@@ -138,5 +138,3 @@ class GIG(object):
         s3_hat = np.mean(np.log(x))
 
         return self.suffstats2param(s1_hat, s2_hat, s3_hat)
-
-    
