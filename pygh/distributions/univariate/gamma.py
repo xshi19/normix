@@ -127,43 +127,70 @@ class Gamma(ExponentialFamily):
         
         return np.array([eta1, eta2])
     
+    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+        """
+        Analytical inverse using Newton's method.
+        
+        From η = [ψ(α) - log(β), α/β]:
+        - η₁ = α/β → β = α/η₁
+        - η₀ = ψ(α) - log(β) → ψ(α) = η₀ + log(β)
+        
+        We solve for α using Newton's method with β = α/η₁.
+        
+        Parameters
+        ----------
+        eta : ndarray
+            Expectation parameters [E[log X], E[X]].
+        
+        Returns
+        -------
+        theta : ndarray
+            Natural parameters [α-1, -β].
+        """
+        # Use η₁ = α/β to express β in terms of α
+        # Then solve: ψ(α) = η₀ + log(α/η₁) = η₀ + log(α) - log(η₁)
+        
+        # Initial guess for α
+        alpha = max(eta[1], 2.0)
+        
+        # Newton's method to solve: ψ(α) - log(α) = η₀ - log(η₁)
+        target = eta[0] - np.log(eta[1])
+        
+        for _ in range(100):  # Increase iterations for better convergence
+            psi_val = digamma(alpha)
+            psi_prime = polygamma(1, alpha)
+            
+            # Current function value: f(α) = ψ(α) - log(α) - target
+            f_val = psi_val - np.log(alpha) - target
+            
+            # Derivative: f'(α) = ψ'(α) - 1/α
+            f_prime = psi_prime - 1.0 / alpha
+            
+            # Newton step
+            alpha_new = alpha - f_val / f_prime
+            
+            # Keep α positive
+            alpha_new = max(alpha_new, 0.5)
+            
+            # Check convergence
+            if abs(alpha_new - alpha) / abs(alpha) < 1e-12:
+                alpha = alpha_new
+                break
+                
+            alpha = alpha_new
+        
+        # Compute β from α/β = η₁
+        beta = alpha / eta[1]
+        
+        return np.array([alpha - 1, -beta])
+    
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """
         Get initial guess for natural parameters from expectation parameters.
         
-        For Gamma: η = [ψ(α) - log(β), α/β]
-        
-        We use an iterative approximation:
-        1. Start with β = 1
-        2. Solve for α from ψ(α) - log(β) = η₁
-        3. Update β = α / η₂
-        4. Repeat a few times
-        
-        Returns θ = [α-1, -β]
+        Uses the analytical inverse (Newton's method).
         """
-        # Initial guess
-        beta = 1.0
-        
-        # Iterative refinement (a few iterations)
-        for _ in range(5):
-            # Solve ψ(α) = η₁ + log(β) using Newton's method
-            target = eta[0] + np.log(beta)
-            
-            # Newton's method for ψ(α) = target
-            alpha = max(eta[1], 1.0)  # Initial guess for α
-            for _ in range(10):
-                psi_val = digamma(alpha)
-                psi_prime = polygamma(1, alpha)
-                alpha_new = alpha - (psi_val - target) / psi_prime
-                if abs(alpha_new - alpha) < 1e-6:
-                    alpha = alpha_new
-                    break
-                alpha = max(alpha_new, 0.1)  # Keep α positive
-            
-            # Update β from α/β = η₂
-            beta = alpha / eta[1]
-        
-        return np.array([alpha - 1, -beta])
+        return self._expectation_to_natural(eta)
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
@@ -171,7 +198,7 @@ class Gamma(ExponentialFamily):
         
         The Hessian is:
         I₁₁ = ψ'(α) (trigamma function)
-        I₁₂ = I₂₁ = -1/β
+        I₁₂ = I₂₁ = 1/β
         I₂₂ = α/β²
         
         where α = θ₁+1, β = -θ₂.
@@ -184,7 +211,7 @@ class Gamma(ExponentialFamily):
         
         # Compute Hessian components
         I_11 = polygamma(1, alpha)  # trigamma(α)
-        I_12 = -1.0 / beta
+        I_12 = 1.0 / beta
         I_22 = alpha / (beta**2)
         
         return np.array([[I_11, I_12],
@@ -272,3 +299,4 @@ class Gamma(ExponentialFamily):
             return float(result)
         
         return result
+

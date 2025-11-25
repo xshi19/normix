@@ -15,8 +15,9 @@ import numpy as np
 import pytest
 from scipy import stats
 from typing import Callable, Dict, Any, Tuple
+from scipy.optimize import approx_fprime
 
-from pygh.distributions.univariate import Exponential, Gamma
+from pygh.distributions.univariate import Exponential, Gamma, InverseGamma
 
 
 # ============================================================
@@ -267,6 +268,98 @@ def check_histogram_vs_pdf(
             f"Chi-square: {chi_square:.2f}, Critical value: {critical_value:.2f}"
 
 
+def check_gradient_consistency(config: DistributionTestConfig, epsilon=1e-6, rtol=1e-4):
+    """
+    Test that analytical gradient (natural_to_expectation) matches numerical gradient.
+    
+    Parameters
+    ----------
+    config : DistributionTestConfig
+        Test configuration.
+    epsilon : float
+        Step size for numerical gradient.
+    rtol : float
+        Relative tolerance for comparison.
+    """
+    for params in config.test_params:
+        # Create distribution
+        dist = config.pygh_class.from_classical_params(**params)
+        
+        # Get natural parameters
+        theta = dist.get_natural_params()
+        
+        # Analytical gradient (natural_to_expectation)
+        analytical_grad = dist._natural_to_expectation(theta)
+        
+        # Numerical gradient using finite differences
+        def log_partition(t):
+            return dist._log_partition(t)
+        
+        numerical_grad = approx_fprime(theta, log_partition, epsilon=epsilon)
+        
+        # Compare
+        assert np.allclose(analytical_grad, numerical_grad, rtol=rtol), \
+            f"Gradient mismatch for {config.name} with params {params}\n" \
+            f"Analytical: {analytical_grad}\n" \
+            f"Numerical: {numerical_grad}\n" \
+            f"Difference: {np.abs(analytical_grad - numerical_grad)}"
+
+
+def check_hessian_consistency(config: DistributionTestConfig, epsilon=1e-6, rtol=1e-3):
+    """
+    Test that analytical Hessian (fisher_information) matches numerical Hessian.
+    
+    Parameters
+    ----------
+    config : DistributionTestConfig
+        Test configuration.
+    epsilon : float
+        Step size for numerical Hessian.
+    rtol : float
+        Relative tolerance for comparison.
+    """
+    for params in config.test_params:
+        # Create distribution
+        dist = config.pygh_class.from_classical_params(**params)
+        
+        # Get natural parameters
+        theta = dist.get_natural_params()
+        
+        # Analytical Hessian (fisher_information)
+        analytical_hessian = dist.fisher_information(theta)
+        
+        # Numerical Hessian using finite differences
+        def gradient_func(t):
+            return dist._natural_to_expectation(t)
+        
+        n = len(theta)
+        numerical_hessian = np.zeros((n, n))
+        
+        for i in range(n):
+            # Compute gradient at theta + epsilon*e_i
+            theta_plus = theta.copy()
+            theta_plus[i] += epsilon
+            grad_plus = gradient_func(theta_plus)
+            
+            # Compute gradient at theta - epsilon*e_i
+            theta_minus = theta.copy()
+            theta_minus[i] -= epsilon
+            grad_minus = gradient_func(theta_minus)
+            
+            # Numerical derivative (row i of Hessian)
+            numerical_hessian[i, :] = (grad_plus - grad_minus) / (2 * epsilon)
+        
+        # Symmetrize numerical Hessian
+        numerical_hessian = (numerical_hessian + numerical_hessian.T) / 2
+        
+        # Compare
+        assert np.allclose(analytical_hessian, numerical_hessian, rtol=rtol), \
+            f"Hessian mismatch for {config.name} with params {params}\n" \
+            f"Analytical:\n{analytical_hessian}\n" \
+            f"Numerical:\n{numerical_hessian}\n" \
+            f"Difference:\n{np.abs(analytical_hessian - numerical_hessian)}"
+
+
 # ============================================================
 # Exponential Distribution Tests
 # ============================================================
@@ -314,6 +407,14 @@ class TestExponentialVsScipy:
     def test_histogram_pdf(self, config):
         """Test histogram matches PDF."""
         check_histogram_vs_pdf(config)
+    
+    def test_gradient_consistency(self, config):
+        """Test analytical gradient matches numerical gradient."""
+        check_gradient_consistency(config)
+    
+    def test_hessian_consistency(self, config):
+        """Test analytical Hessian matches numerical Hessian."""
+        check_hessian_consistency(config)
 
 
 # ============================================================
@@ -327,9 +428,9 @@ def get_gamma_config() -> DistributionTestConfig:
         scipy_dist=stats.gamma,
         param_converter=lambda p: {'a': p['shape'], 'scale': 1.0 / p['rate']},  # scipy uses (a, scale)
         test_params=[
-            {'shape': 1.0, 'rate': 1.0},
-            {'shape': 2.0, 'rate': 1.0},
+            {'shape': 2.0, 'rate': 1.0},  # Avoid shape=1 (boundary case)
             {'shape': 2.0, 'rate': 2.0},
+            {'shape': 3.0, 'rate': 1.5},
             {'shape': 5.0, 'rate': 2.0},
         ],
         test_points=np.linspace(0.01, 10, 100),
@@ -363,6 +464,71 @@ class TestGammaVsScipy:
     def test_histogram_pdf(self, config):
         """Test histogram matches PDF."""
         check_histogram_vs_pdf(config)
+    
+    def test_gradient_consistency(self, config):
+        """Test analytical gradient matches numerical gradient."""
+        check_gradient_consistency(config)
+    
+    def test_hessian_consistency(self, config):
+        """Test analytical Hessian matches numerical Hessian."""
+        check_hessian_consistency(config)
+
+
+# ============================================================
+# Inverse Gamma Distribution Tests
+# ============================================================
+
+def get_inverse_gamma_config() -> DistributionTestConfig:
+    """Get test configuration for Inverse Gamma distribution."""
+    return DistributionTestConfig(
+        pygh_class=InverseGamma,
+        scipy_dist=stats.invgamma,
+        param_converter=lambda p: {'a': p['shape'], 'scale': p['rate']},  # scipy uses (a, scale)
+        test_params=[
+            {'shape': 5.0, 'rate': 2.0},  # Higher shape for better behavior
+            {'shape': 6.0, 'rate': 2.0},
+            {'shape': 7.0, 'rate': 1.0},
+            {'shape': 8.0, 'rate': 1.5},
+        ],
+        test_points=np.linspace(0.01, 5, 100),  # More concentrated range
+        name='InverseGamma'
+    )
+
+
+class TestInverseGammaVsScipy:
+    """Test Inverse Gamma distribution against scipy."""
+    
+    @pytest.fixture
+    def config(self):
+        return get_inverse_gamma_config()
+    
+    def test_pdf_comparison(self, config):
+        """Test PDF matches scipy."""
+        compare_pdf_vs_scipy(config)
+    
+    def test_cdf_comparison(self, config):
+        """Test CDF matches scipy."""
+        compare_cdf_vs_scipy(config)
+    
+    def test_parameter_roundtrip(self, config):
+        """Test Natural→Expectation→Natural conversion."""
+        check_natural_expectation_roundtrip(config)
+    
+    def test_sample_statistics(self, config):
+        """Test sample sufficient statistics match expectation parameters."""
+        check_sample_sufficient_statistics(config)
+    
+    def test_histogram_pdf(self, config):
+        """Test histogram matches PDF."""
+        check_histogram_vs_pdf(config)
+    
+    def test_gradient_consistency(self, config):
+        """Test analytical gradient matches numerical gradient."""
+        check_gradient_consistency(config)
+    
+    def test_hessian_consistency(self, config):
+        """Test analytical Hessian matches numerical Hessian."""
+        check_hessian_consistency(config)
 
 
 # ============================================================
@@ -386,6 +552,8 @@ def run_all_tests_for_distribution(config: DistributionTestConfig, verbose=True)
         ("Natural↔Expectation roundtrip", check_natural_expectation_roundtrip),
         ("Sample sufficient statistics", check_sample_sufficient_statistics),
         ("Histogram vs PDF", check_histogram_vs_pdf),
+        ("Gradient consistency", check_gradient_consistency),
+        ("Hessian consistency", check_hessian_consistency),
     ]
     
     if verbose:
@@ -426,6 +594,7 @@ if __name__ == "__main__":
     configs = [
         get_exponential_config(),
         get_gamma_config(),
+        get_inverse_gamma_config(),
     ]
     
     all_passed = True

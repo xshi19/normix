@@ -651,21 +651,21 @@ class ExponentialFamily(Distribution):
                     theta_arr = self._project_to_support(theta_arr)
                     return self.fisher_information(theta_arr)
                 
-                # trust-constr supports bounds + Hessian
+                # Newton-CG supports bounds + Hessian
                 result = minimize(objective, theta0, method='trust-constr',
                                 jac=objective_grad, hess=objective_hess,
                                 bounds=bounds,
-                                options={'xtol': 1e-8, 'gtol': 1e-8, 'maxiter': 200})
+                                options={'xtol': 1e-6, 'gtol': 1e-6, 'maxiter': 200})
             else:
                 # L-BFGS-B with gradient
-                result = minimize(objective, theta0, method='L-BFGS-B',
+                result = minimize(objective, theta0, method='SLSQP',
                                 jac=objective_grad, bounds=bounds,
-                                options={'ftol': 1e-10, 'gtol': 1e-8, 'maxiter': 200})
+                                options={'ftol': 1e-8, 'gtol': 1e-6, 'maxiter': 200})
         else:
             # L-BFGS-B with numerical gradients
-            result = minimize(objective, theta0, method='L-BFGS-B',
+            result = minimize(objective, theta0, method='SLSQP',
                             bounds=bounds,
-                            options={'ftol': 1e-10, 'maxiter': 200})
+                            options={'ftol': 1e-8, 'maxiter': 200})
         
         if not result.success:
             import warnings

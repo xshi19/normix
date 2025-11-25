@@ -108,6 +108,24 @@ class Exponential(ExponentialFamily):
         """
         return np.array([1.0 / (-theta[0])])
     
+    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+        """
+        Analytical inverse: θ = -1/η.
+        
+        From η = E[X] = 1/λ, we get λ = 1/η, so θ = -λ = -1/η.
+        
+        Parameters
+        ----------
+        eta : ndarray
+            Expectation parameters [E[X]].
+        
+        Returns
+        -------
+        theta : ndarray
+            Natural parameters [-λ].
+        """
+        return np.array([-1.0 / eta[0]])
+    
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
         Analytical Fisher information: I(θ) = ∇²ψ(θ) = 1/θ².
