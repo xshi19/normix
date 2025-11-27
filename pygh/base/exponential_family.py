@@ -603,12 +603,12 @@ class ExponentialFamily(Distribution):
         Convert expectation parameters → natural parameters.
         
         Solves the optimization problem:
-            θ* = argmax_θ [θ·η - ψ(θ)]
+            θ* = argmax_θ [θ·η - A(θ)]
         
-        Equivalently solves: ∇ψ(θ*) = η
+        Equivalently solves: ∇A(θ*) = η
         
-        Uses scipy.optimize.minimize with bounds from parameter support.
-        Automatically uses analytical gradient/Hessian if overridden.
+        Uses multi-start optimization with L-BFGS-B. Starting points are
+        provided by _get_initial_natural_params (override in subclasses).
         
         Parameters
         ----------
@@ -624,63 +624,79 @@ class ExponentialFamily(Distribution):
         
         # Get bounds from support
         bounds_list = self._get_natural_param_support()
-        bounds = Bounds(
-            lb=[b[0] if not np.isinf(b[0]) else -1e100 for b in bounds_list],
-            ub=[b[1] if not np.isinf(b[1]) else 1e100 for b in bounds_list]
-        )
+        lb = np.array([b[0] if not np.isinf(b[0]) else -1e10 for b in bounds_list])
+        ub = np.array([b[1] if not np.isinf(b[1]) else 1e10 for b in bounds_list])
+        bounds = Bounds(lb=lb, ub=ub)
         
-        # Initial guess
-        theta0 = self._get_initial_natural_params(eta)
-        theta0 = self._project_to_support(theta0)
-        
-        # Objective: minimize ψ(θ) - θ·η
+        # Objective: minimize A(θ) - θ·η (negative of dual function)
         def objective(theta_arr):
             theta_arr = self._project_to_support(theta_arr)
             psi = self._log_partition(theta_arr)
             return psi - np.dot(theta_arr, eta)
         
-        # Check if analytical gradient is available
+        # Gradient: ∇A(θ) - η
+        grad_func = None
         if self._has_analytical_gradient():
-            def objective_grad(theta_arr):
+            def grad_func(theta_arr):
                 theta_arr = self._project_to_support(theta_arr)
                 grad_psi = self._natural_to_expectation(theta_arr)
                 return grad_psi - eta
-            
-            if self._has_analytical_hessian():
-                def objective_hess(theta_arr):
-                    theta_arr = self._project_to_support(theta_arr)
-                    return self.fisher_information(theta_arr)
-                
-                # Newton-CG supports bounds + Hessian
-                result = minimize(objective, theta0, method='trust-constr',
-                                jac=objective_grad, hess=objective_hess,
-                                bounds=bounds,
-                                options={'xtol': 1e-6, 'gtol': 1e-6, 'maxiter': 200})
-            else:
-                # L-BFGS-B with gradient
-                result = minimize(objective, theta0, method='SLSQP',
-                                jac=objective_grad, bounds=bounds,
-                                options={'ftol': 1e-8, 'gtol': 1e-6, 'maxiter': 200})
-        else:
-            # L-BFGS-B with numerical gradients
-            result = minimize(objective, theta0, method='SLSQP',
-                            bounds=bounds,
-                            options={'ftol': 1e-8, 'maxiter': 200})
         
-        if not result.success:
+        # Get starting points from subclass (can be single point or list)
+        starting_points = self._get_initial_natural_params(eta)
+        if isinstance(starting_points, np.ndarray) and starting_points.ndim == 1:
+            starting_points = [starting_points]
+        
+        # Track best solution
+        best_theta = None
+        best_obj = np.inf
+        best_grad_norm = np.inf
+        
+        # Try each starting point with L-BFGS-B
+        for x0 in starting_points:
+            x0 = np.asarray(x0)
+            x0 = self._project_to_support(x0)
+            
+            result = minimize(
+                objective, x0,
+                method='L-BFGS-B',
+                jac=grad_func,
+                bounds=bounds,
+                options={'maxiter': 1000, 'ftol': 1e-12, 'gtol': 1e-10}
+            )
+            
+            # Compute gradient norm at solution
+            if grad_func is not None:
+                grad_norm = np.max(np.abs(grad_func(result.x)))
+            else:
+                grad_norm = np.inf
+            
+            # Accept if better objective or much better gradient
+            if result.fun < best_obj or grad_norm < best_grad_norm * 0.1:
+                best_theta = result.x
+                best_obj = result.fun
+                best_grad_norm = grad_norm
+            
+            # Early exit if gradient is small enough
+            if grad_norm < 1e-8:
+                return result.x
+        
+        # Warn if solution quality is poor
+        if best_grad_norm > 1e-4:
             import warnings
             warnings.warn(
-                f"Optimization in expectation_to_natural did not converge: {result.message}"
+                f"Expectation to natural conversion may not have converged well "
+                f"(max gradient norm: {best_grad_norm:.2e})"
             )
         
-        return result.x
+        return best_theta
     
-    def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
+    def _get_initial_natural_params(self, eta: NDArray) -> Union[NDArray, List[NDArray]]:
         """
-        Get initial guess for natural parameters in optimization.
+        Get initial guess(es) for natural parameters in optimization.
         
-        Default: θ₀ ≈ η (works for many distributions).
-        Override for better initialization when available.
+        Override in subclasses to provide distribution-specific initialization.
+        Can return a single array or a list of arrays for multi-start optimization.
         
         Parameters
         ----------
@@ -689,8 +705,8 @@ class ExponentialFamily(Distribution):
         
         Returns
         -------
-        theta0 : ndarray
-            Initial guess for natural parameters.
+        theta0 : ndarray or list of ndarray
+            Initial guess(es) for natural parameters.
         """
         return eta.copy()
     

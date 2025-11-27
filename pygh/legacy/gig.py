@@ -9,7 +9,7 @@ from math import sqrt
 from scipy.special import kv
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
-from .func import *
+from func import *
 
 
 def gig_hellinger(gig1, gig2):
