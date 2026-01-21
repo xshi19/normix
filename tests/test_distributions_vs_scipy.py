@@ -18,6 +18,7 @@ from typing import Callable, Dict, Any, Tuple
 from scipy.optimize import approx_fprime
 
 from pygh.distributions.univariate import Exponential, Gamma, InverseGamma, GeneralizedInverseGaussian
+from pygh.distributions.multivariate import MultivariateNormal
 
 
 # ============================================================
@@ -668,6 +669,241 @@ class TestGIGVsScipy:
         # Check that fitted mean is close to true mean
         assert np.isclose(fitted.mean(), true_dist.mean(), rtol=0.05), \
             f"Fitted mean {fitted.mean():.4f} != True mean {true_dist.mean():.4f}"
+
+
+# ============================================================
+# Multivariate Normal Distribution Tests
+# ============================================================
+
+class TestMultivariateNormalVsScipy:
+    """Test Multivariate Normal distribution against scipy."""
+    
+    def test_pdf_1d(self):
+        """Test 1D PDF matches scipy."""
+        mu = np.array([2.0])
+        sigma = np.array([[1.5]])
+        
+        # pygh distribution
+        pygh_dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # scipy distribution
+        scipy_dist = stats.multivariate_normal(mean=mu, cov=sigma)
+        
+        # Test points
+        x = np.linspace(-2, 6, 50).reshape(-1, 1)
+        
+        pygh_pdf = pygh_dist.pdf(x)
+        scipy_pdf = scipy_dist.pdf(x)
+        
+        assert np.allclose(pygh_pdf, scipy_pdf, rtol=1e-6), \
+            f"1D PDF mismatch"
+    
+    def test_pdf_2d(self):
+        """Test 2D PDF matches scipy."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.5], [0.5, 1.0]])
+        
+        # pygh distribution
+        pygh_dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # scipy distribution
+        scipy_dist = stats.multivariate_normal(mean=mu, cov=sigma)
+        
+        # Test points (grid)
+        x1 = np.linspace(-2, 4, 20)
+        x2 = np.linspace(-1, 5, 20)
+        X1, X2 = np.meshgrid(x1, x2)
+        x_test = np.column_stack([X1.ravel(), X2.ravel()])
+        
+        pygh_pdf = pygh_dist.pdf(x_test)
+        scipy_pdf = scipy_dist.pdf(x_test)
+        
+        assert np.allclose(pygh_pdf, scipy_pdf, rtol=1e-6), \
+            f"2D PDF mismatch"
+    
+    def test_cdf_1d(self):
+        """Test 1D CDF matches scipy."""
+        mu = np.array([0.0])
+        sigma = np.array([[2.0]])
+        
+        # pygh distribution
+        pygh_dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # scipy univariate normal
+        scipy_dist = stats.norm(loc=mu[0], scale=np.sqrt(sigma[0, 0]))
+        
+        # Test points
+        x = np.linspace(-4, 4, 50)
+        
+        pygh_cdf = pygh_dist.cdf(x)
+        scipy_cdf = scipy_dist.cdf(x)
+        
+        assert np.allclose(pygh_cdf, scipy_cdf, rtol=1e-6), \
+            f"1D CDF mismatch"
+    
+    def test_parameter_roundtrip_1d(self):
+        """Test Natural→Expectation→Natural for 1D."""
+        mu = np.array([1.5])
+        sigma = np.array([[2.0]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # Get parameters
+        theta_original = dist.get_natural_params()
+        eta = dist.get_expectation_params()
+        
+        # Roundtrip
+        dist2 = MultivariateNormal(d=1).from_expectation_params(eta)
+        theta_roundtrip = dist2.get_natural_params()
+        
+        assert np.allclose(theta_original, theta_roundtrip, rtol=1e-4), \
+            f"1D roundtrip failed: {theta_original} vs {theta_roundtrip}"
+    
+    def test_parameter_roundtrip_2d(self):
+        """Test Natural→Expectation→Natural for 2D."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.3], [0.3, 1.5]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # Get parameters
+        theta_original = dist.get_natural_params()
+        eta = dist.get_expectation_params()
+        
+        # Roundtrip
+        dist2 = MultivariateNormal(d=2).from_expectation_params(eta)
+        theta_roundtrip = dist2.get_natural_params()
+        
+        assert np.allclose(theta_original, theta_roundtrip, rtol=1e-4), \
+            f"2D roundtrip failed"
+    
+    def test_sample_statistics_1d(self):
+        """Test sample mean/cov match for 1D."""
+        mu = np.array([3.0])
+        sigma = np.array([[2.0]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # Generate samples
+        samples = dist.rvs(size=10000, random_state=42)
+        
+        # Check mean
+        sample_mean = np.mean(samples, axis=0)
+        assert np.allclose(sample_mean, mu, rtol=0.05), \
+            f"1D sample mean mismatch: {sample_mean} vs {mu}"
+        
+        # Check variance
+        sample_var = np.var(samples, axis=0)
+        assert np.allclose(sample_var, sigma[0, 0], rtol=0.1), \
+            f"1D sample var mismatch: {sample_var} vs {sigma[0, 0]}"
+    
+    def test_sample_statistics_2d(self):
+        """Test sample mean/cov match for 2D."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.5], [0.5, 1.5]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # Generate samples
+        samples = dist.rvs(size=10000, random_state=42)
+        
+        # Check mean
+        sample_mean = np.mean(samples, axis=0)
+        assert np.allclose(sample_mean, mu, rtol=0.05), \
+            f"2D sample mean mismatch: {sample_mean} vs {mu}"
+        
+        # Check covariance
+        sample_cov = np.cov(samples, rowvar=False)
+        assert np.allclose(sample_cov, sigma, rtol=0.1), \
+            f"2D sample cov mismatch"
+    
+    def test_fitting_1d(self):
+        """Test MLE fitting for 1D."""
+        true_mu = np.array([2.0])
+        true_sigma = np.array([[1.5]])
+        
+        true_dist = MultivariateNormal.from_classical_params(mu=true_mu, sigma=true_sigma)
+        
+        # Generate data
+        data = true_dist.rvs(size=5000, random_state=42)
+        
+        # Fit
+        fitted = MultivariateNormal(d=1).fit(data)
+        fitted_params = fitted.get_classical_params()
+        
+        assert np.allclose(fitted_params['mu'], true_mu, rtol=0.05), \
+            f"1D fitted mean mismatch"
+        assert np.allclose(fitted_params['sigma'], true_sigma, rtol=0.1), \
+            f"1D fitted sigma mismatch"
+    
+    def test_fitting_2d(self):
+        """Test MLE fitting for 2D."""
+        true_mu = np.array([1.0, 2.0])
+        true_sigma = np.array([[1.0, 0.5], [0.5, 1.5]])
+        
+        true_dist = MultivariateNormal.from_classical_params(mu=true_mu, sigma=true_sigma)
+        
+        # Generate data
+        data = true_dist.rvs(size=5000, random_state=42)
+        
+        # Fit
+        fitted = MultivariateNormal(d=2).fit(data)
+        fitted_params = fitted.get_classical_params()
+        
+        assert np.allclose(fitted_params['mu'], true_mu, rtol=0.05), \
+            f"2D fitted mean mismatch"
+        assert np.allclose(fitted_params['sigma'], true_sigma, rtol=0.1), \
+            f"2D fitted sigma mismatch"
+    
+    def test_scipy_conversion(self):
+        """Test conversion to/from scipy."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.3], [0.3, 1.5]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        # Convert to scipy
+        scipy_dist = dist.to_scipy()
+        
+        # Check parameters
+        assert np.allclose(scipy_dist.mean, mu), "Scipy mean mismatch"
+        assert np.allclose(scipy_dist.cov, sigma), "Scipy cov mismatch"
+        
+        # Convert back
+        dist2 = MultivariateNormal.from_scipy(scipy_dist)
+        params = dist2.get_classical_params()
+        
+        assert np.allclose(params['mu'], mu), "Roundtrip mu mismatch"
+        assert np.allclose(params['sigma'], sigma), "Roundtrip sigma mismatch"
+    
+    def test_entropy(self):
+        """Test entropy matches scipy."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.3], [0.3, 1.5]])
+        
+        pygh_dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        scipy_dist = stats.multivariate_normal(mean=mu, cov=sigma)
+        
+        pygh_entropy = pygh_dist.entropy()
+        scipy_entropy = scipy_dist.entropy()
+        
+        assert np.isclose(pygh_entropy, scipy_entropy, rtol=1e-6), \
+            f"Entropy mismatch: {pygh_entropy} vs {scipy_entropy}"
+    
+    def test_logpdf_consistency(self):
+        """Test logpdf = log(pdf)."""
+        mu = np.array([1.0, 2.0])
+        sigma = np.array([[1.0, 0.5], [0.5, 1.0]])
+        
+        dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
+        
+        x = np.array([[0.5, 1.5], [1.0, 2.0], [2.0, 3.0]])
+        
+        logpdf_direct = dist.logpdf(x)
+        logpdf_from_pdf = np.log(dist.pdf(x))
+        
+        assert np.allclose(logpdf_direct, logpdf_from_pdf, rtol=1e-10), \
+            "logpdf != log(pdf)"
 
 
 # ============================================================
