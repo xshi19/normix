@@ -1,27 +1,37 @@
 """
 Inverse Gaussian distribution (Wald distribution).
 
-Special case of GIG with p = -1/2.
+Special case of GIG with :math:`p = -1/2`.
 Also belongs to the exponential family.
 
-The inverse Gaussian distribution has PDF:
-    p(x|μ,λ) = √(λ/(2πx³)) * exp(-λ(x-μ)²/(2μ²x)) for x > 0
+The Inverse Gaussian distribution has PDF:
+
+.. math::
+    p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} 
+    \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)
+
+for :math:`x > 0`, where :math:`\\mu > 0` is the mean and :math:`\\lambda > 0` 
+is the shape parameter.
 
 Exponential family form:
-    - h(x) = 1/√(2πx³) for x > 0
-    - t(x) = [x, 1/x] (sufficient statistics)
-    - θ = [-λ/(2μ²), -λ/2] (natural parameters)
-    - ψ(θ) = -2√(θ₁θ₂) - (1/2)log(-2θ₂) (log partition function)
+
+- :math:`h(x) = 1/\\sqrt{2\\pi x^3}` for :math:`x > 0` (base measure)
+- :math:`t(x) = [x, 1/x]` (sufficient statistics)
+- :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]` (natural parameters)
+- :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)` (log partition)
 
 Parametrizations:
-    - Classical: μ (mean), λ (shape), μ > 0, λ > 0
-    - Natural: θ = [-λ/(2μ²), -λ/2], θ₁ < 0, θ₂ < 0
-    - Expectation: η = [μ, 1/μ + 1/λ]
+
+- Classical: :math:`\\mu` (mean), :math:`\\lambda` (shape), :math:`\\mu > 0, \\lambda > 0`
+- Natural: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`, :math:`\\theta_1 < 0, \\theta_2 < 0`
+- Expectation: :math:`\\eta = [\\mu, 1/\\mu + 1/\\lambda]`
 
 Note: scipy uses (mu, scale) where:
-    - scipy_mu = μ/λ (shape parameter, confusingly named)
-    - scipy_scale = λ (our shape parameter)
-    - Relationship: μ = scipy_mu * scipy_scale, λ = scipy_scale
+
+- scipy_mu = :math:`\\mu/\\lambda` (shape parameter, confusingly named)
+- scipy_scale = :math:`\\lambda` (our shape parameter)
+- Relationship: :math:`\\mu = \\text{scipy\\_mu} \\times \\text{scipy\\_scale}`, 
+  :math:`\\lambda = \\text{scipy\\_scale}`
 """
 
 import numpy as np
@@ -35,14 +45,28 @@ class InverseGaussian(ExponentialFamily):
     """
     Inverse Gaussian distribution in exponential family form.
     
-    Also known as the Wald distribution.
+    Also known as the Wald distribution. Special case of GIG with :math:`p = -1/2`.
+    
+    The Inverse Gaussian distribution has PDF:
+    
+    .. math::
+        p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} 
+        \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)
+    
+    for :math:`x > 0`, where :math:`\\mu` is the mean and :math:`\\lambda` 
+    is the shape parameter.
     
     Parameters
     ----------
     mean : float, optional
-        Mean parameter μ > 0. Use from_classical_params(mean=μ, shape=λ).
+        Mean parameter :math:`\\mu > 0`. Use ``from_classical_params(mean=..., shape=...)``.
     shape : float, optional
-        Shape parameter λ > 0. Use from_classical_params(mean=μ, shape=λ).
+        Shape parameter :math:`\\lambda > 0`. Use ``from_classical_params(mean=..., shape=...)``.
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`.
     
     Examples
     --------
@@ -55,9 +79,31 @@ class InverseGaussian(ExponentialFamily):
     >>> dist = InverseGaussian.from_natural_params(np.array([-0.5, -0.5]))
     
     >>> # Fit from data
-    >>> import scipy.stats as stats
-    >>> data = stats.invgauss.rvs(mu=1.0, scale=1.0, size=1000)
+    >>> from scipy.stats import invgauss
+    >>> data = invgauss.rvs(mu=1.0, scale=1.0, size=1000)
     >>> dist = InverseGaussian().fit(data)
+    
+    See Also
+    --------
+    GeneralizedInverseGaussian : Generalization with parameter :math:`p`
+    
+    Notes
+    -----
+    The Inverse Gaussian distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [x, 1/x]`
+    - Natural parameters: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`
+    - Log partition: :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)`
+    
+    It is a special case of the Generalized Inverse Gaussian (GIG) with :math:`p = -1/2`:
+    
+    .. math::
+        \\text{InvGauss}(\\mu, \\lambda) = \\text{GIG}(p=-1/2, a=\\lambda/\\mu^2, b=\\lambda)
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+    .. [2] Chhikara, R. S. & Folks, J. L. (1989). The Inverse Gaussian Distribution.
     """
     
     def _get_natural_param_support(self):
@@ -225,16 +271,32 @@ class InverseGaussian(ExponentialFamily):
         # mean = μ, scale = λ
         return rng.wald(mean=mu, scale=lam, size=size)
     
-    def mean(self):
+    def mean(self) -> float:
         """
-        Mean of inverse Gaussian distribution: E[X] = μ.
+        Mean of Inverse Gaussian distribution: E[X] = mu.
+        
+        .. math::
+            E[X] = \\mu
+        
+        Returns
+        -------
+        mean : float
+            Mean of the distribution.
         """
         classical = self.get_classical_params()
         return classical['mean']
     
-    def var(self):
+    def var(self) -> float:
         """
-        Variance of inverse Gaussian distribution: Var[X] = μ³/λ.
+        Variance of Inverse Gaussian distribution: Var[X] = mu^3/lambda.
+        
+        .. math::
+            \\text{Var}[X] = \\frac{\\mu^3}{\\lambda}
+        
+        Returns
+        -------
+        var : float
+            Variance of the distribution.
         """
         classical = self.get_classical_params()
         mu = classical['mean']

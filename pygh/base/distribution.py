@@ -2,7 +2,16 @@
 Base class for probability distributions with scipy-like API.
 
 This module provides an abstract base class that defines the standard interface
-for probability distributions, similar to scipy.stats.
+for probability distributions, similar to ``scipy.stats``.
+
+The API includes:
+
+- **Density functions**: :meth:`pdf`, :meth:`logpdf`
+- **Cumulative distribution**: :meth:`cdf`, :meth:`sf` (survival function)
+- **Quantile functions**: :meth:`ppf`, :meth:`isf` (inverse survival)
+- **Random sampling**: :meth:`rvs`
+- **Fitting**: :meth:`fit` (returns self for method chaining)
+- **Moments**: :meth:`mean`, :meth:`var`, :meth:`std`, :meth:`stats`
 """
 
 from abc import ABC, abstractmethod

@@ -1,19 +1,27 @@
 """
 Exponential distribution as an exponential family.
 
-The exponential distribution has PDF:
-    p(x|λ) = λ exp(-λx) for x ≥ 0
+The Exponential distribution has PDF:
+
+.. math::
+    p(x|\\lambda) = \\lambda e^{-\\lambda x}
+
+for :math:`x \\geq 0`, where :math:`\\lambda > 0` is the rate parameter.
 
 Exponential family form:
-    - h(x) = 1 for x ≥ 0, 0 otherwise
-    - t(x) = x (sufficient statistic)
-    - θ = -λ (natural parameter)
-    - ψ(θ) = -log(-θ) (log partition function)
+
+- :math:`h(x) = 1` for :math:`x \\geq 0` (base measure)
+- :math:`t(x) = x` (sufficient statistic)
+- :math:`\\theta = -\\lambda` (natural parameter)
+- :math:`\\psi(\\theta) = -\\log(-\\theta)` (log partition function)
 
 Parametrizations:
-    - Classical: λ (rate), λ > 0
-    - Natural: θ = -λ, θ < 0
-    - Expectation: η = E[X] = 1/λ, η > 0
+
+- Classical: :math:`\\lambda` (rate), :math:`\\lambda > 0`
+- Natural: :math:`\\theta = -\\lambda`, :math:`\\theta < 0`
+- Expectation: :math:`\\eta = E[X] = 1/\\lambda`, :math:`\\eta > 0`
+
+Note: scipy uses scale = 1/rate parametrization.
 """
 
 import numpy as np
@@ -27,10 +35,22 @@ class Exponential(ExponentialFamily):
     """
     Exponential distribution in exponential family form.
     
+    The Exponential distribution has PDF:
+    
+    .. math::
+        p(x|\\lambda) = \\lambda e^{-\\lambda x}
+    
+    for :math:`x \\geq 0`, where :math:`\\lambda` is the rate parameter.
+    
     Parameters
     ----------
     rate : float, optional
-        Rate parameter λ > 0. Use from_classical_params(rate=λ) to initialize.
+        Rate parameter :math:`\\lambda > 0`. Use ``from_classical_params(rate=...)``.
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters :math:`\\theta = -\\lambda`.
     
     Examples
     --------
@@ -45,6 +65,28 @@ class Exponential(ExponentialFamily):
     >>> # Fit from data
     >>> data = np.random.exponential(scale=0.5, size=1000)
     >>> dist = Exponential().fit(data)
+    
+    See Also
+    --------
+    Gamma : Generalization of Exponential (Exponential is Gamma with :math:`\\alpha = 1`)
+    
+    Notes
+    -----
+    The Exponential distribution is a special case of the Gamma distribution
+    with shape parameter :math:`\\alpha = 1`:
+    
+    .. math::
+        \\text{Exponential}(\\lambda) = \\text{Gamma}(1, \\lambda)
+    
+    Exponential family form:
+    
+    - Sufficient statistic: :math:`t(x) = x`
+    - Natural parameter: :math:`\\theta = -\\lambda`
+    - Log partition: :math:`\\psi(\\theta) = -\\log(-\\theta)`
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
     def _get_natural_param_support(self):
@@ -70,9 +112,22 @@ class Exponential(ExponentialFamily):
     
     def _log_partition(self, theta: NDArray) -> float:
         """
-        Log partition function: ψ(θ) = -log(-θ) for θ < 0.
+        Log partition function: psi(theta) = -log(-theta) for theta < 0.
         
-        This is the cumulant generating function.
+        .. math::
+            \\psi(\\theta) = -\\log(-\\theta)
+        
+        Its gradient gives the expectation parameter: :math:`\\nabla\\psi(\\theta) = E[X] = 1/\\lambda`.
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector :math:`[\\theta]` where :math:`\\theta < 0`.
+        
+        Returns
+        -------
+        psi : float
+            Log partition function value.
         """
         return -np.log(-theta[0])
     
@@ -128,10 +183,22 @@ class Exponential(ExponentialFamily):
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
-        Analytical Fisher information: I(θ) = ∇²ψ(θ) = 1/θ².
+        Analytical Fisher information: I(theta) = 1/theta^2.
         
-        For exponential distribution with rate λ:
-            I(λ) = 1/λ²
+        The Fisher information matrix (Hessian of log partition) is:
+        
+        .. math::
+            I(\\theta) = \\frac{1}{\\theta^2} = \\frac{1}{\\lambda^2}
+        
+        Parameters
+        ----------
+        theta : ndarray, optional
+            Natural parameter vector. If None, uses current parameters.
+        
+        Returns
+        -------
+        fisher : ndarray, shape (1, 1)
+            Fisher information matrix.
         """
         if theta is None:
             theta = self.get_natural_params()
@@ -173,16 +240,32 @@ class Exponential(ExponentialFamily):
         u = rng.uniform(size=size)
         return -np.log(u) / rate
     
-    def mean(self):
+    def mean(self) -> float:
         """
-        Mean of exponential distribution: E[X] = 1/λ.
+        Mean of Exponential distribution: E[X] = 1/lambda.
+        
+        .. math::
+            E[X] = \\frac{1}{\\lambda}
+        
+        Returns
+        -------
+        mean : float
+            Mean of the distribution.
         """
         classical = self.get_classical_params()
         return 1.0 / classical['rate']
     
-    def var(self):
+    def var(self) -> float:
         """
-        Variance of exponential distribution: Var[X] = 1/λ².
+        Variance of Exponential distribution: Var[X] = 1/lambda^2.
+        
+        .. math::
+            \\text{Var}[X] = \\frac{1}{\\lambda^2}
+        
+        Returns
+        -------
+        var : float
+            Variance of the distribution.
         """
         classical = self.get_classical_params()
         return 1.0 / classical['rate']**2

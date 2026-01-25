@@ -1,19 +1,35 @@
 """
 Base class for exponential family distributions.
 
-Exponential families have the form:
-    p(x|θ) = h(x) exp(θ^T t(x) - ψ(θ))
+Exponential families have the canonical form:
+
+.. math::
+    p(x|\\theta) = h(x) \\exp(\\theta^T t(x) - \\psi(\\theta))
 
 where:
-    θ: natural parameters (vector)
-    t(x): sufficient statistics (vector)
-    ψ(θ): log partition function (cumulant generating function)
-    h(x): base measure
+
+- :math:`\\theta`: natural parameters (d-dimensional vector)
+- :math:`t(x)`: sufficient statistics (d-dimensional vector)
+- :math:`\\psi(\\theta)`: log partition function (cumulant generating function)
+- :math:`h(x)`: base measure
+
+The log partition function satisfies:
+
+.. math::
+    \\nabla\\psi(\\theta) = E[t(X)] = \\eta
+
+where :math:`\\eta` are the expectation parameters.
 
 Supports three parametrizations:
-- Classical: Domain-specific parameters (e.g., μ, σ for Normal)
-- Natural: θ in the exponential family form (vector)
-- Expectation: η = ∇ψ(θ) = E[t(X)] (vector)
+
+- **Classical**: Domain-specific parameters (e.g., :math:`\\mu`, :math:`\\sigma` for Normal)
+- **Natural**: :math:`\\theta` in the exponential family form (numpy array)
+- **Expectation**: :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]` (numpy array)
+
+The Fisher information matrix equals the Hessian of the log partition:
+
+.. math::
+    I(\\theta) = \\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)]
 """
 
 from abc import abstractmethod
@@ -34,24 +50,32 @@ class ExponentialFamily(Distribution):
     Exponential family distributions have the probability density:
     
     .. math::
-        p(x|θ) = h(x) \\exp(θ^T t(x) - ψ(θ))
+        p(x|\\theta) = h(x) \\exp(\\theta^T t(x) - \\psi(\\theta))
     
     where:
-    - θ are the natural parameters (d-dimensional vector)
-    - t(x) are the sufficient statistics (d-dimensional vector)
-    - ψ(θ) is the log partition function (scalar)
-    - h(x) is the base measure (scalar)
+    
+    - :math:`\\theta` are the natural parameters (d-dimensional vector)
+    - :math:`t(x)` are the sufficient statistics (d-dimensional vector)
+    - :math:`\\psi(\\theta)` is the log partition function (scalar)
+    - :math:`h(x)` is the base measure (scalar)
     
     Three parametrizations:
-    - **Classical**: Domain-specific (e.g., μ, σ for Normal; λ for Exponential)
-    - **Natural**: θ in exponential family form (numpy array)
-    - **Expectation**: η = ∇ψ(θ) = E[t(X)] (numpy array)
+    
+    - **Classical**: Domain-specific (e.g., :math:`\\mu`, :math:`\\sigma` for Normal; 
+      :math:`\\lambda` for Exponential)
+    - **Natural**: :math:`\\theta` in exponential family form (numpy array)
+    - **Expectation**: :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]` (numpy array)
     
     Natural parameters are stored internally as tuples (hashable for caching).
     All methods use numpy arrays, converting to tuples only for caching.
     
-    Usage
-    -----
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters (tuple for hashability).
+    
+    Examples
+    --------
     Use factory methods to create instances:
     
     >>> # From classical parameters
@@ -63,8 +87,21 @@ class ExponentialFamily(Distribution):
     >>> # From expectation parameters (array)
     >>> dist = Exponential.from_expectation_params(np.array([0.5]))
     
-    >>> # Fit from data (returns self)
+    >>> # Fit from data (returns self for method chaining)
     >>> dist = Exponential().fit(data)
+    
+    Notes
+    -----
+    The log partition function :math:`\\psi(\\theta)` is convex, and its gradient
+    and Hessian give important quantities:
+    
+    - Gradient: :math:`\\nabla\\psi(\\theta) = E[t(X)] = \\eta` (expectation parameters)
+    - Hessian: :math:`\\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)] = I(\\theta)` (Fisher information)
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families
+           in statistical theory.
     """
     
     def __init__(self):
@@ -565,20 +602,25 @@ class ExponentialFamily(Distribution):
     
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
-        Convert natural parameters → expectation parameters: η = ∇ψ(θ).
+        Convert natural parameters to expectation parameters: eta = grad psi(theta).
         
-        Default implementation uses scipy.differentiate.jacobian for numerical gradient.
+        Computes the gradient of the log partition function:
+        
+        .. math::
+            \\eta = \\nabla\\psi(\\theta) = E[t(X)]
+        
+        Default implementation uses ``scipy.differentiate.jacobian`` for numerical gradient.
         Override for analytical gradient when available (recommended for performance).
         
         Parameters
         ----------
         theta : ndarray
-            Natural parameter vector.
+            Natural parameter vector :math:`\\theta`.
         
         Returns
         -------
         eta : ndarray
-            Expectation parameter vector (E[t(X)]).
+            Expectation parameter vector :math:`\\eta = E[t(X)]`.
         """
         theta = self._project_to_support(theta)
         
@@ -600,25 +642,27 @@ class ExponentialFamily(Distribution):
     
     def _expectation_to_natural(self, eta: NDArray) -> NDArray:
         """
-        Convert expectation parameters → natural parameters.
+        Convert expectation parameters to natural parameters.
         
-        Solves the optimization problem:
-            θ* = argmax_θ [θ·η - A(θ)]
+        Solves the convex optimization problem:
         
-        Equivalently solves: ∇A(θ*) = η
+        .. math::
+            \\theta^* = \\arg\\max_\\theta [\\theta \\cdot \\eta - \\psi(\\theta)]
+        
+        Equivalently solves the equation :math:`\\nabla\\psi(\\theta^*) = \\eta`.
         
         Uses multi-start optimization with L-BFGS-B. Starting points are
-        provided by _get_initial_natural_params (override in subclasses).
+        provided by ``_get_initial_natural_params`` (override in subclasses).
         
         Parameters
         ----------
         eta : ndarray
-            Expectation parameter vector.
+            Expectation parameter vector :math:`\\eta = E[t(X)]`.
         
         Returns
         -------
         theta : ndarray
-            Natural parameter vector.
+            Natural parameter vector :math:`\\theta`.
         """
         eta = np.asarray(eta)
         
@@ -732,21 +776,24 @@ class ExponentialFamily(Distribution):
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
-        Compute Fisher information matrix I(θ) = ∇²ψ(θ).
+        Compute Fisher information matrix: I(theta) = Hessian of psi(theta).
         
         The Fisher information equals:
-        - Hessian of log partition: ∇²ψ(θ)
-        - Covariance of sufficient statistics: Cov[t(X)]
         
-        It is always positive semi-definite.
+        .. math::
+            I(\\theta) = \\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)]
         
-        Default implementation uses scipy.differentiate.hessian.
-        Override for analytical Hessian when available (recommended).
+        It is the Hessian of the log partition function (always positive semi-definite
+        since :math:`\\psi` is convex), and equals the covariance matrix of the
+        sufficient statistics.
+        
+        Default implementation uses ``scipy.differentiate.hessian``.
+        Override for analytical Hessian when available (recommended for performance).
         
         Parameters
         ----------
         theta : ndarray, optional
-            Natural parameter vector. If None, uses current parameters.
+            Natural parameter vector :math:`\\theta`. If None, uses current parameters.
         
         Returns
         -------
@@ -797,7 +844,12 @@ class ExponentialFamily(Distribution):
     
     def logpdf(self, x: ArrayLike) -> Union[float, NDArray[np.floating]]:
         """
-        Log probability density: log p(x|θ) = log h(x) + θ^T t(x) - ψ(θ).
+        Log probability density using exponential family form.
+        
+        Computes:
+        
+        .. math::
+            \\log p(x|\\theta) = \\log h(x) + \\theta^T t(x) - \\psi(\\theta)
         
         Parameters
         ----------
@@ -862,10 +914,12 @@ class ExponentialFamily(Distribution):
         
         For exponential families, the MLE has a closed form in expectation parameters:
         
-            η̂ = (1/n) Σᵢ t(xᵢ)
+        .. math::
+            \\hat{\\eta} = \\frac{1}{n} \\sum_{i=1}^n t(x_i)
         
         That is, the MLE of expectation parameters equals the sample mean
-        of sufficient statistics. Then converts to natural parameters.
+        of sufficient statistics. Then converts to natural parameters using
+        ``_expectation_to_natural``.
         
         Parameters
         ----------
@@ -879,7 +933,7 @@ class ExponentialFamily(Distribution):
         Returns
         -------
         self : ExponentialFamily
-            Returns self for method chaining.
+            Returns self for method chaining (sklearn convention).
         
         Examples
         --------

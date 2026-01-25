@@ -71,6 +71,11 @@ class Exponential(ExponentialFamily):
         """η = ∇ψ(θ) = 1/|θ| = 1/λ"""
         return np.array([-1.0 / theta[0]])
     
+    # Override with analytical inverse for efficiency
+    def _expectation_to_natural(self, eta):
+        """θ = -1/η (inverse of natural_to_expectation)"""
+        return np.array([-1.0 / eta[0]])
+    
     # Override with analytical Hessian for efficiency
     def fisher_information(self, theta=None):
         """I(θ) = ∇²ψ(θ) = 1/θ²"""

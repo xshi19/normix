@@ -1,19 +1,29 @@
 """
 Gamma distribution as an exponential family.
 
-The gamma distribution has PDF:
-    p(x|α,β) = (β^α / Γ(α)) x^(α-1) exp(-βx) for x > 0
+The Gamma distribution has PDF:
+
+.. math::
+    p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} x^{\\alpha-1} e^{-\\beta x}
+
+for :math:`x > 0`, where :math:`\\alpha > 0` is the shape parameter and 
+:math:`\\beta > 0` is the rate parameter.
 
 Exponential family form:
-    - h(x) = 1 for x > 0, 0 otherwise
-    - t(x) = [log(x), x] (sufficient statistics)
-    - θ = [α-1, -β] (natural parameters)
-    - ψ(θ) = log Γ(θ₁+1) - (θ₁+1)log(-θ₂) (log partition function)
+
+- :math:`h(x) = 1` for :math:`x > 0` (base measure)
+- :math:`t(x) = [\\log x, x]` (sufficient statistics)
+- :math:`\\theta = [\\alpha - 1, -\\beta]` (natural parameters)
+- :math:`\\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)` (log partition)
 
 Parametrizations:
-    - Classical: α (shape), β (rate), α > 0, β > 0
-    - Natural: θ = [α-1, -β], θ₁ > -1, θ₂ < 0
-    - Expectation: η = [ψ(α) - log(β), α/β], where ψ is digamma function
+
+- Classical: :math:`\\alpha` (shape), :math:`\\beta` (rate), :math:`\\alpha > 0, \\beta > 0`
+- Natural: :math:`\\theta = [\\alpha - 1, -\\beta]`, :math:`\\theta_1 > -1, \\theta_2 < 0`
+- Expectation: :math:`\\eta = [\\psi(\\alpha) - \\log\\beta, \\alpha/\\beta]`, where 
+  :math:`\\psi` is the digamma function
+
+Note: scipy uses scale = 1/rate parametrization.
 """
 
 import numpy as np
@@ -28,12 +38,26 @@ class Gamma(ExponentialFamily):
     """
     Gamma distribution in exponential family form.
     
+    The Gamma distribution has PDF:
+    
+    .. math::
+        p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} 
+        x^{\\alpha-1} e^{-\\beta x}
+    
+    for :math:`x > 0`, where :math:`\\alpha` is the shape parameter 
+    and :math:`\\beta` is the rate parameter.
+    
     Parameters
     ----------
     shape : float, optional
-        Shape parameter α > 0. Use from_classical_params(shape=α, rate=β).
+        Shape parameter :math:`\\alpha > 0`. Use ``from_classical_params(shape=..., rate=...)``.
     rate : float, optional
-        Rate parameter β > 0. Use from_classical_params(shape=α, rate=β).
+        Rate parameter :math:`\\beta > 0`. Use ``from_classical_params(shape=..., rate=...)``.
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters :math:`\\theta = [\\alpha - 1, -\\beta]`.
     
     Examples
     --------
@@ -48,6 +72,31 @@ class Gamma(ExponentialFamily):
     >>> # Fit from data
     >>> data = np.random.gamma(shape=2.0, scale=1.0, size=1000)
     >>> dist = Gamma().fit(data)
+    
+    See Also
+    --------
+    InverseGamma : Inverse of Gamma distribution
+    GeneralizedInverseGaussian : Generalization including Gamma as special case
+    Exponential : Special case of Gamma with :math:`\\alpha = 1`
+    
+    Notes
+    -----
+    The Gamma distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [\\log x, x]`
+    - Natural parameters: :math:`\\theta = [\\alpha - 1, -\\beta]`
+    - Log partition: :math:`\\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)`
+    
+    The expectation parameters are:
+    
+    .. math::
+        \\eta = [\\psi(\\alpha) - \\log\\beta, \\alpha/\\beta]
+    
+    where :math:`\\psi` is the digamma function.
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
     def _get_natural_param_support(self):
@@ -74,9 +123,22 @@ class Gamma(ExponentialFamily):
     
     def _log_partition(self, theta: NDArray) -> float:
         """
-        Log partition function: ψ(θ) = log Γ(θ₁+1) - (θ₁+1)log(-θ₂).
+        Log partition function: psi(theta) = log Gamma(theta_1+1) - (theta_1+1)log(-theta_2).
         
-        This is the cumulant generating function.
+        .. math::
+            \\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)
+        
+        Its gradient gives expectation parameters: :math:`\\nabla\\psi(\\theta) = E[t(X)]`.
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector :math:`[\\theta_1, \\theta_2]`.
+        
+        Returns
+        -------
+        psi : float
+            Log partition function value.
         """
         alpha = theta[0] + 1  # α = θ₁ + 1
         beta = -theta[1]       # β = -θ₂
@@ -115,9 +177,25 @@ class Gamma(ExponentialFamily):
     
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
-        Analytical gradient: η = ∇ψ(θ) = [ψ(α) - log(β), α/β].
+        Analytical gradient: eta = grad psi(theta) = [digamma(alpha) - log(beta), alpha/beta].
         
-        where ψ is the digamma function and α = θ₁+1, β = -θ₂.
+        Computes the expectation parameters:
+        
+        .. math::
+            \\eta = \\nabla\\psi(\\theta) = [\\psi(\\alpha) - \\log\\beta, \\alpha/\\beta]
+        
+        where :math:`\\psi` is the digamma function and :math:`\\alpha = \\theta_1 + 1`, 
+        :math:`\\beta = -\\theta_2`.
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector :math:`[\\theta_1, \\theta_2]`.
+        
+        Returns
+        -------
+        eta : ndarray
+            Expectation parameter vector :math:`[E[\\log X], E[X]]`.
         """
         alpha = theta[0] + 1
         beta = -theta[1]
@@ -194,14 +272,26 @@ class Gamma(ExponentialFamily):
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
-        Analytical Fisher information: I(θ) = ∇²ψ(θ).
+        Analytical Fisher information: I(theta) = Hessian of psi(theta).
         
-        The Hessian is:
-        I₁₁ = ψ'(α) (trigamma function)
-        I₁₂ = I₂₁ = 1/β
-        I₂₂ = α/β²
+        The Fisher information matrix (Hessian of log partition) is:
         
-        where α = θ₁+1, β = -θ₂.
+        .. math::
+            I(\\theta) = \\begin{pmatrix} \\psi'(\\alpha) & 1/\\beta \\\\ 
+            1/\\beta & \\alpha/\\beta^2 \\end{pmatrix}
+        
+        where :math:`\\psi'` is the trigamma function, :math:`\\alpha = \\theta_1 + 1`,
+        and :math:`\\beta = -\\theta_2`.
+        
+        Parameters
+        ----------
+        theta : ndarray, optional
+            Natural parameter vector. If None, uses current parameters.
+        
+        Returns
+        -------
+        fisher : ndarray, shape (2, 2)
+            Fisher information matrix (positive definite).
         """
         if theta is None:
             theta = self.get_natural_params()
@@ -253,16 +343,32 @@ class Gamma(ExponentialFamily):
         # Generate using numpy's gamma (with scale = 1/rate)
         return rng.gamma(shape=shape, scale=1/rate, size=size)
     
-    def mean(self):
+    def mean(self) -> float:
         """
-        Mean of gamma distribution: E[X] = α/β.
+        Mean of Gamma distribution: E[X] = alpha/beta.
+        
+        .. math::
+            E[X] = \\frac{\\alpha}{\\beta}
+        
+        Returns
+        -------
+        mean : float
+            Mean of the distribution.
         """
         classical = self.get_classical_params()
         return classical['shape'] / classical['rate']
     
-    def var(self):
+    def var(self) -> float:
         """
-        Variance of gamma distribution: Var[X] = α/β².
+        Variance of Gamma distribution: Var[X] = alpha/beta^2.
+        
+        .. math::
+            \\text{Var}[X] = \\frac{\\alpha}{\\beta^2}
+        
+        Returns
+        -------
+        var : float
+            Variance of the distribution.
         """
         classical = self.get_classical_params()
         return classical['shape'] / (classical['rate']**2)

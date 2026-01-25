@@ -1,23 +1,30 @@
 """
-Inverse Gamma distribution.
+Inverse Gamma distribution as an exponential family.
 
-Belongs to the exponential family.
+The Inverse Gamma distribution has PDF:
 
-The inverse gamma distribution has PDF:
-    p(x|α,β) = (β^α / Γ(α)) x^(-α-1) exp(-β/x) for x > 0
+.. math::
+    p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} 
+    x^{-\\alpha-1} e^{-\\beta/x}
+
+for :math:`x > 0`, where :math:`\\alpha > 0` is the shape parameter 
+and :math:`\\beta > 0` is the rate parameter.
 
 Exponential family form:
-    - h(x) = 1/x² for x > 0, 0 otherwise
-    - t(x) = [-1/x, log(x)] (sufficient statistics)
-    - θ = [β, -(α+1)] (natural parameters)
-    - ψ(θ) = log Γ(-θ₂-1) - (-θ₂-1)log(θ₁) (log partition function)
+
+- :math:`h(x) = 1` for :math:`x > 0` (base measure)
+- :math:`t(x) = [-1/x, \\log x]` (sufficient statistics)
+- :math:`\\theta = [\\beta, -(\\alpha+1)]` (natural parameters)
+- :math:`\\psi(\\theta) = \\log\\Gamma(-\\theta_2-1) - (-\\theta_2-1)\\log(\\theta_1)` (log partition)
 
 Parametrizations:
-    - Classical: α (shape), β (rate), α > 0, β > 0
-    - Natural: θ = [β, -(α+1)], θ₁ > 0, θ₂ < -1
-    - Expectation: η = [-α/β, log(β) - ψ(α)], where ψ is digamma function
 
-Note: We use rate β (like gamma), while scipy uses scale = β
+- Classical: :math:`\\alpha` (shape), :math:`\\beta` (rate), :math:`\\alpha > 0, \\beta > 0`
+- Natural: :math:`\\theta = [\\beta, -(\\alpha+1)]`, :math:`\\theta_1 > 0, \\theta_2 < -1`
+- Expectation: :math:`\\eta = [-\\alpha/\\beta, \\log\\beta - \\psi(\\alpha)]`, where 
+  :math:`\\psi` is the digamma function
+
+Note: We use rate :math:`\\beta` (like Gamma), while scipy uses scale = :math:`\\beta`.
 """
 
 import numpy as np
@@ -32,12 +39,28 @@ class InverseGamma(ExponentialFamily):
     """
     Inverse Gamma distribution in exponential family form.
     
+    The Inverse Gamma distribution has PDF:
+    
+    .. math::
+        p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} 
+        x^{-\\alpha-1} e^{-\\beta/x}
+    
+    for :math:`x > 0`, where :math:`\\alpha` is the shape parameter
+    and :math:`\\beta` is the rate parameter.
+    
+    If :math:`X \\sim \\text{Gamma}(\\alpha, \\beta)`, then :math:`1/X \\sim \\text{InvGamma}(\\alpha, \\beta)`.
+    
     Parameters
     ----------
     shape : float, optional
-        Shape parameter α > 0. Use from_classical_params(shape=α, rate=β).
+        Shape parameter :math:`\\alpha > 0`. Use ``from_classical_params(shape=..., rate=...)``.
     rate : float, optional
-        Rate parameter β > 0. Use from_classical_params(shape=α, rate=β).
+        Rate parameter :math:`\\beta > 0`. Use ``from_classical_params(shape=..., rate=...)``.
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters :math:`\\theta = [\\beta, -(\\alpha+1)]`.
     
     Examples
     --------
@@ -50,8 +73,36 @@ class InverseGamma(ExponentialFamily):
     >>> dist = InverseGamma.from_natural_params(np.array([1.5, -4.0]))
     
     >>> # Fit from data
-    >>> data = scipy.stats.invgamma.rvs(a=3.0, scale=1.5, size=1000)
+    >>> from scipy.stats import invgamma
+    >>> data = invgamma.rvs(a=3.0, scale=1.5, size=1000)
     >>> dist = InverseGamma().fit(data)
+    
+    See Also
+    --------
+    Gamma : Inverse of InverseGamma distribution
+    GeneralizedInverseGaussian : Generalization including InverseGamma as special case
+    
+    Notes
+    -----
+    The Inverse Gamma distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [-1/x, \\log x]`
+    - Natural parameters: :math:`\\theta = [\\beta, -(\\alpha+1)]`
+    - Log partition: :math:`\\psi(\\theta) = \\log\\Gamma(-\\theta_2-1) - (-\\theta_2-1)\\log(\\theta_1)`
+    
+    The mean exists only for :math:`\\alpha > 1`:
+    
+    .. math::
+        E[X] = \\frac{\\beta}{\\alpha - 1}
+    
+    The variance exists only for :math:`\\alpha > 2`:
+    
+    .. math::
+        \\text{Var}[X] = \\frac{\\beta^2}{(\\alpha-1)^2(\\alpha-2)}
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
     def _get_natural_param_support(self):
@@ -79,9 +130,22 @@ class InverseGamma(ExponentialFamily):
     
     def _log_partition(self, theta: NDArray) -> float:
         """
-        Log partition function: ψ(θ) = log Γ(-θ₂-1) - (-θ₂-1)log(θ₁).
+        Log partition function: psi(theta) = log Gamma(-theta_2-1) - (-theta_2-1)log(theta_1).
         
-        This is the cumulant generating function.
+        .. math::
+            \\psi(\\theta) = \\log\\Gamma(-\\theta_2-1) - (-\\theta_2-1)\\log(\\theta_1)
+        
+        Its gradient gives expectation parameters: :math:`\\nabla\\psi(\\theta) = E[t(X)]`.
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector :math:`[\\theta_1, \\theta_2]`.
+        
+        Returns
+        -------
+        psi : float
+            Log partition function value.
         """
         beta = theta[0]   # β = θ₁
         alpha = -theta[1] - 1  # α = -θ₂ - 1
@@ -251,9 +315,19 @@ class InverseGamma(ExponentialFamily):
         from scipy.stats import invgamma
         return invgamma.rvs(a=shape, scale=rate, size=size, random_state=rng)
     
-    def mean(self):
+    def mean(self) -> float:
         """
-        Mean of inverse gamma distribution: E[X] = β/(α-1) for α > 1.
+        Mean of Inverse Gamma distribution: E[X] = beta/(alpha-1) for alpha > 1.
+        
+        .. math::
+            E[X] = \\frac{\\beta}{\\alpha - 1} \\quad \\text{for } \\alpha > 1
+        
+        Returns infinity if :math:`\\alpha \\leq 1`.
+        
+        Returns
+        -------
+        mean : float
+            Mean of the distribution, or infinity if undefined.
         """
         classical = self.get_classical_params()
         shape = classical['shape']
@@ -264,9 +338,19 @@ class InverseGamma(ExponentialFamily):
         
         return rate / (shape - 1)
     
-    def var(self):
+    def var(self) -> float:
         """
-        Variance of inverse gamma distribution: Var[X] = β²/((α-1)²(α-2)) for α > 2.
+        Variance of Inverse Gamma distribution for alpha > 2.
+        
+        .. math::
+            \\text{Var}[X] = \\frac{\\beta^2}{(\\alpha-1)^2(\\alpha-2)} \\quad \\text{for } \\alpha > 2
+        
+        Returns infinity if :math:`\\alpha \\leq 2`.
+        
+        Returns
+        -------
+        var : float
+            Variance of the distribution, or infinity if undefined.
         """
         classical = self.get_classical_params()
         shape = classical['shape']

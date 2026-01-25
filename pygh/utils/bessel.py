@@ -3,6 +3,16 @@ Bessel function utilities for numerical stability.
 
 This module provides numerically stable implementations of log Bessel functions
 that are essential for the Generalized Inverse Gaussian distribution.
+
+The modified Bessel function of the second kind :math:`K_\\nu(z)` appears in the
+normalizing constant of the GIG distribution:
+
+.. math::
+    f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} 
+    \\exp\\left(-\\frac{ax + b/x}{2}\\right)
+
+For numerical stability, we work with :math:`\\log K_\\nu(z)` instead of 
+:math:`K_\\nu(z)` directly.
 """
 
 import numpy as np
@@ -13,33 +23,38 @@ from scipy.special import gammaln, kve
 
 def log_kv(v: float, z: Union[float, NDArray]) -> Union[float, NDArray]:
     """
-    Log modified Bessel function of the second kind: log(K_v(z)).
+    Log modified Bessel function of the second kind: log K_v(z).
     
-    This is an optimized version where v is a scalar and z can be vectorized.
-    For the fully vectorized version (both v and z arrays), use log_kv_vectorized.
+    Computes :math:`\\log K_\\nu(z)` in a numerically stable way.
     
-    Uses the exponentially scaled function kve(v, z) = K_v(z) * exp(z) for
-    numerical stability when z is large:
-        log(K_v(z)) = log(kve(v, z)) - z
+    This is an optimized version where :math:`\\nu` is a scalar and :math:`z` 
+    can be vectorized. For the fully vectorized version (both :math:`\\nu` and 
+    :math:`z` arrays), use :func:`log_kv_vectorized`.
     
-    When result is inf (kv underflows for small z), uses asymptotic approximations:
-        - If |v| > ε: log(K_v(z)) ≈ gammaln(|v|) - log(2) + |v|(log(2) - log(z))
-        - If |v| ≈ 0: log(K_0(z)) ≈ log(-log(z/2) - γ) where γ = np.euler_gamma
+    Uses the exponentially scaled function :math:`K_\\nu^e(z) = K_\\nu(z) e^z` for
+    numerical stability when :math:`z` is large:
     
-    The underflow threshold depends on v, so we check the result directly
-    rather than using a fixed z threshold.
+    .. math::
+        \\log K_\\nu(z) = \\log K_\\nu^e(z) - z
+    
+    When the result is inf (underflow for small :math:`z`), uses asymptotic approximations:
+    
+    - If :math:`|\\nu| > \\varepsilon`: 
+      :math:`\\log K_\\nu(z) \\approx \\log\\Gamma(|\\nu|) - \\log 2 + |\\nu|(\\log 2 - \\log z)`
+    - If :math:`|\\nu| \\approx 0`: 
+      :math:`\\log K_0(z) \\approx \\log(-\\log(z/2) - \\gamma)` where :math:`\\gamma` is Euler's constant
     
     Parameters
     ----------
     v : float
-        Order of Bessel function (scalar).
+        Order of Bessel function :math:`\\nu` (scalar).
     z : float or ndarray
         Argument (must be > 0), can be vectorized.
     
     Returns
     -------
     log_kv : float or ndarray
-        Log of the modified Bessel function of the second kind.
+        :math:`\\log K_\\nu(z)`.
     
     Examples
     --------

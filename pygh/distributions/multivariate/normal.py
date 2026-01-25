@@ -1,22 +1,31 @@
 """
 Multivariate Normal distribution as an exponential family.
 
-The multivariate normal distribution has PDF:
-    p(x|μ,Σ) = (2π)^{-d/2} |Σ|^{-1/2} exp(-1/2 (x-μ)^T Σ^{-1} (x-μ))
+The multivariate Normal distribution has PDF:
+
+.. math::
+    p(x|\\mu,\\Sigma) = (2\\pi)^{-d/2} |\\Sigma|^{-1/2} 
+    \\exp\\left(-\\frac{1}{2} (x-\\mu)^T \\Sigma^{-1} (x-\\mu)\\right)
+
+for :math:`x \\in \\mathbb{R}^d`, where :math:`\\mu` is the mean vector
+and :math:`\\Sigma` is the covariance matrix.
 
 Exponential family form:
-    - h(x) = (2π)^{-d/2}
-    - t(x) = [x, vec(xx^T)] (sufficient statistics)
-    - θ = [Λμ, -1/2 vec(Λ)] where Λ = Σ^{-1} (natural parameters)
-    - ψ(θ) = 1/2 μ^T Λ μ - 1/2 log|Λ| + d/2 log(2π) (log partition function)
+
+- :math:`h(x) = 1` (base measure, with :math:`(2\\pi)^{-d/2}` absorbed into :math:`\\psi`)
+- :math:`t(x) = [x, \\text{vec}(xx^T)]` (sufficient statistics)
+- :math:`\\theta = [\\Lambda\\mu, -\\frac{1}{2}\\text{vec}(\\Lambda)]` where :math:`\\Lambda = \\Sigma^{-1}`
+- :math:`\\psi(\\theta) = \\frac{1}{2}\\mu^T\\Lambda\\mu - \\frac{1}{2}\\log|\\Lambda| + \\frac{d}{2}\\log(2\\pi)`
 
 Parametrizations:
-    - Classical: μ (mean, d-vector), Σ (covariance, d×d positive definite)
-    - Natural: θ = [η, vec(Λ_half)] where η = Λμ, Λ_half = -1/2 Λ
-    - Expectation: η = [E[X], E[XX^T]] = [μ, Σ + μμ^T]
+
+- Classical: :math:`\\mu` (mean, d-vector), :math:`\\Sigma` (covariance, d×d positive definite)
+- Natural: :math:`\\theta = [\\eta, \\text{vec}(\\Lambda_{half})]` where 
+  :math:`\\eta = \\Lambda\\mu`, :math:`\\Lambda_{half} = -\\frac{1}{2}\\Lambda`
+- Expectation: :math:`\\eta = [E[X], E[XX^T]] = [\\mu, \\Sigma + \\mu\\mu^T]`
 
 Supports both univariate (d=1) and multivariate (d>1) cases.
-For d=1: μ is scalar, Σ is scalar (variance σ²)
+For d=1: :math:`\\mu` is scalar, :math:`\\Sigma` is scalar (variance :math:`\\sigma^2`).
 """
 
 import numpy as np
@@ -31,12 +40,25 @@ class MultivariateNormal(ExponentialFamily):
     """
     Multivariate Normal distribution in exponential family form.
     
+    The Multivariate Normal distribution has PDF:
+    
+    .. math::
+        p(x|\\mu,\\Sigma) = (2\\pi)^{-d/2} |\\Sigma|^{-1/2} 
+        \\exp\\left(-\\frac{1}{2} (x-\\mu)^T \\Sigma^{-1} (x-\\mu)\\right)
+    
     Supports both univariate (d=1) and multivariate (d>1) cases.
     
     Parameters
     ----------
     d : int, optional
         Dimension of the distribution. Inferred from parameters if not provided.
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters.
+    _d : int or None
+        Dimension of the distribution.
     
     Examples
     --------
@@ -55,6 +77,20 @@ class MultivariateNormal(ExponentialFamily):
     >>> # Fit from data
     >>> data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], size=1000)
     >>> dist = MultivariateNormal(d=2).fit(data)
+    
+    Notes
+    -----
+    The Multivariate Normal distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [x, \\text{vec}(xx^T)]`
+    - Natural parameters: :math:`\\theta = [\\Lambda\\mu, -\\frac{1}{2}\\text{vec}(\\Lambda)]`
+    - Log partition: :math:`\\psi(\\theta) = \\frac{1}{2}\\eta^T\\Sigma\\eta - \\frac{1}{2}\\log|\\Lambda| + \\frac{d}{2}\\log(2\\pi)`
+    
+    where :math:`\\Lambda = \\Sigma^{-1}` is the precision matrix.
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
     def __init__(self, d: Optional[int] = None):

@@ -1,48 +1,49 @@
 """
 Generalized Inverse Gaussian (GIG) distribution.
 
-The GIG distribution belongs to the exponential family with:
+The GIG distribution belongs to the exponential family and serves as a
+unifying framework for many important distributions.
 
-Classical parameters: (p, a, b) following Wikipedia parameterization
-    f(x|p,a,b) = (a/b)^(p/2) / (2 K_p(√(ab))) · x^(p-1) exp(-(ax + b/x)/2)
+The GIG distribution has PDF (Wikipedia parameterization):
 
-where:
-    - p: real-valued shape parameter
-    - a > 0: rate parameter (coefficient of x)
-    - b > 0: rate parameter (coefficient of 1/x)
-    - K_p is the modified Bessel function of the second kind
+.. math::
+    f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} 
+    \\exp\\left(-\\frac{ax + b/x}{2}\\right)
 
-Reference: https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
+for :math:`x > 0`, where:
 
-Exponential family form: p(x|θ) = h(x) exp(θᵀt(x) - A(θ))
-    - h(x) = 1 for x > 0
-    - t(x) = [log(x), 1/x, x] (sufficient statistics)
-    - θ = [p-1, -b/2, -a/2] (natural parameters)
-    - A(θ) = log(2) + log(K_p(√(ab))) + (p/2)log(b/a) (log partition function)
+- :math:`p`: real-valued shape parameter (any real number)
+- :math:`a > 0`: rate parameter (coefficient of :math:`x`)
+- :math:`b > 0`: rate parameter (coefficient of :math:`1/x`)
+- :math:`K_p` is the modified Bessel function of the second kind
 
-Natural parameters: θ = (θ₁, θ₂, θ₃)
-    θ₁ = p - 1      (unbounded)
-    θ₂ = -b/2       (< 0)
-    θ₃ = -a/2       (< 0)
+Exponential family form:
 
-Scipy geninvgauss parametrization:
-    scipy uses (p, b, scale) where the PDF is:
-        f(x|p,b,scale) ∝ (x/scale)^{p-1} exp(-b((x/scale) + scale/x)/2)
-    
-    Conversion from our (p, a, b) to scipy (p, b_scipy, scale):
-        p_scipy = p
-        b_scipy = √(ab)
-        scale = √(b/a)
-    
-    Conversion from scipy (p, b_scipy, scale) to our (p, a, b):
-        p = p_scipy
-        a = b_scipy / scale
-        b = b_scipy * scale
+- :math:`h(x) = 1` for :math:`x > 0` (base measure)
+- :math:`t(x) = [\\log x, 1/x, x]` (sufficient statistics)
+- :math:`\\theta = [p-1, -b/2, -a/2]` (natural parameters)
+- :math:`\\psi(\\theta) = \\log(2) + \\log K_p(\\sqrt{ab}) + \\frac{p}{2}\\log(b/a)` (log partition)
 
-Special cases (used for initialization):
-    - Gamma: b → 0, then GIG → Gamma(p, a/2) for p > 0
-    - Inverse Gamma: a → 0, then GIG → InvGamma(-p, b/2) for p < 0
-    - Inverse Gaussian: p = -1/2
+Natural parameters: :math:`\\theta = (\\theta_1, \\theta_2, \\theta_3)`:
+
+- :math:`\\theta_1 = p - 1` (unbounded)
+- :math:`\\theta_2 = -b/2 < 0`
+- :math:`\\theta_3 = -a/2 < 0`
+
+Scipy parametrization (``scipy.stats.geninvgauss``):
+
+- scipy uses :math:`(p, b_{scipy}, \\text{scale})` where 
+  :math:`b_{scipy} = \\sqrt{ab}` and :math:`\\text{scale} = \\sqrt{b/a}`
+
+Special cases:
+
+- **Gamma**: :math:`b \\to 0` gives :math:`\\text{Gamma}(p, a/2)` for :math:`p > 0`
+- **Inverse Gamma**: :math:`a \\to 0` gives :math:`\\text{InvGamma}(-p, b/2)` for :math:`p < 0`
+- **Inverse Gaussian**: :math:`p = -1/2`
+
+References
+----------
+.. [1] https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
 """
 
 import numpy as np
@@ -60,18 +61,27 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     Generalized Inverse Gaussian (GIG) distribution in exponential family form.
     
     The GIG distribution has PDF (Wikipedia parameterization):
-        f(x|p,a,b) = (a/b)^(p/2) / (2 K_p(√(ab))) · x^(p-1) exp(-(ax + b/x)/2)
     
-    for x > 0, where K_p is the modified Bessel function of the second kind.
+    .. math::
+        f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} 
+        \\exp\\left(-\\frac{ax + b/x}{2}\\right)
+    
+    for :math:`x > 0`, where :math:`K_p` is the modified Bessel function 
+    of the second kind.
     
     Parameters
     ----------
-    p : float
-        Shape parameter (any real number).
-    a : float
-        Rate parameter a > 0 (coefficient of x in exponent).
-    b : float
-        Rate parameter b > 0 (coefficient of 1/x in exponent).
+    p : float, optional
+        Shape parameter (any real number). Use ``from_classical_params(p=..., a=..., b=...)``.
+    a : float, optional
+        Rate parameter :math:`a > 0` (coefficient of :math:`x`).
+    b : float, optional
+        Rate parameter :math:`b > 0` (coefficient of :math:`1/x`).
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters :math:`\\theta = [p-1, -b/2, -a/2]`.
     
     Examples
     --------
@@ -87,15 +97,36 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     >>> data = geninvgauss.rvs(p=1.0, b=1.0, size=1000)
     >>> dist = GeneralizedInverseGaussian().fit(data)
     
-    Special Cases
-    -------------
-    - Gamma: b → 0 gives Gamma(p, a/2) for p > 0
-    - Inverse Gamma: a → 0 gives InvGamma(-p, b/2) for p < 0
-    - Inverse Gaussian: p = -1/2
+    See Also
+    --------
+    Gamma : Special case when :math:`b \\to 0` for :math:`p > 0`
+    InverseGamma : Special case when :math:`a \\to 0` for :math:`p < 0`
+    InverseGaussian : Special case when :math:`p = -1/2`
+    
+    Notes
+    -----
+    The GIG distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [\\log x, 1/x, x]`
+    - Natural parameters: :math:`\\theta = [p-1, -b/2, -a/2]`
+    - Log partition: :math:`\\psi(\\theta) = \\log(2) + \\log K_p(\\sqrt{ab}) + \\frac{p}{2}\\log(b/a)`
+    
+    Moments are given by:
+    
+    .. math::
+        E[X^\\alpha] = \\left(\\frac{b}{a}\\right)^{\\alpha/2} 
+        \\frac{K_{p+\\alpha}(\\sqrt{ab})}{K_p(\\sqrt{ab})}
+    
+    Special cases:
+    
+    - :math:`b \\to 0, p > 0`: :math:`\\text{GIG} \\to \\text{Gamma}(p, a/2)`
+    - :math:`a \\to 0, p < 0`: :math:`\\text{GIG} \\to \\text{InvGamma}(-p, b/2)`
+    - :math:`p = -1/2`: :math:`\\text{GIG} \\to \\text{InverseGaussian}`
     
     References
     ----------
-    https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+    .. [2] https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
     """
     
     def _get_natural_param_support(self):
@@ -396,13 +427,31 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     
     def mean(self) -> float:
         """
-        Mean of GIG distribution: E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab)).
+        Mean of GIG distribution using Bessel function ratio.
+        
+        .. math::
+            E[X] = \\sqrt{\\frac{b}{a}} \\frac{K_{p+1}(\\sqrt{ab})}{K_p(\\sqrt{ab})}
+        
+        Returns
+        -------
+        mean : float
+            Mean of the distribution.
         """
         return self.moment_alpha(1.0)
     
     def var(self) -> float:
         """
-        Variance of GIG distribution: Var[X] = E[X²] - E[X]².
+        Variance of GIG distribution: Var[X] = E[X^2] - E[X]^2.
+        
+        .. math::
+            \\text{Var}[X] = E[X^2] - (E[X])^2
+        
+        Uses the moment formula :math:`E[X^\\alpha] = (b/a)^{\\alpha/2} K_{p+\\alpha}(\\sqrt{ab})/K_p(\\sqrt{ab})`.
+        
+        Returns
+        -------
+        var : float
+            Variance of the distribution.
         """
         return self.moment_alpha(2.0) - self.moment_alpha(1.0) ** 2
     
