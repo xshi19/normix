@@ -7,6 +7,11 @@ API Reference
 Base Classes
 ------------
 
+.. automodule:: pygh.base.distribution
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: pygh.base.exponential_family
    :members:
    :undoc-members:
@@ -18,19 +23,9 @@ Base Classes
    :show-inheritance:
 
 Univariate Distributions
--------------------------
+------------------------
 
-.. automodule:: pygh.distributions.univariate.generalized_inverse_gaussian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: pygh.distributions.univariate.inverse_gaussian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: pygh.distributions.univariate.inverse_gamma
+.. automodule:: pygh.distributions.univariate.exponential
    :members:
    :undoc-members:
    :show-inheritance:
@@ -40,8 +35,23 @@ Univariate Distributions
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: pygh.distributions.univariate.inverse_gamma
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pygh.distributions.univariate.inverse_gaussian
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pygh.distributions.univariate.generalized_inverse_gaussian
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Multivariate Distributions
----------------------------
+--------------------------
 
 .. automodule:: pygh.distributions.multivariate.normal
    :members:
@@ -51,12 +61,7 @@ Multivariate Distributions
 Mixture Distributions
 ---------------------
 
-.. automodule:: pygh.distributions.mixtures.generalized_hyperbolic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: pygh.distributions.mixtures.normal_inverse_gaussian
+.. automodule:: pygh.distributions.mixtures.variance_gamma
    :members:
    :undoc-members:
    :show-inheritance:
@@ -66,8 +71,20 @@ Mixture Distributions
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.mixtures.variance_gamma
+.. automodule:: pygh.distributions.mixtures.normal_inverse_gaussian
    :members:
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: pygh.distributions.mixtures.generalized_hyperbolic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Utilities
+---------
+
+.. automodule:: pygh.utils.bessel
+   :members:
+   :undoc-members:
+   :show-inheritance:

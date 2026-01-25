@@ -100,8 +100,8 @@ class ExponentialFamily(Distribution):
     
     References
     ----------
-    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families
-           in statistical theory.
+    Barndorff-Nielsen, O. E. (1978). Information and exponential families
+    in statistical theory.
     """
     
     def __init__(self):
@@ -797,7 +797,7 @@ class ExponentialFamily(Distribution):
         
         Returns
         -------
-        fisher : ndarray, shape (d, d)
+        fisher : ndarray, shape ``(d, d)``
             Fisher information matrix (positive semi-definite).
         
         Examples

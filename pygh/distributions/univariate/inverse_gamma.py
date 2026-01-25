@@ -102,7 +102,7 @@ class InverseGamma(ExponentialFamily):
     
     References
     ----------
-    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+    Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
     def _get_natural_param_support(self):

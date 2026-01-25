@@ -43,7 +43,7 @@ Special cases:
 
 References
 ----------
-.. [1] https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
+https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
 """
 
 import numpy as np
@@ -125,8 +125,9 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     
     References
     ----------
-    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
-    .. [2] https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
+    Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+
+    https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
     """
     
     def _get_natural_param_support(self):

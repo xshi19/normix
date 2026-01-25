@@ -1,14 +1,1186 @@
 """
-Base class for mixture distributions and normal mixture distributions.
+Base classes for normal mixture distributions.
 
-These distributions have the form:
-    f(x) = ∫ f(x|y) f(y) dy
+Normal mixture distributions have the form:
 
-where:
-    - x|y ~ N(μ + Γy, Σy) (conditional normal)
-    - y ~ Mixing distribution (GIG, IG, Gamma, etc.)
+.. math::
+    X \\stackrel{d}{=} \\mu + \\gamma Y + \\sqrt{Y} Z
 
-This representation makes them belong to the exponential family,
-with the joint distribution f(x, y) also in exponential family.
+where :math:`Z \\sim N(0, \\Sigma)` is a Gaussian random vector independent of
+:math:`Y`, and :math:`Y` follows some positive mixing distribution (GIG, Gamma,
+Inverse Gaussian, etc.).
+
+This module provides two abstract base classes:
+
+1. **JointNormalMixture**: The joint distribution :math:`f(x, y)` which IS an
+   exponential family. This class extends :class:`ExponentialFamily`.
+
+2. **NormalMixture**: The marginal distribution :math:`f(x) = \\int f(x, y) dy`
+   which is NOT an exponential family. This class extends :class:`Distribution`
+   and owns a :class:`JointNormalMixture` instance accessible via the ``.joint``
+   property.
+
+The key insight is that while the marginal distribution of :math:`X` (with
+:math:`Y` integrated out) does not belong to the exponential family, the
+joint distribution :math:`(X, Y)` does belong to the exponential family
+when both variables are observed.
+
+Method naming convention:
+
+- ``pdf(x)``: Marginal PDF :math:`f(x)` (on NormalMixture)
+- ``joint.pdf(x, y)``: Joint PDF :math:`f(x, y)` (via .joint property)
+- ``pdf_joint(x, y)``: Convenience alias for ``joint.pdf(x, y)``
+- ``rvs(size)``: Sample from marginal (returns X only)
+- ``rvs_joint(size)``: Sample from joint (returns X, Y tuple)
 """
 
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+import numpy as np
+from numpy.typing import ArrayLike, NDArray
+
+from .distribution import Distribution
+from .exponential_family import ExponentialFamily
+
+
+# ============================================================================
+# JointNormalMixture: Base class for joint distributions f(x, y)
+# ============================================================================
+
+class JointNormalMixture(ExponentialFamily, ABC):
+    """
+    Abstract base class for joint normal mixture distributions :math:`f(x, y)`.
+
+    The joint distribution of :math:`(X, Y)` where:
+
+    .. math::
+        X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)
+
+        Y \\sim \\text{Mixing distribution}
+
+    This joint distribution belongs to the exponential family with sufficient
+    statistics:
+
+    .. math::
+        t(x, y) = \\begin{pmatrix} \\log y \\\\ y^{-1} \\\\ y \\\\ x \\\\ x y^{-1} \\\\ x x^T y^{-1} \\end{pmatrix}
+
+    The natural parameters are derived from the classical parameters
+    :math:`(\\mu, \\gamma, \\Sigma, \\text{mixing params})`.
+
+    Subclasses must implement:
+
+    - :meth:`_get_mixing_distribution_class`: Return the mixing distribution class
+    - :meth:`_mixing_natural_params`: Extract mixing distribution natural params
+    - :meth:`_mixing_sufficient_statistics`: Compute mixing dist sufficient stats
+    - :meth:`_mixing_log_partition`: Compute mixing distribution log partition
+    - :meth:`_classical_to_natural`: Convert classical to natural parameters
+    - :meth:`_natural_to_classical`: Convert natural to classical parameters
+
+    Attributes
+    ----------
+    _d : int or None
+        Dimension of the observed variable :math:`X`.
+    _natural_params : tuple or None
+        Internal storage for natural parameters.
+
+    See Also
+    --------
+    NormalMixture : Marginal distribution (owns a JointNormalMixture)
+    ExponentialFamily : Parent class providing exponential family methods
+    """
+
+    def __init__(self, d: Optional[int] = None):
+        """
+        Initialize a joint normal mixture distribution.
+
+        Parameters
+        ----------
+        d : int, optional
+            Dimension of the observed variable X. Can be inferred from parameters.
+        """
+        super().__init__()
+        self._d = d
+
+    @property
+    def d(self) -> int:
+        """Dimension of the observed variable X."""
+        if self._d is None:
+            raise ValueError("Dimension not set. Use from_*_params() first.")
+        return self._d
+
+    # ========================================================================
+    # Abstract methods for mixing distribution
+    # ========================================================================
+
+    @classmethod
+    @abstractmethod
+    def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
+        """
+        Return the class of the mixing distribution.
+
+        Returns
+        -------
+        cls : Type[ExponentialFamily]
+            The mixing distribution class (e.g., Gamma, InverseGaussian, GIG).
+        """
+        pass
+
+    @abstractmethod
+    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
+        """
+        Extract mixing distribution natural parameters from joint natural params.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Full natural parameter vector for the joint distribution.
+
+        Returns
+        -------
+        theta_y : ndarray
+            Natural parameters for the mixing distribution of Y.
+        """
+        pass
+
+    @abstractmethod
+    def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
+        """
+        Extract normal distribution parameters from joint natural params.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Full natural parameter vector for the joint distribution.
+
+        Returns
+        -------
+        mu : ndarray
+            Location parameter, shape (d,).
+        gamma : ndarray
+            Skewness parameter, shape (d,).
+        Sigma : ndarray
+            Covariance scale matrix, shape (d, d).
+        """
+        pass
+
+    # ========================================================================
+    # Exponential family components
+    # ========================================================================
+
+    def _sufficient_statistics(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Compute sufficient statistics :math:`t(x, y)`.
+
+        The sufficient statistics for the joint normal mixture are:
+
+        .. math::
+            t(x, y) = [\\log y, y^{-1}, y, x, x y^{-1}, \\text{vec}(x x^T y^{-1})]
+
+        Parameters
+        ----------
+        x : array_like
+            Observed values of X. Shape (d,) or (n, d).
+        y : array_like
+            Observed values of Y. Shape () or (n,).
+
+        Returns
+        -------
+        t : ndarray
+            Sufficient statistics. For single observation: shape (3 + 2d + d²,).
+            For n observations: shape (n, 3 + 2d + d²).
+        """
+        x = np.asarray(x)
+        y = np.asarray(y)
+        d = self.d
+
+        # Handle single observation
+        if y.ndim == 0 or (y.ndim == 1 and len(y) == 1):
+            y_scalar = float(y) if y.ndim == 0 else float(y[0])
+            if x.ndim == 1:
+                x = x.reshape(-1)
+            elif x.ndim == 2 and x.shape[0] == 1:
+                x = x[0]
+
+            if len(x) != d:
+                raise ValueError(f"Expected x of dimension {d}, got {len(x)}")
+
+            inv_y = 1.0 / y_scalar
+            x_inv_y = x * inv_y
+            xxT_inv_y = np.outer(x, x) * inv_y
+
+            # Stack: [log(y), 1/y, y, x, x/y, vec(xxT/y)]
+            return np.concatenate([
+                [np.log(y_scalar), inv_y, y_scalar],
+                x,
+                x_inv_y,
+                xxT_inv_y.flatten()
+            ])
+
+        # Handle multiple observations
+        n = len(y)
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
+        if x.shape[0] != n:
+            raise ValueError(f"x has {x.shape[0]} samples but y has {n}")
+        if x.shape[1] != d:
+            raise ValueError(f"Expected x of dimension {d}, got {x.shape[1]}")
+
+        # Vectorized computation of all statistics
+        inv_y = 1.0 / y  # (n,)
+        x_inv_y = x / y[:, np.newaxis]  # (n, d)
+
+        # Compute xx^T / y for all samples: (n, d, d) -> (n, d*d)
+        # xxT_inv_y[i] = outer(x[i], x[i]) / y[i]
+        xxT_inv_y = np.einsum('ni,nj->nij', x, x) / y[:, np.newaxis, np.newaxis]
+        xxT_inv_y_flat = xxT_inv_y.reshape(n, d * d)  # (n, d*d)
+
+        # Stack all statistics: [log(y), 1/y, y, x, x/y, vec(xxT/y)]
+        t = np.column_stack([
+            np.log(y),      # (n,)
+            inv_y,          # (n,)
+            y,              # (n,)
+            x,              # (n, d)
+            x_inv_y,        # (n, d)
+            xxT_inv_y_flat  # (n, d*d)
+        ])
+
+        return t
+
+    def _log_base_measure(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Log base measure: :math:`\\log h(x, y) = -\\frac{d}{2} \\log(2\\pi)` for :math:`y > 0`.
+
+        Parameters
+        ----------
+        x : array_like
+            Observed values of X.
+        y : array_like
+            Observed values of Y.
+
+        Returns
+        -------
+        log_h : ndarray
+            Log base measure value(s). Returns -inf for y <= 0.
+        """
+        x = np.asarray(x)
+        y = np.asarray(y)
+        d = self.d
+
+        log_h_const = -0.5 * d * np.log(2 * np.pi)
+
+        if y.ndim == 0:
+            return log_h_const if y > 0 else -np.inf
+
+        result = np.full_like(y, log_h_const, dtype=float)
+        result[y <= 0] = -np.inf
+        return result
+
+    # ========================================================================
+    # PDF and log PDF (override for joint distribution signature)
+    # ========================================================================
+
+    def pdf(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Joint probability density function :math:`f(x, y)`.
+
+        Parameters
+        ----------
+        x : array_like
+            Observed values of X. Shape (d,) or (n, d).
+        y : array_like
+            Observed values of Y. Shape () or (n,).
+
+        Returns
+        -------
+        pdf : ndarray
+            Joint density values.
+        """
+        return np.exp(self.logpdf(x, y))
+
+    def logpdf(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Log joint probability density function :math:`\\log f(x, y)`.
+
+        .. math::
+            \\log f(x, y) = \\log h(x, y) + \\theta^T t(x, y) - \\psi(\\theta)
+
+        Parameters
+        ----------
+        x : array_like
+            Observed values of X. Shape (d,) or (n, d).
+        y : array_like
+            Observed values of Y. Shape () or (n,).
+
+        Returns
+        -------
+        logpdf : ndarray
+            Log joint density values.
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        theta = self.get_natural_params()
+        t_xy = self._sufficient_statistics(x, y)
+        log_h = self._log_base_measure(x, y)
+        psi = self._log_partition(theta)
+
+        # Handle single vs multiple observations
+        if t_xy.ndim == 1:
+            return float(log_h + np.dot(theta, t_xy) - psi)
+        else:
+            return log_h + t_xy @ theta - psi
+
+    # ========================================================================
+    # Random sampling
+    # ========================================================================
+
+    def rvs(
+        self,
+        size: Optional[Union[int, Tuple[int, ...]]] = None,
+        random_state: Optional[Union[int, np.random.Generator]] = None
+    ) -> Tuple[NDArray, NDArray]:
+        """
+        Generate random samples from the joint distribution.
+
+        Samples :math:`(X, Y)` pairs where:
+
+        1. :math:`Y \\sim` mixing distribution
+        2. :math:`X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)`
+
+        Parameters
+        ----------
+        size : int or tuple of ints, optional
+            Number of samples to generate. If None, returns single sample.
+        random_state : int or Generator, optional
+            Random number generator or seed.
+
+        Returns
+        -------
+        X : ndarray
+            Sampled X values. Shape (d,) if size is None, (n, d) otherwise.
+        Y : ndarray
+            Sampled Y values. Shape () if size is None, (n,) otherwise.
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        # Set up RNG
+        if random_state is None:
+            rng = np.random.default_rng()
+        elif isinstance(random_state, int):
+            rng = np.random.default_rng(random_state)
+        else:
+            rng = random_state
+
+        # Get parameters
+        theta = self.get_natural_params()
+        mu, gamma, Sigma = self._get_normal_params(theta)
+        d = self.d
+
+        # Create mixing distribution instance
+        mixing_class = self._get_mixing_distribution_class()
+        mixing_theta = self._get_mixing_natural_params(theta)
+        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+
+        # Sample Y from mixing distribution
+        Y = mixing_dist.rvs(size=size, random_state=rng)
+
+        # Sample X | Y ~ N(mu + gamma * Y, Sigma * Y)
+        # Using the representation: X = mu + gamma * Y + sqrt(Y) * Z, Z ~ N(0, Sigma)
+        if size is None:
+            # Single sample
+            Y_scalar = float(Y)
+            Z = rng.multivariate_normal(np.zeros(d), Sigma)
+            X = mu + gamma * Y_scalar + np.sqrt(Y_scalar) * Z
+        else:
+            # Multiple samples - vectorized
+            n = size if isinstance(size, int) else np.prod(size)
+            Y_flat = np.atleast_1d(Y).flatten()
+
+            # Sample Z ~ N(0, Sigma) for all n samples at once
+            Z = rng.multivariate_normal(np.zeros(d), Sigma, size=n)
+
+            # Vectorized: X = mu + gamma * Y + sqrt(Y) * Z
+            # Shape: (n, d) = (d,) + (d,) * (n, 1) + (n, d) * (n, 1)
+            sqrt_Y = np.sqrt(Y_flat)[:, np.newaxis]  # (n, 1)
+            X = mu + np.outer(Y_flat, gamma) + Z * sqrt_Y
+
+            # Reshape if needed
+            if isinstance(size, tuple):
+                X = X.reshape(size + (d,))
+                Y = Y_flat.reshape(size)
+
+        return X, Y
+
+    # ========================================================================
+    # Conditional distribution methods
+    # ========================================================================
+
+    def conditional_mean_x_given_y(self, y: ArrayLike) -> NDArray:
+        """
+        Conditional mean :math:`E[X | Y = y] = \\mu + \\gamma y`.
+
+        Parameters
+        ----------
+        y : array_like
+            Conditioning value(s) of Y.
+
+        Returns
+        -------
+        mean : ndarray
+            Conditional mean of X given Y.
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        theta = self.get_natural_params()
+        mu, gamma, _ = self._get_normal_params(theta)
+        y = np.asarray(y)
+
+        if y.ndim == 0:
+            return mu + gamma * float(y)
+        else:
+            return mu[np.newaxis, :] + np.outer(y, gamma)
+
+    def conditional_cov_x_given_y(self, y: ArrayLike) -> NDArray:
+        """
+        Conditional covariance :math:`\\text{Cov}[X | Y = y] = \\Sigma y`.
+
+        Parameters
+        ----------
+        y : array_like
+            Conditioning value(s) of Y.
+
+        Returns
+        -------
+        cov : ndarray
+            Conditional covariance of X given Y.
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        theta = self.get_natural_params()
+        _, _, Sigma = self._get_normal_params(theta)
+        y = np.asarray(y)
+
+        if y.ndim == 0:
+            return Sigma * float(y)
+        else:
+            # Return array of covariance matrices
+            return Sigma[np.newaxis, :, :] * y[:, np.newaxis, np.newaxis]
+
+    # ========================================================================
+    # Moments
+    # ========================================================================
+
+    def mean(self) -> Tuple[NDArray, float]:
+        """
+        Mean of the joint distribution.
+
+        Returns
+        -------
+        E_X : ndarray
+            :math:`E[X] = \\mu + \\gamma E[Y]`
+        E_Y : float
+            :math:`E[Y]` from the mixing distribution
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        theta = self.get_natural_params()
+        mu, gamma, _ = self._get_normal_params(theta)
+
+        # Get E[Y] from mixing distribution
+        mixing_class = self._get_mixing_distribution_class()
+        mixing_theta = self._get_mixing_natural_params(theta)
+        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        E_Y = float(mixing_dist.mean())
+
+        E_X = mu + gamma * E_Y
+
+        return E_X, E_Y
+
+    def var(self) -> Tuple[NDArray, float]:
+        """
+        Variance of the joint distribution (diagonal of covariance).
+
+        Returns
+        -------
+        Var_X : ndarray
+            Variance of X (diagonal of covariance matrix)
+        Var_Y : float
+            Variance of Y from the mixing distribution
+        """
+        cov_X, var_Y = self.cov()
+        return np.diag(cov_X), var_Y
+
+    def cov(self) -> Tuple[NDArray, float]:
+        """
+        Covariance of the joint distribution.
+
+        .. math::
+            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma \\gamma^T
+
+        Returns
+        -------
+        Cov_X : ndarray
+            Covariance matrix of X, shape (d, d)
+        Var_Y : float
+            Variance of Y from the mixing distribution
+        """
+        if self._natural_params is None:
+            raise ValueError("Parameters not set. Use from_*_params() first.")
+
+        theta = self.get_natural_params()
+        _, gamma, Sigma = self._get_normal_params(theta)
+
+        # Get E[Y] and Var[Y] from mixing distribution
+        mixing_class = self._get_mixing_distribution_class()
+        mixing_theta = self._get_mixing_natural_params(theta)
+        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        E_Y = float(mixing_dist.mean())
+        Var_Y = float(mixing_dist.var())
+
+        # Cov[X] = E[Y] * Sigma + Var[Y] * gamma * gamma^T
+        Cov_X = E_Y * Sigma + Var_Y * np.outer(gamma, gamma)
+
+        return Cov_X, Var_Y
+
+    # ========================================================================
+    # String representation
+    # ========================================================================
+
+    def __repr__(self) -> str:
+        """String representation of the joint distribution."""
+        name = self.__class__.__name__
+        if self._natural_params is None:
+            if self._d is not None:
+                return f"{name}(d={self._d}, not fitted)"
+            return f"{name}(not fitted)"
+        return f"{name}(d={self.d})"
+
+
+# ============================================================================
+# NormalMixture: Base class for marginal distributions f(x)
+# ============================================================================
+
+class NormalMixture(Distribution, ABC):
+    """
+    Abstract base class for marginal normal mixture distributions :math:`f(x)`.
+
+    The marginal distribution of :math:`X` where:
+
+    .. math::
+        f(x) = \\int_0^\\infty f(x, y) \\, dy = \\int_0^\\infty f(x | y) f(y) \\, dy
+
+    This marginal distribution is NOT an exponential family. However, the joint
+    distribution :math:`f(x, y)` IS an exponential family and can be accessed
+    via the :attr:`joint` property.
+
+    Method naming convention:
+
+    - ``pdf(x)``: Marginal PDF :math:`f(x)` (default)
+    - ``joint.pdf(x, y)``: Joint PDF :math:`f(x, y)` (via .joint property)
+    - ``pdf_joint(x, y)``: Convenience alias for ``joint.pdf(x, y)``
+    - ``rvs(size)``: Sample from marginal (returns X only)
+    - ``rvs_joint(size)``: Sample from joint (returns X, Y tuple)
+
+    Subclasses must implement:
+
+    - :meth:`_create_joint_distribution`: Factory method to create the joint dist
+    - :meth:`_marginal_logpdf`: Compute the marginal log PDF
+    - :meth:`_conditional_expectation_y_given_x`: E[Y | X] for EM algorithm
+
+    Attributes
+    ----------
+    _joint : JointNormalMixture or None
+        The underlying joint distribution instance.
+
+    See Also
+    --------
+    JointNormalMixture : Joint distribution (exponential family)
+    Distribution : Parent class defining the scipy-like API
+
+    Examples
+    --------
+    >>> # Access marginal distribution methods (default)
+    >>> gh = GeneralizedHyperbolic.from_classical_params(mu=0, gamma=1, ...)
+    >>> gh.pdf(x)  # Marginal PDF f(x)
+    >>> gh.rvs(size=100)  # Sample X values only
+
+    >>> # Access joint distribution methods via .joint property
+    >>> gh.joint.pdf(x, y)  # Joint PDF f(x, y)
+    >>> gh.joint.sufficient_statistics(x, y)  # Exponential family stats
+    >>> gh.joint.natural_params  # Natural parameters
+
+    >>> # Convenience aliases for joint methods
+    >>> gh.pdf_joint(x, y)  # Same as gh.joint.pdf(x, y)
+    >>> gh.rvs_joint(size=100)  # Returns (X, Y) tuple
+    """
+
+    def __init__(self):
+        """Initialize an unfitted marginal normal mixture distribution."""
+        super().__init__()
+        self._joint: Optional[JointNormalMixture] = None
+
+    # ========================================================================
+    # Abstract methods
+    # ========================================================================
+
+    @abstractmethod
+    def _create_joint_distribution(self) -> JointNormalMixture:
+        """
+        Factory method to create the underlying joint distribution.
+
+        Returns
+        -------
+        joint : JointNormalMixture
+            A new instance of the corresponding joint distribution class.
+        """
+        pass
+
+    @abstractmethod
+    def _marginal_logpdf(self, x: ArrayLike) -> NDArray:
+        """
+        Compute the marginal log PDF :math:`\\log f(x)`.
+
+        This is the distribution-specific implementation that computes
+        the marginal density by integrating out Y.
+
+        Parameters
+        ----------
+        x : array_like
+            Points at which to evaluate the log PDF.
+
+        Returns
+        -------
+        logpdf : ndarray
+            Log probability density values.
+        """
+        pass
+
+    @abstractmethod
+    def _conditional_expectation_y_given_x(
+        self, x: ArrayLike
+    ) -> Dict[str, NDArray]:
+        """
+        Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.
+
+        These conditional expectations are used in the E-step of the EM algorithm.
+
+        Parameters
+        ----------
+        x : array_like
+            Observed X values.
+
+        Returns
+        -------
+        expectations : dict
+            Dictionary containing:
+            - 'E_Y': :math:`E[Y | X]`
+            - 'E_inv_Y': :math:`E[1/Y | X]`
+            - 'E_log_Y': :math:`E[\\log Y | X]`
+        """
+        pass
+
+    # ========================================================================
+    # Joint distribution access
+    # ========================================================================
+
+    @property
+    def joint(self) -> JointNormalMixture:
+        """
+        Access the joint distribution :math:`f(x, y)`.
+
+        The joint distribution is an :class:`ExponentialFamily` with all
+        associated methods (natural parameters, sufficient statistics,
+        Fisher information, etc.).
+
+        Returns
+        -------
+        joint : JointNormalMixture
+            The underlying joint distribution instance.
+
+        Examples
+        --------
+        >>> gh = GeneralizedHyperbolic.from_classical_params(...)
+        >>> gh.joint.pdf(x, y)  # Joint PDF
+        >>> gh.joint.natural_params  # Natural parameters
+        >>> gh.joint.sufficient_statistics(x, y)  # Sufficient stats
+        """
+        if self._joint is None:
+            raise ValueError("Distribution not initialized. Use from_*_params().")
+        return self._joint
+
+    @property
+    def d(self) -> int:
+        """Dimension of the distribution."""
+        return self.joint.d
+
+    # ========================================================================
+    # Factory methods (override to sync with joint)
+    # ========================================================================
+
+    @classmethod
+    def from_classical_params(cls, **kwargs) -> 'NormalMixture':
+        """
+        Create distribution from classical parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Distribution-specific classical parameters.
+            Common parameters:
+            - mu : Location parameter (d,)
+            - gamma : Skewness parameter (d,)
+            - sigma : Covariance scale matrix (d, d)
+            - Plus mixing distribution parameters
+
+        Returns
+        -------
+        dist : NormalMixture
+            Distribution instance with parameters set.
+
+        Examples
+        --------
+        >>> gh = GeneralizedHyperbolic.from_classical_params(
+        ...     mu=0.0, gamma=0.5, sigma=1.0, p=-0.5, a=1.0, b=1.0
+        ... )
+        """
+        instance = cls()
+        instance.set_classical_params(**kwargs)
+        return instance
+
+    @classmethod
+    def from_natural_params(cls, theta: NDArray) -> 'NormalMixture':
+        """
+        Create distribution from natural parameters.
+
+        The natural parameters are those of the joint distribution.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector for the joint distribution.
+
+        Returns
+        -------
+        dist : NormalMixture
+            Distribution instance with parameters set.
+        """
+        instance = cls()
+        instance.set_natural_params(theta)
+        return instance
+
+    @classmethod
+    def from_expectation_params(cls, eta: NDArray) -> 'NormalMixture':
+        """
+        Create distribution from expectation parameters.
+
+        The expectation parameters are those of the joint distribution.
+
+        Parameters
+        ----------
+        eta : ndarray
+            Expectation parameter vector for the joint distribution.
+
+        Returns
+        -------
+        dist : NormalMixture
+            Distribution instance with parameters set.
+        """
+        instance = cls()
+        instance.set_expectation_params(eta)
+        return instance
+
+    # ========================================================================
+    # Parameter setters (delegate to joint)
+    # ========================================================================
+
+    def set_classical_params(self, **kwargs) -> 'NormalMixture':
+        """
+        Set parameters from classical parametrization.
+
+        Parameters
+        ----------
+        **kwargs
+            Distribution-specific classical parameters.
+
+        Returns
+        -------
+        self : NormalMixture
+            Returns self for method chaining.
+        """
+        if self._joint is None:
+            self._joint = self._create_joint_distribution()
+
+        self._joint.set_classical_params(**kwargs)
+        return self
+
+    def set_natural_params(self, theta: NDArray) -> 'NormalMixture':
+        """
+        Set parameters from natural parametrization.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameter vector for the joint distribution.
+
+        Returns
+        -------
+        self : NormalMixture
+            Returns self for method chaining.
+        """
+        if self._joint is None:
+            self._joint = self._create_joint_distribution()
+
+        self._joint.set_natural_params(theta)
+        return self
+
+    def set_expectation_params(self, eta: NDArray) -> 'NormalMixture':
+        """
+        Set parameters from expectation parametrization.
+
+        Parameters
+        ----------
+        eta : ndarray
+            Expectation parameter vector for the joint distribution.
+
+        Returns
+        -------
+        self : NormalMixture
+            Returns self for method chaining.
+        """
+        if self._joint is None:
+            self._joint = self._create_joint_distribution()
+
+        self._joint.set_expectation_params(eta)
+        return self
+
+    # ========================================================================
+    # Parameter getters (delegate to joint)
+    # ========================================================================
+
+    def get_natural_params(self) -> NDArray:
+        """
+        Get natural parameters of the joint distribution.
+
+        Note: The marginal distribution itself is not an exponential family,
+        so these are the natural parameters of the joint distribution.
+
+        Returns
+        -------
+        theta : ndarray
+            Natural parameter vector.
+        """
+        return self.joint.get_natural_params()
+
+    def get_expectation_params(self) -> NDArray:
+        """
+        Get expectation parameters of the joint distribution.
+
+        Returns
+        -------
+        eta : ndarray
+            Expectation parameter vector :math:`E[t(X, Y)]`.
+        """
+        return self.joint.get_expectation_params()
+
+    def get_classical_params(self) -> Dict[str, Any]:
+        """
+        Get classical parameters.
+
+        Returns
+        -------
+        params : dict
+            Dictionary of classical parameters.
+        """
+        return self.joint.get_classical_params()
+
+    # ========================================================================
+    # Marginal distribution methods (main interface)
+    # ========================================================================
+
+    def pdf(self, x: ArrayLike) -> NDArray:
+        """
+        Marginal probability density function :math:`f(x)`.
+
+        .. math::
+            f(x) = \\int_0^\\infty f(x, y) \\, dy
+
+        Parameters
+        ----------
+        x : array_like
+            Points at which to evaluate the PDF.
+
+        Returns
+        -------
+        pdf : ndarray
+            Probability density values.
+        """
+        return np.exp(self.logpdf(x))
+
+    def logpdf(self, x: ArrayLike) -> NDArray:
+        """
+        Log marginal probability density function :math:`\\log f(x)`.
+
+        Parameters
+        ----------
+        x : array_like
+            Points at which to evaluate the log PDF.
+
+        Returns
+        -------
+        logpdf : ndarray
+            Log probability density values.
+        """
+        if self._joint is None:
+            raise ValueError("Parameters not set. Use from_*_params().")
+        return self._marginal_logpdf(x)
+
+    def rvs(
+        self,
+        size: Optional[Union[int, Tuple[int, ...]]] = None,
+        random_state: Optional[Union[int, np.random.Generator]] = None
+    ) -> NDArray:
+        """
+        Generate random samples from the marginal distribution.
+
+        Samples X values only (Y is integrated out).
+
+        Parameters
+        ----------
+        size : int or tuple of ints, optional
+            Number of samples to generate.
+        random_state : int or Generator, optional
+            Random number generator or seed.
+
+        Returns
+        -------
+        X : ndarray
+            Sampled X values. Shape ``(d,)`` if size is None, else ``(n, d)`` or
+            ``(*size, d)``.
+        """
+        X, _ = self.rvs_joint(size=size, random_state=random_state)
+        return X
+
+    # ========================================================================
+    # Joint distribution convenience methods
+    # ========================================================================
+
+    def pdf_joint(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Joint probability density function :math:`f(x, y)`.
+
+        Convenience alias for ``self.joint.pdf(x, y)``.
+
+        Parameters
+        ----------
+        x : array_like
+            Observed X values.
+        y : array_like
+            Observed Y values.
+
+        Returns
+        -------
+        pdf : ndarray
+            Joint density values.
+        """
+        return self.joint.pdf(x, y)
+
+    def logpdf_joint(self, x: ArrayLike, y: ArrayLike) -> NDArray:
+        """
+        Log joint probability density function :math:`\\log f(x, y)`.
+
+        Convenience alias for ``self.joint.logpdf(x, y)``.
+
+        Parameters
+        ----------
+        x : array_like
+            Observed X values.
+        y : array_like
+            Observed Y values.
+
+        Returns
+        -------
+        logpdf : ndarray
+            Log joint density values.
+        """
+        return self.joint.logpdf(x, y)
+
+    def rvs_joint(
+        self,
+        size: Optional[Union[int, Tuple[int, ...]]] = None,
+        random_state: Optional[Union[int, np.random.Generator]] = None
+    ) -> Tuple[NDArray, NDArray]:
+        """
+        Generate random samples from the joint distribution.
+
+        Samples both X and Y values.
+
+        Parameters
+        ----------
+        size : int or tuple of ints, optional
+            Number of samples to generate.
+        random_state : int or Generator, optional
+            Random number generator or seed.
+
+        Returns
+        -------
+        X : ndarray
+            Sampled X values.
+        Y : ndarray
+            Sampled Y values (latent mixing variable).
+        """
+        return self.joint.rvs(size=size, random_state=random_state)
+
+    # ========================================================================
+    # Moments (marginal)
+    # ========================================================================
+
+    def mean(self) -> NDArray:
+        """
+        Mean of the marginal distribution.
+
+        .. math::
+            E[X] = \\mu + \\gamma E[Y]
+
+        Returns
+        -------
+        mean : ndarray
+            Mean vector of X, shape (d,).
+        """
+        E_X, _ = self.joint.mean()
+        return E_X
+
+    def var(self) -> NDArray:
+        """
+        Variance of the marginal distribution (diagonal of covariance).
+
+        Returns
+        -------
+        var : ndarray
+            Variance of each component, shape (d,).
+        """
+        return np.diag(self.cov())
+
+    def cov(self) -> NDArray:
+        """
+        Covariance matrix of the marginal distribution.
+
+        .. math::
+            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma \\gamma^T
+
+        Returns
+        -------
+        cov : ndarray
+            Covariance matrix, shape (d, d).
+        """
+        Cov_X, _ = self.joint.cov()
+        return Cov_X
+
+    def std(self) -> NDArray:
+        """
+        Standard deviation of the marginal distribution.
+
+        Returns
+        -------
+        std : ndarray
+            Standard deviation of each component, shape (d,).
+        """
+        return np.sqrt(self.var())
+
+    # ========================================================================
+    # Mixing distribution access
+    # ========================================================================
+
+    @property
+    def mixing_distribution(self) -> ExponentialFamily:
+        """
+        Access the mixing distribution of Y.
+
+        Returns
+        -------
+        mixing : ExponentialFamily
+            The mixing distribution (e.g., GIG, Gamma, InverseGaussian).
+        """
+        theta = self.joint.get_natural_params()
+        mixing_class = self.joint._get_mixing_distribution_class()
+        mixing_theta = self.joint._get_mixing_natural_params(theta)
+        return mixing_class.from_natural_params(mixing_theta)
+
+    # ========================================================================
+    # Fitting (placeholder - to be implemented in subclasses)
+    # ========================================================================
+
+    def fit(self, X: ArrayLike, y: Optional[ArrayLike] = None, **kwargs) -> 'NormalMixture':
+        """
+        Fit distribution to data using EM algorithm.
+
+        When only X is observed (Y is latent), uses the EM algorithm.
+        For complete data (both X and Y observed), use :meth:`fit_complete`.
+
+        Parameters
+        ----------
+        X : array_like
+            Observed X data, shape (n_samples, d).
+        y : array_like, optional
+            Ignored.
+        **kwargs
+            Additional fitting parameters.
+
+        Returns
+        -------
+        self : NormalMixture
+            Fitted distribution.
+
+        Note
+        ----
+        Not yet implemented. Placeholder for EM algorithm.
+        """
+        raise NotImplementedError(
+            "EM fitting not yet implemented. "
+            "Use fit_complete(X, Y) if you have complete data."
+        )
+
+    def fit_complete(self, X: ArrayLike, Y: ArrayLike, **kwargs) -> 'NormalMixture':
+        """
+        Fit distribution from complete data (both X and Y observed).
+
+        Since the joint distribution is an exponential family, this uses
+        closed-form MLE.
+
+        Parameters
+        ----------
+        X : array_like
+            Observed X data, shape (n_samples, d).
+        Y : array_like
+            Observed Y data, shape (n_samples,).
+        **kwargs
+            Additional fitting parameters.
+
+        Returns
+        -------
+        self : NormalMixture
+            Fitted distribution.
+
+        Note
+        ----
+        Not yet implemented.
+        """
+        raise NotImplementedError("Complete data fitting not yet implemented.")
+
+    # ========================================================================
+    # String representation
+    # ========================================================================
+
+    def __repr__(self) -> str:
+        """String representation of the marginal distribution."""
+        name = self.__class__.__name__
+        if self._joint is None:
+            return f"{name}(not fitted)"
+        try:
+            d = self.d
+            return f"{name}(d={d})"
+        except ValueError:
+            return f"{name}(not fitted)"

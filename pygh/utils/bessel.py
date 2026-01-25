@@ -167,14 +167,16 @@ def log_kv_derivative_z(v: float, z: Union[float, NDArray]) -> Union[float, NDAr
     """
     Derivative of log(K_v(z)) with respect to z.
     
-    Using the recurrence relation:
+    Using the recurrence relation::
+    
         K'_v(z) = -(K_{v-1}(z) + K_{v+1}(z)) / 2
     
-    So:
+    So::
+    
         d/dz log(K_v(z)) = K'_v(z) / K_v(z)
-                        = -(K_{v-1}(z) + K_{v+1}(z)) / (2 K_v(z))
-                        = -1/2 (exp(log K_{v-1}(z) - log K_v(z)) + 
-                                exp(log K_{v+1}(z) - log K_v(z)))
+                         = -(K_{v-1}(z) + K_{v+1}(z)) / (2 K_v(z))
+                         = -1/2 (exp(log K_{v-1}(z) - log K_v(z)) + 
+                                 exp(log K_{v+1}(z) - log K_v(z)))
     
     Parameters
     ----------

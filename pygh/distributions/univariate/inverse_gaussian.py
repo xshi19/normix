@@ -102,8 +102,9 @@ class InverseGaussian(ExponentialFamily):
     
     References
     ----------
-    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
-    .. [2] Chhikara, R. S. & Folks, J. L. (1989). The Inverse Gaussian Distribution.
+    Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+
+    Chhikara, R. S. & Folks, J. L. (1989). The Inverse Gaussian Distribution.
     """
     
     def _get_natural_param_support(self):
