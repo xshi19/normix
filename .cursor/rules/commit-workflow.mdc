@@ -1,0 +1,161 @@
+---
+description: Commit workflow and roadmap update guidelines
+alwaysApply: true
+---
+
+# Commit Workflow
+
+## Before Every Commit
+
+When the user requests a commit, ALWAYS perform these steps:
+
+### 1. Update ROADMAP.md
+
+Check if the changes affect any roadmap items and update accordingly:
+
+```markdown
+## Current Status
+
+- [x] Completed item
+- [ ] Pending item
+- [ ] → [x] Just completed item  ← UPDATE THIS
+```
+
+### 2. Update Project Structure in Rules
+
+If new files were added, update `.cursor/rules/project-overview.mdc`:
+
+```markdown
+## Repository Structure
+
+├── pygh/
+│   ├── distributions/
+│   │   ├── univariate/
+│   │   │   ├── new_distribution.py  # ← ADD NEW FILES
+```
+
+### 3. Update README.md Status
+
+If a major milestone was reached, update the README.md status section.
+
+## Commit Message Format
+
+Follow conventional commits:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types
+- `feat`: New feature (new distribution, new method)
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `test`: Adding/updating tests
+- `refactor`: Code refactoring
+- `style`: Formatting, no code change
+- `chore`: Maintenance tasks
+
+### Examples
+
+```bash
+# New distribution
+feat(distributions): add Variance Gamma distribution
+
+Implements VG as normal-gamma mixture with:
+- Full exponential family form
+- EM fitting algorithm
+- Scipy comparison tests
+
+# Bug fix
+fix(gamma): correct expectation_to_natural convergence
+
+Increased Newton iterations and added damping for
+edge cases with small shape parameter.
+
+# Documentation
+docs(notebooks): add Variance Gamma visualization notebook
+```
+
+## Checklist Before Commit
+
+- [ ] Code passes `pytest tests/` 
+- [ ] New distributions have:
+  - [ ] Full docstring with math formulas
+  - [ ] Test configuration in `test_distributions_vs_scipy.py`
+  - [ ] Jupyter notebook in `notebooks/`
+- [ ] ROADMAP.md updated if milestone reached
+- [ ] No debug print statements left
+- [ ] Type hints on all public methods
+
+## After Completing a Roadmap Step
+
+When a major step is completed:
+
+1. Update ROADMAP.md status checkboxes
+2. Update "Next action" line
+3. Consider updating README.md "Current status" section
+4. Add entry to notebooks/ if new distribution
+
+### Example ROADMAP Update
+
+```markdown
+## Current Status
+
+- [x] Step 3: GIG and IG
+  - [x] 3.1 GIG distribution
+  - [x] 3.2 Inverse Gaussian
+- [x] Step 4: Simple mixtures (VG, NInvG)  ← JUST COMPLETED
+  - [x] 4.1 Variance Gamma
+  - [x] 4.2 Normal-Inverse Gamma
+- [ ] Step 5: NIG  ← NOW IN PROGRESS
+
+**Next action:** Implement Step 5 - Normal-Inverse Gaussian
+```
+
+## Updating .cursor/rules/project-overview.mdc
+
+After adding new distributions or major files:
+
+```markdown
+## Repository Structure
+
+│   ├── distributions/
+│   │   ├── univariate/
+│   │   │   ├── variance_gamma.py        # ✓ NEW
+│   │   │   ├── normal_inverse_gamma.py  # ✓ NEW
+```
+
+Also update the "Current Status" section date:
+
+```markdown
+## Current Status (Updated: YYYY-MM-DD)
+```
+
+## Git Workflow Best Practices
+
+```bash
+# Check status before commit
+git status
+git diff
+
+# Stage specific files
+git add pygh/distributions/univariate/new_dist.py
+git add tests/test_distributions_vs_scipy.py
+git add notebooks/new_dist_distribution.ipynb
+git add ROADMAP.md
+
+# Commit with descriptive message
+git commit -m "feat(distributions): add New Distribution
+
+- Implements NewDist as exponential family
+- Adds scipy comparison tests
+- Includes visualization notebook
+- Updates ROADMAP.md status"
+
+# Push to remote
+git push origin main
+```

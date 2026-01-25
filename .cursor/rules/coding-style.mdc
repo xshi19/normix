@@ -1,0 +1,245 @@
+---
+description: Coding style, docstrings with math formulas, and naming conventions
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Coding Style Guide
+
+## LaTeX for Mathematical Formulas
+
+**ALWAYS use LaTeX** for mathematical formulas in:
+- Docstrings (using Sphinx `.. math::` directive or `:math:` role)
+- README.md and documentation files
+- Jupyter notebook markdown cells
+- Cursor rules and documentation
+
+### LaTeX Syntax
+
+| Context | Syntax | Example |
+|---------|--------|---------|
+| Display math (block) | `$$ ... $$` | `$$ p(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2} $$` |
+| Inline math | `$ ... $` | `where $\alpha > 0$` |
+| Sphinx docstring (block) | `.. math::` | See below |
+| Sphinx docstring (inline) | `:math:\`...\`` | `:math:\`\alpha > 0\`` |
+
+### Common LaTeX Patterns
+
+| Formula | LaTeX |
+|---------|-------|
+| Greek letters | `$\alpha, \beta, \theta, \eta, \psi, \lambda, \mu, \sigma$` |
+| Subscripts | `$\theta_1, \theta_2$` |
+| Superscripts | `$x^2, e^{-\beta x}$` |
+| Fractions | `$\frac{\alpha}{\beta}$` |
+| Gamma function | `$\Gamma(\alpha)$` |
+| Log gamma | `$\log\Gamma(\alpha)$` |
+| Expectation | `$E[X]$, $E[t(X)]$` |
+| Gradient | `$\nabla \psi(\theta)$` |
+| Transpose | `$\theta^T t(x)$` |
+| Square root | `$\sqrt{ab}$` |
+| Bessel K | `$K_\nu(z)$` |
+
+## Python Style
+
+Follow PEP-8 with these project-specific conventions:
+
+```python
+# ✅ Standard imports
+import numpy as np
+from numpy.typing import ArrayLike, NDArray
+from typing import Optional, Union, Dict, Any
+from scipy.special import gammaln, digamma, polygamma
+
+# ❌ Don't abbreviate scipy
+import scipy as sp  # Wrong
+```
+
+## Docstring Format (NumPy Style)
+
+Every module, class, and function MUST have a docstring following NumPy format.
+
+### Module Docstring Template
+
+```python
+"""
+Distribution Name distribution.
+
+Brief description of the distribution.
+
+The [distribution name] distribution has PDF:
+
+.. math::
+    p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} x^{\\alpha-1} e^{-\\beta x}
+
+for :math:`x > 0`.
+
+Exponential family form:
+    - :math:`h(x) = 1` for :math:`x > 0` (base measure)
+    - :math:`t(x) = [\\log x, x]` (sufficient statistics)
+    - :math:`\\theta = [\\alpha - 1, -\\beta]` (natural parameters)
+    - :math:`\\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)` (log partition)
+
+Parametrizations:
+    - Classical: :math:`\\alpha` (shape), :math:`\\beta` (rate), :math:`\\alpha > 0, \\beta > 0`
+    - Natural: :math:`\\theta = [\\alpha - 1, -\\beta]`, :math:`\\theta_1 > -1, \\theta_2 < 0`
+    - Expectation: :math:`\\eta = [\\psi(\\alpha) - \\log\\beta, \\alpha/\\beta]`
+
+Note: scipy uses scale = 1/rate parametrization.
+"""
+```
+
+### Class Docstring Template
+
+```python
+class DistributionName(ExponentialFamily):
+    """
+    Distribution Name in exponential family form.
+    
+    The distribution has PDF:
+    
+    .. math::
+        p(x|\\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)} 
+        x^{\\alpha-1} e^{-\\beta x}
+    
+    for :math:`x > 0`, where :math:`\\alpha` is the shape parameter 
+    and :math:`\\beta` is the rate parameter.
+    
+    Parameters
+    ----------
+    shape : float, optional
+        Shape parameter α > 0. Use from_classical_params(shape=α, rate=β).
+    rate : float, optional
+        Rate parameter β > 0. Use from_classical_params(shape=α, rate=β).
+    
+    Attributes
+    ----------
+    _natural_params : tuple or None
+        Internal storage for natural parameters.
+    
+    Examples
+    --------
+    >>> # Create from classical parameters
+    >>> dist = Gamma.from_classical_params(shape=2.0, rate=1.0)
+    >>> dist.mean()
+    2.0
+    
+    >>> # Fit from data
+    >>> data = np.random.gamma(shape=2.0, scale=1.0, size=1000)
+    >>> dist = Gamma().fit(data)
+    
+    See Also
+    --------
+    InverseGamma : Inverse of Gamma distribution
+    GeneralizedInverseGaussian : Generalization including Gamma as special case
+    
+    Notes
+    -----
+    The Gamma distribution belongs to the exponential family with:
+    
+    - Sufficient statistics: :math:`t(x) = [\\log x, x]`
+    - Natural parameters: :math:`\\theta = [\\alpha - 1, -\\beta]`
+    - Log partition: :math:`\\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)`
+    
+    References
+    ----------
+    .. [1] Barndorff-Nielsen, O. E. (1978). Information and exponential families.
+    """
+```
+
+### Method Docstring Template
+
+```python
+def _log_partition(self, theta: NDArray) -> float:
+    """
+    Log partition function: ψ(θ) = log Γ(θ₁+1) - (θ₁+1)log(-θ₂).
+    
+    The log partition function (cumulant generating function) satisfies:
+    
+    .. math::
+        \\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)
+    
+    Its gradient gives expectation parameters: :math:`\\nabla\\psi(\\theta) = E[t(X)]`
+    
+    Parameters
+    ----------
+    theta : ndarray
+        Natural parameter vector [θ₁, θ₂].
+    
+    Returns
+    -------
+    psi : float
+        Log partition function value.
+    """
+```
+
+## Variable Naming Conventions
+
+### Mathematical Variables
+
+Use consistent naming between code and math formulas:
+
+| Math Symbol | Python Variable | Description |
+|-------------|----------------|-------------|
+| $\alpha$ | `alpha`, `shape` | Shape parameter |
+| $\beta$ | `beta`, `rate` | Rate parameter |
+| $\lambda$ | `lam`, `rate` | Rate (avoid `lambda` - reserved) |
+| $\mu$ | `mu`, `mean` | Mean/location |
+| $\sigma$ | `sigma`, `scale` | Scale/std dev |
+| $\Sigma$ | `sigma`, `cov` | Covariance matrix |
+| $\theta$ | `theta` | Natural parameters |
+| $\eta$ | `eta` | Expectation parameters |
+| $\psi$ | `psi` | Log partition function |
+| $\chi$ | `chi` | GIG parameter |
+| $\Gamma$ | `gamma_func` | Gamma function (use scipy.special.gamma) |
+| $K_\nu$ | `kv` | Modified Bessel function |
+
+### Sufficient Statistics and Parameters
+
+```python
+# ✅ Use descriptive names that match formulas
+t_x = self._sufficient_statistics(x)  # t(x)
+log_h = self._log_base_measure(x)     # log h(x)
+psi = self._log_partition(theta)       # ψ(θ)
+
+# ✅ Classical parameters - use full names
+shape = classical['shape']  # α
+rate = classical['rate']    # β
+
+# ✅ Natural/expectation as arrays
+theta = np.array([alpha - 1, -beta])  # θ = [α-1, -β]
+eta = np.array([eta1, eta2])           # η = [η₁, η₂]
+```
+
+## Type Hints
+
+Always use type hints following these patterns:
+
+```python
+from numpy.typing import ArrayLike, NDArray
+from typing import Optional, Union, Dict, Any, List, Tuple
+
+def method(self, x: ArrayLike) -> NDArray:
+    """..."""
+
+def method_optional(self, theta: Optional[NDArray] = None) -> float:
+    """..."""
+
+def method_returns_dict(self, theta: NDArray) -> Dict[str, float]:
+    """..."""
+```
+
+## Code Organization Within Classes
+
+Order methods in each distribution class as follows:
+
+1. `_get_natural_param_support()` - Parameter bounds
+2. `_sufficient_statistics()` - t(x)
+3. `_log_partition()` - ψ(θ)
+4. `_log_base_measure()` - log h(x)
+5. `_classical_to_natural()` - Parameter conversion
+6. `_natural_to_classical()` - Parameter conversion
+7. `_natural_to_expectation()` - Gradient of ψ
+8. `_expectation_to_natural()` - Inverse mapping
+9. `_get_initial_natural_params()` - Optimization init
+10. `fisher_information()` - Hessian of ψ
+11. Distribution methods: `rvs()`, `mean()`, `var()`, `cdf()`, etc.

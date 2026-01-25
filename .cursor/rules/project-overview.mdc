@@ -1,0 +1,80 @@
+---
+description: Project overview, structure, and next steps for pygh - Generalized Hyperbolic distributions
+alwaysApply: true
+---
+
+# pygh Project Overview
+
+## Purpose
+
+`pygh` is a Python package implementing Generalized Hyperbolic distributions and related distributions as exponential families with sklearn-style API.
+
+## Repository Structure
+
+```
+pygh/
+├── pygh/
+│   ├── base/
+│   │   ├── distribution.py      # Abstract Distribution base class
+│   │   ├── exponential_family.py # ExponentialFamily base with 3 parametrizations
+│   │   └── mixture.py           # NormalMixtureDistribution base
+│   │
+│   ├── distributions/
+│   │   ├── univariate/
+│   │   │   ├── exponential.py                   # ✓ Complete
+│   │   │   ├── gamma.py                         # ✓ Complete
+│   │   │   ├── inverse_gamma.py                 # ✓ Complete
+│   │   │   ├── inverse_gaussian.py              # ✓ Complete
+│   │   │   └── generalized_inverse_gaussian.py  # ✓ Complete
+│   │   │
+│   │   ├── multivariate/
+│   │   │   └── normal.py        # ✓ Complete
+│   │   │
+│   │   └── mixtures/            # Pending implementation
+│   │       ├── variance_gamma.py
+│   │       ├── normal_inverse_gamma.py
+│   │       ├── normal_inverse_gaussian.py
+│   │       └── generalized_hyperbolic.py
+│   │
+│   ├── utils/
+│   │   └── bessel.py            # Bessel function utilities (log_kv, etc.)
+│   │
+│   └── legacy/                  # Original code for reference only
+│
+├── tests/
+│   ├── test_exponential_family.py
+│   └── test_distributions_vs_scipy.py
+│
+├── notebooks/                   # Jupyter notebooks with visualizations
+│
+├── docs/                        # Sphinx documentation
+│
+└── ROADMAP.md                   # Implementation roadmap
+```
+
+## Current Status (Updated: 2026-01-24)
+
+**Completed:**
+- Step 1: Base classes (ExponentialFamily with 3 parametrizations)
+- Step 2: Simple univariate distributions (Exponential, Gamma, InverseGamma)
+- Step 3: GIG and Inverse Gaussian
+
+**Next Steps:**
+- Step 4: Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
+- Step 5: Normal-Inverse Gaussian (NIG)
+- Step 6: Generalized Hyperbolic (GH) - the final goal
+
+## Key Architectural Decisions
+
+1. **Exponential Family Form**: All distributions use the canonical form:
+
+$$ p(x|\theta) = h(x) \exp (\theta^T t(x) - \psi(\theta)) $$
+
+2. **Three Parametrizations**: Every distribution supports:
+   - Classical parameters (domain-specific, e.g., $\mu$, $\sigma$)
+   - Natural parameters ($\theta$ in exponential family form)
+   - Expectation parameters ($\eta = \bigtriangledown \psi(\theta) = E[t(X)]$)
+
+3. **sklearn-style API**: `fit()` returns self for method chaining
+
+4. **Mixture Distributions**: Represented as X|Y ~ Normal, Y ~ mixing distribution

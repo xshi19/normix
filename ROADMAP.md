@@ -423,12 +423,32 @@ These files are kept for reference during refactoring. Do not import from legacy
 
 - [x] Package structure created
 - [x] Legacy code moved to `pygh/legacy/`
-- [ ] Step 1: Base classes
-- [ ] Step 2: Simple univariate distributions
-- [ ] Step 3: GIG and IG
+- [x] Step 1: Base classes
+  - [x] 1.1 ExponentialFamily base class with three parametrizations
+  - [x] 1.2 Mixture base class (partial - needs EM framework)
+- [x] Step 2: Simple univariate distributions
+  - [x] 2.1 Multivariate Normal (exponential family form)
+  - [x] 2.2 Gamma distribution
+  - [x] 2.3 Inverse Gamma distribution
+  - [x] Exponential distribution (bonus)
+- [x] Step 3: GIG and IG
+  - [x] 3.1 Generalized Inverse Gaussian (GIG)
+  - [x] 3.2 Inverse Gaussian (IG)
 - [ ] Step 4: Simple mixtures (VG, NInvG)
 - [ ] Step 5: NIG
 - [ ] Step 6: GH
 - [ ] Step 7: Package integration
 
-**Next action:** Implement Step 1.1 - Exponential Family base class
+### Tests Completed
+- [x] `tests/test_exponential_family.py` - Base class tests
+- [x] `tests/test_distributions_vs_scipy.py` - Generic scipy comparison framework
+
+### Notebooks Completed
+- [x] `notebooks/exponential_distribution.ipynb`
+- [x] `notebooks/gamma_distribution.ipynb`
+- [x] `notebooks/inverse_gamma_distribution.ipynb`
+- [x] `notebooks/inverse_gaussian_distribution.ipynb`
+- [x] `notebooks/generalized_inverse_gaussian_distribution.ipynb`
+- [x] `notebooks/multivariate_normal_distribution.ipynb`
+
+**Next action:** Implement Step 4 - Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)

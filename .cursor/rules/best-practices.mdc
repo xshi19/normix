@@ -1,0 +1,229 @@
+---
+description: Best practices from scipy, numpy, and scikit-learn
+alwaysApply: true
+---
+
+# Best Practices (from scipy/numpy/sklearn)
+
+## LaTeX for Mathematical Formulas
+
+**ALWAYS use LaTeX** for mathematical formulas throughout the project:
+
+| Location | Format | Example |
+|----------|--------|---------|
+| Docstrings | `.. math::` block or `:math:\`...\`` inline | `:math:\`\\alpha > 0\`` |
+| README.md / Jupyter markdown / Cursor rules (.mdc) | `$$ ... $$` block or `$ ... $` inline | `$\alpha > 0$` |
+
+This is important because probability distributions are math-heavy.
+
+## Function Design
+
+1. **Use keyword-only arguments** for non-obvious parameters (SciPy):
+
+```python
+# ✅ Good: force keyword arguments after *
+def fit(self, X, *, method='mle', max_iter=100, tol=1e-8):
+    pass
+
+# ❌ Bad: all positional
+def fit(self, X, method='mle', max_iter=100, tol=1e-8):
+    pass
+```
+
+2. **Return objects, not tuples** for multiple conceptually distinct values (SciPy):
+
+```python
+# ✅ Good: return structured result
+@dataclass
+class FitResult:
+    params: np.ndarray
+    log_likelihood: float
+    converged: bool
+
+# ❌ Bad: return tuple
+return params, log_likelihood, converged
+```
+
+3. **`fit()` returns self** for method chaining (sklearn):
+
+```python
+def fit(self, X, y=None):
+    # ... fitting logic ...
+    return self  # ← REQUIRED
+
+# Enables chaining
+dist = Distribution().fit(X).score(X_test)
+```
+
+
+## Documentation Standards
+
+1. **Use LaTeX for mathematical formulas** with ASCII summary line (pygh + NumPy):
+
+```python
+def _log_partition(self, theta):
+    """
+    Log partition function: psi(theta) = log Gamma(theta[0]+1) - ...
+    
+    .. math::
+        \\psi(\\theta) = \\log\\Gamma(\\theta_1 + 1) - (\\theta_1 + 1)\\log(-\\theta_2)
+    
+    Its gradient gives expectation parameters: :math:`\\nabla\\psi(\\theta) = E[t(X)]`
+    """
+```
+
+2. **Specific, actionable error messages** (sklearn):
+
+```python
+# ✅ Good
+if shape <= 0:
+    raise ValueError(
+        f"Shape parameter must be positive, got {shape}. "
+        f"Use from_classical_params(shape=α, rate=β) with α > 0."
+    )
+
+# ❌ Bad
+raise ValueError("Invalid parameter")
+```
+
+## Parameter Naming
+
+Use consistent sklearn conventions:
+
+```python
+random_state=None  # Not seed=None
+n_iter=100         # Not max_iterations=100
+tol=1e-8           # Not tolerance=1e-8
+verbose=0          # Not quiet=True
+```
+
+## Array Handling
+
+1. **Always convert input to array** (NumPy):
+
+```python
+x = np.asarray(x)
+```
+
+2. **Handle scalar and array consistently** (NumPy):
+
+```python
+if x.ndim == 0 or x.shape == ():
+    return scalar_result
+else:
+    return array_result
+```
+
+3. **Use broadcasting** (NumPy):
+
+```python
+result = np.where(x > 0, positive_case, negative_case)
+```
+
+## Numerical Stability
+
+1. **Use log-space operations** (SciPy):
+
+```python
+log_prob = log_a + log_b  # Instead of np.log(a * b)
+```
+
+2. **Use scipy.special functions** (SciPy):
+
+```python
+from scipy.special import gammaln, logsumexp
+log_gamma = gammaln(x)  # Instead of np.log(gamma(x))
+```
+
+3. **Handle edge cases explicitly** (SciPy):
+
+```python
+def mean(self):
+    if self.shape <= 1:
+        return np.inf
+    return self.rate / (self.shape - 1)
+```
+
+## Input Validation
+
+```python
+def fit(self, X, y=None, random_state=None):
+    # Validate input array (NumPy)
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    
+    # Validate random state (sklearn)
+    if random_state is None:
+        rng = np.random.default_rng()
+    elif isinstance(random_state, int):
+        rng = np.random.default_rng(random_state)
+    else:
+        rng = random_state
+```
+
+## Performance
+
+1. **Cache expensive computations** (SciPy/NumPy):
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def _get_expectation_params_cached(self, theta_tuple):
+    return self._natural_to_expectation(np.array(theta_tuple))
+```
+
+2. **Vectorize operations** (NumPy):
+
+```python
+result = np.dot(t_x, theta)  # Not: sum(t_x[i] * theta[i] for i in ...)
+```
+
+3. **Use scipy's optimized functions** (SciPy):
+
+```python
+from scipy.special import gammaln  # Not: np.log(scipy.special.gamma(x))
+```
+
+## Testing
+
+1. **Use pytest fixtures** (SciPy/NumPy):
+
+```python
+@pytest.fixture
+def config(self):
+    return get_distribution_config()
+```
+
+2. **Use parametrize for multiple test cases** (pytest):
+
+```python
+@pytest.mark.parametrize("shape,rate", [(2.0, 1.0), (5.0, 2.0)])
+def test_pdf(self, shape, rate):
+    ...
+```
+
+3. **Use appropriate tolerances** (NumPy):
+
+```python
+np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-8)
+```
+
+## Deprecation
+
+```python
+import warnings
+
+def old_method(self, ...):
+    """
+    .. deprecated:: 1.0
+        Use :meth:`new_method` instead.
+    """
+    warnings.warn(
+        "old_method is deprecated. Use new_method instead.",
+        FutureWarning,
+        stacklevel=2
+    )
+    return self.new_method(...)
+```

@@ -1,0 +1,261 @@
+---
+description: Design patterns for implementing probability distributions
+globs: "**/distributions/**/*.py"
+alwaysApply: false
+---
+
+# Distribution Implementation Patterns
+
+## Exponential Family Structure
+
+Every distribution MUST be implemented as an exponential family with the canonical form:
+
+$$ p(x|\theta) = h(x) \exp(\theta^T t(x) - \psi(\theta)) $$
+
+where:
+- $h(x)$ is the base measure
+- $t(x)$ is the sufficient statistics vector
+- $\theta$ is the natural parameters vector
+- $\psi(\theta)$ is the log partition function (cumulant generating function)
+
+### Required Abstract Methods
+
+```python
+class NewDistribution(ExponentialFamily):
+    """
+    Distribution Name in exponential family form.
+    
+    Exponential family components:
+    
+    .. math::
+        p(x|\\theta) = h(x) \\exp(\\theta^T t(x) - \\psi(\\theta))
+    
+    where:
+    - :math:`h(x) = ...` (base measure)
+    - :math:`t(x) = [...]` (sufficient statistics)
+    - :math:`\\theta = [...]` (natural parameters)
+    - :math:`\\psi(\\theta) = ...` (log partition function)
+    """
+    
+    def _get_natural_param_support(self):
+        """Define valid range for natural parameters."""
+        return [(lower1, upper1), (lower2, upper2), ...]
+    
+    def _sufficient_statistics(self, x: ArrayLike) -> NDArray:
+        """Compute $t(x)$. Return shape (d,) for scalar, (n, d) for array."""
+        pass
+    
+    def _log_partition(self, theta: NDArray) -> float:
+        """Compute $\\psi(\\theta)$. MUST be differentiable."""
+        pass
+    
+    def _log_base_measure(self, x: ArrayLike) -> NDArray:
+        """Compute $\\log h(x)$. Return $-\\infty$ outside support."""
+        pass
+    
+    def _classical_to_natural(self, **kwargs) -> NDArray:
+        """Convert classical params to natural params."""
+        pass
+    
+    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
+        """Convert natural params to classical params."""
+        pass
+```
+
+### Recommended Analytical Overrides
+
+Override these for better performance (default uses numerical differentiation):
+
+```python
+def _natural_to_expectation(self, theta: NDArray) -> NDArray:
+    """
+    Analytical gradient: :math:`\\eta = \\nabla\\psi(\\theta)`.
+    
+    Override with closed-form formula when available.
+    """
+    pass
+
+def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    """
+    Analytical inverse mapping from :math:`\\eta` to :math:`\\theta`.
+    
+    Override when closed-form inverse exists.
+    """
+    pass
+
+def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
+    """
+    Analytical Fisher information: :math:`I(\\theta) = \\nabla^2\\psi(\\theta)`.
+    
+    Override with closed-form formula when available.
+    """
+    pass
+```
+
+## Distribution Methods (Required)
+
+```python
+def rvs(self, size=None, random_state=None):
+    """
+    Generate random samples.
+    
+    Use scipy or numpy generators when available.
+    Implement custom sampler only if necessary.
+    """
+    pass
+
+def mean(self) -> float:
+    """
+    Mean of the distribution: :math:`E[X] = \\alpha / \\beta`.
+    
+    Document the formula in docstring using LaTeX.
+    """
+    pass
+
+def var(self) -> float:
+    """
+    Variance of the distribution: :math:`\\text{Var}[X] = \\alpha / \\beta^2`.
+    
+    Document the formula in docstring using LaTeX.
+    """
+    pass
+
+def cdf(self, x: ArrayLike) -> NDArray:
+    """
+    Cumulative distribution function :math:`F(x) = P(X \\leq x)`.
+    
+    Use scipy when available. Implement numerical integration otherwise.
+    """
+    pass
+```
+
+## Parameter Validation Pattern
+
+```python
+def _classical_to_natural(self, **kwargs) -> NDArray:
+    """Convert with validation."""
+    shape = kwargs['shape']
+    rate = kwargs['rate']
+    
+    # ✅ Always validate classical parameters
+    if shape <= 0:
+        raise ValueError(f"Shape must be positive, got {shape}")
+    if rate <= 0:
+        raise ValueError(f"Rate must be positive, got {rate}")
+    
+    return np.array([shape - 1, -rate])
+```
+
+## Handling Scalar vs Array Inputs
+
+```python
+def _sufficient_statistics(self, x: ArrayLike) -> NDArray:
+    """Handle both scalar and array inputs consistently."""
+    x = np.asarray(x)
+    
+    if x.ndim == 0 or x.shape == ():
+        # Scalar input → return shape (d,)
+        return np.array([np.log(x), x])
+    else:
+        # Array input → return shape (n, d)
+        return np.column_stack([np.log(x), x])
+```
+
+## Special Cases and Limiting Distributions
+
+Document relationships between distributions using LaTeX:
+
+```python
+class InverseGaussian(ExponentialFamily):
+    """
+    Inverse Gaussian distribution.
+    
+    Special case of GIG with :math:`p = -1/2`.
+    
+    Relationships
+    -------------
+    - :math:`\\text{GIG}(p=-1/2, a, b) \\to \\text{IG}` with :math:`\\mu=\\sqrt{b/a}, \\lambda=b`
+    - As :math:`\\lambda \\to \\infty`, :math:`\\text{IG}(\\mu, \\lambda) \\to N(\\mu, \\mu^3/\\lambda)`
+    """
+```
+
+## Scipy Conversion Methods
+
+When scipy uses different parametrization:
+
+```python
+def to_scipy_params(self) -> Dict[str, float]:
+    """
+    Convert to scipy.stats parametrization.
+    
+    Our $(p, a, b) \\to$ scipy $(p, b_{scipy}, \\text{scale})$:
+    
+    .. math::
+        p_{scipy} = p, \\quad b_{scipy} = \\sqrt{ab}, \\quad \\text{scale} = \\sqrt{b/a}
+    """
+    classical = self.get_classical_params()
+    return {
+        'p': classical['p'],
+        'b': np.sqrt(classical['a'] * classical['b']),
+        'scale': np.sqrt(classical['b'] / classical['a'])
+    }
+
+@classmethod
+def from_scipy_params(cls, p: float, b: float, scale: float = 1.0):
+    """Create from scipy.stats parametrization."""
+    a_ours = b / scale
+    b_ours = b * scale
+    return cls.from_classical_params(p=p, a=a_ours, b=b_ours)
+```
+
+## Mixture Distribution Pattern
+
+For normal mixture distributions ($X|Y \sim \text{Normal}$, $Y \sim$ mixing distribution):
+
+```python
+class JointVarianceGamma(NormalMixtureDistribution):
+    """
+    Joint distribution :math:`f(x, y) = f(x|y) f(y)`.
+    
+    Structure:
+    
+    .. math::
+        X | Y \\sim N(\\mu + \\Gamma Y, \\Sigma Y)
+        
+        Y \\sim \\text{Gamma}(\\alpha, \\beta)
+    
+    Mathematical formulation:
+    
+    .. math::
+        f(x, y) = \\phi(x; \\mu + \\Gamma y, \\Sigma y) \\cdot g(y; \\alpha, \\beta)
+    
+    where :math:`\\phi` is the normal density and :math:`g` is the gamma density.
+    """
+    
+    @property
+    def mixing_distribution_class(self):
+        return Gamma
+    
+    def _compute_conditional_params(self, y: float):
+        """Return mean and cov for :math:`X|Y=y`."""
+        return self.mu + self.gamma * y, self.sigma * y
+```
+
+## Numerical Stability Guidelines
+
+```python
+# ✅ Use log-space for products: log(ab) = log(a) + log(b)
+log_result = log_a + log_b  # Instead of np.log(a * b)
+
+# ✅ Use logsumexp for sums of exponentials: log(e^a + e^b)
+from scipy.special import logsumexp
+log_sum = logsumexp([log_a, log_b])
+
+# ✅ Use log Bessel functions: log K_ν(z)
+from pygh.utils import log_kv
+log_bessel = log_kv(nu, z)  # Instead of np.log(kv(nu, z))
+
+# ✅ Handle edge cases explicitly
+if shape <= 1:
+    return np.inf  # Mean undefined for InvGamma with α ≤ 1
+```
