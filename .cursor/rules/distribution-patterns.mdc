@@ -252,7 +252,7 @@ from scipy.special import logsumexp
 log_sum = logsumexp([log_a, log_b])
 
 # ✅ Use log Bessel functions: log K_ν(z)
-from pygh.utils import log_kv
+from normix.utils import log_kv
 log_bessel = log_kv(nu, z)  # Instead of np.log(kv(nu, z))
 
 # ✅ Handle edge cases explicitly

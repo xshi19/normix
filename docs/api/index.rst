@@ -7,17 +7,17 @@ API Reference
 Base Classes
 ------------
 
-.. automodule:: pygh.base.distribution
+.. automodule:: normix.base.distribution
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.base.exponential_family
+.. automodule:: normix.base.exponential_family
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.base.mixture
+.. automodule:: normix.base.mixture
    :members:
    :undoc-members:
    :show-inheritance:
@@ -25,27 +25,27 @@ Base Classes
 Univariate Distributions
 ------------------------
 
-.. automodule:: pygh.distributions.univariate.exponential
+.. automodule:: normix.distributions.univariate.exponential
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.univariate.gamma
+.. automodule:: normix.distributions.univariate.gamma
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.univariate.inverse_gamma
+.. automodule:: normix.distributions.univariate.inverse_gamma
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.univariate.inverse_gaussian
+.. automodule:: normix.distributions.univariate.inverse_gaussian
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.univariate.generalized_inverse_gaussian
+.. automodule:: normix.distributions.univariate.generalized_inverse_gaussian
    :members:
    :undoc-members:
    :show-inheritance:
@@ -53,7 +53,7 @@ Univariate Distributions
 Multivariate Distributions
 --------------------------
 
-.. automodule:: pygh.distributions.multivariate.normal
+.. automodule:: normix.distributions.multivariate.normal
    :members:
    :undoc-members:
    :show-inheritance:
@@ -61,22 +61,22 @@ Multivariate Distributions
 Mixture Distributions
 ---------------------
 
-.. automodule:: pygh.distributions.mixtures.variance_gamma
+.. automodule:: normix.distributions.mixtures.variance_gamma
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.mixtures.normal_inverse_gamma
+.. automodule:: normix.distributions.mixtures.normal_inverse_gamma
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.mixtures.normal_inverse_gaussian
+.. automodule:: normix.distributions.mixtures.normal_inverse_gaussian
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: pygh.distributions.mixtures.generalized_hyperbolic
+.. automodule:: normix.distributions.mixtures.generalized_hyperbolic
    :members:
    :undoc-members:
    :show-inheritance:
@@ -84,7 +84,7 @@ Mixture Distributions
 Utilities
 ---------
 
-.. automodule:: pygh.utils.bessel
+.. automodule:: normix.utils.bessel
    :members:
    :undoc-members:
    :show-inheritance:

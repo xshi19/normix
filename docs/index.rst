@@ -1,13 +1,13 @@
-pygh Documentation
+normix Documentation
 ==================
 
-**pygh** is a Python package for Generalized Hyperbolic distributions and related distributions,
+**normix** is a Python package for Generalized Hyperbolic distributions and related distributions,
 implemented as exponential families with an sklearn-style API.
 
 Overview
 --------
 
-``pygh`` provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH)
+``normix`` provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH)
 distribution family, including:
 
 - **Univariate distributions**: Exponential, Gamma, Inverse Gamma, Generalized Inverse Gaussian (GIG), Inverse Gaussian
@@ -81,7 +81,7 @@ Quick Example
 
 .. code-block:: python
 
-   from pygh.distributions.univariate import Gamma
+   from normix.distributions.univariate import Gamma
    import numpy as np
 
    # Create distribution from classical parameters

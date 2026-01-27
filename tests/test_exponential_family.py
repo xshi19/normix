@@ -8,7 +8,7 @@ to test the exponential family framework.
 import numpy as np
 import pytest
 
-from pygh.base import ExponentialFamily
+from normix.base import ExponentialFamily
 
 
 # ============================================================

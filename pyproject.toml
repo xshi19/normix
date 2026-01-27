@@ -1,16 +1,16 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "pygh"
+name = "normix"
 version = "0.1.0"
 description = "Python package for Generalized Hyperbolic distributions"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
-    {name = "pygh developers"},
+    {name = "normix developers"},
 ]
 keywords = [
     "statistics",
@@ -29,41 +29,34 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = [
-    "numpy>=1.20.0",
+    "numpy>=2.0.0",
     "scipy>=1.14.0",  # Required for scipy.differentiate (available since 1.14.0)
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "pytest-cov>=3.0",
-    "black>=22.0",
-    "flake8>=4.0",
-    "mypy>=0.950",
+    "pytest>=8.0",
+    "matplotlib>=3.9",
+    "ipykernel>=6.29",
 ]
 docs = [
-    "sphinx>=4.0",
-    "sphinx-rtd-theme>=1.0",
-    "numpydoc>=1.2",
+    "sphinx>=9.0",
+    "sphinx-rtd-theme>=3.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/xshi19/pygh"
-Repository = "https://github.com/xshi19/pygh"
-Documentation = "https://github.com/xshi19/pygh"
-"Bug Tracker" = "https://github.com/xshi19/pygh/issues"
+Homepage = "https://github.com/xshi19/normix"
+Repository = "https://github.com/xshi19/normix"
+Documentation = "https://github.com/xshi19/normix"
+"Bug Tracker" = "https://github.com/xshi19/normix/issues"
 
-[tool.setuptools]
-packages = ["pygh"]
-
-[tool.setuptools.package-data]
-pygh = ["py.typed"]
+[tool.hatch.build.targets.wheel]
+packages = ["normix"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -76,35 +69,19 @@ addopts = [
     "--strict-config",
 ]
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.venv
-  | build
-  | dist
-  | legacy
-)/
-'''
-
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "pygh.legacy.*"
+module = "normix.legacy.*"
 ignore_errors = true
 
 [tool.coverage.run]
-source = ["pygh"]
+source = ["normix"]
 omit = [
     "*/tests/*",
     "*/legacy/*",

@@ -38,7 +38,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional
 
-from pygh.base import ExponentialFamily
+from normix.base import ExponentialFamily
 
 
 class InverseGaussian(ExponentialFamily):

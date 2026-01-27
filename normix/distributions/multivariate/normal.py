@@ -33,7 +33,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Union
 from scipy import stats
 
-from pygh.base import ExponentialFamily
+from normix.base import ExponentialFamily
 
 
 class MultivariateNormal(ExponentialFamily):
@@ -686,7 +686,7 @@ class MultivariateNormal(ExponentialFamily):
         Returns
         -------
         dist : MultivariateNormal
-            pygh distribution.
+            normix distribution.
         """
         return cls.from_classical_params(mu=rv.mean, sigma=rv.cov)
     

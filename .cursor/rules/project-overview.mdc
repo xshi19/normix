@@ -1,19 +1,19 @@
 ---
-description: Project overview, structure, and next steps for pygh - Generalized Hyperbolic distributions
+description: Project overview, structure, and next steps for normix - Generalized Hyperbolic distributions
 alwaysApply: true
 ---
 
-# pygh Project Overview
+# normix Project Overview
 
 ## Purpose
 
-`pygh` is a Python package implementing Generalized Hyperbolic distributions and related distributions as exponential families with sklearn-style API.
+`normix` is a Python package implementing Generalized Hyperbolic distributions and related distributions as exponential families with sklearn-style API.
 
 ## Repository Structure
 
 ```
-pygh/
-├── pygh/
+normix/
+├── normix/
 │   ├── base/
 │   │   ├── distribution.py      # Abstract Distribution base class
 │   │   ├── exponential_family.py # ExponentialFamily base with 3 parametrizations

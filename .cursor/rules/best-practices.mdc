@@ -58,7 +58,7 @@ dist = Distribution().fit(X).score(X_test)
 
 ## Documentation Standards
 
-1. **Use LaTeX for mathematical formulas** with ASCII summary line (pygh + NumPy):
+1. **Use LaTeX for mathematical formulas** with ASCII summary line (normix + NumPy):
 
 ```python
 def _log_partition(self, theta):

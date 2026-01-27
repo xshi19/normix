@@ -42,7 +42,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-from pygh.distributions.univariate import Distribution
+from normix.distributions.univariate import Distribution
 
 # Set plotting style
 plt.style.use('seaborn-v0_8-whitegrid')
@@ -73,20 +73,20 @@ Always validate against scipy:
 
 ```python
 # Compare PDF with scipy
-pygh_dist = Distribution.from_classical_params(...)
+normix_dist = Distribution.from_classical_params(...)
 scipy_dist = stats.scipy_distribution(...)
 
 x = np.linspace(0.01, 10, 200)
 
 plt.figure(figsize=(10, 4))
 plt.subplot(1, 2, 1)
-plt.plot(x, pygh_dist.pdf(x), 'b-', label='pygh', linewidth=2)
+plt.plot(x, normix_dist.pdf(x), 'b-', label='normix', linewidth=2)
 plt.plot(x, scipy_dist.pdf(x), 'r--', label='scipy', linewidth=2)
 plt.title('PDF Comparison')
 plt.legend()
 
 plt.subplot(1, 2, 2)
-plt.plot(x, pygh_dist.cdf(x), 'b-', label='pygh', linewidth=2)
+plt.plot(x, normix_dist.cdf(x), 'b-', label='normix', linewidth=2)
 plt.plot(x, scipy_dist.cdf(x), 'r--', label='scipy', linewidth=2)
 plt.title('CDF Comparison')
 plt.legend()

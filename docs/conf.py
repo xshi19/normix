@@ -1,5 +1,5 @@
 """
-Sphinx configuration file for pygh documentation.
+Sphinx configuration file for normix documentation.
 """
 
 # Configuration file for the Sphinx documentation builder.
@@ -7,9 +7,9 @@ Sphinx configuration file for pygh documentation.
 
 # -- Project information -----------------------------------------------------
 
-project = 'pygh'
-copyright = '2024, pygh developers'
-author = 'pygh developers'
+project = 'normix'
+copyright = '2024, normix developers'
+author = 'normix developers'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0.0'

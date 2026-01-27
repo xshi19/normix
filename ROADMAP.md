@@ -1,4 +1,4 @@
-# pygh Implementation Roadmap
+# normix Implementation Roadmap
 
 ## Overview
 
@@ -9,7 +9,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ## Step 1: Base Classes
 
 ### 1.1 Exponential Family Base Class
-**File:** `pygh/base/exponential_family.py`
+**File:** `normix/base/exponential_family.py`
 
 **Implementation:**
 - Define `ParameterType` enum (CLASSICAL, NATURAL, EXPECTATION)
@@ -30,7 +30,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
     - `score(X, y=None)` - mean log-likelihood
 
 **Utilities needed:**
-- `pygh/utils/validation.py`: `check_positive()`, `check_array_like()`, `check_shape()`
+- `normix/utils/validation.py`: `check_positive()`, `check_array_like()`, `check_shape()`
 
 **Tests:** `tests/test_exponential_family.py`
 - Test with simple exponential distribution
@@ -44,7 +44,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ---
 
 ### 1.2 Mixture Distribution Base Class
-**File:** `pygh/base/mixture.py`
+**File:** `normix/base/mixture.py`
 
 **Implementation:**
 - Implement `NormalMixtureDistribution` abstract base class:
@@ -78,7 +78,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ## Step 2: Simple Univariate Distributions
 
 ### 2.1 Multivariate Normal
-**File:** `pygh/distributions/multivariate/normal.py`
+**File:** `normix/distributions/multivariate/normal.py`
 
 **Implementation:**
 - `MultivariateNormal(ExponentialFamily)`:
@@ -88,7 +88,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
   - Wrap scipy.stats.multivariate_normal
 
 **Utilities needed:**
-- `pygh/utils/validation.py`: `check_square_matrix()`, `check_positive_definite()`
+- `normix/utils/validation.py`: `check_square_matrix()`, `check_positive_definite()`
 
 **Tests:** `tests/test_multivariate_normal.py`
 - Test parameter conversions
@@ -101,7 +101,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ---
 
 ### 2.2 Gamma Distribution
-**File:** `pygh/distributions/univariate/gamma.py`
+**File:** `normix/distributions/univariate/gamma.py`
 
 **Implementation:**
 - `Gamma(ExponentialFamily)`:
@@ -122,7 +122,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ---
 
 ### 2.3 Inverse Gamma Distribution
-**File:** `pygh/distributions/univariate/inverse_gamma.py`
+**File:** `normix/distributions/univariate/inverse_gamma.py`
 
 **Implementation:**
 - `InverseGamma(ExponentialFamily)`:
@@ -142,7 +142,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ## Step 3: Generalized Inverse Gaussian
 
 ### 3.1 GIG Distribution
-**File:** `pygh/distributions/univariate/generalized_inverse_gaussian.py`
+**File:** `normix/distributions/univariate/generalized_inverse_gaussian.py`
 
 **Implementation:**
 - `GIG(ExponentialFamily)`:
@@ -153,11 +153,11 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
   - Fitting methods: MLE, moments, natural gradient
   - Sampling: implement efficient algorithm
   - Properties: mean, var, moment(n), entropy
-- Migrate useful code from `pygh/legacy/gig.py`
+- Migrate useful code from `normix/legacy/gig.py`
 
 **Utilities needed:**
-- `pygh/utils/bessel.py`: Migrate `logkv`, `logkvp`, `kvratio` from `pygh/legacy/func.py`
-- `pygh/utils/numerical.py`: `log_sum_exp()`, `safe_log()`, `safe_div()`
+- `normix/utils/bessel.py`: Migrate `logkv`, `logkvp`, `kvratio` from `normix/legacy/func.py`
+- `normix/utils/numerical.py`: `log_sum_exp()`, `safe_log()`, `safe_div()`
 
 **Tests:** `tests/test_gig.py`
 - All three parameter conversions work correctly
@@ -177,7 +177,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ---
 
 ### 3.2 Inverse Gaussian
-**File:** `pygh/distributions/univariate/inverse_gaussian.py`
+**File:** `normix/distributions/univariate/inverse_gaussian.py`
 
 **Implementation:**
 - `InverseGaussian(GIG)`:
@@ -201,8 +201,8 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 
 ### 4.1 Normal-Gamma (Variance Gamma)
 **Files:**
-- `pygh/distributions/mixtures/joint_variance_gamma.py` (joint f(x,y))
-- `pygh/distributions/mixtures/variance_gamma.py` (marginal f(x))
+- `normix/distributions/mixtures/joint_variance_gamma.py` (joint f(x,y))
+- `normix/distributions/mixtures/variance_gamma.py` (marginal f(x))
 
 **Implementation:**
 - `JointVG`: Joint distribution with X|Y ~ N(μ + γY, σY), Y ~ Gamma
@@ -229,8 +229,8 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 
 ### 4.2 Normal-Inverse Gamma
 **Files:**
-- `pygh/distributions/mixtures/joint_normal_inverse_gamma.py`
-- `pygh/distributions/mixtures/normal_inverse_gamma.py`
+- `normix/distributions/mixtures/joint_normal_inverse_gamma.py`
+- `normix/distributions/mixtures/normal_inverse_gamma.py`
 
 **Implementation:**
 - `JointNInvG` and `NInvG` (similar structure to VG)
@@ -250,8 +250,8 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 
 ### 5.1 NIG Distribution
 **Files:**
-- `pygh/distributions/mixtures/joint_normal_inverse_gaussian.py`
-- `pygh/distributions/mixtures/normal_inverse_gaussian.py`
+- `normix/distributions/mixtures/joint_normal_inverse_gaussian.py`
+- `normix/distributions/mixtures/normal_inverse_gaussian.py`
 
 **Implementation:**
 - `JointNIG`: X|Y ~ N(μ + γY, σY), Y ~ IG
@@ -277,8 +277,8 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 
 ### 6.1 GH Distribution (Final Step)
 **Files:**
-- `pygh/distributions/mixtures/joint_generalized_hyperbolic.py`
-- `pygh/distributions/mixtures/generalized_hyperbolic.py`
+- `normix/distributions/mixtures/joint_generalized_hyperbolic.py`
+- `normix/distributions/mixtures/generalized_hyperbolic.py`
 
 **Implementation:**
 - `JointGH`: X|Y ~ N(μ + ΓY, ΣY), Y ~ GIG(λ, χ, ψ)
@@ -292,7 +292,7 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
     - M-step: update all parameters
   - Parameter regularization methods
   - sklearn-style API
-- Migrate code from `pygh/legacy/gh.py`
+- Migrate code from `normix/legacy/gh.py`
 
 **Utilities needed:**
 - Bessel function ratios for E-step
@@ -320,14 +320,14 @@ Implementation follows a bottom-up approach, starting from the simplest distribu
 ## Step 7: Package Integration
 
 ### 7.1 Main Package Interface
-**File:** `pygh/__init__.py`
+**File:** `normix/__init__.py`
 
 **Implementation:**
 ```python
-from pygh.distributions.univariate import GIG, InverseGaussian, Gamma, InverseGamma
-from pygh.distributions.multivariate import MultivariateNormal
-from pygh.distributions.mixtures import GH, NIG, VG, NInvG
-from pygh.distributions.mixtures import JointGH, JointNIG, JointVG, JointNInvG
+from normix.distributions.univariate import GIG, InverseGaussian, Gamma, InverseGamma
+from normix.distributions.multivariate import MultivariateNormal
+from normix.distributions.mixtures import GH, NIG, VG, NInvG
+from normix.distributions.mixtures import JointGH, JointNIG, JointVG, JointNInvG
 
 __version__ = "1.0.0"
 __all__ = [
@@ -403,9 +403,9 @@ Each step builds on previous ones. Complete one step fully (code + tests + docs)
 ## Migration from Legacy Code
 
 ### Legacy Files (for reference only):
-- `pygh/legacy/gig.py` - Original GIG implementation
-- `pygh/legacy/gh.py` - Original GH implementation
-- `pygh/legacy/func.py` - Original utility functions
+- `normix/legacy/gig.py` - Original GIG implementation
+- `normix/legacy/gh.py` - Original GH implementation
+- `normix/legacy/func.py` - Original utility functions
 
 These files are kept for reference during refactoring. Do not import from legacy in new code.
 
@@ -422,7 +422,7 @@ These files are kept for reference during refactoring. Do not import from legacy
 ## Current Status
 
 - [x] Package structure created
-- [x] Legacy code moved to `pygh/legacy/`
+- [x] Legacy code moved to `normix/legacy/`
 - [x] Step 1: Base classes
   - [x] 1.1 ExponentialFamily base class with three parametrizations
   - [x] 1.2 Mixture base class (partial - needs EM framework)

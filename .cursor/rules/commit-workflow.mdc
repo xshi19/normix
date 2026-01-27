@@ -28,7 +28,7 @@ If new files were added, update `.cursor/rules/project-overview.mdc`:
 ```markdown
 ## Repository Structure
 
-├── pygh/
+├── normix/
 │   ├── distributions/
 │   │   ├── univariate/
 │   │   │   ├── new_distribution.py  # ← ADD NEW FILES
@@ -143,7 +143,7 @@ git status
 git diff
 
 # Stage specific files
-git add pygh/distributions/univariate/new_dist.py
+git add normix/distributions/univariate/new_dist.py
 git add tests/test_distributions_vs_scipy.py
 git add notebooks/new_dist_distribution.ipynb
 git add ROADMAP.md

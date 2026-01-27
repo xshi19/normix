@@ -1,2 +1,2 @@
-"""Test suite for pygh package."""
+"""Test suite for normix package."""
 

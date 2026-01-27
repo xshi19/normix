@@ -1,10 +1,10 @@
-# pygh
+# normix
 
 Python package for Generalized Hyperbolic distributions and related distributions.
 
 ## Overview
 
-`pygh` provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH) distribution family, including:
+`normix` provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH) distribution family, including:
 
 - **Univariate distributions**: Exponential, Gamma, Inverse Gamma, Generalized Inverse Gaussian (GIG), Inverse Gaussian
 - **Multivariate distributions**: Multivariate Normal
@@ -33,12 +33,12 @@ See [Architecture Overview](#architecture-overview) below for the complete packa
 
 ## Legacy Code
 
-The original implementation has been moved to `pygh/legacy/` for reference:
-- `pygh/legacy/gig.py` - Original GIG implementation
-- `pygh/legacy/gh.py` - Original GH implementation
-- `pygh/legacy/func.py` - Original utility functions
+The original implementation has been moved to `normix/legacy/` for reference:
+- `normix/legacy/gig.py` - Original GIG implementation
+- `normix/legacy/gh.py` - Original GH implementation
+- `normix/legacy/func.py` - Original utility functions
 
-**Note:** The legacy code is kept for reference only during the refactoring process. Do not import from `pygh.legacy` in new code. The new implementation provides better API design, numerical stability, and testing.
+**Note:** The legacy code is kept for reference only during the refactoring process. Do not import from `normix.legacy` in new code. The new implementation provides better API design, numerical stability, and testing.
 
 ## Roadmap
 
@@ -59,8 +59,8 @@ See [ROADMAP.md](ROADMAP.md) for the detailed implementation plan.
 ## Architecture Overview
 
 ```
-pygh/
-├── pygh/
+normix/
+├── normix/
 │   ├── __init__.py
 │   │
 │   ├── base/
@@ -174,7 +174,7 @@ pytest tests/
 
 With coverage:
 ```bash
-pytest tests/ --cov=pygh --cov-report=html
+pytest tests/ --cov=normix --cov-report=html
 ```
 
 ## License
@@ -192,10 +192,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 If you use this package in academic work, please cite:
 
 ```bibtex
-@software{pygh,
-  title = {pygh: Generalized Hyperbolic Distributions for Python},
-  author = {pygh developers},
+@software{normix,
+  title = {normix: Generalized Hyperbolic Distributions for Python},
+  author = {normix developers},
   year = {2024},
-  url = {https://github.com/yourusername/pygh}
+  url = {https://github.com/xshi19/normix}
 }
 ```

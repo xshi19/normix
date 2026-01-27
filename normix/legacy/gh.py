@@ -11,8 +11,8 @@ from scipy.optimize import minimize
 from scipy.linalg import solve_triangular
 from scipy.special import kv
 
-from pygh.gig import GIG
-from pygh.func import logkv, kvratio
+from normix.gig import GIG
+from normix.func import logkv, kvratio
 
 
 class GH(object):

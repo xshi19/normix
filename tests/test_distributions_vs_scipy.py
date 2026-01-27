@@ -1,5 +1,5 @@
 """
-Generic test framework for comparing pygh distributions with scipy.
+Generic test framework for comparing normix distributions with scipy.
 
 This module provides a reusable test framework for validating exponential family
 distributions against scipy implementations.
@@ -17,8 +17,8 @@ from scipy import stats
 from typing import Callable, Dict, Any, Tuple
 from scipy.optimize import approx_fprime
 
-from pygh.distributions.univariate import Exponential, Gamma, InverseGamma, GeneralizedInverseGaussian
-from pygh.distributions.multivariate import MultivariateNormal
+from normix.distributions.univariate import Exponential, Gamma, InverseGamma, GeneralizedInverseGaussian
+from normix.distributions.multivariate import MultivariateNormal
 
 
 # ============================================================

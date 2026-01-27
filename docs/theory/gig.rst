@@ -68,7 +68,7 @@ The moments of the GIG distribution have a particularly elegant form:
    \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
    = \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.
 
-This formula is implemented in the :meth:`~pygh.distributions.univariate.GeneralizedInverseGaussian.moment_alpha` method.
+This formula is implemented in the :meth:`~normix.distributions.univariate.GeneralizedInverseGaussian.moment_alpha` method.
 
 Exponential Family Form
 -----------------------
@@ -204,11 +204,11 @@ There are several important special cases of the GIG distribution:
 - **Gamma**: when :math:`p > 0` and :math:`b \to 0`, giving :math:`\text{Gamma}(p, a/2)`
 - **Inverse Gamma**: when :math:`p < 0` and :math:`a \to 0`, giving :math:`\text{InvGamma}(-p, b/2)`
 
-These special cases are implemented as separate classes in ``pygh``:
+These special cases are implemented as separate classes in ``normix``:
 
-- :class:`~pygh.distributions.univariate.InverseGaussian`
-- :class:`~pygh.distributions.univariate.Gamma`
-- :class:`~pygh.distributions.univariate.InverseGamma`
+- :class:`~normix.distributions.univariate.InverseGaussian`
+- :class:`~normix.distributions.univariate.Gamma`
+- :class:`~normix.distributions.univariate.InverseGamma`
 
 References
 ----------

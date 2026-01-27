@@ -35,7 +35,7 @@ are usually called **normal mixture** or **Gaussian mixture** distributions.
 .. note::
 
    In many references, "normal mixture" refers to a discrete mixture of normal
-   densities. In ``pygh``, we use "normal mixture" to refer to any random variable
+   densities. In ``normix``, we use "normal mixture" to refer to any random variable
    that can be expressed by :eq:`gh-def`.
 
 Joint GH Distribution
@@ -280,11 +280,11 @@ Several important distributions are special cases of the GH family:
 - **Student-t**: :math:`p < 0`, :math:`a = 0`, :math:`\gamma = 0`
 - **Hyperbolic**: :math:`p = 1`
 
-These are implemented as separate classes in ``pygh``:
+These are implemented as separate classes in ``normix``:
 
-- :class:`~pygh.distributions.mixtures.NormalInverseGaussian`
-- :class:`~pygh.distributions.mixtures.VarianceGamma`
-- :class:`~pygh.distributions.mixtures.NormalInverseGamma`
+- :class:`~normix.distributions.mixtures.NormalInverseGaussian`
+- :class:`~normix.distributions.mixtures.VarianceGamma`
+- :class:`~normix.distributions.mixtures.NormalInverseGamma`
 
 References
 ----------

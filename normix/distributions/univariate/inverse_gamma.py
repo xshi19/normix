@@ -32,7 +32,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Optional
 from scipy.special import gammaln, digamma, polygamma
 
-from pygh.base import ExponentialFamily
+from normix.base import ExponentialFamily
 
 
 class InverseGamma(ExponentialFamily):

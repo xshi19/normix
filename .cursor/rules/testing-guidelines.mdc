@@ -18,7 +18,7 @@ Every distribution should have a test configuration:
 def get_distribution_config() -> DistributionTestConfig:
     """Get test configuration for Distribution."""
     return DistributionTestConfig(
-        pygh_class=Distribution,
+        normix_class=Distribution,
         scipy_dist=stats.scipy_dist,
         param_converter=lambda p: {'scipy_param': p['our_param']},
         test_params=[
@@ -166,7 +166,7 @@ pytest tests/ -v
 pytest tests/test_distributions_vs_scipy.py::TestGammaVsScipy -v
 
 # Run with coverage
-pytest tests/ --cov=pygh --cov-report=html
+pytest tests/ --cov=normix --cov-report=html
 
 # Run and generate plots (for debugging)
 pytest tests/ -v -s  # -s shows print output

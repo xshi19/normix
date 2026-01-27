@@ -52,8 +52,8 @@ from typing import Optional, Union, List
 from scipy.interpolate import interp1d
 from scipy.special import digamma
 
-from pygh.base import ExponentialFamily
-from pygh.utils import log_kv, log_kv_derivative_z
+from normix.base import ExponentialFamily
+from normix.utils import log_kv, log_kv_derivative_z
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
