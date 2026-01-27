@@ -425,7 +425,7 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] Legacy code moved to `normix/legacy/`
 - [x] Step 1: Base classes
   - [x] 1.1 ExponentialFamily base class with three parametrizations
-  - [x] 1.2 Mixture base class (partial - needs EM framework)
+  - [x] 1.2 Mixture base class with JointNormalMixture and NormalMixture
 - [x] Step 2: Simple univariate distributions
   - [x] 2.1 Multivariate Normal (exponential family form)
   - [x] 2.2 Gamma distribution
@@ -434,14 +434,21 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] Step 3: GIG and IG
   - [x] 3.1 Generalized Inverse Gaussian (GIG)
   - [x] 3.2 Inverse Gaussian (IG)
-- [ ] Step 4: Simple mixtures (VG, NInvG)
-- [ ] Step 5: NIG
+- [x] Step 4: Simple mixtures (VG, NInvG)
+  - [x] 4.1 Variance Gamma (JointVarianceGamma, VarianceGamma)
+  - [x] 4.2 Normal-Inverse Gamma (JointNormalInverseGamma, NormalInverseGamma)
+- [x] Step 5: NIG
+  - [x] 5.1 Joint Normal Inverse Gaussian (JointNormalInverseGaussian)
+  - [x] 5.2 Normal Inverse Gaussian marginal (NormalInverseGaussian)
 - [ ] Step 6: GH
 - [ ] Step 7: Package integration
 
 ### Tests Completed
 - [x] `tests/test_exponential_family.py` - Base class tests
 - [x] `tests/test_distributions_vs_scipy.py` - Generic scipy comparison framework
+- [x] `tests/test_variance_gamma.py` - Variance Gamma tests
+- [x] `tests/test_normal_inverse_gamma.py` - Normal Inverse Gamma tests
+- [x] `tests/test_normal_inverse_gaussian.py` - Normal Inverse Gaussian tests
 
 ### Notebooks Completed
 - [x] `notebooks/exponential_distribution.ipynb`
@@ -450,5 +457,6 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] `notebooks/inverse_gaussian_distribution.ipynb`
 - [x] `notebooks/generalized_inverse_gaussian_distribution.ipynb`
 - [x] `notebooks/multivariate_normal_distribution.ipynb`
+- [x] `notebooks/variance_gamma_distribution.ipynb`
 
-**Next action:** Implement Step 4 - Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
+**Next action:** Implement Step 6 - Generalized Hyperbolic distribution (the most general case)

@@ -30,11 +30,14 @@ normix/
 │   │   ├── multivariate/
 │   │   │   └── normal.py        # ✓ Complete
 │   │   │
-│   │   └── mixtures/            # Pending implementation
-│   │       ├── variance_gamma.py
-│   │       ├── normal_inverse_gamma.py
-│   │       ├── normal_inverse_gaussian.py
-│   │       └── generalized_hyperbolic.py
+│   │   └── mixtures/
+│   │       ├── variance_gamma.py              # ✓ Complete
+│   │       ├── joint_variance_gamma.py        # ✓ Complete
+│   │       ├── normal_inverse_gamma.py        # ✓ Complete
+│   │       ├── joint_normal_inverse_gamma.py  # ✓ Complete
+│   │       ├── normal_inverse_gaussian.py     # ✓ Complete
+│   │       ├── joint_normal_inverse_gaussian.py # ✓ Complete
+│   │       └── generalized_hyperbolic.py      # Pending
 │   │
 │   ├── utils/
 │   │   └── bessel.py            # Bessel function utilities (log_kv, etc.)
@@ -43,7 +46,10 @@ normix/
 │
 ├── tests/
 │   ├── test_exponential_family.py
-│   └── test_distributions_vs_scipy.py
+│   ├── test_distributions_vs_scipy.py
+│   ├── test_variance_gamma.py
+│   ├── test_normal_inverse_gamma.py
+│   └── test_normal_inverse_gaussian.py
 │
 ├── notebooks/                   # Jupyter notebooks with visualizations
 │
@@ -52,16 +58,16 @@ normix/
 └── ROADMAP.md                   # Implementation roadmap
 ```
 
-## Current Status (Updated: 2026-01-24)
+## Current Status (Updated: 2026-01-27)
 
 **Completed:**
-- Step 1: Base classes (ExponentialFamily with 3 parametrizations)
+- Step 1: Base classes (ExponentialFamily with 3 parametrizations, NormalMixture base)
 - Step 2: Simple univariate distributions (Exponential, Gamma, InverseGamma)
 - Step 3: GIG and Inverse Gaussian
-
-**Next Steps:**
 - Step 4: Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
 - Step 5: Normal-Inverse Gaussian (NIG)
+
+**Next Steps:**
 - Step 6: Generalized Hyperbolic (GH) - the final goal
 
 ## Key Architectural Decisions
