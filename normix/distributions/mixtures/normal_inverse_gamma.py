@@ -166,9 +166,9 @@ class NormalInverseGamma(NormalMixture):
         # Constants
         gamma_quad = gamma @ Lambda @ gamma
 
-        # Log normalizing constant
+        # Log normalizing constant (without log(2) - that comes from the GIG integral)
         _, logdet_Sigma = np.linalg.slogdet(Sigma)
-        log_C = (np.log(2) - 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
+        log_C = (- 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
                  - gammaln(alpha) + alpha * np.log(beta))
 
         # Order of Bessel function
@@ -216,17 +216,16 @@ class NormalInverseGamma(NormalMixture):
             # Handle the case where a_gig ≈ 0 (symmetric case)
             if a_gig < 1e-12:
                 # Symmetric case: reduces to Student-t like
-                # f(x) ∝ (b_gig)^{-α} Γ(α)
-                # Actually for a → 0 in GIG:
-                # K_p(√(ab)) / (a/b)^{p/2} → Γ(|p|) (b/2)^{|p|} / 2 for p < 0
-                #                          → Γ(p) (2/b)^p for p > 0
+                # For a → 0 in GIG with p < 0:
+                # ∫ y^{p-1} exp(-b/(2y)) dy = (b/2)^p × Γ(-p)
                 
                 p_gig = -(alpha + d / 2)
                 
                 if p_gig < 0:
-                    # For negative p, use the asymptotic for small a
-                    # The integral ∫ y^{p-1} exp(-b/(2y)) dy = 2 (2/b)^p Γ(-p)
-                    log_integral = np.log(2) + (-p_gig) * np.log(2.0 / b_gig) + gammaln(-p_gig)
+                    # For negative p, the integral is (b/2)^p × Γ(-p)
+                    # log_integral = p × log(b/2) + log Γ(-p)
+                    #              = (-p) × log(2/b) + log Γ(-p)
+                    log_integral = (-p_gig) * np.log(2.0 / b_gig) + gammaln(-p_gig)
                 else:
                     # This shouldn't happen for typical α > 0
                     logpdf[i] = -np.inf

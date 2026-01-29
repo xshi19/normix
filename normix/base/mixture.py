@@ -326,7 +326,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # Handle single vs multiple observations
         if t_xy.ndim == 1:
-            return float(log_h + np.dot(theta, t_xy) - psi)
+            log_h_scalar = float(log_h) if np.ndim(log_h) == 0 else float(log_h.flat[0])
+            return log_h_scalar + np.dot(theta, t_xy) - psi
         else:
             return log_h + t_xy @ theta - psi
 
