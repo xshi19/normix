@@ -12,6 +12,8 @@ Joint distributions :math:`f(x, y)` are exponential families.
 Marginal distributions :math:`f(x)` are NOT exponential families.
 
 Available distributions:
+- GeneralizedHyperbolic: Y ~ GIG (most general case)
+- JointGeneralizedHyperbolic: Joint distribution for Generalized Hyperbolic
 - VarianceGamma: Y ~ Gamma (special case of GH with b → 0)
 - JointVarianceGamma: Joint distribution for Variance Gamma
 - NormalInverseGamma: Y ~ InverseGamma (special case of GH with a → 0)
@@ -20,6 +22,15 @@ Available distributions:
 - JointNormalInverseGaussian: Joint distribution for Normal Inverse Gaussian
 """
 
+from .generalized_hyperbolic import (
+    GeneralizedHyperbolic,
+    REGULARIZATION_METHODS,
+    regularize_det_sigma_one,
+    regularize_sigma_diagonal_one,
+    regularize_fix_p,
+    regularize_none,
+)
+from .joint_generalized_hyperbolic import JointGeneralizedHyperbolic
 from .variance_gamma import VarianceGamma
 from .joint_variance_gamma import JointVarianceGamma
 from .normal_inverse_gamma import NormalInverseGamma
@@ -28,6 +39,13 @@ from .normal_inverse_gaussian import NormalInverseGaussian
 from .joint_normal_inverse_gaussian import JointNormalInverseGaussian
 
 __all__ = [
+    "GeneralizedHyperbolic",
+    "JointGeneralizedHyperbolic",
+    "REGULARIZATION_METHODS",
+    "regularize_det_sigma_one",
+    "regularize_sigma_diagonal_one",
+    "regularize_fix_p",
+    "regularize_none",
     "VarianceGamma",
     "JointVarianceGamma",
     "NormalInverseGamma",

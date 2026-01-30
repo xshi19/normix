@@ -114,9 +114,17 @@ def plot_joint_distribution_1d(
     # Right marginal: Y histogram and PDF
     ax_right.hist(Y_samples, bins=50, density=True, alpha=0.7, color='steelblue',
                   orientation='horizontal')
-    # Compute marginal Y PDF by integrating joint over X
-    y_pdf = np.sum(Z, axis=1) * (x_range[1] - x_range[0])
-    y_pdf = y_pdf / np.trapezoid(y_pdf, y_range)  # Normalize
+    # Use actual mixing distribution PDF (more accurate than numerical integration)
+    try:
+        theta = joint_dist.get_natural_params()
+        mixing_theta = joint_dist._get_mixing_natural_params(theta)
+        mixing_class = joint_dist._get_mixing_distribution_class()
+        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        y_pdf = mixing_dist.pdf(y_range)
+    except (AttributeError, TypeError):
+        # Fallback to numerical integration if mixing distribution not accessible
+        y_pdf = np.sum(Z, axis=1) * (x_range[1] - x_range[0])
+        y_pdf = y_pdf / np.trapezoid(y_pdf, y_range)  # Normalize
     ax_right.plot(y_pdf, y_range, 'r-', linewidth=2, label='PDF')
     ax_right.set_xlabel('Density', fontsize=10)
     ax_right.tick_params(labelleft=False)
@@ -357,7 +365,8 @@ def fit_and_track_convergence(
     X_data: np.ndarray,
     max_iter: int = 100,
     tol: float = 1e-6,
-    random_state: int = 42
+    random_state: int = 42,
+    **fit_kwargs
 ) -> Tuple[Any, EMConvergenceResult]:
     """
     Fit marginal distribution with EM and track convergence.
@@ -374,6 +383,9 @@ def fit_and_track_convergence(
         Convergence tolerance
     random_state : int
         Random seed
+    **fit_kwargs
+        Additional keyword arguments passed to fit() method
+        (e.g., regularization='det_sigma_one' for GeneralizedHyperbolic)
         
     Returns
     -------
@@ -417,7 +429,7 @@ def fit_and_track_convergence(
     sys.stdout = buffer = io.StringIO()
     
     try:
-        dist.fit(X, max_iter=max_iter, tol=tol, verbose=2, random_state=random_state)
+        dist.fit(X, max_iter=max_iter, tol=tol, verbose=2, random_state=random_state, **fit_kwargs)
     finally:
         sys.stdout = old_stdout
     
@@ -455,21 +467,45 @@ def fit_and_track_convergence(
 def plot_em_convergence(
     convergence: EMConvergenceResult,
     title: str = "EM Algorithm Convergence",
-    figsize: Tuple[int, int] = (10, 5)
+    figsize: Tuple[int, int] = (10, 5),
+    true_ll: Optional[float] = None
 ) -> plt.Figure:
-    """Plot EM algorithm convergence."""
+    """
+    Plot EM algorithm convergence.
+    
+    Parameters
+    ----------
+    convergence : EMConvergenceResult
+        Convergence tracking result from fit_and_track_convergence.
+    title : str
+        Plot title.
+    figsize : tuple
+        Figure size.
+    true_ll : float, optional
+        Log-likelihood under true parameters. If provided, plotted as
+        a horizontal reference line. The fitted LL should be >= true LL
+        since MLE maximizes likelihood.
+    """
     fig, ax = plt.subplots(figsize=figsize)
     
-    ax.plot(convergence.iterations, convergence.log_likelihoods, 'b-o', linewidth=2, markersize=4)
+    ax.plot(convergence.iterations, convergence.log_likelihoods, 'b-o', linewidth=2, markersize=4,
+            label='Fitted LL')
+    
+    # Plot true parameter log-likelihood as reference
+    if true_ll is not None:
+        ax.axhline(y=true_ll, color='green', linestyle='--', linewidth=2, 
+                   label=f'True params LL = {true_ll:.4f}')
+    
     ax.set_xlabel('Iteration', fontsize=12)
     ax.set_ylabel('Log-likelihood', fontsize=12)
     ax.set_title(title, fontsize=14)
     ax.grid(True, alpha=0.3)
+    ax.legend(loc='lower right', fontsize=10)
     
     # Add convergence annotation
     status = "Converged" if convergence.converged else "Not converged"
-    ax.annotate(status, xy=(0.98, 0.02), xycoords='axes fraction',
-                ha='right', va='bottom', fontsize=11,
+    ax.annotate(status, xy=(0.98, 0.98), xycoords='axes fraction',
+                ha='right', va='top', fontsize=11,
                 color='green' if convergence.converged else 'red')
     
     plt.tight_layout()

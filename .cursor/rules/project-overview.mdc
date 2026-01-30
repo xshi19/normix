@@ -37,7 +37,8 @@ normix/
 │   │       ├── joint_normal_inverse_gamma.py  # ✓ Complete
 │   │       ├── normal_inverse_gaussian.py     # ✓ Complete
 │   │       ├── joint_normal_inverse_gaussian.py # ✓ Complete
-│   │       └── generalized_hyperbolic.py      # Pending
+│   │       ├── generalized_hyperbolic.py      # ✓ Complete (with regularization)
+│   │       └── joint_generalized_hyperbolic.py # ✓ Complete
 │   │
 │   ├── utils/
 │   │   └── bessel.py            # Bessel function utilities (log_kv, etc.)
@@ -49,7 +50,8 @@ normix/
 │   ├── test_distributions_vs_scipy.py
 │   ├── test_variance_gamma.py
 │   ├── test_normal_inverse_gamma.py
-│   └── test_normal_inverse_gaussian.py
+│   ├── test_normal_inverse_gaussian.py
+│   └── test_generalized_hyperbolic.py
 │
 ├── notebooks/                   # Jupyter notebooks with visualizations
 │
@@ -66,9 +68,10 @@ normix/
 - Step 3: GIG and Inverse Gaussian
 - Step 4: Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
 - Step 5: Normal-Inverse Gaussian (NIG)
+- Step 6: Generalized Hyperbolic (GH) with EM algorithm and parameter regularization
 
 **Next Steps:**
-- Step 6: Generalized Hyperbolic (GH) - the final goal
+- Step 7: Package integration (clean public API, documentation, examples)
 
 ## Key Architectural Decisions
 

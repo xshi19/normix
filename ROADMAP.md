@@ -440,7 +440,11 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] Step 5: NIG
   - [x] 5.1 Joint Normal Inverse Gaussian (JointNormalInverseGaussian)
   - [x] 5.2 Normal Inverse Gaussian marginal (NormalInverseGaussian)
-- [ ] Step 6: GH
+- [x] Step 6: GH
+  - [x] 6.1 Joint Generalized Hyperbolic (JointGeneralizedHyperbolic)
+  - [x] 6.2 Generalized Hyperbolic marginal (GeneralizedHyperbolic)
+  - [x] Parameter regularization methods for EM fitting
+  - [x] Special case constructors (as_variance_gamma, as_normal_inverse_gaussian, as_normal_inverse_gamma)
 - [ ] Step 7: Package integration
 
 ### Tests Completed
@@ -449,6 +453,7 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] `tests/test_variance_gamma.py` - Variance Gamma tests
 - [x] `tests/test_normal_inverse_gamma.py` - Normal Inverse Gamma tests
 - [x] `tests/test_normal_inverse_gaussian.py` - Normal Inverse Gaussian tests
+- [x] `tests/test_generalized_hyperbolic.py` - Generalized Hyperbolic tests
 
 ### Notebooks Completed
 - [x] `notebooks/exponential_distribution.ipynb`
@@ -458,5 +463,9 @@ These files are kept for reference during refactoring. Do not import from legacy
 - [x] `notebooks/generalized_inverse_gaussian_distribution.ipynb`
 - [x] `notebooks/multivariate_normal_distribution.ipynb`
 - [x] `notebooks/variance_gamma_distribution.ipynb`
+- [x] `notebooks/normal_inverse_gamma_distribution.ipynb`
+- [x] `notebooks/normal_inverse_gaussian_distribution.ipynb`
+- [x] `notebooks/generalized_hyperbolic_distribution.ipynb`
+- [x] `notebooks/mixture_distributions_comparison.ipynb`
 
-**Next action:** Implement Step 6 - Generalized Hyperbolic distribution (the most general case)
+**Next action:** Implement Step 7 - Package integration (clean public API, documentation, examples)
