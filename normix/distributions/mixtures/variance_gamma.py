@@ -179,9 +179,19 @@ class VarianceGamma(NormalMixture):
             # Mahalanobis distance squared
             q = diff @ Lambda @ diff
 
-            # Avoid log(0)
-            if q <= 0:
-                logpdf[i] = -np.inf
+            # Linear term: (x-μ)^T Λ γ
+            linear = diff @ Lambda @ gamma
+
+            # Handle q = 0 case (x = μ) specially
+            # As q→0, (q/(2c))^{ν/2} * K_ν(√(2qc)) → Γ(ν) * 2^{ν-1} / (2c)^ν for ν > 0
+            if q <= 1e-14:
+                if nu > 0:
+                    # Limit: log C + log(Γ(ν) * 2^{ν-1} / (2c)^ν) + linear
+                    logpdf[i] = (log_C + gammaln(nu) + (nu - 1) * np.log(2) 
+                                 - nu * np.log(2.0 * c) + linear)
+                else:
+                    # For ν ≤ 0, the PDF diverges at q=0
+                    logpdf[i] = np.inf if nu < 0 else -np.inf
                 continue
 
             # Bessel function argument: sqrt(2 * q * c)
@@ -189,9 +199,6 @@ class VarianceGamma(NormalMixture):
 
             # Log Bessel K
             log_K = log_kv(nu, z)
-
-            # Linear term
-            linear = diff @ Lambda @ gamma
 
             # Combine: log C + (ν/2) log(q/(2c)) + log K_ν(z) + linear
             logpdf[i] = (log_C + 0.5 * nu * np.log(q / (2.0 * c)) + log_K + linear)
