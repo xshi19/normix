@@ -36,6 +36,7 @@ classifiers = [
 dependencies = [
     "numpy>=2.0.0",
     "scipy>=1.14.0",  # Required for scipy.differentiate (available since 1.14.0)
+    "yfinance>=1.1.0",
 ]
 
 [project.optional-dependencies]
