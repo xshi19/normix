@@ -38,6 +38,8 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+from scipy.linalg import solve as scipy_solve
+
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGaussian
 from normix.utils import log_kv
@@ -142,24 +144,18 @@ class JointNormalInverseGaussian(JointNormalMixture):
         """
         d = self.d
 
-        # Extract components
+        # Extract scalar components
         theta_2 = theta[1]  # -(b + 1/2 μ^T Λ μ)
         theta_3 = theta[2]  # -(a + 1/2 γ^T Λ γ)
         theta_4 = theta[3:3 + d]  # Λγ
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
+        # Get normal params using helper
+        _, _, mu_vec, gamma_vec = self._extract_normal_params_from_theta(theta)
 
-        # Recover μ and γ
-        mu_vec = Sigma @ theta_5
-        gamma_vec = Sigma @ theta_4
-
-        # Recover GIG parameters a and b
-        mu_quad = 0.5 * mu_vec @ Lambda @ mu_vec
-        gamma_quad = 0.5 * gamma_vec @ Lambda @ gamma_vec
+        # Recover GIG parameters a and b using simplified quadratic forms
+        mu_quad = 0.5 * (mu_vec @ theta_5)
+        gamma_quad = 0.5 * (gamma_vec @ theta_4)
         
         b = -theta_2 - mu_quad  # b = η
         a = -theta_3 - gamma_quad  # a = η / δ²
@@ -180,40 +176,6 @@ class JointNormalInverseGaussian(JointNormalMixture):
         theta_ig_2 = -eta / 2
 
         return np.array([theta_ig_1, theta_ig_2])
-
-    def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
-        """
-        Extract normal distribution parameters :math:`(\\mu, \\gamma, \\Sigma)` from joint natural params.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector.
-
-        Returns
-        -------
-        mu : ndarray
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : ndarray
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        Sigma : ndarray
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        """
-        d = self.d
-
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
-        return mu, gamma, Sigma
 
     # ========================================================================
     # Natural parameter support
@@ -311,8 +273,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
         if eta <= 0:
             raise ValueError(f"Eta must be positive, got {eta}")
 
-        # Compute precision matrix
-        Lambda = np.linalg.inv(sigma)
+        # Compute precision matrix (Σ is positive definite)
+        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
 
         # GIG parameters for IG(δ, η): p = -1/2, a = η/δ², b = η
         p = -0.5
@@ -351,28 +313,20 @@ class JointNormalInverseGaussian(JointNormalMixture):
         params : dict
             Dictionary with keys: mu, gamma, sigma, delta, eta.
         """
-        d = self.d
-
-        # Extract components
+        # Extract scalar components
         theta_2 = theta[1]
         theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
+        theta_4 = theta[3:3 + self.d]  # Λγ
+        theta_5 = theta[3 + self.d:3 + 2 * self.d]  # Λμ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        # Symmetrize for numerical stability
-        Lambda = (Lambda + Lambda.T) / 2
-        Sigma = np.linalg.inv(Lambda)
+        # Get normal params using helper (with symmetrization)
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
+            theta, symmetrize=True
+        )
 
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
-        # Recover a and b
-        mu_quad = 0.5 * mu @ Lambda @ mu
-        gamma_quad = 0.5 * gamma @ Lambda @ gamma
+        # Recover a and b using simplified quadratic forms
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
         
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
@@ -422,29 +376,23 @@ class JointNormalInverseGaussian(JointNormalMixture):
         """
         d = self.d
 
-        # Extract and recover classical parameters
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Lambda = (Lambda + Lambda.T) / 2
-
-        # Log determinant of Σ = -log|Λ|
-        _, logdet_Lambda = np.linalg.slogdet(Lambda)
-        log_det_Sigma = -logdet_Lambda
-
-        # Recover classical parameters
-        Sigma = np.linalg.inv(Lambda)
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
+        # Extract scalar components
         theta_2 = theta[1]
         theta_3 = theta[2]
-        
-        mu_quad = 0.5 * mu @ Lambda @ mu
-        gamma_quad = 0.5 * gamma @ Lambda @ gamma
+        theta_4 = theta[3:3 + d]  # Λγ
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
+
+        # Get normal params using Cholesky (more efficient for log determinant)
+        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(
+            theta, symmetrize=True
+        )
+
+        # Log determinant of Σ = -log|Λ|
+        log_det_Sigma = -log_det_Lambda
+
+        # Recover a and b using simplified quadratic forms
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
         
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
@@ -467,8 +415,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
         # log K_{-1/2}(z) = log(√(π/(2z))) - z = 0.5*log(π/(2z)) - z
         log_K = 0.5 * np.log(np.pi / (2 * sqrt_ab)) - sqrt_ab
 
-        # Compute μ^T Λ γ = θ₅^T Σ θ₄
-        mu_Lambda_gamma = theta_5 @ Sigma @ theta_4
+        # Compute μ^T Λ γ = μ^T θ₄ (since Λγ = θ₄)
+        mu_Lambda_gamma = mu @ theta_4
 
         # Log partition
         # psi = 0.5 * log|Σ| + log(2) + log K_p(η) + (p/2) log(b/a) + μ^T Λ γ

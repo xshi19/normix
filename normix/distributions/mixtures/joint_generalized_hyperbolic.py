@@ -37,6 +37,8 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+from scipy.linalg import solve as scipy_solve
+
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import GeneralizedInverseGaussian
 from normix.utils import log_kv
@@ -147,65 +149,27 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         d = self.d
 
-        # Extract components
+        # Extract scalar components
         theta_1 = theta[0]  # p - 1 - d/2
         theta_2 = theta[1]  # -(b + 1/2 μ^T Λ μ)
         theta_3 = theta[2]  # -(a + 1/2 γ^T Λ γ)
         theta_4 = theta[3:3 + d]  # Λγ
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
+        # Get normal params using helper
+        _, _, mu, gamma = self._extract_normal_params_from_theta(theta)
 
         # Recover p, a, b
+        # Note: Since Λμ = θ₅ and Λγ = θ₄, we simplify:
+        #   μ^T Λ μ = μ^T θ₅  and  γ^T Λ γ = γ^T θ₄
         p_minus_1 = theta_1 + d / 2  # p - 1
-        mu_quad = 0.5 * mu @ Lambda @ mu
-        gamma_quad = 0.5 * gamma @ Lambda @ gamma
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
 
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
 
         return np.array([p_minus_1, -b / 2, -a / 2])
-
-    def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
-        """
-        Extract normal distribution parameters :math:`(\\mu, \\gamma, \\Sigma)` from joint natural params.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector.
-
-        Returns
-        -------
-        mu : ndarray
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : ndarray
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        Sigma : ndarray
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        """
-        d = self.d
-
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
-        return mu, gamma, Sigma
 
     # ========================================================================
     # Natural parameter support
@@ -304,8 +268,9 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         if b <= 0:
             raise ValueError(f"Parameter 'b' must be positive, got {b}")
 
-        # Compute precision matrix
-        Lambda = np.linalg.inv(sigma)
+        # Compute precision matrix (Σ is positive definite)
+        # Solves Σ @ Λ = I for Λ using Cholesky decomposition
+        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
 
         # Natural parameters
         theta_1 = p - 1 - d / 2
@@ -341,30 +306,25 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         d = self.d
 
-        # Extract components
+        # Extract scalar components
         theta_1 = theta[0]
         theta_2 = theta[1]
         theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
+        theta_4 = theta[3:3 + d]  # Λγ
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        # Symmetrize for numerical stability
-        Lambda = (Lambda + Lambda.T) / 2
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
+        # Get normal params using helper (with symmetrization for stability)
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
+            theta, symmetrize=True
+        )
 
         # Recover p
         p = theta_1 + 1 + d / 2
 
-        # Recover a and b
-        mu_quad = 0.5 * mu @ Lambda @ mu
-        gamma_quad = 0.5 * gamma @ Lambda @ gamma
+        # Recover a and b using simplified quadratic forms:
+        # μ^T Λ μ = μ^T θ₅  and  γ^T Λ γ = γ^T θ₄
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
 
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
@@ -402,31 +362,25 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         d = self.d
 
-        # Extract and recover classical parameters
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Lambda = (Lambda + Lambda.T) / 2
-
-        # Log determinant of Σ = -log|Λ|
-        _, logdet_Lambda = np.linalg.slogdet(Lambda)
-        log_det_Sigma = -logdet_Lambda
-
-        # Recover classical parameters
-        Sigma = np.linalg.inv(Lambda)
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
+        # Extract scalar components
         theta_1 = theta[0]
         theta_2 = theta[1]
         theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]  # Λγ
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
+        # Get normal params using Cholesky (more efficient for log determinant)
+        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(
+            theta, symmetrize=True
+        )
+
+        # Log determinant of Σ = -log|Λ|
+        log_det_Sigma = -log_det_Lambda
+
+        # Recover p, a, b using simplified quadratic forms
         p = theta_1 + 1 + d / 2
-        mu_quad = 0.5 * mu @ Lambda @ mu
-        gamma_quad = 0.5 * gamma @ Lambda @ gamma
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
 
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
@@ -435,8 +389,8 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         sqrt_ab = np.sqrt(a * b)
         log_K_p = log_kv(p, sqrt_ab)
 
-        # Compute μ^T Λ γ = θ₅^T Σ θ₄
-        mu_Lambda_gamma = theta_5 @ Sigma @ theta_4
+        # Compute μ^T Λ γ = μ^T θ₄ (since Λγ = θ₄)
+        mu_Lambda_gamma = mu @ theta_4
 
         # Log partition
         psi = (0.5 * log_det_Sigma + np.log(2) + log_K_p +

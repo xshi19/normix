@@ -33,6 +33,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+from scipy.linalg import solve as scipy_solve
 from scipy.special import gammaln, digamma, polygamma
 
 from normix.base import JointNormalMixture, ExponentialFamily
@@ -129,59 +130,20 @@ class JointNormalInverseGamma(JointNormalMixture):
         """
         d = self.d
 
-        # Extract components
+        # Extract scalar components
         theta_1 = theta[0]  # -(α + 1) - d/2
         theta_2 = theta[1]  # -(β + 1/2 μ^T Λ μ)
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
+        # Get normal params using helper
+        _, _, mu, _ = self._extract_normal_params_from_theta(theta)
 
-        # Recover μ
-        mu = Sigma @ theta_5
-
-        # Recover α and β
+        # Recover α and β using simplified quadratic form: μ^T Λ μ = μ^T θ₅
         neg_alpha_plus_1 = theta_1 + d / 2  # -(α + 1)
-        mu_quad = 0.5 * mu @ Lambda @ mu
+        mu_quad = 0.5 * (mu @ theta_5)
         beta = -theta_2 - mu_quad
 
         return np.array([beta, neg_alpha_plus_1])
-
-    def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
-        """
-        Extract normal distribution parameters :math:`(\\mu, \\gamma, \\Sigma)` from joint natural params.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector.
-
-        Returns
-        -------
-        mu : ndarray
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : ndarray
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        Sigma : ndarray
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        """
-        d = self.d
-
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
-
-        return mu, gamma, Sigma
 
     # ========================================================================
     # Natural parameter support
@@ -278,8 +240,8 @@ class JointNormalInverseGamma(JointNormalMixture):
         if beta <= 0:
             raise ValueError(f"Rate must be positive, got {beta}")
 
-        # Compute precision matrix
-        Lambda = np.linalg.inv(sigma)
+        # Compute precision matrix (Σ is positive definite)
+        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
 
         # Natural parameters
         # For InvGamma mixing: coefficient of log(y) is -(α+1) from f(y) 
@@ -322,29 +284,21 @@ class JointNormalInverseGamma(JointNormalMixture):
         """
         d = self.d
 
-        # Extract components
+        # Extract scalar components
         theta_1 = theta[0]
         theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        # Symmetrize for numerical stability
-        Lambda = (Lambda + Lambda.T) / 2
-        Sigma = np.linalg.inv(Lambda)
-
-        # Recover μ and γ
-        mu = Sigma @ theta_5
-        gamma = Sigma @ theta_4
+        # Get normal params using helper (with symmetrization)
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
+            theta, symmetrize=True
+        )
 
         # Recover α: θ₁ = -(α+1) - d/2, so α = -(θ₁ + d/2) - 1
         alpha = -(theta_1 + d / 2) - 1
 
-        # Recover β: θ₂ = -(β + 1/2 μ^T Λ μ)
-        mu_quad = 0.5 * mu @ Lambda @ mu
+        # Recover β using simplified quadratic form: μ^T Λ μ = μ^T θ₅
+        mu_quad = 0.5 * (mu @ theta_5)
         beta = -theta_2 - mu_quad
 
         return {
@@ -379,34 +333,29 @@ class JointNormalInverseGamma(JointNormalMixture):
         """
         d = self.d
 
-        # Extract and recover classical parameters
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        # Recover Λ and Σ
-        Lambda = -2 * theta_6
-        Lambda = (Lambda + Lambda.T) / 2
-
-        # Log determinant of Σ = -log|Λ|
-        _, logdet_Lambda = np.linalg.slogdet(Lambda)
-        log_det_Sigma = -logdet_Lambda
-
-        # Recover α and β from theta
+        # Extract scalar components
         theta_1 = theta[0]
         theta_2 = theta[1]
+        theta_4 = theta[3:3 + d]  # Λγ
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
+        # Get normal params using Cholesky (more efficient for log determinant)
+        _, log_det_Lambda, mu, _ = self._extract_normal_params_with_cholesky(
+            theta, symmetrize=True
+        )
+
+        # Log determinant of Σ = -log|Λ|
+        log_det_Sigma = -log_det_Lambda
+
+        # Recover α
         alpha = -(theta_1 + d / 2) - 1
 
-        # Recover Σ for computing β
-        Sigma = np.linalg.inv(Lambda)
-        mu = Sigma @ theta_5
-
-        mu_quad = 0.5 * mu @ Lambda @ mu
+        # Recover β using simplified quadratic form
+        mu_quad = 0.5 * (mu @ theta_5)
         beta = -theta_2 - mu_quad
 
-        # Compute μ^T Λ γ = θ₅^T Σ θ₄
-        mu_Lambda_gamma = theta_5 @ Sigma @ theta_4
+        # Compute μ^T Λ γ = μ^T θ₄ (since Λγ = θ₄)
+        mu_Lambda_gamma = mu @ theta_4
 
         # Log partition
         psi = 0.5 * log_det_Sigma + gammaln(alpha) - alpha * np.log(beta) + mu_Lambda_gamma

@@ -39,6 +39,8 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from scipy.linalg import cholesky, cho_solve, solve_triangular
+
 from .distribution import Distribution
 from .exponential_family import ExponentialFamily
 
@@ -142,10 +144,148 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         pass
 
-    @abstractmethod
+    # ========================================================================
+    # Helper methods for parameter extraction (shared across all subclasses)
+    # ========================================================================
+
+    def _extract_normal_params_from_theta(
+        self, theta: NDArray, *, symmetrize: bool = False
+    ) -> Tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Extract normal distribution parameters from natural parameter vector.
+
+        This helper method centralizes the common calculation of extracting
+        :math:`(\\Lambda, \\Sigma, \\mu, \\gamma)` from the natural parameters,
+        avoiding code duplication across multiple methods.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Full natural parameter vector.
+        symmetrize : bool, optional
+            Whether to symmetrize Lambda for numerical stability.
+            Default is False.
+
+        Returns
+        -------
+        Lambda : ndarray
+            Precision matrix :math:`\\Lambda = \\Sigma^{-1}`, shape (d, d).
+        Sigma : ndarray
+            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
+        mu : ndarray
+            Location parameter :math:`\\mu`, shape (d,).
+        gamma : ndarray
+            Skewness parameter :math:`\\gamma`, shape (d,).
+
+        Notes
+        -----
+        This method delegates to :meth:`_extract_normal_params_with_cholesky`
+        and recovers Lambda from its Cholesky factor.
+
+        See Also
+        --------
+        _extract_normal_params_with_cholesky : Core implementation using Cholesky.
+        """
+        # Delegate to Cholesky version and recover Lambda from L @ L.T
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, symmetrize=symmetrize, return_sigma=True
+        )
+        Lambda = L_Lambda @ L_Lambda.T
+
+        return Lambda, Sigma, mu, gamma
+
+    def _extract_normal_params_with_cholesky(
+        self, theta: NDArray, *, symmetrize: bool = False, return_sigma: bool = False
+    ) -> Tuple[NDArray, float, NDArray, NDArray] | Tuple[NDArray, float, NDArray, NDArray, NDArray]:
+        """
+        Extract normal parameters using Cholesky decomposition.
+
+        More numerically efficient than :meth:`_extract_normal_params_from_theta`
+        for computing log determinants and avoids explicit matrix inversion when
+        only :math:`\\mu` and :math:`\\gamma` are needed.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Full natural parameter vector.
+        symmetrize : bool, optional
+            Whether to symmetrize Lambda for numerical stability. Default False.
+        return_sigma : bool, optional
+            If True, also compute and return Sigma. Default False.
+
+        Returns
+        -------
+        L_Lambda : ndarray
+            Lower Cholesky factor of precision matrix, shape (d, d).
+            Satisfies :math:`\\Lambda = L_{\\Lambda} L_{\\Lambda}^T`.
+        log_det_Lambda : float
+            Log determinant of Lambda: :math:`\\log|\\Lambda| = 2 \\sum_i \\log L_{ii}`.
+        mu : ndarray
+            Location parameter :math:`\\mu`, shape (d,).
+        gamma : ndarray
+            Skewness parameter :math:`\\gamma`, shape (d,).
+        Sigma : ndarray, optional
+            Covariance scale matrix, shape (d, d). Only returned if ``return_sigma=True``.
+
+        Notes
+        -----
+        Instead of computing :math:`\\Sigma = \\Lambda^{-1}` explicitly, this method
+        solves the linear systems :math:`\\Lambda \\mu = \\theta_5` and
+        :math:`\\Lambda \\gamma = \\theta_4` using Cholesky factorization via
+        :func:`scipy.linalg.cho_solve`.
+
+        The log determinant is computed as:
+
+        .. math::
+            \\log|\\Lambda| = 2 \\sum_{i=1}^{d} \\log L_{ii}
+
+        where :math:`L` is the lower Cholesky factor.
+
+        If ``return_sigma=True``, the covariance matrix is computed by solving
+        :math:`L_{\\Lambda} L_{\\Sigma}^T = I`, giving the Cholesky factor of Sigma,
+        then :math:`\\Sigma = L_{\\Sigma} L_{\\Sigma}^T`.
+        """
+        d = self.d
+
+        theta_4 = theta[3:3 + d]  # Λγ
+        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
+        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
+
+        # Recover Λ from θ₆ = -1/2 Λ
+        Lambda = -2 * theta_6
+
+        if symmetrize:
+            Lambda = (Lambda + Lambda.T) / 2
+
+        # Cholesky factorization: Λ = L @ L.T
+        L_Lambda = cholesky(Lambda, lower=True)
+
+        # Log determinant: log|Λ| = 2 * Σ log(L_ii)
+        log_det_Lambda = 2.0 * np.sum(np.log(np.diag(L_Lambda)))
+
+        # Solve Λ @ μ = θ₅ and Λ @ γ = θ₄ using Cholesky factorization
+        # cho_solve takes (L, lower) tuple and solves L @ L.T @ x = b
+        mu = cho_solve((L_Lambda, True), theta_5)
+        gamma = cho_solve((L_Lambda, True), theta_4)
+
+        if return_sigma:
+            # Compute L_Sigma where Sigma = L_Sigma @ L_Sigma.T
+            # From L_Lambda @ L_Lambda.T = Lambda, we have Sigma = inv(Lambda)
+            # L_Sigma = inv(L_Lambda).T, so solve L_Lambda @ L_Sigma.T = I
+            # which gives L_Sigma.T = inv(L_Lambda) (lower triangular)
+            # Then L_Sigma = inv(L_Lambda).T (upper triangular -> transpose to lower)
+            L_Sigma_T = solve_triangular(L_Lambda, np.eye(d), lower=True)
+            Sigma = L_Sigma_T.T @ L_Sigma_T
+            return L_Lambda, log_det_Lambda, mu, gamma, Sigma
+
+        return L_Lambda, log_det_Lambda, mu, gamma
+
     def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
         """
         Extract normal distribution parameters from joint natural params.
+
+        Convenience method that returns the most commonly needed parameters
+        :math:`(\\mu, \\gamma, \\Sigma)`.
 
         Parameters
         ----------
@@ -155,13 +295,19 @@ class JointNormalMixture(ExponentialFamily, ABC):
         Returns
         -------
         mu : ndarray
-            Location parameter, shape (d,).
+            Location parameter :math:`\\mu`, shape (d,).
         gamma : ndarray
-            Skewness parameter, shape (d,).
+            Skewness parameter :math:`\\gamma`, shape (d,).
         Sigma : ndarray
-            Covariance scale matrix, shape (d, d).
+            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
+
+        See Also
+        --------
+        _extract_normal_params_from_theta : Returns (Lambda, Sigma, mu, gamma).
+        _extract_normal_params_with_cholesky : Cholesky-based version for efficiency.
         """
-        pass
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
+        return mu, gamma, Sigma
 
     # ========================================================================
     # Exponential family components
