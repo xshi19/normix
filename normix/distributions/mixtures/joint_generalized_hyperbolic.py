@@ -550,16 +550,13 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
             Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
 
         # ================================================================
-        # M-step for GIG parameters (numerical optimization)
-        # Fit GIG to match E[log Y], E[1/Y], E[Y]
+        # M-step for GIG parameters
+        # Use GIG's expectation-to-natural conversion since the first three
+        # expectation parameters of JointGH are exactly the GIG expectations:
+        #   η_GIG = [E[log Y], E[1/Y], E[Y]]
         # ================================================================
 
         gig = GeneralizedInverseGaussian()
-        gig._d = 1  # Set dimension for GIG (it's univariate)
-
-        # Use the GIG's expectation-to-natural conversion
-        # GIG sufficient statistics: [log y, 1/y, y]
-        # GIG expectation parameters: [E[log Y], E[1/Y], E[Y]]
         gig_eta = np.array([E_log_Y, E_inv_Y, E_Y])
 
         try:
