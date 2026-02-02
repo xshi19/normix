@@ -51,12 +51,12 @@ def regularize_det_sigma_one(
     Regularize GH parameters by enforcing :math:`|\\Sigma| = 1`.
 
     This is the recommended regularization that doesn't affect convergence
-    of the EM algorithm. From em_algorithm.rst:
+    of the EM algorithm. Following the legacy implementation:
 
     .. math::
         (\\mu, \\gamma, \\Sigma, p, a, b) \\to
         (\\mu, |\\Sigma|^{-1/d} \\gamma, |\\Sigma|^{-1/d} \\Sigma,
-        p, |\\Sigma|^{1/d} a, |\\Sigma|^{-1/d} b)
+        p, |\\Sigma|^{-1/d} a, |\\Sigma|^{1/d} b)
 
     Parameters
     ----------
@@ -82,8 +82,8 @@ def regularize_det_sigma_one(
         'gamma': gamma / scale,
         'sigma': sigma / scale,
         'p': p,
-        'a': a * scale,
-        'b': b / scale
+        'a': a / scale,  # Legacy: psi = psi / scale
+        'b': b * scale   # Legacy: chi = chi * scale
     }
 
 
@@ -125,8 +125,8 @@ def regularize_sigma_diagonal_one(
         'gamma': gamma / scale,
         'sigma': sigma / scale,
         'p': p,
-        'a': a * scale,
-        'b': b / scale
+        'a': a / scale,
+        'b': b * scale
     }
 
 
@@ -296,7 +296,7 @@ class GeneralizedHyperbolic(NormalMixture):
 
     def _marginal_logpdf(self, x: ArrayLike) -> NDArray:
         """
-        Compute marginal log PDF: log f(x).
+        Compute marginal log PDF: log f(x) (vectorized with Cholesky).
 
         The marginal PDF for GH has a closed form involving Bessel K functions:
 
@@ -320,6 +320,8 @@ class GeneralizedHyperbolic(NormalMixture):
         logpdf : ndarray
             Log PDF values.
         """
+        from scipy.linalg import cholesky, solve_triangular
+        
         x = np.asarray(x)
         classical = self.get_classical_params()
         mu = classical['mu']
@@ -330,27 +332,6 @@ class GeneralizedHyperbolic(NormalMixture):
         b = classical['b']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
-
-        # Constants
-        gamma_quad = gamma @ Lambda @ gamma
-        sqrt_ab = np.sqrt(a * b)
-
-        # Order of Bessel function for marginal: p - d/2
-        nu = p - d / 2
-
-        # Log normalizing constant
-        _, logdet_Sigma = np.linalg.slogdet(Sigma)
-
-        # C = (a/b)^{p/2} * (a + γ^T Λ γ)^{d/2 - p} / ((2π)^{d/2} |Σ|^{1/2} K_p(√(ab)))
-        log_K_p = log_kv(p, sqrt_ab)
-
-        log_C = (0.5 * p * np.log(a / b) +
-                 (0.5 * d - p) * np.log(a + gamma_quad) -
-                 0.5 * d * np.log(2 * np.pi) -
-                 0.5 * logdet_Sigma - log_K_p)
-
         # Handle single point vs multiple points
         if x.ndim == 1:
             x = x.reshape(1, -1)
@@ -359,50 +340,57 @@ class GeneralizedHyperbolic(NormalMixture):
             single_point = False
 
         n = x.shape[0]
-        logpdf = np.zeros(n)
 
-        for i in range(n):
-            diff = x[i] - mu
+        # Cholesky decomposition: Σ = L @ L.T
+        L = cholesky(Sigma, lower=True)
+        
+        # Log determinant: log|Σ| = 2 * Σ log(L_ii)
+        logdet_Sigma = 2.0 * np.sum(np.log(np.diag(L)))
+        
+        # Transform data: z = L^{-1}(x - μ)
+        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
+        diff = x - mu  # (n, d)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        q = np.sum(z ** 2, axis=0)  # (n,)
+        
+        # Transform gamma: gamma_z = L^{-1} γ
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+        
+        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
+        linear = z.T @ gamma_z  # (n,)
 
-            # Mahalanobis distance squared
-            q = diff @ Lambda @ diff
+        # Constants
+        sqrt_ab = np.sqrt(a * b)
+        nu = p - d / 2  # Order of Bessel function for marginal
 
-            # Arguments for Bessel function
-            arg1 = b + q
-            arg2 = a + gamma_quad
-            sqrt_arg = np.sqrt(arg1 * arg2)
+        # Log Bessel K_p(√ab) - constant for all x
+        log_K_p = log_kv(p, sqrt_ab)
 
-            # Log Bessel K_{p - d/2}(√((b+q)(a+γ^T Λ γ)))
-            log_K_nu = log_kv(nu, sqrt_arg)
-
-            # Linear term: (x-μ)^T Λ γ
-            linear = diff @ Lambda @ gamma
-
-            # Log PDF
-            # log f(x) = log C + (ν/2) log((b+q)/(a+γ^T Λ γ)) + log K_ν(...) + linear
-            # But we already accounted for (d/2 - p) log(a + γ^T Λ γ) in log_C
-            # So: log f(x) = log C + (ν/2) log(b+q) - (ν/2) log(a+γ^T Λ γ) + log K_ν + linear
-            # With our log_C: (d/2 - p) log(a+γ^T Λ γ) is added, and we need (p - d/2)/2 log(b+q)
-            # Actually, let's recalculate more carefully
-
-            # Full formula:
-            # f(x) = (a/b)^{p/2} / ((2π)^{d/2} |Σ|^{1/2} K_p(√ab))
-            #        × (b + q)^{(p - d/2)/2} × (a + γ^T Λ γ)^{(d/2 - p)/2}
-            #        × K_{p-d/2}(√((b+q)(a+γ^T Λ γ))) × exp((x-μ)^T Λ γ)
-
-            # log f(x) = (p/2)(log a - log b) - (d/2) log(2π) - (1/2) log|Σ| - log K_p(√ab)
-            #            + ((p - d/2)/2) log(b + q) + ((d/2 - p)/2) log(a + γ^T Λ γ)
-            #            + log K_{p-d/2}(√...) + (x-μ)^T Λ γ
-
-            logpdf[i] = (0.5 * p * (np.log(a) - np.log(b)) -
-                        0.5 * d * np.log(2 * np.pi) -
-                        0.5 * logdet_Sigma - log_K_p +
-                        0.5 * nu * np.log(arg1) +
-                        0.5 * (-nu) * np.log(arg2) +
-                        log_K_nu + linear)
+        # Vectorized log PDF computation:
+        # log f(x) = (p/2)(log a - log b) - (d/2) log(2π) - (1/2) log|Σ| - log K_p(√ab)
+        #            + (ν/2) log(b + q) + (-ν/2) log(a + γ^T Λ γ)
+        #            + log K_{p-d/2}(√((b+q)(a+γ^TΛγ))) + (x-μ)^T Λ γ
+        
+        # Arguments for Bessel function
+        arg1 = b + q  # (n,)
+        arg2 = a + gamma_quad  # scalar
+        eta = np.sqrt(arg1 * arg2)  # (n,)
+        
+        # Log Bessel K_{p-d/2}(eta) - vectorized
+        log_K_nu = log_kv(nu, eta)  # (n,)
+        
+        # Constant part (same for all samples)
+        log_const = (0.5 * p * (np.log(a) - np.log(b)) -
+                     0.5 * d * np.log(2 * np.pi) -
+                     0.5 * logdet_Sigma - log_K_p +
+                     0.5 * (-nu) * np.log(arg2))
+        
+        # Variable part (depends on x)
+        logpdf = log_const + 0.5 * nu * np.log(arg1) + log_K_nu + linear
 
         if single_point:
-            return logpdf[0]
+            return float(logpdf[0])
         return logpdf
 
     # ========================================================================
@@ -414,11 +402,12 @@ class GeneralizedHyperbolic(NormalMixture):
         X: ArrayLike,
         *,
         max_iter: int = 100,
-        tol: float = 1e-6,
+        tol: float = 1e-4,
         verbose: int = 0,
         regularization: Union[str, Callable] = 'det_sigma_one',
         regularization_params: Optional[Dict] = None,
         random_state: Optional[int] = None,
+        fix_tail: bool = False,
     ) -> 'GeneralizedHyperbolic':
         """
         Fit distribution to marginal data X using the EM algorithm.
@@ -434,7 +423,8 @@ class GeneralizedHyperbolic(NormalMixture):
         max_iter : int, optional
             Maximum number of EM iterations. Default is 100.
         tol : float, optional
-            Convergence tolerance for log-likelihood. Default is 1e-6.
+            Convergence tolerance for relative change in log-likelihood.
+            Default is 1e-4.
         verbose : int, optional
             Verbosity level (0=silent, 1=progress). Default is 0.
         regularization : str or callable, optional
@@ -452,6 +442,9 @@ class GeneralizedHyperbolic(NormalMixture):
             For 'fix_p': ``{'p_fixed': -0.5}`` to fix p = -0.5 (NIG).
         random_state : int, optional
             Random seed for initialization.
+        fix_tail : bool, optional
+            If True, do not update GIG parameters (p, a, b) during fitting.
+            Useful for fitting special cases like VG, NIG, NInvG. Default False.
 
         Returns
         -------
@@ -525,16 +518,10 @@ class GeneralizedHyperbolic(NormalMixture):
             self._initialize_params(X, random_state)
 
         # EM iterations
-        prev_ll = -np.inf
+        prev_ll = 0.0
 
         for iteration in range(max_iter):
-            # E-step: compute conditional expectations
-            cond_exp = self._conditional_expectation_y_given_x(X)
-
-            # M-step: update parameters
-            self._m_step(X, cond_exp)
-
-            # Apply regularization
+            # Apply regularization BEFORE computing log-likelihood (following legacy)
             classical = self.get_classical_params()
             if regularization == 'fix_p':
                 regularized = regularize_fn(
@@ -547,24 +534,47 @@ class GeneralizedHyperbolic(NormalMixture):
                     classical['mu'], classical['gamma'], classical['sigma'],
                     classical['p'], classical['a'], classical['b'], d
                 )
-
-            # Set regularized parameters
+            
+            # Sanity check after regularization: reject if parameters are degenerate
+            a_reg = regularized['a']
+            b_reg = regularized['b']
+            if a_reg < 1e-6 or b_reg < 1e-6 or a_reg > 1e6 or b_reg > 1e6:
+                # Parameters are degenerate, clamp to reasonable bounds
+                regularized['a'] = np.clip(a_reg, 1e-6, 1e6)
+                regularized['b'] = np.clip(b_reg, 1e-6, 1e6)
+            
             self._joint.set_classical_params(**regularized)
-
-            # Compute log-likelihood
+            
+            # Compute MARGINAL log-likelihood (not joint)
             ll = np.mean(self.logpdf(X))
 
-            if verbose > 0:
-                print(f"Iteration {iteration + 1}: log-likelihood = {ll:.6f}")
-
-            # Check convergence
-            if abs(ll - prev_ll) < tol:
+            # Check convergence using relative change (following legacy)
+            if iteration > 0:
                 if verbose > 0:
-                    print(f"Converged after {iteration + 1} iterations.")
-                break
+                    change = ll - prev_ll
+                    # Use format compatible with fit_and_track_convergence utility
+                    print(f"Iteration {iteration}: log-likelihood = {ll:.6f}")
+                    if verbose > 1:
+                        print(f"  change = {change:.6f}")
 
+                if abs(prev_ll) > 0 and abs(ll - prev_ll) / abs(prev_ll) < tol:
+                    if verbose > 0:
+                        print('Converged')
+                    return self
+            else:
+                if verbose > 0:
+                    print(f"Initial log-likelihood: {ll:.6f}")
+                    
             prev_ll = ll
 
+            # E-step: compute conditional expectations
+            cond_exp = self._conditional_expectation_y_given_x(X)
+
+            # M-step: update parameters
+            self._m_step(X, cond_exp, fix_tail=fix_tail)
+
+        if verbose > 0:
+            print('Not converged (max iterations reached)')
         return self
 
     def _initialize_params(
@@ -611,7 +621,12 @@ class GeneralizedHyperbolic(NormalMixture):
             mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
         )
 
-    def _m_step(self, X: NDArray, cond_exp: Dict[str, NDArray]) -> None:
+    def _m_step(
+        self, 
+        X: NDArray, 
+        cond_exp: Dict[str, NDArray],
+        fix_tail: bool = False
+    ) -> None:
         """
         M-step: update parameters given conditional expectations.
 
@@ -621,6 +636,8 @@ class GeneralizedHyperbolic(NormalMixture):
             Data array, shape (n_samples, d).
         cond_exp : dict
             Dictionary with keys 'E_Y', 'E_inv_Y', 'E_log_Y'.
+        fix_tail : bool, optional
+            If True, do not update GIG parameters (p, a, b). Default False.
         """
         from normix.distributions.univariate import GeneralizedInverseGaussian
 
@@ -630,35 +647,84 @@ class GeneralizedHyperbolic(NormalMixture):
         E_inv_Y = cond_exp['E_inv_Y']
         E_log_Y = cond_exp['E_log_Y']
 
-        # Average conditional expectations
-        eta_1 = np.mean(E_inv_Y)  # E[E[1/Y|X]]
-        eta_2 = np.mean(E_Y)      # E[E[Y|X]]
-        eta_3 = np.mean(E_log_Y)  # E[E[log Y|X]]
+        # Average conditional expectations (sufficient statistics for GIG)
+        # Following legacy naming: s1 = E[1/Y], s2 = E[Y], s3 = E[log Y]
+        s1 = np.mean(E_inv_Y)  # E[E[1/Y|X]]
+        s2 = np.mean(E_Y)      # E[E[Y|X]]
+        s3 = np.mean(E_log_Y)  # E[E[log Y|X]]
 
         # Weighted sums for normal parameters
-        eta_4 = np.mean(X, axis=0)  # E[X]
-        eta_5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # E[X/Y]
-        eta_6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
+        # s4 = E[X], s5 = E[X/Y], s6 = E[XX^T/Y]
+        s4 = np.mean(X, axis=0)  # E[X]
+        s5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # E[X/Y]
+        s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
 
-        # Symmetrize
-        eta_6 = (eta_6 + eta_6.T) / 2
+        # Get current GIG parameters for initialization and fallback
+        current = self.get_classical_params()
+        
+        # Update GIG parameters if not fixed
+        if not fix_tail:
+            gig = GeneralizedInverseGaussian()
+            # Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]
+            gig_eta = np.array([s3, s1, s2])
+            
+            # Use current GIG parameters as initial point
+            current_gig_theta = np.array([
+                current['p'] - 1, 
+                -current['b'] / 2, 
+                -current['a'] / 2
+            ])
+            
+            try:
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    gig.set_expectation_params(gig_eta, theta0=current_gig_theta)
+                    
+                gig_classical = gig.get_classical_params()
+                p_new = gig_classical['p']
+                a_new = gig_classical['a']
+                b_new = gig_classical['b']
+                
+                # Sanity check: reject if parameters are extreme or degenerate
+                # This prevents the optimization from diverging
+                if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10 or
+                    a_new < 1e-10 or b_new < 1e-10):
+                    # Keep current parameters
+                    p = current['p']
+                    a = current['a']
+                    b = current['b']
+                else:
+                    p = p_new
+                    a = a_new
+                    b = b_new
+            except Exception:
+                # Fallback: keep current GIG parameters
+                p = current['p']
+                a = current['a']
+                b = current['b']
+        else:
+            # Keep current GIG parameters
+            p = current['p']
+            a = current['a']
+            b = current['b']
 
-        # M-step for normal parameters (closed-form)
-        denom = 1.0 - eta_1 * eta_2
+        # M-step for normal parameters (closed-form, following legacy)
+        # mu = (s4 - s2 * s5) / (1 - s1 * s2)
+        # gamma = (s5 - s1 * s4) / (1 - s1 * s2)
+        denom = 1.0 - s1 * s2
 
         if abs(denom) < 1e-10:
-            mu = eta_4 / eta_2 if eta_2 > 0 else eta_4
+            mu = s4 / s2 if s2 > 0 else s4
             gamma = np.zeros(d)
         else:
-            mu = (eta_4 - eta_2 * eta_5) / denom
-            gamma = (eta_5 - eta_1 * eta_4) / denom
+            mu = (s4 - s2 * s5) / denom
+            gamma = (s5 - s1 * s4) / denom
 
-        # Sigma = E[XX^T/Y] - E[X/Y] μ^T - μ E[X/Y]^T + E[1/Y] μ μ^T - E[Y] γ γ^T
-        Sigma = (eta_6
-                 - np.outer(eta_5, mu)
-                 - np.outer(mu, eta_5)
-                 + eta_1 * np.outer(mu, mu)
-                 - eta_2 * np.outer(gamma, gamma))
+        # Sigma = -s5 μ^T - μ s5^T + s6 + s1 μ μ^T - s2 γ γ^T
+        # Following legacy code exactly
+        Sigma = -np.outer(s5, mu)
+        Sigma = Sigma + Sigma.T + s6 + s1 * np.outer(mu, mu) - s2 * np.outer(gamma, gamma)
 
         # Symmetrize and ensure positive definiteness
         Sigma = (Sigma + Sigma.T) / 2
@@ -666,24 +732,7 @@ class GeneralizedHyperbolic(NormalMixture):
         if min_eig < 1e-8:
             Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
 
-        # M-step for GIG parameters
-        gig = GeneralizedInverseGaussian()
-        gig_eta = np.array([eta_3, eta_1, eta_2])
-
-        try:
-            gig.set_expectation_params(gig_eta)
-            gig_classical = gig.get_classical_params()
-            p = gig_classical['p']
-            a = gig_classical['a']
-            b = gig_classical['b']
-        except Exception:
-            # Fallback: keep current GIG parameters
-            current = self.get_classical_params()
-            p = current['p']
-            a = current['a']
-            b = current['b']
-
-        # Bound parameters
+        # Bound GIG parameters
         a = max(a, 1e-6)
         b = max(b, 1e-6)
 
@@ -701,7 +750,7 @@ class GeneralizedHyperbolic(NormalMixture):
         X: ArrayLike
     ) -> Dict[str, NDArray]:
         """
-        Compute conditional expectations E[Y^α | X] for the E-step.
+        Compute conditional expectations E[Y^α | X] for the E-step (vectorized).
 
         The conditional distribution Y | X = x is GIG with parameters:
 
@@ -723,6 +772,9 @@ class GeneralizedHyperbolic(NormalMixture):
             - 'E_inv_Y': E[1/Y | X], shape (n,)
             - 'E_log_Y': E[log Y | X], shape (n,)
         """
+        from scipy.linalg import cholesky, solve_triangular
+        from normix.utils import kv_ratio
+        
         X = np.asarray(X)
 
         if X.ndim == 1:
@@ -740,44 +792,41 @@ class GeneralizedHyperbolic(NormalMixture):
         b = classical['b']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
-
-        # Constants for conditional GIG
-        gamma_quad = gamma @ Lambda @ gamma
-        a_cond = a + gamma_quad  # a + γ^T Λ γ
-
-        # Conditional GIG order
-        p_cond = p - d / 2
-
-        n = X.shape[0]
-        E_Y = np.zeros(n)
-        E_inv_Y = np.zeros(n)
-        E_log_Y = np.zeros(n)
-
-        for i in range(n):
-            diff = X[i] - mu
-            q = diff @ Lambda @ diff
-            b_cond = b + q  # b + q(x)
-
-            # GIG moments
-            sqrt_ab = np.sqrt(a_cond * b_cond)
-            sqrt_b_over_a = np.sqrt(b_cond / a_cond)
-
-            log_kv_p = log_kv(p_cond, sqrt_ab)
-            log_kv_pm1 = log_kv(p_cond - 1, sqrt_ab)
-            log_kv_pp1 = log_kv(p_cond + 1, sqrt_ab)
-
-            # E[Y | X=x] = √(b_cond/a_cond) · K_{p_cond+1}(√(ab)) / K_{p_cond}(√(ab))
-            E_Y[i] = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
-
-            # E[1/Y | X=x] = √(a_cond/b_cond) · K_{p_cond-1}(√(ab)) / K_{p_cond}(√(ab))
-            E_inv_Y[i] = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
-
-            # E[log Y | X=x] = ∂/∂p log(K_p(√(ab))) + (1/2) log(b_cond/a_cond)
-            eps = 1e-6
-            d_log_kv_dp = (log_kv(p_cond + eps, sqrt_ab) - log_kv(p_cond - eps, sqrt_ab)) / (2 * eps)
-            E_log_Y[i] = d_log_kv_dp + 0.5 * np.log(b_cond / a_cond)
+        # Cholesky decomposition: Σ = L @ L.T
+        L = cholesky(Sigma, lower=True)
+        
+        # Transform data: z = L^{-1}(x - μ), shape (n, d) -> (d, n) -> solve -> (d, n) -> (n, d)
+        # z.T @ z gives Mahalanobis distance (x - μ)^T Σ^{-1} (x - μ)
+        diff = X - mu  # (n, d)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        
+        # Mahalanobis distances: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
+        q = np.sum(z ** 2, axis=0)  # (n,)
+        
+        # Transform gamma: L^{-1} γ
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+        
+        # Conditional GIG parameters (vectorized)
+        p_cond = p - d / 2  # scalar
+        a_cond = a + gamma_quad  # scalar (same for all x)
+        b_cond = b + q  # (n,) - varies with x
+        
+        # delta = sqrt(b_cond / a_cond), eta = sqrt(a_cond * b_cond)
+        delta = np.sqrt(b_cond / a_cond)  # (n,)
+        eta = np.sqrt(a_cond * b_cond)  # (n,)
+        
+        # E[Y | X] = delta * K_{p_cond+1}(eta) / K_{p_cond}(eta)
+        E_Y = delta * kv_ratio(p_cond + 1, p_cond, eta)
+        
+        # E[1/Y | X] = (1/delta) * K_{p_cond-1}(eta) / K_{p_cond}(eta)
+        E_inv_Y = kv_ratio(p_cond - 1, p_cond, eta) / delta
+        
+        # E[log Y | X] = ∂/∂p log(K_p(eta)) + log(delta)
+        # Numerical derivative for ∂/∂p log(K_p(eta))
+        eps = 1e-5
+        d_log_kv_dp = (log_kv(p_cond + eps, eta) - log_kv(p_cond - eps, eta)) / (2 * eps)
+        E_log_Y = d_log_kv_dp + np.log(delta)
 
         if single_point:
             return {

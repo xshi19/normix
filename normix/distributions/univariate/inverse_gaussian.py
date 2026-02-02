@@ -194,7 +194,7 @@ class InverseGaussian(ExponentialFamily):
         eta2 = 1.0 / mu + 1.0 / lam
         return np.array([eta1, eta2])
     
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
         """
         Analytical inverse from expectation parameters η = [μ, 1/μ + 1/λ].
         """

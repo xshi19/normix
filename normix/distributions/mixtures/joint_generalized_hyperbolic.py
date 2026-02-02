@@ -35,7 +35,7 @@ Special cases:
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from scipy.linalg import solve as scipy_solve
 
@@ -479,7 +479,11 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # Expectation to Natural conversion (for fitting)
     # ========================================================================
 
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(
+        self, 
+        eta: NDArray, 
+        theta0: Optional[Union[NDArray, List[NDArray]]] = None
+    ) -> NDArray:
         """
         Convert expectation parameters to natural parameters.
 
@@ -496,6 +500,9 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         ----------
         eta : ndarray
             Expectation parameter vector.
+        theta0 : ndarray or list of ndarray, optional
+            Initial guess(es) for natural parameters. If provided, used to
+            extract initial GIG parameters for optimization.
 
         Returns
         -------
@@ -558,9 +565,17 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
         gig = GeneralizedInverseGaussian()
         gig_eta = np.array([E_log_Y, E_inv_Y, E_Y])
+        
+        # Extract GIG initial parameters from theta0 if provided
+        gig_theta0 = None
+        if theta0 is not None:
+            theta0_arr = np.asarray(theta0[0] if isinstance(theta0, list) else theta0)
+            if len(theta0_arr) >= 3:
+                # First 3 components are GIG natural parameters
+                gig_theta0 = theta0_arr[:3]
 
         try:
-            gig.set_expectation_params(gig_eta)
+            gig.set_expectation_params(gig_eta, theta0=gig_theta0)
             gig_classical = gig.get_classical_params()
             p = gig_classical['p']
             a = gig_classical['a']

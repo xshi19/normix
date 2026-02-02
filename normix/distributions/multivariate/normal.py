@@ -373,7 +373,7 @@ class MultivariateNormal(ExponentialFamily):
         
         return np.concatenate([eta1, eta2])
     
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
         """
         Convert expectation to natural parameters.
         

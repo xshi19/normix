@@ -163,7 +163,7 @@ class Exponential(ExponentialFamily):
         """
         return np.array([1.0 / (-theta[0])])
     
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
         """
         Analytical inverse: θ = -1/η.
         

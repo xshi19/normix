@@ -34,7 +34,7 @@ The Fisher information matrix equals the Hessian of the log partition:
 
 from abc import abstractmethod
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from scipy.differentiate import jacobian, hessian
@@ -250,7 +250,11 @@ class ExponentialFamily(Distribution):
         
         return self
     
-    def set_expectation_params(self, eta: NDArray) -> 'ExponentialFamily':
+    def set_expectation_params(
+        self, 
+        eta: NDArray, 
+        theta0: Optional[Union[NDArray, List[NDArray]]] = None
+    ) -> 'ExponentialFamily':
         """
         Set parameters from expectation parametrization.
         
@@ -258,6 +262,9 @@ class ExponentialFamily(Distribution):
         ----------
         eta : ndarray
             Expectation parameter vector (E[t(X)]).
+        theta0 : ndarray or list of ndarray, optional
+            Initial guess(es) for natural parameters in optimization.
+            If provided, these are used instead of the default initial points.
         
         Returns
         -------
@@ -267,7 +274,7 @@ class ExponentialFamily(Distribution):
         eta = np.asarray(eta)
         
         # Convert to natural parameters (uses optimization)
-        theta = self._expectation_to_natural(eta)
+        theta = self._expectation_to_natural(eta, theta0=theta0)
         
         # Validate and store
         self._validate_natural_params(theta)
@@ -640,7 +647,11 @@ class ExponentialFamily(Distribution):
         
         return np.asarray(eta)
     
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(
+        self, 
+        eta: NDArray, 
+        theta0: Optional[Union[NDArray, List[NDArray]]] = None
+    ) -> NDArray:
         """
         Convert expectation parameters to natural parameters.
         
@@ -652,12 +663,17 @@ class ExponentialFamily(Distribution):
         Equivalently solves the equation :math:`\\nabla\\psi(\\theta^*) = \\eta`.
         
         Uses multi-start optimization with L-BFGS-B. Starting points are
-        provided by ``_get_initial_natural_params`` (override in subclasses).
+        provided by ``_get_initial_natural_params`` (override in subclasses)
+        or can be specified via the ``theta0`` parameter.
         
         Parameters
         ----------
         eta : ndarray
             Expectation parameter vector :math:`\\eta = E[t(X)]`.
+        theta0 : ndarray or list of ndarray, optional
+            Initial guess(es) for natural parameters. If provided, these are
+            used instead of calling ``_get_initial_natural_params``. Can be
+            a single array or a list of arrays for multi-start optimization.
         
         Returns
         -------
@@ -686,10 +702,18 @@ class ExponentialFamily(Distribution):
                 grad_psi = self._natural_to_expectation(theta_arr)
                 return grad_psi - eta
         
-        # Get starting points from subclass (can be single point or list)
-        starting_points = self._get_initial_natural_params(eta)
-        if isinstance(starting_points, np.ndarray) and starting_points.ndim == 1:
-            starting_points = [starting_points]
+        # Get starting points: use theta0 if provided, otherwise from subclass
+        if theta0 is not None:
+            if isinstance(theta0, np.ndarray) and theta0.ndim == 1:
+                starting_points = [theta0]
+            elif isinstance(theta0, list):
+                starting_points = theta0
+            else:
+                starting_points = [np.asarray(theta0)]
+        else:
+            starting_points = self._get_initial_natural_params(eta)
+            if isinstance(starting_points, np.ndarray) and starting_points.ndim == 1:
+                starting_points = [starting_points]
         
         # Track best solution
         best_theta = None

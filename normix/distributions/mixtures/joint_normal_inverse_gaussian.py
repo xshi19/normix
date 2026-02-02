@@ -510,7 +510,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
     # Expectation to Natural conversion (for fitting)
     # ========================================================================
 
-    def _expectation_to_natural(self, eta: NDArray) -> NDArray:
+    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
         """
         Convert expectation parameters to natural parameters.
 

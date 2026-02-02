@@ -72,7 +72,7 @@ class Exponential(ExponentialFamily):
         return np.array([-1.0 / theta[0]])
     
     # Override with analytical inverse for efficiency
-    def _expectation_to_natural(self, eta):
+    def _expectation_to_natural(self, eta, theta0=None):
         """θ = -1/η (inverse of natural_to_expectation)"""
         return np.array([-1.0 / eta[0]])
     
