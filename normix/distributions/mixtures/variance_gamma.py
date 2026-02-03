@@ -143,25 +143,13 @@ class VarianceGamma(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         alpha = classical['shape']
         beta = classical['rate']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
-
-        # Constant terms
-        gamma_quad = gamma @ Lambda @ gamma
-        c = beta + 0.5 * gamma_quad  # β + 1/2 γ^T Λ γ
-
-        # Log normalizing constant: C = 2 * β^α / ((2π)^{d/2} |Σ|^{1/2} Γ(α))
-        _, logdet_Sigma = np.linalg.slogdet(Sigma)
-        log_C = (np.log(2) - 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
-                 - gammaln(alpha) + alpha * np.log(beta))
-
-        # Order of Bessel function
-        nu = alpha - d / 2
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, logdet_Sigma = self._joint.get_L_Sigma()
 
         # Handle single point vs multiple points
         if x.ndim == 1:
@@ -171,37 +159,59 @@ class VarianceGamma(NormalMixture):
             single_point = False
 
         n = x.shape[0]
+
+        # Transform data: z = U^{-1}(x - μ)
+        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
+        diff = x - mu  # (n, d)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        q = np.sum(z ** 2, axis=0)  # (n,)
+
+        # Transform gamma: gamma_z = U^{-1} γ
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+
+        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
+        linear = z.T @ gamma_z  # (n,)
+
+        # Constant terms
+        c = beta + 0.5 * gamma_quad  # β + 1/2 γ^T Λ γ
+
+        # Log normalizing constant: C = 2 * β^α / ((2π)^{d/2} |Σ|^{1/2} Γ(α))
+        log_C = (np.log(2) - 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
+                 - gammaln(alpha) + alpha * np.log(beta))
+
+        # Order of Bessel function
+        nu = alpha - d / 2
+
+        # Initialize logpdf
         logpdf = np.zeros(n)
 
-        for i in range(n):
-            diff = x[i] - mu
+        # Handle q = 0 case (x = μ) specially
+        small_q_mask = q <= 1e-14
+        if np.any(small_q_mask):
+            if nu > 0:
+                # Limit: log C + log(Γ(ν) * 2^{ν-1} / (2c)^ν) + linear
+                logpdf[small_q_mask] = (log_C + gammaln(nu) + (nu - 1) * np.log(2) 
+                                        - nu * np.log(2.0 * c) + linear[small_q_mask])
+            else:
+                # For ν ≤ 0, the PDF diverges at q=0
+                logpdf[small_q_mask] = np.inf if nu < 0 else -np.inf
 
-            # Mahalanobis distance squared
-            q = diff @ Lambda @ diff
-
-            # Linear term: (x-μ)^T Λ γ
-            linear = diff @ Lambda @ gamma
-
-            # Handle q = 0 case (x = μ) specially
-            # As q→0, (q/(2c))^{ν/2} * K_ν(√(2qc)) → Γ(ν) * 2^{ν-1} / (2c)^ν for ν > 0
-            if q <= 1e-14:
-                if nu > 0:
-                    # Limit: log C + log(Γ(ν) * 2^{ν-1} / (2c)^ν) + linear
-                    logpdf[i] = (log_C + gammaln(nu) + (nu - 1) * np.log(2) 
-                                 - nu * np.log(2.0 * c) + linear)
-                else:
-                    # For ν ≤ 0, the PDF diverges at q=0
-                    logpdf[i] = np.inf if nu < 0 else -np.inf
-                continue
+        # Handle normal case (q > 0) - vectorized
+        normal_mask = ~small_q_mask
+        if np.any(normal_mask):
+            q_normal = q[normal_mask]
+            linear_normal = linear[normal_mask]
 
             # Bessel function argument: sqrt(2 * q * c)
-            z = np.sqrt(2.0 * q * c)
+            z_arg = np.sqrt(2.0 * q_normal * c)
 
-            # Log Bessel K
-            log_K = log_kv(nu, z)
+            # Log Bessel K (vectorized)
+            log_K = log_kv(nu, z_arg)
 
             # Combine: log C + (ν/2) log(q/(2c)) + log K_ν(z) + linear
-            logpdf[i] = (log_C + 0.5 * nu * np.log(q / (2.0 * c)) + log_K + linear)
+            logpdf[normal_mask] = (log_C + 0.5 * nu * np.log(q_normal / (2.0 * c)) 
+                                   + log_K + linear_normal)
 
         if single_point:
             return float(logpdf[0])
@@ -241,25 +251,26 @@ class VarianceGamma(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         alpha = classical['shape']
         beta = classical['rate']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, _ = self._joint.get_L_Sigma()
 
         # GIG parameters for Y | X = x
         # From the derivation:
         # f(Y|X) ∝ Y^{p-1} exp(-(a Y + b/Y)/2)
         # where:
         #   p = α - d/2
-        #   a = 2β + γ^T Λ γ
-        #   b = (x-μ)^T Λ (x-μ)
+        #   a = 2β + γ^T Σ^{-1} γ
+        #   b = (x-μ)^T Σ^{-1} (x-μ)
         p_cond = alpha - d / 2
 
-        # a = 2β + γ^T Λ γ (same for all x)
-        gamma_quad = gamma @ Lambda @ gamma
+        # a = 2β + γ^T Σ^{-1} γ (same for all x)
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         a_cond = 2 * beta + gamma_quad
 
         # Handle single point vs multiple points
@@ -271,10 +282,10 @@ class VarianceGamma(NormalMixture):
 
         n = x.shape[0]
 
-        # b = (x - μ)^T Λ (x - μ) for each x
+        # b = (x - μ)^T Σ^{-1} (x - μ) for each x
         diff = x - mu  # (n, d)
-        # Mahalanobis distance squared: q(x) = diff @ Λ @ diff^T diagonal
-        b_cond = np.einsum('ni,ij,nj->n', diff, Lambda, diff)  # (n,)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        b_cond = np.sum(z ** 2, axis=0)  # (n,)
 
         # Ensure b > 0 (add small epsilon for numerical stability)
         b_cond = np.maximum(b_cond, 1e-10)

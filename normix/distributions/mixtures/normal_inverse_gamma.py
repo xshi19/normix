@@ -155,24 +155,13 @@ class NormalInverseGamma(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         alpha = classical['shape']
         beta = classical['rate']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
-
-        # Constants
-        gamma_quad = gamma @ Lambda @ gamma
-
-        # Log normalizing constant (without log(2) - that comes from the GIG integral)
-        _, logdet_Sigma = np.linalg.slogdet(Sigma)
-        log_C = (- 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
-                 - gammaln(alpha) + alpha * np.log(beta))
-
-        # Order of Bessel function
-        nu = alpha - d / 2
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, logdet_Sigma = self._joint.get_L_Sigma()
 
         # Handle single point vs multiple points
         if x.ndim == 1:
@@ -182,80 +171,55 @@ class NormalInverseGamma(NormalMixture):
             single_point = False
 
         n = x.shape[0]
+
+        # Transform data: z = U^{-1}(x - μ)
+        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
+        diff = x - mu  # (n, d)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        q = np.sum(z ** 2, axis=0)  # (n,)
+
+        # Transform gamma: gamma_z = U^{-1} γ
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+
+        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
+        linear = z.T @ gamma_z  # (n,)
+
+        # Log normalizing constant (without log(2) - that comes from the GIG integral)
+        log_C = (- 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
+                 - gammaln(alpha) + alpha * np.log(beta))
+
+        # GIG parameters: p = -(α + d/2), a = γ^T Σ^{-1} γ, b = q + 2β
+        p_gig = -(alpha + d / 2)
+        a_gig = gamma_quad
+        b_gig = q + 2 * beta  # (n,)
+
+        # Initialize logpdf
         logpdf = np.zeros(n)
 
-        for i in range(n):
-            diff = x[i] - mu
-
-            # Mahalanobis distance squared
-            q = diff @ Lambda @ diff
-
-            # For NInvG: the argument involves both q and gamma_quad
-            # The conditional Y|X ~ GIG(p, a, b) with:
-            #   p = α - d/2
-            #   a = γ^T Λ γ  
-            #   b = β + (1/2) (x-μ)^T Λ (x-μ) = β + q/2
-            
-            # Actually, the marginal PDF has a similar form to VG.
-            # The key difference is in how the parameters map.
-            # For NInvG with Y ~ InvGamma(α, β):
-            #   c_nig = β
-            #   The argument to Bessel is sqrt(2 * q * c_nig) when γ = 0
-            #   When γ ≠ 0, we need to account for it differently
-            
-            # More precise derivation:
-            # The marginal involves: ∫ y^{-d/2 - α - 1} exp(-q/(2y) - β/y + γ^T Λ (x-μ) - γ^T Λ γ y / 2) dy
-            # This is a GIG integral with:
-            #   p = -(α + d/2)
-            #   b = q + 2β  (coefficient of 1/y divided by 2)
-            #   a = γ^T Λ γ (coefficient of y divided by 2)
-
-            a_gig = gamma_quad
-            b_gig = q + 2 * beta
-
-            # Handle the case where a_gig ≈ 0 (symmetric case)
-            if a_gig < 1e-12:
-                # Symmetric case: reduces to Student-t like
-                # For a → 0 in GIG with p < 0:
-                # ∫ y^{p-1} exp(-b/(2y)) dy = (b/2)^p × Γ(-p)
-                
-                p_gig = -(alpha + d / 2)
-                
-                if p_gig < 0:
-                    # For negative p, the integral is (b/2)^p × Γ(-p)
-                    # log_integral = p × log(b/2) + log Γ(-p)
-                    #              = (-p) × log(2/b) + log Γ(-p)
-                    log_integral = (-p_gig) * np.log(2.0 / b_gig) + gammaln(-p_gig)
-                else:
-                    # This shouldn't happen for typical α > 0
-                    logpdf[i] = -np.inf
-                    continue
+        # Handle the case where a_gig ≈ 0 (symmetric case)
+        if a_gig < 1e-12:
+            # Symmetric case: reduces to Student-t like
+            # For a → 0 in GIG with p < 0:
+            # ∫ y^{p-1} exp(-b/(2y)) dy = (b/2)^p × Γ(-p)
+            if p_gig < 0:
+                # For negative p, the integral is (b/2)^p × Γ(-p)
+                # log_integral = p × log(b/2) + log Γ(-p)
+                #              = (-p) × log(2/b) + log Γ(-p)
+                log_integral = (-p_gig) * np.log(2.0 / b_gig) + gammaln(-p_gig)
+                logpdf = log_C + linear + log_integral
             else:
-                # General case with γ ≠ 0
-                p_gig = -(alpha + d / 2)
-                sqrt_ab = np.sqrt(a_gig * b_gig)
-                
-                # The GIG normalization integral is:
-                # ∫ y^{p-1} exp(-b/(2y) - a*y/2) dy = 2 (b/a)^{p/2} K_p(√(ab))
-                log_bessel = log_kv(p_gig, sqrt_ab)
-                log_integral = np.log(2) + 0.5 * p_gig * np.log(b_gig / a_gig) + log_bessel
-
-            # Linear term from the normal
-            linear = diff @ Lambda @ gamma
-
-            # The full log PDF
-            # We need to account for all normalizing constants
-            # log f(x) = log_C + linear + log_integral - (normalization from GIG)
+                # This shouldn't happen for typical α > 0
+                logpdf[:] = -np.inf
+        else:
+            # General case with γ ≠ 0 - vectorized
+            sqrt_ab = np.sqrt(a_gig * b_gig)  # (n,)
             
-            # Detailed computation:
-            # f(x,y) = (1/(2π)^{d/2} |Σ|^{1/2}) y^{-d/2} exp(-q/(2y)) 
-            #        × (β^α / Γ(α)) y^{-α-1} exp(-β/y)
-            #        × exp(γ^T Λ (x-μ) - (γ^T Λ γ / 2) y)
-            # 
-            # f(x) = (1/(2π)^{d/2} |Σ|^{1/2}) × (β^α / Γ(α)) × exp(γ^T Λ (x-μ))
-            #      × ∫ y^{-(α + d/2 + 1)} exp(-(q/2 + β)/y - (γ^T Λ γ / 2) y) dy
-            
-            logpdf[i] = log_C + linear + log_integral
+            # The GIG normalization integral is:
+            # ∫ y^{p-1} exp(-b/(2y) - a*y/2) dy = 2 (b/a)^{p/2} K_p(√(ab))
+            log_bessel = log_kv(p_gig, sqrt_ab)  # (n,)
+            log_integral = np.log(2) + 0.5 * p_gig * np.log(b_gig / a_gig) + log_bessel
+            logpdf = log_C + linear + log_integral
 
         if single_point:
             return float(logpdf[0])
@@ -295,22 +259,23 @@ class NormalInverseGamma(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         alpha = classical['shape']
         beta = classical['rate']
         d = self.d
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, _ = self._joint.get_L_Sigma()
 
         # GIG parameters for Y | X = x
         # p = -(α + d/2)
-        # a = γ^T Λ γ
-        # b = 2β + (x-μ)^T Λ (x-μ)
+        # a = γ^T Σ^{-1} γ
+        # b = 2β + (x-μ)^T Σ^{-1} (x-μ)
         p_cond = -(alpha + d / 2)
 
         # a is same for all x
-        gamma_quad = gamma @ Lambda @ gamma
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         a_cond = gamma_quad
 
         # Handle single point vs multiple points
@@ -322,9 +287,10 @@ class NormalInverseGamma(NormalMixture):
 
         n = x.shape[0]
 
-        # b = 2β + (x - μ)^T Λ (x - μ) for each x
+        # b = 2β + (x - μ)^T Σ^{-1} (x - μ) for each x
         diff = x - mu  # (n, d)
-        q_x = np.einsum('ni,ij,nj->n', diff, Lambda, diff)  # (n,)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        q_x = np.sum(z ** 2, axis=0)  # (n,)
         b_cond = 2 * beta + q_x
 
         # Ensure b > 0 (add small epsilon for numerical stability)

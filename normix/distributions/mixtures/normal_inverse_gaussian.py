@@ -159,27 +159,9 @@ class NormalInverseGaussian(NormalMixture):
         a = eta / (delta ** 2)
         b = eta
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
-
-        # Constants
-        gamma_quad = gamma @ Lambda @ gamma
-
-        # Order of Bessel function for marginal: p - d/2 = -1/2 - d/2
-        nu = p - d / 2
-
-        # Log normalizing constant
-        _, logdet_Sigma = np.linalg.slogdet(Sigma)
-        
-        # C = (a/b)^{p/2} * (a + γ^T Λ γ)^{d/2 - p} / ((2π)^{d/2} |Σ|^{1/2} K_p(√(ab)))
-        # For NIG: √(ab) = √(η · η/δ²) = η/δ
-        sqrt_ab = np.sqrt(a * b)  # = eta / delta
-        log_K_p = log_kv(p, sqrt_ab)
-        
-        log_C = (0.5 * p * np.log(a / b) + 
-                 (0.5 * d - p) * np.log(a + gamma_quad) -
-                 0.5 * d * np.log(2 * np.pi) - 
-                 0.5 * logdet_Sigma - log_K_p)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, logdet_Sigma = self._joint.get_L_Sigma()
 
         # Handle single point vs multiple points
         if x.ndim == 1:
@@ -189,63 +171,43 @@ class NormalInverseGaussian(NormalMixture):
             single_point = False
 
         n = x.shape[0]
-        logpdf = np.zeros(n)
 
-        for i in range(n):
-            diff = x[i] - mu
+        # Transform data: z = U^{-1}(x - μ)
+        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
+        diff = x - mu  # (n, d)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        q = np.sum(z ** 2, axis=0)  # (n,)
 
-            # Mahalanobis distance squared
-            q = diff @ Lambda @ diff
+        # Transform gamma: gamma_z = U^{-1} γ
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
 
-            # Arguments for Bessel function
-            # sqrt((b + q)(a + γ^T Λ γ))
-            arg_inner = (b + q) * (a + gamma_quad)
-            
-            if arg_inner <= 0:
-                logpdf[i] = -np.inf
-                continue
-                
-            arg = np.sqrt(arg_inner)
+        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
+        linear = z.T @ gamma_z  # (n,)
 
-            # Log Bessel K
-            log_K = log_kv(nu, arg)
+        # Order of Bessel function for marginal: p - d/2 = -1/2 - d/2
+        nu = p - d / 2
 
-            # Linear term
-            linear = diff @ Lambda @ gamma
+        # Constants
+        sqrt_ab = np.sqrt(a * b)  # = eta / delta
+        log_K_p = log_kv(p, sqrt_ab)
 
-            # Combine: log f(x) = log C + (d/2 - p) * log(sqrt((b+q)/(a+γ^TΛγ))) + log K_ν(arg) + linear
-            # Simplify: (d/2 - p) * 0.5 * log((b+q)/(a+γ^TΛγ)) = (d/2 - p)/2 * log(b+q) - (d/2-p)/2 * log(a+γ^TΛγ)
-            # The log(a+γ^TΛγ) part is already in log_C
-            
-            # Full formula:
-            # log f(x) = log C + (d/2 - p) * 0.5 * log((b+q)/(a+γ^TΛγ)) + log K_ν(arg) + linear
-            #          = log C + (d/2 - p) * 0.5 * log(b+q) - (d/2-p) * 0.5 * log(a+γ^TΛγ) + log K_ν(arg) + linear
-            # But the (d/2-p)*log(a+γ^TΛγ) term is already in log_C with positive sign, so we need:
-            
-            half_nu_term = (0.5 * d - p) * 0.5 * np.log(b + q) - (0.5 * d - p) * 0.5 * np.log(a + gamma_quad)
-            
-            # Actually the correct formula is:
-            # f(x) = C * (sqrt((b+q)/(a+γ^TΛγ)))^{d/2-p} * K_ν(arg) * exp(linear)
-            # log f(x) = log C + (d/2-p)/2 * log(b+q) - (d/2-p)/2 * log(a+γ^TΛγ) + log K_ν + linear
-            # Since log_C already has + (d/2-p) * log(a+γ^TΛγ), we need to cancel half of it
-            
-            # Let me recalculate more carefully:
-            # From the GH marginal formula:
-            # f(x) = c * K_{p-d/2}(sqrt((b+q)(a+γ^TΛγ))) / (sqrt((b+q)(a+γ^TΛγ)))^{d/2-p} * exp(linear)
-            # where c = (a/b)^{p/2} * (a+γ^TΛγ)^{d/2-p} / ((2π)^{d/2} |Σ|^{1/2} K_p(sqrt(ab)))
-            
-            # So: log f = log c + log K_ν(arg) - (d/2-p) * log(arg) + linear
-            #           = log c + log K_ν(arg) - (d/2-p) * 0.5 * log((b+q)(a+γ^TΛγ)) + linear
-            #           = log c + log K_ν(arg) - (d/2-p)/2 * log(b+q) - (d/2-p)/2 * log(a+γ^TΛγ) + linear
-            
-            # log c = p/2 * log(a/b) + (d/2-p) * log(a+γ^TΛγ) - d/2 * log(2π) - 1/2 * log|Σ| - log K_p(η)
-            
-            # Combining the (a+γ^TΛγ) terms: (d/2-p) * log(...) - (d/2-p)/2 * log(...) = (d/2-p)/2 * log(...)
-            
-            logpdf[i] = (log_C + log_K 
-                        - (0.5 * d - p) * 0.5 * np.log(b + q)
-                        - (0.5 * d - p) * 0.5 * np.log(a + gamma_quad)
-                        + linear)
+        # Arguments for Bessel function (vectorized)
+        arg1 = b + q  # (n,)
+        arg2 = a + gamma_quad  # scalar
+        eta_arg = np.sqrt(arg1 * arg2)  # (n,)
+
+        # Log Bessel K_{p-d/2}(eta) - vectorized
+        log_K_nu = log_kv(nu, eta_arg)  # (n,)
+
+        # Constant part (same for all samples)
+        log_const = (0.5 * p * (np.log(a) - np.log(b)) -
+                     0.5 * d * np.log(2 * np.pi) -
+                     0.5 * logdet_Sigma - log_K_p +
+                     0.5 * (-nu) * np.log(arg2))
+
+        # Variable part (depends on x)
+        logpdf = log_const + 0.5 * nu * np.log(arg1) + log_K_nu + linear
 
         if single_point:
             return float(logpdf[0])
@@ -286,7 +248,6 @@ class NormalInverseGaussian(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         delta = classical['delta']
         eta = classical['eta']
         d = self.d
@@ -295,15 +256,17 @@ class NormalInverseGaussian(NormalMixture):
         a_mix = eta / (delta ** 2)
         b_mix = eta
 
-        # Precision matrix
-        Lambda = np.linalg.inv(Sigma)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        from scipy.linalg import solve_triangular
+        U, _ = self._joint.get_L_Sigma()
 
         # GIG parameters for Y | X = x
         # p_cond = p - d/2 = -1/2 - d/2
         p_cond = -0.5 - d / 2
 
-        # a_cond = a + γ^T Λ γ (same for all x)
-        gamma_quad = gamma @ Lambda @ gamma
+        # a_cond = a + γ^T Σ^{-1} γ (same for all x)
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         a_cond = a_mix + gamma_quad
 
         # Handle single point vs multiple points
@@ -315,9 +278,10 @@ class NormalInverseGaussian(NormalMixture):
 
         n = x.shape[0]
 
-        # b_cond = b + (x - μ)^T Λ (x - μ) for each x
+        # b_cond = b + (x - μ)^T Σ^{-1} (x - μ) for each x
         diff = x - mu  # (n, d)
-        q_x = np.einsum('ni,ij,nj->n', diff, Lambda, diff)  # (n,)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        q_x = np.sum(z ** 2, axis=0)  # (n,)
         b_cond = b_mix + q_x
 
         # Ensure b > 0 (add small epsilon for numerical stability)

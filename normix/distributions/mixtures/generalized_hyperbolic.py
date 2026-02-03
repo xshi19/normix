@@ -45,7 +45,8 @@ def regularize_det_sigma_one(
     p: float,
     a: float,
     b: float,
-    d: int
+    d: int,
+    log_det_sigma: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Regularize GH parameters by enforcing :math:`|\\Sigma| = 1`.
@@ -64,13 +65,21 @@ def regularize_det_sigma_one(
         Classical GH parameters.
     d : int
         Dimension of X.
+    log_det_sigma : float, optional
+        Precomputed log determinant of Sigma. If provided, avoids
+        recomputing the determinant.
 
     Returns
     -------
     params : dict
         Regularized parameters with |Σ| = 1.
     """
-    det_sigma = np.linalg.det(sigma)
+    if log_det_sigma is not None:
+        # Use precomputed log determinant
+        det_sigma = np.exp(log_det_sigma)
+    else:
+        det_sigma = np.linalg.det(sigma)
+    
     if det_sigma <= 0:
         # Sigma is degenerate, can't regularize
         return {'mu': mu, 'gamma': gamma, 'sigma': sigma, 'p': p, 'a': a, 'b': b}
@@ -320,13 +329,12 @@ class GeneralizedHyperbolic(NormalMixture):
         logpdf : ndarray
             Log PDF values.
         """
-        from scipy.linalg import cholesky, solve_triangular
+        from scipy.linalg import solve_triangular
         
         x = np.asarray(x)
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         p = classical['p']
         a = classical['a']
         b = classical['b']
@@ -341,20 +349,17 @@ class GeneralizedHyperbolic(NormalMixture):
 
         n = x.shape[0]
 
-        # Cholesky decomposition: Σ = L @ L.T
-        L = cholesky(Sigma, lower=True)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        U, logdet_Sigma = self._joint.get_L_Sigma()
         
-        # Log determinant: log|Σ| = 2 * Σ log(L_ii)
-        logdet_Sigma = 2.0 * np.sum(np.log(np.diag(L)))
-        
-        # Transform data: z = L^{-1}(x - μ)
+        # Transform data: z = U^{-1}(x - μ)
         # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
         diff = x - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
         q = np.sum(z ** 2, axis=0)  # (n,)
         
-        # Transform gamma: gamma_z = L^{-1} γ
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        # Transform gamma: gamma_z = U^{-1} γ
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
@@ -523,11 +528,21 @@ class GeneralizedHyperbolic(NormalMixture):
         for iteration in range(max_iter):
             # Apply regularization BEFORE computing log-likelihood (following legacy)
             classical = self.get_classical_params()
+            # Get cached log_det_Sigma for efficient regularization
+            _, log_det_sigma = self._joint.get_L_Sigma()
+            
             if regularization == 'fix_p':
                 regularized = regularize_fn(
                     classical['mu'], classical['gamma'], classical['sigma'],
                     classical['p'], classical['a'], classical['b'], d,
                     **regularization_params
+                )
+            elif regularization == 'det_sigma_one':
+                # Pass cached log_det_sigma
+                regularized = regularize_fn(
+                    classical['mu'], classical['gamma'], classical['sigma'],
+                    classical['p'], classical['a'], classical['b'], d,
+                    log_det_sigma=log_det_sigma
                 )
             else:
                 regularized = regularize_fn(
@@ -732,14 +747,20 @@ class GeneralizedHyperbolic(NormalMixture):
         if min_eig < 1e-8:
             Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
 
+        # Compute Cholesky factor of Sigma once and cache it
+        from scipy.linalg import cholesky
+        L_Sigma = cholesky(Sigma, lower=True)
+
         # Bound GIG parameters
         a = max(a, 1e-6)
         b = max(b, 1e-6)
 
-        # Update joint distribution
+        # Update joint distribution and cache L_Sigma
         self._joint.set_classical_params(
             mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
         )
+        # Cache the Cholesky factor (set_classical_params clears cache, so set after)
+        self._joint.set_L_Sigma(L_Sigma)
 
     # ========================================================================
     # Conditional Expectations (E-step helper)
@@ -772,7 +793,7 @@ class GeneralizedHyperbolic(NormalMixture):
             - 'E_inv_Y': E[1/Y | X], shape (n,)
             - 'E_log_Y': E[log Y | X], shape (n,)
         """
-        from scipy.linalg import cholesky, solve_triangular
+        from scipy.linalg import solve_triangular
         from normix.utils import kv_ratio
         
         X = np.asarray(X)
@@ -786,25 +807,24 @@ class GeneralizedHyperbolic(NormalMixture):
         classical = self.get_classical_params()
         mu = classical['mu']
         gamma = classical['gamma']
-        Sigma = classical['sigma']
         p = classical['p']
         a = classical['a']
         b = classical['b']
         d = self.d
 
-        # Cholesky decomposition: Σ = L @ L.T
-        L = cholesky(Sigma, lower=True)
+        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        U, _ = self._joint.get_L_Sigma()
         
-        # Transform data: z = L^{-1}(x - μ), shape (n, d) -> (d, n) -> solve -> (d, n) -> (n, d)
-        # z.T @ z gives Mahalanobis distance (x - μ)^T Σ^{-1} (x - μ)
+        # Transform data: z = U^{-1}(x - μ)
+        # Mahalanobis distance: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         diff = X - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
         
         # Mahalanobis distances: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         q = np.sum(z ** 2, axis=0)  # (n,)
         
-        # Transform gamma: L^{-1} γ
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        # Transform gamma: U^{-1} γ
+        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Conditional GIG parameters (vectorized)
