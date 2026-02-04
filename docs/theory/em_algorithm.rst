@@ -166,7 +166,7 @@ at the end of each M-step:
 
    (\mu_k, \gamma_k, \Sigma_k, p_k, a_k, b_k) \rightarrow
    \left(\mu_k, |\Sigma_k|^{-1/d} \gamma_k, |\Sigma_k|^{-1/d} \Sigma_k,
-   p_k, |\Sigma_k|^{1/d} a_k, |\Sigma_k|^{-1/d} b_k\right)
+   p_k, |\Sigma_k|^{-1/d} a_k, |\Sigma_k|^{1/d} b_k\right)
 
 This rescaling does not affect the convergence of the EM algorithm:
 
