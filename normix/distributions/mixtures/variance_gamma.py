@@ -348,6 +348,10 @@ class VarianceGamma(NormalMixture):
         in the theory documentation. The E-step computes conditional expectations
         of Y given X, and the M-step updates parameters using closed-form formulas.
 
+        Convergence is checked based on the relative change in the normal
+        parameters :math:`(\\mu, \\gamma, \\Sigma)`. Log-likelihood is optionally
+        displayed per iteration when ``verbose >= 1``.
+
         Parameters
         ----------
         X : array_like
@@ -357,9 +361,11 @@ class VarianceGamma(NormalMixture):
         max_iter : int, optional
             Maximum number of EM iterations. Default is 100.
         tol : float, optional
-            Convergence tolerance for log-likelihood. Default is 1e-6.
+            Convergence tolerance for relative parameter change.
+            Default is 1e-6.
         verbose : int, optional
-            Verbosity level. 0 = silent, 1 = progress, 2 = detailed. Default is 0.
+            Verbosity level. 0 = silent, 1 = progress with llh,
+            2 = detailed with parameter norms. Default is 0.
         random_state : int or Generator, optional
             Random state for initialization.
 
@@ -479,16 +485,20 @@ class VarianceGamma(NormalMixture):
             rate=beta_init
         )
 
-        # Compute initial log-likelihood
-        prev_ll = np.mean(self.logpdf(X))
-
         if verbose >= 1:
-            print(f"Initial log-likelihood: {prev_ll:.6f}")
+            init_ll = np.mean(self.logpdf(X))
+            print(f"Initial log-likelihood: {init_ll:.6f}")
 
         # ================================================================
         # EM iterations
         # ================================================================
         for iteration in range(max_iter):
+            # Save current parameters for convergence check
+            old_params = self.get_classical_params()
+            prev_mu = old_params['mu'].copy()
+            prev_gamma = old_params['gamma'].copy()
+            prev_sigma = old_params['sigma'].copy()
+
             # ==============================================================
             # E-step: Compute conditional expectations E[g(Y) | X]
             # ==============================================================
@@ -514,11 +524,7 @@ class VarianceGamma(NormalMixture):
             eta_5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # (d,)
 
             # η̂₆ = (1/n) Σ X_j X_j^T E[1/Y | X_j]
-            # Compute as weighted outer products
-            eta_6 = np.zeros((d, d))
-            for j in range(n_samples):
-                eta_6 += np.outer(X[j], X[j]) * E_inv_Y[j]
-            eta_6 /= n_samples
+            eta_6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n_samples
 
             # ==============================================================
             # M-step: Update parameters
@@ -560,7 +566,7 @@ class VarianceGamma(NormalMixture):
             target = eta_3 - np.log(eta_2)
 
             # Initial guess from current parameters
-            alpha_new = self.get_classical_params()['shape']
+            alpha_new = old_params['shape']
 
             for _ in range(50):
                 psi_val = digamma(alpha_new)
@@ -586,11 +592,8 @@ class VarianceGamma(NormalMixture):
             beta_new = alpha_new / eta_2
 
             # ==============================================================
-            # Update parameters with damping for stability
+            # Update parameters
             # ==============================================================
-            # Store old parameters in case we need to revert
-            old_params = self.get_classical_params()
-
             try:
                 self.set_classical_params(
                     mu=mu_new,
@@ -607,29 +610,38 @@ class VarianceGamma(NormalMixture):
                 break
 
             # ==============================================================
-            # Check convergence
+            # Check convergence using relative parameter change
             # ==============================================================
-            current_ll = np.mean(self.logpdf(X))
+            # Compute relative norms for mu, gamma, Sigma
+            mu_norm = np.linalg.norm(mu_new - prev_mu)
+            mu_denom = max(np.linalg.norm(prev_mu), 1e-10)
+            rel_mu = mu_norm / mu_denom
 
-            if verbose >= 2:
+            gamma_norm = np.linalg.norm(gamma_new - prev_gamma)
+            gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
+            rel_gamma = gamma_norm / gamma_denom
+
+            sigma_norm = np.linalg.norm(Sigma_new - prev_sigma, 'fro')
+            sigma_denom = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
+            rel_sigma = sigma_norm / sigma_denom
+
+            max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
+
+            if verbose >= 1:
+                current_ll = np.mean(self.logpdf(X))
                 print(f"Iteration {iteration + 1}: log-likelihood = {current_ll:.6f}")
+                if verbose >= 2:
+                    print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
+                          f"Sigma={rel_sigma:.2e}")
 
-            # Check for convergence
-            ll_change = current_ll - prev_ll
-            if abs(ll_change) < tol:
+            if max_rel_change < tol:
                 if verbose >= 1:
                     print(f"Converged at iteration {iteration + 1}")
                 break
 
-            # Check for decrease (shouldn't happen in EM, but numerical issues)
-            if ll_change < -1e-8:
-                if verbose >= 1:
-                    print(f"Warning: log-likelihood decreased at iteration {iteration + 1}")
-
-            prev_ll = current_ll
-
         if verbose >= 1:
-            print(f"Final log-likelihood: {prev_ll:.6f}")
+            final_ll = np.mean(self.logpdf(X))
+            print(f"Final log-likelihood: {final_ll:.6f}")
 
         return self
 
