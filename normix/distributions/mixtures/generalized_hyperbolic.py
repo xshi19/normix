@@ -421,6 +421,11 @@ class GeneralizedHyperbolic(NormalMixture):
         the EM algorithm treating Y as latent. The joint distribution (X, Y)
         is an exponential family, which makes the EM algorithm tractable.
 
+        Convergence is checked based on the relative change in the normal
+        parameters :math:`(\\mu, \\gamma, \\Sigma)`, which are more stable than
+        the GIG parameters. Log-likelihood is optionally displayed per
+        iteration when ``verbose >= 1``.
+
         Parameters
         ----------
         X : array_like
@@ -428,10 +433,11 @@ class GeneralizedHyperbolic(NormalMixture):
         max_iter : int, optional
             Maximum number of EM iterations. Default is 100.
         tol : float, optional
-            Convergence tolerance for relative change in log-likelihood.
-            Default is 1e-4.
+            Convergence tolerance for relative parameter change (based on
+            :math:`\\mu, \\gamma, \\Sigma`). Default is 1e-4.
         verbose : int, optional
-            Verbosity level (0=silent, 1=progress). Default is 0.
+            Verbosity level. 0 = silent, 1 = progress with llh,
+            2 = detailed with parameter norms. Default is 0.
         regularization : str or callable, optional
             Regularization method to use. Options:
 
@@ -471,6 +477,10 @@ class GeneralizedHyperbolic(NormalMixture):
         After each M-step, regularization is applied to ensure identifiability.
         The recommended regularization is :math:`|\\Sigma| = 1`, which doesn't
         affect EM convergence (see em_algorithm.rst for proof).
+
+        The initial parameters are obtained by running a short NIG EM
+        (5 iterations) to get a reasonable starting point for
+        :math:`(\\mu, \\gamma, \\Sigma)` and the GIG parameters.
 
         Examples
         --------
@@ -518,19 +528,19 @@ class GeneralizedHyperbolic(NormalMixture):
 
         regularization_params = regularization_params or {}
 
-        # Initialize parameters using method of moments
+        # Initialize parameters using NIG warm start
         if self._joint._natural_params is None:
             self._initialize_params(X, random_state)
 
-        # EM iterations
-        prev_ll = 0.0
+        if verbose > 0:
+            init_ll = np.mean(self.logpdf(X))
+            print(f"Initial log-likelihood: {init_ll:.6f}")
 
-        for iteration in range(max_iter):
-            # Apply regularization BEFORE computing log-likelihood (following legacy)
+        def _apply_regularization():
+            """Apply regularization to current parameters."""
             classical = self.get_classical_params()
-            # Get cached log_det_Sigma for efficient regularization
             _, log_det_sigma = self._joint.get_L_Sigma()
-            
+
             if regularization == 'fix_p':
                 regularized = regularize_fn(
                     classical['mu'], classical['gamma'], classical['sigma'],
@@ -538,7 +548,6 @@ class GeneralizedHyperbolic(NormalMixture):
                     **regularization_params
                 )
             elif regularization == 'det_sigma_one':
-                # Pass cached log_det_sigma
                 regularized = regularize_fn(
                     classical['mu'], classical['gamma'], classical['sigma'],
                     classical['p'], classical['a'], classical['b'], d,
@@ -549,44 +558,67 @@ class GeneralizedHyperbolic(NormalMixture):
                     classical['mu'], classical['gamma'], classical['sigma'],
                     classical['p'], classical['a'], classical['b'], d
                 )
-            
-            # Sanity check after regularization: reject if parameters are degenerate
+
+            # Sanity check: clamp degenerate GIG parameters
             a_reg = regularized['a']
             b_reg = regularized['b']
             if a_reg < 1e-6 or b_reg < 1e-6 or a_reg > 1e6 or b_reg > 1e6:
-                # Parameters are degenerate, clamp to reasonable bounds
                 regularized['a'] = np.clip(a_reg, 1e-6, 1e6)
                 regularized['b'] = np.clip(b_reg, 1e-6, 1e6)
-            
+
             self._joint.set_classical_params(**regularized)
-            
-            # Compute MARGINAL log-likelihood (not joint)
-            ll = np.mean(self.logpdf(X))
 
-            # Check convergence using relative change (following legacy)
-            if iteration > 0:
-                if verbose > 0:
-                    change = ll - prev_ll
-                    # Use format compatible with fit_and_track_convergence utility
-                    print(f"Iteration {iteration}: log-likelihood = {ll:.6f}")
-                    if verbose > 1:
-                        print(f"  change = {change:.6f}")
+        # EM iterations
+        for iteration in range(max_iter):
+            # Apply regularization BEFORE E-step (following legacy)
+            _apply_regularization()
 
-                if abs(prev_ll) > 0 and abs(ll - prev_ll) / abs(prev_ll) < tol:
-                    if verbose > 0:
-                        print('Converged')
-                    return self
-            else:
-                if verbose > 0:
-                    print(f"Initial log-likelihood: {ll:.6f}")
-                    
-            prev_ll = ll
+            # Save regularized parameters for convergence check
+            classical = self.get_classical_params()
+            prev_mu = classical['mu'].copy()
+            prev_gamma = classical['gamma'].copy()
+            prev_sigma = classical['sigma'].copy()
 
             # E-step: compute conditional expectations
             cond_exp = self._conditional_expectation_y_given_x(X)
 
             # M-step: update parameters
             self._m_step(X, cond_exp, fix_tail=fix_tail)
+
+            # Apply regularization AFTER M-step to ensure constraints hold
+            _apply_regularization()
+
+            # Check convergence using relative parameter change on (mu, gamma, Sigma)
+            new_classical = self.get_classical_params()
+            mu_new = new_classical['mu']
+            gamma_new = new_classical['gamma']
+            sigma_new = new_classical['sigma']
+
+            mu_norm = np.linalg.norm(mu_new - prev_mu)
+            mu_denom = max(np.linalg.norm(prev_mu), 1e-10)
+            rel_mu = mu_norm / mu_denom
+
+            gamma_norm = np.linalg.norm(gamma_new - prev_gamma)
+            gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
+            rel_gamma = gamma_norm / gamma_denom
+
+            sigma_norm = np.linalg.norm(sigma_new - prev_sigma, 'fro')
+            sigma_denom = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
+            rel_sigma = sigma_norm / sigma_denom
+
+            max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
+
+            if verbose > 0:
+                ll = np.mean(self.logpdf(X))
+                print(f"Iteration {iteration + 1}: log-likelihood = {ll:.6f}")
+                if verbose > 1:
+                    print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
+                          f"Sigma={rel_sigma:.2e}")
+
+            if max_rel_change < tol:
+                if verbose > 0:
+                    print('Converged')
+                return self
 
         if verbose > 0:
             print('Not converged (max iterations reached)')
@@ -598,7 +630,11 @@ class GeneralizedHyperbolic(NormalMixture):
         random_state: Optional[int] = None
     ) -> None:
         """
-        Initialize parameters using method of moments.
+        Initialize GH parameters using a short NIG EM warm start.
+
+        Runs a Normal-Inverse Gaussian EM for a few iterations to obtain
+        reasonable initial values for :math:`(\\mu, \\gamma, \\Sigma)` and
+        the GIG parameters :math:`(p, a, b)`.
 
         Parameters
         ----------
@@ -607,29 +643,50 @@ class GeneralizedHyperbolic(NormalMixture):
         random_state : int, optional
             Random seed.
         """
+        import warnings
+        from .normal_inverse_gaussian import NormalInverseGaussian
+
         n, d = X.shape
 
-        # Estimate mu as sample mean
-        mu = np.mean(X, axis=0)
+        try:
+            # Use NIG with a few EM iterations to get a warm start
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                nig = NormalInverseGaussian()
+                nig.fit(X, max_iter=5, verbose=0, random_state=random_state)
 
-        # Estimate Sigma as sample covariance
-        Sigma = np.cov(X, rowvar=False)
-        if d == 1:
-            Sigma = np.array([[Sigma]])
+            nig_params = nig.get_classical_params()
+            mu = nig_params['mu']
+            gamma = nig_params['gamma']
+            Sigma = nig_params['sigma']
+            delta = nig_params['delta']
+            eta = nig_params['eta']
 
-        # Make sure Sigma is positive definite
-        min_eig = np.linalg.eigvalsh(Sigma).min()
-        if min_eig < 1e-8:
-            Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+            # Convert NIG (IG) params to GIG params:
+            # IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)
+            p = -0.5
+            a = eta / (delta ** 2)
+            b = eta
 
-        # Start with symmetric case (gamma = 0)
-        gamma = np.zeros(d)
+            # Clamp GIG parameters to reasonable range
+            a = np.clip(a, 1e-6, 1e6)
+            b = np.clip(b, 1e-6, 1e6)
 
-        # Initial GIG parameters (reasonable defaults)
-        # Start near the hyperbolic case
-        p = 1.0
-        a = 1.0
-        b = 1.0
+        except Exception:
+            # Fallback: method of moments initialization
+            mu = np.mean(X, axis=0)
+            Sigma = np.cov(X, rowvar=False)
+            if d == 1:
+                Sigma = np.array([[Sigma]])
+
+            min_eig = np.linalg.eigvalsh(Sigma).min()
+            if min_eig < 1e-8:
+                Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+
+            gamma = np.zeros(d)
+            p = 1.0
+            a = 1.0
+            b = 1.0
 
         # Set initial parameters
         self._joint.set_classical_params(
