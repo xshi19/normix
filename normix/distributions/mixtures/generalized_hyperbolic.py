@@ -349,17 +349,17 @@ class GeneralizedHyperbolic(NormalMixture):
 
         n = x.shape[0]
 
-        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
-        U, logdet_Sigma = self._joint.get_L_Sigma()
+        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
+        L, logdet_Sigma = self._joint.get_L_Sigma()
         
-        # Transform data: z = U^{-1}(x - μ)
+        # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
         diff = x - mu  # (n, d)
-        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
         q = np.sum(z ** 2, axis=0)  # (n,)
         
-        # Transform gamma: gamma_z = U^{-1} γ
-        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        # Transform gamma: gamma_z = L^{-1} γ
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
@@ -618,10 +618,12 @@ class GeneralizedHyperbolic(NormalMixture):
             if max_rel_change < tol:
                 if verbose > 0:
                     print('Converged')
+                self.n_iter_ = iteration + 1
                 return self
 
         if verbose > 0:
             print('Not converged (max iterations reached)')
+        self.n_iter_ = max_iter
         return self
 
     def _initialize_params(
@@ -869,19 +871,19 @@ class GeneralizedHyperbolic(NormalMixture):
         b = classical['b']
         d = self.d
 
-        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
-        U, _ = self._joint.get_L_Sigma()
+        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
+        L, _ = self._joint.get_L_Sigma()
         
-        # Transform data: z = U^{-1}(x - μ)
+        # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         diff = X - mu  # (n, d)
-        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
         
         # Mahalanobis distances: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         q = np.sum(z ** 2, axis=0)  # (n,)
         
-        # Transform gamma: U^{-1} γ
-        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        # Transform gamma: L^{-1} γ
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Conditional GIG parameters (vectorized)

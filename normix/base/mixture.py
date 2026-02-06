@@ -319,19 +319,19 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
     def get_L_Sigma(self) -> Tuple[NDArray, float]:
         """
-        Get the upper Cholesky factor of Sigma (cached or computed).
+        Get the lower Cholesky factor of Sigma (cached or computed).
 
-        Returns the upper Cholesky factor U such that Σ = U.T @ U, along with
-        the log determinant of Sigma. Uses cached values if available, otherwise
-        computes from natural parameters.
+        Returns the lower Cholesky factor L such that :math:`\\Sigma = L L^T`,
+        along with the log determinant of Sigma. Uses cached values if
+        available, otherwise computes from natural parameters.
 
         Returns
         -------
-        U_Sigma : ndarray
-            Upper Cholesky factor of Sigma, shape (d, d).
-            Satisfies Σ = U_Sigma.T @ U_Sigma.
+        L_Sigma : ndarray
+            Lower Cholesky factor of Sigma, shape (d, d).
+            Satisfies :math:`\\Sigma = L L^T`.
         log_det_Sigma : float
-            Log determinant of Sigma: log|Σ| = 2 * Σ log(U_ii).
+            Log determinant of Sigma: :math:`\\log|\\Sigma| = 2 \\sum \\log(L_{ii})`.
 
         Notes
         -----
@@ -340,19 +340,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
         factor is cached after the first computation or when set via
         :meth:`set_L_Sigma`.
 
-        We use upper Cholesky (Σ = U.T @ U) because it can be computed directly
-        from the lower Cholesky of Lambda without an additional decomposition:
-
-        .. math::
-            \\Lambda = L_\\Lambda L_\\Lambda^T \\implies
-            \\Sigma = \\Lambda^{-1} = L_\\Lambda^{-T} L_\\Lambda^{-1} = M^T M
-
-        where :math:`M = L_\\Lambda^{-1}` is lower triangular. Thus the upper
-        Cholesky of Sigma is :math:`U_\\Sigma = M^T`.
-
         For Mahalanobis distance computation, use::
 
-            z = solve_triangular(U_Sigma, x - mu, lower=False)
+            z = solve_triangular(L_Sigma, x - mu, lower=True)
             mahalanobis_sq = np.sum(z ** 2, axis=0)
         """
         if self._L_Sigma is not None and self._log_det_Sigma is not None:
@@ -371,18 +361,20 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # M = inv(L_Lambda) is lower triangular
         # Σ = Λ^{-1} = L_Λ^{-T} @ L_Λ^{-1} = M.T @ M
-        # So the upper Cholesky of Σ is U_Σ = M.T
         M = solve_triangular(L_Lambda, np.eye(d), lower=True)
-        U_Sigma = M.T  # Upper Cholesky: Σ = U.T @ U
+        Sigma = M.T @ M
 
-        # Log determinant: log|Σ| = 2 * Σ log(U_ii) = -2 * Σ log(L_Lambda_ii)
-        log_det_Sigma = 2.0 * np.sum(np.log(np.diag(U_Sigma)))
+        # Lower Cholesky of Sigma: Σ = L_Σ @ L_Σ.T
+        L_Sigma = cholesky(Sigma, lower=True)
+
+        # Log determinant: log|Σ| = 2 * Σ log(L_ii)
+        log_det_Sigma = 2.0 * np.sum(np.log(np.diag(L_Sigma)))
 
         # Cache the results
-        self._L_Sigma = U_Sigma
+        self._L_Sigma = L_Sigma
         self._log_det_Sigma = log_det_Sigma
 
-        return U_Sigma, log_det_Sigma
+        return L_Sigma, log_det_Sigma
 
     def set_L_Sigma(self, L_Sigma: NDArray, lower: bool = True) -> None:
         """
@@ -397,16 +389,17 @@ class JointNormalMixture(ExponentialFamily, ABC):
         L_Sigma : ndarray
             Cholesky factor of Sigma, shape (d, d).
         lower : bool, default True
-            If True, L_Sigma is lower triangular (Σ = L @ L.T) and will be
-            converted to upper. If False, L_Sigma is already upper (Σ = U.T @ U).
+            If True, L_Sigma is lower triangular (:math:`\\Sigma = L L^T`).
+            If False, L_Sigma is upper triangular (:math:`\\Sigma = U^T U`)
+            and will be converted to lower.
         """
         if lower:
-            # Convert lower to upper: if Σ = L @ L.T, then U = L.T gives Σ = U.T @ U
-            U_Sigma = L_Sigma.T
+            L = L_Sigma
         else:
-            U_Sigma = L_Sigma
-        self._L_Sigma = U_Sigma
-        self._log_det_Sigma = 2.0 * np.sum(np.log(np.diag(U_Sigma)))
+            # Convert upper to lower: if Σ = U.T @ U, then L = U.T gives Σ = L @ L.T
+            L = L_Sigma.T
+        self._L_Sigma = L
+        self._log_det_Sigma = 2.0 * np.sum(np.log(np.diag(L)))
 
     def clear_L_Sigma_cache(self) -> None:
         """Clear the cached Cholesky factor of Sigma."""
@@ -633,9 +626,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
         L_Lambda, _, mu, gamma = self._extract_normal_params_with_cholesky(theta)
         d = self.d
 
-        # Get upper Cholesky of Sigma: Σ = U.T @ U
-        # We have U = inv(L_Lambda).T, computed via get_L_Sigma()
-        U_Sigma, _ = self.get_L_Sigma()
+        # Get lower Cholesky of Sigma: Σ = L @ L.T
+        L_Sigma, _ = self.get_L_Sigma()
 
         # Create mixing distribution instance
         mixing_class = self._get_mixing_distribution_class()
@@ -647,12 +639,12 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # Sample X | Y ~ N(mu + gamma * Y, Sigma * Y)
         # Using the representation: X = mu + gamma * Y + sqrt(Y) * Z, Z ~ N(0, Sigma)
-        # Since Σ = U.T @ U, we have: Z = U.T @ W where W ~ N(0, I)
+        # Since Σ = L @ L.T, we have: Z = L @ W where W ~ N(0, I)
         if size is None:
             # Single sample
             Y_scalar = float(Y)
             W = rng.standard_normal(d)  # W ~ N(0, I)
-            Z = U_Sigma.T @ W  # Z ~ N(0, Sigma)
+            Z = L_Sigma @ W  # Z ~ N(0, Sigma)
             X = mu + gamma * Y_scalar + np.sqrt(Y_scalar) * Z
         else:
             # Multiple samples - vectorized
@@ -660,9 +652,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
             Y_flat = np.atleast_1d(Y).flatten()
 
             # Sample W ~ N(0, I) for all n samples, then transform to Z ~ N(0, Sigma)
-            # W has shape (n, d), Z = W @ U (since Z_i = U.T @ W_i means Z = W @ U in matrix form)
+            # W has shape (n, d), Z = W @ L.T (since Z_i = L @ W_i means Z = W @ L.T in matrix form)
             W = rng.standard_normal((n, d))  # (n, d)
-            Z = W @ U_Sigma  # (n, d) @ (d, d) = (n, d), each row is U.T @ W_i
+            Z = W @ L_Sigma.T  # (n, d) @ (d, d) = (n, d), each row is L @ W_i
 
             # Vectorized: X = mu + gamma * Y + sqrt(Y) * Z
             # Shape: (n, d) = (d,) + (d,) * (n, 1) + (n, d) * (n, 1)

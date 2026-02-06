@@ -147,9 +147,9 @@ class VarianceGamma(NormalMixture):
         beta = classical['rate']
         d = self.d
 
-        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
         from scipy.linalg import solve_triangular
-        U, logdet_Sigma = self._joint.get_L_Sigma()
+        L, logdet_Sigma = self._joint.get_L_Sigma()
 
         # Handle single point vs multiple points
         if x.ndim == 1:
@@ -160,14 +160,14 @@ class VarianceGamma(NormalMixture):
 
         n = x.shape[0]
 
-        # Transform data: z = U^{-1}(x - μ)
+        # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
         diff = x - mu  # (n, d)
-        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
         q = np.sum(z ** 2, axis=0)  # (n,)
 
-        # Transform gamma: gamma_z = U^{-1} γ
-        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        # Transform gamma: gamma_z = L^{-1} γ
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
 
         # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
@@ -255,9 +255,9 @@ class VarianceGamma(NormalMixture):
         beta = classical['rate']
         d = self.d
 
-        # Get cached upper Cholesky factor of Sigma (Σ = U.T @ U)
+        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
         from scipy.linalg import solve_triangular
-        U, _ = self._joint.get_L_Sigma()
+        L, _ = self._joint.get_L_Sigma()
 
         # GIG parameters for Y | X = x
         # From the derivation:
@@ -269,7 +269,7 @@ class VarianceGamma(NormalMixture):
         p_cond = alpha - d / 2
 
         # a = 2β + γ^T Σ^{-1} γ (same for all x)
-        gamma_z = solve_triangular(U, gamma, lower=False)  # (d,)
+        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         a_cond = 2 * beta + gamma_quad
 
@@ -284,7 +284,7 @@ class VarianceGamma(NormalMixture):
 
         # b = (x - μ)^T Σ^{-1} (x - μ) for each x
         diff = x - mu  # (n, d)
-        z = solve_triangular(U, diff.T, lower=False)  # (d, n)
+        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
         b_cond = np.sum(z ** 2, axis=0)  # (n,)
 
         # Ensure b > 0 (add small epsilon for numerical stability)
@@ -607,6 +607,7 @@ class VarianceGamma(NormalMixture):
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
                 # Revert to old parameters
                 self.set_classical_params(**old_params)
+                self.n_iter_ = iteration + 1
                 break
 
             # ==============================================================
@@ -637,7 +638,10 @@ class VarianceGamma(NormalMixture):
             if max_rel_change < tol:
                 if verbose >= 1:
                     print(f"Converged at iteration {iteration + 1}")
+                self.n_iter_ = iteration + 1
                 break
+        else:
+            self.n_iter_ = max_iter
 
         if verbose >= 1:
             final_ll = np.mean(self.logpdf(X))
