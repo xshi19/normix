@@ -187,3 +187,97 @@ class TestCachedAttrsInheritance:
 
     def test_base_distribution_has_empty_cached_attrs(self):
         assert Distribution._cached_attrs == ()
+
+
+# ============================================================================
+# Tests for NormalMixture cache behavior
+# ============================================================================
+
+class TestNormalMixtureCacheInfrastructure:
+    """Test that NormalMixture correctly syncs _fitted with its joint."""
+
+    def test_normal_mixture_not_fitted_initially(self):
+        """NormalMixture should not be fitted at creation."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma()
+        assert vg._fitted is False
+
+    def test_normal_mixture_fitted_after_from_classical_params(self):
+        """NormalMixture should be fitted after from_classical_params."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma.from_classical_params(
+            mu=np.array([0.0]), gamma=np.array([0.1]),
+            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
+        )
+        assert vg._fitted is True
+        assert vg._joint._fitted is True
+
+    def test_normal_mixture_check_fitted_syncs_from_joint(self):
+        """_check_fitted should sync _fitted from joint when joint is fitted."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma()
+        vg._joint = vg._create_joint_distribution()
+        # Set params directly on joint (simulates EM behavior)
+        vg._joint.set_classical_params(
+            mu=np.array([0.0]), gamma=np.array([0.1]),
+            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
+        )
+        # Marginal _fitted is False, but joint is fitted
+        assert vg._fitted is False
+        assert vg._joint._fitted is True
+        # _check_fitted should sync and not raise
+        vg._check_fitted()
+        assert vg._fitted is True
+
+    def test_normal_mixture_check_fitted_raises_when_no_joint(self):
+        """_check_fitted should raise when joint is not initialized."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma()
+        with pytest.raises(ValueError, match="parameters not set"):
+            vg._check_fitted()
+
+    def test_normal_mixture_classical_params_cached_property(self):
+        """classical_params cached property should work on NormalMixture."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma.from_classical_params(
+            mu=np.array([0.0]), gamma=np.array([0.1]),
+            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
+        )
+        params = vg.classical_params
+        assert 'mu' in params
+        assert 'gamma' in params
+        assert 'sigma' in params
+
+    def test_normal_mixture_invalidate_cache_on_param_change(self):
+        """classical_params should be invalidated when params change."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma.from_classical_params(
+            mu=np.array([0.0]), gamma=np.array([0.1]),
+            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
+        )
+        # Access classical_params to populate cache
+        params1 = vg.classical_params
+
+        # Change params via setter (which calls _invalidate_cache)
+        vg.set_classical_params(
+            mu=np.array([1.0]), gamma=np.array([0.2]),
+            sigma=np.array([[2.0]]), shape=3.0, rate=2.0
+        )
+        params2 = vg.classical_params
+        assert not np.allclose(params1['mu'], params2['mu'])
+
+    def test_normal_mixture_repr_uses_fitted(self):
+        """__repr__ should use _fitted flag."""
+        from normix.distributions.mixtures.variance_gamma import VarianceGamma
+        vg = VarianceGamma()
+        assert "not fitted" in repr(vg)
+        vg = VarianceGamma.from_classical_params(
+            mu=np.array([0.0]), gamma=np.array([0.1]),
+            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
+        )
+        assert "not fitted" not in repr(vg)
+
+    def test_normal_mixture_cached_attrs_includes_classical_params(self):
+        """_cached_attrs should include classical_params."""
+        from normix.base.mixture import NormalMixture
+        assert 'classical_params' in NormalMixture._cached_attrs

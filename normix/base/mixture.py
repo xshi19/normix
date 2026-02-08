@@ -932,10 +932,26 @@ class NormalMixture(Distribution, ABC):
     >>> gh.rvs_joint(size=100)  # Returns (X, Y) tuple
     """
 
+    _cached_attrs = ('classical_params',)
+
     def __init__(self):
         """Initialize an unfitted marginal normal mixture distribution."""
         super().__init__()
         self._joint: Optional[JointNormalMixture] = None
+
+    def _check_fitted(self) -> None:
+        """
+        Check if the marginal distribution is fitted.
+
+        A NormalMixture is considered fitted if its underlying joint
+        distribution exists and is fitted. This is necessary because
+        EM fitting modifies the joint distribution directly, bypassing
+        the marginal's setters.
+        """
+        if self._joint is not None and self._joint._fitted:
+            self._fitted = True
+            return
+        super()._check_fitted()
 
     # ========================================================================
     # Abstract methods
@@ -1129,6 +1145,8 @@ class NormalMixture(Distribution, ABC):
             self._joint = self._create_joint_distribution()
 
         self._joint.set_classical_params(**kwargs)
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
         return self
 
     def set_natural_params(self, theta: NDArray) -> 'NormalMixture':
@@ -1149,6 +1167,8 @@ class NormalMixture(Distribution, ABC):
             self._joint = self._create_joint_distribution()
 
         self._joint.set_natural_params(theta)
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
         return self
 
     def set_expectation_params(self, eta: NDArray) -> 'NormalMixture':
@@ -1169,11 +1189,28 @@ class NormalMixture(Distribution, ABC):
             self._joint = self._create_joint_distribution()
 
         self._joint.set_expectation_params(eta)
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
         return self
 
     # ========================================================================
     # Parameter getters (delegate to joint)
     # ========================================================================
+
+    @cached_property
+    def classical_params(self) -> Dict[str, Any]:
+        """
+        Classical parameters of the distribution (cached).
+
+        Delegates to the joint distribution's classical parameters.
+
+        Returns
+        -------
+        params : dict
+            Dictionary of classical parameters.
+        """
+        self._check_fitted()
+        return self.joint.classical_params
 
     def get_natural_params(self) -> NDArray:
         """
@@ -1248,8 +1285,7 @@ class NormalMixture(Distribution, ABC):
         logpdf : ndarray
             Log probability density values.
         """
-        if self._joint is None:
-            raise ValueError("Parameters not set. Use from_*_params().")
+        self._check_fitted()
         return self._marginal_logpdf(x)
 
     def rvs(
@@ -1491,7 +1527,7 @@ class NormalMixture(Distribution, ABC):
     def __repr__(self) -> str:
         """String representation of the marginal distribution."""
         name = self.__class__.__name__
-        if self._joint is None:
+        if not self._fitted:
             return f"{name}(not fitted)"
         try:
             d = self.d
