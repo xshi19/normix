@@ -146,10 +146,9 @@ class NormalInverseGaussian(NormalMixture):
             Log PDF values.
         """
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        mu = classical['mu']
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
+        mu = self._joint._mu
+        gamma = self._joint._gamma
+        classical = self._joint.classical_params
         delta = classical['delta']
         eta = classical['eta']
         d = self.d
@@ -159,9 +158,9 @@ class NormalInverseGaussian(NormalMixture):
         a = eta / (delta ** 2)
         b = eta
 
-        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
-        from scipy.linalg import solve_triangular
-        L, logdet_Sigma = self._joint.get_L_Sigma()
+        # Get cached Cholesky quantities
+        L_inv = self._joint.L_Sigma_inv
+        logdet_Sigma = self._joint.log_det_Sigma
 
         # Handle single point vs multiple points
         if x.ndim == 1:
@@ -175,11 +174,11 @@ class NormalInverseGaussian(NormalMixture):
         # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
         diff = x - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = L_inv @ diff.T  # (d, n)
         q = np.sum(z ** 2, axis=0)  # (n,)
 
         # Transform gamma: gamma_z = L^{-1} γ
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_z = L_inv @ gamma  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
 
         # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
@@ -245,9 +244,9 @@ class NormalInverseGaussian(NormalMixture):
             - 'E_log_Y': :math:`E[\\log Y | X]`, shape (n,)
         """
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        mu = classical['mu']
-        gamma = classical['gamma']
+        mu = self._joint._mu
+        gamma = self._joint._gamma
+        classical = self._joint.classical_params
         delta = classical['delta']
         eta = classical['eta']
         d = self.d
@@ -256,16 +255,15 @@ class NormalInverseGaussian(NormalMixture):
         a_mix = eta / (delta ** 2)
         b_mix = eta
 
-        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
-        from scipy.linalg import solve_triangular
-        L, _ = self._joint.get_L_Sigma()
+        # Get cached Cholesky quantities
+        L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x
         # p_cond = p - d/2 = -1/2 - d/2
         p_cond = -0.5 - d / 2
 
         # a_cond = a + γ^T Σ^{-1} γ (same for all x)
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_z = L_inv @ gamma  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         a_cond = a_mix + gamma_quad
 
@@ -280,7 +278,7 @@ class NormalInverseGaussian(NormalMixture):
 
         # b_cond = b + (x - μ)^T Σ^{-1} (x - μ) for each x
         diff = x - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = L_inv @ diff.T  # (d, n)
         q_x = np.sum(z ** 2, axis=0)  # (n,)
         b_cond = b_mix + q_x
 
@@ -583,6 +581,9 @@ class NormalInverseGaussian(NormalMixture):
         else:
             self.n_iter_ = max_iter
 
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
+
         if verbose >= 1:
             final_ll = np.mean(self.logpdf(X))
             print(f"Final log-likelihood: {final_ll:.6f}")
@@ -628,6 +629,8 @@ class NormalInverseGaussian(NormalMixture):
 
         # Use joint distribution's fit method
         self._joint.fit(X, Y, **kwargs)
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
 
         return self
 
@@ -637,7 +640,7 @@ class NormalInverseGaussian(NormalMixture):
 
     def __repr__(self) -> str:
         """String representation."""
-        if self._joint is None:
+        if not self._fitted:
             return "NormalInverseGaussian(not fitted)"
 
         try:
