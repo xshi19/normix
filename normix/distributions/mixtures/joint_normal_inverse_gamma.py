@@ -656,7 +656,7 @@ class JointNormalInverseGamma(JointNormalMixture):
 
     def __repr__(self) -> str:
         """String representation."""
-        if self._natural_params is None:
+        if not self._fitted:
             if self._d is not None:
                 return f"JointNormalInverseGamma(d={self._d}, not fitted)"
             return "JointNormalInverseGamma(not fitted)"
