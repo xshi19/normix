@@ -35,6 +35,7 @@ Method naming convention:
 """
 
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -91,6 +92,10 @@ class JointNormalMixture(ExponentialFamily, ABC):
     ExponentialFamily : Parent class providing exponential family methods
     """
 
+    _cached_attrs: Tuple[str, ...] = ExponentialFamily._cached_attrs + (
+        'log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq',
+    )
+
     def __init__(self, d: Optional[int] = None):
         """
         Initialize a joint normal mixture distribution.
@@ -102,10 +107,10 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         super().__init__()
         self._d = d
-        # Cache for Cholesky factor of Sigma (covariance scale matrix)
-        # L_Sigma satisfies Sigma = L_Sigma @ L_Sigma.T
-        self._L_Sigma: Optional[NDArray] = None
-        self._log_det_Sigma: Optional[float] = None
+        # Internal state: normal distribution parameters
+        self._mu: Optional[NDArray] = None
+        self._gamma: Optional[NDArray] = None
+        self._L_Sigma: Optional[NDArray] = None  # Lower Cholesky of Sigma
 
     @property
     def d(self) -> int:
@@ -314,102 +319,161 @@ class JointNormalMixture(ExponentialFamily, ABC):
         return mu, gamma, Sigma
 
     # ========================================================================
-    # Cholesky factor caching for Sigma
+    # Internal state management
+    # ========================================================================
+
+    def _set_from_natural(self, theta: NDArray) -> None:
+        """
+        Set internal state from natural parameters.
+
+        Extracts and stores :math:`\\mu`, :math:`\\gamma`, and the Cholesky
+        factor of :math:`\\Sigma` alongside the legacy tuple storage.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Full natural parameter vector.
+        """
+        theta = np.asarray(theta, dtype=float)
+
+        # Infer dimension if needed
+        if self._d is None:
+            # theta has 3 + 2d + d^2 entries
+            # Solve d^2 + 2d + 3 - len(theta) = 0
+            n = len(theta)
+            # d^2 + 2d + 3 = n => d = (-2 + sqrt(4 + 4*(n-3))) / 2
+            disc = 4 + 4 * (n - 3)
+            d = int((-2 + np.sqrt(disc)) / 2)
+            if 3 + 2 * d + d * d != n:
+                raise ValueError(f"Cannot infer d from parameter length {n}")
+            self._d = d
+
+        # Validate and store legacy
+        self._validate_natural_params(theta)
+        self._natural_params = tuple(theta)
+
+        # Extract normal params via Cholesky
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, symmetrize=True, return_sigma=True
+        )
+        L_Sigma = cholesky(Sigma, lower=True)
+
+        # Store internal state
+        self._mu = mu
+        self._gamma = gamma
+        self._L_Sigma = L_Sigma
+
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _compute_classical_params(self):
+        """
+        Compute classical parameters from internal state.
+
+        Delegates to the legacy ``_natural_to_classical`` for now.
+        Subclasses will override when migrated.
+        """
+        theta = self.natural_params
+        return self._natural_to_classical(theta)
+
+    # ========================================================================
+    # Cached derived quantities
+    # ========================================================================
+
+    @cached_property
+    def log_det_Sigma(self) -> float:
+        r"""
+        Log-determinant of the covariance scale matrix (cached).
+
+        .. math::
+            \log|\Sigma| = 2 \sum_{i=1}^d \log (L_\Sigma)_{ii}
+
+        Returns
+        -------
+        log_det : float
+        """
+        self._check_fitted()
+        return 2.0 * np.sum(np.log(np.diag(self._L_Sigma)))
+
+    @cached_property
+    def L_Sigma_inv(self) -> NDArray:
+        r"""
+        Inverse of the lower Cholesky factor of Sigma (cached).
+
+        :math:`L_\Sigma^{-1}` such that :math:`\Sigma^{-1} = L_\Sigma^{-T} L_\Sigma^{-1}`.
+
+        Returns
+        -------
+        L_inv : ndarray, shape ``(d, d)``
+            Lower triangular matrix.
+        """
+        self._check_fitted()
+        return solve_triangular(self._L_Sigma, np.eye(self._d), lower=True)
+
+    @cached_property
+    def gamma_mahal_sq(self) -> float:
+        r"""
+        Mahalanobis norm of gamma: :math:`\gamma^T \Sigma^{-1} \gamma` (cached).
+
+        Used in marginal PDF computations.
+
+        Returns
+        -------
+        mahal_sq : float
+        """
+        self._check_fitted()
+        z = solve_triangular(self._L_Sigma, self._gamma, lower=True)
+        return float(z @ z)
+
+    # ========================================================================
+    # Backward-compatible Cholesky factor access
     # ========================================================================
 
     def get_L_Sigma(self) -> Tuple[NDArray, float]:
         """
-        Get the lower Cholesky factor of Sigma (cached or computed).
-
-        Returns the lower Cholesky factor L such that :math:`\\Sigma = L L^T`,
-        along with the log determinant of Sigma. Uses cached values if
-        available, otherwise computes from natural parameters.
+        Get the lower Cholesky factor of Sigma and its log determinant.
 
         Returns
         -------
         L_Sigma : ndarray
             Lower Cholesky factor of Sigma, shape (d, d).
-            Satisfies :math:`\\Sigma = L L^T`.
         log_det_Sigma : float
-            Log determinant of Sigma: :math:`\\log|\\Sigma| = 2 \\sum \\log(L_{ii})`.
+            Log determinant of Sigma.
 
         Notes
         -----
-        This method is optimized for use in the EM algorithm where the same
-        Sigma is used multiple times (E-step, logpdf evaluation). The Cholesky
-        factor is cached after the first computation or when set via
-        :meth:`set_L_Sigma`.
-
-        For Mahalanobis distance computation, use::
-
-            z = solve_triangular(L_Sigma, x - mu, lower=True)
-            mahalanobis_sq = np.sum(z ** 2, axis=0)
+        This method now delegates to the internal ``_L_Sigma`` attribute
+        and the ``log_det_Sigma`` cached property.
         """
-        if self._L_Sigma is not None and self._log_det_Sigma is not None:
-            return self._L_Sigma, self._log_det_Sigma
-
-        # Compute from natural parameters
-        theta = self.get_natural_params()
-        d = self.d
-
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -1/2 Λ
-        Lambda = -2 * theta_6
-        Lambda = (Lambda + Lambda.T) / 2  # Symmetrize
-
-        # Lower Cholesky of Lambda: Λ = L_Λ @ L_Λ.T
-        L_Lambda = cholesky(Lambda, lower=True)
-
-        # M = inv(L_Lambda) is lower triangular
-        # Σ = Λ^{-1} = L_Λ^{-T} @ L_Λ^{-1} = M.T @ M
-        M = solve_triangular(L_Lambda, np.eye(d), lower=True)
-        Sigma = M.T @ M
-
-        # Lower Cholesky of Sigma: Σ = L_Σ @ L_Σ.T
-        L_Sigma = cholesky(Sigma, lower=True)
-
-        # Log determinant: log|Σ| = 2 * Σ log(L_ii)
-        log_det_Sigma = 2.0 * np.sum(np.log(np.diag(L_Sigma)))
-
-        # Cache the results
-        self._L_Sigma = L_Sigma
-        self._log_det_Sigma = log_det_Sigma
-
-        return L_Sigma, log_det_Sigma
+        self._check_fitted()
+        return self._L_Sigma, self.log_det_Sigma
 
     def set_L_Sigma(self, L_Sigma: NDArray, lower: bool = True) -> None:
         """
-        Set the cached Cholesky factor of Sigma.
+        Set the Cholesky factor of Sigma.
 
-        This method is used by the M-step of the EM algorithm to cache the
-        Cholesky factor after computing Sigma, avoiding recomputation in
-        subsequent E-steps and logpdf evaluations.
+        Used by the M-step of the EM algorithm.
 
         Parameters
         ----------
         L_Sigma : ndarray
             Cholesky factor of Sigma, shape (d, d).
         lower : bool, default True
-            If True, L_Sigma is lower triangular (:math:`\\Sigma = L L^T`).
-            If False, L_Sigma is upper triangular (:math:`\\Sigma = U^T U`)
-            and will be converted to lower.
+            If True, L_Sigma is lower triangular.
+            If False, converts to lower triangular.
         """
         if lower:
-            L = L_Sigma
+            self._L_Sigma = L_Sigma.copy()
         else:
-            # Convert upper to lower: if Σ = U.T @ U, then L = U.T gives Σ = L @ L.T
-            L = L_Sigma.T
-        self._L_Sigma = L
-        self._log_det_Sigma = 2.0 * np.sum(np.log(np.diag(L)))
+            self._L_Sigma = L_Sigma.T.copy()
+        # Invalidate cached properties that depend on L_Sigma
+        for attr in ('log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq'):
+            self.__dict__.pop(attr, None)
 
     def clear_L_Sigma_cache(self) -> None:
-        """Clear the cached Cholesky factor of Sigma."""
-        self._L_Sigma = None
-        self._log_det_Sigma = None
-
-    def _clear_param_cache(self):
-        """Clear all parameter caches including L_Sigma."""
-        super()._clear_param_cache()
-        self.clear_L_Sigma_cache()
+        """Clear cached Cholesky-derived quantities (backward compat)."""
+        for attr in ('log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq'):
+            self.__dict__.pop(attr, None)
 
     # ========================================================================
     # Exponential family components
@@ -564,10 +628,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
         logpdf : ndarray
             Log joint density values.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
-        theta = self.get_natural_params()
+        theta = self.natural_params
         t_xy = self._sufficient_statistics(x, y)
         log_h = self._log_base_measure(x, y)
         psi = self._log_partition(theta)
@@ -610,8 +673,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
         Y : ndarray
             Sampled Y values. Shape () if size is None, (n,) otherwise.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
         # Set up RNG
         if random_state is None:
@@ -621,13 +683,12 @@ class JointNormalMixture(ExponentialFamily, ABC):
         else:
             rng = random_state
 
-        # Get parameters using Cholesky decomposition
-        theta = self.get_natural_params()
-        L_Lambda, _, mu, gamma = self._extract_normal_params_with_cholesky(theta)
-        d = self.d
-
-        # Get lower Cholesky of Sigma: Σ = L @ L.T
-        L_Sigma, _ = self.get_L_Sigma()
+        # Use internal state directly
+        mu = self._mu
+        gamma = self._gamma
+        L_Sigma = self._L_Sigma
+        d = self._d
+        theta = self.natural_params
 
         # Create mixing distribution instance
         mixing_class = self._get_mixing_distribution_class()
@@ -686,11 +747,10 @@ class JointNormalMixture(ExponentialFamily, ABC):
         mean : ndarray
             Conditional mean of X given Y.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
-        theta = self.get_natural_params()
-        mu, gamma, _ = self._get_normal_params(theta)
+        mu = self._mu
+        gamma = self._gamma
         y = np.asarray(y)
 
         if y.ndim == 0:
@@ -712,11 +772,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
         cov : ndarray
             Conditional covariance of X given Y.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
-        theta = self.get_natural_params()
-        _, _, Sigma = self._get_normal_params(theta)
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         y = np.asarray(y)
 
         if y.ndim == 0:
@@ -740,11 +798,11 @@ class JointNormalMixture(ExponentialFamily, ABC):
         E_Y : float
             :math:`E[Y]` from the mixing distribution
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
-        theta = self.get_natural_params()
-        mu, gamma, _ = self._get_normal_params(theta)
+        mu = self._mu
+        gamma = self._gamma
+        theta = self.natural_params
 
         # Get E[Y] from mixing distribution
         mixing_class = self._get_mixing_distribution_class()
@@ -784,11 +842,11 @@ class JointNormalMixture(ExponentialFamily, ABC):
         Var_Y : float
             Variance of Y from the mixing distribution
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() first.")
+        self._check_fitted()
 
-        theta = self.get_natural_params()
-        _, gamma, Sigma = self._get_normal_params(theta)
+        gamma = self._gamma
+        Sigma = self._L_Sigma @ self._L_Sigma.T
+        theta = self.natural_params
 
         # Get E[Y] and Var[Y] from mixing distribution
         mixing_class = self._get_mixing_distribution_class()
@@ -809,7 +867,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
     def __repr__(self) -> str:
         """String representation of the joint distribution."""
         name = self.__class__.__name__
-        if self._natural_params is None:
+        if not self._fitted:
             if self._d is not None:
                 return f"{name}(d={self._d}, not fitted)"
             return f"{name}(not fitted)"
