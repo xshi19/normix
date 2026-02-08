@@ -99,3 +99,8 @@ exclude_lines = [
     "@abstractmethod",
 ]
 
+[dependency-groups]
+dev = [
+    "nbconvert>=7.17.0",
+]
+

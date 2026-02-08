@@ -1,0 +1,30 @@
+---
+description: Python environment configuration - use uv, not conda
+alwaysApply: true
+---
+
+# Python Environment
+
+This project uses **uv** for dependency management, NOT conda.
+
+## Running Python commands
+
+Always use `uv run` to execute Python commands in the project virtualenv:
+
+```bash
+# ✅ Good
+uv run python scripts/compare_em_convergence.py
+uv run pytest tests/
+uv run python -c "import normix; print(normix.__version__)"
+
+# ❌ Bad - do NOT use conda
+conda run -n normix python ...
+conda activate normix && python ...
+```
+
+## Adding dependencies
+
+```bash
+uv add pandas
+uv add --dev pytest
+```
