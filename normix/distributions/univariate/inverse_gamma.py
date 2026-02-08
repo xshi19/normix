@@ -105,6 +105,45 @@ class InverseGamma(ExponentialFamily):
     Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
     
+    def __init__(self):
+        super().__init__()
+        self._shape = None
+        self._rate = None
+
+    # ================================================================
+    # New interface: internal state management
+    # ================================================================
+
+    def _set_from_classical(self, *, shape, rate) -> None:
+        """Set internal state from classical parameters."""
+        if shape <= 0:
+            raise ValueError(f"Shape must be positive, got {shape}")
+        if rate <= 0:
+            raise ValueError(f"Rate must be positive, got {rate}")
+        self._shape = float(shape)
+        self._rate = float(rate)
+        self._natural_params = tuple(np.array([rate, -(shape + 1)]))
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _set_from_natural(self, theta) -> None:
+        """Set internal state from natural parameters."""
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._shape = float(-theta[1] - 1)
+        self._rate = float(theta[0])
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _compute_natural_params(self):
+        """Compute natural parameters from internal state: θ = [β, -(α+1)]."""
+        return np.array([self._rate, -(self._shape + 1)])
+
+    def _compute_classical_params(self):
+        """Return classical parameters as dict."""
+        return {'shape': self._shape, 'rate': self._rate}
+
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ > 0, θ₂ < -1."""
         return [(0.0, np.inf), (-np.inf, -1.0)]
@@ -295,12 +334,7 @@ class InverseGamma(ExponentialFamily):
         samples : float or ndarray
             Random samples from the distribution.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
-        
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
+        self._check_fitted()
         
         # Set up random number generator
         if random_state is None:
@@ -313,7 +347,7 @@ class InverseGamma(ExponentialFamily):
         # Generate using scipy parameterization (a, scale)
         # scipy uses scale parameter, we use rate, so scale = rate
         from scipy.stats import invgamma
-        return invgamma.rvs(a=shape, scale=rate, size=size, random_state=rng)
+        return invgamma.rvs(a=self._shape, scale=self._rate, size=size, random_state=rng)
     
     def mean(self) -> float:
         """
@@ -329,14 +363,10 @@ class InverseGamma(ExponentialFamily):
         mean : float
             Mean of the distribution, or infinity if undefined.
         """
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
-        
-        if shape <= 1:
+        self._check_fitted()
+        if self._shape <= 1:
             return np.inf
-        
-        return rate / (shape - 1)
+        return self._rate / (self._shape - 1)
     
     def var(self) -> float:
         """
@@ -352,14 +382,10 @@ class InverseGamma(ExponentialFamily):
         var : float
             Variance of the distribution, or infinity if undefined.
         """
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
-        
-        if shape <= 2:
+        self._check_fitted()
+        if self._shape <= 2:
             return np.inf
-        
-        return (rate**2) / ((shape - 1)**2 * (shape - 2))
+        return (self._rate**2) / ((self._shape - 1)**2 * (self._shape - 2))
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -375,18 +401,14 @@ class InverseGamma(ExponentialFamily):
         cdf : ndarray or float
             CDF values.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         from scipy.stats import invgamma
         
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
         
         # CDF: scipy uses scale parameter
-        result = invgamma.cdf(x, a=shape, scale=rate)
+        result = invgamma.cdf(x, a=self._shape, scale=self._rate)
         
         # Return scalar if input was scalar
         if np.isscalar(x) or (hasattr(x, 'shape') and x.shape == ()):

@@ -29,6 +29,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Optional
 
 from normix.base import ExponentialFamily
+from normix.params import ExponentialParams
 
 
 class Exponential(ExponentialFamily):
@@ -88,6 +89,39 @@ class Exponential(ExponentialFamily):
     ----------
     Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
+    
+    def __init__(self):
+        super().__init__()
+        self._rate = None
+    
+    # ================================================================
+    # New interface: internal state management
+    # ================================================================
+    
+    def _set_from_classical(self, *, rate) -> None:
+        """Set internal state from classical parameters."""
+        if rate <= 0:
+            raise ValueError(f"Rate must be positive, got {rate}")
+        self._rate = float(rate)
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _set_from_natural(self, theta) -> None:
+        """Set internal state from natural parameters."""
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._rate = float(-theta[0])
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _compute_natural_params(self):
+        """Compute natural parameters from internal state: θ = -λ."""
+        return np.array([-self._rate])
+    
+    def _compute_classical_params(self):
+        """Return frozen dataclass of classical parameters."""
+        return ExponentialParams(rate=self._rate)
     
     def _get_natural_param_support(self):
         """Natural parameter support: θ < 0."""
@@ -222,11 +256,8 @@ class Exponential(ExponentialFamily):
         samples : float or ndarray
             Random samples from the distribution.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
-        
-        classical = self.get_classical_params()
-        rate = classical['rate']
+        self._check_fitted()
+        rate = self._rate
         
         # Set up random number generator
         if random_state is None:
@@ -252,8 +283,8 @@ class Exponential(ExponentialFamily):
         mean : float
             Mean of the distribution.
         """
-        classical = self.get_classical_params()
-        return 1.0 / classical['rate']
+        self._check_fitted()
+        return 1.0 / self._rate
     
     def var(self) -> float:
         """
@@ -267,8 +298,8 @@ class Exponential(ExponentialFamily):
         var : float
             Variance of the distribution.
         """
-        classical = self.get_classical_params()
-        return 1.0 / classical['rate']**2
+        self._check_fitted()
+        return 1.0 / self._rate**2
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -284,12 +315,10 @@ class Exponential(ExponentialFamily):
         cdf : ndarray
             CDF values.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        rate = classical['rate']
+        rate = self._rate
         
         result = np.zeros_like(x, dtype=float)
         mask = x >= 0

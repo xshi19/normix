@@ -130,6 +130,48 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution
     """
     
+    def __init__(self):
+        super().__init__()
+        self._p = None
+        self._a = None
+        self._b = None
+    
+    # ================================================================
+    # New interface: internal state management
+    # ================================================================
+    
+    def _set_from_classical(self, *, p, a, b) -> None:
+        """Set internal state from classical parameters."""
+        if a <= 0:
+            raise ValueError(f"Parameter 'a' must be positive, got {a}")
+        if b <= 0:
+            raise ValueError(f"Parameter 'b' must be positive, got {b}")
+        self._p = float(p)
+        self._a = float(a)
+        self._b = float(b)
+        self._natural_params = tuple(np.array([p - 1, -b / 2, -a / 2]))
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _set_from_natural(self, theta) -> None:
+        """Set internal state from natural parameters."""
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._p = float(theta[0] + 1)
+        self._b = float(-2 * theta[1])
+        self._a = float(-2 * theta[2])
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _compute_natural_params(self):
+        """Compute natural parameters from internal state: θ = [p-1, -b/2, -a/2]."""
+        return np.array([self._p - 1, -self._b / 2, -self._a / 2])
+    
+    def _compute_classical_params(self):
+        """Compute classical parameters from internal state."""
+        return {'p': self._p, 'a': self._a, 'b': self._b}
+    
     def _get_natural_param_support(self):
         """
         Natural parameter support.
@@ -355,15 +397,12 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         params : dict
             Dictionary with keys 'p', 'b', 'scale'.
         """
-        classical = self.get_classical_params()
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        self._check_fitted()
         
         return {
-            'p': p,
-            'b': np.sqrt(a * b),
-            'scale': np.sqrt(b / a)
+            'p': self._p,
+            'b': np.sqrt(self._a * self._b),
+            'scale': np.sqrt(self._b / self._a)
         }
     
     @classmethod
@@ -414,15 +453,12 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         moment : float
             The α-th moment.
         """
-        classical = self.get_classical_params()
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        self._check_fitted()
         
-        sqrt_b_over_a = np.sqrt(b / a)
-        sqrt_ab = np.sqrt(a * b)
+        sqrt_b_over_a = np.sqrt(self._b / self._a)
+        sqrt_ab = np.sqrt(self._a * self._b)
         
-        log_ratio = log_kv(p + alpha, sqrt_ab) - log_kv(p, sqrt_ab)
+        log_ratio = log_kv(self._p + alpha, sqrt_ab) - log_kv(self._p, sqrt_ab)
         
         return (sqrt_b_over_a ** alpha) * np.exp(log_ratio)
     
@@ -479,8 +515,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         samples : float or ndarray
             Random samples from the distribution.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         if random_state is None:
             rng = np.random.default_rng()
@@ -543,8 +578,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         
         Uses scipy.stats.geninvgauss.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         from scipy.stats import geninvgauss
         
@@ -563,8 +597,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         
         Uses scipy.stats.geninvgauss.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         from scipy.stats import geninvgauss
         

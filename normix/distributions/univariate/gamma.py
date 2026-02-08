@@ -32,6 +32,7 @@ from typing import Optional
 from scipy.special import gammaln, digamma, polygamma
 
 from normix.base import ExponentialFamily
+from normix.params import GammaParams
 
 
 class Gamma(ExponentialFamily):
@@ -98,6 +99,49 @@ class Gamma(ExponentialFamily):
     ----------
     Barndorff-Nielsen, O. E. (1978). Information and exponential families.
     """
+    
+    def __init__(self):
+        super().__init__()
+        self._shape = None
+        self._rate = None
+    
+    # ================================================================
+    # New interface: internal state management
+    # ================================================================
+    
+    def _set_from_classical(self, *, shape, rate) -> None:
+        """Set internal state from classical parameters."""
+        if shape <= 0:
+            raise ValueError(f"Shape must be positive, got {shape}")
+        if rate <= 0:
+            raise ValueError(f"Rate must be positive, got {rate}")
+        self._shape = float(shape)
+        self._rate = float(rate)
+        self._natural_params = tuple(np.array([shape - 1, -rate]))
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _set_from_natural(self, theta) -> None:
+        """Set internal state from natural parameters."""
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._shape = float(theta[0] + 1)
+        self._rate = float(-theta[1])
+        if self._shape <= 0:
+            raise ValueError(f"Shape must be positive, got {self._shape}")
+        if self._rate <= 0:
+            raise ValueError(f"Rate must be positive, got {self._rate}")
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+    
+    def _compute_natural_params(self):
+        """Compute natural parameters from internal state: θ = [α-1, -β]."""
+        return np.array([self._shape - 1, -self._rate])
+    
+    def _compute_classical_params(self):
+        """Return frozen dataclass of classical parameters."""
+        return GammaParams(shape=self._shape, rate=self._rate)
     
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ > -1, θ₂ < 0."""
@@ -325,12 +369,9 @@ class Gamma(ExponentialFamily):
         samples : float or ndarray
             Random samples from the distribution.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
-        
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
+        self._check_fitted()
+        shape = self._shape
+        rate = self._rate
         
         # Set up random number generator
         if random_state is None:
@@ -355,8 +396,8 @@ class Gamma(ExponentialFamily):
         mean : float
             Mean of the distribution.
         """
-        classical = self.get_classical_params()
-        return classical['shape'] / classical['rate']
+        self._check_fitted()
+        return self._shape / self._rate
     
     def var(self) -> float:
         """
@@ -370,8 +411,8 @@ class Gamma(ExponentialFamily):
         var : float
             Variance of the distribution.
         """
-        classical = self.get_classical_params()
-        return classical['shape'] / (classical['rate']**2)
+        self._check_fitted()
+        return self._shape / (self._rate**2)
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -387,15 +428,13 @@ class Gamma(ExponentialFamily):
         cdf : ndarray or float
             CDF values.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         from scipy.special import gammainc
         
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        shape = classical['shape']
-        rate = classical['rate']
+        shape = self._shape
+        rate = self._rate
         
         # CDF: P(X ≤ x) = gammainc(α, βx) (regularized lower incomplete gamma)
         result = np.where(x > 0, gammainc(shape, rate * x), 0.0)

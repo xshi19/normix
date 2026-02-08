@@ -107,6 +107,46 @@ class InverseGaussian(ExponentialFamily):
     Chhikara, R. S. & Folks, J. L. (1989). The Inverse Gaussian Distribution.
     """
     
+    def __init__(self):
+        super().__init__()
+        self._mean_param = None
+        self._shape = None
+
+    # ================================================================
+    # New interface: internal state management
+    # ================================================================
+
+    def _set_from_classical(self, *, mean, shape) -> None:
+        """Set internal state from classical parameters."""
+        if mean <= 0:
+            raise ValueError(f"Mean must be positive, got {mean}")
+        if shape <= 0:
+            raise ValueError(f"Shape must be positive, got {shape}")
+        self._mean_param = float(mean)
+        self._shape = float(shape)
+        theta = np.array([-shape / (2 * mean**2), -shape / 2])
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _set_from_natural(self, theta) -> None:
+        """Set internal state from natural parameters."""
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._shape = float(-2 * theta[1])
+        self._mean_param = float(np.sqrt(theta[1] / theta[0]))
+        self._natural_params = tuple(theta)
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _compute_natural_params(self):
+        """Compute natural parameters: θ = [-λ/(2μ²), -λ/2]."""
+        return np.array([-self._shape / (2 * self._mean_param**2), -self._shape / 2])
+
+    def _compute_classical_params(self):
+        """Return classical parameters as dict."""
+        return {'mean': self._mean_param, 'shape': self._shape}
+
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ < 0, θ₂ < 0."""
         return [(-np.inf, 0.0), (-np.inf, 0.0)]
@@ -253,12 +293,7 @@ class InverseGaussian(ExponentialFamily):
         samples : float or ndarray
             Random samples from the distribution.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
-        
-        classical = self.get_classical_params()
-        mu = classical['mean']
-        lam = classical['shape']
+        self._check_fitted()
         
         # Set up random number generator
         if random_state is None:
@@ -270,7 +305,7 @@ class InverseGaussian(ExponentialFamily):
         
         # numpy.random.wald uses the same parameterization:
         # mean = μ, scale = λ
-        return rng.wald(mean=mu, scale=lam, size=size)
+        return rng.wald(mean=self._mean_param, scale=self._shape, size=size)
     
     def mean(self) -> float:
         """
@@ -284,8 +319,8 @@ class InverseGaussian(ExponentialFamily):
         mean : float
             Mean of the distribution.
         """
-        classical = self.get_classical_params()
-        return classical['mean']
+        self._check_fitted()
+        return self._mean_param
     
     def var(self) -> float:
         """
@@ -299,10 +334,8 @@ class InverseGaussian(ExponentialFamily):
         var : float
             Variance of the distribution.
         """
-        classical = self.get_classical_params()
-        mu = classical['mean']
-        lam = classical['shape']
-        return (mu**3) / lam
+        self._check_fitted()
+        return (self._mean_param**3) / self._shape
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -318,20 +351,16 @@ class InverseGaussian(ExponentialFamily):
         cdf : ndarray or float
             CDF values.
         """
-        if self._natural_params is None:
-            raise ValueError("Parameters not set. Use from_*_params() or fit().")
+        self._check_fitted()
         
         from scipy.stats import invgauss
         
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        mu = classical['mean']
-        lam = classical['shape']
         
         # scipy.stats.invgauss uses (mu, scale) where:
         # scipy_mu = μ/λ, scipy_scale = λ
-        scipy_mu = mu / lam
-        scipy_scale = lam
+        scipy_mu = self._mean_param / self._shape
+        scipy_scale = self._shape
         
         result = invgauss.cdf(x, mu=scipy_mu, scale=scipy_scale)
         
