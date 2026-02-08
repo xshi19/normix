@@ -197,28 +197,6 @@ class Gamma(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert shape and rate parameters to natural parameters: θ = [α-1, -β].
-        """
-        shape = kwargs['shape']
-        rate = kwargs['rate']
-        
-        if shape <= 0:
-            raise ValueError(f"Shape must be positive, got {shape}")
-        if rate <= 0:
-            raise ValueError(f"Rate must be positive, got {rate}")
-        
-        return np.array([shape - 1, -rate])
-    
-    def _natural_to_classical(self, theta: NDArray):
-        """
-        Convert natural parameters to shape and rate: α = θ₁+1, β = -θ₂.
-        """
-        shape = theta[0] + 1
-        rate = -theta[1]
-        return {'shape': shape, 'rate': rate}
-    
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: eta = grad psi(theta) = [digamma(alpha) - log(beta), alpha/beta].

@@ -223,34 +223,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert (p, a, b) to natural parameters: θ = [p-1, -b/2, -a/2].
-        """
-        p = kwargs['p']
-        a = kwargs['a']
-        b = kwargs['b']
-        
-        if a <= 0:
-            raise ValueError(f"Parameter 'a' must be positive, got {a}")
-        if b <= 0:
-            raise ValueError(f"Parameter 'b' must be positive, got {b}")
-        
-        return np.array([p - 1, -b / 2, -a / 2])
-    
-    def _natural_to_classical(self, theta: NDArray):
-        """
-        Convert natural parameters to (p, a, b).
-        
-        p = θ₁ + 1
-        b = -2θ₂
-        a = -2θ₃
-        """
-        p = theta[0] + 1
-        b = -2 * theta[1]
-        a = -2 * theta[2]
-        return {'p': p, 'a': a, 'b': b}
-    
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Convert natural parameters to expectation parameters: η = ∇A(θ).

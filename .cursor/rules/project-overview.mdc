@@ -14,31 +14,34 @@ alwaysApply: true
 ```
 normix/
 ├── normix/
+│   ├── __init__.py              # Package exports (including params)
+│   ├── params.py                # Frozen dataclass parameter containers
+│   │
 │   ├── base/
-│   │   ├── distribution.py      # Abstract Distribution base class
-│   │   ├── exponential_family.py # ExponentialFamily base with 3 parametrizations
-│   │   └── mixture.py           # NormalMixtureDistribution base
+│   │   ├── distribution.py      # Abstract Distribution base class (cache infra)
+│   │   ├── exponential_family.py # ExponentialFamily with cached_property
+│   │   └── mixture.py           # JointNormalMixture + NormalMixture bases
 │   │
 │   ├── distributions/
 │   │   ├── univariate/
-│   │   │   ├── exponential.py                   # ✓ Complete
-│   │   │   ├── gamma.py                         # ✓ Complete
-│   │   │   ├── inverse_gamma.py                 # ✓ Complete
-│   │   │   ├── inverse_gaussian.py              # ✓ Complete
-│   │   │   └── generalized_inverse_gaussian.py  # ✓ Complete
+│   │   │   ├── exponential.py                   # ✓ Complete (internal attrs)
+│   │   │   ├── gamma.py                         # ✓ Complete (internal attrs)
+│   │   │   ├── inverse_gamma.py                 # ✓ Complete (internal attrs)
+│   │   │   ├── inverse_gaussian.py              # ✓ Complete (internal attrs)
+│   │   │   └── generalized_inverse_gaussian.py  # ✓ Complete (internal attrs)
 │   │   │
 │   │   ├── multivariate/
-│   │   │   └── normal.py        # ✓ Complete
+│   │   │   └── normal.py        # ✓ Complete (Cholesky-first storage)
 │   │   │
 │   │   └── mixtures/
-│   │       ├── variance_gamma.py              # ✓ Complete
-│   │       ├── joint_variance_gamma.py        # ✓ Complete
-│   │       ├── normal_inverse_gamma.py        # ✓ Complete
-│   │       ├── joint_normal_inverse_gamma.py  # ✓ Complete
-│   │       ├── normal_inverse_gaussian.py     # ✓ Complete
-│   │       ├── joint_normal_inverse_gaussian.py # ✓ Complete
-│   │       ├── generalized_hyperbolic.py      # ✓ Complete (with regularization)
-│   │       └── joint_generalized_hyperbolic.py # ✓ Complete
+│   │       ├── variance_gamma.py              # ✓ Complete (direct attr access)
+│   │       ├── joint_variance_gamma.py        # ✓ Complete (cached Cholesky)
+│   │       ├── normal_inverse_gamma.py        # ✓ Complete (direct attr access)
+│   │       ├── joint_normal_inverse_gamma.py  # ✓ Complete (cached Cholesky)
+│   │       ├── normal_inverse_gaussian.py     # ✓ Complete (direct attr access)
+│   │       ├── joint_normal_inverse_gaussian.py # ✓ Complete (cached Cholesky)
+│   │       ├── generalized_hyperbolic.py      # ✓ Complete (regularization + direct access)
+│   │       └── joint_generalized_hyperbolic.py # ✓ Complete (cached Cholesky)
 │   │
 │   ├── utils/
 │   │   └── bessel.py            # Bessel function utilities (log_kv, etc.)
@@ -51,16 +54,20 @@ normix/
 │   ├── test_variance_gamma.py
 │   ├── test_normal_inverse_gamma.py
 │   ├── test_normal_inverse_gaussian.py
-│   └── test_generalized_hyperbolic.py
+│   ├── test_generalized_hyperbolic.py
+│   ├── test_params.py                       # Frozen dataclass tests
+│   ├── test_cached_property_invalidation.py # Cache infrastructure tests
+│   └── test_em_regression.py                # EM regression tests
 │
 ├── notebooks/                   # Jupyter notebooks with visualizations
 │
-├── docs/                        # Sphinx documentation
+├── docs/
+│   └── refactoring_plan.md      # Detailed refactoring plan (Phases 0-8)
 │
 └── ROADMAP.md                   # Implementation roadmap
 ```
 
-## Current Status (Updated: 2026-01-27)
+## Current Status (Updated: 2026-02-07)
 
 **Completed:**
 - Step 1: Base classes (ExponentialFamily with 3 parametrizations, NormalMixture base)
@@ -69,6 +76,13 @@ normix/
 - Step 4: Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
 - Step 5: Normal-Inverse Gaussian (NIG)
 - Step 6: Generalized Hyperbolic (GH) with EM algorithm and parameter regularization
+- Refactoring: `cached_property` + frozen dataclass parameters (Phases 0-8)
+  - Internal attribute storage per subclass
+  - `functools.cached_property` for lazy parametrization caching
+  - `_invalidate_cache()` for cache invalidation
+  - Cholesky-first storage for multivariate distributions
+  - Direct attribute access in marginal mixture distributions
+  - Frozen dataclass parameter containers (`normix.params`)
 
 **Next Steps:**
 - Step 7: Package integration (clean public API, documentation, examples)
@@ -87,3 +101,9 @@ $$ p(x|\theta) = h(x) \exp (\theta^T t(x) - \psi(\theta)) $$
 3. **sklearn-style API**: `fit()` returns self for method chaining
 
 4. **Mixture Distributions**: Represented as X|Y ~ Normal, Y ~ mixing distribution
+
+5. **Caching Strategy**: `functools.cached_property` with `_invalidate_cache()` via `__dict__.pop()`
+
+6. **Internal Storage**: Each subclass stores its own optimal internal representation (e.g., `_rate` for Exponential, `_mu` + `_L` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` for JointNormalMixture)
+
+7. **Parameter Containers**: `@dataclass(frozen=True, slots=True)` for classical parameter output

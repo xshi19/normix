@@ -467,87 +467,6 @@ class MultivariateNormal(ExponentialFamily):
         else:
             return np.zeros(x.shape[0])
 
-    # ============================================================
-    # Parameter conversions (legacy interface, kept for abstract)
-    # ============================================================
-
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters.
-
-        Parameters
-        ----------
-        mu : array_like
-            Mean vector (d,).
-        sigma : array_like
-            Covariance matrix (d, d).
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameters [η, vec(Λ_half)] where η = Λμ, Λ_half = -1/2 Λ.
-        """
-        mu = np.asarray(kwargs['mu']).flatten()
-        sigma = np.asarray(kwargs['sigma'])
-
-        # Handle scalar input for 1D case
-        if sigma.ndim == 0:
-            sigma = np.array([[sigma]])
-        elif sigma.ndim == 1:
-            sigma = np.diag(sigma)
-
-        d = len(mu)
-        if sigma.shape != (d, d):
-            raise ValueError(f"sigma shape {sigma.shape} doesn't match mu dimension {d}")
-
-        # Set dimension
-        self._d = d
-
-        # Validate covariance matrix
-        if not np.allclose(sigma, sigma.T):
-            raise ValueError("Covariance matrix must be symmetric")
-
-        eigvals = np.linalg.eigvalsh(sigma)
-        if np.any(eigvals <= 0):
-            raise ValueError("Covariance matrix must be positive definite")
-
-        # Compute natural parameters
-        Lambda = np.linalg.inv(sigma)  # Precision matrix
-        eta = Lambda @ mu  # η = Λμ
-        Lambda_half = -0.5 * Lambda  # Λ_half = -1/2 Λ
-
-        # Flatten and concatenate
-        theta = np.concatenate([eta, Lambda_half.flatten()])
-
-        return theta
-
-    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
-        """
-        Convert natural parameters to classical parameters.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameters [η, vec(Λ_half)].
-
-        Returns
-        -------
-        params : dict
-            {'mu': mean vector, 'sigma': covariance matrix}
-        """
-        d = self.d
-
-        # Extract parameters
-        eta = theta[:d]
-        Lambda_half = theta[d:].reshape(d, d)
-        Lambda = -2 * Lambda_half  # Precision matrix
-
-        # Compute classical parameters
-        Sigma = np.linalg.inv(Lambda)  # Covariance matrix
-        mu = Sigma @ eta  # μ = Σ η = Λ^{-1} η
-
-        return {'mu': mu, 'sigma': Sigma}
-
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Convert natural to expectation parameters.
@@ -561,10 +480,12 @@ class MultivariateNormal(ExponentialFamily):
         """
         d = self.d
 
-        # Get classical parameters
-        classical = self._natural_to_classical(theta)
-        mu = classical['mu']
-        Sigma = classical['sigma']
+        # Extract classical parameters from theta
+        eta = theta[:d]
+        Lambda_half = theta[d:].reshape(d, d)
+        Lambda = -2 * Lambda_half  # Precision matrix
+        Sigma = np.linalg.inv(Lambda)  # Covariance matrix
+        mu = Sigma @ eta  # μ = Σ η = Λ^{-1} η
 
         # Compute expectation parameters
         eta1 = mu
@@ -610,7 +531,10 @@ class MultivariateNormal(ExponentialFamily):
             Sigma += (-min_eig + 1e-6) * np.eye(d)
 
         # Convert to natural parameters
-        return self._classical_to_natural(mu=mu, sigma=Sigma)
+        Lambda = np.linalg.inv(Sigma)
+        eta_nat = Lambda @ mu
+        Lambda_half = -0.5 * Lambda
+        return np.concatenate([eta_nat, Lambda_half.flatten()])
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """Get initial guess for natural parameters."""

@@ -66,16 +66,15 @@ class ExponentialFamily(Distribution):
     - **Natural**: :math:`\\theta` in exponential family form (numpy array)
     - **Expectation**: :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]` (numpy array)
 
-    Subclasses may store parameters in two ways:
+    Subclasses must implement the following state management methods:
 
-    1. **Legacy interface** (current subclasses): Implement
-       ``_classical_to_natural`` and ``_natural_to_classical``.
-       Parameters are stored internally as a flat tuple in ``_natural_params``.
+    - ``_set_from_classical(**kwargs)``: Set internal state from classical params.
+    - ``_set_from_natural(theta)``: Set internal state from natural params.
+    - ``_compute_natural_params()``: Derive natural params from internal state.
+    - ``_compute_classical_params()``: Derive classical params from internal state.
 
-    2. **New interface** (migrated subclasses): Override ``_set_from_classical``,
-       ``_set_from_natural``, ``_compute_natural_params``, and
-       ``_compute_classical_params``. Store parameters as named internal
-       attributes (e.g., ``_rate``, ``_mu``, ``_L``).
+    Parameters should be stored as named internal attributes (e.g., ``_rate``,
+    ``_mu``, ``_L``) for efficient direct access.
 
     Both interfaces use ``functools.cached_property`` for lazy caching of
     derived parametrizations, with ``_invalidate_cache()`` clearing all
@@ -658,17 +657,19 @@ class ExponentialFamily(Distribution):
         pass
 
     # ============================================================
-    # Abstract methods for parameter conversions (legacy interface)
+    # Legacy parameter conversions (only for unmigrated subclasses)
     # ============================================================
 
-    @abstractmethod
     def _classical_to_natural(self, **kwargs) -> NDArray:
         """
-        Convert classical parameters → natural parameters (vector).
+        Convert classical parameters to natural parameters (legacy interface).
 
-        Legacy interface. Migrated subclasses should override
-        ``_set_from_classical`` instead, but must still implement this
-        as it is abstract.
+        Only needed by subclasses that have NOT overridden
+        ``_set_from_classical``. Called by the default
+        ``_set_from_classical`` implementation.
+
+        Migrated subclasses (which override ``_set_from_classical``)
+        do not need to implement this method.
 
         Parameters
         ----------
@@ -679,28 +680,22 @@ class ExponentialFamily(Distribution):
         -------
         theta : ndarray
             Natural parameter vector.
-
-        Examples
-        --------
-        Exponential: λ → θ = -λ
-        >>> rate = kwargs['rate']
-        >>> return np.array([-rate])
-
-        Normal: (μ, σ) → (θ₁, θ₂) = (μ/σ², -1/(2σ²))
-        >>> mu = kwargs['mu']
-        >>> sigma = kwargs['sigma']
-        >>> return np.array([mu / sigma**2, -0.5 / sigma**2])
         """
-        pass
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must override _set_from_classical() "
+            f"or implement _classical_to_natural()."
+        )
 
-    @abstractmethod
     def _natural_to_classical(self, theta: NDArray) -> Union[Dict[str, Any], Tuple]:
         """
-        Convert natural parameters (vector) → classical parameters.
+        Convert natural parameters to classical parameters (legacy interface).
 
-        Legacy interface. Migrated subclasses should override
-        ``_compute_classical_params`` instead, but must still implement this
-        as it is abstract.
+        Only needed by subclasses that have NOT overridden
+        ``_compute_classical_params``. Called by the default
+        ``_compute_classical_params`` implementation.
+
+        Migrated subclasses (which override ``_compute_classical_params``)
+        do not need to implement this method.
 
         Parameters
         ----------
@@ -710,19 +705,12 @@ class ExponentialFamily(Distribution):
         Returns
         -------
         params : dict or tuple
-            Classical parameters (distribution-specific format).
-
-        Examples
-        --------
-        Exponential: θ → λ = -θ
-        >>> return {'rate': -theta[0]}
-
-        Normal: (θ₁, θ₂) → (μ, σ)
-        >>> sigma = np.sqrt(-0.5 / theta[1])
-        >>> mu = theta[0] * sigma**2
-        >>> return {'mu': mu, 'sigma': sigma}
+            Classical parameters.
         """
-        pass
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must override _compute_classical_params() "
+            f"or implement _natural_to_classical()."
+        )
 
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """

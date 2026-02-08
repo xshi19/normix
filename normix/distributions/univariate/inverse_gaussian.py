@@ -190,46 +190,12 @@ class InverseGaussian(ExponentialFamily):
         result[~mask] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert mean and shape parameters to natural parameters.
-        
-        θ = [-λ/(2μ²), -λ/2]
-        """
-        mean = kwargs['mean']
-        shape = kwargs['shape']
-        
-        if mean <= 0:
-            raise ValueError(f"Mean must be positive, got {mean}")
-        if shape <= 0:
-            raise ValueError(f"Shape must be positive, got {shape}")
-        
-        theta1 = -shape / (2 * mean**2)
-        theta2 = -shape / 2
-        
-        return np.array([theta1, theta2])
-    
-    def _natural_to_classical(self, theta: NDArray):
-        """
-        Convert natural parameters to mean and shape: μ, λ.
-        
-        From θ = [-λ/(2μ²), -λ/2]:
-        - λ = -2θ₂
-        - μ² = -λ/(2θ₁) = θ₂/θ₁
-        """
-        lam = -2 * theta[1]
-        mu_squared = theta[1] / theta[0]
-        mu = np.sqrt(mu_squared)
-        
-        return {'mean': mu, 'shape': lam}
-    
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = [μ, 1/μ + 1/λ].
         """
-        params = self._natural_to_classical(theta)
-        mu = params['mean']
-        lam = params['shape']
+        lam = -2 * theta[1]
+        mu = np.sqrt(theta[1] / theta[0])
         eta1 = mu
         eta2 = 1.0 / mu + 1.0 / lam
         return np.array([eta1, eta2])
@@ -262,9 +228,8 @@ class InverseGaussian(ExponentialFamily):
         if theta is None:
             theta = self.get_natural_params()
         
-        params = self._natural_to_classical(theta)
-        mu = params['mean']
-        lam = params['shape']
+        lam = -2 * theta[1]
+        mu = np.sqrt(theta[1] / theta[0])
         
         I_11 = mu**3 / lam
         I_12 = I_21 = -mu / lam

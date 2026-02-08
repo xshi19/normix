@@ -174,21 +174,6 @@ class Exponential(ExponentialFamily):
         result[x < 0] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert rate parameter to natural parameter: θ = -λ.
-        """
-        rate = kwargs['rate']
-        if rate <= 0:
-            raise ValueError(f"Rate must be positive, got {rate}")
-        return np.array([-rate])
-    
-    def _natural_to_classical(self, theta: NDArray):
-        """
-        Convert natural parameter to rate: λ = -θ.
-        """
-        return {'rate': -theta[0]}
-    
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = 1/(-θ) = 1/λ.

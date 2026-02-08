@@ -199,28 +199,6 @@ class InverseGamma(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert shape and rate parameters to natural parameters: θ = [β, -(α+1)].
-        """
-        shape = kwargs['shape']
-        rate = kwargs['rate']
-        
-        if shape <= 0:
-            raise ValueError(f"Shape must be positive, got {shape}")
-        if rate <= 0:
-            raise ValueError(f"Rate must be positive, got {rate}")
-        
-        return np.array([rate, -(shape + 1)])
-    
-    def _natural_to_classical(self, theta: NDArray):
-        """
-        Convert natural parameters to shape and rate: α = -θ₂-1, β = θ₁.
-        """
-        shape = -theta[1] - 1
-        rate = theta[0]
-        return {'shape': shape, 'rate': rate}
-    
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = [-α/β, log(β) - ψ(α)].

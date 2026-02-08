@@ -445,15 +445,29 @@ These files are kept for reference during refactoring. Do not import from legacy
   - [x] 6.2 Generalized Hyperbolic marginal (GeneralizedHyperbolic)
   - [x] Parameter regularization methods for EM fitting
   - [x] Special case constructors (as_variance_gamma, as_normal_inverse_gaussian, as_normal_inverse_gamma)
+- [x] Refactoring: cached_property + frozen dataclass parameters
+  - [x] Phase 0: Parameter dataclasses (`normix/params.py`)
+  - [x] Phase 1a: Cache infrastructure on `Distribution` base class
+  - [x] Phase 1b: `ExponentialFamily` with `cached_property` and backward compat
+  - [x] Phase 2: Univariate distributions migrated to internal attributes
+  - [x] Phase 3: `MultivariateNormal` Cholesky-first storage
+  - [x] Phase 4: `JointNormalMixture` cached Cholesky properties
+  - [x] Phase 5: Joint mixture distributions migrated
+  - [x] Phase 6: `NormalMixture` base class using `cached_property`
+  - [x] Phase 7: Marginal mixture distributions direct attribute access
+  - [x] Phase 8: Cleanup (removed backward compat shims, updated exports)
 - [ ] Step 7: Package integration
 
-### Tests Completed
+### Tests Completed (269 tests)
 - [x] `tests/test_exponential_family.py` - Base class tests
 - [x] `tests/test_distributions_vs_scipy.py` - Generic scipy comparison framework
 - [x] `tests/test_variance_gamma.py` - Variance Gamma tests
 - [x] `tests/test_normal_inverse_gamma.py` - Normal Inverse Gamma tests
 - [x] `tests/test_normal_inverse_gaussian.py` - Normal Inverse Gaussian tests
 - [x] `tests/test_generalized_hyperbolic.py` - Generalized Hyperbolic tests
+- [x] `tests/test_params.py` - Frozen dataclass parameter tests
+- [x] `tests/test_cached_property_invalidation.py` - Cache infrastructure tests
+- [x] `tests/test_em_regression.py` - EM algorithm regression tests
 
 ### Notebooks Completed
 - [x] `notebooks/exponential_distribution.ipynb`
