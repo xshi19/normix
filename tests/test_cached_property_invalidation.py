@@ -277,7 +277,13 @@ class TestNormalMixtureCacheInfrastructure:
         )
         assert "not fitted" not in repr(vg)
 
-    def test_normal_mixture_cached_attrs_includes_classical_params(self):
-        """_cached_attrs should include classical_params."""
+    def test_normal_mixture_params_are_properties(self):
+        """NormalMixture parameter accessors should be plain properties (not cached)."""
         from normix.base.mixture import NormalMixture
-        assert 'classical_params' in NormalMixture._cached_attrs
+        # NormalMixture uses @property (not @cached_property) for parameter
+        # accessors because the EM loop may update self._joint directly.
+        # The joint distribution's own cached_property handles caching.
+        for attr in ('natural_params', 'classical_params', 'expectation_params'):
+            assert isinstance(
+                getattr(NormalMixture, attr), property
+            ), f"{attr} should be a plain @property on NormalMixture"

@@ -28,8 +28,40 @@ are internally mutable (``params.mu[0] = 999`` still works at the Python level).
 For full immutability, callers should not modify returned arrays in-place.
 """
 
-from dataclasses import dataclass
+import dataclasses
+from dataclasses import dataclass, fields
 import numpy as np
+
+
+class _ParamsBase:
+    """Mixin providing dict-style access on frozen dataclass params.
+
+    Allows both ``params.mu`` and ``params['mu']`` access styles,
+    plus ``items()``, ``keys()``, ``values()`` for iteration.
+    """
+
+    __slots__ = ()
+
+    def __getitem__(self, key: str):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: str) -> bool:
+        return hasattr(self, key)
+
+    def keys(self):
+        """Yield field names."""
+        return (f.name for f in fields(self))
+
+    def values(self):
+        """Yield field values."""
+        return (getattr(self, f.name) for f in fields(self))
+
+    def items(self):
+        """Yield ``(name, value)`` pairs."""
+        return ((f.name, getattr(self, f.name)) for f in fields(self))
 
 
 # ============================================================================
@@ -37,7 +69,7 @@ import numpy as np
 # ============================================================================
 
 @dataclass(frozen=True, slots=True)
-class ExponentialParams:
+class ExponentialParams(_ParamsBase):
     """
     Classical parameters for the Exponential distribution.
 
@@ -50,7 +82,7 @@ class ExponentialParams:
 
 
 @dataclass(frozen=True, slots=True)
-class GammaParams:
+class GammaParams(_ParamsBase):
     """
     Classical parameters for the Gamma distribution.
 
@@ -66,7 +98,7 @@ class GammaParams:
 
 
 @dataclass(frozen=True, slots=True)
-class InverseGammaParams:
+class InverseGammaParams(_ParamsBase):
     """
     Classical parameters for the Inverse Gamma distribution.
 
@@ -74,15 +106,15 @@ class InverseGammaParams:
     ----------
     shape : float
         Shape parameter :math:`\\alpha > 0`.
-    scale : float
-        Scale parameter :math:`\\beta > 0`.
+    rate : float
+        Rate parameter :math:`\\beta > 0`.
     """
     shape: float
-    scale: float
+    rate: float
 
 
 @dataclass(frozen=True, slots=True)
-class InverseGaussianParams:
+class InverseGaussianParams(_ParamsBase):
     """
     Classical parameters for the Inverse Gaussian distribution.
 
@@ -98,7 +130,7 @@ class InverseGaussianParams:
 
 
 @dataclass(frozen=True, slots=True)
-class GIGParams:
+class GIGParams(_ParamsBase):
     """
     Classical parameters for the Generalized Inverse Gaussian distribution.
 
@@ -121,7 +153,7 @@ class GIGParams:
 # ============================================================================
 
 @dataclass(frozen=True, slots=True)
-class MultivariateNormalParams:
+class MultivariateNormalParams(_ParamsBase):
     """
     Classical parameters for the Multivariate Normal distribution.
 
@@ -141,7 +173,7 @@ class MultivariateNormalParams:
 # ============================================================================
 
 @dataclass(frozen=True, slots=True)
-class VarianceGammaParams:
+class VarianceGammaParams(_ParamsBase):
     """
     Classical parameters for the Variance Gamma distribution.
 
@@ -168,7 +200,7 @@ class VarianceGammaParams:
 
 
 @dataclass(frozen=True, slots=True)
-class NormalInverseGammaParams:
+class NormalInverseGammaParams(_ParamsBase):
     """
     Classical parameters for the Normal-Inverse Gamma distribution.
 
@@ -195,7 +227,7 @@ class NormalInverseGammaParams:
 
 
 @dataclass(frozen=True, slots=True)
-class NormalInverseGaussianParams:
+class NormalInverseGaussianParams(_ParamsBase):
     """
     Classical parameters for the Normal-Inverse Gaussian distribution.
 
@@ -222,7 +254,7 @@ class NormalInverseGaussianParams:
 
 
 @dataclass(frozen=True, slots=True)
-class GHParams:
+class GHParams(_ParamsBase):
     """
     Classical parameters for the Generalized Hyperbolic distribution.
 

@@ -35,6 +35,7 @@ from scipy.special import gammaln
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import Gamma
+from normix.params import VarianceGammaParams
 
 
 class JointVarianceGamma(JointNormalMixture):
@@ -286,13 +287,9 @@ class JointVarianceGamma(JointNormalMixture):
         gamma_quad = 0.5 * (gamma @ theta_4)
         beta = -theta_3 - gamma_quad
 
-        return {
-            'mu': mu,
-            'gamma': gamma,
-            'sigma': Sigma,
-            'shape': alpha,
-            'rate': beta
-        }
+        return VarianceGammaParams(
+            mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
+        )
 
     # ========================================================================
     # Log partition function
@@ -599,7 +596,7 @@ class JointVarianceGamma(JointNormalMixture):
         >>> 
         >>> # Fit new distribution
         >>> fitted = JointVarianceGamma(d=1).fit(X, Y)
-        >>> print(fitted.get_classical_params())
+        >>> print(fitted.classical_params)
         """
         X = np.asarray(X)
         Y = np.asarray(Y)
@@ -639,7 +636,7 @@ class JointVarianceGamma(JointNormalMixture):
                 return f"JointVarianceGamma(d={self._d}, not fitted)"
             return "JointVarianceGamma(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         alpha = classical['shape']
         beta = classical['rate']

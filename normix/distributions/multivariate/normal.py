@@ -47,6 +47,7 @@ from scipy import stats
 from scipy.linalg import cholesky, solve_triangular
 
 from normix.base import ExponentialFamily
+from normix.params import MultivariateNormalParams
 
 
 class MultivariateNormal(ExponentialFamily):
@@ -311,9 +312,9 @@ class MultivariateNormal(ExponentialFamily):
         return np.concatenate([eta, Lambda_half.flatten()])
 
     def _compute_classical_params(self):
-        """Compute classical parameters from internal state."""
+        """Return frozen dataclass of classical parameters."""
         Sigma = self._L @ self._L.T
-        return {'mu': self._mu.copy(), 'sigma': Sigma}
+        return MultivariateNormalParams(mu=self._mu.copy(), sigma=Sigma)
 
     # ============================================================
     # Natural parameter support / validation
@@ -430,7 +431,7 @@ class MultivariateNormal(ExponentialFamily):
     def _log_partition(self, theta: NDArray) -> float:
         """
         Log partition function: ψ(θ) = 1/2 μ^T Λ μ - 1/2 log|Λ| + d/2 log(2π).
-
+classical_params
         Given θ = [η, vec(Λ_half)] where η = Λμ and Λ_half = -1/2 Λ:
         - Λ = -2 * Λ_half
         - μ = Λ^{-1} η = Σ η

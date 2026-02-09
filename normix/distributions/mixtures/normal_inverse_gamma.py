@@ -361,7 +361,7 @@ class NormalInverseGamma(NormalMixture):
         y: Optional[ArrayLike] = None,
         *,
         max_iter: int = 100,
-        tol: float = 1e-6,
+        tol: float = 1e-3,
         verbose: int = 0,
         random_state: Optional[Union[int, np.random.Generator]] = None
     ) -> 'NormalInverseGamma':
@@ -499,7 +499,7 @@ class NormalInverseGamma(NormalMixture):
         # ================================================================
         for iteration in range(max_iter):
             # Save current parameters for convergence check
-            old_params = self.get_classical_params()
+            old_params = self.classical_params
             prev_mu = old_params['mu'].copy()
             prev_gamma = old_params['gamma'].copy()
             prev_sigma = old_params['sigma'].copy()
@@ -701,7 +701,7 @@ class NormalInverseGamma(NormalMixture):
             return "NormalInverseGamma(not fitted)"
 
         try:
-            classical = self.get_classical_params()
+            classical = self.classical_params
             d = self.d
             alpha = classical['shape']
             beta = classical['rate']

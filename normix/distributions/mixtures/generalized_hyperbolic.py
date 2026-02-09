@@ -406,7 +406,7 @@ class GeneralizedHyperbolic(NormalMixture):
         X: ArrayLike,
         *,
         max_iter: int = 100,
-        tol: float = 1e-4,
+        tol: float = 1e-2,
         verbose: int = 0,
         regularization: Union[str, Callable] = 'det_sigma_one',
         regularization_params: Optional[Dict] = None,
@@ -537,7 +537,7 @@ class GeneralizedHyperbolic(NormalMixture):
 
         def _apply_regularization():
             """Apply regularization to current parameters."""
-            classical = self.get_classical_params()
+            classical = self.classical_params
             log_det_sigma = self._joint.log_det_Sigma
 
             if regularization == 'fix_p':
@@ -573,7 +573,7 @@ class GeneralizedHyperbolic(NormalMixture):
             _apply_regularization()
 
             # Save regularized parameters for convergence check
-            classical = self.get_classical_params()
+            classical = self.classical_params
             prev_mu = classical['mu'].copy()
             prev_gamma = classical['gamma'].copy()
             prev_sigma = classical['sigma'].copy()
@@ -588,7 +588,7 @@ class GeneralizedHyperbolic(NormalMixture):
             _apply_regularization()
 
             # Check convergence using relative parameter change on (mu, gamma, Sigma)
-            new_classical = self.get_classical_params()
+            new_classical = self.classical_params
             mu_new = new_classical['mu']
             gamma_new = new_classical['gamma']
             sigma_new = new_classical['sigma']
@@ -660,7 +660,7 @@ class GeneralizedHyperbolic(NormalMixture):
                 nig = NormalInverseGaussian()
                 nig.fit(X, max_iter=5, verbose=0, random_state=random_state)
 
-            nig_params = nig.get_classical_params()
+            nig_params = nig.classical_params
             mu = nig_params['mu']
             gamma = nig_params['gamma']
             Sigma = nig_params['sigma']
@@ -737,7 +737,7 @@ class GeneralizedHyperbolic(NormalMixture):
         s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
 
         # Get current GIG parameters for initialization and fallback
-        current = self.joint.get_classical_params()
+        current = self.joint.classical_params
         
         # Update GIG parameters if not fixed
         if not fix_tail:
@@ -758,10 +758,10 @@ class GeneralizedHyperbolic(NormalMixture):
                     warnings.simplefilter("ignore")
                     gig.set_expectation_params(gig_eta, theta0=current_gig_theta)
                     
-                gig_classical = gig.get_classical_params()
-                p_new = gig_classical['p']
-                a_new = gig_classical['a']
-                b_new = gig_classical['b']
+                gig_classical = gig.classical_params
+                p_new = gig_classical.p
+                a_new = gig_classical.a
+                b_new = gig_classical.b
                 
                 # Sanity check: reject if parameters are extreme or degenerate
                 # This prevents the optimization from diverging
@@ -1133,7 +1133,7 @@ class GeneralizedHyperbolic(NormalMixture):
         if not self._fitted:
             return "GeneralizedHyperbolic(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         p = classical['p']
         a = classical['a']

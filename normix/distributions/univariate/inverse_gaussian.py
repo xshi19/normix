@@ -39,6 +39,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Optional
 
 from normix.base import ExponentialFamily
+from normix.params import InverseGaussianParams
 
 
 class InverseGaussian(ExponentialFamily):
@@ -144,8 +145,8 @@ class InverseGaussian(ExponentialFamily):
         return np.array([-self._shape / (2 * self._mean_param**2), -self._shape / 2])
 
     def _compute_classical_params(self):
-        """Return classical parameters as dict."""
-        return {'mean': self._mean_param, 'shape': self._shape}
+        """Return frozen dataclass of classical parameters."""
+        return InverseGaussianParams(mean=self._mean_param, shape=self._shape)
 
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ < 0, θ₂ < 0."""
@@ -226,7 +227,7 @@ class InverseGaussian(ExponentialFamily):
         Analytical Fisher information: I(θ) = ∇²ψ(θ).
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         
         lam = -2 * theta[1]
         mu = np.sqrt(theta[1] / theta[0])

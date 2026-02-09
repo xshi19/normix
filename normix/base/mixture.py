@@ -932,7 +932,7 @@ class NormalMixture(Distribution, ABC):
     >>> gh.rvs_joint(size=100)  # Returns (X, Y) tuple
     """
 
-    _cached_attrs = ('classical_params',)
+    _cached_attrs: Tuple[str, ...] = ()
 
     def __init__(self):
         """Initialize an unfitted marginal normal mixture distribution."""
@@ -1197,10 +1197,26 @@ class NormalMixture(Distribution, ABC):
     # Parameter getters (delegate to joint)
     # ========================================================================
 
-    @cached_property
+    @property
+    def natural_params(self) -> NDArray:
+        """
+        Natural parameters :math:`\\theta` of the joint distribution.
+
+        Note: The marginal distribution itself is not an exponential family,
+        so these are the natural parameters of the joint distribution.
+
+        Returns
+        -------
+        theta : ndarray
+            Natural parameter vector.
+        """
+        self._check_fitted()
+        return self.joint.natural_params
+
+    @property
     def classical_params(self) -> Dict[str, Any]:
         """
-        Classical parameters of the distribution (cached).
+        Classical parameters of the distribution.
 
         Delegates to the joint distribution's classical parameters.
 
@@ -1212,41 +1228,18 @@ class NormalMixture(Distribution, ABC):
         self._check_fitted()
         return self.joint.classical_params
 
-    def get_natural_params(self) -> NDArray:
+    @property
+    def expectation_params(self) -> NDArray:
         """
-        Get natural parameters of the joint distribution.
-
-        Note: The marginal distribution itself is not an exponential family,
-        so these are the natural parameters of the joint distribution.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        return self.joint.get_natural_params()
-
-    def get_expectation_params(self) -> NDArray:
-        """
-        Get expectation parameters of the joint distribution.
+        Expectation parameters :math:`\\eta = E[t(X, Y)]` of the joint.
 
         Returns
         -------
         eta : ndarray
-            Expectation parameter vector :math:`E[t(X, Y)]`.
+            Expectation parameter vector.
         """
-        return self.joint.get_expectation_params()
-
-    def get_classical_params(self) -> Dict[str, Any]:
-        """
-        Get classical parameters.
-
-        Returns
-        -------
-        params : dict
-            Dictionary of classical parameters.
-        """
-        return self.joint.get_classical_params()
+        self._check_fitted()
+        return self.joint.expectation_params
 
     # ========================================================================
     # Marginal distribution methods (main interface)
@@ -1454,7 +1447,7 @@ class NormalMixture(Distribution, ABC):
         mixing : ExponentialFamily
             The mixing distribution (e.g., GIG, Gamma, InverseGaussian).
         """
-        theta = self.joint.get_natural_params()
+        theta = self.joint.natural_params
         mixing_class = self.joint._get_mixing_distribution_class()
         mixing_theta = self.joint._get_mixing_natural_params(theta)
         return mixing_class.from_natural_params(mixing_theta)

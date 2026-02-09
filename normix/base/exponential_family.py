@@ -32,6 +32,7 @@ The Fisher information matrix equals the Hessian of the log partition:
     I(\\theta) = \\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)]
 """
 
+import dataclasses
 from abc import abstractmethod
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -421,46 +422,6 @@ class ExponentialFamily(Distribution):
         """
         self._check_fitted()
         return self._compute_expectation_params()
-
-    # ============================================================
-    # Backward-compatible getters (delegate to cached properties)
-    # ============================================================
-
-    def get_natural_params(self) -> NDArray:
-        """
-        Get natural parameters :math:`\\theta` as numpy array.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        self._check_fitted()
-        return np.array(self.natural_params)
-
-    def get_expectation_params(self) -> NDArray:
-        """
-        Get expectation parameters :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]`.
-
-        Returns
-        -------
-        eta : ndarray
-            Expectation parameter vector.
-        """
-        self._check_fitted()
-        return np.array(self.expectation_params)
-
-    def get_classical_params(self):
-        """
-        Get classical parameters (distribution-specific).
-
-        Returns
-        -------
-        params : dict or dataclass
-            Classical parameters.
-        """
-        self._check_fitted()
-        return self.classical_params
 
     # ============================================================
     # Abstract methods for parameter support/validation
@@ -936,7 +897,7 @@ class ExponentialFamily(Distribution):
         >>> print(fisher)  # [[0.25]] for rate=2
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         else:
             theta = np.asarray(theta)
 
@@ -1067,7 +1028,7 @@ class ExponentialFamily(Distribution):
         --------
         >>> data = np.random.exponential(scale=0.5, size=1000)
         >>> dist = Exponential().fit(data)
-        >>> print(dist.get_classical_params())
+        >>> print(dist.classical_params)
         {'rate': 2.01...}
         """
         X = np.asarray(X)
@@ -1121,18 +1082,24 @@ class ExponentialFamily(Distribution):
 
         # Show classical parameters if available
         try:
-            classical = self.get_classical_params()
-            if isinstance(classical, dict):
-                param_str = ", ".join(
-                    f"{k}={v:.4f}" if isinstance(v, (int, float, np.number))
-                    else f"{k}=..."
-                    for k, v in classical.items()
+            classical = self.classical_params
+            if dataclasses.is_dataclass(classical) and not isinstance(classical, type):
+                items = (
+                    (f.name, getattr(classical, f.name))
+                    for f in dataclasses.fields(classical)
                 )
+            elif isinstance(classical, dict):
+                items = classical.items()
             else:
-                param_str = str(classical)
+                return f"{self.__class__.__name__}({classical})"
+            param_str = ", ".join(
+                f"{k}={v:.4f}" if isinstance(v, (int, float, np.number))
+                else f"{k}=..."
+                for k, v in items
+            )
             return f"{self.__class__.__name__}({param_str})"
         except Exception:
             # Fallback to natural parameters
-            theta = self.get_natural_params()
+            theta = self.natural_params
             theta_str = ", ".join(f"{x:.4f}" for x in theta)
             return f"{self.__class__.__name__}(θ=[{theta_str}])"

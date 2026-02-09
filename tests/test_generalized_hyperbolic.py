@@ -107,14 +107,14 @@ class TestJointGeneralizedHyperbolic1D:
             dist = JointGeneralizedHyperbolic.from_classical_params(**params)
 
             # Get natural params
-            theta = dist.get_natural_params()
+            theta = dist.natural_params
 
             # Create from natural
             dist2 = JointGeneralizedHyperbolic(d=1)
             dist2.set_natural_params(theta)
 
             # Get classical back
-            recovered = dist2.get_classical_params()
+            recovered = dist2.classical_params
 
             # Compare
             np.testing.assert_allclose(
@@ -151,7 +151,7 @@ class TestJointGeneralizedHyperbolic1D:
             dist = JointGeneralizedHyperbolic.from_classical_params(**params)
 
             # Get theoretical expectation parameters
-            eta_theory = dist.get_expectation_params()
+            eta_theory = dist.expectation_params
 
             # Skip if any are infinite
             if not np.all(np.isfinite(eta_theory)):
@@ -231,7 +231,7 @@ class TestGeneralizedHyperbolic2D:
             gh = GeneralizedHyperbolic.from_classical_params(**params)
 
             # Access via joint
-            classical = gh.get_classical_params()
+            classical = gh.classical_params
 
             np.testing.assert_allclose(classical['mu'], params['mu'])
             np.testing.assert_allclose(classical['gamma'], params['gamma'])
@@ -263,7 +263,7 @@ class TestGeneralizedHyperbolic2D:
             assert isinstance(joint, JointGeneralizedHyperbolic)
 
             # Parameters should match
-            joint_params = joint.get_classical_params()
+            joint_params = joint.classical_params
             np.testing.assert_allclose(joint_params['mu'], params['mu'])
             np.testing.assert_allclose(joint_params['p'], params['p'])
 
@@ -601,7 +601,7 @@ class TestGeneralizedHyperbolicEMFitting:
         )
 
         # Check that p is fixed
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
         np.testing.assert_allclose(
             fitted_params['p'], -0.5, rtol=1e-10,
             err_msg="p parameter not fixed correctly"

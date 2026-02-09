@@ -69,14 +69,14 @@ class TestGammaParams:
 
 class TestInverseGammaParams:
     def test_construction(self):
-        p = InverseGammaParams(shape=3.0, scale=2.0)
+        p = InverseGammaParams(shape=3.0, rate=2.0)
         assert p.shape == 3.0
-        assert p.scale == 2.0
+        assert p.rate == 2.0
 
     def test_frozen(self):
-        p = InverseGammaParams(shape=3.0, scale=2.0)
+        p = InverseGammaParams(shape=3.0, rate=2.0)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            p.scale = 5.0
+            p.rate = 5.0
 
 
 class TestInverseGaussianParams:

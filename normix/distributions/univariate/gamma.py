@@ -316,7 +316,7 @@ class Gamma(ExponentialFamily):
             Fisher information matrix (positive definite).
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         
         alpha = theta[0] + 1
         beta = -theta[1]

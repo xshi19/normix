@@ -70,14 +70,14 @@ class TestJointVarianceGammaHighDim:
         dist = JointVarianceGamma.from_classical_params(**params)
 
         # Get natural params
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
 
         # Create from natural
         dist2 = JointVarianceGamma(d=dim)
         dist2.set_natural_params(theta)
 
         # Get classical back
-        recovered = dist2.get_classical_params()
+        recovered = dist2.classical_params
 
         # Compare
         np.testing.assert_allclose(
@@ -115,7 +115,7 @@ class TestJointVarianceGammaHighDim:
         fitted = JointVarianceGamma(d=dim).fit(X, Y)
 
         # Check fitted parameters are reasonable
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
 
         # Check mu (should be close to 0)
         np.testing.assert_allclose(
@@ -172,11 +172,11 @@ class TestJointNormalInverseGammaHighDim:
     def test_parameter_roundtrip(self, params, dim):
         """Test classical -> natural -> classical roundtrip."""
         dist = JointNormalInverseGamma.from_classical_params(**params)
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
 
         dist2 = JointNormalInverseGamma(d=dim)
         dist2.set_natural_params(theta)
-        recovered = dist2.get_classical_params()
+        recovered = dist2.classical_params
 
         np.testing.assert_allclose(
             recovered['mu'], params['mu'], rtol=1e-8,
@@ -207,7 +207,7 @@ class TestJointNormalInverseGammaHighDim:
         X, Y = true_dist.rvs(size=n_samples, random_state=42)
 
         fitted = JointNormalInverseGamma(d=dim).fit(X, Y)
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
 
         np.testing.assert_allclose(
             fitted_params['mu'], params['mu'], atol=0.2,
@@ -255,11 +255,11 @@ class TestJointNormalInverseGaussianHighDim:
     def test_parameter_roundtrip(self, params, dim):
         """Test classical -> natural -> classical roundtrip."""
         dist = JointNormalInverseGaussian.from_classical_params(**params)
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
 
         dist2 = JointNormalInverseGaussian(d=dim)
         dist2.set_natural_params(theta)
-        recovered = dist2.get_classical_params()
+        recovered = dist2.classical_params
 
         np.testing.assert_allclose(
             recovered['mu'], params['mu'], rtol=1e-8,
@@ -290,7 +290,7 @@ class TestJointNormalInverseGaussianHighDim:
         X, Y = true_dist.rvs(size=n_samples, random_state=42)
 
         fitted = JointNormalInverseGaussian(d=dim).fit(X, Y)
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
 
         np.testing.assert_allclose(
             fitted_params['mu'], params['mu'], atol=0.2,
@@ -339,11 +339,11 @@ class TestJointGeneralizedHyperbolicHighDim:
     def test_parameter_roundtrip(self, params, dim):
         """Test classical -> natural -> classical roundtrip."""
         dist = JointGeneralizedHyperbolic.from_classical_params(**params)
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
 
         dist2 = JointGeneralizedHyperbolic(d=dim)
         dist2.set_natural_params(theta)
-        recovered = dist2.get_classical_params()
+        recovered = dist2.classical_params
 
         np.testing.assert_allclose(
             recovered['mu'], params['mu'], rtol=1e-8,
@@ -378,7 +378,7 @@ class TestJointGeneralizedHyperbolicHighDim:
         X, Y = true_dist.rvs(size=n_samples, random_state=42)
 
         fitted = JointGeneralizedHyperbolic(d=dim).fit(X, Y)
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
 
         np.testing.assert_allclose(
             fitted_params['mu'], params['mu'], atol=0.2,
@@ -437,7 +437,7 @@ class TestHighDimPerformance:
         }
         dist = JointGeneralizedHyperbolic.from_classical_params(**params)
 
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
         log_partition = dist._log_partition(theta)
 
         assert np.isfinite(log_partition), "Log partition should be finite"

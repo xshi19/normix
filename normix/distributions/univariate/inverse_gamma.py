@@ -33,6 +33,7 @@ from typing import Optional
 from scipy.special import gammaln, digamma, polygamma
 
 from normix.base import ExponentialFamily
+from normix.params import InverseGammaParams
 
 
 class InverseGamma(ExponentialFamily):
@@ -141,8 +142,8 @@ class InverseGamma(ExponentialFamily):
         return np.array([self._rate, -(self._shape + 1)])
 
     def _compute_classical_params(self):
-        """Return classical parameters as dict."""
-        return {'shape': self._shape, 'rate': self._rate}
+        """Return frozen dataclass of classical parameters."""
+        return InverseGammaParams(shape=self._shape, rate=self._rate)
 
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ > 0, θ₂ < -1."""
@@ -281,7 +282,7 @@ class InverseGamma(ExponentialFamily):
         where α = -θ₂-1, β = θ₁.
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         
         beta = theta[0]
         alpha = -theta[1] - 1

@@ -220,7 +220,7 @@ class Exponential(ExponentialFamily):
             Fisher information matrix.
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         return np.array([[1.0 / theta[0]**2]])
     
     # Implement required Distribution methods

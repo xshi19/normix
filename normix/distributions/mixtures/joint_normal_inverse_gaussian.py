@@ -42,6 +42,7 @@ from scipy.linalg import solve as scipy_solve
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGaussian
+from normix.params import NormalInverseGaussianParams
 from normix.utils import log_kv
 
 
@@ -342,13 +343,9 @@ class JointNormalInverseGaussian(JointNormalMixture):
             delta = 1.0
             eta = max(b, 1e-6)
 
-        return {
-            'mu': mu,
-            'gamma': gamma,
-            'sigma': Sigma,
-            'delta': delta,
-            'eta': eta
-        }
+        return NormalInverseGaussianParams(
+            mu=mu, gamma=gamma, sigma=Sigma, delta=delta, eta=eta
+        )
 
     # ========================================================================
     # Log partition function
@@ -679,7 +676,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
                 return f"JointNormalInverseGaussian(d={self._d}, not fitted)"
             return "JointNormalInverseGaussian(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         delta = classical['delta']
         eta = classical['eta']

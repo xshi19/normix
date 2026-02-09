@@ -38,6 +38,7 @@ from scipy.special import gammaln, digamma, polygamma
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGamma
+from normix.params import NormalInverseGammaParams
 
 
 class JointNormalInverseGamma(JointNormalMixture):
@@ -301,13 +302,9 @@ class JointNormalInverseGamma(JointNormalMixture):
         mu_quad = 0.5 * (mu @ theta_5)
         beta = -theta_2 - mu_quad
 
-        return {
-            'mu': mu,
-            'gamma': gamma,
-            'sigma': Sigma,
-            'shape': alpha,
-            'rate': beta
-        }
+        return NormalInverseGammaParams(
+            mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
+        )
 
     # ========================================================================
     # Log partition function
@@ -621,7 +618,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         >>> 
         >>> # Fit new distribution
         >>> fitted = JointNormalInverseGamma(d=1).fit(X, Y)
-        >>> print(fitted.get_classical_params())
+        >>> print(fitted.classical_params)
         """
         X = np.asarray(X)
         Y = np.asarray(Y)
@@ -661,7 +658,7 @@ class JointNormalInverseGamma(JointNormalMixture):
                 return f"JointNormalInverseGamma(d={self._d}, not fitted)"
             return "JointNormalInverseGamma(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         alpha = classical['shape']
         beta = classical['rate']

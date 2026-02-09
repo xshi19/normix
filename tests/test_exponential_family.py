@@ -80,7 +80,7 @@ class Exponential(ExponentialFamily):
     def fisher_information(self, theta=None):
         """I(θ) = ∇²ψ(θ) = 1/θ²"""
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         return np.array([[1.0 / theta[0]**2]])
     
     # Implement required methods from Distribution
@@ -89,7 +89,7 @@ class Exponential(ExponentialFamily):
         if self._natural_params is None:
             raise ValueError("Parameters not set")
         
-        classical = self.get_classical_params()
+        classical = self.classical_params
         rate = classical['rate']
         
         if random_state is None:
@@ -105,12 +105,12 @@ class Exponential(ExponentialFamily):
     
     def mean(self):
         """Mean = 1/λ"""
-        classical = self.get_classical_params()
+        classical = self.classical_params
         return 1.0 / classical['rate']
     
     def var(self):
         """Variance = 1/λ²"""
-        classical = self.get_classical_params()
+        classical = self.classical_params
         return 1.0 / classical['rate']**2
 
 
@@ -125,22 +125,22 @@ class TestExponentialDistribution:
         """Test initialization from classical parameters."""
         dist = Exponential.from_classical_params(rate=2.0)
         
-        classical = dist.get_classical_params()
+        classical = dist.classical_params
         assert classical['rate'] == 2.0
         
         # Check conversion to natural
-        natural = dist.get_natural_params()
+        natural = dist.natural_params
         assert np.isclose(natural[0], -2.0)
     
     def test_from_natural_params(self):
         """Test initialization from natural parameters."""
         dist = Exponential.from_natural_params(np.array([-2.0]))
         
-        natural = dist.get_natural_params()
+        natural = dist.natural_params
         assert natural[0] == -2.0
         
         # Check conversion to classical
-        classical = dist.get_classical_params()
+        classical = dist.classical_params
         assert np.isclose(classical['rate'], 2.0)
     
     def test_from_expectation_params(self):
@@ -148,11 +148,11 @@ class TestExponentialDistribution:
         # E[X] = 0.5 means rate = 2.0
         dist = Exponential.from_expectation_params(np.array([0.5]))
         
-        expectation = dist.get_expectation_params()
+        expectation = dist.expectation_params
         assert np.isclose(expectation[0], 0.5, atol=1e-4)
         
         # Check conversion to classical
-        classical = dist.get_classical_params()
+        classical = dist.classical_params
         assert np.isclose(classical['rate'], 2.0, atol=1e-3)
     
     def test_parameter_conversions(self):
@@ -161,15 +161,15 @@ class TestExponentialDistribution:
         dist = Exponential.from_classical_params(rate=2.0)
         
         # Classical → Natural: θ = -λ = -2.0
-        natural = dist.get_natural_params()
+        natural = dist.natural_params
         assert np.isclose(natural[0], -2.0)
         
         # Natural → Expectation: η = 1/λ = 0.5
-        expectation = dist.get_expectation_params()
+        expectation = dist.expectation_params
         assert np.isclose(expectation[0], 0.5)
         
         # Back to classical
-        classical = dist.get_classical_params()
+        classical = dist.classical_params
         assert np.isclose(classical['rate'], 2.0)
     
     def test_set_params(self):
@@ -178,15 +178,15 @@ class TestExponentialDistribution:
         
         # Set classical
         dist.set_classical_params(rate=3.0)
-        assert dist.get_classical_params()['rate'] == 3.0
+        assert dist.classical_params['rate'] == 3.0
         
         # Set natural
         dist.set_natural_params(np.array([-1.5]))
-        assert np.isclose(dist.get_classical_params()['rate'], 1.5)
+        assert np.isclose(dist.classical_params['rate'], 1.5)
         
         # Set expectation
         dist.set_expectation_params(np.array([2.0]))
-        assert np.isclose(dist.get_classical_params()['rate'], 0.5, atol=1e-4)
+        assert np.isclose(dist.classical_params['rate'], 0.5, atol=1e-4)
     
     def test_pdf_single_value(self):
         """Test PDF at a single point."""
@@ -284,7 +284,7 @@ class TestExponentialDistribution:
         dist = Exponential().fit(data)
         
         # Check that fitted rate is close to true rate
-        fitted = dist.get_classical_params()
+        fitted = dist.classical_params
         assert np.abs(fitted['rate'] - true_rate) < 0.2
     
     def test_fit_returns_self(self):
@@ -330,9 +330,9 @@ class TestExponentialDistribution:
         dist = Exponential.from_classical_params(rate=2.0)
         
         # First call
-        exp1 = dist.get_expectation_params()
+        exp1 = dist.expectation_params
         # Second call (should be cached)
-        exp2 = dist.get_expectation_params()
+        exp2 = dist.expectation_params
         
         assert exp1 == exp2
         assert exp1[0] == exp2[0]
@@ -346,7 +346,7 @@ class TestExponentialDistribution:
         score = dist.score(data)
         
         assert score is not None
-        assert dist.get_classical_params()['rate'] > 0
+        assert dist.classical_params['rate'] > 0
 
 
 class TestAbstractMethods:
@@ -377,7 +377,7 @@ class TestNumericalDifferentiation:
         dist = ExponentialNoAnalytical.from_classical_params(rate=2.0)
         
         # Should still work with numerical differentiation
-        expectation = dist.get_expectation_params()
+        expectation = dist.expectation_params
         assert isinstance(expectation, np.ndarray)
         assert len(expectation) == 1
         assert np.isclose(expectation[0], 0.5, atol=1e-4)

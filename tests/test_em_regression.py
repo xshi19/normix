@@ -35,7 +35,7 @@ class TestVGEMRegression:
         X = true_dist.rvs(size=2000, random_state=42)
 
         fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         # Verify fitted state
         assert fitted._fitted is True
@@ -60,7 +60,7 @@ class TestVGEMRegression:
         X = true_dist.rvs(size=3000, random_state=42)
 
         fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert params['mu'].shape == (2,)
@@ -86,7 +86,7 @@ class TestNInvGEMRegression:
         X = true_dist.rvs(size=2000, random_state=42)
 
         fitted = NormalInverseGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert fitted._joint._fitted is True
@@ -106,7 +106,7 @@ class TestNInvGEMRegression:
         X = true_dist.rvs(size=3000, random_state=42)
 
         fitted = NormalInverseGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert params['sigma'].shape == (2, 2)
@@ -129,7 +129,7 @@ class TestNIGEMRegression:
         X = true_dist.rvs(size=2000, random_state=42)
 
         fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert fitted._joint._fitted is True
@@ -149,7 +149,7 @@ class TestNIGEMRegression:
         X = true_dist.rvs(size=3000, random_state=42)
 
         fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert params['sigma'].shape == (2, 2)
@@ -177,7 +177,7 @@ class TestGHEMRegression:
             regularization='det_sigma_one',
             random_state=123
         )
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert fitted._joint._fitted is True
@@ -204,7 +204,7 @@ class TestGHEMRegression:
             regularization='det_sigma_one',
             random_state=123
         )
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         assert params['sigma'].shape == (2, 2)
@@ -229,7 +229,7 @@ class TestGHEMRegression:
             regularization_params={'p_fixed': -0.5},
             random_state=123
         )
-        params = fitted.get_classical_params()
+        params = fitted.classical_params
 
         assert fitted._fitted is True
         # p should be fixed at -0.5

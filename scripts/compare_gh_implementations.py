@@ -4,10 +4,14 @@ Compare the new GeneralizedHyperbolic implementation (normix.distributions.mixtu
 with the legacy GH implementation (normix.legacy.gh).
 
 This script:
-1. Downloads MAG7 stock prices from Yahoo Finance (last 5 years)
+1. Downloads stock prices from Yahoo Finance
 2. Computes log returns
 3. Fits a MULTIVARIATE GH distribution to all stocks jointly
 4. Compares: parameters, likelihoods, and fitting speed
+
+Two modes:
+- MAG7 mode (default): Uses 7 Magnificent stocks, 5 years of data
+- SP500 mode (--sp500): Uses 30 S&P 500 stocks matching the notebook configuration
 
 Parameterization mapping between implementations:
 - New (normix.distributions): mu, gamma, sigma, p, a, b
@@ -82,6 +86,127 @@ def download_stock_data(tickers, period_years=5):
     return prices
 
 
+def get_sp500_tickers():
+    """
+    Get a curated list of S&P 500 tickers (same as notebook).
+    
+    Returns
+    -------
+    tickers : list of str
+        List of S&P 500 constituent tickers.
+    """
+    # Same curated list as used in sp500_stocks_multivariate_study.ipynb
+    sp500_tickers = [
+        # Technology
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA', 'AMD', 'INTC', 'CRM',
+        'ADBE', 'CSCO', 'ORCL', 'AVGO', 'TXN', 'QCOM', 'IBM', 'AMAT', 'ADI', 'LRCX',
+        # Finance
+        'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'BLK', 'SCHW', 'AXP', 'USB',
+        'PNC', 'TFC', 'BK', 'COF', 'CME',
+        # Healthcare
+        'UNH', 'JNJ', 'PFE', 'ABBV', 'MRK', 'LLY', 'TMO', 'ABT', 'DHR', 'BMY',
+        'AMGN', 'GILD', 'CVS', 'MDT', 'ISRG',
+        # Consumer
+        'WMT', 'PG', 'KO', 'PEP', 'COST', 'HD', 'MCD', 'NKE', 'SBUX', 'TGT',
+        'LOW', 'DG', 'DLTR', 'TJX', 'ROST',
+        # Industrial
+        'BA', 'UPS', 'HON', 'CAT', 'GE', 'MMM', 'RTX', 'DE', 'LMT', 'UNP',
+        # Energy
+        'XOM', 'CVX', 'COP', 'SLB', 'EOG', 'MPC', 'PSX', 'VLO', 'OXY', 'KMI',
+        # REITs
+        'AMT', 'PLD', 'CCI', 'EQIX', 'SPG',
+        # Utilities
+        'NEE', 'DUK', 'SO', 'AEP', 'SRE',
+        # Telecom
+        'VZ', 'T', 'TMUS',
+        # Materials
+        'LIN', 'APD', 'SHW', 'FCX', 'NEM',
+        # Travel/Leisure
+        'MAR', 'HLT', 'BKNG', 'DAL', 'UAL'
+    ]
+    return sp500_tickers
+
+
+def download_sp500_data(n_stocks=30, period_years=10, use_training_only=True):
+    """
+    Download S&P 500 data matching the notebook configuration.
+    
+    Parameters
+    ----------
+    n_stocks : int
+        Number of stocks to select (alphabetically sorted).
+    period_years : int
+        Number of years of historical data.
+    use_training_only : bool
+        If True, return only the first half (training period).
+        
+    Returns
+    -------
+    log_returns : pd.DataFrame
+        Log returns for selected stocks.
+    selected_tickers : list of str
+        List of selected ticker symbols.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        raise ImportError(
+            "yfinance is required. Install with: pip install yfinance"
+        )
+    
+    sp500_tickers = get_sp500_tickers()
+    
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=period_years * 365 + 60)  # Extra buffer
+    
+    print(f"Downloading S&P 500 stocks data from {start_date.date()} to {end_date.date()}...")
+    print("This may take a minute...")
+    
+    all_data = yf.download(sp500_tickers, start=start_date, end=end_date, progress=True)
+    
+    # Extract close prices
+    if isinstance(all_data.columns, pd.MultiIndex):
+        if 'Close' in all_data.columns.get_level_values(0):
+            prices = all_data['Close']
+        elif 'Adj Close' in all_data.columns.get_level_values(0):
+            prices = all_data['Adj Close']
+        else:
+            prices = all_data
+    else:
+        prices = all_data
+    
+    print(f"Downloaded {len(prices.columns)} stocks with {len(prices)} trading days")
+    
+    # Compute log returns (NOT multiplied by 100, matching notebook)
+    log_returns = np.log(prices / prices.shift(1))
+    log_returns = log_returns.iloc[1:]  # Remove first NaN row
+    
+    # Filter stocks with complete data
+    min_days = 252 * period_years - 100
+    valid_counts = log_returns.notna().sum()
+    valid_tickers = valid_counts[valid_counts >= min_days].index.tolist()
+    log_returns_filtered = log_returns[valid_tickers].dropna(axis=1)
+    
+    print(f"Stocks with complete data: {len(log_returns_filtered.columns)}")
+    
+    # Select first N stocks alphabetically (matching notebook)
+    selected_tickers = sorted(log_returns_filtered.columns.tolist())[:n_stocks]
+    log_returns_selected = log_returns_filtered[selected_tickers]
+    
+    print(f"\nSelected {n_stocks} stocks for analysis:")
+    print(selected_tickers)
+    
+    # Split into training/testing (matching notebook)
+    if use_training_only:
+        n_total = len(log_returns_selected)
+        n_train = n_total // 2
+        log_returns_train = log_returns_selected.iloc[:n_train]
+        print(f"\nUsing training period only: {len(log_returns_train)} samples")
+        return log_returns_train, selected_tickers
+    else:
+        return log_returns_selected, selected_tickers
+
+
 def compute_log_returns(prices):
     """
     Compute log returns from price series.
@@ -129,7 +254,7 @@ def fit_new_implementation(returns_matrix, max_iter=100, verbose=0):
     elapsed = time.time() - start_time
     
     # Get parameters
-    params = gh.get_classical_params()
+    params = gh.classical_params
     
     # Compute log-likelihood (per sample)
     ll = np.mean(gh.logpdf(returns_matrix))
@@ -699,6 +824,554 @@ def run_comparison(tickers=None, period_years=5, max_iter=100, verbose=0):
     }
 
 
+def analyze_gig_expectations(new_result, legacy_result, returns_matrix):
+    """
+    Analyze the GIG expectation parameters E[Y], E[1/Y], E[log Y].
+    
+    These are crucial for understanding why gamma becomes large.
+    """
+    print("\n" + "=" * 100)
+    print("GIG EXPECTATION ANALYSIS")
+    print("=" * 100)
+    
+    # Compute E[Y], E[1/Y] from the fitted GIG parameters
+    from normix.utils import kv_ratio
+    
+    # New implementation
+    p_new = new_result['p']
+    a_new = new_result['a']
+    b_new = new_result['b']
+    
+    sqrt_ab_new = np.sqrt(a_new * b_new)
+    delta_new = np.sqrt(b_new / a_new)
+    
+    E_Y_new = delta_new * kv_ratio(p_new + 1, p_new, sqrt_ab_new)
+    E_inv_Y_new = kv_ratio(p_new - 1, p_new, sqrt_ab_new) / delta_new
+    
+    print(f"\nNew Implementation GIG parameters:")
+    print(f"  p = {p_new:.4f}")
+    print(f"  a = {a_new:.6f}")
+    print(f"  b = {b_new:.6f}")
+    print(f"  sqrt(ab) = {sqrt_ab_new:.4f}")
+    print(f"  delta = sqrt(b/a) = {delta_new:.6e}")
+    print(f"\nGIG Expectations:")
+    print(f"  E[Y] = {E_Y_new:.6e}")
+    print(f"  E[1/Y] = {E_inv_Y_new:.6e}")
+    print(f"  E[1/Y] * E[Y] = {E_inv_Y_new * E_Y_new:.6f}")
+    print(f"  1 - E[1/Y] * E[Y] = {1 - E_inv_Y_new * E_Y_new:.6f}")
+    
+    # Legacy implementation
+    p_leg = legacy_result['p']
+    a_leg = legacy_result['a']
+    b_leg = legacy_result['b']
+    
+    sqrt_ab_leg = np.sqrt(a_leg * b_leg)
+    delta_leg = np.sqrt(b_leg / a_leg)
+    
+    E_Y_leg = delta_leg * kv_ratio(p_leg + 1, p_leg, sqrt_ab_leg)
+    E_inv_Y_leg = kv_ratio(p_leg - 1, p_leg, sqrt_ab_leg) / delta_leg
+    
+    print(f"\nLegacy Implementation:")
+    print(f"  E[Y] = {E_Y_leg:.6e}")
+    print(f"  E[1/Y] = {E_inv_Y_leg:.6e}")
+    print(f"  E[1/Y] * E[Y] = {E_inv_Y_leg * E_Y_leg:.6f}")
+    
+    # Now fit NIG to the same data and compare
+    print("\n" + "-" * 80)
+    print("COMPARISON WITH NIG (Normal-Inverse Gaussian)")
+    print("-" * 80)
+    
+    try:
+        from normix.distributions.mixtures import NormalInverseGaussian
+        
+        nig = NormalInverseGaussian()
+        nig.fit(returns_matrix, max_iter=100, verbose=0)
+        nig_params = nig.classical_params
+        
+        delta_nig = nig_params['delta']
+        eta_nig = nig_params['eta']
+        
+        # For IG: E[Y] = δ, E[1/Y] = 1/δ + 1/η
+        E_Y_nig = delta_nig
+        E_inv_Y_nig = 1/delta_nig + 1/eta_nig
+        
+        gamma_nig = nig_params['gamma']
+        sigma_nig = nig_params['sigma']
+        sigma_diag_nig = np.sqrt(np.diag(sigma_nig))
+        gamma_norm_nig = gamma_nig / sigma_diag_nig
+        
+        print(f"\nNIG fitted parameters:")
+        print(f"  delta = {delta_nig:.6f}")
+        print(f"  eta = {eta_nig:.6f}")
+        print(f"\nNIG Expectations:")
+        print(f"  E[Y] = {E_Y_nig:.6e}")
+        print(f"  E[1/Y] = {E_inv_Y_nig:.6e}")
+        print(f"  E[1/Y] * E[Y] = {E_inv_Y_nig * E_Y_nig:.6f}")
+        print(f"  1 - E[1/Y] * E[Y] = {1 - E_inv_Y_nig * E_Y_nig:.6f}")
+        print(f"\nNIG γ/σ statistics:")
+        print(f"  γ/σ range: [{gamma_norm_nig.min():.4f}, {gamma_norm_nig.max():.4f}]")
+        print(f"  Mean |γ/σ|: {np.mean(np.abs(gamma_norm_nig)):.4f}")
+        
+        # Compare the KEY ratio: E[1/Y] * E[Y]
+        print("\n" + "-" * 80)
+        print("KEY INSIGHT: The denominator 1 - E[1/Y]*E[Y] in the M-step formula")
+        print("-" * 80)
+        print(f"GH:  1 - E[1/Y]*E[Y] = {1 - E_inv_Y_new * E_Y_new:.6f}")
+        print(f"NIG: 1 - E[1/Y]*E[Y] = {1 - E_inv_Y_nig * E_Y_nig:.6f}")
+        print("\nThe smaller this denominator, the larger gamma becomes!")
+        
+    except Exception as e:
+        print(f"Could not fit NIG: {e}")
+    
+
+def analyze_gamma_normalized(new_result, legacy_result, tickers):
+    """
+    Analyze normalized gamma (gamma/sigma) which is what the notebook plots.
+    
+    Parameters
+    ----------
+    new_result : dict
+        Results from new implementation.
+    legacy_result : dict
+        Results from legacy implementation.
+    tickers : list of str
+        Ticker symbols.
+    """
+    print("\n" + "=" * 100)
+    print("NORMALIZED GAMMA ANALYSIS (γ/σ)")
+    print("This matches the scatter plot in sp500_stocks_multivariate_study.ipynb")
+    print("=" * 100)
+    
+    new_gamma = new_result['gamma']
+    legacy_gamma = legacy_result['gamma']
+    new_sigma_diag = np.sqrt(np.diag(new_result['sigma']))
+    legacy_sigma_diag = np.sqrt(np.diag(legacy_result['sigma']))
+    
+    new_gamma_norm = new_gamma / new_sigma_diag
+    legacy_gamma_norm = legacy_gamma / legacy_sigma_diag
+    
+    new_mu = new_result['mu']
+    legacy_mu = legacy_result['mu']
+    
+    new_mu_norm = new_mu / new_sigma_diag
+    legacy_mu_norm = legacy_mu / legacy_sigma_diag
+    
+    print(f"\n{'Ticker':<8} {'New γ/σ':>12} {'Legacy γ/σ':>12} {'Ratio':>10} {'New μ/σ':>12} {'Legacy μ/σ':>12}")
+    print("-" * 70)
+    
+    for i, ticker in enumerate(tickers):
+        ratio = new_gamma_norm[i] / legacy_gamma_norm[i] if abs(legacy_gamma_norm[i]) > 1e-10 else np.nan
+        print(f"{ticker:<8} {new_gamma_norm[i]:>12.4f} {legacy_gamma_norm[i]:>12.4f} {ratio:>10.2f} "
+              f"{new_mu_norm[i]:>12.4f} {legacy_mu_norm[i]:>12.4f}")
+    
+    print("\n--- Summary Statistics ---")
+    print(f"New γ/σ range: [{new_gamma_norm.min():.4f}, {new_gamma_norm.max():.4f}]")
+    print(f"Legacy γ/σ range: [{legacy_gamma_norm.min():.4f}, {legacy_gamma_norm.max():.4f}]")
+    print(f"New μ/σ range: [{new_mu_norm.min():.4f}, {new_mu_norm.max():.4f}]")
+    print(f"Legacy μ/σ range: [{legacy_mu_norm.min():.4f}, {legacy_mu_norm.max():.4f}]")
+    
+    print(f"\nMean |γ/σ| new: {np.mean(np.abs(new_gamma_norm)):.4f}")
+    print(f"Mean |γ/σ| legacy: {np.mean(np.abs(legacy_gamma_norm)):.4f}")
+    print(f"Ratio of means: {np.mean(np.abs(new_gamma_norm)) / np.mean(np.abs(legacy_gamma_norm)):.2f}x")
+    
+    # Check correlation between implementations
+    corr = np.corrcoef(new_gamma_norm, legacy_gamma_norm)[0, 1]
+    print(f"\nCorrelation between new and legacy γ/σ: {corr:.4f}")
+    
+    return {
+        'new_gamma_norm': new_gamma_norm,
+        'legacy_gamma_norm': legacy_gamma_norm,
+        'new_mu_norm': new_mu_norm,
+        'legacy_mu_norm': legacy_mu_norm
+    }
+
+
+def run_sp500_comparison(n_stocks=30, max_iter=100, verbose=0):
+    """
+    Run comparison on S&P 500 data matching notebook configuration.
+    
+    Parameters
+    ----------
+    n_stocks : int
+        Number of stocks to analyze.
+    max_iter : int
+        Maximum EM iterations.
+    verbose : int
+        Verbosity level.
+        
+    Returns
+    -------
+    results : dict
+        Dictionary of comparison results.
+    """
+    print("=" * 100)
+    print("S&P 500 GH Implementation Comparison")
+    print("Matching sp500_stocks_multivariate_study.ipynb configuration")
+    print("=" * 100)
+    
+    # Download S&P 500 data (training period only, matching notebook)
+    log_returns, tickers = download_sp500_data(
+        n_stocks=n_stocks, 
+        period_years=10, 
+        use_training_only=True
+    )
+    
+    print(f"\nLog returns statistics:")
+    print(log_returns.describe().T[['mean', 'std', 'min', 'max']])
+    
+    # Convert to numpy array - NOTE: notebook uses raw log returns, not multiplied by 100
+    returns_matrix = log_returns.values
+    n_samples, d = returns_matrix.shape
+    
+    print(f"\nFitting {d}-dimensional GH distribution to {n_samples} samples...")
+    print("NOTE: Log returns are NOT scaled (raw log returns, not percentages)")
+    
+    # Fit new implementation
+    print(f"\n--- Fitting NEW implementation ---")
+    try:
+        new_result = fit_new_implementation_raw(returns_matrix, max_iter=max_iter, verbose=verbose)
+        print(f"  Time: {new_result['time']:.4f}s")
+        print(f"  Log-likelihood (per sample): {new_result['log_likelihood']:.4f}")
+        print(f"  GIG params: p={new_result['p']:.4f}, a={new_result['a']:.6f}, b={new_result['b']:.6f}")
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        new_result = None
+    
+    # Fit legacy implementation
+    print(f"\n--- Fitting LEGACY implementation ---")
+    try:
+        legacy_result = fit_legacy_implementation_raw(returns_matrix, max_iter=max_iter, verbose=(verbose > 0))
+        print(f"  Time: {legacy_result['time']:.4f}s")
+        print(f"  Log-likelihood (per sample): {legacy_result['log_likelihood']:.4f}")
+        print(f"  GIG params: lam={legacy_result['lam']:.4f}, chi={legacy_result['chi']:.6f}, psi={legacy_result['psi']:.6f}")
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        legacy_result = None
+    
+    # Print comparison if both succeeded
+    if new_result is not None and legacy_result is not None:
+        print_comparison(new_result, legacy_result, tickers)
+        analyze_gig_expectations(new_result, legacy_result, returns_matrix)
+        analyze_gamma_normalized(new_result, legacy_result, tickers)
+        analyze_potential_issues(new_result, legacy_result)
+    
+    return {
+        'new_result': new_result,
+        'legacy_result': legacy_result,
+        'log_returns': log_returns,
+        'tickers': tickers
+    }
+
+
+def fit_new_implementation_raw(returns_matrix, max_iter=100, verbose=0):
+    """
+    Fit the new GeneralizedHyperbolic implementation on raw (unscaled) log returns.
+    
+    Parameters
+    ----------
+    returns_matrix : np.ndarray
+        2D array of raw log returns, shape (n_samples, n_assets).
+    max_iter : int
+        Maximum EM iterations.
+    verbose : int
+        Verbosity level.
+        
+    Returns
+    -------
+    result : dict
+        Dictionary with fitted parameters, log-likelihood, and timing.
+    """
+    from normix.distributions.mixtures import GeneralizedHyperbolic
+    
+    n_samples, d = returns_matrix.shape
+    
+    gh = GeneralizedHyperbolic()
+    
+    start_time = time.time()
+    gh.fit(returns_matrix, max_iter=max_iter, verbose=verbose, regularization='det_sigma_one')
+    elapsed = time.time() - start_time
+    
+    # Get parameters
+    params = gh.classical_params
+    
+    # Compute log-likelihood (per sample)
+    ll = np.mean(gh.logpdf(returns_matrix))
+    
+    return {
+        'mu': params['mu'],
+        'gamma': params['gamma'],
+        'sigma': params['sigma'],
+        'p': params['p'],
+        'a': params['a'],
+        'b': params['b'],
+        'log_likelihood': ll,
+        'time': elapsed,
+        'dist': gh,
+        'd': d,
+        'n_samples': n_samples
+    }
+
+
+def fit_legacy_implementation_raw(returns_matrix, max_iter=100, verbose=False):
+    """
+    Fit the legacy GH implementation on raw (unscaled) log returns.
+    
+    Parameters
+    ----------
+    returns_matrix : np.ndarray
+        2D array of raw log returns, shape (n_samples, n_assets).
+    max_iter : int
+        Maximum EM iterations.
+    verbose : bool
+        Whether to print progress.
+        
+    Returns
+    -------
+    result : dict
+        Dictionary with fitted parameters, log-likelihood, and timing.
+    """
+    # Import legacy GH - need to handle its internal imports
+    from scipy.special import kv, gammaln, factorial
+    from scipy.interpolate import interp1d
+    from scipy.optimize import minimize
+    from scipy.linalg import solve_triangular
+    
+    # Define legacy helper functions inline (from normix/legacy/func.py)
+    def logkv(v, z):
+        """Log modified Bessel function of the second kind"""
+        y = np.log(kv(v, z))
+        
+        # y -> -infinity when z -> infinity
+        if np.any(y == -np.inf):
+            k = np.arange(1, 10)
+            akv = np.cumprod(4*v**2 - (2*k-1)**2) / factorial(k) / 8**k
+            y[y == -np.inf] = -z[y == -np.inf] - 0.5*np.log(z[y == -np.inf]) + 0.5*np.log(np.pi/2) \
+                            + np.log(1 + np.sum(akv/np.power.outer(z[y == -np.inf], k), axis=1))
+        
+        # y -> infinity when z -> 0
+        if np.any(y == np.inf):
+            if np.abs(v) > 1e-10:
+                y[y == np.inf] = gammaln(np.abs(v)) - np.log(2.) \
+                                + np.abs(v) * (np.log(2.) - np.log(z[y == np.inf]))
+            else:
+                y[y == np.inf] = np.log(-np.log(z[y == np.inf]/2) - np.euler_gamma)
+        
+        return y
+    
+    def logkvp(v, z):
+        return -0.5*(np.exp(logkv(v+1, z)-logkv(v, z))+np.exp(logkv(v-1, z)-logkv(v, z)))
+    
+    def kvratio(v1, v2, z):
+        return np.exp(logkv(v1, z) - logkv(v2, z))
+    
+    # Define legacy GIG class inline
+    class GIG:
+        """Generalized Inverse Gaussian (GIG) - Legacy"""
+        
+        def __init__(self, lam, chi, psi):
+            self.lam = lam
+            self.chi = chi
+            self.psi = psi
+        
+        def moment(self, alpha):
+            delta = np.sqrt(self.chi/self.psi)
+            eta = np.sqrt(self.chi*self.psi)
+            m = delta**alpha * np.exp(logkv(self.lam+alpha, eta) - logkv(self.lam, eta))
+            return m
+        
+        def mean(self):
+            return self.moment(1)
+        
+        def var(self):
+            return self.moment(2) - self.moment(1)**2
+        
+        def suffstats2param(self, s1, s2, s3):
+            def llh(param):
+                lam = param[0]
+                chi = param[1]
+                psi = param[2]
+                eta = np.array([np.sqrt(chi*psi)])
+                delta = np.sqrt(chi/psi)
+                l = 0.5*(chi*s1 + psi*s2) - (lam-1)*s3 + lam*np.log(delta) + logkv(lam, eta)
+                return l[0]
+            
+            def grad(param):
+                lam = param[0]
+                chi = param[1]
+                psi = param[2]
+                eta = np.array([np.sqrt(chi*psi)])
+                delta = np.sqrt(chi/psi)
+                g = np.array([(-s3 + np.log(delta) + (logkv(lam+1e-10, eta)[0] - logkv(lam-1e-10, eta)[0])/2e-10),
+                              0.5*(s1 + lam/chi + logkvp(lam, eta)[0]/delta),
+                              0.5*(s2 - lam/psi + logkvp(lam, eta)[0]*delta)])
+                return g
+            
+            x0 = np.array([self.lam, self.chi, self.psi])
+            bounds = [(-20., 20.), (1e-20, None), (1e-20, None)]
+            res = minimize(fun=llh, x0=x0, jac=grad, bounds=bounds)
+            
+            if res.success:
+                self.lam = res.x[0]
+                self.chi = res.x[1]
+                self.psi = res.x[2]
+            return res
+    
+    # Define legacy GH class inline
+    class GH:
+        """Generalized Hyperbolic (GH) - Legacy"""
+        
+        def __init__(self, mu, gamma, sigma, lam, chi, psi):
+            self.mu = mu
+            self.gamma = gamma
+            self.sigma = sigma
+            self.lam = lam
+            self.chi = chi
+            self.psi = psi
+            self.dim = len(mu)
+        
+        def llh(self, x):
+            l = np.linalg.cholesky(self.sigma)
+            z = solve_triangular(l, (x-self.mu).T, lower=True)
+            gamma = solve_triangular(l, self.gamma, lower=True)
+            lam = self.lam - self.dim/2
+            chi = self.chi + np.sum(z**2, axis=0)
+            psi = self.psi + np.dot(gamma, gamma)
+            
+            delta = np.sqrt(chi/psi)
+            eta = np.sqrt(chi*psi)
+            
+            llh = self.lam/2*np.log(self.psi/self.chi) \
+                - logkv(self.lam, np.sqrt(self.chi*self.psi)) \
+                + logkv(lam, eta) + np.dot(z.T, gamma) + lam*np.log(delta)
+            return llh, lam, delta, eta
+        
+        def regulate(self, method='|sigma|=1'):
+            if method == 'chi=1':
+                self.gamma = self.gamma * self.chi
+                self.sigma = self.sigma * self.chi
+                self.psi = self.psi * self.chi
+                self.chi = 1.0
+            elif method == 'psi=1':
+                self.gamma = self.gamma / self.psi
+                self.sigma = self.sigma / self.psi
+                self.chi = self.chi * self.psi
+                self.psi = 1.0
+            elif method == 'chi=psi':
+                self.gamma = self.gamma * np.sqrt(self.chi/self.psi)
+                self.sigma = self.sigma * np.sqrt(self.chi/self.psi)
+                self.chi = np.sqrt(self.chi*self.psi)
+                self.psi = self.chi
+            elif method == '|sigma|=1':
+                _, logd = np.linalg.slogdet(self.sigma)
+                const = np.exp(logd/self.dim)
+                self.gamma = self.gamma / const
+                self.sigma = self.sigma / const
+                self.chi = self.chi * const
+                self.psi = self.psi / const
+        
+        def fit_em(self, x, max_iter=100, fix_tail=False, eps=1e-4, reg='|sigma|=1', diff=1e-5, disp=True):
+            if self.dim != x.shape[1]:
+                raise ValueError('x dimension must be (, {})'.format(self.dim))
+            
+            suff_stats = [0]*6
+            suff_stats[3] = np.mean(x, axis=0)
+            
+            llh_last = 0
+            for i in range(max_iter):
+                self.regulate(reg)
+                llh, lam, delta, eta = self.llh(x)
+                llh = np.mean(llh)
+                
+                if i > 0:
+                    if disp:
+                        print('iter=%s, llh=%.5f, change=%.5f' % (i, llh, llh-llh_last))
+                    
+                    if (np.abs(llh-llh_last)/np.abs(llh_last)) < eps:
+                        if disp:
+                            print('success')
+                        return True
+                llh_last = llh
+                
+                # E-step
+                a = kvratio(lam-1, lam, eta) / delta
+                b = kvratio(lam+1, lam, eta) * delta
+                c = (kvratio(lam+diff, lam, eta) - kvratio(lam-diff, lam, eta)) / (2*diff) + np.log(delta)
+                
+                suff_stats[0] = np.mean(a)
+                suff_stats[1] = np.mean(b)
+                suff_stats[2] = np.mean(c)
+                suff_stats[4] = np.mean(x.T * a, axis=1)
+                suff_stats[5] = np.dot((x.T * a) / x.shape[0], x)
+                
+                if not fix_tail:
+                    gig = GIG(self.lam, self.chi, self.psi)
+                    res = gig.suffstats2param(suff_stats[0], suff_stats[1], suff_stats[2])
+                    if res.success:
+                        self.lam = gig.lam
+                        self.chi = gig.chi
+                        self.psi = gig.psi
+                
+                self.mu = (suff_stats[3] - suff_stats[1]*suff_stats[4]) / (1 - suff_stats[0]*suff_stats[1])
+                self.gamma = (suff_stats[4] - suff_stats[0]*suff_stats[3]) / (1 - suff_stats[0]*suff_stats[1])
+                self.sigma = -np.outer(suff_stats[4], self.mu)
+                self.sigma = self.sigma + self.sigma.T + suff_stats[5] \
+                    + suff_stats[0]*np.outer(self.mu, self.mu) \
+                    - suff_stats[1]*np.outer(self.gamma, self.gamma)
+            
+            if disp:
+                print('fail to converge')
+            return False
+    
+    n_samples, d = returns_matrix.shape
+    
+    # Initialize with reasonable defaults
+    mu_init = np.mean(returns_matrix, axis=0)
+    gamma_init = np.zeros(d)
+    sigma_init = np.cov(returns_matrix, rowvar=False)
+    
+    # Ensure sigma is positive definite
+    min_eig = np.linalg.eigvalsh(sigma_init).min()
+    if min_eig < 1e-8:
+        sigma_init = sigma_init + (1e-8 - min_eig + 1e-8) * np.eye(d)
+    
+    lam_init = 1.0
+    chi_init = 1.0
+    psi_init = 1.0
+    
+    gh = GH(mu_init, gamma_init, sigma_init, lam_init, chi_init, psi_init)
+    
+    start_time = time.time()
+    converged = gh.fit_em(returns_matrix, max_iter=max_iter, reg='|sigma|=1', disp=verbose)
+    elapsed = time.time() - start_time
+    
+    # Compute log-likelihood (per sample)
+    llh_result = gh.llh(returns_matrix)
+    ll = np.mean(llh_result[0])
+    
+    return {
+        'mu': gh.mu,
+        'gamma': gh.gamma,
+        'sigma': gh.sigma,
+        'lam': gh.lam,
+        'chi': gh.chi,
+        'psi': gh.psi,
+        # Mapped to new parameterization
+        'p': gh.lam,
+        'a': gh.psi,
+        'b': gh.chi,
+        'log_likelihood': ll,
+        'time': elapsed,
+        'converged': converged,
+        'dist': gh,
+        'd': d,
+        'n_samples': n_samples
+    }
+
+
 if __name__ == '__main__':
     import argparse
     
@@ -711,12 +1384,23 @@ if __name__ == '__main__':
                         help='Maximum EM iterations (default: 100)')
     parser.add_argument('--verbose', type=int, default=0,
                         help='Verbosity level (default: 0)')
+    parser.add_argument('--sp500', action='store_true',
+                        help='Use S&P 500 data matching notebook configuration')
+    parser.add_argument('--n-stocks', type=int, default=30,
+                        help='Number of S&P 500 stocks to analyze (default: 30)')
     
     args = parser.parse_args()
     
-    results = run_comparison(
-        tickers=args.tickers,
-        period_years=args.years,
-        max_iter=args.max_iter,
-        verbose=args.verbose
-    )
+    if args.sp500:
+        results = run_sp500_comparison(
+            n_stocks=args.n_stocks,
+            max_iter=args.max_iter,
+            verbose=args.verbose
+        )
+    else:
+        results = run_comparison(
+            tickers=args.tickers,
+            period_years=args.years,
+            max_iter=args.max_iter,
+            verbose=args.verbose
+        )

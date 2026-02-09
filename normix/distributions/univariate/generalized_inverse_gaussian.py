@@ -52,6 +52,7 @@ from typing import Optional, Union, List
 from scipy.interpolate import interp1d
 from scipy.special import digamma
 
+from normix.params import GIGParams
 from normix.base import ExponentialFamily
 from normix.utils import log_kv, log_kv_derivative_z
 
@@ -170,7 +171,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     
     def _compute_classical_params(self):
         """Compute classical parameters from internal state."""
-        return {'p': self._p, 'a': self._a, 'b': self._b}
+        return GIGParams(p=self._p, a=self._a, b=self._b)
     
     def _get_natural_param_support(self):
         """
@@ -345,7 +346,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Uses numerical differentiation since the analytical form is complex.
         """
         if theta is None:
-            theta = self.get_natural_params()
+            theta = self.natural_params
         return super().fisher_information(theta)
     
     # ============================================================
