@@ -1,0 +1,1245 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>normix.base.exponential_family &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">normix.base.exponential_family</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for normix.base.exponential_family</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base class for exponential family distributions.</span>
+
+<span class="sd">Exponential families have the canonical form:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    p(x|\\theta) = h(x) \\exp(\\theta^T t(x) - \\psi(\\theta))</span>
+
+<span class="sd">where:</span>
+
+<span class="sd">- :math:`\\theta`: natural parameters (d-dimensional vector)</span>
+<span class="sd">- :math:`t(x)`: sufficient statistics (d-dimensional vector)</span>
+<span class="sd">- :math:`\\psi(\\theta)`: log partition function (cumulant generating function)</span>
+<span class="sd">- :math:`h(x)`: base measure</span>
+
+<span class="sd">The log partition function satisfies:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    \\nabla\\psi(\\theta) = E[t(X)] = \\eta</span>
+
+<span class="sd">where :math:`\\eta` are the expectation parameters.</span>
+
+<span class="sd">Supports three parametrizations:</span>
+
+<span class="sd">- **Classical**: Domain-specific parameters (e.g., :math:`\\mu`, :math:`\\sigma` for Normal)</span>
+<span class="sd">- **Natural**: :math:`\\theta` in the exponential family form (numpy array)</span>
+<span class="sd">- **Expectation**: :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]` (numpy array)</span>
+
+<span class="sd">The Fisher information matrix equals the Hessian of the log partition:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    I(\\theta) = \\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.differentiate</span><span class="w"> </span><span class="kn">import</span> <span class="n">jacobian</span><span class="p">,</span> <span class="n">hessian</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span><span class="p">,</span> <span class="n">Bounds</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Distribution</span>
+
+
+<div class="viewcode-block" id="ExponentialFamily">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExponentialFamily</span><span class="p">(</span><span class="n">Distribution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for exponential family distributions.</span>
+
+<span class="sd">    Exponential family distributions have the probability density:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        p(x|\\theta) = h(x) \\exp(\\theta^T t(x) - \\psi(\\theta))</span>
+
+<span class="sd">    where:</span>
+
+<span class="sd">    - :math:`\\theta` are the natural parameters (d-dimensional vector)</span>
+<span class="sd">    - :math:`t(x)` are the sufficient statistics (d-dimensional vector)</span>
+<span class="sd">    - :math:`\\psi(\\theta)` is the log partition function (scalar)</span>
+<span class="sd">    - :math:`h(x)` is the base measure (scalar)</span>
+
+<span class="sd">    Three parametrizations:</span>
+
+<span class="sd">    - **Classical**: Domain-specific (e.g., :math:`\\mu`, :math:`\\sigma` for Normal;</span>
+<span class="sd">      :math:`\\lambda` for Exponential)</span>
+<span class="sd">    - **Natural**: :math:`\\theta` in exponential family form (numpy array)</span>
+<span class="sd">    - **Expectation**: :math:`\\eta = \\nabla\\psi(\\theta) = E[t(X)]` (numpy array)</span>
+
+<span class="sd">    Subclasses must implement the following state management methods:</span>
+
+<span class="sd">    - ``_set_from_classical(**kwargs)``: Set internal state from classical params.</span>
+<span class="sd">    - ``_set_from_natural(theta)``: Set internal state from natural params.</span>
+<span class="sd">    - ``_compute_natural_params()``: Derive natural params from internal state.</span>
+<span class="sd">    - ``_compute_classical_params()``: Derive classical params from internal state.</span>
+
+<span class="sd">    Parameters should be stored as named internal attributes (e.g., ``_rate``,</span>
+<span class="sd">    ``_mu``, ``_L``) for efficient direct access.</span>
+
+<span class="sd">    Both interfaces use ``functools.cached_property`` for lazy caching of</span>
+<span class="sd">    derived parametrizations, with ``_invalidate_cache()`` clearing all</span>
+<span class="sd">    entries when state changes.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _natural_params : tuple or None</span>
+<span class="sd">        Legacy storage for natural parameters (tuple for hashability).</span>
+<span class="sd">        Set by the default ``_set_from_natural`` implementation.</span>
+<span class="sd">        Migrated subclasses may not use this.</span>
+<span class="sd">    _fitted : bool</span>
+<span class="sd">        Whether parameters have been set (inherited from Distribution).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Use factory methods to create instances:</span>
+
+<span class="sd">    &gt;&gt;&gt; # From classical parameters</span>
+<span class="sd">    &gt;&gt;&gt; dist = Exponential.from_classical_params(rate=2.0)</span>
+
+<span class="sd">    &gt;&gt;&gt; # From natural parameters (array)</span>
+<span class="sd">    &gt;&gt;&gt; dist = Exponential.from_natural_params(np.array([-2.0]))</span>
+
+<span class="sd">    &gt;&gt;&gt; # From expectation parameters (array)</span>
+<span class="sd">    &gt;&gt;&gt; dist = Exponential.from_expectation_params(np.array([0.5]))</span>
+
+<span class="sd">    &gt;&gt;&gt; # Fit from data (returns self for method chaining)</span>
+<span class="sd">    &gt;&gt;&gt; dist = Exponential().fit(data)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The log partition function :math:`\\psi(\\theta)` is convex, and its gradient</span>
+<span class="sd">    and Hessian give important quantities:</span>
+
+<span class="sd">    - Gradient: :math:`\\nabla\\psi(\\theta) = E[t(X)] = \\eta` (expectation parameters)</span>
+<span class="sd">    - Hessian: :math:`\\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)] = I(\\theta)` (Fisher information)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Barndorff-Nielsen, O. E. (1978). Information and exponential families</span>
+<span class="sd">    in statistical theory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cached_attrs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;natural_params&#39;</span><span class="p">,</span> <span class="s1">&#39;classical_params&#39;</span><span class="p">,</span> <span class="s1">&#39;expectation_params&#39;</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize an unfitted exponential family distribution.</span>
+
+<span class="sd">        Use factory methods (from_classical_params, from_natural_params, etc.)</span>
+<span class="sd">        or fit() to set parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Legacy storage (tuple), kept for backward compat</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Factory methods for initialization</span>
+    <span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="ExponentialFamily.from_classical_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.from_classical_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_classical_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from classical parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+<span class="sd">            E.g., rate=2.0 for Exponential, mu=0.0, sigma=1.0 for Normal.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : ExponentialFamily</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; dist = Exponential.from_classical_params(rate=2.0)</span>
+<span class="sd">        &gt;&gt;&gt; dist = Normal.from_classical_params(mu=0.0, sigma=1.0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.from_natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.from_natural_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from natural parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : ExponentialFamily</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; dist = Exponential.from_natural_params(np.array([-2.0]))</span>
+<span class="sd">        &gt;&gt;&gt; dist = Normal.from_natural_params(np.array([0.0, -0.5]))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.from_expectation_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.from_expectation_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from expectation parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector (E[t(X)]).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : ExponentialFamily</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; dist = Exponential.from_expectation_params(np.array([0.5]))</span>
+<span class="sd">        &gt;&gt;&gt; dist = Normal.from_expectation_params(np.array([0.0, 1.0]))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Parameter setters</span>
+    <span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="ExponentialFamily.set_classical_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.set_classical_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from classical parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : ExponentialFamily</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_classical</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.set_natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.set_natural_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from natural parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : ExponentialFamily</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.set_expectation_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.set_expectation_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_expectation_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from expectation parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector (E[t(X)]).</span>
+<span class="sd">        theta0 : ndarray or list of ndarray, optional</span>
+<span class="sd">            Initial guess(es) for natural parameters in optimization.</span>
+<span class="sd">            If provided, these are used instead of the default initial points.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : ExponentialFamily</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+
+        <span class="c1"># Convert to natural parameters (uses optimization or analytical)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="n">theta0</span><span class="p">)</span>
+
+        <span class="c1"># Use the standard natural parameter setter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># New interface: internal state management</span>
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Default implementations use the legacy _classical_to_natural /</span>
+    <span class="c1"># _natural_to_classical methods. Migrated subclasses override these.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set internal state from classical parameters.</span>
+
+<span class="sd">        Default implementation converts to natural parameters via</span>
+<span class="sd">        ``_classical_to_natural`` and delegates to ``_set_from_natural``.</span>
+<span class="sd">        Migrated subclasses override to store named internal attributes</span>
+<span class="sd">        (e.g., ``self._rate``, ``self._mu``, ``self._L``).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classical_to_natural</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set internal state from natural parameters.</span>
+
+<span class="sd">        Default implementation validates and stores as a flat tuple in</span>
+<span class="sd">        ``_natural_params`` (legacy path). Migrated subclasses override</span>
+<span class="sd">        to store named internal attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute natural parameters from internal state.</span>
+
+<span class="sd">        Default implementation returns the legacy ``_natural_params`` tuple</span>
+<span class="sd">        as a numpy array. Migrated subclasses override to derive from</span>
+<span class="sd">        their internal attributes.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute classical parameters from internal state.</span>
+
+<span class="sd">        Default implementation calls ``_natural_to_classical`` on the</span>
+<span class="sd">        natural parameters. Migrated subclasses override to derive from</span>
+<span class="sd">        their internal attributes and return a frozen dataclass.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        params : dict or dataclass</span>
+<span class="sd">            Classical parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_natural_to_classical</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute expectation parameters from internal state.</span>
+
+<span class="sd">        Default implementation calls ``_natural_to_expectation`` on the</span>
+<span class="sd">        natural parameters. Override for analytical computation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector :math:`E[t(X)]`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_natural_to_expectation</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Cached property parametrizations</span>
+    <span class="c1"># ============================================================</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Natural parameters :math:`\\theta` as numpy array (cached).</span>
+
+<span class="sd">        Computed lazily from internal state via ``_compute_natural_params``.</span>
+<span class="sd">        Cache is invalidated when parameters change.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_natural_params</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classical parameters as a frozen dataclass or dict (cached).</span>
+
+<span class="sd">        Computed lazily from internal state via ``_compute_classical_params``.</span>
+<span class="sd">        For migrated subclasses, returns a frozen dataclass with attribute</span>
+<span class="sd">        access (e.g., ``params.rate``). For legacy subclasses, returns a dict.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        params : dataclass or dict</span>
+<span class="sd">            Classical parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_classical_params</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expectation parameters :math:`\\eta = E[t(X)]` (cached).</span>
+
+<span class="sd">        Computed lazily from internal state via ``_compute_expectation_params``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_expectation_params</span><span class="p">()</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Abstract methods for parameter support/validation</span>
+    <span class="c1"># ============================================================</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_natural_param_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get support/bounds for each natural parameter component.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bounds : list of tuples</span>
+<span class="sd">            List of (lower, upper) bounds for each component of θ.</span>
+<span class="sd">            Use -np.inf or np.inf for unbounded.</span>
+<span class="sd">            Length must match the dimension of natural parameters.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Exponential: θ &lt; 0</span>
+<span class="sd">        &gt;&gt;&gt; return [(-np.inf, 0.0)]</span>
+
+<span class="sd">        Gamma: θ₁ &gt; -1, θ₂ &lt; 0</span>
+<span class="sd">        &gt;&gt;&gt; return [(-1.0, np.inf), (-np.inf, 0.0)]</span>
+
+<span class="sd">        Normal: θ₁ unbounded, θ₂ &lt; 0</span>
+<span class="sd">        &gt;&gt;&gt; return [(-np.inf, np.inf), (-np.inf, 0.0)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate natural parameters against support (vectorized).</span>
+
+<span class="sd">        Raises ValueError if parameters are outside support.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_natural_param_support</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Parameter dimension mismatch: expected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Vectorized validation</span>
+        <span class="n">lower_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">upper_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Check all bounds at once</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span> <span class="o">&lt;=</span> <span class="n">lower_bounds</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">theta</span> <span class="o">&gt;=</span> <span class="n">upper_bounds</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">violations</span><span class="p">):</span>
+            <span class="c1"># Find first violation for error message</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">violations</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Natural parameter θ[</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">] = </span><span class="si">{</span><span class="n">theta</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> is outside support &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">lower_bounds</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">upper_bounds</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_to_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Project parameters to valid support with margin from boundaries (vectorized).</span>
+
+<span class="sd">        Useful for numerical differentiation near boundaries.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        margin : float, optional</span>
+<span class="sd">            Safety margin from boundaries.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta_proj : ndarray</span>
+<span class="sd">            Projected parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_natural_param_support</span><span class="p">())</span>
+        <span class="n">lower_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">upper_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">theta_proj</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Vectorized projection</span>
+        <span class="c1"># Project to lower bound + margin where finite</span>
+        <span class="n">finite_lower</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">lower_bounds</span><span class="p">)</span>
+        <span class="n">theta_proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">finite_lower</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">theta_proj</span> <span class="o">&lt;</span> <span class="n">lower_bounds</span> <span class="o">+</span> <span class="n">margin</span><span class="p">),</span>
+            <span class="n">lower_bounds</span> <span class="o">+</span> <span class="n">margin</span><span class="p">,</span>
+            <span class="n">theta_proj</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Project to upper bound - margin where finite</span>
+        <span class="n">finite_upper</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">upper_bounds</span><span class="p">)</span>
+        <span class="n">theta_proj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">finite_upper</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">theta_proj</span> <span class="o">&gt;</span> <span class="n">upper_bounds</span> <span class="o">-</span> <span class="n">margin</span><span class="p">),</span>
+            <span class="n">upper_bounds</span> <span class="o">-</span> <span class="n">margin</span><span class="p">,</span>
+            <span class="n">theta_proj</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">theta_proj</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Abstract methods for exponential family structure</span>
+    <span class="c1"># ============================================================</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sufficient_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute sufficient statistics t(x).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Input data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        t : ndarray</span>
+<span class="sd">            Sufficient statistics.</span>
+<span class="sd">            - Shape (d,) for single sample (d = number of parameters)</span>
+<span class="sd">            - Shape (n, d) for n samples</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Exponential: t(x) = x</span>
+<span class="sd">        &gt;&gt;&gt; x = np.asarray(x)</span>
+<span class="sd">        &gt;&gt;&gt; return x.reshape(-1, 1) if x.ndim &gt; 0 else np.array([x])</span>
+
+<span class="sd">        Normal: t(x) = [x, x²]</span>
+<span class="sd">        &gt;&gt;&gt; x = np.asarray(x)</span>
+<span class="sd">        &gt;&gt;&gt; if x.ndim == 0:</span>
+<span class="sd">        &gt;&gt;&gt;     return np.array([x, x**2])</span>
+<span class="sd">        &gt;&gt;&gt; return np.column_stack([x, x**2])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log partition function ψ(θ).</span>
+
+<span class="sd">        The log partition function&#39;s gradient gives expectation parameters:</span>
+<span class="sd">            ∇ψ(θ) = E[t(X)] = η</span>
+
+<span class="sd">        And its Hessian gives Fisher information:</span>
+<span class="sd">            ∇²ψ(θ) = Cov[t(X)] = I(θ)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        psi : float</span>
+<span class="sd">            Log partition function value.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Exponential: ψ(θ) = -log(-θ) for θ &lt; 0</span>
+<span class="sd">        &gt;&gt;&gt; return -np.log(-theta[0])</span>
+
+<span class="sd">        Normal: ψ(θ₁, θ₂) = -θ₁²/(4θ₂) - ½log(-2θ₂) for θ₂ &lt; 0</span>
+<span class="sd">        &gt;&gt;&gt; return -theta[0]**2 / (4*theta[1]) - 0.5*np.log(-2*theta[1])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log base measure log h(x).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Input data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        log_h : ndarray or scalar</span>
+<span class="sd">            Log base measure at each point.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Exponential: h(x) = 1 for x ≥ 0, 0 otherwise</span>
+<span class="sd">        &gt;&gt;&gt; x = np.asarray(x)</span>
+<span class="sd">        &gt;&gt;&gt; result = np.zeros_like(x, dtype=float)</span>
+<span class="sd">        &gt;&gt;&gt; result[x &lt; 0] = -np.inf</span>
+<span class="sd">        &gt;&gt;&gt; return result</span>
+
+<span class="sd">        Normal: h(x) = 1/√(2π)</span>
+<span class="sd">        &gt;&gt;&gt; return -0.5 * np.log(2 * np.pi)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Legacy parameter conversions (only for unmigrated subclasses)</span>
+    <span class="c1"># ============================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classical_to_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert classical parameters to natural parameters (legacy interface).</span>
+
+<span class="sd">        Only needed by subclasses that have NOT overridden</span>
+<span class="sd">        ``_set_from_classical``. Called by the default</span>
+<span class="sd">        ``_set_from_classical`` implementation.</span>
+
+<span class="sd">        Migrated subclasses (which override ``_set_from_classical``)</span>
+<span class="sd">        do not need to implement this method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must override _set_from_classical() &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;or implement _classical_to_natural().&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert natural parameters to classical parameters (legacy interface).</span>
+
+<span class="sd">        Only needed by subclasses that have NOT overridden</span>
+<span class="sd">        ``_compute_classical_params``. Called by the default</span>
+<span class="sd">        ``_compute_classical_params`` implementation.</span>
+
+<span class="sd">        Migrated subclasses (which override ``_compute_classical_params``)</span>
+<span class="sd">        do not need to implement this method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        params : dict or tuple</span>
+<span class="sd">            Classical parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must override _compute_classical_params() &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;or implement _natural_to_classical().&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert natural parameters to expectation parameters: eta = grad psi(theta).</span>
+
+<span class="sd">        Computes the gradient of the log partition function:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\eta = \\nabla\\psi(\\theta) = E[t(X)]</span>
+
+<span class="sd">        Default implementation uses ``scipy.differentiate.jacobian`` for numerical gradient.</span>
+<span class="sd">        Override for analytical gradient when available (recommended for performance).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector :math:`\\theta`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector :math:`\\eta = E[t(X)]`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_to_support</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Define ψ as function of array for scipy.differentiate</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">psi_func</span><span class="p">(</span><span class="n">theta_vec</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta_vec</span><span class="p">)</span>
+
+        <span class="c1"># Compute gradient using scipy.differentiate.jacobian</span>
+        <span class="c1"># For scalar function → vector, jacobian returns gradient</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">jacobian</span><span class="p">(</span><span class="n">psi_func</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Extract the gradient from result object</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;ddf&#39;</span><span class="p">):</span>
+            <span class="n">eta</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ddf</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">eta</span> <span class="o">=</span> <span class="n">result</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_to_natural</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert expectation parameters to natural parameters.</span>
+
+<span class="sd">        Solves the convex optimization problem:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\theta^* = \\arg\\max_\\theta [\\theta \\cdot \\eta - \\psi(\\theta)]</span>
+
+<span class="sd">        Equivalently solves the equation :math:`\\nabla\\psi(\\theta^*) = \\eta`.</span>
+
+<span class="sd">        Uses multi-start optimization with L-BFGS-B. Starting points are</span>
+<span class="sd">        provided by ``_get_initial_natural_params`` (override in subclasses)</span>
+<span class="sd">        or can be specified via the ``theta0`` parameter.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector :math:`\\eta = E[t(X)]`.</span>
+<span class="sd">        theta0 : ndarray or list of ndarray, optional</span>
+<span class="sd">            Initial guess(es) for natural parameters. If provided, these are</span>
+<span class="sd">            used instead of calling ``_get_initial_natural_params``. Can be</span>
+<span class="sd">            a single array or a list of arrays for multi-start optimization.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector :math:`\\theta`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+
+        <span class="c1"># Get bounds from support</span>
+        <span class="n">bounds_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_natural_param_support</span><span class="p">()</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1e10</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bounds_list</span><span class="p">])</span>
+        <span class="n">ub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">else</span> <span class="mf">1e10</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bounds_list</span><span class="p">])</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">Bounds</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">)</span>
+
+        <span class="c1"># Objective: minimize A(θ) - θ·η (negative of dual function)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">):</span>
+            <span class="n">theta_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_to_support</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">)</span>
+            <span class="n">psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">psi</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
+
+        <span class="c1"># Gradient: ∇A(θ) - η</span>
+        <span class="n">grad_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_analytical_gradient</span><span class="p">():</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">grad_func</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">):</span>
+                <span class="n">theta_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_to_support</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">)</span>
+                <span class="n">grad_psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_natural_to_expectation</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">grad_psi</span> <span class="o">-</span> <span class="n">eta</span>
+
+        <span class="c1"># Get starting points: use theta0 if provided, otherwise from subclass</span>
+        <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">theta0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">theta0</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">starting_points</span> <span class="o">=</span> <span class="n">theta0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">starting_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_initial_natural_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">starting_points</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">starting_points</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">starting_points</span><span class="p">]</span>
+
+        <span class="c1"># Track best solution</span>
+        <span class="n">best_theta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">best_obj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">best_grad_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="c1"># Try each starting point with L-BFGS-B</span>
+        <span class="k">for</span> <span class="n">x0</span> <span class="ow">in</span> <span class="n">starting_points</span><span class="p">:</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_to_support</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+                <span class="n">objective</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">,</span>
+                <span class="n">jac</span><span class="o">=</span><span class="n">grad_func</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;ftol&#39;</span><span class="p">:</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="s1">&#39;gtol&#39;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">}</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Compute gradient norm at solution</span>
+            <span class="k">if</span> <span class="n">grad_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">grad_func</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="c1"># Accept if better objective or much better gradient</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">fun</span> <span class="o">&lt;</span> <span class="n">best_obj</span> <span class="ow">or</span> <span class="n">grad_norm</span> <span class="o">&lt;</span> <span class="n">best_grad_norm</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">:</span>
+                <span class="n">best_theta</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span>
+                <span class="n">best_obj</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">fun</span>
+                <span class="n">best_grad_norm</span> <span class="o">=</span> <span class="n">grad_norm</span>
+
+            <span class="c1"># Early exit if gradient is small enough</span>
+            <span class="k">if</span> <span class="n">grad_norm</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span>
+
+        <span class="c1"># Warn if solution quality is poor</span>
+        <span class="k">if</span> <span class="n">best_grad_norm</span> <span class="o">&gt;</span> <span class="mf">1e-4</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expectation to natural conversion may not have converged well &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(max gradient norm: </span><span class="si">{</span><span class="n">best_grad_norm</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">best_theta</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get initial guess(es) for natural parameters in optimization.</span>
+
+<span class="sd">        Override in subclasses to provide distribution-specific initialization.</span>
+<span class="sd">        Can return a single array or a list of arrays for multi-start optimization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta0 : ndarray or list of ndarray</span>
+<span class="sd">            Initial guess(es) for natural parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_analytical_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if _natural_to_expectation is overridden.&quot;&quot;&quot;</span>
+        <span class="c1"># Check if method is defined in subclass</span>
+        <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;_natural_to_expectation&#39;</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ExponentialFamily</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_analytical_hessian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if fisher_information is overridden.&quot;&quot;&quot;</span>
+        <span class="c1"># Check if method is defined in subclass</span>
+        <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;fisher_information&#39;</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ExponentialFamily</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Fisher Information</span>
+    <span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="ExponentialFamily.fisher_information">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.fisher_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fisher_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute Fisher information matrix: I(theta) = Hessian of psi(theta).</span>
+
+<span class="sd">        The Fisher information equals:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            I(\\theta) = \\nabla^2\\psi(\\theta) = \\text{Cov}[t(X)]</span>
+
+<span class="sd">        It is the Hessian of the log partition function (always positive semi-definite</span>
+<span class="sd">        since :math:`\\psi` is convex), and equals the covariance matrix of the</span>
+<span class="sd">        sufficient statistics.</span>
+
+<span class="sd">        Default implementation uses ``scipy.differentiate.hessian``.</span>
+<span class="sd">        Override for analytical Hessian when available (recommended for performance).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray, optional</span>
+<span class="sd">            Natural parameter vector :math:`\\theta`. If None, uses current parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fisher : ndarray, shape ``(d, d)``</span>
+<span class="sd">            Fisher information matrix (positive semi-definite).</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; dist = Exponential.from_classical_params(rate=2.0)</span>
+<span class="sd">        &gt;&gt;&gt; fisher = dist.fisher_information()</span>
+<span class="sd">        &gt;&gt;&gt; print(fisher)  # [[0.25]] for rate=2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_to_support</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Define ψ for scipy.differentiate</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">psi_func</span><span class="p">(</span><span class="n">theta_vec</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta_vec</span><span class="p">)</span>
+
+        <span class="c1"># Compute Hessian using scipy.differentiate.hessian</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">hessian</span><span class="p">(</span><span class="n">psi_func</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Extract the Hessian from result object</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;ddf&#39;</span><span class="p">):</span>
+            <span class="n">fisher</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ddf</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fisher</span> <span class="o">=</span> <span class="n">result</span>
+
+        <span class="c1"># Ensure it&#39;s 2D and symmetric</span>
+        <span class="n">fisher</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fisher</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fisher</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fisher</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">fisher</span><span class="p">]])</span>
+        <span class="k">elif</span> <span class="n">fisher</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fisher</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">fisher</span><span class="p">)</span>
+
+        <span class="c1"># Ensure numerical symmetry</span>
+        <span class="n">fisher</span> <span class="o">=</span> <span class="p">(</span><span class="n">fisher</span> <span class="o">+</span> <span class="n">fisher</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">fisher</span></div>
+
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># PDF using exponential family form</span>
+    <span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="ExponentialFamily.logpdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.logpdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log probability density using exponential family form.</span>
+
+<span class="sd">        Computes:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\log p(x|\\theta) = \\log h(x) + \\theta^T t(x) - \\psi(\\theta)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate log PDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : float or ndarray</span>
+<span class="sd">            Log probability density at each point.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+
+        <span class="c1"># Compute components</span>
+        <span class="n">log_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">t_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># log p(x) = log h(x) + θ^T t(x) - ψ(θ)</span>
+        <span class="k">if</span> <span class="n">t_x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Single sample: t(x) is 1D</span>
+            <span class="n">theta_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">t_x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Multiple samples: t(x) is 2D (n_samples, d)</span>
+            <span class="n">theta_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">t_x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">log_h</span> <span class="o">+</span> <span class="n">theta_t</span> <span class="o">-</span> <span class="n">psi</span>
+
+        <span class="c1"># Return scalar if input was scalar</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.pdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.pdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Probability density: p(x|θ) = exp(logpdf(x)).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate PDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pdf : float or ndarray</span>
+<span class="sd">            Probability density at each point.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Fitting (MLE)</span>
+    <span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="ExponentialFamily.fit">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ExponentialFamily&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit distribution parameters using Maximum Likelihood Estimation.</span>
+
+<span class="sd">        For exponential families, the MLE has a closed form in expectation parameters:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\hat{\\eta} = \\frac{1}{n} \\sum_{i=1}^n t(x_i)</span>
+
+<span class="sd">        That is, the MLE of expectation parameters equals the sample mean</span>
+<span class="sd">        of sufficient statistics. Then converts to natural parameters using</span>
+<span class="sd">        ``_expectation_to_natural``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Training data.</span>
+<span class="sd">        y : array_like, optional</span>
+<span class="sd">            Ignored (for sklearn API compatibility).</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional options (currently unused).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : ExponentialFamily</span>
+<span class="sd">            Returns self for method chaining (sklearn convention).</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; data = np.random.exponential(scale=0.5, size=1000)</span>
+<span class="sd">        &gt;&gt;&gt; dist = Exponential().fit(data)</span>
+<span class="sd">        &gt;&gt;&gt; print(dist.classical_params)</span>
+<span class="sd">        {&#39;rate&#39;: 2.01...}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Compute sufficient statistics for all samples</span>
+        <span class="n">t_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sufficient_statistics</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Compute sample mean (MLE in expectation parameters)</span>
+        <span class="k">if</span> <span class="n">t_x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Single sufficient statistic</span>
+            <span class="n">eta_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">t_x</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Multiple sufficient statistics (n_samples, d)</span>
+            <span class="n">eta_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">t_x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Convert to natural parameters (uses optimization)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">eta_hat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.score">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.exponential_family.ExponentialFamily.score">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute mean log-likelihood (sklearn-style scoring).</span>
+
+<span class="sd">        Higher scores are better (sklearn convention).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Data samples.</span>
+<span class="sd">        y : array_like, optional</span>
+<span class="sd">            Ignored (for sklearn API compatibility).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        score : float</span>
+<span class="sd">            Mean log-likelihood.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">logpdf_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">logpdf_vals</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># String representation</span>
+    <span class="c1"># ============================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of the distribution.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(not fitted)&quot;</span>
+
+        <span class="c1"># Show classical parameters if available</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">classical</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classical</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">classical</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">classical</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classical</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="n">classical</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">classical</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="n">param_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">))</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=...&quot;</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">items</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">param_str</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># Fallback to natural parameters</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+            <span class="n">theta_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(θ=[</span><span class="si">{</span><span class="n">theta_str</span><span class="si">}</span><span class="s2">])&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

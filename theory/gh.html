@@ -1,0 +1,368 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Generalized Hyperbolic Distribution &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EM Algorithm for Generalized Hyperbolic Distributions" href="em_algorithm.html" />
+    <link rel="prev" title="The Generalized Inverse Gaussian Distribution" href="gig.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The Generalized Hyperbolic Distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#definition-as-normal-mixture">Definition as Normal Mixture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#joint-gh-distribution">Joint GH Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marginal-gh-density">Marginal GH Density</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alternative-parameterization">Alternative Parameterization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-identifiability">Model Identifiability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exponential-family-form">Exponential Family Form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#recovering-parameters-from-expectations">Recovering Parameters from Expectations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hellinger-distance">Hellinger Distance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numerical-stability">Numerical Stability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#special-cases">Special Cases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">The Generalized Hyperbolic Distribution</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/gh.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-generalized-hyperbolic-distribution">
+<h1>The Generalized Hyperbolic Distribution<a class="headerlink" href="#the-generalized-hyperbolic-distribution" title="Link to this heading"></a></h1>
+<p>In this section we briefly review the basic properties of the Generalized
+Hyperbolic (GH) distribution.</p>
+<section id="definition-as-normal-mixture">
+<h2>Definition as Normal Mixture<a class="headerlink" href="#definition-as-normal-mixture" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(Y\)</span> be a GIG random variable with parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span>, and
+<span class="math notranslate nohighlight">\(Z\)</span> be an independent Gaussian random vector with zero mean and covariance
+<span class="math notranslate nohighlight">\(\Sigma\)</span>. Then the random vector:</p>
+<div class="math notranslate nohighlight" id="equation-gh-def">
+<span class="eqno">(1)<a class="headerlink" href="#equation-gh-def" title="Link to this equation"></a></span>\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\]</div>
+<p>follows the <strong>generalized hyperbolic distribution</strong> with parameters
+<span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, p, a, b)\)</span>, where <span class="math notranslate nohighlight">\(\mu, \gamma \in \mathbb{R}^d\)</span>
+and <span class="math notranslate nohighlight">\(\Sigma \in \mathbb{R}^{d \times d}\)</span> is a positive definite matrix.</p>
+<section id="parameter-interpretation">
+<h3>Parameter Interpretation<a class="headerlink" href="#parameter-interpretation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mu\)</span>: location parameter</p></li>
+<li><p><span class="math notranslate nohighlight">\(\gamma\)</span>: skewness parameter</p></li>
+<li><p><span class="math notranslate nohighlight">\(\Sigma\)</span>: models the dependency structure of the multivariate distribution</p></li>
+<li><p><span class="math notranslate nohighlight">\((p, a, b)\)</span>: GIG parameters controlling the heavy-tailedness</p></li>
+</ul>
+<p>In general, many multivariate heavy-tailed distributions can be defined by
+<a class="reference internal" href="#equation-gh-def">(1)</a> given some non-negative random variable <span class="math notranslate nohighlight">\(Y\)</span>. These distributions
+are usually called <strong>normal mixture</strong> or <strong>Gaussian mixture</strong> distributions.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In many references, “normal mixture” refers to a discrete mixture of normal
+densities. In <code class="docutils literal notranslate"><span class="pre">normix</span></code>, we use “normal mixture” to refer to any random variable
+that can be expressed by <a class="reference internal" href="#equation-gh-def">(1)</a>.</p>
+</div>
+</section>
+</section>
+<section id="joint-gh-distribution">
+<h2>Joint GH Distribution<a class="headerlink" href="#joint-gh-distribution" title="Link to this heading"></a></h2>
+<p>The joint distribution of <span class="math notranslate nohighlight">\(X\)</span> and <span class="math notranslate nohighlight">\(Y\)</span> is crucial in analyzing the GH
+distribution. We call the distribution of <span class="math notranslate nohighlight">\((X, Y)\)</span> the <strong>joint-GH distribution</strong>.
+Its density function is:</p>
+<div class="math notranslate nohighlight" id="equation-gh-joint">
+<span class="eqno">(2)<a class="headerlink" href="#equation-gh-joint" title="Link to this equation"></a></span>\[\begin{split}f(x, y | \mu, \gamma, \Sigma, p, a, b) &amp;= \frac{1}{\sqrt{(2\pi)^d |\Sigma|}}
+\frac{(a/b)^{p/2}}{2 K_p(\sqrt{ab})} y^{p - 1 - d/2} \\
+&amp;\quad \times \exp\left( -\frac{1}{2}(x - \mu - \gamma y)^\top \Sigma^{-1}
+(x - \mu - \gamma y) y^{-1} - \frac{1}{2}(b y^{-1} + a y) \right),\end{split}\]</div>
+<p>for <span class="math notranslate nohighlight">\(y &gt; 0\)</span>.</p>
+</section>
+<section id="marginal-gh-density">
+<h2>Marginal GH Density<a class="headerlink" href="#marginal-gh-density" title="Link to this heading"></a></h2>
+<p>Integrating out <span class="math notranslate nohighlight">\(y\)</span> from <a class="reference internal" href="#equation-gh-joint">(2)</a>, we obtain the marginal distribution
+of <span class="math notranslate nohighlight">\(x\)</span>, which is the GH density function:</p>
+<div class="math notranslate nohighlight" id="equation-gh-marginal">
+<span class="eqno">(3)<a class="headerlink" href="#equation-gh-marginal" title="Link to this equation"></a></span>\[\begin{split}f(x | \mu, \gamma, \Sigma, p, a, b) &amp;= \int_0^\infty f(x, y | \mu, \gamma, \Sigma, p, a, b) \, dy \\
+&amp;= c \frac{K_{p - d/2}\left(\sqrt{(b + q(x))(a + \gamma^\top \Sigma^{-1} \gamma)}\right)}
+{\left(\sqrt{(b + q(x))(a + \gamma^\top \Sigma^{-1} \gamma)}\right)^{d/2 - p}}
+e^{(x - \mu)^\top \Sigma^{-1} \gamma},\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(q(x) = (x - \mu)^\top \Sigma^{-1} (x - \mu)\)</span> is the Mahalanobis distance, and</p>
+<div class="math notranslate nohighlight">
+\[c = \frac{(a/b)^{p/2} (a + \gamma^\top \Sigma^{-1} \gamma)^{d/2 - p}}
+{(2\pi)^{d/2} |\Sigma|^{1/2} K_p(\sqrt{ab})}.\]</div>
+</section>
+<section id="alternative-parameterization">
+<h2>Alternative Parameterization<a class="headerlink" href="#alternative-parameterization" title="Link to this heading"></a></h2>
+<p>Similar to the GIG distribution, one can use another parameterization with
+<span class="math notranslate nohighlight">\(\delta = \sqrt{b/a}\)</span> and <span class="math notranslate nohighlight">\(\eta = \sqrt{ab}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[f(x | \mu, \gamma, \Sigma, p, \delta, \eta) = c
+\frac{K_{p - d/2}\left(\sqrt{(\eta + q_\delta(x))(\eta + \tilde{q}_\delta)}\right)}
+{\left(\sqrt{(\eta + q_\delta(x))(\eta + \tilde{q}_\delta)}\right)^{d/2 - p}}
+e^{(x - \mu)^\top (\delta \Sigma)^{-1} \delta \gamma},\]</div>
+<p>where <span class="math notranslate nohighlight">\(q_\delta(x) = (x - \mu)^\top (\delta \Sigma)^{-1} (x - \mu)\)</span>,
+<span class="math notranslate nohighlight">\(\tilde{q}_\delta = (\delta \gamma)^\top (\delta \Sigma)^{-1} (\delta \gamma)\)</span>, and</p>
+<div class="math notranslate nohighlight">
+\[c = \frac{(\eta + \tilde{q}_\delta)^{d/2 - p}}{(2\pi)^{d/2} |\delta \Sigma|^{1/2} K_p(\eta)}.\]</div>
+</section>
+<section id="model-identifiability">
+<h2>Model Identifiability<a class="headerlink" href="#model-identifiability" title="Link to this heading"></a></h2>
+<p>From the above representation, one can observe that the GH model is <strong>not regular</strong>
+since the parameter sets <span class="math notranslate nohighlight">\((\mu, \gamma/c, \Sigma/c, p, c\delta, \eta)\)</span> give the
+same distribution for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. Therefore, the Fisher information matrix of
+the GH distribution is singular.</p>
+<p>There are several ways to regularize the GH family:</p>
+<ol class="arabic simple">
+<li><p><strong>Set</strong> <span class="math notranslate nohighlight">\(\delta = 1\)</span> (simplest approach)</p></li>
+<li><p><strong>Set</strong> <span class="math notranslate nohighlight">\(b = 1\)</span> in the EM algorithm <a class="reference internal" href="#protassov2004" id="id1"><span>[Protassov2004]</span></a></p></li>
+<li><p><strong>Fix</strong> <span class="math notranslate nohighlight">\(b\)</span> when <span class="math notranslate nohighlight">\(p &gt; -1\)</span> and fix <span class="math notranslate nohighlight">\(a\)</span> when <span class="math notranslate nohighlight">\(p &lt; 1\)</span> <a class="reference internal" href="#hu2005" id="id2"><span>[Hu2005]</span></a></p></li>
+<li><p><strong>Fix the determinant</strong> <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> <a class="reference internal" href="#mcneil2010" id="id3"><span>[McNeil2010]</span></a></p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When the dimension <span class="math notranslate nohighlight">\(d\)</span> is high, fixing <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> is recommended.
+Since <span class="math notranslate nohighlight">\(|\Sigma/c| = |\Sigma|/c^d\)</span>, any small perturbation of the matrix scale
+will make <span class="math notranslate nohighlight">\(|\Sigma|\)</span> change dramatically when <span class="math notranslate nohighlight">\(d\)</span> is large. The matrix
+inversion would be intractable if <span class="math notranslate nohighlight">\(|\Sigma|\)</span> is too large or too small.</p>
+</div>
+</section>
+<section id="exponential-family-form">
+<h2>Exponential Family Form<a class="headerlink" href="#exponential-family-form" title="Link to this heading"></a></h2>
+<p>The joint-GH distribution <a class="reference internal" href="#equation-gh-joint">(2)</a> belongs to the exponential family with density:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y|\theta) = h(x, y) \exp\left(\theta^\top t(x, y) - \psi(\theta)\right)\]</div>
+<p><strong>Sufficient Statistics:</strong></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}t(x, y) = \begin{pmatrix} \log y \\ y^{-1} \\ y \\ x \\ x y^{-1} \\ x x^\top y^{-1} \end{pmatrix}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(t_1, t_2, t_3 \in \mathbb{R}\)</span>, <span class="math notranslate nohighlight">\(t_4, t_5 \in \mathbb{R}^d\)</span>, and
+<span class="math notranslate nohighlight">\(t_6 \in \mathbb{R}^{d \times d}\)</span>.</p>
+<p><strong>Natural Parameters:</strong></p>
+<p>The natural parameters are derived from the classical parameters
+<span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, p, a, b)\)</span>. By expanding the exponent in <a class="reference internal" href="#equation-gh-joint">(2)</a>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}&amp;-\frac{1}{2}(x - \mu - \gamma y)^\top \Sigma^{-1} (x - \mu - \gamma y) y^{-1}
+- \frac{1}{2}(b y^{-1} + a y) \\
+&amp;= -\frac{1}{2} x^\top \Sigma^{-1} x \, y^{-1}
++ x^\top \Sigma^{-1} \mu \, y^{-1}
++ x^\top \Sigma^{-1} \gamma \\
+&amp;\quad - \frac{1}{2} \mu^\top \Sigma^{-1} \mu \, y^{-1}
+- \mu^\top \Sigma^{-1} \gamma
+- \frac{1}{2} \gamma^\top \Sigma^{-1} \gamma \, y \\
+&amp;\quad - \frac{1}{2} b \, y^{-1} - \frac{1}{2} a \, y\end{split}\]</div>
+<p>we identify the natural parameters:</p>
+<div class="math notranslate nohighlight" id="equation-gh-natural-params">
+<span class="eqno">(4)<a class="headerlink" href="#equation-gh-natural-params" title="Link to this equation"></a></span>\[\begin{split}\theta_1 &amp;= p - 1 - \frac{d}{2} \quad \text{(coefficient of } \log y \text{)} \\
+\theta_2 &amp;= -\frac{1}{2}\left(b + \mu^\top \Sigma^{-1} \mu\right) \quad \text{(coefficient of } y^{-1} \text{)} \\
+\theta_3 &amp;= -\frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right) \quad \text{(coefficient of } y \text{)} \\
+\theta_4 &amp;= \Sigma^{-1} \gamma \quad \text{(coefficient of } x \text{)} \\
+\theta_5 &amp;= \Sigma^{-1} \mu \quad \text{(coefficient of } x y^{-1} \text{)} \\
+\theta_6 &amp;= -\frac{1}{2} \Sigma^{-1} \quad \text{(coefficient of } x x^\top y^{-1} \text{)}\end{split}\]</div>
+<p><strong>Base Measure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x, y) = \frac{1}{(2\pi)^{d/2}} \mathbf{1}_{y &gt; 0}\]</div>
+<p><strong>Log Partition Function:</strong></p>
+<div class="math notranslate nohighlight" id="equation-gh-log-partition">
+<span class="eqno">(5)<a class="headerlink" href="#equation-gh-log-partition" title="Link to this equation"></a></span>\[\psi(\theta) = \frac{1}{2} \log|\Sigma| + \log 2 + \log K_p(\sqrt{ab})
++ \frac{p}{2} \log\left(\frac{b}{a}\right) + \mu^\top \Sigma^{-1} \gamma\]</div>
+<p><strong>Expectation Parameters:</strong></p>
+<p>The expectation parameters <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X, Y)]\)</span> are:</p>
+<div class="math notranslate nohighlight" id="equation-gh-expectation">
+<span class="eqno">(6)<a class="headerlink" href="#equation-gh-expectation" title="Link to this equation"></a></span>\[\begin{split}\eta_1 &amp;:= E[\log Y] = \left.\frac{\partial}{\partial \alpha}
+\left(\sqrt{\frac{b}{a}}\right)^\alpha \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
+\right|_{\alpha=0} \\
+\eta_2 &amp;:= E[Y^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
+\eta_3 &amp;:= E[Y] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
+\eta_4 &amp;:= E[X] = \mu + \gamma \eta_3 \\
+\eta_5 &amp;:= E[X Y^{-1}] = \mu \eta_2 + \gamma \\
+\eta_6 &amp;:= E[X X^\top Y^{-1}] = \Sigma + \mu \mu^\top \eta_2 + \gamma \gamma^\top \eta_3
++ \mu \gamma^\top + \gamma \mu^\top\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta_1, \eta_2, \eta_3 \in \mathbb{R}\)</span>, <span class="math notranslate nohighlight">\(\eta_4, \eta_5 \in \mathbb{R}^d\)</span>, and
+<span class="math notranslate nohighlight">\(\eta_6 \in \mathbb{R}^{d \times d}\)</span>.</p>
+<p>Note that <span class="math notranslate nohighlight">\(\eta_1, \eta_2, \eta_3\)</span> are exactly the expectation parameters of the GIG
+random variable <span class="math notranslate nohighlight">\(Y\)</span>.</p>
+</section>
+<section id="recovering-parameters-from-expectations">
+<h2>Recovering Parameters from Expectations<a class="headerlink" href="#recovering-parameters-from-expectations" title="Link to this heading"></a></h2>
+<p>Given all the expectation parameters, we can recover the original parameters as follows:</p>
+<div class="math notranslate nohighlight" id="equation-gh-m-step">
+<span class="eqno">(7)<a class="headerlink" href="#equation-gh-m-step" title="Link to this equation"></a></span>\[\begin{split}\mu &amp;= \frac{\eta_4 - \eta_3 \eta_5}{1 - \eta_2 \eta_3}, \\
+\gamma &amp;= \frac{\eta_5 - \eta_2 \eta_4}{1 - \eta_2 \eta_3}, \\
+\Sigma &amp;= \eta_6 - \eta_5 \mu^\top - \mu \eta_5^\top + \eta_2 \mu \mu^\top - \eta_3 \gamma \gamma^\top, \\
+(p, a, b) &amp;= \arg\max_{p,a,b} L_{\text{GIG}}(p, a, b | \eta_1, \eta_2, \eta_3),\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(L_{\text{GIG}}\)</span> is the GIG log-likelihood function given in
+<a class="reference internal" href="gig.html#equation-gig-loglik">(8)</a>.</p>
+<p>These equations form the <strong>M-step</strong> in the EM algorithm, where the expectations in
+<a class="reference internal" href="#equation-gh-expectation">(6)</a> are replaced by conditional expectations.</p>
+</section>
+<section id="hellinger-distance">
+<h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading"></a></h2>
+<p>While there is no analytical formulation of the Hellinger distance between two GH
+distributions, the Hellinger distance of the joint-GH distributions is tractable.</p>
+<p><strong>Proposition.</strong> Let <span class="math notranslate nohighlight">\(\theta_1 = (\mu_1, \gamma_1, \Sigma_1, p_1, a_1, b_1)\)</span> and
+<span class="math notranslate nohighlight">\(\theta_2 = (\mu_2, \gamma_2, \Sigma_2, p_2, a_2, b_2)\)</span> be the parameters of two
+joint-GH distributions. The squared Hellinger distance between the two distributions is:</p>
+<div class="math notranslate nohighlight">
+\[H_{\text{JGH}}^2(\theta_1 \| \theta_2) = 1 -
+\frac{|\Sigma_1 \Sigma_2|^{1/4}}{|\bar{\Sigma}|^{1/2}}
+\frac{(a_1/b_1)^{p_1/4} (a_2/b_2)^{p_2/4}}
+{\sqrt{K_{p_1}(\sqrt{a_1 b_1}) K_{p_2}(\sqrt{a_2 b_2})}}
+\frac{K_{\bar{p}}(\sqrt{\bar{b}' \bar{a}'})}{(\bar{a}'/\bar{b}')^{\bar{p}/2}}
+e^{-\frac{1}{4} \Delta\mu^\top \bar{\Sigma}^{-1} \Delta\gamma},\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\Delta\mu = \mu_1 - \mu_2\)</span>, <span class="math notranslate nohighlight">\(\Delta\gamma = \gamma_1 - \gamma_2\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\bar{\Sigma} = (\Sigma_1 + \Sigma_2)/2\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\bar{p} = (p_1 + p_2)/2\)</span>, <span class="math notranslate nohighlight">\(\bar{a} = (a_1 + a_2)/2\)</span>, <span class="math notranslate nohighlight">\(\bar{b} = (b_1 + b_2)/2\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\bar{b}' = \bar{b} + \frac{1}{4} \Delta\mu^\top \bar{\Sigma}^{-1} \Delta\mu\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\bar{a}' = \bar{a} + \frac{1}{4} \Delta\gamma^\top \bar{\Sigma}^{-1} \Delta\gamma\)</span></p></li>
+</ul>
+<p>If <span class="math notranslate nohighlight">\(\mu_1 = \mu_2\)</span>, <span class="math notranslate nohighlight">\(\gamma_1 = \gamma_2\)</span>, and <span class="math notranslate nohighlight">\(\Sigma_1 = \Sigma_2\)</span>,
+then <span class="math notranslate nohighlight">\(H_{\text{JGH}}(\theta_1 \| \theta_2) = H_{\text{GIG}}(p_1, a_1, b_1 \| p_2, a_2, b_2)\)</span>.</p>
+<p>Although <span class="math notranslate nohighlight">\(H_{\text{JGH}}\)</span> differs from the Hellinger distance of the marginal GH,
+it provides an upper bound, so we can use it to measure how close two GH distributions are.</p>
+</section>
+<section id="numerical-stability">
+<h2>Numerical Stability<a class="headerlink" href="#numerical-stability" title="Link to this heading"></a></h2>
+<p>The computation of <a class="reference internal" href="#equation-gh-m-step">(7)</a> is not stable in terms of relative error under
+certain conditions. However, it is relatively stable in terms of the Hellinger distance.</p>
+<p>Numerical experiments show that:</p>
+<ul class="simple">
+<li><p>The relative errors of <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\gamma\)</span> are around machine epsilon</p></li>
+<li><p>The relative error of some GIG parameters (especially when <span class="math notranslate nohighlight">\(|p|\)</span> is large) can be large</p></li>
+<li><p>However, the Hellinger distance between true and estimated parameters remains small</p></li>
+</ul>
+<p>This behavior is consistent with the ill-conditioning of the GIG optimization problem
+discussed in the <a class="reference internal" href="gig.html"><span class="doc">The Generalized Inverse Gaussian Distribution</span></a> section.</p>
+</section>
+<section id="special-cases">
+<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading"></a></h2>
+<p>Several important distributions are special cases of the GH family:</p>
+<ul class="simple">
+<li><p><strong>Normal-Inverse Gaussian (NIG)</strong>: <span class="math notranslate nohighlight">\(p = -1/2\)</span></p></li>
+<li><p><strong>Variance-Gamma (VG)</strong>: <span class="math notranslate nohighlight">\(b \to 0\)</span> (Gamma mixing)</p></li>
+<li><p><strong>Normal-Inverse Gamma (NInvG)</strong>: <span class="math notranslate nohighlight">\(a \to 0\)</span> (Inverse-Gamma mixing)</p></li>
+<li><p><strong>Student-t</strong>: <span class="math notranslate nohighlight">\(p &lt; 0\)</span>, <span class="math notranslate nohighlight">\(a = 0\)</span>, <span class="math notranslate nohighlight">\(\gamma = 0\)</span></p></li>
+<li><p><strong>Hyperbolic</strong>: <span class="math notranslate nohighlight">\(p = 1\)</span></p></li>
+</ul>
+<p>These are implemented as separate classes in <code class="docutils literal notranslate"><span class="pre">normix</span></code>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="protassov2004" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Protassov2004</a><span class="fn-bracket">]</span></span>
+<p>Protassov, R. S. (2004). EM-based maximum likelihood parameter estimation for multivariate generalized hyperbolic distributions.</p>
+</div>
+<div class="citation" id="hu2005" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Hu2005</a><span class="fn-bracket">]</span></span>
+<p>Hu, W. (2005). Calibration of multivariate generalized hyperbolic distributions using the EM algorithm.</p>
+</div>
+<div class="citation" id="mcneil2010" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">McNeil2010</a><span class="fn-bracket">]</span></span>
+<p>McNeil, A. J., Frey, R., &amp; Embrechts, P. (2010). Quantitative Risk Management. Princeton University Press.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gig.html" class="btn btn-neutral float-left" title="The Generalized Inverse Gaussian Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="em_algorithm.html" class="btn btn-neutral float-right" title="EM Algorithm for Generalized Hyperbolic Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

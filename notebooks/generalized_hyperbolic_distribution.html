@@ -1,0 +1,830 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generalized Hyperbolic (GH) Distribution &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Comparison of Normal Mixture Distributions" href="mixture_distributions_comparison.html" />
+    <link rel="prev" title="Normal Inverse Gaussian Distribution" href="normal_inverse_gaussian_distribution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html">Variance Gamma Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html">Normal Inverse Gamma Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-4:-Connection-to-Student-t-(Symmetric-Case)">Part 4: Connection to Student-t (Symmetric Case)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gaussian_distribution.html">Normal Inverse Gaussian Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gaussian_distribution.html#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gaussian_distribution.html#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gaussian_distribution.html#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gaussian_distribution.html#Summary">Summary</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Generalized Hyperbolic (GH) Distribution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">Generalized Hyperbolic (GH) Distribution</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/generalized_hyperbolic_distribution.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/generalized_hyperbolic_distribution.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="Generalized-Hyperbolic-(GH)-Distribution">
+<h1>Generalized Hyperbolic (GH) Distribution<a class="headerlink" href="#Generalized-Hyperbolic-(GH)-Distribution" title="Link to this heading"></a></h1>
+<p>The Generalized Hyperbolic distribution is the most general form of the normal variance-mean mixture family.</p>
+<section id="Definition">
+<h2>Definition<a class="headerlink" href="#Definition" title="Link to this heading"></a></h2>
+<p>A random variable <span class="math notranslate nohighlight">\(X\)</span> follows a Generalized Hyperbolic distribution if it can be written as:</p>
+<div class="math notranslate nohighlight">
+\[X = \mu + \gamma Y + \sqrt{Y} Z\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(Z \sim N(0, \Sigma)\)</span> is independent of <span class="math notranslate nohighlight">\(Y\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span> (Generalized Inverse Gaussian)</p></li>
+</ul>
+</section>
+<section id="Special-Cases">
+<h2>Special Cases<a class="headerlink" href="#Special-Cases" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Distribution</p></th>
+<th class="head"><p>GIG Parameters</p></th>
+<th class="head"><p>Mixing Distribution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Variance Gamma</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(p &gt; 0\)</span></p></td>
+<td><p>Gamma<span class="math notranslate nohighlight">\((p, a/2)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Normal-Inverse Gaussian</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(p = -1/2\)</span></p></td>
+<td><p>InverseGaussian<span class="math notranslate nohighlight">\((\delta, \eta)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Normal-Inverse Gamma</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(p &lt; 0\)</span></p></td>
+<td><p>InverseGamma<span class="math notranslate nohighlight">\((-p, b/2)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Hyperbolic</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(p = 1\)</span></p></td>
+<td><p>GIG<span class="math notranslate nohighlight">\((1, a, b)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="Key-Properties">
+<h2>Key Properties<a class="headerlink" href="#Key-Properties" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Joint distribution</strong> <span class="math notranslate nohighlight">\(f(x, y)\)</span> is an <strong>exponential family</strong></p></li>
+<li><p><strong>Marginal distribution</strong> <span class="math notranslate nohighlight">\(f(x)\)</span> is <strong>NOT</strong> an exponential family</p></li>
+<li><p>Fitting uses the <strong>EM algorithm</strong> with <strong>parameter regularization</strong></p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from scipy import stats
+
+from normix.distributions.mixtures import (
+    GeneralizedHyperbolic, JointGeneralizedHyperbolic,
+    VarianceGamma, NormalInverseGaussian, NormalInverseGamma
+)
+from normix.utils import (
+    plot_joint_distribution_1d, plot_marginal_distribution_2d,
+    validate_moments, print_moment_validation,
+    fit_and_track_convergence, plot_em_convergence,
+    test_joint_fitting, print_fitting_results
+)
+
+plt.style.use(&#39;seaborn-v0_8-whitegrid&#39;)
+%matplotlib inline
+
+print(&quot;Imports successful!&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Imports successful!
+</pre></div></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="1.-Joint-Distribution:-f(x,-y)-(Exponential-Family)">
+<h2>1. Joint Distribution: <span class="math notranslate nohighlight">\(f(x, y)\)</span> (Exponential Family)<a class="headerlink" href="#1.-Joint-Distribution:-f(x,-y)-(Exponential-Family)" title="Link to this heading"></a></h2>
+<p>The joint distribution is:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y) = f(x|y) \cdot f(y)\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(X|Y \sim N(\mu + \gamma Y, \Sigma Y)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span></p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Define parameters for 1D joint distribution
+params_1d = {
+    &#39;mu&#39;: np.array([0.0]),
+    &#39;gamma&#39;: np.array([0.5]),
+    &#39;sigma&#39;: np.array([[1.0]]),
+    &#39;p&#39;: 1.0,
+    &#39;a&#39;: 1.0,
+    &#39;b&#39;: 1.0
+}
+
+# Create joint distribution
+jgh_1d = JointGeneralizedHyperbolic.from_classical_params(**params_1d)
+print(&quot;Created:&quot;, jgh_1d)
+print(&quot;\nClassical parameters:&quot;, jgh_1d.classical_params)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Created: JointGeneralizedHyperbolic(μ=0.000, γ=0.500, p=1.000, a=1.000, b=1.000)
+
+Classical parameters: GHParams(mu=array([0.]), gamma=array([0.5]), sigma=array([[1.]]), p=np.float64(1.0), a=np.float64(1.0), b=np.float64(1.0))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Visualize joint distribution
+fig = plot_joint_distribution_1d(
+    jgh_1d, n_samples=5000, random_state=42,
+    title=f&quot;Joint GH Distribution (p={params_1d[&#39;p&#39;]}, a={params_1d[&#39;a&#39;]}, b={params_1d[&#39;b&#39;]})&quot;
+)
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_2346057/2167798511.py:6: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.tight_layout()
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_generalized_hyperbolic_distribution_4_1.png" src="../_images/notebooks_generalized_hyperbolic_distribution_4_1.png" />
+</div>
+</div>
+<section id="1.1-Moment-Validation">
+<h3>1.1 Moment Validation<a class="headerlink" href="#1.1-Moment-Validation" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Validate moments
+moment_results = validate_moments(jgh_1d, n_samples=20000, random_state=42, is_joint=True)
+print_moment_validation(moment_results)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+============================================================
+Moment Validation: Distribution
+============================================================
+X_mean    : sample =     1.3374, theory =     1.3497, rel_err = 9.18e-03
+Y_mean    : sample =     2.7129, theory =     2.6995, rel_err = 4.98e-03
+X_var     : sample =     3.8364, theory =     3.8272, rel_err = 2.43e-03
+Y_var     : sample =     4.5105, theory =     4.5107, rel_err = 5.71e-05
+</pre></div></div>
+</div>
+</section>
+<section id="1.2-MLE-Fitting-(Complete-Data)">
+<h3>1.2 MLE Fitting (Complete Data)<a class="headerlink" href="#1.2-MLE-Fitting-(Complete-Data)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Test MLE fitting for joint distribution
+fitted_dist, fitted_params, param_errors = test_joint_fitting(
+    JointGeneralizedHyperbolic,
+    params_1d,
+    n_samples=10000,
+    random_state=42
+)
+print_fitting_results(params_1d, fitted_params, param_errors, name=&quot;JointGH&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+============================================================
+Fitting Results: JointGH
+============================================================
+Parameter                  True          Fitted    Rel.Error
+------------------------------------------------------------
+mu                       0.0000         -0.0110     1.10e+08
+gamma                    0.5000          0.5025     5.00e-03
+sigma                    1.0000          1.0071     7.11e-03
+p                        1.0000          0.9702     2.98e-02
+a                        1.0000          0.9982     1.76e-03
+b                        1.0000          1.0471     4.71e-02
+</pre></div></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="2.-Marginal-Distribution:-f(x)-(2D-Case)">
+<h2>2. Marginal Distribution: <span class="math notranslate nohighlight">\(f(x)\)</span> (2D Case)<a class="headerlink" href="#2.-Marginal-Distribution:-f(x)-(2D-Case)" title="Link to this heading"></a></h2>
+<p>The marginal distribution is NOT an exponential family.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Define 2D marginal distribution parameters
+params_2d = {
+    &#39;mu&#39;: np.array([0.0, 0.0]),
+    &#39;gamma&#39;: np.array([0.5, -0.3]),
+    &#39;sigma&#39;: np.array([[1.0, 0.3], [0.3, 1.0]]),
+    &#39;p&#39;: 1.0,
+    &#39;a&#39;: 1.0,
+    &#39;b&#39;: 1.0
+}
+
+# Create marginal distribution
+gh_2d = GeneralizedHyperbolic.from_classical_params(**params_2d)
+print(&quot;Created:&quot;, gh_2d)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Created: GeneralizedHyperbolic(d=2, p=1.000, a=1.000, b=1.000)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Visualize 2D marginal distribution
+fig = plot_marginal_distribution_2d(
+    gh_2d, n_samples=5000, random_state=42,
+    title=f&quot;2D Marginal GH Distribution (p={params_2d[&#39;p&#39;]}, a={params_2d[&#39;a&#39;]}, b={params_2d[&#39;b&#39;]})&quot;
+)
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_2346057/2887610028.py:6: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.tight_layout()
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_generalized_hyperbolic_distribution_11_1.png" src="../_images/notebooks_generalized_hyperbolic_distribution_11_1.png" />
+</div>
+</div>
+<section id="2.1-EM-Algorithm-Fitting">
+<h3>2.1 EM Algorithm Fitting<a class="headerlink" href="#2.1-EM-Algorithm-Fitting" title="Link to this heading"></a></h3>
+<p>The marginal distribution requires the EM algorithm for fitting.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Generate data from true distribution
+true_gh = GeneralizedHyperbolic.from_classical_params(**params_2d)
+X_data = true_gh.rvs(size=5000, random_state=42)
+
+# Compute true log-likelihood for reference
+true_ll = np.mean(true_gh.logpdf(X_data))
+print(f&quot;True parameters log-likelihood: {true_ll:.4f}&quot;)
+
+# Fit using EM algorithm with regularization
+print(&quot;\nFitting with EM algorithm (det_sigma_one regularization)...&quot;)
+fitted_gh, convergence = fit_and_track_convergence(
+    GeneralizedHyperbolic,
+    X_data,
+    max_iter=100,
+    tol=1e-2,  # Use reasonable tolerance for GH
+    regularization=&#39;det_sigma_one&#39;,
+)
+
+print(f&quot;\nConverged: {convergence.converged}&quot;)
+print(f&quot;Final log-likelihood: {convergence.log_likelihoods[-1]:.4f}&quot;)
+print(f&quot;Improvement over true: {convergence.log_likelihoods[-1] - true_ll:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+True parameters log-likelihood: -3.8839
+
+Fitting with EM algorithm (det_sigma_one regularization)...
+
+Converged: True
+Final log-likelihood: -3.8824
+Improvement over true: 0.0015
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Plot convergence with true log-likelihood reference
+fig = plot_em_convergence(
+    convergence,
+    title=&quot;GH EM Algorithm Convergence (2D)&quot;,
+    true_ll=true_ll
+)
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_generalized_hyperbolic_distribution_14_0.png" src="../_images/notebooks_generalized_hyperbolic_distribution_14_0.png" />
+</div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="3.-Effect-of-GIG-Parameters">
+<h2>3. Effect of GIG Parameters<a class="headerlink" href="#3.-Effect-of-GIG-Parameters" title="Link to this heading"></a></h2>
+<p>The GIG parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> control the shape of the mixing distribution and thus the behavior of the GH distribution.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# Base parameters
+base_mu = np.array([0.0])
+base_gamma = np.array([0.3])
+base_sigma = np.array([[1.0]])
+
+x = np.linspace(-5, 5, 300)
+
+# Effect of p
+ax = axes[0]
+for p in [-1.0, -0.5, 0.0, 1.0, 2.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=p, a=1.0, b=1.0
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;p={p}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of p (shape)&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# Effect of a
+ax = axes[1]
+for a in [0.5, 1.0, 2.0, 5.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=1.0, a=a, b=1.0
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;a={a}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of a (rate for y)&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# Effect of b
+ax = axes[2]
+for b in [0.5, 1.0, 2.0, 5.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=1.0, a=1.0, b=b
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;b={b}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of b (rate for 1/y)&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_generalized_hyperbolic_distribution_16_0.png" src="../_images/notebooks_generalized_hyperbolic_distribution_16_0.png" />
+</div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="4.-Special-Case-Comparison">
+<h2>4. Special Case Comparison<a class="headerlink" href="#4.-Special-Case-Comparison" title="Link to this heading"></a></h2>
+<p>Verify that GH special cases match their dedicated implementations.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Test parameters
+mu = np.array([0.0])
+gamma = np.array([0.5])
+sigma = np.array([[1.0]])
+
+x = np.linspace(-4, 6, 300)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# NIG comparison (p = -0.5)
+ax = axes[0]
+nig_params = {&#39;delta&#39;: 1.0, &#39;eta&#39;: 1.0}
+nig = NormalInverseGaussian.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **nig_params)
+gh_nig = GeneralizedHyperbolic.as_normal_inverse_gaussian(mu=mu, gamma=gamma, sigma=sigma, **nig_params)
+
+nig_pdf = np.array([nig.pdf(np.array([xi])) for xi in x])
+gh_nig_pdf = np.array([gh_nig.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, nig_pdf, &#39;b-&#39;, linewidth=2, label=&#39;NIG&#39;)
+ax.plot(x, gh_nig_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (p=-0.5)&#39;)
+ax.set_title(&#39;Normal-Inverse Gaussian&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+print(f&quot;NIG mean: {nig.mean()}, GH mean: {gh_nig.mean()}&quot;)
+
+# NInvG comparison (a → 0)
+ax = axes[1]
+ninvg_params = {&#39;shape&#39;: 3.0, &#39;rate&#39;: 1.0}
+ninvg = NormalInverseGamma.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **ninvg_params)
+gh_ninvg = GeneralizedHyperbolic.as_normal_inverse_gamma(mu=mu, gamma=gamma, sigma=sigma, **ninvg_params)
+
+ninvg_pdf = np.array([ninvg.pdf(np.array([xi])) for xi in x])
+gh_ninvg_pdf = np.array([gh_ninvg.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, ninvg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;NInvG&#39;)
+ax.plot(x, gh_ninvg_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (a→0)&#39;)
+ax.set_title(&#39;Normal-Inverse Gamma&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+print(f&quot;NInvG mean: {ninvg.mean()}, GH mean: {gh_ninvg.mean()}&quot;)
+
+# VG comparison (b → 0)
+ax = axes[2]
+vg_params = {&#39;shape&#39;: 2.0, &#39;rate&#39;: 1.0}
+vg = VarianceGamma.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **vg_params)
+gh_vg = GeneralizedHyperbolic.as_variance_gamma(mu=mu, gamma=gamma, sigma=sigma, **vg_params)
+
+vg_pdf = np.array([vg.pdf(np.array([xi])) for xi in x])
+gh_vg_pdf = np.array([gh_vg.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, vg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;VG&#39;)
+ax.plot(x, gh_vg_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (b→0)&#39;)
+ax.set_title(&#39;Variance Gamma&#39;)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+print(f&quot;VG mean: {vg.mean()}, GH mean: {gh_vg.mean()}&quot;)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NIG mean: [0.5], GH mean: [0.5]
+NInvG mean: [0.25], GH mean: [0.25]
+VG mean: [1.], GH mean: [1.]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_generalized_hyperbolic_distribution_18_1.png" src="../_images/notebooks_generalized_hyperbolic_distribution_18_1.png" />
+</div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="5.-Parameter-Regularization">
+<h2>5. Parameter Regularization<a class="headerlink" href="#5.-Parameter-Regularization" title="Link to this heading"></a></h2>
+<p>The GH model is not identifiable since <span class="math notranslate nohighlight">\((\mu, \gamma/c, \Sigma/c, p, cb, a/c)\)</span> gives the same distribution for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>.</p>
+<p>Available regularization methods:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">det_sigma_one</span></code>: Fix <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> (recommended)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sigma_diagonal_one</span></code>: Fix <span class="math notranslate nohighlight">\(\Sigma_{11} = 1\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fix_p</span></code>: Fix <span class="math notranslate nohighlight">\(p\)</span> to a specific value</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">none</span></code>: No regularization</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from normix.distributions.mixtures import REGULARIZATION_METHODS
+
+print(&quot;Available regularization methods:&quot;)
+for name in REGULARIZATION_METHODS:
+    print(f&quot;  - {name}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Available regularization methods:
+  - det_sigma_one
+  - sigma_diagonal_one
+  - fix_p
+  - none
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compare different regularizations
+X_data = true_gh.rvs(size=3000, random_state=42)
+
+regularizations = [&#39;det_sigma_one&#39;, &#39;fix_p&#39;]
+results = {}
+
+for reg in regularizations:
+    print(f&quot;\n--- Regularization: {reg} ---&quot;)
+    fitted = GeneralizedHyperbolic()
+    kwargs = {&#39;regularization&#39;: reg}
+    if reg == &#39;fix_p&#39;:
+        kwargs[&#39;regularization_params&#39;] = {&#39;p_fixed&#39;: 1.0}
+
+    fitted.fit(X_data, max_iter=30, verbose=0, **kwargs)
+    params = fitted.classical_params
+
+    print(f&quot;  p = {params.p:.4f}&quot;)
+    print(f&quot;  a = {params.a:.4f}&quot;)
+    print(f&quot;  b = {params.b:.4f}&quot;)
+    print(f&quot;  |Σ| = {np.linalg.det(params.sigma):.4f}&quot;)
+    print(f&quot;  Mean = {fitted.mean()}&quot;)
+    results[reg] = fitted
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+--- Regularization: det_sigma_one ---
+  p = 0.5896
+  a = 0.9347
+  b = 1.6064
+  |Σ| = 1.0000
+  Mean = [ 1.27654667 -0.82581383]
+
+--- Regularization: fix_p ---
+  p = 1.0000
+  a = 0.3575
+  b = 14.3831
+  |Σ| = 0.0738
+  Mean = [ 1.58034717 -1.01797886]
+</pre></div></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="6.-Exponential-Family-Structure">
+<h2>6. Exponential Family Structure<a class="headerlink" href="#6.-Exponential-Family-Structure" title="Link to this heading"></a></h2>
+<p>The joint distribution is an exponential family with:</p>
+<p><strong>Sufficient statistics:</strong></p>
+<div class="math notranslate nohighlight">
+\[t(x, y) = [\log y, y^{-1}, y, x, xy^{-1}, \text{vec}(xx^T y^{-1})]\]</div>
+<p><strong>Natural parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\theta = [p - 1 - d/2, -(b + \frac{1}{2}\mu^T\Lambda\mu), -(a + \frac{1}{2}\gamma^T\Lambda\gamma), \Lambda\gamma, \Lambda\mu, -\frac{1}{2}\text{vec}(\Lambda)]\]</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Show parameter conversions
+print(&quot;=== Exponential Family Parameters ===&quot;)
+print(f&quot;\nClassical: {jgh_1d.classical_params}&quot;)
+print(f&quot;\nNatural: {jgh_1d.natural_params}&quot;)
+print(f&quot;\nExpectation: {jgh_1d.expectation_params[:6]}...&quot;)  # First 6 components
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+=== Exponential Family Parameters ===
+
+Classical: GHParams(mu=array([0.]), gamma=array([0.5]), sigma=array([[1.]]), p=np.float64(1.0), a=np.float64(1.0), b=np.float64(1.0))
+
+Natural: [-0.5   -1.    -1.125  0.5    0.    -0.5  ]
+
+Expectation: [0.69948394 0.69948394 2.69948394 1.34974197 0.5        1.67487098]...
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Verify sufficient statistics match expectation parameters
+n_samples = 20000
+X, Y = jgh_1d.rvs(size=n_samples, random_state=42)
+t_samples = jgh_1d._sufficient_statistics(X, Y)
+eta_sample = np.mean(t_samples, axis=0)
+eta_theory = jgh_1d.expectation_params
+
+print(&quot;E[t(X,Y)] from samples vs theoretical:&quot;)
+print(f&quot;  E[log Y]:     {eta_sample[0]:.4f} vs {eta_theory[0]:.4f}&quot;)
+print(f&quot;  E[1/Y]:       {eta_sample[1]:.4f} vs {eta_theory[1]:.4f}&quot;)
+print(f&quot;  E[Y]:         {eta_sample[2]:.4f} vs {eta_theory[2]:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+E[t(X,Y)] from samples vs theoretical:
+  E[log Y]:     0.7052 vs 0.6995
+  E[1/Y]:       0.6942 vs 0.6995
+  E[Y]:         2.7129 vs 2.6995
+</pre></div></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="Summary">
+<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
+<p>The Generalized Hyperbolic distribution:</p>
+<ol class="arabic simple">
+<li><p><strong>Most general</strong> normal variance-mean mixture</p></li>
+<li><p><strong>Joint</strong> distribution is an exponential family</p></li>
+<li><p><strong>Marginal</strong> distribution requires EM algorithm for fitting</p></li>
+<li><p><strong>Special cases</strong> include VG, NIG, NInvG, and more</p></li>
+<li><p><strong>Regularization</strong> is needed due to identifiability issues</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="normal_inverse_gaussian_distribution.html" class="btn btn-neutral float-left" title="Normal Inverse Gaussian Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mixture_distributions_comparison.html" class="btn btn-neutral float-right" title="Comparison of Normal Mixture Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

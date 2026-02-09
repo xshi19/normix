@@ -1,0 +1,1287 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>normix.distributions.mixtures.generalized_hyperbolic &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">normix.distributions.mixtures.generalized_hyperbolic</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for normix.distributions.mixtures.generalized_hyperbolic</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Generalized Hyperbolic (GH) marginal distribution :math:`f(x)`.</span>
+
+<span class="sd">The marginal distribution of :math:`X` obtained by integrating out :math:`Y`:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    f(x) = \\int_0^\\infty f(x, y) \\, dy = \\int_0^\\infty f(x | y) f(y) \\, dy</span>
+
+<span class="sd">where:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)</span>
+
+<span class="sd">    Y \\sim \\text{GIG}(p, a, b)</span>
+
+<span class="sd">The marginal PDF has a closed form involving modified Bessel functions.</span>
+
+<span class="sd">Note: The marginal distribution is NOT an exponential family, but the joint</span>
+<span class="sd">distribution :math:`f(x, y)` IS an exponential family (accessible via ``.joint``).</span>
+
+<span class="sd">Special cases:</span>
+<span class="sd">- **Variance Gamma (VG)**: :math:`b \\to 0` (GIG → Gamma)</span>
+<span class="sd">- **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (GIG → InverseGaussian)  </span>
+<span class="sd">- **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0` (GIG → InverseGamma)</span>
+<span class="sd">- **Hyperbolic**: :math:`p = 1`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">JointNormalMixture</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.joint_generalized_hyperbolic</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointGeneralizedHyperbolic</span>
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Parameter Regularization Methods</span>
+<span class="c1"># ============================================================================</span>
+
+<div class="viewcode-block" id="regularize_det_sigma_one">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.regularize_det_sigma_one">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma_one</span><span class="p">(</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">log_det_sigma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Regularize GH parameters by enforcing :math:`|\\Sigma| = 1`.</span>
+
+<span class="sd">    This is the recommended regularization that doesn&#39;t affect convergence</span>
+<span class="sd">    of the EM algorithm. Following the legacy implementation:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        (\\mu, \\gamma, \\Sigma, p, a, b) \\to</span>
+<span class="sd">        (\\mu, |\\Sigma|^{-1/d} \\gamma, |\\Sigma|^{-1/d} \\Sigma,</span>
+<span class="sd">        p, |\\Sigma|^{-1/d} a, |\\Sigma|^{1/d} b)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu, gamma, sigma, p, a, b : parameters</span>
+<span class="sd">        Classical GH parameters.</span>
+<span class="sd">    d : int</span>
+<span class="sd">        Dimension of X.</span>
+<span class="sd">    log_det_sigma : float, optional</span>
+<span class="sd">        Precomputed log determinant of Sigma. If provided, avoids</span>
+<span class="sd">        recomputing the determinant.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    params : dict</span>
+<span class="sd">        Regularized parameters with |Σ| = 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">log_det_sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Use precomputed log determinant</span>
+        <span class="n">det_sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_det_sigma</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">det_sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">det_sigma</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Sigma is degenerate, can&#39;t regularize</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">det_sigma</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">d</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span>
+        <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+        <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>  <span class="c1"># Legacy: psi = psi / scale</span>
+        <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span> <span class="o">*</span> <span class="n">scale</span>   <span class="c1"># Legacy: chi = chi * scale</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="regularize_sigma_diagonal_one">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.regularize_sigma_diagonal_one">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regularize_sigma_diagonal_one</span><span class="p">(</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Regularize by enforcing the first diagonal element of :math:`\\Sigma` to be 1.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\Sigma_{11} = 1</span>
+
+<span class="sd">    This is an alternative regularization useful in some applications.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu, gamma, sigma, p, a, b : parameters</span>
+<span class="sd">        Classical GH parameters.</span>
+<span class="sd">    d : int</span>
+<span class="sd">        Dimension of X.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    params : dict</span>
+<span class="sd">        Regularized parameters with Σ₁₁ = 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span>
+        <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+        <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span> <span class="o">*</span> <span class="n">scale</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="regularize_fix_p">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.regularize_fix_p">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regularize_fix_p</span><span class="p">(</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">p_fixed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Regularize by fixing the GIG parameter :math:`p`.</span>
+
+<span class="sd">    This converts GH to a special case:</span>
+<span class="sd">    - p = -0.5: Normal-Inverse Gaussian</span>
+<span class="sd">    - p &gt; 0 with b → 0: Variance Gamma (approximately)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu, gamma, sigma, p, a, b : parameters</span>
+<span class="sd">        Classical GH parameters.</span>
+<span class="sd">    d : int</span>
+<span class="sd">        Dimension of X.</span>
+<span class="sd">    p_fixed : float, optional</span>
+<span class="sd">        Fixed value for p. Default is -0.5 (NIG).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    params : dict</span>
+<span class="sd">        Regularized parameters with fixed p.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span>
+        <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span>
+        <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span>
+        <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p_fixed</span><span class="p">,</span>
+        <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span>
+        <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="regularize_none">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.regularize_none">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regularize_none</span><span class="p">(</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    No regularization (identity function).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mu, gamma, sigma, p, a, b : parameters</span>
+<span class="sd">        Classical GH parameters.</span>
+<span class="sd">    d : int</span>
+<span class="sd">        Dimension of X.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    params : dict</span>
+<span class="sd">        Unchanged parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span></div>
+
+
+
+<span class="c1"># Dictionary of available regularization methods</span>
+<span class="n">REGULARIZATION_METHODS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">:</span> <span class="n">regularize_det_sigma_one</span><span class="p">,</span>
+    <span class="s1">&#39;sigma_diagonal_one&#39;</span><span class="p">:</span> <span class="n">regularize_sigma_diagonal_one</span><span class="p">,</span>
+    <span class="s1">&#39;fix_p&#39;</span><span class="p">:</span> <span class="n">regularize_fix_p</span><span class="p">,</span>
+    <span class="s1">&#39;none&#39;</span><span class="p">:</span> <span class="n">regularize_none</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">NormalMixture</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generalized Hyperbolic (GH) marginal distribution.</span>
+
+<span class="sd">    The Generalized Hyperbolic distribution is a normal variance-mean mixture where</span>
+<span class="sd">    the mixing distribution is Generalized Inverse Gaussian (GIG). It is the most</span>
+<span class="sd">    general form of the normal variance-mean mixture family.</span>
+
+<span class="sd">    The marginal distribution :math:`f(x)` is NOT an exponential family.</span>
+<span class="sd">    The joint distribution :math:`f(x, y)` IS an exponential family and can</span>
+<span class="sd">    be accessed via the ``.joint`` property.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    None. Use factory methods to create instances.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _joint : JointGeneralizedHyperbolic</span>
+<span class="sd">        The underlying joint distribution.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # 1D case</span>
+<span class="sd">    &gt;&gt;&gt; gh = GeneralizedHyperbolic.from_classical_params(</span>
+<span class="sd">    ...     mu=np.array([0.0]),</span>
+<span class="sd">    ...     gamma=np.array([0.5]),</span>
+<span class="sd">    ...     sigma=np.array([[1.0]]),</span>
+<span class="sd">    ...     p=1.0,</span>
+<span class="sd">    ...     a=1.0,</span>
+<span class="sd">    ...     b=1.0</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; x = gh.rvs(size=1000, random_state=42)  # Samples X only</span>
+
+<span class="sd">    &gt;&gt;&gt; # Access joint distribution</span>
+<span class="sd">    &gt;&gt;&gt; gh.joint.pdf(x, y)  # Joint PDF f(x, y)</span>
+<span class="sd">    &gt;&gt;&gt; gh.joint.natural_params  # Natural parameters (exponential family)</span>
+
+<span class="sd">    &gt;&gt;&gt; # Fit with EM algorithm and regularization</span>
+<span class="sd">    &gt;&gt;&gt; gh = GeneralizedHyperbolic().fit(</span>
+<span class="sd">    ...     X, max_iter=100, </span>
+<span class="sd">    ...     regularization=&#39;det_sigma_one&#39;  # or &#39;sigma_diagonal_one&#39;, &#39;fix_p&#39;, &#39;none&#39;</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    JointGeneralizedHyperbolic : Joint distribution (exponential family)</span>
+<span class="sd">    GeneralizedInverseGaussian : The mixing distribution for Y</span>
+<span class="sd">    VarianceGamma : Special case with Gamma mixing (b → 0)</span>
+<span class="sd">    NormalInverseGaussian : Special case with p = -1/2</span>
+<span class="sd">    NormalInverseGamma : Special case with a → 0</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The GH distribution is widely used in finance for modeling asset returns.</span>
+<span class="sd">    It includes many important distributions as special cases:</span>
+
+<span class="sd">    - **Variance Gamma (VG)**: :math:`b \\to 0, p &gt; 0` (Gamma mixing)</span>
+<span class="sd">    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG mixing)</span>
+<span class="sd">    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p &lt; 0` (InvGamma mixing)</span>
+<span class="sd">    - **Hyperbolic**: :math:`p = 1`</span>
+<span class="sd">    - **Student-t**: :math:`p = -\\nu/2, a \\to 0, b = \\nu` gives Student-t with ν d.f.</span>
+
+<span class="sd">    The model is not identifiable since the parameter sets</span>
+<span class="sd">    :math:`(\\mu, \\gamma/c, \\Sigma/c, p, c \\cdot b, a/c)` give the same distribution</span>
+<span class="sd">    for any :math:`c &gt; 0`. Use regularization to fix this.</span>
+
+<span class="sd">    Available regularization methods:</span>
+
+<span class="sd">    - ``&#39;det_sigma_one&#39;``: Fix :math:`|\\Sigma| = 1` (recommended)</span>
+<span class="sd">    - ``&#39;sigma_diagonal_one&#39;``: Fix :math:`\\Sigma_{11} = 1`</span>
+<span class="sd">    - ``&#39;fix_p&#39;``: Fix :math:`p` to a specific value (e.g., -0.5 for NIG)</span>
+<span class="sd">    - ``&#39;none&#39;``: No regularization</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Joint distribution factory</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_joint_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JointNormalMixture</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the underlying JointGeneralizedHyperbolic instance.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">()</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Marginal PDF</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_marginal_logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute marginal log PDF: log f(x) (vectorized with Cholesky).</span>
+
+<span class="sd">        The marginal PDF for GH has a closed form involving Bessel K functions:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            f(x) = C \\cdot (b + q(x))^{(p - d/2)/2} (a + \\tilde{q})^{(d/2 - p)/2}</span>
+<span class="sd">            \\cdot \\frac{K_{p - d/2}(\\sqrt{(b + q(x))(a + \\tilde{q})})}{</span>
+<span class="sd">            K_p(\\sqrt{ab})} \\cdot e^{(x-\\mu)^T\\Lambda\\gamma}</span>
+
+<span class="sd">        where:</span>
+<span class="sd">        - :math:`q(x) = (x-\\mu)^T \\Lambda (x-\\mu)` (Mahalanobis distance squared)</span>
+<span class="sd">        - :math:`\\tilde{q} = \\gamma^T \\Lambda \\gamma`</span>
+<span class="sd">        - :math:`C` is the normalizing constant</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate log PDF. Shape (d,) or (n, d).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : ndarray</span>
+<span class="sd">            Log PDF values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+        <span class="c1"># Handle single point vs multiple points</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">single_point</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">single_point</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Get cached L_Sigma_inv and log_det_Sigma</span>
+        <span class="n">L_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma_inv</span>
+        <span class="n">logdet_Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_Sigma</span>
+        
+        <span class="c1"># Transform data: z = L^{-1}(x - μ)</span>
+        <span class="c1"># Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mu</span>  <span class="c1"># (n, d)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">L_inv</span> <span class="o">@</span> <span class="n">diff</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, n)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        
+        <span class="c1"># Transform gamma: gamma_z = L^{-1} γ</span>
+        <span class="n">gamma_z</span> <span class="o">=</span> <span class="n">L_inv</span> <span class="o">@</span> <span class="n">gamma</span>  <span class="c1"># (d,)</span>
+        <span class="n">gamma_quad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma_z</span><span class="p">,</span> <span class="n">gamma_z</span><span class="p">)</span>  <span class="c1"># γ^T Σ^{-1} γ</span>
+        
+        <span class="c1"># Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">gamma_z</span>  <span class="c1"># (n,)</span>
+
+        <span class="c1"># Constants</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># Order of Bessel function for marginal</span>
+
+        <span class="c1"># Log Bessel K_p(√ab) - constant for all x</span>
+        <span class="n">log_K_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+
+        <span class="c1"># Vectorized log PDF computation:</span>
+        <span class="c1"># log f(x) = (p/2)(log a - log b) - (d/2) log(2π) - (1/2) log|Σ| - log K_p(√ab)</span>
+        <span class="c1">#            + (ν/2) log(b + q) + (-ν/2) log(a + γ^T Λ γ)</span>
+        <span class="c1">#            + log K_{p-d/2}(√((b+q)(a+γ^TΛγ))) + (x-μ)^T Λ γ</span>
+        
+        <span class="c1"># Arguments for Bessel function</span>
+        <span class="n">arg1</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="n">q</span>  <span class="c1"># (n,)</span>
+        <span class="n">arg2</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">gamma_quad</span>  <span class="c1"># scalar</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">arg1</span> <span class="o">*</span> <span class="n">arg2</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        
+        <span class="c1"># Log Bessel K_{p-d/2}(eta) - vectorized</span>
+        <span class="n">log_K_nu</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        
+        <span class="c1"># Constant part (same for all samples)</span>
+        <span class="n">log_const</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">-</span>
+                     <span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span>
+                     <span class="mf">0.5</span> <span class="o">*</span> <span class="n">logdet_Sigma</span> <span class="o">-</span> <span class="n">log_K_p</span> <span class="o">+</span>
+                     <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">arg2</span><span class="p">))</span>
+        
+        <span class="c1"># Variable part (depends on x)</span>
+        <span class="n">logpdf</span> <span class="o">=</span> <span class="n">log_const</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">arg1</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_K_nu</span> <span class="o">+</span> <span class="n">linear</span>
+
+        <span class="k">if</span> <span class="n">single_point</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">logpdf</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">logpdf</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># EM Algorithm with Regularization</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.fit">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">regularization</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">,</span>
+        <span class="n">regularization_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fix_tail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;GeneralizedHyperbolic&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit distribution to marginal data X using the EM algorithm.</span>
+
+<span class="sd">        Since the marginal distribution is not an exponential family, we use</span>
+<span class="sd">        the EM algorithm treating Y as latent. The joint distribution (X, Y)</span>
+<span class="sd">        is an exponential family, which makes the EM algorithm tractable.</span>
+
+<span class="sd">        Convergence is checked based on the relative change in the normal</span>
+<span class="sd">        parameters :math:`(\\mu, \\gamma, \\Sigma)`, which are more stable than</span>
+<span class="sd">        the GIG parameters. Log-likelihood is optionally displayed per</span>
+<span class="sd">        iteration when ``verbose &gt;= 1``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Observed data, shape (n_samples, d) or (n_samples,) for d=1.</span>
+<span class="sd">        max_iter : int, optional</span>
+<span class="sd">            Maximum number of EM iterations. Default is 100.</span>
+<span class="sd">        tol : float, optional</span>
+<span class="sd">            Convergence tolerance for relative parameter change (based on</span>
+<span class="sd">            :math:`\\mu, \\gamma, \\Sigma`). Default is 1e-4.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity level. 0 = silent, 1 = progress with llh,</span>
+<span class="sd">            2 = detailed with parameter norms. Default is 0.</span>
+<span class="sd">        regularization : str or callable, optional</span>
+<span class="sd">            Regularization method to use. Options:</span>
+
+<span class="sd">            - ``&#39;det_sigma_one&#39;``: Fix |Σ| = 1 (recommended, default)</span>
+<span class="sd">            - ``&#39;sigma_diagonal_one&#39;``: Fix Σ₁₁ = 1</span>
+<span class="sd">            - ``&#39;fix_p&#39;``: Fix p to a specific value (use regularization_params)</span>
+<span class="sd">            - ``&#39;none&#39;``: No regularization</span>
+<span class="sd">            - Or provide a custom callable with signature:</span>
+<span class="sd">              ``f(mu, gamma, sigma, p, a, b, d) -&gt; dict``</span>
+
+<span class="sd">        regularization_params : dict, optional</span>
+<span class="sd">            Additional parameters for the regularization method.</span>
+<span class="sd">            For &#39;fix_p&#39;: ``{&#39;p_fixed&#39;: -0.5}`` to fix p = -0.5 (NIG).</span>
+<span class="sd">        random_state : int, optional</span>
+<span class="sd">            Random seed for initialization.</span>
+<span class="sd">        fix_tail : bool, optional</span>
+<span class="sd">            If True, do not update GIG parameters (p, a, b) during fitting.</span>
+<span class="sd">            Useful for fitting special cases like VG, NIG, NInvG. Default False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : GeneralizedHyperbolic</span>
+<span class="sd">            Fitted distribution (returns self for method chaining).</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The EM algorithm alternates between:</span>
+
+<span class="sd">        **E-step**: Compute conditional expectations given current parameters:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            E[Y^{-1}|X], E[Y|X], E[\\log Y|X]</span>
+
+<span class="sd">        **M-step**: Update parameters using closed-form solutions for normal</span>
+<span class="sd">        parameters and numerical optimization for GIG parameters.</span>
+
+<span class="sd">        After each M-step, regularization is applied to ensure identifiability.</span>
+<span class="sd">        The recommended regularization is :math:`|\\Sigma| = 1`, which doesn&#39;t</span>
+<span class="sd">        affect EM convergence (see em_algorithm.rst for proof).</span>
+
+<span class="sd">        The initial parameters are obtained by running a short NIG EM</span>
+<span class="sd">        (5 iterations) to get a reasonable starting point for</span>
+<span class="sd">        :math:`(\\mu, \\gamma, \\Sigma)` and the GIG parameters.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; # Default regularization (|Σ| = 1)</span>
+<span class="sd">        &gt;&gt;&gt; gh = GeneralizedHyperbolic().fit(X)</span>
+
+<span class="sd">        &gt;&gt;&gt; # Fix p = -0.5 (NIG)</span>
+<span class="sd">        &gt;&gt;&gt; gh = GeneralizedHyperbolic().fit(</span>
+<span class="sd">        ...     X, </span>
+<span class="sd">        ...     regularization=&#39;fix_p&#39;,</span>
+<span class="sd">        ...     regularization_params={&#39;p_fixed&#39;: -0.5}</span>
+<span class="sd">        ... )</span>
+
+<span class="sd">        &gt;&gt;&gt; # Custom regularization</span>
+<span class="sd">        &gt;&gt;&gt; def my_regularize(mu, gamma, sigma, p, a, b, d):</span>
+<span class="sd">        ...     return {&#39;mu&#39;: mu, &#39;gamma&#39;: gamma, &#39;sigma&#39;: sigma,</span>
+<span class="sd">        ...             &#39;p&#39;: p, &#39;a&#39;: a, &#39;b&#39;: 1.0}  # Fix b = 1</span>
+<span class="sd">        &gt;&gt;&gt; gh = GeneralizedHyperbolic().fit(X, regularization=my_regularize)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Handle 1D X</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">n_samples</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># Initialize joint distribution if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_joint_distribution</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
+
+        <span class="c1"># Get regularization function</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">regularization</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">regularization</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">REGULARIZATION_METHODS</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unknown regularization method: </span><span class="si">{</span><span class="n">regularization</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">REGULARIZATION_METHODS</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">regularize_fn</span> <span class="o">=</span> <span class="n">REGULARIZATION_METHODS</span><span class="p">[</span><span class="n">regularization</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">regularization</span><span class="p">):</span>
+            <span class="n">regularize_fn</span> <span class="o">=</span> <span class="n">regularization</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;regularization must be str or callable&quot;</span><span class="p">)</span>
+
+        <span class="n">regularization_params</span> <span class="o">=</span> <span class="n">regularization_params</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="c1"># Initialize parameters using NIG warm start</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">init_ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial log-likelihood: </span><span class="si">{</span><span class="n">init_ll</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_apply_regularization</span><span class="p">():</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Apply regularization to current parameters.&quot;&quot;&quot;</span>
+            <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">log_det_sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_Sigma</span>
+
+            <span class="k">if</span> <span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;fix_p&#39;</span><span class="p">:</span>
+                <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">regularization_params</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">:</span>
+                <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span>
+                    <span class="n">log_det_sigma</span><span class="o">=</span><span class="n">log_det_sigma</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
+                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Sanity check: clamp degenerate GIG parameters</span>
+            <span class="n">a_reg</span> <span class="o">=</span> <span class="n">regularized</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+            <span class="n">b_reg</span> <span class="o">=</span> <span class="n">regularized</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">a_reg</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">or</span> <span class="n">b_reg</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">or</span> <span class="n">a_reg</span> <span class="o">&gt;</span> <span class="mf">1e6</span> <span class="ow">or</span> <span class="n">b_reg</span> <span class="o">&gt;</span> <span class="mf">1e6</span><span class="p">:</span>
+                <span class="n">regularized</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">a_reg</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+                <span class="n">regularized</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">b_reg</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span><span class="o">**</span><span class="n">regularized</span><span class="p">)</span>
+
+        <span class="c1"># EM iterations</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="c1"># Apply regularization BEFORE E-step (following legacy)</span>
+            <span class="n">_apply_regularization</span><span class="p">()</span>
+
+            <span class="c1"># Save regularized parameters for convergence check</span>
+            <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">prev_mu</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_gamma</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_sigma</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># E-step: compute conditional expectations</span>
+            <span class="n">cond_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional_expectation_y_given_x</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+            <span class="c1"># M-step: update parameters</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_m_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">cond_exp</span><span class="p">,</span> <span class="n">fix_tail</span><span class="o">=</span><span class="n">fix_tail</span><span class="p">)</span>
+
+            <span class="c1"># Apply regularization AFTER M-step to ensure constraints hold</span>
+            <span class="n">_apply_regularization</span><span class="p">()</span>
+
+            <span class="c1"># Check convergence using relative parameter change on (mu, gamma, Sigma)</span>
+            <span class="n">new_classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">mu_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+            <span class="n">gamma_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span>
+            <span class="n">sigma_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+
+            <span class="n">mu_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">mu_new</span> <span class="o">-</span> <span class="n">prev_mu</span><span class="p">)</span>
+            <span class="n">mu_denom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_mu</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">rel_mu</span> <span class="o">=</span> <span class="n">mu_norm</span> <span class="o">/</span> <span class="n">mu_denom</span>
+
+            <span class="n">gamma_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gamma_new</span> <span class="o">-</span> <span class="n">prev_gamma</span><span class="p">)</span>
+            <span class="n">gamma_denom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_gamma</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">rel_gamma</span> <span class="o">=</span> <span class="n">gamma_norm</span> <span class="o">/</span> <span class="n">gamma_denom</span>
+
+            <span class="n">sigma_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">sigma_new</span> <span class="o">-</span> <span class="n">prev_sigma</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">)</span>
+            <span class="n">sigma_denom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_sigma</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">rel_sigma</span> <span class="o">=</span> <span class="n">sigma_norm</span> <span class="o">/</span> <span class="n">sigma_denom</span>
+
+            <span class="n">max_rel_change</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">rel_mu</span><span class="p">,</span> <span class="n">rel_gamma</span><span class="p">,</span> <span class="n">rel_sigma</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">iteration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: log-likelihood = </span><span class="si">{</span><span class="n">ll</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  rel_change: mu=</span><span class="si">{</span><span class="n">rel_mu</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, gamma=</span><span class="si">{</span><span class="n">rel_gamma</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, &quot;</span>
+                          <span class="sa">f</span><span class="s2">&quot;Sigma=</span><span class="si">{</span><span class="n">rel_sigma</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">max_rel_change</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Converged&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">n_iter_</span> <span class="o">=</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Not converged (max iterations reached)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_iter_</span> <span class="o">=</span> <span class="n">max_iter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> 
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize GH parameters using a short NIG EM warm start.</span>
+
+<span class="sd">        Runs a Normal-Inverse Gaussian EM for a few iterations to obtain</span>
+<span class="sd">        reasonable initial values for :math:`(\\mu, \\gamma, \\Sigma)` and</span>
+<span class="sd">        the GIG parameters :math:`(p, a, b)`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Data array, shape (n_samples, d).</span>
+<span class="sd">        random_state : int, optional</span>
+<span class="sd">            Random seed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use NIG with a few EM iterations to get a warm start</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                <span class="n">nig</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="p">()</span>
+                <span class="n">nig</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+
+            <span class="n">nig_params</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span>
+            <span class="n">Sigma</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span>
+            <span class="n">eta</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Convert NIG (IG) params to GIG params:</span>
+            <span class="c1"># IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">eta</span>
+
+            <span class="c1"># Clamp GIG parameters to reasonable range</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># Fallback: method of moments initialization</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">Sigma</span><span class="p">]])</span>
+
+            <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+                <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1e-8</span> <span class="o">-</span> <span class="n">min_eig</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Set initial parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_m_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> 
+        <span class="n">cond_exp</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">],</span>
+        <span class="n">fix_tail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        M-step: update parameters given conditional expectations.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Data array, shape (n_samples, d).</span>
+<span class="sd">        cond_exp : dict</span>
+<span class="sd">            Dictionary with keys &#39;E_Y&#39;, &#39;E_inv_Y&#39;, &#39;E_log_Y&#39;.</span>
+<span class="sd">        fix_tail : bool, optional</span>
+<span class="sd">            If True, do not update GIG parameters (p, a, b). Default False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedInverseGaussian</span>
+
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]</span>
+        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_inv_Y&#39;</span><span class="p">]</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Average conditional expectations (sufficient statistics for GIG)</span>
+        <span class="c1"># Following legacy naming: s1 = E[1/Y], s2 = E[Y], s3 = E[log Y]</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span>  <span class="c1"># E[E[1/Y|X]]</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_Y</span><span class="p">)</span>      <span class="c1"># E[E[Y|X]]</span>
+        <span class="n">s3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">)</span>  <span class="c1"># E[E[log Y|X]]</span>
+
+        <span class="c1"># Weighted sums for normal parameters</span>
+        <span class="c1"># s4 = E[X], s5 = E[X/Y], s6 = E[XX^T/Y]</span>
+        <span class="n">s4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># E[X]</span>
+        <span class="n">s5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># E[X/Y]</span>
+        <span class="n">s6</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ik,i-&gt;jk&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># E[XX^T/Y]</span>
+
+        <span class="c1"># Get current GIG parameters for initialization and fallback</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        
+        <span class="c1"># Update GIG parameters if not fixed</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fix_tail</span><span class="p">:</span>
+            <span class="n">gig</span> <span class="o">=</span> <span class="n">GeneralizedInverseGaussian</span><span class="p">()</span>
+            <span class="c1"># Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]</span>
+            <span class="n">gig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s3</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">])</span>
+            
+            <span class="c1"># Use current GIG parameters as initial point</span>
+            <span class="n">current_gig_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+                <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> 
+                <span class="o">-</span><span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> 
+                <span class="o">-</span><span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="p">])</span>
+            
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                    <span class="n">gig</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">gig_eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig_theta</span><span class="p">)</span>
+                    
+                <span class="n">gig_classical</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">classical_params</span>
+                <span class="n">p_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">p</span>
+                <span class="n">a_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">a</span>
+                <span class="n">b_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">b</span>
+                
+                <span class="c1"># Sanity check: reject if parameters are extreme or degenerate</span>
+                <span class="c1"># This prevents the optimization from diverging</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span>
+                    <span class="n">a_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">):</span>
+                    <span class="c1"># Keep current parameters</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+                    <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="n">p_new</span>
+                    <span class="n">a</span> <span class="o">=</span> <span class="n">a_new</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">b_new</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Fallback: keep current GIG parameters</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Keep current GIG parameters</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="c1"># M-step for normal parameters (closed-form, following legacy)</span>
+        <span class="c1"># mu = (s4 - s2 * s5) / (1 - s1 * s2)</span>
+        <span class="c1"># gamma = (s5 - s1 * s4) / (1 - s1 * s2)</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">s2</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">denom</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">s4</span> <span class="o">/</span> <span class="n">s2</span> <span class="k">if</span> <span class="n">s2</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">s4</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span><span class="n">s4</span> <span class="o">-</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">s5</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="p">(</span><span class="n">s5</span> <span class="o">-</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">s4</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+
+        <span class="c1"># Sigma = -s5 μ^T - μ s5^T + s6 + s1 μ μ^T - s2 γ γ^T</span>
+        <span class="c1"># Following legacy code exactly</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s5</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">s6</span> <span class="o">+</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+
+        <span class="c1"># Symmetrize and ensure positive definiteness</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+            <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1e-8</span> <span class="o">-</span> <span class="n">min_eig</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="c1"># Compute Cholesky factor of Sigma once and cache it</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cholesky</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Bound GIG parameters</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+
+        <span class="c1"># Update joint distribution and cache L_Sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
+        <span class="p">)</span>
+        <span class="c1"># Cache the Cholesky factor (set_classical_params clears cache, so set after)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_L_Sigma</span><span class="p">(</span><span class="n">L_Sigma</span><span class="p">)</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Conditional Expectations (E-step helper)</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_conditional_expectation_y_given_x</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute conditional expectations E[Y^α | X] for the E-step (vectorized).</span>
+
+<span class="sd">        The conditional distribution Y | X = x is GIG with parameters:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            Y | X = x \\sim \\text{GIG}\\left(p - \\frac{d}{2}, \\,</span>
+<span class="sd">            a + \\gamma^T \\Sigma^{-1} \\gamma, \\,</span>
+<span class="sd">            b + (x-\\mu)^T \\Sigma^{-1}(x-\\mu)\\right)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Data points, shape (n, d) or (d,).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        expectations : dict</span>
+<span class="sd">            Dictionary with keys:</span>
+<span class="sd">            - &#39;E_Y&#39;: E[Y | X], shape (n,)</span>
+<span class="sd">            - &#39;E_inv_Y&#39;: E[1/Y | X], shape (n,)</span>
+<span class="sd">            - &#39;E_log_Y&#39;: E[log Y | X], shape (n,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">kv_ratio</span>
+        
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">single_point</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">single_point</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+        <span class="c1"># Get cached L_Sigma_inv</span>
+        <span class="n">L_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma_inv</span>
+        
+        <span class="c1"># Transform data: z = L^{-1}(x - μ)</span>
+        <span class="c1"># Mahalanobis distance: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">mu</span>  <span class="c1"># (n, d)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">L_inv</span> <span class="o">@</span> <span class="n">diff</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, n)</span>
+        
+        <span class="c1"># Mahalanobis distances: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        
+        <span class="c1"># Transform gamma: L^{-1} γ</span>
+        <span class="n">gamma_z</span> <span class="o">=</span> <span class="n">L_inv</span> <span class="o">@</span> <span class="n">gamma</span>  <span class="c1"># (d,)</span>
+        <span class="n">gamma_quad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma_z</span><span class="p">,</span> <span class="n">gamma_z</span><span class="p">)</span>  <span class="c1"># γ^T Σ^{-1} γ</span>
+        
+        <span class="c1"># Conditional GIG parameters (vectorized)</span>
+        <span class="n">p_cond</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># scalar</span>
+        <span class="n">a_cond</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">gamma_quad</span>  <span class="c1"># scalar (same for all x)</span>
+        <span class="n">b_cond</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="n">q</span>  <span class="c1"># (n,) - varies with x</span>
+        
+        <span class="c1"># delta = sqrt(b_cond / a_cond), eta = sqrt(a_cond * b_cond)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b_cond</span> <span class="o">/</span> <span class="n">a_cond</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_cond</span> <span class="o">*</span> <span class="n">b_cond</span><span class="p">)</span>  <span class="c1"># (n,)</span>
+        
+        <span class="c1"># E[Y | X] = delta * K_{p_cond+1}(eta) / K_{p_cond}(eta)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">kv_ratio</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_cond</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
+        
+        <span class="c1"># E[1/Y | X] = (1/delta) * K_{p_cond-1}(eta) / K_{p_cond}(eta)</span>
+        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">kv_ratio</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_cond</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span>
+        
+        <span class="c1"># E[log Y | X] = ∂/∂p log(K_p(eta)) + log(delta)</span>
+        <span class="c1"># Numerical derivative for ∂/∂p log(K_p(eta))</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-5</span>
+        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eta</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">single_point</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">E_Y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="n">E_Y</span><span class="p">,</span>
+            <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">E_inv_Y</span><span class="p">,</span>
+            <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">E_log_Y</span>
+        <span class="p">}</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Special Case Constructors</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.as_variance_gamma">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_variance_gamma">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_variance_gamma</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">gamma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;GeneralizedHyperbolic&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a GH distribution equivalent to Variance Gamma.</span>
+
+<span class="sd">        VG is GH with b → 0 (Gamma mixing).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mu, gamma, sigma : arrays</span>
+<span class="sd">            Normal parameters.</span>
+<span class="sd">        shape : float</span>
+<span class="sd">            Gamma shape parameter α.</span>
+<span class="sd">        rate : float</span>
+<span class="sd">            Gamma rate parameter β.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gh : GeneralizedHyperbolic</span>
+<span class="sd">            GH distribution equivalent to VG.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">gamma_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+
+        <span class="c1"># VG: Y ~ Gamma(α, β)</span>
+        <span class="c1"># GH: Y ~ GIG(p, a, b) with b → 0, p = α, a = 2β</span>
+        <span class="c1"># Small b to approximate Gamma limit</span>
+        <span class="n">b_small</span> <span class="o">=</span> <span class="mf">1e-10</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_arr</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rate</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_small</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.as_normal_inverse_gaussian">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gaussian">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_normal_inverse_gaussian</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">gamma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;GeneralizedHyperbolic&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a GH distribution equivalent to Normal-Inverse Gaussian.</span>
+
+<span class="sd">        NIG is GH with p = -1/2 (Inverse Gaussian mixing).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mu, gamma, sigma : arrays</span>
+<span class="sd">            Normal parameters.</span>
+<span class="sd">        delta : float</span>
+<span class="sd">            IG mean parameter.</span>
+<span class="sd">        eta : float</span>
+<span class="sd">            IG shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gh : GeneralizedHyperbolic</span>
+<span class="sd">            GH distribution equivalent to NIG.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">gamma_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+
+        <span class="c1"># NIG: Y ~ IG(δ, η)</span>
+        <span class="c1"># GIG: p = -1/2, a = η/δ², b = η</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_arr</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.as_normal_inverse_gamma">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gamma">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_normal_inverse_gamma</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">gamma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;GeneralizedHyperbolic&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a GH distribution equivalent to Normal-Inverse Gamma.</span>
+
+<span class="sd">        NInvG is GH with a → 0 (Inverse Gamma mixing).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mu, gamma, sigma : arrays</span>
+<span class="sd">            Normal parameters.</span>
+<span class="sd">        shape : float</span>
+<span class="sd">            InverseGamma shape parameter α.</span>
+<span class="sd">        rate : float</span>
+<span class="sd">            InverseGamma rate parameter β.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gh : GeneralizedHyperbolic</span>
+<span class="sd">            GH distribution equivalent to NInvG.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">gamma_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+
+        <span class="c1"># NInvG: Y ~ InvGamma(α, β)</span>
+        <span class="c1"># GIG: a → 0, p = -α, b = 2β</span>
+        <span class="n">a_small</span> <span class="o">=</span> <span class="mf">1e-10</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_arr</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=-</span><span class="n">shape</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_small</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rate</span>
+        <span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Moments</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.mean">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean of the marginal distribution: :math:`E[X] = \\mu + \\gamma E[Y]`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mean : ndarray</span>
+<span class="sd">            Mean vector, shape (d,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="c1"># E[Y] from GIG</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">log_kv_pp1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">sqrt_b_over_a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.var">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance of the marginal distribution (diagonal elements of covariance).</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma\\gamma^T</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        var : ndarray</span>
+<span class="sd">            Variance vector, shape (d,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.cov">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.cov">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Covariance matrix of the marginal distribution.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma\\gamma^T</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cov : ndarray</span>
+<span class="sd">            Covariance matrix, shape (d, d).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="c1"># E[Y] and E[Y²] from GIG</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">log_kv_pp1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">log_kv_pp2</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">sqrt_b_over_a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
+        <span class="n">E_Y2</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp2</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
+        <span class="n">Var_Y</span> <span class="o">=</span> <span class="n">E_Y2</span> <span class="o">-</span> <span class="n">E_Y</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># String representation</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;GeneralizedHyperbolic(not fitted)&quot;</span>
+
+        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">gamma_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;GeneralizedHyperbolic(μ=</span><span class="si">{</span><span class="n">mu</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, γ=</span><span class="si">{</span><span class="n">gamma_val</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, p=</span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, a=</span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, b=</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;GeneralizedHyperbolic(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, p=</span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, a=</span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, b=</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

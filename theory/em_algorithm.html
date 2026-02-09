@@ -1,0 +1,456 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EM Algorithm for Generalized Hyperbolic Distributions &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="The Generalized Hyperbolic Distribution" href="gh.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">EM Algorithm for Generalized Hyperbolic Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditional-distribution-of-y-given-x">Conditional Distribution of Y given X</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditional-expectations">Conditional Expectations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-em-algorithm">The EM Algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-regularization">Parameter Regularization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mcecm-algorithm">MCECM Algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#special-cases">Special Cases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numerical-considerations">Numerical Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#implementation-in-normix">Implementation in normix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">EM Algorithm for Generalized Hyperbolic Distributions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/em_algorithm.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="em-algorithm-for-generalized-hyperbolic-distributions">
+<h1>EM Algorithm for Generalized Hyperbolic Distributions<a class="headerlink" href="#em-algorithm-for-generalized-hyperbolic-distributions" title="Link to this heading"></a></h1>
+<p>The Expectation-Maximization (EM) algorithm is a classical iterative method for
+fitting data with hidden (latent) variables <a class="reference internal" href="#dempster1977" id="id1"><span>[Dempster1977]</span></a>. This section
+describes the EM algorithm for the Generalized Hyperbolic (GH) distribution,
+following the framework in <a class="reference internal" href="gh.html#hu2005" id="id2"><span>[Hu2005]</span></a> with some modifications.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The key insight is that while the marginal GH distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is not
+an exponential family, the joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> of the observed
+variable <span class="math notranslate nohighlight">\(X\)</span> and the latent mixing variable <span class="math notranslate nohighlight">\(Y\)</span> <strong>is</strong> an exponential
+family. This makes the EM algorithm particularly elegant.</p>
+<p>Our approach differs from previous works in several ways:</p>
+<ol class="arabic simple">
+<li><p>We use general convex optimization to solve the GIG MLE directly without
+fixing the parameter <span class="math notranslate nohighlight">\(p\)</span> (called <span class="math notranslate nohighlight">\(\lambda\)</span> in some references).</p></li>
+<li><p>Constraints on GIG parameters are unnecessary since the optimization is
+stable under the Hellinger distance.</p></li>
+<li><p>The best way to regularize GH parameters is to fix <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>,
+and this can be done at the end of each EM iteration without affecting
+convergence.</p></li>
+</ol>
+</section>
+<section id="conditional-distribution-of-y-given-x">
+<h2>Conditional Distribution of Y given X<a class="headerlink" href="#conditional-distribution-of-y-given-x" title="Link to this heading"></a></h2>
+<p>Recall that a GH random vector <span class="math notranslate nohighlight">\(X\)</span> can be expressed as:</p>
+<div class="math notranslate nohighlight">
+\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z \sim N(0, \Sigma)\)</span> is independent of <span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span>.</p>
+<p>Given the joint density <span class="math notranslate nohighlight">\(f(x, y)\)</span>, we can compute the conditional density
+of <span class="math notranslate nohighlight">\(Y\)</span> given <span class="math notranslate nohighlight">\(X\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f(y | x, \theta) &amp;= \frac{f(x, y | \theta)}{f(x | \theta)} \\
+&amp;\propto y^{p - 1 - d/2} \exp\left(-\frac{1}{2}(x-\mu-\gamma y)^\top \Sigma^{-1}
+(x-\mu-\gamma y) y^{-1} - \frac{1}{2}(b y^{-1} + a y)\right) \\
+&amp;\propto y^{p - 1 - d/2} \exp\left(-\frac{1}{2}\left(b + (x-\mu)^\top \Sigma^{-1}(x-\mu)\right) y^{-1}
+- \frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right) y\right)\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\theta = (\mu, \gamma, \Sigma, p, a, b)\)</span> denotes the full parameter set.</p>
+<p>This is a GIG distribution with parameters:</p>
+<div class="math notranslate nohighlight">
+\[Y | X = x \sim \text{GIG}\left(p - \frac{d}{2}, \,
+a + \gamma^\top \Sigma^{-1} \gamma, \,
+b + (x-\mu)^\top \Sigma^{-1}(x-\mu)\right)\]</div>
+</section>
+<section id="conditional-expectations">
+<h2>Conditional Expectations<a class="headerlink" href="#conditional-expectations" title="Link to this heading"></a></h2>
+<p>Using the GIG moment formula, we obtain the conditional expectations needed for
+the E-step:</p>
+<div class="math notranslate nohighlight" id="equation-gig-moment-cond">
+<span class="eqno">(1)<a class="headerlink" href="#equation-gig-moment-cond" title="Link to this equation"></a></span>\[E[Y^\alpha | X = x, \theta] = \left(\sqrt{\frac{b + (x-\mu)^\top \Sigma^{-1}(x-\mu)}
+{a + \gamma^\top \Sigma^{-1} \gamma}}\right)^\alpha
+\frac{K_{p - d/2 + \alpha}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}
+{K_{p - d/2}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(q(x) = (x-\mu)^\top \Sigma^{-1}(x-\mu)\)</span> is the squared Mahalanobis distance</p></li>
+<li><p><span class="math notranslate nohighlight">\(\tilde{q} = \gamma^\top \Sigma^{-1} \gamma\)</span></p></li>
+</ul>
+<p>For the log moment:</p>
+<div class="math notranslate nohighlight">
+\[E[\log Y | X = x, \theta] = \left.\frac{\partial}{\partial \alpha}
+E[Y^\alpha | X = x, \theta]\right|_{\alpha=0}\]</div>
+<p>This derivative can be computed numerically.</p>
+</section>
+<section id="the-em-algorithm">
+<h2>The EM Algorithm<a class="headerlink" href="#the-em-algorithm" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(x_1, \ldots, x_n \in \mathbb{R}^d\)</span> be i.i.d. sample data. Given initial
+parameters <span class="math notranslate nohighlight">\(\theta_0 = (\mu_0, \gamma_0, \Sigma_0, p_0, a_0, b_0)\)</span>, the EM
+algorithm iterates between two steps.</p>
+<section id="e-step">
+<h3>E-Step<a class="headerlink" href="#e-step" title="Link to this heading"></a></h3>
+<p>The <span class="math notranslate nohighlight">\((k+1)\)</span>-th E-step computes the average conditional expectations of the
+sufficient statistics:</p>
+<div class="math notranslate nohighlight" id="equation-e-step">
+<span class="eqno">(2)<a class="headerlink" href="#equation-e-step" title="Link to this equation"></a></span>\[\begin{split}\hat{\eta}_1^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{\eta}_2^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \theta_k] \\
+\hat{\eta}_3^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \theta_k] \\
+\hat{\eta}_4^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j \\
+\hat{\eta}_5^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{\eta}_6^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j x_j^\top E[Y^{-1} | X = x_j, \theta_k]\end{split}\]</div>
+<p>where the conditional expectations are computed using <a class="reference internal" href="#equation-gig-moment-cond">(1)</a>.</p>
+<p>Note that <span class="math notranslate nohighlight">\((\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})\)</span> are
+estimates of the GIG expectation parameters, and
+<span class="math notranslate nohighlight">\((\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})\)</span> are estimates
+of the normal component expectation parameters.</p>
+</section>
+<section id="m-step">
+<h3>M-Step<a class="headerlink" href="#m-step" title="Link to this heading"></a></h3>
+<p>The M-step solves the optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \arg\max_\theta \sum_{j=1}^n E[\log f(X, Y | \theta) | X = x_j, \theta_k]\]</div>
+<p>This is equivalent to maximizing the joint GH log-likelihood at the estimated
+expectation parameters:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \arg\max_\theta L_{\text{GH}}(\mu, \gamma, \Sigma, p, a, b |
+\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)},
+\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})\]</div>
+<p>The closed-form solutions are (see <a class="reference internal" href="gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a> for derivation):</p>
+<div class="math notranslate nohighlight" id="equation-m-step">
+<span class="eqno">(3)<a class="headerlink" href="#equation-m-step" title="Link to this equation"></a></span>\[\begin{split}\mu_{k+1} &amp;= \frac{\hat{\eta}_4^{(k)} - \hat{\eta}_2^{(k)} \hat{\eta}_5^{(k)}}
+{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
+\gamma_{k+1} &amp;= \frac{\hat{\eta}_5^{(k)} - \hat{\eta}_1^{(k)} \hat{\eta}_4^{(k)}}
+{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
+\Sigma_{k+1} &amp;= \hat{\eta}_6^{(k)} - \hat{\eta}_5^{(k)} \mu_{k+1}^\top
+- \mu_{k+1} (\hat{\eta}_5^{(k)})^\top + \hat{\eta}_1^{(k)} \mu_{k+1} \mu_{k+1}^\top
+- \hat{\eta}_2^{(k)} \gamma_{k+1} \gamma_{k+1}^\top \\
+(p_{k+1}, a_{k+1}, b_{k+1}) &amp;= \arg\max_{p, a, b}
+L_{\text{GIG}}(p, a, b | \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})\end{split}\]</div>
+<p>The first three equations have closed-form solutions, while the GIG parameters
+require numerical optimization.</p>
+</section>
+</section>
+<section id="parameter-regularization">
+<h2>Parameter Regularization<a class="headerlink" href="#parameter-regularization" title="Link to this heading"></a></h2>
+<p>The GH model is not identifiable since the parameter sets
+<span class="math notranslate nohighlight">\((\mu, \gamma/c, \Sigma/c, p, c \cdot b, a/c)\)</span> give the same distribution
+for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. A good way to regularize is to fix <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>.</p>
+<p>Instead of adding a constraint to the optimization, we can rescale parameters
+at the end of each M-step:</p>
+<div class="math notranslate nohighlight">
+\[(\mu_k, \gamma_k, \Sigma_k, p_k, a_k, b_k) \rightarrow
+\left(\mu_k, |\Sigma_k|^{-1/d} \gamma_k, |\Sigma_k|^{-1/d} \Sigma_k,
+p_k, |\Sigma_k|^{-1/d} a_k, |\Sigma_k|^{1/d} b_k\right)\]</div>
+<p>This rescaling does not affect the convergence of the EM algorithm:</p>
+<p><strong>Proposition.</strong> If we write the <span class="math notranslate nohighlight">\((k+1)\)</span>-th iteration as a function
+<span class="math notranslate nohighlight">\(f\)</span>, i.e.,</p>
+<div class="math notranslate nohighlight">
+\[(\mu_{k+1}, \gamma_{k+1}, \Sigma_{k+1}, p_{k+1}, a_{k+1}, b_{k+1})
+= f(\mu_k, \gamma_k, \Sigma_k, p_k, a_k, b_k)\]</div>
+<p>then for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[(\mu_{k+1}, c \gamma_{k+1}, c \Sigma_{k+1}, p_{k+1}, a_{k+1}/c, c \, b_{k+1})
+= f(\mu_k, c \gamma_k, c \Sigma_k, p_k, a_k/c, c \, b_k)\]</div>
+<p><em>Proof.</em> A direct computation using <a class="reference internal" href="#equation-gig-moment-cond">(1)</a> shows that:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[Y^\alpha | X = x, \tilde{\theta}_k] &amp;= E[Y^\alpha | X = x, \theta_k] / c^\alpha \\
+E[\log Y | X = x, \tilde{\theta}_k] &amp;= E[\log Y | X = x, \theta_k] - \log c\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tilde{\theta}_k = (\mu_k, c\gamma_k, c\Sigma_k, p_k, a_k/c, c \, b_k)\)</span>.</p>
+<p>Thus if <span class="math notranslate nohighlight">\(\hat{\eta}_1^{(k)}, \ldots, \hat{\eta}_6^{(k)}\)</span> are the E-step
+outputs given <span class="math notranslate nohighlight">\(\theta_k\)</span>, then
+<span class="math notranslate nohighlight">\(c \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}/c, \hat{\eta}_3^{(k)} - \log c,
+\hat{\eta}_4^{(k)}, c \hat{\eta}_5^{(k)}, c \hat{\eta}_6^{(k)}\)</span> are the
+corresponding outputs given <span class="math notranslate nohighlight">\(\tilde{\theta}_k\)</span>. The result follows by
+applying these to <a class="reference internal" href="#equation-m-step">(3)</a>. ∎</p>
+</section>
+<section id="mcecm-algorithm">
+<h2>MCECM Algorithm<a class="headerlink" href="#mcecm-algorithm" title="Link to this heading"></a></h2>
+<p>An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
+algorithm <a class="reference internal" href="gh.html#mcneil2010" id="id3"><span>[McNeil2010]</span></a>. Unlike the EM algorithm which updates all parameters
+via <a class="reference internal" href="#equation-m-step">(3)</a>, MCECM proceeds in two cycles:</p>
+<p><strong>Cycle 1:</strong> Compute <span class="math notranslate nohighlight">\(\mu_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\gamma_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span>
+from the first three equations in <a class="reference internal" href="#equation-m-step">(3)</a>, then set
+<span class="math notranslate nohighlight">\(\Sigma_{k+1} \leftarrow \Sigma_{k+1} / |\Sigma_{k+1}|^{1/d}\)</span>.</p>
+<p><strong>Cycle 2:</strong> Set <span class="math notranslate nohighlight">\(\tilde{\theta}_{k+1} = (\mu_{k+1}, \gamma_{k+1}, \Sigma_{k+1}, p_k, a_k, b_k)\)</span>
+and recompute the GIG expectation parameters:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{\eta}_1^{(k+1)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \tilde{\theta}_{k+1}] \\
+\tilde{\eta}_2^{(k+1)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \tilde{\theta}_{k+1}] \\
+\tilde{\eta}_3^{(k+1)} &amp;= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \tilde{\theta}_{k+1}]\end{split}\]</div>
+<p>Then update the GIG parameters:</p>
+<div class="math notranslate nohighlight">
+\[(p_{k+1}, a_{k+1}, b_{k+1}) = \arg\max_{p, a, b}
+L_{\text{GIG}}(p, a, b | \tilde{\eta}_1^{(k+1)}, \tilde{\eta}_2^{(k+1)}, \tilde{\eta}_3^{(k+1)})\]</div>
+<p>Both algorithms converge to the MLE and have similar computational efficiency.</p>
+</section>
+<section id="special-cases">
+<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading"></a></h2>
+<p>For special cases of the GH distribution, the EM algorithm simplifies because
+the mixing distribution has fewer parameters and the M-step has closed-form
+solutions.</p>
+<section id="variance-gamma-vg">
+<h3>Variance Gamma (VG)<a class="headerlink" href="#variance-gamma-vg" title="Link to this heading"></a></h3>
+<p>The Variance Gamma distribution uses a <strong>Gamma</strong> mixing distribution:
+<span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span>. The GIG reduces to Gamma when
+<span class="math notranslate nohighlight">\(b \to 0\)</span>.</p>
+<p><strong>Sufficient statistics for Y:</strong></p>
+<div class="math notranslate nohighlight">
+\[t_Y(y) = (\log y, \, y)\]</div>
+<p><strong>Expectation parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\eta_1 &amp;= E[\log Y] = \psi(\alpha) - \log \beta \\
+\eta_2 &amp;= E[Y] = \alpha / \beta\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\psi\)</span> is the digamma function.</p>
+<p><strong>E-step:</strong> The conditional distribution <span class="math notranslate nohighlight">\(Y | X = x\)</span> is GIG with
+<span class="math notranslate nohighlight">\(b = (x-\mu)^\top \Sigma^{-1}(x-\mu)\)</span>, so we still need to compute
+GIG conditional expectations. However, the M-step simplifies.</p>
+<p><strong>M-step for Gamma parameters:</strong> Given <span class="math notranslate nohighlight">\(\hat{\eta}_1 = E[\log Y]\)</span> and
+<span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y]\)</span>, we solve:</p>
+<div class="math notranslate nohighlight">
+\[\psi(\alpha) - \log(\alpha / \hat{\eta}_2) = \hat{\eta}_1\]</div>
+<p>This is a single-variable equation that can be solved efficiently using
+Newton’s method:</p>
+<div class="math notranslate nohighlight">
+\[\alpha^{(t+1)} = \alpha^{(t)} - \frac{\psi(\alpha^{(t)}) - \log \alpha^{(t)} - (\hat{\eta}_1 - \log \hat{\eta}_2)}
+{\psi'(\alpha^{(t)}) - 1/\alpha^{(t)}}\]</div>
+<p>Then <span class="math notranslate nohighlight">\(\beta = \alpha / \hat{\eta}_2\)</span>.</p>
+</section>
+<section id="normal-inverse-gaussian-nig">
+<h3>Normal-Inverse Gaussian (NIG)<a class="headerlink" href="#normal-inverse-gaussian-nig" title="Link to this heading"></a></h3>
+<p>The Normal-Inverse Gaussian distribution uses an <strong>Inverse Gaussian</strong> mixing
+distribution: <span class="math notranslate nohighlight">\(Y \sim \text{IG}(\mu_Y, \lambda)\)</span>. This corresponds to
+GIG with <span class="math notranslate nohighlight">\(p = -1/2\)</span>.</p>
+<p><strong>Sufficient statistics for Y:</strong></p>
+<div class="math notranslate nohighlight">
+\[t_Y(y) = (y, \, y^{-1})\]</div>
+<p><strong>Expectation parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\eta_1 &amp;= E[Y] = \mu_Y \\
+\eta_2 &amp;= E[Y^{-1}] = 1/\mu_Y + 1/\lambda\end{split}\]</div>
+<p><strong>M-step for Inverse Gaussian parameters:</strong> Given <span class="math notranslate nohighlight">\(\hat{\eta}_1 = E[Y]\)</span>
+and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</span>, the closed-form solution is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mu_Y &amp;= \hat{\eta}_1 \\
+\lambda &amp;= \frac{1}{\hat{\eta}_2 - 1/\hat{\eta}_1}\end{split}\]</div>
+<p>This is fully analytical with no optimization required.</p>
+</section>
+<section id="normal-inverse-gamma-ninvg">
+<h3>Normal-Inverse Gamma (NInvG)<a class="headerlink" href="#normal-inverse-gamma-ninvg" title="Link to this heading"></a></h3>
+<p>The Normal-Inverse Gamma distribution uses an <strong>Inverse Gamma</strong> mixing
+distribution: <span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span>. This corresponds
+to GIG with <span class="math notranslate nohighlight">\(a \to 0\)</span> (or equivalently, <span class="math notranslate nohighlight">\(p &lt; 0\)</span> with <span class="math notranslate nohighlight">\(a = 0\)</span>).</p>
+<p><strong>Sufficient statistics for Y:</strong></p>
+<div class="math notranslate nohighlight">
+\[t_Y(y) = (\log y, \, y^{-1})\]</div>
+<p><strong>Expectation parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\eta_1 &amp;= E[\log Y] = \log \beta - \psi(\alpha) \\
+\eta_2 &amp;= E[Y^{-1}] = \alpha / \beta\end{split}\]</div>
+<p><strong>M-step for Inverse Gamma parameters:</strong> Given <span class="math notranslate nohighlight">\(\hat{\eta}_1 = E[\log Y]\)</span>
+and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</span>, we solve:</p>
+<div class="math notranslate nohighlight">
+\[\log(\alpha / \hat{\eta}_2) - \psi(\alpha) = \hat{\eta}_1\]</div>
+<p>This is again a single-variable equation solved by Newton’s method:</p>
+<div class="math notranslate nohighlight">
+\[\alpha^{(t+1)} = \alpha^{(t)} - \frac{\log \alpha^{(t)} - \psi(\alpha^{(t)}) - (\hat{\eta}_1 + \log \hat{\eta}_2)}
+{\frac{1}{\alpha^{(t)}} - \psi'(\alpha^{(t)})}\]</div>
+<p>Then <span class="math notranslate nohighlight">\(\beta = \alpha / \hat{\eta}_2\)</span>.</p>
+</section>
+<section id="summary-of-special-cases">
+<h3>Summary of Special Cases<a class="headerlink" href="#summary-of-special-cases" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id4">
+<caption><span class="caption-text">EM Algorithm Simplifications for Special Cases</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Distribution</p></th>
+<th class="head"><p>Mixing Dist.</p></th>
+<th class="head"><p>Sufficient Stats</p></th>
+<th class="head"><p>M-Step Complexity</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GH (general)</p></td>
+<td><p>GIG(<span class="math notranslate nohighlight">\(p, a, b\)</span>)</p></td>
+<td><p><span class="math notranslate nohighlight">\((\log y, y^{-1}, y)\)</span></p></td>
+<td><p>3D optimization</p></td>
+</tr>
+<tr class="row-odd"><td><p>Variance Gamma</p></td>
+<td><p>Gamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></td>
+<td><p><span class="math notranslate nohighlight">\((\log y, y)\)</span></p></td>
+<td><p>1D Newton</p></td>
+</tr>
+<tr class="row-even"><td><p>Normal-Inv Gaussian</p></td>
+<td><p>InvGauss(<span class="math notranslate nohighlight">\(\mu, \lambda\)</span>)</p></td>
+<td><p><span class="math notranslate nohighlight">\((y, y^{-1})\)</span></p></td>
+<td><p>Closed-form</p></td>
+</tr>
+<tr class="row-odd"><td><p>Normal-Inv Gamma</p></td>
+<td><p>InvGamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></td>
+<td><p><span class="math notranslate nohighlight">\((\log y, y^{-1})\)</span></p></td>
+<td><p>1D Newton</p></td>
+</tr>
+</tbody>
+</table>
+<p>The Normal-Inverse Gaussian case is particularly attractive because the M-step
+is fully analytical. The Variance Gamma and Normal-Inverse Gamma cases require
+only 1D optimization (Newton’s method), which is much faster and more stable
+than the 3D optimization required for the general GH case.</p>
+</section>
+</section>
+<section id="numerical-considerations">
+<h2>Numerical Considerations<a class="headerlink" href="#numerical-considerations" title="Link to this heading"></a></h2>
+<section id="high-dimensional-issues">
+<h3>High-Dimensional Issues<a class="headerlink" href="#high-dimensional-issues" title="Link to this heading"></a></h3>
+<p>When the dimension <span class="math notranslate nohighlight">\(d\)</span> is large (e.g., 500), computing the modified Bessel
+functions in <a class="reference internal" href="#equation-gig-moment-cond">(1)</a> can be challenging. For large <span class="math notranslate nohighlight">\(d\)</span>,
+<span class="math notranslate nohighlight">\(K_{p + d/2 + \alpha}\)</span> may overflow or underflow. This is addressed using
+log-space computations in the <a class="reference internal" href="../api/index.html#module-normix.utils.bessel" title="normix.utils.bessel"><code class="xref py py-mod docutils literal notranslate"><span class="pre">normix.utils.bessel</span></code></a> module.</p>
+</section>
+<section id="matrix-conditioning">
+<h3>Matrix Conditioning<a class="headerlink" href="#matrix-conditioning" title="Link to this heading"></a></h3>
+<p>The formula for <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> in <a class="reference internal" href="#equation-m-step">(3)</a> has the same numerical
+issues as the sample covariance: the condition number can be huge when the
+sample size is relatively small. Shrinkage estimators (such as penalized
+likelihood methods) can help improve the conditioning of <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
+</section>
+</section>
+<section id="implementation-in-normix">
+<h2>Implementation in normix<a class="headerlink" href="#implementation-in-normix" title="Link to this heading"></a></h2>
+<p>In <code class="docutils literal notranslate"><span class="pre">normix</span></code>, the EM algorithm is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> method of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code> subclasses. The key methods are:</p>
+<ul class="simple">
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_conditional_expectation_y_given_x()</span></code>: Computes <span class="math notranslate nohighlight">\(E[Y^{-1}|X]\)</span>,
+<span class="math notranslate nohighlight">\(E[Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[\log Y|X]\)</span> for the E-step</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">joint.set_expectation_params()</span></code>: Sets parameters from expectation
+parameters for the M-step</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">joint._expectation_to_natural()</span></code>: Converts expectation to natural
+parameters (solves the GIG optimization)</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="dempster1977" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Dempster1977</a><span class="fn-bracket">]</span></span>
+<p>Dempster, A. P., Laird, N. M., &amp; Rubin, D. B. (1977).
+Maximum likelihood from incomplete data via the EM algorithm.
+<em>Journal of the Royal Statistical Society: Series B</em>, 39(1), 1-38.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gh.html" class="btn btn-neutral float-left" title="The Generalized Hyperbolic Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

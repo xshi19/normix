@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inverse Gaussian Distribution in Exponential Family Form &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generalized Inverse Gaussian Distribution in Exponential Family Form" href="generalized_inverse_gaussian_distribution.html" />
+    <link rel="prev" title="Inverse Gamma Distribution in Exponential Family Form" href="inverse_gamma_distribution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="exponential_distribution.html">Exponential Distribution in Exponential Family Form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gamma_distribution.html">Gamma Distribution in Exponential Family Form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inverse_gamma_distribution.html">Inverse Gamma Distribution in Exponential Family Form</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Inverse Gaussian Distribution in Exponential Family Form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generalized_inverse_gaussian_distribution.html">Generalized Inverse Gaussian Distribution in Exponential Family Form</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">Inverse Gaussian Distribution in Exponential Family Form</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/inverse_gaussian_distribution.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/inverse_gaussian_distribution.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="Inverse-Gaussian-Distribution-in-Exponential-Family-Form">
+<h1>Inverse Gaussian Distribution in Exponential Family Form<a class="headerlink" href="#Inverse-Gaussian-Distribution-in-Exponential-Family-Form" title="Link to this heading"></a></h1>
+<p>This notebook demonstrates the <strong>Inverse Gaussian (Wald) distribution</strong> implemented as an exponential family.</p>
+<p><strong>Key Features:</strong></p>
+<ul class="simple">
+<li><p>Three parametrizations: Classical (mean μ, shape λ), Natural (θ), Expectation (η)</p></li>
+<li><p>Two-dimensional sufficient statistics: t(x) = [x, 1/x]</p></li>
+<li><p>Analytical formulas for gradients and Fisher information</p></li>
+<li><p>Comparison with scipy implementation</p></li>
+<li><p>Visualization of PDFs, CDFs, and samples</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+from normix.distributions.univariate import InverseGaussian
+
+# Set style for better-looking plots
+plt.style.use(&#39;default&#39;)
+plt.rcParams[&#39;figure.figsize&#39;] = (10, 6)
+plt.rcParams[&#39;font.size&#39;] = 11
+<br/></pre></div>
+</div>
+</div>
+<section id="1.-Creating-Distributions">
+<h2>1. Creating Distributions<a class="headerlink" href="#1.-Creating-Distributions" title="Link to this heading"></a></h2>
+<p>The inverse Gaussian distribution can be created using three different parametrizations:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Classical parameters (mean μ, shape λ)
+dist1 = InverseGaussian.from_classical_params(mean=1.5, shape=5.0)
+print(f&quot;From classical params: {dist1}&quot;)
+
+# Natural parameters (θ = [-λ/(2μ²), -λ/2])
+theta = np.array([-5.0 / (2 * 1.5**2), -5.0 / 2])
+dist2 = InverseGaussian.from_natural_params(theta)
+print(f&quot;From natural params:   {dist2}&quot;)
+
+# Expectation parameters (η = [μ, 1/μ + 1/λ])
+eta = np.array([1.5, 1/1.5 + 1/5.0])
+dist3 = InverseGaussian.from_expectation_params(eta)
+print(f&quot;From expectation params: {dist3}&quot;)
+
+print(&quot;\n✓ All three parametrizations create the same distribution!&quot;)
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+From classical params: InverseGaussian(mean=1.5000, shape=5.0000)
+From natural params:   InverseGaussian(mean=1.5000, shape=5.0000)
+From expectation params: InverseGaussian(mean=1.5000, shape=5.0000)
+
+✓ All three parametrizations create the same distribution!
+</pre></div></div>
+</div>
+</section>
+<section id="2.-PDF-and-CDF-Comparison-with-Scipy">
+<h2>2. PDF and CDF Comparison with Scipy<a class="headerlink" href="#2.-PDF-and-CDF-Comparison-with-Scipy" title="Link to this heading"></a></h2>
+<p>Let’s compare our implementation with scipy’s inverse Gaussian distribution.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Test different parameter combinations
+test_configs = [
+    {&#39;mean&#39;: 1.0, &#39;shape&#39;: 5.0},
+    {&#39;mean&#39;: 2.0, &#39;shape&#39;: 10.0},
+    {&#39;mean&#39;: 3.0, &#39;shape&#39;: 15.0},
+    {&#39;mean&#39;: 1.5, &#39;shape&#39;: 7.5}
+]
+
+x = np.linspace(0.05, 4.0, 200)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Plot PDFs
+ax = axes[0]
+for cfg in test_configs:
+    mean, shape = cfg[&#39;mean&#39;], cfg[&#39;shape&#39;]
+
+    # normix distribution
+    normix_dist = InverseGaussian.from_classical_params(mean=mean, shape=shape)
+    normix_pdf = normix_dist.pdf(x)
+
+    # scipy distribution (mu = mean/shape, scale = shape)
+    scipy_dist = stats.invgauss(mu=mean/shape, scale=shape)
+    scipy_pdf = scipy_dist.pdf(x)
+
+    ax.plot(x, normix_pdf, &#39;-&#39;, linewidth=2,
+            label=f&#39;μ={mean}, λ={shape}&#39;, alpha=0.8)
+    ax.plot(x, scipy_pdf, &#39;o&#39;, markersize=2, alpha=0.3)
+
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.set_title(&#39;Probability Density Functions\n(normix lines, scipy dots)&#39;)
+ax.legend(loc=&#39;upper right&#39;, fontsize=9)
+ax.grid(True, alpha=0.3)
+
+# Plot CDFs
+ax = axes[1]
+for cfg in test_configs:
+    mean, shape = cfg[&#39;mean&#39;], cfg[&#39;shape&#39;]
+
+    normix_dist = InverseGaussian.from_classical_params(mean=mean, shape=shape)
+    normix_cdf = normix_dist.cdf(x)
+
+    scipy_dist = stats.invgauss(mu=mean/shape, scale=shape)
+    scipy_cdf = scipy_dist.cdf(x)
+
+    ax.plot(x, normix_cdf, &#39;-&#39;, linewidth=2,
+            label=f&#39;μ={mean}, λ={shape}&#39;, alpha=0.8)
+    ax.plot(x, scipy_cdf, &#39;o&#39;, markersize=2, alpha=0.3)
+
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;CDF&#39;)
+ax.set_title(&#39;Cumulative Distribution Functions\n(normix lines, scipy dots)&#39;)
+ax.legend(loc=&#39;lower right&#39;, fontsize=9)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(&quot;✓ normix and scipy implementations match perfectly!&quot;)
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_inverse_gaussian_distribution_5_0.png" src="../_images/notebooks_inverse_gaussian_distribution_5_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+✓ normix and scipy implementations match perfectly!
+</pre></div></div>
+</div>
+</section>
+<section id="3.-Random-Sampling-and-Histograms">
+<h2>3. Random Sampling and Histograms<a class="headerlink" href="#3.-Random-Sampling-and-Histograms" title="Link to this heading"></a></h2>
+<p>Let’s generate random samples and compare the histogram with the theoretical PDF.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Parameters for different distributions (higher λ gives tighter histograms)
+test_configs = [
+    {&#39;mean&#39;: 1.0, &#39;shape&#39;: 5.0, &#39;n_samples&#39;: 10000},
+    {&#39;mean&#39;: 2.0, &#39;shape&#39;: 10.0, &#39;n_samples&#39;: 10000},
+    {&#39;mean&#39;: 3.0, &#39;shape&#39;: 15.0, &#39;n_samples&#39;: 10000},
+    {&#39;mean&#39;: 1.5, &#39;shape&#39;: 7.5, &#39;n_samples&#39;: 10000}
+]
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+axes = axes.flatten()
+
+for idx, config in enumerate(test_configs):
+    mean = config[&#39;mean&#39;]
+    shape = config[&#39;shape&#39;]
+    n_samples = config[&#39;n_samples&#39;]
+
+    # Create distribution
+    dist = InverseGaussian.from_classical_params(mean=mean, shape=shape)
+
+    # Generate samples
+    samples = dist.rvs(size=n_samples, random_state=42 + idx)
+
+    # Theoretical PDF
+    x_plot = np.linspace(samples.min() * 0.8, samples.max() * 1.1, 200)
+    pdf_theory = dist.pdf(x_plot)
+
+    # Plot
+    ax = axes[idx]
+    ax.hist(samples, bins=50, density=True, alpha=0.6, color=&#39;steelblue&#39;,
+            edgecolor=&#39;black&#39;, linewidth=0.5, label=&#39;Sample histogram&#39;)
+    ax.plot(x_plot, pdf_theory, &#39;r-&#39;, linewidth=2.5, label=&#39;Theoretical PDF (normix)&#39;)
+
+    # Also plot scipy for comparison
+    scipy_dist = stats.invgauss(mu=mean/shape, scale=shape)
+    scipy_pdf = scipy_dist.pdf(x_plot)
+    ax.plot(x_plot, scipy_pdf, &#39;g--&#39;, linewidth=2, label=&#39;Scipy PDF&#39;, alpha=0.7)
+
+    # Statistics
+    sample_mean = np.mean(samples)
+    theory_mean = dist.mean()
+    sample_std = np.std(samples)
+    theory_std = np.sqrt(dist.var())
+
+    ax.set_xlabel(&#39;x&#39;)
+    ax.set_ylabel(&#39;Density&#39;)
+    ax.set_title(f&#39;InverseGaussian(μ={mean}, λ={shape})\n&#39;
+                f&#39;Mean: {sample_mean:.3f} (theory: {theory_mean:.3f}), &#39;
+                f&#39;Std: {sample_std:.3f} (theory: {theory_std:.3f})&#39;)
+    ax.legend(loc=&#39;upper right&#39;, fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(&quot;✓ Histograms closely match theoretical PDFs!&quot;)
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_inverse_gaussian_distribution_7_0.png" src="../_images/notebooks_inverse_gaussian_distribution_7_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+✓ Histograms closely match theoretical PDFs!
+</pre></div></div>
+</div>
+</section>
+<section id="4.-Fitting-to-Data">
+<h2>4. Fitting to Data<a class="headerlink" href="#4.-Fitting-to-Data" title="Link to this heading"></a></h2>
+<p>Demonstrate maximum likelihood estimation by fitting to simulated data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Generate data with known parameters
+true_mean = 2.5
+true_shape = 8.0
+n_data = 15000
+
+# scipy parameterization: mu = mean/shape, scale = shape
+data = stats.invgauss.rvs(mu=true_mean/true_shape, scale=true_shape,
+                          size=n_data, random_state=123)
+
+# Fit distribution
+fitted_dist = InverseGaussian().fit(data)
+fitted_params = fitted_dist.classical_params
+
+print(f&quot;Fitting {n_data} samples from InverseGaussian(μ={true_mean}, λ={true_shape})\n&quot;)
+print(f&quot;True mean:           {true_mean:.6f}&quot;)
+print(f&quot;Fitted mean (MLE):  {fitted_params.mean:.6f}&quot;)
+print(f&quot;True shape:          {true_shape:.6f}&quot;)
+print(f&quot;Fitted shape (MLE): {fitted_params.shape:.6f}&quot;)
+
+# Visualize fit
+fig, ax = plt.subplots(figsize=(12, 6))
+
+ax.hist(data, bins=60, density=True, alpha=0.6, color=&#39;lightblue&#39;,
+        edgecolor=&#39;black&#39;, linewidth=0.5, label=&#39;Data histogram&#39;)
+
+x_plot = np.linspace(0.1, np.percentile(data, 99.5), 400)
+true_dist = InverseGaussian.from_classical_params(mean=true_mean, shape=true_shape)
+ax.plot(x_plot, true_dist.pdf(x_plot), &#39;g-&#39;, linewidth=3,
+        label=f&#39;True: μ={true_mean:.1f}, λ={true_shape:.1f}&#39;)
+
+ax.plot(x_plot, fitted_dist.pdf(x_plot), &#39;r--&#39;, linewidth=3,
+        label=f&#39;Fitted (normix): μ={fitted_params.mean:.2f}, λ={fitted_params.shape:.2f}&#39;)
+
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;Density&#39;)
+ax.set_title(&#39;Maximum Likelihood Estimation&#39;)
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(&quot;\n✓ MLE successfully recovers the true parameters!&quot;)
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting 15000 samples from InverseGaussian(μ=2.5, λ=8.0)
+
+True mean:           2.500000
+Fitted mean (MLE):  2.507047
+True shape:          8.000000
+Fitted shape (MLE): 8.077597
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_inverse_gaussian_distribution_9_1.png" src="../_images/notebooks_inverse_gaussian_distribution_9_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+✓ MLE successfully recovers the true parameters!
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="inverse_gamma_distribution.html" class="btn btn-neutral float-left" title="Inverse Gamma Distribution in Exponential Family Form" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generalized_inverse_gaussian_distribution.html" class="btn btn-neutral float-right" title="Generalized Inverse Gaussian Distribution in Exponential Family Form" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

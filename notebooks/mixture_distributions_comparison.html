@@ -1,0 +1,943 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparison of Normal Mixture Distributions &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="S&amp;P 500 Empirical Study: Distribution Comparison" href="sp500_index_empirical_study.html" />
+    <link rel="prev" title="Generalized Hyperbolic (GH) Distribution" href="generalized_hyperbolic_distribution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Comparison of Normal Mixture Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sp500_index_empirical_study.html">S&amp;P 500 Empirical Study: Distribution Comparison</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sp500_stocks_multivariate_study.html">S&amp;P 500 Stocks Multivariate Empirical Study</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">Comparison of Normal Mixture Distributions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/mixture_distributions_comparison.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/mixture_distributions_comparison.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="Comparison-of-Normal-Mixture-Distributions">
+<h1>Comparison of Normal Mixture Distributions<a class="headerlink" href="#Comparison-of-Normal-Mixture-Distributions" title="Link to this heading"></a></h1>
+<p>This notebook compares the normal variance-mean mixture distributions:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Distribution</p></th>
+<th class="head"><p>Mixing Distribution</p></th>
+<th class="head"><p>Tail Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Generalized Hyperbolic (GH)</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span></p></td>
+<td><p>Most general</p></td>
+</tr>
+<tr class="row-odd"><td><p>Variance Gamma (VG)</p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span></p></td>
+<td><p>Semi-heavy</p></td>
+</tr>
+<tr class="row-even"><td><p>Normal Inverse Gamma (NInvG)</p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span></p></td>
+<td><p>Heavy (Student-t like)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Normal Inverse Gaussian (NIG)</p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGauss}(\delta, \eta)\)</span></p></td>
+<td><p>Semi-heavy</p></td>
+</tr>
+</tbody>
+</table>
+<p>We also compare with the <strong>Normal</strong> and <strong>Student-t</strong> distributions.</p>
+<p><strong>Key insight:</strong> VG, NInvG, and NIG are all <strong>special cases</strong> of the Generalized Hyperbolic distribution.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+from normix.distributions.mixtures import (
+    GeneralizedHyperbolic,
+    VarianceGamma,
+    NormalInverseGamma,
+    NormalInverseGaussian
+)
+
+plt.style.use(&#39;seaborn-v0_8-whitegrid&#39;)
+%matplotlib inline
+
+np.set_printoptions(precision=4, suppress=True)
+</pre></div>
+</div>
+</div>
+<section id="1.-Symmetric-Distributions-(γ-=-0)">
+<h2>1. Symmetric Distributions (γ = 0)<a class="headerlink" href="#1.-Symmetric-Distributions-(γ-=-0)" title="Link to this heading"></a></h2>
+<p>When <span class="math notranslate nohighlight">\(\gamma = 0\)</span>, all mixture distributions are symmetric. We match them to have similar variance.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create symmetric distributions with similar variance
+
+# VG: Var[X] = (α/β) σ² when γ=0, so for α=2, β=1, σ²=1, Var=2
+vg_sym = VarianceGamma.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([0.0]),
+    sigma=np.array([[1.0]]),
+    shape=2.0,
+    rate=1.0
+)
+
+# NInvG: Var[X] = (β/(α-1)) σ² when γ=0 and α&gt;2
+# For α=3, β=2, σ²=1, Var = (2/2)*1 = 1, but let&#39;s match VG variance
+ninvg_sym = NormalInverseGamma.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([0.0]),
+    sigma=np.array([[1.0]]),
+    shape=3.0,
+    rate=1.0
+)
+
+# NIG: Var[X] = δ σ² when γ=0
+nig_sym = NormalInverseGaussian.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([0.0]),
+    sigma=np.array([[1.0]]),
+    delta=1.0,
+    eta=1.0
+)
+
+print(&quot;Symmetric Distributions&quot;)
+print(&quot;=&quot;*50)
+print(f&quot;VG:    mean = {vg_sym.mean()[0]:.4f}, var = {vg_sym.var()[0]:.4f}&quot;)
+print(f&quot;NInvG: mean = {ninvg_sym.mean()[0]:.4f}, var = {ninvg_sym.var()[0]:.4f}&quot;)
+print(f&quot;NIG:   mean = {nig_sym.mean()[0]:.4f}, var = {nig_sym.var()[0]:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Symmetric Distributions
+==================================================
+VG:    mean = 0.0000, var = 2.0000
+NInvG: mean = 0.0000, var = 0.5000
+NIG:   mean = 0.0000, var = 1.0000
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># PDF comparison
+x_range = np.linspace(-6, 6, 400)
+
+vg_pdf = vg_sym.pdf(x_range.reshape(-1, 1)).flatten()
+ninvg_pdf = ninvg_sym.pdf(x_range.reshape(-1, 1)).flatten()
+nig_pdf = nig_sym.pdf(x_range.reshape(-1, 1)).flatten()
+
+# Match variance for Normal and Student-t
+var_ref = 1.0  # Use unit variance for comparison
+normal_pdf = stats.norm(0, np.sqrt(var_ref)).pdf(x_range)
+t_pdf = stats.t(df=5, scale=np.sqrt(var_ref * 3/5)).pdf(x_range)  # df=5, scaled for same variance
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Linear scale
+axes[0].plot(x_range, vg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;Variance Gamma&#39;)
+axes[0].plot(x_range, ninvg_pdf, &#39;r-&#39;, linewidth=2, label=&#39;Normal Inverse Gamma&#39;)
+axes[0].plot(x_range, nig_pdf, &#39;g-&#39;, linewidth=2, label=&#39;Normal Inverse Gaussian&#39;)
+axes[0].plot(x_range, normal_pdf, &#39;k--&#39;, linewidth=1.5, alpha=0.7, label=&#39;Normal&#39;)
+axes[0].plot(x_range, t_pdf, &#39;k:&#39;, linewidth=1.5, alpha=0.7, label=&#39;Student-t (df=5)&#39;)
+axes[0].set_xlabel(&#39;X&#39;, fontsize=12)
+axes[0].set_ylabel(&#39;Density&#39;, fontsize=12)
+axes[0].set_title(&#39;PDF Comparison (Symmetric, γ=0)&#39;, fontsize=14)
+axes[0].legend()
+axes[0].set_xlim(-6, 6)
+
+# Log scale for tail comparison
+axes[1].semilogy(x_range, vg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;VG&#39;)
+axes[1].semilogy(x_range, ninvg_pdf, &#39;r-&#39;, linewidth=2, label=&#39;NInvG&#39;)
+axes[1].semilogy(x_range, nig_pdf, &#39;g-&#39;, linewidth=2, label=&#39;NIG&#39;)
+axes[1].semilogy(x_range, normal_pdf, &#39;k--&#39;, linewidth=1.5, alpha=0.7, label=&#39;Normal&#39;)
+axes[1].semilogy(x_range, t_pdf, &#39;k:&#39;, linewidth=1.5, alpha=0.7, label=&#39;Student-t&#39;)
+axes[1].set_xlabel(&#39;X&#39;, fontsize=12)
+axes[1].set_ylabel(&#39;Density (log scale)&#39;, fontsize=12)
+axes[1].set_title(&#39;Tail Comparison (Log Scale)&#39;, fontsize=14)
+axes[1].legend()
+axes[1].set_xlim(-6, 6)
+axes[1].set_ylim(1e-6, 1)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_4_0.png" src="../_images/notebooks_mixture_distributions_comparison_4_0.png" />
+</div>
+</div>
+</section>
+<section id="2.-Skewed-Distributions-(γ-≠-0)">
+<h2>2. Skewed Distributions (γ ≠ 0)<a class="headerlink" href="#2.-Skewed-Distributions-(γ-≠-0)" title="Link to this heading"></a></h2>
+<p>When <span class="math notranslate nohighlight">\(\gamma \neq 0\)</span>, the distributions become asymmetric.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create right-skewed distributions
+gamma_val = 0.5
+
+vg_skew = VarianceGamma.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([gamma_val]),
+    sigma=np.array([[1.0]]),
+    shape=2.0,
+    rate=1.0
+)
+
+ninvg_skew = NormalInverseGamma.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([gamma_val]),
+    sigma=np.array([[1.0]]),
+    shape=3.0,
+    rate=1.0
+)
+
+nig_skew = NormalInverseGaussian.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([gamma_val]),
+    sigma=np.array([[1.0]]),
+    delta=1.0,
+    eta=1.0
+)
+
+print(f&quot;Right-Skewed Distributions (γ = {gamma_val})&quot;)
+print(&quot;=&quot;*50)
+print(f&quot;VG:    mean = {vg_skew.mean()[0]:.4f}, var = {vg_skew.var()[0]:.4f}&quot;)
+print(f&quot;NInvG: mean = {ninvg_skew.mean()[0]:.4f}, var = {ninvg_skew.var()[0]:.4f}&quot;)
+print(f&quot;NIG:   mean = {nig_skew.mean()[0]:.4f}, var = {nig_skew.var()[0]:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Right-Skewed Distributions (γ = 0.5)
+==================================================
+VG:    mean = 1.0000, var = 2.5000
+NInvG: mean = 0.2500, var = 0.5625
+NIG:   mean = 0.5000, var = 1.2500
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># PDF comparison - skewed
+x_range = np.linspace(-4, 8, 400)
+
+vg_pdf = vg_skew.pdf(x_range.reshape(-1, 1)).flatten()
+ninvg_pdf = ninvg_skew.pdf(x_range.reshape(-1, 1)).flatten()
+nig_pdf = nig_skew.pdf(x_range.reshape(-1, 1)).flatten()
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Linear scale
+axes[0].plot(x_range, vg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;Variance Gamma&#39;)
+axes[0].plot(x_range, ninvg_pdf, &#39;r-&#39;, linewidth=2, label=&#39;Normal Inverse Gamma&#39;)
+axes[0].plot(x_range, nig_pdf, &#39;g-&#39;, linewidth=2, label=&#39;Normal Inverse Gaussian&#39;)
+axes[0].set_xlabel(&#39;X&#39;, fontsize=12)
+axes[0].set_ylabel(&#39;Density&#39;, fontsize=12)
+axes[0].set_title(f&#39;PDF Comparison (Right-Skewed, γ={gamma_val})&#39;, fontsize=14)
+axes[0].legend()
+
+# Log scale for tail comparison
+axes[1].semilogy(x_range, vg_pdf, &#39;b-&#39;, linewidth=2, label=&#39;VG&#39;)
+axes[1].semilogy(x_range, ninvg_pdf, &#39;r-&#39;, linewidth=2, label=&#39;NInvG&#39;)
+axes[1].semilogy(x_range, nig_pdf, &#39;g-&#39;, linewidth=2, label=&#39;NIG&#39;)
+axes[1].set_xlabel(&#39;X&#39;, fontsize=12)
+axes[1].set_ylabel(&#39;Density (log scale)&#39;, fontsize=12)
+axes[1].set_title(&#39;Tail Comparison (Log Scale)&#39;, fontsize=14)
+axes[1].legend()
+axes[1].set_ylim(1e-6, 1)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_7_0.png" src="../_images/notebooks_mixture_distributions_comparison_7_0.png" />
+</div>
+</div>
+</section>
+<section id="3.-Sample-Statistics-Comparison">
+<h2>3. Sample Statistics Comparison<a class="headerlink" href="#3.-Sample-Statistics-Comparison" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Generate samples and compute statistics
+n_samples = 100000
+
+vg_samples = vg_sym.rvs(size=n_samples, random_state=42).flatten()
+ninvg_samples = ninvg_sym.rvs(size=n_samples, random_state=42).flatten()
+nig_samples = nig_sym.rvs(size=n_samples, random_state=42).flatten()
+normal_samples = stats.norm(0, 1).rvs(size=n_samples, random_state=42)
+
+print(&quot;Sample Statistics (Symmetric Distributions)&quot;)
+print(&quot;=&quot;*70)
+print(f&quot;{&#39;Distribution&#39;:&lt;15} {&#39;Mean&#39;:&gt;10} {&#39;Std&#39;:&gt;10} {&#39;Skewness&#39;:&gt;12} {&#39;Kurtosis&#39;:&gt;12}&quot;)
+print(&quot;-&quot;*70)
+
+for name, samples in [(&#39;VG&#39;, vg_samples), (&#39;NInvG&#39;, ninvg_samples),
+                       (&#39;NIG&#39;, nig_samples), (&#39;Normal&#39;, normal_samples)]:
+    print(f&quot;{name:&lt;15} {np.mean(samples):&gt;10.4f} {np.std(samples):&gt;10.4f} &quot;
+          f&quot;{stats.skew(samples):&gt;12.4f} {stats.kurtosis(samples):&gt;12.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Sample Statistics (Symmetric Distributions)
+======================================================================
+Distribution          Mean        Std     Skewness     Kurtosis
+----------------------------------------------------------------------
+VG                  0.0036     1.4115      -0.0003       1.5262
+NInvG               0.0011     0.7070      -0.0416       2.5453
+NIG                 0.0023     0.9982       0.0319       2.9578
+Normal              0.0010     1.0009      -0.0018      -0.0080
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Histogram comparison
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+bins = np.linspace(-6, 6, 80)
+
+for ax, (name, samples, color) in zip(axes.flat,
+    [(&#39;Variance Gamma&#39;, vg_samples, &#39;blue&#39;),
+     (&#39;Normal Inverse Gamma&#39;, ninvg_samples, &#39;red&#39;),
+     (&#39;Normal Inverse Gaussian&#39;, nig_samples, &#39;green&#39;),
+     (&#39;Normal&#39;, normal_samples, &#39;gray&#39;)]):
+
+    ax.hist(samples, bins=bins, density=True, alpha=0.7, color=color, label=&#39;Samples&#39;)
+    ax.set_title(name, fontsize=12)
+    ax.set_xlabel(&#39;X&#39;)
+    ax.set_ylabel(&#39;Density&#39;)
+    ax.set_xlim(-6, 6)
+
+    # Add kurtosis annotation
+    kurt = stats.kurtosis(samples)
+    ax.annotate(f&#39;Kurtosis: {kurt:.2f}&#39;, xy=(0.95, 0.95), xycoords=&#39;axes fraction&#39;,
+                ha=&#39;right&#39;, va=&#39;top&#39;, fontsize=10,
+                bbox=dict(boxstyle=&#39;round&#39;, facecolor=&#39;white&#39;, alpha=0.8))
+
+plt.suptitle(&#39;Sample Distributions Comparison&#39;, fontsize=14)
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_10_0.png" src="../_images/notebooks_mixture_distributions_comparison_10_0.png" />
+</div>
+</div>
+</section>
+<section id="4.-Tail-Behavior-Analysis">
+<h2>4. Tail Behavior Analysis<a class="headerlink" href="#4.-Tail-Behavior-Analysis" title="Link to this heading"></a></h2>
+<p>Analyzing the probability of extreme events (tail probabilities).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compute tail probabilities P(|X| &gt; t) for various thresholds
+thresholds = [2, 3, 4, 5]
+
+print(&quot;Tail Probabilities P(|X| &gt; t)&quot;)
+print(&quot;=&quot;*70)
+print(f&quot;{&#39;t&#39;:&gt;6} {&#39;VG&#39;:&gt;12} {&#39;NInvG&#39;:&gt;12} {&#39;NIG&#39;:&gt;12} {&#39;Normal&#39;:&gt;12} {&#39;Student-t&#39;:&gt;12}&quot;)
+print(&quot;-&quot;*70)
+
+normal_dist = stats.norm(0, 1)
+t_dist = stats.t(df=5, scale=np.sqrt(3/5))  # Scaled to have similar variance
+
+for t in thresholds:
+    vg_tail = np.mean(np.abs(vg_samples) &gt; t)
+    ninvg_tail = np.mean(np.abs(ninvg_samples) &gt; t)
+    nig_tail = np.mean(np.abs(nig_samples) &gt; t)
+    normal_tail = 2 * normal_dist.sf(t)
+    t_tail = 2 * t_dist.sf(t)
+
+    print(f&quot;{t:&gt;6} {vg_tail:&gt;12.6f} {ninvg_tail:&gt;12.6f} {nig_tail:&gt;12.6f} &quot;
+          f&quot;{normal_tail:&gt;12.6f} {t_tail:&gt;12.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Tail Probabilities P(|X| &gt; t)
+======================================================================
+     t           VG        NInvG          NIG       Normal    Student-t
+----------------------------------------------------------------------
+     2     0.141580     0.013090     0.054240     0.045500     0.049313
+     3     0.044780     0.002020     0.013660     0.002700     0.011725
+     4     0.013710     0.000390     0.003590     0.000063     0.003573
+     5     0.003900     0.000080     0.000800     0.000001     0.001328
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Q-Q plots against Normal
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+for ax, (name, samples, color) in zip(axes,
+    [(&#39;Variance Gamma&#39;, vg_samples, &#39;blue&#39;),
+     (&#39;Normal Inverse Gamma&#39;, ninvg_samples, &#39;red&#39;),
+     (&#39;Normal Inverse Gaussian&#39;, nig_samples, &#39;green&#39;)]):
+
+    stats.probplot(samples, dist=&#39;norm&#39;, plot=ax)
+    ax.set_title(f&#39;Q-Q Plot: {name} vs Normal&#39;, fontsize=12)
+    ax.get_lines()[0].set_color(color)
+    ax.get_lines()[0].set_alpha(0.5)
+    ax.get_lines()[1].set_color(&#39;black&#39;)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_13_0.png" src="../_images/notebooks_mixture_distributions_comparison_13_0.png" />
+</div>
+</div>
+</section>
+<section id="5.-Effect-of-Mixing-Distribution-Parameters">
+<h2>5. Effect of Mixing Distribution Parameters<a class="headerlink" href="#5.-Effect-of-Mixing-Distribution-Parameters" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Show how mixing distribution shape affects tails
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+x_range = np.linspace(-5, 5, 300)
+
+# VG: vary α (shape of Gamma mixing)
+ax = axes[0]
+for alpha in [1.0, 2.0, 5.0, 10.0]:
+    vg = VarianceGamma.from_classical_params(
+        mu=np.array([0.0]), gamma=np.array([0.0]), sigma=np.array([[1.0]]),
+        shape=alpha, rate=alpha  # Keep E[Y]=1 constant
+    )
+    pdf = vg.pdf(x_range.reshape(-1, 1)).flatten()
+    ax.semilogy(x_range, pdf, linewidth=2, label=f&#39;α={alpha}&#39;)
+ax.set_xlabel(&#39;X&#39;)
+ax.set_ylabel(&#39;Density (log)&#39;)
+ax.set_title(&#39;VG: Effect of Gamma shape α&#39;)
+ax.legend()
+ax.set_ylim(1e-6, 1)
+
+# NInvG: vary α (shape of InvGamma mixing)
+ax = axes[1]
+for alpha in [2.5, 3.0, 5.0, 10.0]:
+    ninvg = NormalInverseGamma.from_classical_params(
+        mu=np.array([0.0]), gamma=np.array([0.0]), sigma=np.array([[1.0]]),
+        shape=alpha, rate=alpha-1  # Keep E[Y]=1 constant (for α&gt;1)
+    )
+    pdf = ninvg.pdf(x_range.reshape(-1, 1)).flatten()
+    ax.semilogy(x_range, pdf, linewidth=2, label=f&#39;α={alpha}&#39;)
+ax.set_xlabel(&#39;X&#39;)
+ax.set_ylabel(&#39;Density (log)&#39;)
+ax.set_title(&#39;NInvG: Effect of InvGamma shape α&#39;)
+ax.legend()
+ax.set_ylim(1e-6, 1)
+
+# NIG: vary η (shape of InvGaussian mixing)
+ax = axes[2]
+for eta in [0.5, 1.0, 2.0, 5.0]:
+    nig = NormalInverseGaussian.from_classical_params(
+        mu=np.array([0.0]), gamma=np.array([0.0]), sigma=np.array([[1.0]]),
+        delta=1.0, eta=eta
+    )
+    pdf = nig.pdf(x_range.reshape(-1, 1)).flatten()
+    ax.semilogy(x_range, pdf, linewidth=2, label=f&#39;η={eta}&#39;)
+ax.set_xlabel(&#39;X&#39;)
+ax.set_ylabel(&#39;Density (log)&#39;)
+ax.set_title(&#39;NIG: Effect of InvGauss shape η&#39;)
+ax.legend()
+ax.set_ylim(1e-6, 1)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_15_0.png" src="../_images/notebooks_mixture_distributions_comparison_15_0.png" />
+</div>
+</div>
+</section>
+<section id="6.-Summary-Table">
+<h2>6. Summary Table<a class="headerlink" href="#6.-Summary-Table" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;\n&quot; + &quot;=&quot;*80)
+print(&quot;SUMMARY: Normal Variance-Mean Mixture Distributions&quot;)
+print(&quot;=&quot;*80)
+
+summary = &quot;&quot;&quot;
+╔══════════════════════╦══════════════════════╦══════════════════════════════╗
+║ Distribution         ║ Mixing Y             ║ Key Characteristics          ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Variance Gamma       ║ Gamma(α, β)          ║ • Semi-heavy tails           ║
+║                      ║                      ║ • Flexible kurtosis          ║
+║                      ║                      ║ • Popular in finance         ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Normal Inverse Gamma ║ InvGamma(α, β)       ║ • Heavy tails (Student-t)    ║
+║                      ║                      ║ • Requires α &gt; 2 for var     ║
+║                      ║                      ║ • Good for outlier-prone     ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Normal Inverse       ║ InvGauss(δ, η)       ║ • Semi-heavy tails           ║
+║ Gaussian             ║                      ║ • Special case of GH (p=-½)  ║
+║                      ║                      ║ • Good fit for asset returns ║
+╚══════════════════════╩══════════════════════╩══════════════════════════════╝
+
+Common Properties:
+• All are normal variance-mean mixtures: X|Y ~ N(μ + γY, ΣY)
+• Joint distribution (X,Y) is exponential family → closed-form MLE
+• Marginal distribution f(x) is NOT exponential family → requires EM
+• Skewness controlled by γ (γ=0 → symmetric)
+• All have heavier tails than Normal distribution
+&quot;&quot;&quot;
+
+print(summary)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+================================================================================
+SUMMARY: Normal Variance-Mean Mixture Distributions
+================================================================================
+
+╔══════════════════════╦══════════════════════╦══════════════════════════════╗
+║ Distribution         ║ Mixing Y             ║ Key Characteristics          ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Variance Gamma       ║ Gamma(α, β)          ║ • Semi-heavy tails           ║
+║                      ║                      ║ • Flexible kurtosis          ║
+║                      ║                      ║ • Popular in finance         ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Normal Inverse Gamma ║ InvGamma(α, β)       ║ • Heavy tails (Student-t)    ║
+║                      ║                      ║ • Requires α &gt; 2 for var     ║
+║                      ║                      ║ • Good for outlier-prone     ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════╣
+║ Normal Inverse       ║ InvGauss(δ, η)       ║ • Semi-heavy tails           ║
+║ Gaussian             ║                      ║ • Special case of GH (p=-½)  ║
+║                      ║                      ║ • Good fit for asset returns ║
+╚══════════════════════╩══════════════════════╩══════════════════════════════╝
+
+Common Properties:
+• All are normal variance-mean mixtures: X|Y ~ N(μ + γY, ΣY)
+• Joint distribution (X,Y) is exponential family → closed-form MLE
+• Marginal distribution f(x) is NOT exponential family → requires EM
+• Skewness controlled by γ (γ=0 → symmetric)
+• All have heavier tails than Normal distribution
+
+</pre></div></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="6.-Generalized-Hyperbolic:-The-Unifying-Distribution">
+<h2>6. Generalized Hyperbolic: The Unifying Distribution<a class="headerlink" href="#6.-Generalized-Hyperbolic:-The-Unifying-Distribution" title="Link to this heading"></a></h2>
+<p>The Generalized Hyperbolic (GH) distribution is the <strong>most general</strong> normal variance-mean mixture. All other distributions are special cases:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Special Case</p></th>
+<th class="head"><p>GIG Parameters</p></th>
+<th class="head"><p>Condition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Variance Gamma</p></td>
+<td><p><span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(p &gt; 0\)</span></p></td>
+<td><p>Gamma mixing</p></td>
+</tr>
+<tr class="row-odd"><td><p>Normal-Inverse Gaussian</p></td>
+<td><p><span class="math notranslate nohighlight">\(p = -1/2\)</span></p></td>
+<td><p>IG mixing</p></td>
+</tr>
+<tr class="row-even"><td><p>Normal-Inverse Gamma</p></td>
+<td><p><span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(p &lt; 0\)</span></p></td>
+<td><p>InvGamma mixing</p></td>
+</tr>
+</tbody>
+</table>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create a general GH distribution
+gh = GeneralizedHyperbolic.from_classical_params(
+    mu=np.array([0.0]),
+    gamma=np.array([0.5]),
+    sigma=np.array([[1.0]]),
+    p=1.0,
+    a=1.0,
+    b=1.0
+)
+
+print(&quot;Generalized Hyperbolic distribution created.&quot;)
+print(f&quot;Mean: {gh.mean()[0]:.4f}&quot;)
+print(f&quot;Variance: {gh.var()[0]:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Generalized Hyperbolic distribution created.
+Mean: 1.3497
+Variance: 3.8272
+</pre></div></div>
+</div>
+<section id="6.1-Verifying-Special-Cases">
+<h3>6.1 Verifying Special Cases<a class="headerlink" href="#6.1-Verifying-Special-Cases" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Test parameters
+mu = np.array([0.0])
+gamma = np.array([0.5])
+sigma = np.array([[1.0]])
+
+x = np.linspace(-4, 6, 300)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# NIG comparison
+ax = axes[0]
+nig_params = {&#39;delta&#39;: 1.0, &#39;eta&#39;: 1.0}
+nig = NormalInverseGaussian.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **nig_params)
+gh_nig = GeneralizedHyperbolic.as_normal_inverse_gaussian(mu=mu, gamma=gamma, sigma=sigma, **nig_params)
+
+nig_pdf = nig.pdf(x.reshape(-1, 1)).flatten()
+gh_nig_pdf = np.array([gh_nig.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, nig_pdf, &#39;b-&#39;, linewidth=2.5, label=&#39;NIG&#39;)
+ax.plot(x, gh_nig_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (p=-0.5)&#39;)
+ax.set_title(&#39;Normal-Inverse Gaussian&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# NInvG comparison
+ax = axes[1]
+ninvg_params = {&#39;shape&#39;: 3.0, &#39;rate&#39;: 1.0}
+ninvg = NormalInverseGamma.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **ninvg_params)
+gh_ninvg = GeneralizedHyperbolic.as_normal_inverse_gamma(mu=mu, gamma=gamma, sigma=sigma, **ninvg_params)
+
+ninvg_pdf = ninvg.pdf(x.reshape(-1, 1)).flatten()
+gh_ninvg_pdf = np.array([gh_ninvg.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, ninvg_pdf, &#39;b-&#39;, linewidth=2.5, label=&#39;NInvG&#39;)
+ax.plot(x, gh_ninvg_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (a→0)&#39;)
+ax.set_title(&#39;Normal-Inverse Gamma&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# VG comparison
+ax = axes[2]
+vg_params = {&#39;shape&#39;: 2.0, &#39;rate&#39;: 1.0}
+vg = VarianceGamma.from_classical_params(mu=mu, gamma=gamma, sigma=sigma, **vg_params)
+gh_vg = GeneralizedHyperbolic.as_variance_gamma(mu=mu, gamma=gamma, sigma=sigma, **vg_params)
+
+vg_pdf = vg.pdf(x.reshape(-1, 1)).flatten()
+gh_vg_pdf = np.array([gh_vg.pdf(np.array([xi])) for xi in x])
+
+ax.plot(x, vg_pdf, &#39;b-&#39;, linewidth=2.5, label=&#39;VG&#39;)
+ax.plot(x, gh_vg_pdf, &#39;r--&#39;, linewidth=2, label=&#39;GH (b→0)&#39;)
+ax.set_title(&#39;Variance Gamma&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+plt.suptitle(&#39;GH Special Cases Match Dedicated Implementations&#39;, fontsize=14, y=1.02)
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_21_0.png" src="../_images/notebooks_mixture_distributions_comparison_21_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Quantitative comparison of means
+print(&quot;=&quot; * 60)
+print(&quot;Mean Comparison: GH Special Cases vs Dedicated Implementations&quot;)
+print(&quot;=&quot; * 60)
+print(f&quot;\nNIG:   NIG mean = {nig.mean()[0]:.6f}, GH(p=-0.5) mean = {gh_nig.mean()[0]:.6f}&quot;)
+print(f&quot;NInvG: NInvG mean = {ninvg.mean()[0]:.6f}, GH(a→0) mean = {gh_ninvg.mean()[0]:.6f}&quot;)
+print(f&quot;VG:    VG mean = {vg.mean()[0]:.6f}, GH(b→0) mean = {gh_vg.mean()[0]:.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+============================================================
+Mean Comparison: GH Special Cases vs Dedicated Implementations
+============================================================
+
+NIG:   NIG mean = 0.500000, GH(p=-0.5) mean = 0.500000
+NInvG: NInvG mean = 0.250000, GH(a→0) mean = 0.250000
+VG:    VG mean = 1.000000, GH(b→0) mean = 1.000000
+</pre></div></div>
+</div>
+</section>
+<section id="6.2-Effect-of-GIG-Parameters">
+<h3>6.2 Effect of GIG Parameters<a class="headerlink" href="#6.2-Effect-of-GIG-Parameters" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Effect of GIG parameters on GH distribution
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+x = np.linspace(-5, 5, 300)
+base_mu = np.array([0.0])
+base_gamma = np.array([0.3])
+base_sigma = np.array([[1.0]])
+
+# Effect of p
+ax = axes[0]
+for p in [-1.0, -0.5, 0.0, 1.0, 2.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=p, a=1.0, b=1.0
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;p={p}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of p (GIG shape)&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# Effect of a
+ax = axes[1]
+for a in [0.5, 1.0, 2.0, 5.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=1.0, a=a, b=1.0
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;a={a}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of a (rate for y)&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+# Effect of b
+ax = axes[2]
+for b in [0.5, 1.0, 2.0, 5.0]:
+    try:
+        gh = GeneralizedHyperbolic.from_classical_params(
+            mu=base_mu, gamma=base_gamma, sigma=base_sigma, p=1.0, a=1.0, b=b
+        )
+        pdf = np.array([gh.pdf(np.array([xi])) for xi in x])
+        ax.plot(x, pdf, label=f&#39;b={b}&#39;)
+    except:
+        pass
+ax.set_title(&#39;Effect of b (rate for 1/y)&#39;, fontsize=12)
+ax.set_xlabel(&#39;x&#39;)
+ax.set_ylabel(&#39;PDF&#39;)
+ax.legend()
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_mixture_distributions_comparison_24_0.png" src="../_images/notebooks_mixture_distributions_comparison_24_0.png" />
+</div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="Summary">
+<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>All distributions</strong> in this family are normal variance-mean mixtures</p></li>
+<li><p><strong>NInvG</strong> has the heaviest tails (similar to Student-t)</p></li>
+<li><p><strong>VG</strong> and <strong>NIG</strong> have semi-heavy tails</p></li>
+<li><p><strong>Skewness</strong> is controlled by the <span class="math notranslate nohighlight">\(\gamma\)</span> parameter</p></li>
+<li><p><strong>GH</strong> is the most general form, unifying all special cases</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generalized_hyperbolic_distribution.html" class="btn btn-neutral float-left" title="Generalized Hyperbolic (GH) Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sp500_index_empirical_study.html" class="btn btn-neutral float-right" title="S&amp;P 500 Empirical Study: Distribution Comparison" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

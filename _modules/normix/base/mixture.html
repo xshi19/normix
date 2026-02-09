@@ -1,0 +1,1726 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>normix.base.mixture &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">normix.base.mixture</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for normix.base.mixture</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base classes for normal mixture distributions.</span>
+
+<span class="sd">Normal mixture distributions have the form:</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    X \\stackrel{d}{=} \\mu + \\gamma Y + \\sqrt{Y} Z</span>
+
+<span class="sd">where :math:`Z \\sim N(0, \\Sigma)` is a Gaussian random vector independent of</span>
+<span class="sd">:math:`Y`, and :math:`Y` follows some positive mixing distribution (GIG, Gamma,</span>
+<span class="sd">Inverse Gaussian, etc.).</span>
+
+<span class="sd">This module provides two abstract base classes:</span>
+
+<span class="sd">1. **JointNormalMixture**: The joint distribution :math:`f(x, y)` which IS an</span>
+<span class="sd">   exponential family. This class extends :class:`ExponentialFamily`.</span>
+
+<span class="sd">2. **NormalMixture**: The marginal distribution :math:`f(x) = \\int f(x, y) dy`</span>
+<span class="sd">   which is NOT an exponential family. This class extends :class:`Distribution`</span>
+<span class="sd">   and owns a :class:`JointNormalMixture` instance accessible via the ``.joint``</span>
+<span class="sd">   property.</span>
+
+<span class="sd">The key insight is that while the marginal distribution of :math:`X` (with</span>
+<span class="sd">:math:`Y` integrated out) does not belong to the exponential family, the</span>
+<span class="sd">joint distribution :math:`(X, Y)` does belong to the exponential family</span>
+<span class="sd">when both variables are observed.</span>
+
+<span class="sd">Method naming convention:</span>
+
+<span class="sd">- ``pdf(x)``: Marginal PDF :math:`f(x)` (on NormalMixture)</span>
+<span class="sd">- ``joint.pdf(x, y)``: Joint PDF :math:`f(x, y)` (via .joint property)</span>
+<span class="sd">- ``pdf_joint(x, y)``: Convenience alias for ``joint.pdf(x, y)``</span>
+<span class="sd">- ``rvs(size)``: Sample from marginal (returns X only)</span>
+<span class="sd">- ``rvs_joint(size)``: Sample from joint (returns X, Y tuple)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cholesky</span><span class="p">,</span> <span class="n">cho_solve</span><span class="p">,</span> <span class="n">solve_triangular</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Distribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># JointNormalMixture: Base class for joint distributions f(x, y)</span>
+<span class="c1"># ============================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JointNormalMixture</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for joint normal mixture distributions :math:`f(x, y)`.</span>
+
+<span class="sd">    The joint distribution of :math:`(X, Y)` where:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)</span>
+
+<span class="sd">        Y \\sim \\text{Mixing distribution}</span>
+
+<span class="sd">    This joint distribution belongs to the exponential family with sufficient</span>
+<span class="sd">    statistics:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        t(x, y) = \\begin{pmatrix} \\log y \\\\ y^{-1} \\\\ y \\\\ x \\\\ x y^{-1} \\\\ x x^T y^{-1} \\end{pmatrix}</span>
+
+<span class="sd">    The natural parameters are derived from the classical parameters</span>
+<span class="sd">    :math:`(\\mu, \\gamma, \\Sigma, \\text{mixing params})`.</span>
+
+<span class="sd">    Subclasses must implement:</span>
+
+<span class="sd">    - :meth:`_get_mixing_distribution_class`: Return the mixing distribution class</span>
+<span class="sd">    - :meth:`_mixing_natural_params`: Extract mixing distribution natural params</span>
+<span class="sd">    - :meth:`_mixing_sufficient_statistics`: Compute mixing dist sufficient stats</span>
+<span class="sd">    - :meth:`_mixing_log_partition`: Compute mixing distribution log partition</span>
+<span class="sd">    - :meth:`_classical_to_natural`: Convert classical to natural parameters</span>
+<span class="sd">    - :meth:`_natural_to_classical`: Convert natural to classical parameters</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _d : int or None</span>
+<span class="sd">        Dimension of the observed variable :math:`X`.</span>
+<span class="sd">    _natural_params : tuple or None</span>
+<span class="sd">        Internal storage for natural parameters.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    NormalMixture : Marginal distribution (owns a JointNormalMixture)</span>
+<span class="sd">    ExponentialFamily : Parent class providing exponential family methods</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cached_attrs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ExponentialFamily</span><span class="o">.</span><span class="n">_cached_attrs</span> <span class="o">+</span> <span class="p">(</span>
+        <span class="s1">&#39;log_det_Sigma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma_inv&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma_mahal_sq&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a joint normal mixture distribution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d : int, optional</span>
+<span class="sd">            Dimension of the observed variable X. Can be inferred from parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="c1"># Internal state: normal distribution parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Lower Cholesky of Sigma</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dimension of the observed variable X.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Dimension not set. Use from_*_params() first.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Abstract methods for mixing distribution</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_mixing_distribution_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">ExponentialFamily</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the class of the mixing distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cls : Type[ExponentialFamily]</span>
+<span class="sd">            The mixing distribution class (e.g., Gamma, InverseGaussian, GIG).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_mixing_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract mixing distribution natural parameters from joint natural params.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Full natural parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta_y : ndarray</span>
+<span class="sd">            Natural parameters for the mixing distribution of Y.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Helper methods for parameter extraction (shared across all subclasses)</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_normal_params_from_theta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">symmetrize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract normal distribution parameters from natural parameter vector.</span>
+
+<span class="sd">        This helper method centralizes the common calculation of extracting</span>
+<span class="sd">        :math:`(\\Lambda, \\Sigma, \\mu, \\gamma)` from the natural parameters,</span>
+<span class="sd">        avoiding code duplication across multiple methods.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Full natural parameter vector.</span>
+<span class="sd">        symmetrize : bool, optional</span>
+<span class="sd">            Whether to symmetrize Lambda for numerical stability.</span>
+<span class="sd">            Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Lambda : ndarray</span>
+<span class="sd">            Precision matrix :math:`\\Lambda = \\Sigma^{-1}`, shape (d, d).</span>
+<span class="sd">        Sigma : ndarray</span>
+<span class="sd">            Covariance scale matrix :math:`\\Sigma`, shape (d, d).</span>
+<span class="sd">        mu : ndarray</span>
+<span class="sd">            Location parameter :math:`\\mu`, shape (d,).</span>
+<span class="sd">        gamma : ndarray</span>
+<span class="sd">            Skewness parameter :math:`\\gamma`, shape (d,).</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method delegates to :meth:`_extract_normal_params_with_cholesky`</span>
+<span class="sd">        and recovers Lambda from its Cholesky factor.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        _extract_normal_params_with_cholesky : Core implementation using Cholesky.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Delegate to Cholesky version and recover Lambda from L @ L.T</span>
+        <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_normal_params_with_cholesky</span><span class="p">(</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">symmetrize</span><span class="o">=</span><span class="n">symmetrize</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="n">L_Lambda</span> <span class="o">@</span> <span class="n">L_Lambda</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">return</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_normal_params_with_cholesky</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">symmetrize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">return_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract normal parameters using Cholesky decomposition.</span>
+
+<span class="sd">        More numerically efficient than :meth:`_extract_normal_params_from_theta`</span>
+<span class="sd">        for computing log determinants and avoids explicit matrix inversion when</span>
+<span class="sd">        only :math:`\\mu` and :math:`\\gamma` are needed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Full natural parameter vector.</span>
+<span class="sd">        symmetrize : bool, optional</span>
+<span class="sd">            Whether to symmetrize Lambda for numerical stability. Default False.</span>
+<span class="sd">        return_sigma : bool, optional</span>
+<span class="sd">            If True, also compute and return Sigma. Default False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        L_Lambda : ndarray</span>
+<span class="sd">            Lower Cholesky factor of precision matrix, shape (d, d).</span>
+<span class="sd">            Satisfies :math:`\\Lambda = L_{\\Lambda} L_{\\Lambda}^T`.</span>
+<span class="sd">        log_det_Lambda : float</span>
+<span class="sd">            Log determinant of Lambda: :math:`\\log|\\Lambda| = 2 \\sum_i \\log L_{ii}`.</span>
+<span class="sd">        mu : ndarray</span>
+<span class="sd">            Location parameter :math:`\\mu`, shape (d,).</span>
+<span class="sd">        gamma : ndarray</span>
+<span class="sd">            Skewness parameter :math:`\\gamma`, shape (d,).</span>
+<span class="sd">        Sigma : ndarray, optional</span>
+<span class="sd">            Covariance scale matrix, shape (d, d). Only returned if ``return_sigma=True``.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Instead of computing :math:`\\Sigma = \\Lambda^{-1}` explicitly, this method</span>
+<span class="sd">        solves the linear systems :math:`\\Lambda \\mu = \\theta_5` and</span>
+<span class="sd">        :math:`\\Lambda \\gamma = \\theta_4` using Cholesky factorization via</span>
+<span class="sd">        :func:`scipy.linalg.cho_solve`.</span>
+
+<span class="sd">        The log determinant is computed as:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\log|\\Lambda| = 2 \\sum_{i=1}^{d} \\log L_{ii}</span>
+
+<span class="sd">        where :math:`L` is the lower Cholesky factor.</span>
+
+<span class="sd">        If ``return_sigma=True``, the covariance matrix is computed by solving</span>
+<span class="sd">        :math:`L_{\\Lambda} L_{\\Sigma}^T = I`, giving the Cholesky factor of Sigma,</span>
+<span class="sd">        then :math:`\\Sigma = L_{\\Sigma} L_{\\Sigma}^T`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+        <span class="n">theta_4</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">]</span>  <span class="c1"># Λγ</span>
+        <span class="n">theta_5</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">]</span>  <span class="c1"># Λμ</span>
+        <span class="n">theta_6</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>  <span class="c1"># -1/2 Λ</span>
+
+        <span class="c1"># Recover Λ from θ₆ = -1/2 Λ</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta_6</span>
+
+        <span class="k">if</span> <span class="n">symmetrize</span><span class="p">:</span>
+            <span class="n">Lambda</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Cholesky factorization: Λ = L @ L.T</span>
+        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Log determinant: log|Λ| = 2 * Σ log(L_ii)</span>
+        <span class="n">log_det_Lambda</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">)))</span>
+
+        <span class="c1"># Solve Λ @ μ = θ₅ and Λ @ γ = θ₄ using Cholesky factorization</span>
+        <span class="c1"># cho_solve takes (L, lower) tuple and solves L @ L.T @ x = b</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">theta_5</span><span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">theta_4</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">return_sigma</span><span class="p">:</span>
+            <span class="c1"># Compute L_Sigma where Sigma = L_Sigma @ L_Sigma.T</span>
+            <span class="c1"># From L_Lambda @ L_Lambda.T = Lambda, we have Sigma = inv(Lambda)</span>
+            <span class="c1"># L_Sigma = inv(L_Lambda).T, so solve L_Lambda @ L_Sigma.T = I</span>
+            <span class="c1"># which gives L_Sigma.T = inv(L_Lambda) (lower triangular)</span>
+            <span class="c1"># Then L_Sigma = inv(L_Lambda).T (upper triangular -&gt; transpose to lower)</span>
+            <span class="n">L_Sigma_T</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L_Sigma_T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_Sigma_T</span>
+            <span class="k">return</span> <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">log_det_Lambda</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span>
+
+        <span class="k">return</span> <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">log_det_Lambda</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_normal_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract normal distribution parameters from joint natural params.</span>
+
+<span class="sd">        Convenience method that returns the most commonly needed parameters</span>
+<span class="sd">        :math:`(\\mu, \\gamma, \\Sigma)`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Full natural parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mu : ndarray</span>
+<span class="sd">            Location parameter :math:`\\mu`, shape (d,).</span>
+<span class="sd">        gamma : ndarray</span>
+<span class="sd">            Skewness parameter :math:`\\gamma`, shape (d,).</span>
+<span class="sd">        Sigma : ndarray</span>
+<span class="sd">            Covariance scale matrix :math:`\\Sigma`, shape (d, d).</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        _extract_normal_params_from_theta : Returns (Lambda, Sigma, mu, gamma).</span>
+<span class="sd">        _extract_normal_params_with_cholesky : Cholesky-based version for efficiency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_normal_params_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Internal state management</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set internal state from natural parameters.</span>
+
+<span class="sd">        Extracts and stores :math:`\\mu`, :math:`\\gamma`, and the Cholesky</span>
+<span class="sd">        factor of :math:`\\Sigma` alongside the legacy tuple storage.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Full natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="c1"># Infer dimension if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># theta has 3 + 2d + d^2 entries</span>
+            <span class="c1"># Solve d^2 + 2d + 3 - len(theta) = 0</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+            <span class="c1"># d^2 + 2d + 3 = n =&gt; d = (-2 + sqrt(4 + 4*(n-3))) / 2</span>
+            <span class="n">disc</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">disc</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span> <span class="o">+</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot infer d from parameter length </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
+
+        <span class="c1"># Validate and store legacy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Extract normal params via Cholesky</span>
+        <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_normal_params_with_cholesky</span><span class="p">(</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">symmetrize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Store internal state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="n">mu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">L_Sigma</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute classical parameters from internal state.</span>
+
+<span class="sd">        Delegates to the legacy ``_natural_to_classical`` for now.</span>
+<span class="sd">        Subclasses will override when migrated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_natural_to_classical</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Cached derived quantities</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_det_Sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log-determinant of the covariance scale matrix (cached).</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \log|\Sigma| = 2 \sum_{i=1}^d \log (L_\Sigma)_{ii}</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        log_det : float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">)))</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">L_Sigma_inv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse of the lower Cholesky factor of Sigma (cached).</span>
+
+<span class="sd">        :math:`L_\Sigma^{-1}` such that :math:`\Sigma^{-1} = L_\Sigma^{-T} L_\Sigma^{-1}`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        L_inv : ndarray, shape ``(d, d)``</span>
+<span class="sd">            Lower triangular matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gamma_mahal_sq</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mahalanobis norm of gamma: :math:`\gamma^T \Sigma^{-1} \gamma` (cached).</span>
+
+<span class="sd">        Used in marginal PDF computations.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mahal_sq : float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">z</span> <span class="o">@</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Backward-compatible Cholesky factor access</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture.get_L_Sigma">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.get_L_Sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_L_Sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the lower Cholesky factor of Sigma and its log determinant.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        L_Sigma : ndarray</span>
+<span class="sd">            Lower Cholesky factor of Sigma, shape (d, d).</span>
+<span class="sd">        log_det_Sigma : float</span>
+<span class="sd">            Log determinant of Sigma.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method now delegates to the internal ``_L_Sigma`` attribute</span>
+<span class="sd">        and the ``log_det_Sigma`` cached property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_det_Sigma</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.set_L_Sigma">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.set_L_Sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_L_Sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the Cholesky factor of Sigma.</span>
+
+<span class="sd">        Used by the M-step of the EM algorithm.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        L_Sigma : ndarray</span>
+<span class="sd">            Cholesky factor of Sigma, shape (d, d).</span>
+<span class="sd">        lower : bool, default True</span>
+<span class="sd">            If True, L_Sigma is lower triangular.</span>
+<span class="sd">            If False, converts to lower triangular.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">lower</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">L_Sigma</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c1"># Invalidate cached properties that depend on L_Sigma</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;log_det_Sigma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma_inv&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma_mahal_sq&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.clear_L_Sigma_cache">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.clear_L_Sigma_cache">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_L_Sigma_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear cached Cholesky-derived quantities (backward compat).&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;log_det_Sigma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma_inv&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma_mahal_sq&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Exponential family components</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sufficient_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute sufficient statistics :math:`t(x, y)`.</span>
+
+<span class="sd">        The sufficient statistics for the joint normal mixture are:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            t(x, y) = [\\log y, y^{-1}, y, x, x y^{-1}, \\text{vec}(x x^T y^{-1})]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed values of X. Shape (d,) or (n, d).</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed values of Y. Shape () or (n,).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        t : ndarray</span>
+<span class="sd">            Sufficient statistics. For single observation: shape (3 + 2d + d²,).</span>
+<span class="sd">            For n observations: shape (n, 3 + 2d + d²).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+        <span class="c1"># Handle single observation</span>
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">y_scalar</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="n">d</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected x of dimension </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">inv_y</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">y_scalar</span>
+            <span class="n">x_inv_y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">inv_y</span>
+            <span class="n">xxT_inv_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv_y</span>
+
+            <span class="c1"># Stack: [log(y), 1/y, y, x, x/y, vec(xxT/y)]</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y_scalar</span><span class="p">),</span> <span class="n">inv_y</span><span class="p">,</span> <span class="n">y_scalar</span><span class="p">],</span>
+                <span class="n">x</span><span class="p">,</span>
+                <span class="n">x_inv_y</span><span class="p">,</span>
+                <span class="n">xxT_inv_y</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="p">])</span>
+
+        <span class="c1"># Handle multiple observations</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x has </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> samples but y has </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected x of dimension </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Vectorized computation of all statistics</span>
+        <span class="n">inv_y</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">y</span>  <span class="c1"># (n,)</span>
+        <span class="n">x_inv_y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">y</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>  <span class="c1"># (n, d)</span>
+
+        <span class="c1"># Compute xx^T / y for all samples: (n, d, d) -&gt; (n, d*d)</span>
+        <span class="c1"># xxT_inv_y[i] = outer(x[i], x[i]) / y[i]</span>
+        <span class="n">xxT_inv_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj-&gt;nij&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="n">y</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">xxT_inv_y_flat</span> <span class="o">=</span> <span class="n">xxT_inv_y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span><span class="p">)</span>  <span class="c1"># (n, d*d)</span>
+
+        <span class="c1"># Stack all statistics: [log(y), 1/y, y, x, x/y, vec(xxT/y)]</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>      <span class="c1"># (n,)</span>
+            <span class="n">inv_y</span><span class="p">,</span>          <span class="c1"># (n,)</span>
+            <span class="n">y</span><span class="p">,</span>              <span class="c1"># (n,)</span>
+            <span class="n">x</span><span class="p">,</span>              <span class="c1"># (n, d)</span>
+            <span class="n">x_inv_y</span><span class="p">,</span>        <span class="c1"># (n, d)</span>
+            <span class="n">xxT_inv_y_flat</span>  <span class="c1"># (n, d*d)</span>
+        <span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">t</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log base measure: :math:`\\log h(x, y) = -\\frac{d}{2} \\log(2\\pi)` for :math:`y &gt; 0`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed values of X.</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed values of Y.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        log_h : ndarray</span>
+<span class="sd">            Log base measure value(s). Returns -inf for y &lt;= 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+        <span class="n">log_h_const</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">log_h_const</span> <span class="k">if</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">log_h_const</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># PDF and log PDF (override for joint distribution signature)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture.pdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.pdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Joint probability density function :math:`f(x, y)`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed values of X. Shape (d,) or (n, d).</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed values of Y. Shape () or (n,).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pdf : ndarray</span>
+<span class="sd">            Joint density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.logpdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.logpdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log joint probability density function :math:`\\log f(x, y)`.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\log f(x, y) = \\log h(x, y) + \\theta^T t(x, y) - \\psi(\\theta)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed values of X. Shape (d,) or (n, d).</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed values of Y. Shape () or (n,).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : ndarray</span>
+<span class="sd">            Log joint density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="n">t_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">log_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="c1"># Handle single vs multiple observations</span>
+        <span class="k">if</span> <span class="n">t_xy</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">log_h_scalar</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_h</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">log_h</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_h</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">log_h_scalar</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">t_xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">log_h</span> <span class="o">+</span> <span class="n">t_xy</span> <span class="o">@</span> <span class="n">theta</span> <span class="o">-</span> <span class="n">psi</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Random sampling</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture.rvs">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate random samples from the joint distribution.</span>
+
+<span class="sd">        Samples :math:`(X, Y)` pairs where:</span>
+
+<span class="sd">        1. :math:`Y \\sim` mixing distribution</span>
+<span class="sd">        2. :math:`X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)`</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int or tuple of ints, optional</span>
+<span class="sd">            Number of samples to generate. If None, returns single sample.</span>
+<span class="sd">        random_state : int or Generator, optional</span>
+<span class="sd">            Random number generator or seed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Sampled X values. Shape (d,) if size is None, (n, d) otherwise.</span>
+<span class="sd">        Y : ndarray</span>
+<span class="sd">            Sampled Y values. Shape () if size is None, (n,) otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="c1"># Set up RNG</span>
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">random_state</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">random_state</span>
+
+        <span class="c1"># Use internal state directly</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+
+        <span class="c1"># Create mixing distribution instance</span>
+        <span class="n">mixing_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_distribution_class</span><span class="p">()</span>
+        <span class="n">mixing_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="n">mixing_class</span><span class="o">.</span><span class="n">from_natural_params</span><span class="p">(</span><span class="n">mixing_theta</span><span class="p">)</span>
+
+        <span class="c1"># Sample Y from mixing distribution</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">mixing_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+
+        <span class="c1"># Sample X | Y ~ N(mu + gamma * Y, Sigma * Y)</span>
+        <span class="c1"># Using the representation: X = mu + gamma * Y + sqrt(Y) * Z, Z ~ N(0, Sigma)</span>
+        <span class="c1"># Since Σ = L @ L.T, we have: Z = L @ W where W ~ N(0, I)</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Single sample</span>
+            <span class="n">Y_scalar</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>  <span class="c1"># W ~ N(0, I)</span>
+            <span class="n">Z</span> <span class="o">=</span> <span class="n">L_Sigma</span> <span class="o">@</span> <span class="n">W</span>  <span class="c1"># Z ~ N(0, Sigma)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">Y_scalar</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Y_scalar</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Multiple samples - vectorized</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">Y_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="c1"># Sample W ~ N(0, I) for all n samples, then transform to Z ~ N(0, Sigma)</span>
+            <span class="c1"># W has shape (n, d), Z = W @ L.T (since Z_i = L @ W_i means Z = W @ L.T in matrix form)</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>  <span class="c1"># (n, d)</span>
+            <span class="n">Z</span> <span class="o">=</span> <span class="n">W</span> <span class="o">@</span> <span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (n, d) @ (d, d) = (n, d), each row is L @ W_i</span>
+
+            <span class="c1"># Vectorized: X = mu + gamma * Y + sqrt(Y) * Z</span>
+            <span class="c1"># Shape: (n, d) = (d,) + (d,) * (n, 1) + (n, d) * (n, 1)</span>
+            <span class="n">sqrt_Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Y_flat</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>  <span class="c1"># (n, 1)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">Y_flat</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">Z</span> <span class="o">*</span> <span class="n">sqrt_Y</span>
+
+            <span class="c1"># Reshape if needed</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="p">(</span><span class="n">d</span><span class="p">,))</span>
+                <span class="n">Y</span> <span class="o">=</span> <span class="n">Y_flat</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Conditional distribution methods</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture.conditional_mean_x_given_y">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.conditional_mean_x_given_y">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conditional_mean_x_given_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conditional mean :math:`E[X | Y = y] = \\mu + \\gamma y`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Conditioning value(s) of Y.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mean : ndarray</span>
+<span class="sd">            Conditional mean of X given Y.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mu</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.conditional_cov_x_given_y">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.conditional_cov_x_given_y">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conditional_cov_x_given_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conditional covariance :math:`\\text{Cov}[X | Y = y] = \\Sigma y`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Conditioning value(s) of Y.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cov : ndarray</span>
+<span class="sd">            Conditional covariance of X given Y.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Sigma</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Return array of covariance matrices</span>
+            <span class="k">return</span> <span class="n">Sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Moments</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="JointNormalMixture.mean">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean of the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        E_X : ndarray</span>
+<span class="sd">            :math:`E[X] = \\mu + \\gamma E[Y]`</span>
+<span class="sd">        E_Y : float</span>
+<span class="sd">            :math:`E[Y]` from the mixing distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+
+        <span class="c1"># Get E[Y] from mixing distribution</span>
+        <span class="n">mixing_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_distribution_class</span><span class="p">()</span>
+        <span class="n">mixing_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="n">mixing_class</span><span class="o">.</span><span class="n">from_natural_params</span><span class="p">(</span><span class="n">mixing_theta</span><span class="p">)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+        <span class="n">E_X</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span>
+
+        <span class="k">return</span> <span class="n">E_X</span><span class="p">,</span> <span class="n">E_Y</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.var">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance of the joint distribution (diagonal of covariance).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Var_X : ndarray</span>
+<span class="sd">            Variance of X (diagonal of covariance matrix)</span>
+<span class="sd">        Var_Y : float</span>
+<span class="sd">            Variance of Y from the mixing distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cov_X</span><span class="p">,</span> <span class="n">var_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov_X</span><span class="p">),</span> <span class="n">var_Y</span></div>
+
+
+<div class="viewcode-block" id="JointNormalMixture.cov">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.cov">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Covariance of the joint distribution.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma \\gamma^T</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Cov_X : ndarray</span>
+<span class="sd">            Covariance matrix of X, shape (d, d)</span>
+<span class="sd">        Var_Y : float</span>
+<span class="sd">            Variance of Y from the mixing distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+
+        <span class="c1"># Get E[Y] and Var[Y] from mixing distribution</span>
+        <span class="n">mixing_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_distribution_class</span><span class="p">()</span>
+        <span class="n">mixing_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mixing_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="n">mixing_class</span><span class="o">.</span><span class="n">from_natural_params</span><span class="p">(</span><span class="n">mixing_theta</span><span class="p">)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">Var_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">var</span><span class="p">())</span>
+
+        <span class="c1"># Cov[X] = E[Y] * Sigma + Var[Y] * gamma * gamma^T</span>
+        <span class="n">Cov_X</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Cov_X</span><span class="p">,</span> <span class="n">Var_Y</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># String representation</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of the joint distribution.&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(d=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="si">}</span><span class="s2">, not fitted)&quot;</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(not fitted)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(d=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># NormalMixture: Base class for marginal distributions f(x)</span>
+<span class="c1"># ============================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NormalMixture</span><span class="p">(</span><span class="n">Distribution</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for marginal normal mixture distributions :math:`f(x)`.</span>
+
+<span class="sd">    The marginal distribution of :math:`X` where:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        f(x) = \\int_0^\\infty f(x, y) \\, dy = \\int_0^\\infty f(x | y) f(y) \\, dy</span>
+
+<span class="sd">    This marginal distribution is NOT an exponential family. However, the joint</span>
+<span class="sd">    distribution :math:`f(x, y)` IS an exponential family and can be accessed</span>
+<span class="sd">    via the :attr:`joint` property.</span>
+
+<span class="sd">    Method naming convention:</span>
+
+<span class="sd">    - ``pdf(x)``: Marginal PDF :math:`f(x)` (default)</span>
+<span class="sd">    - ``joint.pdf(x, y)``: Joint PDF :math:`f(x, y)` (via .joint property)</span>
+<span class="sd">    - ``pdf_joint(x, y)``: Convenience alias for ``joint.pdf(x, y)``</span>
+<span class="sd">    - ``rvs(size)``: Sample from marginal (returns X only)</span>
+<span class="sd">    - ``rvs_joint(size)``: Sample from joint (returns X, Y tuple)</span>
+
+<span class="sd">    Subclasses must implement:</span>
+
+<span class="sd">    - :meth:`_create_joint_distribution`: Factory method to create the joint dist</span>
+<span class="sd">    - :meth:`_marginal_logpdf`: Compute the marginal log PDF</span>
+<span class="sd">    - :meth:`_conditional_expectation_y_given_x`: E[Y | X] for EM algorithm</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _joint : JointNormalMixture or None</span>
+<span class="sd">        The underlying joint distribution instance.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    JointNormalMixture : Joint distribution (exponential family)</span>
+<span class="sd">    Distribution : Parent class defining the scipy-like API</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Access marginal distribution methods (default)</span>
+<span class="sd">    &gt;&gt;&gt; gh = GeneralizedHyperbolic.from_classical_params(mu=0, gamma=1, ...)</span>
+<span class="sd">    &gt;&gt;&gt; gh.pdf(x)  # Marginal PDF f(x)</span>
+<span class="sd">    &gt;&gt;&gt; gh.rvs(size=100)  # Sample X values only</span>
+
+<span class="sd">    &gt;&gt;&gt; # Access joint distribution methods via .joint property</span>
+<span class="sd">    &gt;&gt;&gt; gh.joint.pdf(x, y)  # Joint PDF f(x, y)</span>
+<span class="sd">    &gt;&gt;&gt; gh.joint.sufficient_statistics(x, y)  # Exponential family stats</span>
+<span class="sd">    &gt;&gt;&gt; gh.joint.natural_params  # Natural parameters</span>
+
+<span class="sd">    &gt;&gt;&gt; # Convenience aliases for joint methods</span>
+<span class="sd">    &gt;&gt;&gt; gh.pdf_joint(x, y)  # Same as gh.joint.pdf(x, y)</span>
+<span class="sd">    &gt;&gt;&gt; gh.rvs_joint(size=100)  # Returns (X, Y) tuple</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cached_attrs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an unfitted marginal normal mixture distribution.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">JointNormalMixture</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the marginal distribution is fitted.</span>
+
+<span class="sd">        A NormalMixture is considered fitted if its underlying joint</span>
+<span class="sd">        distribution exists and is fitted. This is necessary because</span>
+<span class="sd">        EM fitting modifies the joint distribution directly, bypassing</span>
+<span class="sd">        the marginal&#39;s setters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Abstract methods</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_joint_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JointNormalMixture</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Factory method to create the underlying joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        joint : JointNormalMixture</span>
+<span class="sd">            A new instance of the corresponding joint distribution class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_marginal_logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the marginal log PDF :math:`\\log f(x)`.</span>
+
+<span class="sd">        This is the distribution-specific implementation that computes</span>
+<span class="sd">        the marginal density by integrating out Y.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate the log PDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : ndarray</span>
+<span class="sd">            Log probability density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_conditional_expectation_y_given_x</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.</span>
+
+<span class="sd">        These conditional expectations are used in the E-step of the EM algorithm.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed X values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        expectations : dict</span>
+<span class="sd">            Dictionary containing:</span>
+<span class="sd">            - &#39;E_Y&#39;: :math:`E[Y | X]`</span>
+<span class="sd">            - &#39;E_inv_Y&#39;: :math:`E[1/Y | X]`</span>
+<span class="sd">            - &#39;E_log_Y&#39;: :math:`E[\\log Y | X]`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Joint distribution access</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JointNormalMixture</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Access the joint distribution :math:`f(x, y)`.</span>
+
+<span class="sd">        The joint distribution is an :class:`ExponentialFamily` with all</span>
+<span class="sd">        associated methods (natural parameters, sufficient statistics,</span>
+<span class="sd">        Fisher information, etc.).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        joint : JointNormalMixture</span>
+<span class="sd">            The underlying joint distribution instance.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; gh = GeneralizedHyperbolic.from_classical_params(...)</span>
+<span class="sd">        &gt;&gt;&gt; gh.joint.pdf(x, y)  # Joint PDF</span>
+<span class="sd">        &gt;&gt;&gt; gh.joint.natural_params  # Natural parameters</span>
+<span class="sd">        &gt;&gt;&gt; gh.joint.sufficient_statistics(x, y)  # Sufficient stats</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Distribution not initialized. Use from_*_params().&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dimension of the distribution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">d</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Factory methods (override to sync with joint)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.from_classical_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.from_classical_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_classical_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from classical parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+<span class="sd">            Common parameters:</span>
+<span class="sd">            - mu : Location parameter (d,)</span>
+<span class="sd">            - gamma : Skewness parameter (d,)</span>
+<span class="sd">            - sigma : Covariance scale matrix (d, d)</span>
+<span class="sd">            - Plus mixing distribution parameters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : NormalMixture</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; gh = GeneralizedHyperbolic.from_classical_params(</span>
+<span class="sd">        ...     mu=0.0, gamma=0.5, sigma=1.0, p=-0.5, a=1.0, b=1.0</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.from_natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.from_natural_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from natural parameters.</span>
+
+<span class="sd">        The natural parameters are those of the joint distribution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : NormalMixture</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.from_expectation_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.from_expectation_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create distribution from expectation parameters.</span>
+
+<span class="sd">        The expectation parameters are those of the joint distribution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : NormalMixture</span>
+<span class="sd">            Distribution instance with parameters set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Parameter setters (delegate to joint)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.set_classical_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.set_classical_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from classical parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Distribution-specific classical parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : NormalMixture</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_joint_distribution</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.set_natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.set_natural_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from natural parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : NormalMixture</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_joint_distribution</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.set_expectation_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.set_expectation_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set parameters from expectation parametrization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector for the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : NormalMixture</span>
+<span class="sd">            Returns self for method chaining.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_joint_distribution</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Parameter getters (delegate to joint)</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Natural parameters :math:`\\theta` of the joint distribution.</span>
+
+<span class="sd">        Note: The marginal distribution itself is not an exponential family,</span>
+<span class="sd">        so these are the natural parameters of the joint distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">natural_params</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classical parameters of the distribution.</span>
+
+<span class="sd">        Delegates to the joint distribution&#39;s classical parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        params : dict</span>
+<span class="sd">            Dictionary of classical parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expectation parameters :math:`\\eta = E[t(X, Y)]` of the joint.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Expectation parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">expectation_params</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Marginal distribution methods (main interface)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.pdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.pdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Marginal probability density function :math:`f(x)`.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            f(x) = \\int_0^\\infty f(x, y) \\, dy</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate the PDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pdf : ndarray</span>
+<span class="sd">            Probability density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.logpdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.logpdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log marginal probability density function :math:`\\log f(x)`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Points at which to evaluate the log PDF.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : ndarray</span>
+<span class="sd">            Log probability density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_marginal_logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.rvs">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate random samples from the marginal distribution.</span>
+
+<span class="sd">        Samples X values only (Y is integrated out).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int or tuple of ints, optional</span>
+<span class="sd">            Number of samples to generate.</span>
+<span class="sd">        random_state : int or Generator, optional</span>
+<span class="sd">            Random number generator or seed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Sampled X values. Shape ``(d,)`` if size is None, else ``(n, d)`` or</span>
+<span class="sd">            ``(*size, d)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rvs_joint</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">X</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Joint distribution convenience methods</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.pdf_joint">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.pdf_joint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf_joint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Joint probability density function :math:`f(x, y)`.</span>
+
+<span class="sd">        Convenience alias for ``self.joint.pdf(x, y)``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed X values.</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed Y values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pdf : ndarray</span>
+<span class="sd">            Joint density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.logpdf_joint">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.logpdf_joint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf_joint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log joint probability density function :math:`\\log f(x, y)`.</span>
+
+<span class="sd">        Convenience alias for ``self.joint.logpdf(x, y)``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : array_like</span>
+<span class="sd">            Observed X values.</span>
+<span class="sd">        y : array_like</span>
+<span class="sd">            Observed Y values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        logpdf : ndarray</span>
+<span class="sd">            Log joint density values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.rvs_joint">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.rvs_joint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs_joint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate random samples from the joint distribution.</span>
+
+<span class="sd">        Samples both X and Y values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int or tuple of ints, optional</span>
+<span class="sd">            Number of samples to generate.</span>
+<span class="sd">        random_state : int or Generator, optional</span>
+<span class="sd">            Random number generator or seed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Sampled X values.</span>
+<span class="sd">        Y : ndarray</span>
+<span class="sd">            Sampled Y values (latent mixing variable).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Moments (marginal)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.mean">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean of the marginal distribution.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            E[X] = \\mu + \\gamma E[Y]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mean : ndarray</span>
+<span class="sd">            Mean vector of X, shape (d,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">E_X</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.var">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance of the marginal distribution (diagonal of covariance).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        var : ndarray</span>
+<span class="sd">            Variance of each component, shape (d,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.cov">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.cov">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Covariance matrix of the marginal distribution.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\text{Cov}[X] = E[Y] \\Sigma + \\text{Var}[Y] \\gamma \\gamma^T</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cov : ndarray</span>
+<span class="sd">            Covariance matrix, shape (d, d).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Cov_X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Cov_X</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.std">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.std">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">std</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Standard deviation of the marginal distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        std : ndarray</span>
+<span class="sd">            Standard deviation of each component, shape (d,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Mixing distribution access</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mixing_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Access the mixing distribution of Y.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mixing : ExponentialFamily</span>
+<span class="sd">            The mixing distribution (e.g., GIG, Gamma, InverseGaussian).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="n">mixing_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">_get_mixing_distribution_class</span><span class="p">()</span>
+        <span class="n">mixing_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">_get_mixing_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mixing_class</span><span class="o">.</span><span class="n">from_natural_params</span><span class="p">(</span><span class="n">mixing_theta</span><span class="p">)</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Fitting (placeholder - to be implemented in subclasses)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="NormalMixture.fit">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit distribution to data using EM algorithm.</span>
+
+<span class="sd">        When only X is observed (Y is latent), uses the EM algorithm.</span>
+<span class="sd">        For complete data (both X and Y observed), use :meth:`fit_complete`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Observed X data, shape (n_samples, d).</span>
+<span class="sd">        y : array_like, optional</span>
+<span class="sd">            Ignored.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional fitting parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : NormalMixture</span>
+<span class="sd">            Fitted distribution.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        Not yet implemented. Placeholder for EM algorithm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;EM fitting not yet implemented. &quot;</span>
+            <span class="s2">&quot;Use fit_complete(X, Y) if you have complete data.&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.fit_complete">
+<a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.NormalMixture.fit_complete">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalMixture&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit distribution from complete data (both X and Y observed).</span>
+
+<span class="sd">        Since the joint distribution is an exponential family, this uses</span>
+<span class="sd">        closed-form MLE.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array_like</span>
+<span class="sd">            Observed X data, shape (n_samples, d).</span>
+<span class="sd">        Y : array_like</span>
+<span class="sd">            Observed Y data, shape (n_samples,).</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional fitting parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : NormalMixture</span>
+<span class="sd">            Fitted distribution.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        Not yet implemented.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Complete data fitting not yet implemented.&quot;</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># String representation</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of the marginal distribution.&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(not fitted)&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">(not fitted)&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

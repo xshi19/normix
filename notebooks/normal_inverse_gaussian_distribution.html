@@ -1,0 +1,877 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Normal Inverse Gaussian Distribution &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generalized Hyperbolic (GH) Distribution" href="generalized_hyperbolic_distribution.html" />
+    <link rel="prev" title="Normal Inverse Gamma Distribution" href="normal_inverse_gamma_distribution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html">Variance Gamma Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="variance_gamma_distribution.html#Summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html">Normal Inverse Gamma Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Part-4:-Connection-to-Student-t-(Symmetric-Case)">Part 4: Connection to Student-t (Symmetric Case)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="normal_inverse_gamma_distribution.html#Summary">Summary</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Normal Inverse Gaussian Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Part-1:-Joint-Distribution-(1D-X)">Part 1: Joint Distribution (1D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Part-2:-Marginal-Distribution-(2D-X)">Part 2: Marginal Distribution (2D X)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Part-3:-Exponential-Family-Structure">Part 3: Exponential Family Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Summary">Summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generalized_hyperbolic_distribution.html">Generalized Hyperbolic (GH) Distribution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">Normal Inverse Gaussian Distribution</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/normal_inverse_gaussian_distribution.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/normal_inverse_gaussian_distribution.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="Normal-Inverse-Gaussian-Distribution">
+<h1>Normal Inverse Gaussian Distribution<a class="headerlink" href="#Normal-Inverse-Gaussian-Distribution" title="Link to this heading"></a></h1>
+<p>This notebook demonstrates the <strong>Normal Inverse Gaussian (NIG)</strong> distribution, a normal variance-mean mixture where the mixing distribution is Inverse Gaussian.</p>
+<section id="Mathematical-Definition">
+<h2>Mathematical Definition<a class="headerlink" href="#Mathematical-Definition" title="Link to this heading"></a></h2>
+<p>The Normal Inverse Gaussian distribution is defined as a normal mixture:</p>
+<div class="math notranslate nohighlight">
+\[X | Y \sim N(\mu + \gamma Y, \Sigma Y)\]</div>
+<div class="math notranslate nohighlight">
+\[Y \sim \text{InvGauss}(\delta, \eta)\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mu \in \mathbb{R}^d\)</span>: location parameter</p></li>
+<li><p><span class="math notranslate nohighlight">\(\gamma \in \mathbb{R}^d\)</span>: skewness parameter</p></li>
+<li><p><span class="math notranslate nohighlight">\(\Sigma \in \mathbb{R}^{d \times d}\)</span>: covariance scale matrix (positive definite)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\delta &gt; 0\)</span>: Inverse Gaussian mean parameter (E[Y] = δ)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\eta &gt; 0\)</span>: Inverse Gaussian shape parameter</p></li>
+</ul>
+</section>
+<section id="Key-Properties">
+<h2>Key Properties<a class="headerlink" href="#Key-Properties" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Formula</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma \delta\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Covariance</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Cov}[X] = \delta \Sigma + \frac{\delta^3}{\eta} \gamma \gamma^T\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="Distribution-Types">
+<h2>Distribution Types<a class="headerlink" href="#Distribution-Types" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Joint distribution</strong> <span class="math notranslate nohighlight">\(f(x, y)\)</span>: Exponential family (tractable)</p></li>
+<li><p><strong>Marginal distribution</strong> <span class="math notranslate nohighlight">\(f(x)\)</span>: NOT exponential family (requires EM for fitting)</p></li>
+</ul>
+</section>
+<section id="Special-Case">
+<h2>Special Case<a class="headerlink" href="#Special-Case" title="Link to this heading"></a></h2>
+<p>NIG is a special case of the <strong>Generalized Hyperbolic</strong> distribution with GIG parameter <span class="math notranslate nohighlight">\(p = -1/2\)</span>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from scipy import stats
+
+from normix.distributions.mixtures import JointNormalInverseGaussian, NormalInverseGaussian
+from normix.distributions.univariate import InverseGaussian
+from normix.utils import (
+    plot_joint_distribution_1d,
+    plot_marginal_distribution_2d,
+    validate_moments,
+    print_moment_validation,
+    fit_and_track_convergence,
+    plot_em_convergence,
+    test_joint_fitting,
+    print_fitting_results
+)
+
+plt.style.use(&#39;seaborn-v0_8-whitegrid&#39;)
+%matplotlib inline
+
+# Consistent styling
+COLORS = {&#39;primary&#39;: &#39;tab:blue&#39;, &#39;secondary&#39;: &#39;tab:red&#39;, &#39;tertiary&#39;: &#39;tab:green&#39;}
+np.set_printoptions(precision=4, suppress=True)
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Parameter-Sets-for-Testing">
+<h2>Parameter Sets for Testing<a class="headerlink" href="#Parameter-Sets-for-Testing" title="Link to this heading"></a></h2>
+<p>We test with three different parameter configurations to demonstrate the distribution’s flexibility.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Define three parameter sets for comprehensive testing
+PARAM_SETS = [
+    {
+        &#39;name&#39;: &#39;Symmetric (γ=0)&#39;,
+        &#39;mu&#39;: np.array([0.0, 0.0]),
+        &#39;gamma&#39;: np.array([0.0, 0.0]),
+        &#39;sigma&#39;: np.array([[1.0, 0.3], [0.3, 1.0]]),
+        &#39;delta&#39;: 1.0,
+        &#39;eta&#39;: 1.0
+    },
+    {
+        &#39;name&#39;: &#39;Right-skewed (γ&gt;0)&#39;,
+        &#39;mu&#39;: np.array([0.0, 0.0]),
+        &#39;gamma&#39;: np.array([0.5, 0.3]),
+        &#39;sigma&#39;: np.array([[1.0, 0.2], [0.2, 1.5]]),
+        &#39;delta&#39;: 1.5,
+        &#39;eta&#39;: 2.0
+    },
+    {
+        &#39;name&#39;: &#39;Left-skewed (γ&lt;0)&#39;,
+        &#39;mu&#39;: np.array([1.0, -0.5]),
+        &#39;gamma&#39;: np.array([-0.4, 0.2]),
+        &#39;sigma&#39;: np.array([[2.0, -0.5], [-0.5, 1.0]]),
+        &#39;delta&#39;: 2.0,
+        &#39;eta&#39;: 1.5
+    }
+]
+
+# Display parameter sets
+for i, params in enumerate(PARAM_SETS):
+    print(f&quot;\nParameter Set {i+1}: {params[&#39;name&#39;]}&quot;)
+    print(f&quot;  μ = {params[&#39;mu&#39;]}&quot;)
+    print(f&quot;  γ = {params[&#39;gamma&#39;]}&quot;)
+    print(f&quot;  δ = {params[&#39;delta&#39;]}, η = {params[&#39;eta&#39;]}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Parameter Set 1: Symmetric (γ=0)
+  μ = [0. 0.]
+  γ = [0. 0.]
+  δ = 1.0, η = 1.0
+
+Parameter Set 2: Right-skewed (γ&gt;0)
+  μ = [0. 0.]
+  γ = [0.5 0.3]
+  δ = 1.5, η = 2.0
+
+Parameter Set 3: Left-skewed (γ&lt;0)
+  μ = [ 1.  -0.5]
+  γ = [-0.4  0.2]
+  δ = 2.0, η = 1.5
+</pre></div></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="Part-1:-Joint-Distribution-(1D-X)">
+<h1>Part 1: Joint Distribution (1D X)<a class="headerlink" href="#Part-1:-Joint-Distribution-(1D-X)" title="Link to this heading"></a></h1>
+<p>The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> is an <strong>exponential family</strong> with natural parameters.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def get_1d_params(params):
+    &quot;&quot;&quot;Extract 1D version of parameters.&quot;&quot;&quot;
+    return {
+        &#39;mu&#39;: np.array([params[&#39;mu&#39;][0]]),
+        &#39;gamma&#39;: np.array([params[&#39;gamma&#39;][0]]),
+        &#39;sigma&#39;: np.array([[params[&#39;sigma&#39;][0, 0]]]),
+        &#39;delta&#39;: params[&#39;delta&#39;],
+        &#39;eta&#39;: params[&#39;eta&#39;]
+    }
+</pre></div>
+</div>
+</div>
+<section id="1.1-Joint-Distribution-Visualization">
+<h2>1.1 Joint Distribution Visualization<a class="headerlink" href="#1.1-Joint-Distribution-Visualization" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>N_SAMPLES = 5000
+
+for i, params in enumerate(PARAM_SETS):
+    params_1d = get_1d_params(params)
+    joint_dist = JointNormalInverseGaussian.from_classical_params(**params_1d)
+
+    print(f&quot;\n{&#39;=&#39;*70}&quot;)
+    print(f&quot;Parameter Set {i+1}: {params[&#39;name&#39;]}&quot;)
+    print(f&quot;{&#39;=&#39;*70}&quot;)
+
+    fig = plot_joint_distribution_1d(
+        joint_dist,
+        n_samples=N_SAMPLES,
+        random_state=42,
+        title=f&quot;Joint Normal Inverse Gaussian - {params[&#39;name&#39;]}&quot;
+    )
+    plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 1: Symmetric (γ=0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_7_1.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_7_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 2: Right-skewed (γ&gt;0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_7_3.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_7_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 3: Left-skewed (γ&lt;0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_7_5.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_7_5.png" />
+</div>
+</div>
+</section>
+<section id="1.2-Moment-Validation-(Joint)">
+<h2>1.2 Moment Validation (Joint)<a class="headerlink" href="#1.2-Moment-Validation-(Joint)" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i, params in enumerate(PARAM_SETS):
+    params_1d = get_1d_params(params)
+    joint_dist = JointNormalInverseGaussian.from_classical_params(**params_1d)
+
+    results = validate_moments(joint_dist, n_samples=50000, random_state=42, is_joint=True)
+    print_moment_validation(results, f&quot;Joint NIG - {params[&#39;name&#39;]}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+============================================================
+Moment Validation: Joint NIG - Symmetric (γ=0)
+============================================================
+X_mean    : sample =    -0.0009, theory =     0.0000, rel_err = 9.03e+06
+Y_mean    : sample =     1.0028, theory =     1.0000, rel_err = 2.79e-03
+X_var     : sample =     1.0206, theory =     1.0000, rel_err = 2.06e-02
+Y_var     : sample =     1.0209, theory =     1.0000, rel_err = 2.09e-02
+
+============================================================
+Moment Validation: Joint NIG - Right-skewed (γ&gt;0)
+============================================================
+X_mean    : sample =     0.7513, theory =     0.7500, rel_err = 1.68e-03
+Y_mean    : sample =     1.5044, theory =     1.5000, rel_err = 2.91e-03
+X_var     : sample =     1.9634, theory =     1.9219, rel_err = 2.16e-02
+Y_var     : sample =     1.7077, theory =     1.6875, rel_err = 1.20e-02
+
+============================================================
+Moment Validation: Joint NIG - Left-skewed (γ&lt;0)
+============================================================
+X_mean    : sample =     0.1963, theory =     0.2000, rel_err = 1.83e-02
+Y_mean    : sample =     2.0050, theory =     2.0000, rel_err = 2.49e-03
+X_var     : sample =     4.9320, theory =     4.8533, rel_err = 1.62e-02
+Y_var     : sample =     5.4041, theory =     5.3333, rel_err = 1.33e-02
+</pre></div></div>
+</div>
+</section>
+<section id="1.3-Joint-Distribution-Fitting-(Exponential-Family-MLE)">
+<h2>1.3 Joint Distribution Fitting (Exponential Family MLE)<a class="headerlink" href="#1.3-Joint-Distribution-Fitting-(Exponential-Family-MLE)" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i, params in enumerate(PARAM_SETS):
+    params_1d = get_1d_params(params)
+
+    fitted_dist, fitted_params, param_errors = test_joint_fitting(
+        JointNormalInverseGaussian,
+        params_1d,
+        n_samples=N_SAMPLES,
+        random_state=42
+    )
+    print_fitting_results(params_1d, fitted_params, param_errors, f&quot;Joint NIG - {params[&#39;name&#39;]}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+============================================================
+Fitting Results: Joint NIG - Symmetric (γ=0)
+============================================================
+Parameter                  True          Fitted    Rel.Error
+------------------------------------------------------------
+mu                       0.0000         -0.0141     1.41e+08
+gamma                    0.0000          0.0137     1.37e+08
+sigma                    1.0000          0.9988     1.20e-03
+delta                    1.0000          0.9806     1.94e-02
+eta                      1.0000          1.0179     1.79e-02
+
+============================================================
+Fitting Results: Joint NIG - Right-skewed (γ&gt;0)
+============================================================
+Parameter                  True          Fitted    Rel.Error
+------------------------------------------------------------
+mu                       0.0000         -0.0177     1.77e+08
+gamma                    0.5000          0.5106     2.12e-02
+sigma                    1.0000          0.9988     1.16e-03
+delta                    1.5000          1.4772     1.52e-02
+eta                      2.0000          2.0356     1.78e-02
+
+============================================================
+Fitting Results: Joint NIG - Left-skewed (γ&lt;0)
+============================================================
+Parameter                  True          Fitted    Rel.Error
+------------------------------------------------------------
+mu                       1.0000          0.9762     2.38e-02
+gamma                   -0.4000         -0.3884     2.91e-02
+sigma                    2.0000          1.9976     1.19e-03
+delta                    2.0000          1.9628     1.86e-02
+eta                      1.5000          1.5267     1.78e-02
+</pre></div></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="Part-2:-Marginal-Distribution-(2D-X)">
+<h1>Part 2: Marginal Distribution (2D X)<a class="headerlink" href="#Part-2:-Marginal-Distribution-(2D-X)" title="Link to this heading"></a></h1>
+<p>The marginal distribution <span class="math notranslate nohighlight">\(f(x) = \int f(x, y) dy\)</span> is <strong>NOT</strong> an exponential family.</p>
+<p>Fitting requires the <strong>EM algorithm</strong>.</p>
+<section id="2.1-Marginal-Distribution-Visualization">
+<h2>2.1 Marginal Distribution Visualization<a class="headerlink" href="#2.1-Marginal-Distribution-Visualization" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i, params in enumerate(PARAM_SETS):
+    marginal_dist = NormalInverseGaussian.from_classical_params(**params)
+
+    print(f&quot;\n{&#39;=&#39;*70}&quot;)
+    print(f&quot;Parameter Set {i+1}: {params[&#39;name&#39;]}&quot;)
+    print(f&quot;{&#39;=&#39;*70}&quot;)
+
+    fig = plot_marginal_distribution_2d(
+        marginal_dist,
+        n_samples=N_SAMPLES,
+        random_state=42,
+        title=f&quot;Marginal Normal Inverse Gaussian (2D) - {params[&#39;name&#39;]}&quot;
+    )
+    plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 1: Symmetric (γ=0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_14_1.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_14_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 2: Right-skewed (γ&gt;0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_14_3.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_14_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 3: Left-skewed (γ&lt;0)
+======================================================================
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_14_5.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_14_5.png" />
+</div>
+</div>
+</section>
+<section id="2.2-Moment-Validation-(Marginal)">
+<h2>2.2 Moment Validation (Marginal)<a class="headerlink" href="#2.2-Moment-Validation-(Marginal)" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i, params in enumerate(PARAM_SETS):
+    marginal_dist = NormalInverseGaussian.from_classical_params(**params)
+
+    results = validate_moments(marginal_dist, n_samples=50000, random_state=42, is_joint=False)
+    print_moment_validation(results, f&quot;Marginal NIG - {params[&#39;name&#39;]}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+============================================================
+Moment Validation: Marginal NIG - Symmetric (γ=0)
+============================================================
+mean      :
+  sample = [0.0048 0.0031]
+  theory = [0. 0.]
+  rel_err = [47529792.35 31132175.93]
+variance  :
+  sample = [1.0095 1.003 ]
+  theory = [1. 1.]
+  rel_err = [0.01 0.  ]
+
+============================================================
+Moment Validation: Marginal NIG - Right-skewed (γ&gt;0)
+============================================================
+mean      :
+  sample = [0.7577 0.4542]
+  theory = [0.75 0.45]
+  rel_err = [0.01 0.01]
+variance  :
+  sample = [1.9515 2.4097]
+  theory = [1.9219 2.4019]
+  rel_err = [0.02 0.  ]
+
+============================================================
+Moment Validation: Marginal NIG - Left-skewed (γ&lt;0)
+============================================================
+mean      :
+  sample = [ 0.2067 -0.0984]
+  theory = [ 0.2 -0.1]
+  rel_err = [0.03 0.02]
+variance  :
+  sample = [4.8635 2.2215]
+  theory = [4.8533 2.2133]
+  rel_err = [0. 0.]
+</pre></div></div>
+</div>
+</section>
+<section id="2.3-EM-Algorithm-Fitting-with-Convergence-Tracking">
+<h2>2.3 EM Algorithm Fitting with Convergence Tracking<a class="headerlink" href="#2.3-EM-Algorithm-Fitting-with-Convergence-Tracking" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i, params in enumerate(PARAM_SETS):
+    print(f&quot;\n{&#39;=&#39;*70}&quot;)
+    print(f&quot;Parameter Set {i+1}: {params[&#39;name&#39;]}&quot;)
+    print(f&quot;{&#39;=&#39;*70}&quot;)
+
+    # Generate data from true distribution
+    true_dist = NormalInverseGaussian.from_classical_params(**params)
+    X_data = true_dist.rvs(size=N_SAMPLES, random_state=42)
+
+    # Fit with EM and track convergence
+    fitted_dist, convergence = fit_and_track_convergence(
+        NormalInverseGaussian,
+        X_data,
+        max_iter=100,
+        random_state=43
+    )
+
+    # Print results
+    print(f&quot;\nConverged: {convergence.converged}&quot;)
+    print(f&quot;Iterations: {len(convergence.iterations)}&quot;)
+    if convergence.log_likelihoods:
+        print(f&quot;Initial LL: {convergence.log_likelihoods[0]:.4f}&quot;)
+        print(f&quot;Final LL:   {convergence.log_likelihoods[-1]:.4f}&quot;)
+
+    # Compare parameters
+    print(&quot;\nParameter Comparison:&quot;)
+    print(f&quot;  True δ = {params[&#39;delta&#39;]:.4f}, Fitted δ = {convergence.final_params[&#39;delta&#39;]:.4f}&quot;)
+    print(f&quot;  True η = {params[&#39;eta&#39;]:.4f}, Fitted η = {convergence.final_params[&#39;eta&#39;]:.4f}&quot;)
+
+    # Plot convergence
+    if convergence.iterations:
+        fig = plot_em_convergence(
+            convergence,
+            title=f&quot;EM Convergence - {params[&#39;name&#39;]}&quot;
+        )
+        plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 1: Symmetric (γ=0)
+======================================================================
+
+Converged: True
+Iterations: 12
+Initial LL: -2.6579
+Final LL:   -2.6575
+
+Parameter Comparison:
+  True δ = 1.0000, Fitted δ = 1.0040
+  True η = 1.0000, Fitted η = 0.9793
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_18_1.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_18_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 2: Right-skewed (γ&gt;0)
+======================================================================
+
+Converged: True
+Iterations: 51
+Initial LL: -3.4288
+Final LL:   -3.4028
+
+Parameter Comparison:
+  True δ = 1.5000, Fitted δ = 0.9257
+  True η = 2.0000, Fitted η = 1.1585
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_18_3.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_18_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+Parameter Set 3: Left-skewed (γ&lt;0)
+======================================================================
+
+Converged: True
+Iterations: 21
+Initial LL: -3.6860
+Final LL:   -3.6604
+
+Parameter Comparison:
+  True δ = 2.0000, Fitted δ = 1.0162
+  True η = 1.5000, Fitted η = 0.7952
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_normal_inverse_gaussian_distribution_18_5.png" src="../_images/notebooks_normal_inverse_gaussian_distribution_18_5.png" />
+</div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="Part-3:-Exponential-Family-Structure">
+<h1>Part 3: Exponential Family Structure<a class="headerlink" href="#Part-3:-Exponential-Family-Structure" title="Link to this heading"></a></h1>
+<p>The joint distribution has the exponential family form:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y | \theta) = h(x, y) \exp(\theta^T t(x, y) - \psi(\theta))\]</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Demonstrate exponential family structure
+params_1d = get_1d_params(PARAM_SETS[1])  # Use right-skewed set
+joint_dist = JointNormalInverseGaussian.from_classical_params(**params_1d)
+
+print(&quot;Exponential Family Structure&quot;)
+print(&quot;=&quot;*60)
+print(f&quot;\nClassical parameters:&quot;)
+print(joint_dist.classical_params)
+
+print(f&quot;\nNatural parameters θ:&quot;)
+print(joint_dist.natural_params)
+
+print(f&quot;\nExpectation parameters η = E[t(X,Y)]:&quot;)
+print(joint_dist.expectation_params)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Exponential Family Structure
+============================================================
+
+Classical parameters:
+{&#39;mu&#39;: array([0.]), &#39;gamma&#39;: array([0.5]), &#39;sigma&#39;: array([[1.]]), &#39;delta&#39;: np.float64(1.5), &#39;eta&#39;: np.float64(2.0)}
+
+Natural parameters θ:
+[-2.     -2.     -1.0139  0.5     0.     -0.5   ]
+
+Expectation parameters η = E[t(X,Y)]:
+[0.1172 1.1667 1.5    0.75   0.5    1.375 ]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Verify E[t(X,Y)] matches expectation parameters
+X_samples, Y_samples = joint_dist.rvs(size=50000, random_state=42)
+t_samples = joint_dist._sufficient_statistics(X_samples, Y_samples)
+
+eta_sample = np.mean(t_samples, axis=0)
+eta_theory = joint_dist.expectation_params
+
+print(&quot;\nVerification: E[t(X,Y)] from samples vs theory&quot;)
+print(&quot;=&quot;*60)
+print(f&quot;Sample:     {eta_sample}&quot;)
+print(f&quot;Theory:     {eta_theory}&quot;)
+print(f&quot;Max error:  {np.max(np.abs(eta_sample - eta_theory)):.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Verification: E[t(X,Y)] from samples vs theory
+============================================================
+Sample:     [0.1178 1.1691 1.5044 0.7513 0.4983 1.3865]
+Theory:     [0.1172 1.1667 1.5    0.75   0.5    1.375 ]
+Max error:  0.011455
+</pre></div></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="Summary">
+<h1>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h1>
+<p>The <strong>Normal Inverse Gaussian</strong> distribution is a flexible model with:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Mixing</p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGauss}(\delta, \eta)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Skewness</p></td>
+<td><p>Controlled by <span class="math notranslate nohighlight">\(\gamma\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Tail behavior</p></td>
+<td><p>Semi-heavy tails</p></td>
+</tr>
+<tr class="row-odd"><td><p>Joint fitting</p></td>
+<td><p>Exponential family MLE</p></td>
+</tr>
+<tr class="row-even"><td><p>Marginal fitting</p></td>
+<td><p>EM algorithm</p></td>
+</tr>
+<tr class="row-odd"><td><p>Special case</p></td>
+<td><p>GH with <span class="math notranslate nohighlight">\(p = -1/2\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="normal_inverse_gamma_distribution.html" class="btn btn-neutral float-left" title="Normal Inverse Gamma Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generalized_hyperbolic_distribution.html" class="btn btn-neutral float-right" title="Generalized Hyperbolic (GH) Distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

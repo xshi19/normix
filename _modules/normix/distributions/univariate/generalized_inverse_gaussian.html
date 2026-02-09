@@ -1,0 +1,722 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>normix.distributions.univariate.generalized_inverse_gaussian &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">normix.distributions.univariate.generalized_inverse_gaussian</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for normix.distributions.univariate.generalized_inverse_gaussian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Generalized Inverse Gaussian (GIG) distribution.</span>
+
+<span class="sd">The GIG distribution belongs to the exponential family and serves as a</span>
+<span class="sd">unifying framework for many important distributions.</span>
+
+<span class="sd">The GIG distribution has PDF (Wikipedia parameterization):</span>
+
+<span class="sd">.. math::</span>
+<span class="sd">    f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} </span>
+<span class="sd">    \\exp\\left(-\\frac{ax + b/x}{2}\\right)</span>
+
+<span class="sd">for :math:`x &gt; 0`, where:</span>
+
+<span class="sd">- :math:`p`: real-valued shape parameter (any real number)</span>
+<span class="sd">- :math:`a &gt; 0`: rate parameter (coefficient of :math:`x`)</span>
+<span class="sd">- :math:`b &gt; 0`: rate parameter (coefficient of :math:`1/x`)</span>
+<span class="sd">- :math:`K_p` is the modified Bessel function of the second kind</span>
+
+<span class="sd">Exponential family form:</span>
+
+<span class="sd">- :math:`h(x) = 1` for :math:`x &gt; 0` (base measure)</span>
+<span class="sd">- :math:`t(x) = [\\log x, 1/x, x]` (sufficient statistics)</span>
+<span class="sd">- :math:`\\theta = [p-1, -b/2, -a/2]` (natural parameters)</span>
+<span class="sd">- :math:`\\psi(\\theta) = \\log(2) + \\log K_p(\\sqrt{ab}) + \\frac{p}{2}\\log(b/a)` (log partition)</span>
+
+<span class="sd">Natural parameters: :math:`\\theta = (\\theta_1, \\theta_2, \\theta_3)`:</span>
+
+<span class="sd">- :math:`\\theta_1 = p - 1` (unbounded)</span>
+<span class="sd">- :math:`\\theta_2 = -b/2 &lt; 0`</span>
+<span class="sd">- :math:`\\theta_3 = -a/2 &lt; 0`</span>
+
+<span class="sd">Scipy parametrization (``scipy.stats.geninvgauss``):</span>
+
+<span class="sd">- scipy uses :math:`(p, b_{scipy}, \\text{scale})` where </span>
+<span class="sd">  :math:`b_{scipy} = \\sqrt{ab}` and :math:`\\text{scale} = \\sqrt{b/a}`</span>
+
+<span class="sd">Special cases:</span>
+
+<span class="sd">- **Gamma**: :math:`b \\to 0` gives :math:`\\text{Gamma}(p, a/2)` for :math:`p &gt; 0`</span>
+<span class="sd">- **Inverse Gamma**: :math:`a \\to 0` gives :math:`\\text{InvGamma}(-p, b/2)` for :math:`p &lt; 0`</span>
+<span class="sd">- **Inverse Gaussian**: :math:`p = -1/2`</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">digamma</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIGParams</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_z</span>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedInverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generalized Inverse Gaussian (GIG) distribution in exponential family form.</span>
+<span class="sd">    </span>
+<span class="sd">    The GIG distribution has PDF (Wikipedia parameterization):</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} </span>
+<span class="sd">        \\exp\\left(-\\frac{ax + b/x}{2}\\right)</span>
+<span class="sd">    </span>
+<span class="sd">    for :math:`x &gt; 0`, where :math:`K_p` is the modified Bessel function </span>
+<span class="sd">    of the second kind.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p : float, optional</span>
+<span class="sd">        Shape parameter (any real number). Use ``from_classical_params(p=..., a=..., b=...)``.</span>
+<span class="sd">    a : float, optional</span>
+<span class="sd">        Rate parameter :math:`a &gt; 0` (coefficient of :math:`x`).</span>
+<span class="sd">    b : float, optional</span>
+<span class="sd">        Rate parameter :math:`b &gt; 0` (coefficient of :math:`1/x`).</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _natural_params : tuple or None</span>
+<span class="sd">        Internal storage for natural parameters :math:`\\theta = [p-1, -b/2, -a/2]`.</span>
+<span class="sd">    </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; # Create from classical parameters</span>
+<span class="sd">    &gt;&gt;&gt; dist = GeneralizedInverseGaussian.from_classical_params(p=1.0, a=1.0, b=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; dist.mean()</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; # Create from natural parameters</span>
+<span class="sd">    &gt;&gt;&gt; dist = GeneralizedInverseGaussian.from_natural_params(np.array([0.0, -0.5, -0.5]))</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; # Fit from data</span>
+<span class="sd">    &gt;&gt;&gt; from scipy.stats import geninvgauss</span>
+<span class="sd">    &gt;&gt;&gt; data = geninvgauss.rvs(p=1.0, b=1.0, size=1000)</span>
+<span class="sd">    &gt;&gt;&gt; dist = GeneralizedInverseGaussian().fit(data)</span>
+<span class="sd">    </span>
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Gamma : Special case when :math:`b \\to 0` for :math:`p &gt; 0`</span>
+<span class="sd">    InverseGamma : Special case when :math:`a \\to 0` for :math:`p &lt; 0`</span>
+<span class="sd">    InverseGaussian : Special case when :math:`p = -1/2`</span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The GIG distribution belongs to the exponential family with:</span>
+<span class="sd">    </span>
+<span class="sd">    - Sufficient statistics: :math:`t(x) = [\\log x, 1/x, x]`</span>
+<span class="sd">    - Natural parameters: :math:`\\theta = [p-1, -b/2, -a/2]`</span>
+<span class="sd">    - Log partition: :math:`\\psi(\\theta) = \\log(2) + \\log K_p(\\sqrt{ab}) + \\frac{p}{2}\\log(b/a)`</span>
+<span class="sd">    </span>
+<span class="sd">    Moments are given by:</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        E[X^\\alpha] = \\left(\\frac{b}{a}\\right)^{\\alpha/2} </span>
+<span class="sd">        \\frac{K_{p+\\alpha}(\\sqrt{ab})}{K_p(\\sqrt{ab})}</span>
+<span class="sd">    </span>
+<span class="sd">    Special cases:</span>
+<span class="sd">    </span>
+<span class="sd">    - :math:`b \\to 0, p &gt; 0`: :math:`\\text{GIG} \\to \\text{Gamma}(p, a/2)`</span>
+<span class="sd">    - :math:`a \\to 0, p &lt; 0`: :math:`\\text{GIG} \\to \\text{InvGamma}(-p, b/2)`</span>
+<span class="sd">    - :math:`p = -1/2`: :math:`\\text{GIG} \\to \\text{InverseGaussian}`</span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Barndorff-Nielsen, O. E. (1978). Information and exponential families.</span>
+
+<span class="sd">    https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="c1"># ================================================================</span>
+    <span class="c1"># New interface: internal state management</span>
+    <span class="c1"># ================================================================</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from classical parameters.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;a&#39; must be positive, got </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;b&#39; must be positive, got </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from natural parameters.&quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute natural parameters from internal state: θ = [p-1, -b/2, -a/2].&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute classical parameters from internal state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">GIGParams</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_b</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_natural_param_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Natural parameter support.</span>
+<span class="sd">        </span>
+<span class="sd">        θ₁ = p - 1: unbounded</span>
+<span class="sd">        θ₂ = -b/2: &lt; 0 (since b &gt; 0)</span>
+<span class="sd">        θ₃ = -a/2: &lt; 0 (since a &gt; 0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sufficient_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sufficient statistics: t(x) = [log(x), 1/x, x].</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        t : ndarray</span>
+<span class="sd">            Shape (3,) for scalar input, (n, 3) for array input.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">():</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log partition function: A(θ) = log(2) + log(K_p(√(ab))) + (p/2)log(b/a).</span>
+<span class="sd">        </span>
+<span class="sd">        where:</span>
+<span class="sd">            p = θ₁ + 1</span>
+<span class="sd">            b = -2θ₂</span>
+<span class="sd">            a = -2θ₃</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log base measure: log h(x) = 0 for x &gt; 0, -∞ otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">return</span> <span class="n">result</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert natural parameters to expectation parameters: η = ∇A(θ).</span>
+<span class="sd">        </span>
+<span class="sd">        η = [E[log X], E[1/X], E[X]]</span>
+<span class="sd">        </span>
+<span class="sd">        Using analytical formulas from Wikipedia:</span>
+<span class="sd">        - E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))</span>
+<span class="sd">        - E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab)) - 2p/b  [Note: Wikipedia formula]</span>
+<span class="sd">        - E[log X] = log(√(b/a)) + ∂/∂p log(K_p(√(ab)))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
+        
+        <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">log_kv_pm1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        <span class="n">log_kv_pp1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        
+        <span class="c1"># E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab))</span>
+        <span class="c1"># Note: Using the recurrence relation form which is more stable</span>
+        <span class="n">E_inv_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pm1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
+        
+        <span class="c1"># E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))</span>
+        <span class="n">E_x</span> <span class="o">=</span> <span class="n">sqrt_b_over_a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
+        
+        <span class="c1"># E[log X] = ∂A/∂θ₁ = ∂/∂p[log K_p(√(ab))] + (1/2)(log b - log a)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
+        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get initial guesses for natural parameters from expectation parameters.</span>
+<span class="sd">        </span>
+<span class="sd">        Uses the three special cases of GIG distribution:</span>
+<span class="sd">        1. Inverse Gaussian (p = -1/2): uses E[X] and E[1/X]</span>
+<span class="sd">        2. Gamma (b → small): uses E[log X] and E[X]</span>
+<span class="sd">        3. Inverse Gamma (a → small): uses E[log X] and E[1/X]</span>
+<span class="sd">        </span>
+<span class="sd">        Returns multiple starting points for multi-start optimization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Small value for nearly-degenerate cases</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
+        
+        <span class="c1"># === Special case 1: Inverse Gaussian (p = -1/2) ===</span>
+        <span class="c1"># For IG: E[X] = μ, E[1/X] = 1/μ + 1/(μ²λ)</span>
+        <span class="c1"># With GIG params: a = λ/μ, b = λμ, p = -1/2</span>
+        <span class="c1"># E[X] = √(b/a), so b/a = E[X]²</span>
+        <span class="c1"># E[1/X] = √(a/b) · K_{-3/2}(√(ab)) / K_{-1/2}(√(ab))</span>
+        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">p_ig</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+            <span class="c1"># Approximate: for IG, √(b/a) ≈ E[X]</span>
+            <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">E_x</span>
+            <span class="c1"># Product ab from the ratio E[1/X]/E[X] ≈ a/b for moderate √(ab)</span>
+            <span class="c1"># Simple heuristic: set √(ab) = 1</span>
+            <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">E_x</span> <span class="o">*</span> <span class="n">E_inv_x</span><span class="p">))</span>
+            <span class="n">a_ig</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
+            <span class="n">b_ig</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">*</span> <span class="n">sqrt_b_over_a</span>
+            <span class="n">a_ig</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_ig</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+            <span class="n">b_ig</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b_ig</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_ig</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_ig</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_ig</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        
+        <span class="c1"># === Special case 2: Gamma (b → small) ===</span>
+        <span class="c1"># Gamma(α, β) with α = p, β = a/2, b → 0</span>
+        <span class="c1"># E[X] = α/β = 2p/a</span>
+        <span class="c1"># E[log X] = ψ(α) - log(β) = ψ(p) - log(a/2)</span>
+        <span class="c1"># From E[X]: a = 2p/E[X]</span>
+        <span class="c1"># From E[log X]: p satisfies ψ(p) = E[log X] + log(a/2)</span>
+        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Try a few values of p &gt; 0 for Gamma</span>
+            <span class="k">for</span> <span class="n">p_gamma</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]:</span>
+                <span class="n">a_gamma</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">p_gamma</span> <span class="o">/</span> <span class="n">E_x</span>
+                <span class="n">a_gamma</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_gamma</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+                <span class="n">b_gamma</span> <span class="o">=</span> <span class="n">eps</span>  <span class="c1"># Small b for Gamma limit</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_gamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_gamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_gamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        
+        <span class="c1"># === Special case 3: Inverse Gamma (a → small) ===</span>
+        <span class="c1"># InvGamma(α, β) with α = -p, β = b/2, a → 0</span>
+        <span class="c1"># E[1/X] = α/β = -2p/b (for p &lt; 0)</span>
+        <span class="c1"># E[log X] = log(β) - ψ(α) = log(b/2) - ψ(-p)</span>
+        <span class="c1"># From E[1/X]: b = -2p/E[1/X]</span>
+        <span class="k">if</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Try a few values of p &lt; 0 for Inverse Gamma</span>
+            <span class="k">for</span> <span class="n">p_invgamma</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">]:</span>
+                <span class="n">b_invgamma</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">p_invgamma</span> <span class="o">/</span> <span class="n">E_inv_x</span>
+                <span class="n">b_invgamma</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b_invgamma</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+                <span class="n">a_invgamma</span> <span class="o">=</span> <span class="n">eps</span>  <span class="c1"># Small a for Inverse Gamma limit</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_invgamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_invgamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_invgamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        
+        <span class="c1"># === General heuristic: moment matching ===</span>
+        <span class="c1"># E[X]/E[1/X] ≈ b/a for moderate √(ab)</span>
+        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="n">E_x</span> <span class="o">/</span> <span class="n">E_inv_x</span>  <span class="c1"># ≈ b/a</span>
+            <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">eps</span><span class="p">))</span>
+            
+            <span class="k">for</span> <span class="n">sqrt_ab</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]:</span>
+                <span class="n">a_heur</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
+                <span class="n">b_heur</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">*</span> <span class="n">sqrt_b_over_a</span>
+                <span class="k">for</span> <span class="n">p_heur</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]:</span>
+                    <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_heur</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_heur</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_heur</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        
+        <span class="c1"># Fallback: simple default</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">starting_points</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]))</span>  <span class="c1"># p=1, a=1, b=1</span>
+        
+        <span class="k">return</span> <span class="n">starting_points</span>
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.fisher_information">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.fisher_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fisher_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fisher information matrix I(θ) = ∇²A(θ).</span>
+<span class="sd">        </span>
+<span class="sd">        Uses numerical differentiation since the analytical form is complex.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fisher_information</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
+
+    
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Conversion methods for scipy.stats.geninvgauss</span>
+    <span class="c1"># ============================================================</span>
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.to_scipy_params">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_scipy_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_scipy_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert to scipy.stats.geninvgauss parameters (p, b, scale).</span>
+<span class="sd">        </span>
+<span class="sd">        scipy parameterization:</span>
+<span class="sd">            f(x|p,b,scale) ∝ (x/scale)^{p-1} exp(-b((x/scale) + scale/x)/2)</span>
+<span class="sd">        </span>
+<span class="sd">        Conversion:</span>
+<span class="sd">            p_scipy = p</span>
+<span class="sd">            b_scipy = √(ab)</span>
+<span class="sd">            scale = √(b/a)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        params : dict</span>
+<span class="sd">            Dictionary with keys &#39;p&#39;, &#39;b&#39;, &#39;scale&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span>
+            <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_b</span><span class="p">),</span>
+            <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.from_scipy_params">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_scipy_params">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_scipy_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;GeneralizedInverseGaussian&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create from scipy.stats.geninvgauss parameters.</span>
+<span class="sd">        </span>
+<span class="sd">        Conversion:</span>
+<span class="sd">            p = p_scipy</span>
+<span class="sd">            a = b_scipy / scale</span>
+<span class="sd">            b = b_scipy * scale</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        p : float</span>
+<span class="sd">            Shape parameter.</span>
+<span class="sd">        b : float</span>
+<span class="sd">            Shape parameter b &gt; 0 (this is √(ab) in our notation).</span>
+<span class="sd">        scale : float, optional</span>
+<span class="sd">            Scale parameter &gt; 0. Default is 1.0.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dist : GeneralizedInverseGaussian</span>
+<span class="sd">            Distribution instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a_ours</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="n">b_ours</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">scale</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_ours</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_ours</span><span class="p">)</span></div>
+
+    
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Moments using Bessel function ratios</span>
+    <span class="c1"># ============================================================</span>
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.moment_alpha">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.moment_alpha">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">moment_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the α-th moment E[X^α].</span>
+<span class="sd">        </span>
+<span class="sd">        E[X^α] = (b/a)^(α/2) · K_{p+α}(√(ab)) / K_p(√(ab))</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            Order of the moment.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        moment : float</span>
+<span class="sd">            The α-th moment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        
+        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_b</span><span class="p">)</span>
+        
+        <span class="n">log_ratio</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">+</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="n">sqrt_b_over_a</span> <span class="o">**</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.mean">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean of GIG distribution using Bessel function ratio.</span>
+<span class="sd">        </span>
+<span class="sd">        .. math::</span>
+<span class="sd">            E[X] = \\sqrt{\\frac{b}{a}} \\frac{K_{p+1}(\\sqrt{ab})}{K_p(\\sqrt{ab})}</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mean : float</span>
+<span class="sd">            Mean of the distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">moment_alpha</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.var">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance of GIG distribution: Var[X] = E[X^2] - E[X]^2.</span>
+<span class="sd">        </span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \\text{Var}[X] = E[X^2] - (E[X])^2</span>
+<span class="sd">        </span>
+<span class="sd">        Uses the moment formula :math:`E[X^\\alpha] = (b/a)^{\\alpha/2} K_{p+\\alpha}(\\sqrt{ab})/K_p(\\sqrt{ab})`.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        var : float</span>
+<span class="sd">            Variance of the distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">moment_alpha</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">moment_alpha</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span></div>
+
+    
+    <span class="c1"># ============================================================</span>
+    <span class="c1"># Random variate generation</span>
+    <span class="c1"># ============================================================</span>
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.rvs">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;scipy&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate random samples from the GIG distribution.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int or tuple of ints, optional</span>
+<span class="sd">            Shape of samples to generate.</span>
+<span class="sd">        random_state : int or Generator, optional</span>
+<span class="sd">            Random number generator seed or instance.</span>
+<span class="sd">        method : str, optional</span>
+<span class="sd">            Sampling method: &#39;scipy&#39; uses scipy.stats.geninvgauss (default),</span>
+<span class="sd">            &#39;naive&#39; uses inverse CDF method.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        samples : float or ndarray</span>
+<span class="sd">            Random samples from the distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">random_state</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">random_state</span>
+        
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;scipy&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rvs_scipy</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;naive&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rvs_naive</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">. Use &#39;scipy&#39; or &#39;naive&#39;.&quot;</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rvs_scipy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">rng</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate samples using scipy.stats.geninvgauss.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">geninvgauss</span>
+        
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_scipy_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">geninvgauss</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">],</span>
+                               <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rvs_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">n_grids</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100000</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate samples using naive inverse CDF method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">n_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">z2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">mu</span><span class="p">,</span> <span class="n">n_grids</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">])</span>
+        
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">z_mid</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">dz</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="n">pdf_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">z_mid</span><span class="p">)</span>
+        <span class="n">pdf_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">pdf_vals</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">pdf_vals</span> <span class="o">*</span> <span class="n">dz</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="n">y_unique</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">z_unique</span> <span class="o">=</span> <span class="n">z_mid</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        
+        <span class="n">inv_cdf</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">y_unique</span><span class="p">,</span> <span class="n">z_unique</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+                          <span class="n">bounds_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="n">z_unique</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">z_unique</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">inv_cdf</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.cdf">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cumulative distribution function.</span>
+<span class="sd">        </span>
+<span class="sd">        Uses scipy.stats.geninvgauss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">geninvgauss</span>
+        
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_scipy_params</span><span class="p">()</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">geninvgauss</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    
+<div class="viewcode-block" id="GeneralizedInverseGaussian.ppf">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Percent point function (inverse of CDF).</span>
+<span class="sd">        </span>
+<span class="sd">        Uses scipy.stats.geninvgauss.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">geninvgauss</span>
+        
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_scipy_params</span><span class="p">()</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">geninvgauss</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">q</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+
+
+
+<span class="c1"># Alias for convenience</span>
+<span class="n">GIG</span> <span class="o">=</span> <span class="n">GeneralizedInverseGaussian</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1889 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&amp;P 500 Stocks Multivariate Empirical Study &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mathematical Background" href="../theory/index.html" />
+    <link rel="prev" title="S&amp;P 500 Empirical Study: Distribution Comparison" href="sp500_index_empirical_study.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="mixture_distributions_comparison.html">Comparison of Normal Mixture Distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sp500_index_empirical_study.html">S&amp;P 500 Empirical Study: Distribution Comparison</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">S&amp;P 500 Stocks Multivariate Empirical Study</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">S&amp;P 500 Stocks Multivariate Empirical Study</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/sp500_stocks_multivariate_study.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/sp500_stocks_multivariate_study.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="S&amp;P-500-Stocks-Multivariate-Empirical-Study">
+<h1>S&amp;P 500 Stocks Multivariate Empirical Study<a class="headerlink" href="#S&P-500-Stocks-Multivariate-Empirical-Study" title="Link to this heading"></a></h1>
+<p>This notebook compares multivariate probability distributions for modeling S&amp;P 500 stock returns. The main purpose is to test the EM algorithm in real-world high-dimensional settings.</p>
+<section id="Distributions-Compared">
+<h2>Distributions Compared<a class="headerlink" href="#Distributions-Compared" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Multivariate Normal</strong> - Baseline Gaussian distribution</p></li>
+<li><p><strong>Variance Gamma (VG)</strong> - Normal-Gamma mixture, semi-heavy tails</p></li>
+<li><p><strong>Normal Inverse Gamma (NInvG)</strong> - Normal-InverseGamma mixture, heavy tails</p></li>
+<li><p><strong>Normal Inverse Gaussian (NIG)</strong> - Normal-InverseGaussian mixture</p></li>
+<li><p><strong>Generalized Hyperbolic (GH)</strong> - Most general, encompasses VG, NInvG, NIG as special cases</p></li>
+</ol>
+</section>
+<section id="Methodology">
+<h2>Methodology<a class="headerlink" href="#Methodology" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Data</strong>: 10 years of S&amp;P 500 constituent stocks daily returns</p></li>
+<li><p><strong>Training</strong>: First 5 years (in-sample)</p></li>
+<li><p><strong>Testing</strong>: Last 5 years (out-of-sample)</p></li>
+<li><p><strong>EM Algorithm</strong>: Track convergence and timing in high dimensions</p></li>
+<li><p><strong>Testing Methods</strong>: Random portfolio projections, KS/AD tests, QQ plots</p></li>
+<li><p><strong>Parameter Analysis</strong>: Compare location (μ) vs skewness (γ) parameters across stocks</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from scipy import stats
+from scipy.stats import ks_2samp, anderson_ksamp
+import warnings
+import time
+warnings.filterwarnings(&#39;ignore&#39;)
+
+# Import normix distributions
+from normix.distributions.multivariate import MultivariateNormal
+from normix.distributions.mixtures import (
+    VarianceGamma, NormalInverseGamma, NormalInverseGaussian, GeneralizedHyperbolic
+)
+
+plt.style.use(&#39;seaborn-v0_8-whitegrid&#39;)
+%matplotlib inline
+
+print(&quot;Imports successful!&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Imports successful!
+</pre></div></div>
+</div>
+</section>
+<section id="1.-Load-S&amp;P-500-Stock-Returns-Data">
+<h2>1. Load S&amp;P 500 Stock Returns Data<a class="headerlink" href="#1.-Load-S&P-500-Stock-Returns-Data" title="Link to this heading"></a></h2>
+<p>The log returns data is pre-computed and stored in <code class="docutils literal notranslate"><span class="pre">data/sp500_returns.csv</span></code>. This file is generated by <code class="docutils literal notranslate"><span class="pre">scripts/download_sp500_data.py</span></code> which fetches S&amp;P 500 constituent stocks from Wikipedia and downloads historical price data from Yahoo Finance.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Load pre-computed log returns from CSV
+import os
+
+data_path = &#39;../data/sp500_returns.csv&#39;
+
+if not os.path.exists(data_path):
+    raise FileNotFoundError(
+        f&quot;Data file not found at {data_path}. &quot;
+        &quot;Please run &#39;python scripts/download_sp500_data.py&#39; first to generate the data.&quot;
+    )
+
+log_returns = pd.read_csv(data_path, index_col=&#39;Date&#39;, parse_dates=True)
+
+print(f&quot;Loaded log returns from: {data_path}&quot;)
+print(f&quot;Shape: {log_returns.shape}&quot;)
+print(f&quot;Date range: {log_returns.index[0].date()} to {log_returns.index[-1].date()}&quot;)
+print(f&quot;Number of stocks: {len(log_returns.columns)}&quot;)
+print(f&quot;First 10 tickers: {list(log_returns.columns[:10])}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Loaded log returns from: ../data/sp500_returns.csv
+Shape: (2551, 224)
+Date range: 2015-12-10 to 2026-02-03
+Number of stocks: 224
+First 10 tickers: [&#39;A&#39;, &#39;AAPL&#39;, &#39;ABBV&#39;, &#39;ABT&#39;, &#39;ACN&#39;, &#39;ADBE&#39;, &#39;ADI&#39;, &#39;AEP&#39;, &#39;AES&#39;, &#39;AIG&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Use ALL stocks from the CSV file (no filtering needed - data is already clean)
+# Note: High-dimensional fitting can be slow - adjust MAX_STOCKS if needed for computational constraints
+MAX_STOCKS = None  # Set to a number (e.g., 100) to limit, or None for all available stocks
+
+# Select all stocks, sorted alphabetically
+all_tickers = sorted(log_returns.columns.tolist())
+
+if MAX_STOCKS is not None and MAX_STOCKS &lt; len(all_tickers):
+    selected_tickers = all_tickers[:MAX_STOCKS]
+    print(f&quot;Limited to {MAX_STOCKS} stocks for computational efficiency&quot;)
+else:
+    selected_tickers = all_tickers
+
+log_returns_selected = log_returns[selected_tickers]
+
+print(f&quot;Selected {len(selected_tickers)} stocks for analysis:&quot;)
+print(f&quot;Tickers: {selected_tickers[:20]}{&#39;...&#39; if len(selected_tickers) &gt; 20 else &#39;&#39;}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Selected 224 stocks for analysis:
+Tickers: [&#39;A&#39;, &#39;AAPL&#39;, &#39;ABBV&#39;, &#39;ABT&#39;, &#39;ACN&#39;, &#39;ADBE&#39;, &#39;ADI&#39;, &#39;AEP&#39;, &#39;AES&#39;, &#39;AIG&#39;, &#39;ALL&#39;, &#39;AMAT&#39;, &#39;AMD&#39;, &#39;AMGN&#39;, &#39;AMT&#39;, &#39;AMZN&#39;, &#39;APA&#39;, &#39;APD&#39;, &#39;ARE&#39;, &#39;AVB&#39;]...
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Split into training (first half) and testing (second half)
+n_total = len(log_returns_selected)
+n_train = n_total // 2
+
+train_df = log_returns_selected.iloc[:n_train]
+test_df = log_returns_selected.iloc[n_train:]
+
+# Convert to numpy arrays
+returns_train = train_df.values
+returns_test = test_df.values
+
+print(f&quot;\nTraining period: {train_df.index[0].date()} to {train_df.index[-1].date()}&quot;)
+print(f&quot;Training samples: {returns_train.shape[0]}, dimensions: {returns_train.shape[1]}&quot;)
+print(f&quot;\nTesting period: {test_df.index[0].date()} to {test_df.index[-1].date()}&quot;)
+print(f&quot;Testing samples: {returns_test.shape[0]}, dimensions: {returns_test.shape[1]}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Training period: 2015-12-10 to 2021-01-04
+Training samples: 1275, dimensions: 224
+
+Testing period: 2021-01-05 to 2026-02-03
+Testing samples: 1276, dimensions: 224
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Display training data statistics
+print(&quot;--- Training Data Statistics ---&quot;)
+mean_returns = returns_train.mean(axis=0) * 100
+std_returns = returns_train.std(axis=0) * 100
+skewness = stats.skew(returns_train, axis=0)
+kurtosis = stats.kurtosis(returns_train, axis=0)
+
+stats_df = pd.DataFrame({
+    &#39;Mean (%)&#39;: mean_returns,
+    &#39;Std (%)&#39;: std_returns,
+    &#39;Skewness&#39;: skewness,
+    &#39;Kurtosis&#39;: kurtosis
+}, index=selected_tickers)
+
+print(stats_df.round(4))
+
+print(f&quot;\n--- Summary ---&quot;)
+print(f&quot;Average mean return: {mean_returns.mean():.4f}%&quot;)
+print(f&quot;Average volatility: {std_returns.mean():.4f}%&quot;)
+print(f&quot;Average skewness: {skewness.mean():.4f}&quot;)
+print(f&quot;Average excess kurtosis: {kurtosis.mean():.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+--- Training Data Statistics ---
+      Mean (%)  Std (%)  Skewness  Kurtosis
+A       0.0872   1.6669   -0.6919    7.1136
+AAPL    0.1236   1.8991   -0.3552    7.4072
+ABBV    0.0669   1.8452   -1.0039   14.5807
+ABT     0.0772   1.5974   -0.3903    7.7395
+ACN     0.0751   1.5903   -0.0063    8.8244
+...        ...      ...       ...       ...
+WMB    -0.0040   3.1997   -1.8227   39.9337
+WMT     0.0801   1.3877    0.7979   15.6157
+XEL     0.0612   1.4044   -1.0123   19.8592
+XOM    -0.0285   1.8035   -0.1616   10.5633
+ZBH     0.0368   1.8834   -0.1455   12.3800
+
+[224 rows x 4 columns]
+
+--- Summary ---
+Average mean return: 0.0523%
+Average volatility: 1.9748%
+Average skewness: -0.5328
+Average excess kurtosis: 17.8969
+</pre></div></div>
+</div>
+</section>
+<section id="2.-Fit-Distributions-with-EM-Algorithm-Tracking">
+<h2>2. Fit Distributions with EM Algorithm Tracking<a class="headerlink" href="#2.-Fit-Distributions-with-EM-Algorithm-Tracking" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Storage for fitted distributions and convergence info
+fitted_dists = {}
+fitting_times = {}
+convergence_history = {}
+
+d = returns_train.shape[1]  # dimension
+print(f&quot;Fitting distributions to {d}-dimensional data...&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting distributions to 224-dimensional data...
+</pre></div></div>
+</div>
+<section id="2.1-Multivariate-Normal-(Baseline)">
+<h3>2.1 Multivariate Normal (Baseline)<a class="headerlink" href="#2.1-Multivariate-Normal-(Baseline)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Fitting Multivariate Normal...&quot;)
+start_time = time.time()
+
+mvn = MultivariateNormal(d=d).fit(returns_train)
+
+fitting_times[&#39;MVN&#39;] = time.time() - start_time
+fitted_dists[&#39;MVN&#39;] = mvn
+
+print(f&quot;Fitting time: {fitting_times[&#39;MVN&#39;]:.2f}s&quot;)
+print(f&quot;Mean log-likelihood (train): {np.mean(mvn.logpdf(returns_train)):.4f}&quot;)
+print(f&quot;Mean log-likelihood (test): {np.mean(mvn.logpdf(returns_test)):.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting Multivariate Normal...
+Fitting time: 0.08s
+Mean log-likelihood (train): 702.2173
+Mean log-likelihood (test): 624.0910
+</pre></div></div>
+</div>
+</section>
+<section id="2.2-Variance-Gamma-(VG)">
+<h3>2.2 Variance Gamma (VG)<a class="headerlink" href="#2.2-Variance-Gamma-(VG)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Fitting Variance Gamma...&quot;)
+start_time = time.time()
+
+# Create a custom verbose fit to track convergence
+vg = VarianceGamma()
+vg_ll_history = []
+
+# We&#39;ll manually track convergence by fitting with verbose=2
+# and capturing the output, or by modifying the fit loop
+# For simplicity, just fit with verbose
+vg.fit(returns_train, max_iter=100, tol=1e-3, verbose=1)
+
+fitting_times[&#39;VG&#39;] = time.time() - start_time
+fitted_dists[&#39;VG&#39;] = vg
+
+print(f&quot;\nFitting time: {fitting_times[&#39;VG&#39;]:.2f}s&quot;)
+print(f&quot;Mean log-likelihood (train): {np.mean(vg.logpdf(returns_train)):.4f}&quot;)
+print(f&quot;Mean log-likelihood (test): {np.mean(vg.logpdf(returns_test)):.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting Variance Gamma...
+Initial log-likelihood: 445.622318
+Iteration 1: log-likelihood = 702.301546
+Iteration 2: log-likelihood = 712.297042
+Iteration 3: log-likelihood = 718.818670
+Iteration 4: log-likelihood = 720.217824
+Iteration 5: log-likelihood = 720.394836
+Iteration 6: log-likelihood = 720.414506
+Iteration 7: log-likelihood = 720.416618
+Iteration 8: log-likelihood = 720.416843
+Iteration 9: log-likelihood = 720.416867
+Iteration 10: log-likelihood = 720.416869
+Converged at iteration 10
+Final log-likelihood: 720.416869
+
+Fitting time: 2.68s
+Mean log-likelihood (train): 720.4169
+Mean log-likelihood (test): 666.1294
+</pre></div></div>
+</div>
+</section>
+<section id="2.3-Normal-Inverse-Gamma-(NInvG)">
+<h3>2.3 Normal Inverse Gamma (NInvG)<a class="headerlink" href="#2.3-Normal-Inverse-Gamma-(NInvG)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Fitting Normal Inverse Gamma...&quot;)
+start_time = time.time()
+
+ninvg = NormalInverseGamma()
+ninvg.fit(returns_train, max_iter=100, tol=1e-3, verbose=1)
+
+fitting_times[&#39;NInvG&#39;] = time.time() - start_time
+fitted_dists[&#39;NInvG&#39;] = ninvg
+
+print(f&quot;\nFitting time: {fitting_times[&#39;NInvG&#39;]:.2f}s&quot;)
+print(f&quot;Mean log-likelihood (train): {np.mean(ninvg.logpdf(returns_train)):.4f}&quot;)
+print(f&quot;Mean log-likelihood (test): {np.mean(ninvg.logpdf(returns_test)):.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting Normal Inverse Gamma...
+Initial log-likelihood: 667.849344
+Iteration 1: log-likelihood = 714.870073
+Iteration 2: log-likelihood = 720.056497
+Iteration 3: log-likelihood = 720.590019
+Iteration 4: log-likelihood = 720.629384
+Iteration 5: log-likelihood = 720.632118
+Iteration 6: log-likelihood = 720.632313
+Iteration 7: log-likelihood = 720.632327
+Iteration 8: log-likelihood = 720.632328
+Converged at iteration 8
+Final log-likelihood: 720.632328
+
+Fitting time: 0.21s
+Mean log-likelihood (train): 720.6323
+Mean log-likelihood (test): 666.0525
+</pre></div></div>
+</div>
+</section>
+<section id="2.4-Normal-Inverse-Gaussian-(NIG)">
+<h3>2.4 Normal Inverse Gaussian (NIG)<a class="headerlink" href="#2.4-Normal-Inverse-Gaussian-(NIG)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Fitting Normal Inverse Gaussian...&quot;)
+start_time = time.time()
+
+nig = NormalInverseGaussian()
+nig.fit(returns_train, max_iter=100, tol=1e-3, verbose=1)
+
+fitting_times[&#39;NIG&#39;] = time.time() - start_time
+fitted_dists[&#39;NIG&#39;] = nig
+
+print(f&quot;\nFitting time: {fitting_times[&#39;NIG&#39;]:.2f}s&quot;)
+print(f&quot;Mean log-likelihood (train): {np.mean(nig.logpdf(returns_train)):.4f}&quot;)
+print(f&quot;Mean log-likelihood (test): {np.mean(nig.logpdf(returns_test)):.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting Normal Inverse Gaussian...
+Initial log-likelihood: 529.719043
+Iteration 1: log-likelihood = 706.340524
+Iteration 2: log-likelihood = 718.128162
+Iteration 3: log-likelihood = 720.312762
+Iteration 4: log-likelihood = 720.540481
+Iteration 5: log-likelihood = 720.560807
+Iteration 6: log-likelihood = 720.562597
+Iteration 7: log-likelihood = 720.562757
+Iteration 8: log-likelihood = 720.562771
+Iteration 9: log-likelihood = 720.562772
+Converged at iteration 9
+Final log-likelihood: 720.562772
+
+Fitting time: 2.48s
+Mean log-likelihood (train): 720.5628
+Mean log-likelihood (test): 666.1407
+</pre></div></div>
+</div>
+</section>
+<section id="2.5-Generalized-Hyperbolic-(GH)">
+<h3>2.5 Generalized Hyperbolic (GH)<a class="headerlink" href="#2.5-Generalized-Hyperbolic-(GH)" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Fitting Generalized Hyperbolic...&quot;)
+print(&quot;This is the most general model and may take longer...&quot;)
+start_time = time.time()
+
+gh = GeneralizedHyperbolic()
+gh.fit(returns_train, max_iter=100, tol=1e-3, verbose=1, regularization=&#39;det_sigma_one&#39;)
+
+fitting_times[&#39;GH&#39;] = time.time() - start_time
+fitted_dists[&#39;GH&#39;] = gh
+
+print(f&quot;\nFitting time: {fitting_times[&#39;GH&#39;]:.2f}s&quot;)
+print(f&quot;Mean log-likelihood (train): {np.mean(gh.logpdf(returns_train)):.4f}&quot;)
+print(f&quot;Mean log-likelihood (test): {np.mean(gh.logpdf(returns_test)):.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting Generalized Hyperbolic...
+This is the most general model and may take longer...
+Initial log-likelihood: 720.560807
+Iteration 1: log-likelihood = 720.562228
+Iteration 2: log-likelihood = 720.562318
+Iteration 3: log-likelihood = 720.562324
+Iteration 4: log-likelihood = 720.562325
+Converged
+
+Fitting time: 3.60s
+Mean log-likelihood (train): 720.5623
+Mean log-likelihood (test): 666.1362
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="3.-Summary-of-Fitting-Results">
+<h2>3. Summary of Fitting Results<a class="headerlink" href="#3.-Summary-of-Fitting-Results" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compute log-likelihoods for all distributions
+results = []
+
+for name, dist in fitted_dists.items():
+    train_ll = np.mean(dist.logpdf(returns_train))
+    test_ll = np.mean(dist.logpdf(returns_test))
+
+    results.append({
+        &#39;Distribution&#39;: name,
+        &#39;Train LL&#39;: train_ll,
+        &#39;Test LL&#39;: test_ll,
+        &#39;Fitting Time (s)&#39;: fitting_times[name]
+    })
+
+results_df = pd.DataFrame(results)
+results_df = results_df.sort_values(&#39;Test LL&#39;, ascending=False)
+
+print(&quot;\n&quot; + &quot;=&quot;*70)
+print(&quot;SUMMARY: Distribution Fitting Results&quot;)
+print(&quot;=&quot;*70)
+print(results_df.to_string(index=False))
+print(&quot;=&quot;*70)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+======================================================================
+SUMMARY: Distribution Fitting Results
+======================================================================
+Distribution   Train LL    Test LL  Fitting Time (s)
+         NIG 720.562772 666.140655          2.481778
+          GH 720.562325 666.136179          3.599135
+          VG 720.416869 666.129448          2.676722
+       NInvG 720.632328 666.052491          0.207242
+         MVN 702.217252 624.090997          0.076318
+======================================================================
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Visualization of fitting times and log-likelihoods
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+dist_names = list(fitted_dists.keys())
+colors = plt.cm.Set2(np.linspace(0, 1, len(dist_names)))
+
+# Plot 1: Fitting times
+ax1 = axes[0]
+times = [fitting_times[n] for n in dist_names]
+bars1 = ax1.bar(dist_names, times, color=colors)
+ax1.set_ylabel(&#39;Time (seconds)&#39;)
+ax1.set_title(&#39;Fitting Time&#39;)
+ax1.tick_params(axis=&#39;x&#39;, rotation=45)
+
+# Add value labels
+for bar, t in zip(bars1, times):
+    ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+             f&#39;{t:.1f}s&#39;, ha=&#39;center&#39;, va=&#39;bottom&#39;, fontsize=9)
+
+# Plot 2: Train log-likelihood
+ax2 = axes[1]
+train_lls = [np.mean(fitted_dists[n].logpdf(returns_train)) for n in dist_names]
+bars2 = ax2.bar(dist_names, train_lls, color=colors)
+ax2.set_ylabel(&#39;Mean Log-Likelihood&#39;)
+ax2.set_title(&#39;Training Log-Likelihood&#39;)
+ax2.tick_params(axis=&#39;x&#39;, rotation=45)
+
+# Plot 3: Test log-likelihood
+ax3 = axes[2]
+test_lls = [np.mean(fitted_dists[n].logpdf(returns_test)) for n in dist_names]
+bars3 = ax3.bar(dist_names, test_lls, color=colors)
+ax3.set_ylabel(&#39;Mean Log-Likelihood&#39;)
+ax3.set_title(&#39;Test Log-Likelihood (Out-of-Sample)&#39;)
+ax3.tick_params(axis=&#39;x&#39;, rotation=45)
+
+plt.tight_layout()
+plt.savefig(&#39;fitting_summary.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_21_0.png" src="../_images/notebooks_sp500_stocks_multivariate_study_21_0.png" />
+</div>
+</div>
+</section>
+<section id="4.-Random-Portfolio-Projections-Testing">
+<h2>4. Random Portfolio Projections Testing<a class="headerlink" href="#4.-Random-Portfolio-Projections-Testing" title="Link to this heading"></a></h2>
+<p>To test multivariate distributions, we use random portfolio projections:</p>
+<ol class="arabic simple">
+<li><p>Generate random weight vectors</p></li>
+<li><p>Project returns onto 1D using these weights</p></li>
+<li><p>Compare simulated samples from fitted distributions vs actual test data</p></li>
+<li><p>Use KS and Anderson-Darling tests</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def generate_random_weights(d, n_portfolios=100, random_state=None):
+    &quot;&quot;&quot;
+    Generate random portfolio weights.
+
+    Parameters
+    ----------
+    d : int
+        Number of assets.
+    n_portfolios : int
+        Number of random portfolios to generate.
+    random_state : int, optional
+        Random seed.
+
+    Returns
+    -------
+    weights : ndarray
+        Shape (n_portfolios, d), each row sums to 1.
+    &quot;&quot;&quot;
+    rng = np.random.default_rng(random_state)
+
+    # Generate random weights from Dirichlet distribution (uniform on simplex)
+    # This ensures weights are positive and sum to 1
+    weights = rng.dirichlet(np.ones(d), size=n_portfolios)
+
+    return weights
+
+
+def project_returns(returns, weights):
+    &quot;&quot;&quot;
+    Project multivariate returns to 1D portfolio returns.
+
+    Parameters
+    ----------
+    returns : ndarray
+        Shape (n_samples, d).
+    weights : ndarray
+        Shape (n_portfolios, d) or (d,).
+
+    Returns
+    -------
+    portfolio_returns : ndarray
+        Shape (n_samples, n_portfolios) or (n_samples,).
+    &quot;&quot;&quot;
+    if weights.ndim == 1:
+        return returns @ weights
+    else:
+        return returns @ weights.T
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Generate random portfolios
+N_PORTFOLIOS = 100
+random_weights = generate_random_weights(d, n_portfolios=N_PORTFOLIOS, random_state=42)
+
+print(f&quot;Generated {N_PORTFOLIOS} random portfolios&quot;)
+print(f&quot;Weight matrix shape: {random_weights.shape}&quot;)
+print(f&quot;First portfolio weights: {random_weights[0][:5].round(3)}...&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Generated 100 random portfolios
+Weight matrix shape: (100, 224)
+First portfolio weights: [0.011 0.011 0.011 0.001 0.   ]...
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def portfolio_test(dist, returns_test, weights, n_samples=10000, random_state=None):
+    &quot;&quot;&quot;
+    Test a distribution using random portfolio projections.
+
+    Parameters
+    ----------
+    dist : distribution object
+        Fitted distribution.
+    returns_test : ndarray
+        Test data, shape (n_test, d).
+    weights : ndarray
+        Portfolio weights, shape (n_portfolios, d).
+    n_samples : int
+        Number of samples to generate from distribution.
+    random_state : int, optional
+        Random seed.
+
+    Returns
+    -------
+    results : dict
+        Dictionary with KS and AD test statistics.
+    &quot;&quot;&quot;
+    # Generate samples from fitted distribution
+    samples = dist.rvs(size=n_samples, random_state=random_state)
+
+    n_portfolios = weights.shape[0]
+    ks_stats = []
+    ks_pvals = []
+    ad_stats = []
+
+    for i in range(n_portfolios):
+        w = weights[i]
+
+        # Project to 1D
+        test_proj = returns_test @ w
+        sample_proj = samples @ w
+
+        # KS test
+        ks_stat, ks_pval = ks_2samp(test_proj, sample_proj)
+        ks_stats.append(ks_stat)
+        ks_pvals.append(ks_pval)
+
+        # Anderson-Darling test (two-sample)
+        try:
+            ad_result = anderson_ksamp([test_proj, sample_proj])
+            ad_stats.append(ad_result.statistic)
+        except Exception:
+            ad_stats.append(np.nan)
+
+    return {
+        &#39;ks_stats&#39;: np.array(ks_stats),
+        &#39;ks_pvals&#39;: np.array(ks_pvals),
+        &#39;ad_stats&#39;: np.array(ad_stats),
+        &#39;ks_mean&#39;: np.mean(ks_stats),
+        &#39;ks_median&#39;: np.median(ks_stats),
+        &#39;ad_mean&#39;: np.nanmean(ad_stats),
+        &#39;ad_median&#39;: np.nanmedian(ad_stats),
+        &#39;ks_reject_rate&#39;: np.mean(np.array(ks_pvals) &lt; 0.05)  # Rejection rate at 5%
+    }
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Run portfolio tests for all distributions
+portfolio_results = {}
+
+print(&quot;Running portfolio projection tests...&quot;)
+print(f&quot;Testing with {N_PORTFOLIOS} random portfolios\n&quot;)
+
+for name, dist in fitted_dists.items():
+    print(f&quot;Testing {name}...&quot;)
+    try:
+        results = portfolio_test(dist, returns_test, random_weights,
+                                 n_samples=5000, random_state=42)
+        portfolio_results[name] = results
+        print(f&quot;  KS mean: {results[&#39;ks_mean&#39;]:.4f}, KS reject rate: {results[&#39;ks_reject_rate&#39;]:.2%}&quot;)
+        print(f&quot;  AD mean: {results[&#39;ad_mean&#39;]:.4f}&quot;)
+    except Exception as e:
+        print(f&quot;  Error: {e}&quot;)
+        portfolio_results[name] = None
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Running portfolio projection tests...
+Testing with 100 random portfolios
+
+Testing MVN...
+  KS mean: 0.1124, KS reject rate: 100.00%
+  AD mean: 41.9969
+Testing VG...
+  KS mean: 0.0384, KS reject rate: 15.00%
+  AD mean: 3.4969
+Testing NInvG...
+  KS mean: 0.0328, KS reject rate: 1.00%
+  AD mean: 0.8984
+Testing NIG...
+  KS mean: 0.0360, KS reject rate: 10.00%
+  AD mean: 1.5887
+Testing GH...
+  KS mean: 0.0374, KS reject rate: 19.00%
+  AD mean: 1.8635
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Summary of portfolio tests
+test_summary = []
+for name, results in portfolio_results.items():
+    if results is not None:
+        test_summary.append({
+            &#39;Distribution&#39;: name,
+            &#39;KS Mean&#39;: results[&#39;ks_mean&#39;],
+            &#39;KS Median&#39;: results[&#39;ks_median&#39;],
+            &#39;KS Reject Rate&#39;: results[&#39;ks_reject_rate&#39;],
+            &#39;AD Mean&#39;: results[&#39;ad_mean&#39;],
+            &#39;AD Median&#39;: results[&#39;ad_median&#39;]
+        })
+
+test_df = pd.DataFrame(test_summary)
+test_df = test_df.sort_values(&#39;KS Mean&#39;)
+
+print(&quot;\n&quot; + &quot;=&quot;*80)
+print(&quot;PORTFOLIO PROJECTION TEST RESULTS&quot;)
+print(&quot;Lower KS/AD statistics indicate better fit&quot;)
+print(&quot;=&quot;*80)
+print(test_df.to_string(index=False))
+print(&quot;=&quot;*80)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+================================================================================
+PORTFOLIO PROJECTION TEST RESULTS
+Lower KS/AD statistics indicate better fit
+================================================================================
+Distribution  KS Mean  KS Median  KS Reject Rate   AD Mean  AD Median
+       NInvG 0.032845   0.032740            0.01  0.898434   0.797889
+         NIG 0.035985   0.037087            0.10  1.588689   1.574836
+          GH 0.037391   0.037722            0.19  1.863452   1.757622
+          VG 0.038414   0.038188            0.15  3.496930   3.348221
+         MVN 0.112396   0.112363            1.00 41.996915  41.885030
+================================================================================
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Visualize test statistics distribution
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# KS statistics boxplot
+ax1 = axes[0]
+ks_data = [portfolio_results[n][&#39;ks_stats&#39;] for n in fitted_dists.keys() if portfolio_results[n] is not None]
+ks_labels = [n for n in fitted_dists.keys() if portfolio_results[n] is not None]
+bp1 = ax1.boxplot(ks_data, labels=ks_labels, patch_artist=True)
+for patch, color in zip(bp1[&#39;boxes&#39;], colors[:len(ks_labels)]):
+    patch.set_facecolor(color)
+ax1.set_ylabel(&#39;KS Statistic&#39;)
+ax1.set_title(&#39;KS Statistics Across Random Portfolios&#39;)
+ax1.tick_params(axis=&#39;x&#39;, rotation=45)
+
+# AD statistics boxplot
+ax2 = axes[1]
+ad_data = [portfolio_results[n][&#39;ad_stats&#39;] for n in fitted_dists.keys() if portfolio_results[n] is not None]
+ad_labels = [n for n in fitted_dists.keys() if portfolio_results[n] is not None]
+bp2 = ax2.boxplot(ad_data, labels=ad_labels, patch_artist=True)
+for patch, color in zip(bp2[&#39;boxes&#39;], colors[:len(ad_labels)]):
+    patch.set_facecolor(color)
+ax2.set_ylabel(&#39;AD Statistic&#39;)
+ax2.set_title(&#39;Anderson-Darling Statistics Across Random Portfolios&#39;)
+ax2.tick_params(axis=&#39;x&#39;, rotation=45)
+
+plt.tight_layout()
+plt.savefig(&#39;portfolio_test_boxplots.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_28_0.png" src="../_images/notebooks_sp500_stocks_multivariate_study_28_0.png" />
+</div>
+</div>
+</section>
+<section id="5.-Quantile-Range-Plots">
+<h2>5. Quantile Range Plots<a class="headerlink" href="#5.-Quantile-Range-Plots" title="Link to this heading"></a></h2>
+<p>For each random portfolio, compare quantiles of simulated vs actual data.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def compute_quantile_comparison(dist, returns_test, weights,
+                                 quantiles=np.linspace(0.01, 0.99, 99),
+                                 n_samples=10000, random_state=None):
+    &quot;&quot;&quot;
+    Compute quantile comparison for multiple portfolios.
+
+    Returns arrays of (empirical quantiles, theoretical quantiles) for each portfolio.
+    &quot;&quot;&quot;
+    # Generate samples
+    samples = dist.rvs(size=n_samples, random_state=random_state)
+
+    n_portfolios = weights.shape[0]
+    n_quantiles = len(quantiles)
+
+    empirical_quantiles = np.zeros((n_portfolios, n_quantiles))
+    theoretical_quantiles = np.zeros((n_portfolios, n_quantiles))
+
+    for i in range(n_portfolios):
+        w = weights[i]
+        test_proj = returns_test @ w
+        sample_proj = samples @ w
+
+        empirical_quantiles[i] = np.quantile(test_proj, quantiles)
+        theoretical_quantiles[i] = np.quantile(sample_proj, quantiles)
+
+    return empirical_quantiles, theoretical_quantiles, quantiles
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compute quantile comparisons for select distributions
+quantile_results = {}
+quantiles = np.linspace(0.01, 0.99, 99)
+
+for name, dist in fitted_dists.items():
+    print(f&quot;Computing quantiles for {name}...&quot;)
+    try:
+        emp_q, theo_q, q = compute_quantile_comparison(
+            dist, returns_test, random_weights,
+            quantiles=quantiles, n_samples=10000, random_state=42
+        )
+        quantile_results[name] = (emp_q, theo_q, q)
+    except Exception as e:
+        print(f&quot;  Error: {e}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Computing quantiles for MVN...
+Computing quantiles for VG...
+Computing quantiles for NInvG...
+Computing quantiles for NIG...
+Computing quantiles for GH...
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create QQ plot comparing all distributions
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+axes = axes.flatten()
+
+for idx, (name, (emp_q, theo_q, q)) in enumerate(quantile_results.items()):
+    if idx &gt;= len(axes):
+        break
+    ax = axes[idx]
+
+    # Plot quantile range (5th-95th percentile across portfolios)
+    emp_median = np.median(emp_q, axis=0)
+    emp_lower = np.percentile(emp_q, 5, axis=0)
+    emp_upper = np.percentile(emp_q, 95, axis=0)
+
+    theo_median = np.median(theo_q, axis=0)
+    theo_lower = np.percentile(theo_q, 5, axis=0)
+    theo_upper = np.percentile(theo_q, 95, axis=0)
+
+    # Plot diagonal
+    min_val = min(emp_median.min(), theo_median.min())
+    max_val = max(emp_median.max(), theo_median.max())
+    ax.plot([min_val, max_val], [min_val, max_val], &#39;k--&#39;, alpha=0.5, label=&#39;Perfect fit&#39;)
+
+    # Plot median QQ line
+    ax.plot(theo_median, emp_median, &#39;b-&#39;, lw=2, label=&#39;Median&#39;)
+
+    # Plot confidence band
+    ax.fill_betweenx(emp_median, theo_lower, theo_upper, alpha=0.3,
+                     label=&#39;5th-95th percentile range&#39;)
+
+    ax.set_xlabel(&#39;Theoretical Quantiles&#39;)
+    ax.set_ylabel(&#39;Empirical Quantiles&#39;)
+    ax.set_title(f&#39;{name}&#39;)
+    ax.legend(loc=&#39;upper left&#39;, fontsize=8)
+
+# Hide unused subplots
+for idx in range(len(quantile_results), len(axes)):
+    axes[idx].set_visible(False)
+
+plt.suptitle(&#39;QQ Plots: Theoretical vs Empirical Quantiles (Random Portfolio Projections)&#39;,
+             fontsize=14, y=1.02)
+plt.tight_layout()
+plt.savefig(&#39;qq_plots_comparison.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_32_0.png" src="../_images/notebooks_sp500_stocks_multivariate_study_32_0.png" />
+</div>
+</div>
+</section>
+<section id="6.-Parameter-Analysis:-Location-(μ)-vs-Skewness-(γ)">
+<h2>6. Parameter Analysis: Location (μ) vs Skewness (γ)<a class="headerlink" href="#6.-Parameter-Analysis:-Location-(μ)-vs-Skewness-(γ)" title="Link to this heading"></a></h2>
+<p>For normal mixture distributions, compare the location parameter μ and skewness parameter γ across stocks. We normalize by the volatility σ for comparison.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Extract parameters from fitted distributions
+from normix.utils.bessel import log_kv
+
+def compute_E_Y(name, params):
+    &quot;&quot;&quot;
+    Compute E[Y] for the mixing distribution of each normal mixture type.
+
+    - VG (Gamma):         E[Y] = α / β (shape / rate)
+    - NInvG (InvGamma):   E[Y] = β / (α - 1) for α &gt; 1 (rate / (shape - 1))
+    - NIG (InvGaussian):  E[Y] = δ (delta)
+    - GH (GIG):           E[Y] = √(b/a) * K_{p+1}(√(ab)) / K_p(√(ab))
+    &quot;&quot;&quot;
+    if name == &#39;VG&#39;:
+        alpha = params[&#39;shape&#39;]
+        beta = params[&#39;rate&#39;]
+        return alpha / beta
+    elif name == &#39;NInvG&#39;:
+        alpha = params[&#39;shape&#39;]
+        beta = params[&#39;rate&#39;]
+        if alpha &gt; 1:
+            return beta / (alpha - 1)
+        else:
+            return np.inf
+    elif name == &#39;NIG&#39;:
+        return params[&#39;delta&#39;]
+    elif name == &#39;GH&#39;:
+        p = params[&#39;p&#39;]
+        a = params[&#39;a&#39;]
+        b = params[&#39;b&#39;]
+        sqrt_ab = np.sqrt(a * b)
+        sqrt_b_over_a = np.sqrt(b / a) if a &gt; 0 else np.inf
+        log_kv_p = log_kv(p, sqrt_ab)
+        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
+        E_Y = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
+        return E_Y
+    else:
+        return 1.0  # Default for MVN or unknown
+
+def extract_mixture_params(dist, name):
+    &quot;&quot;&quot;
+    Extract μ, γ, σ (diagonal of Σ), and E[Y] from normal mixture distributions.
+
+    Returns:
+        mu: Location parameter
+        gamma: Skewness parameter
+        sigma_diag: Diagonal of covariance (volatilities)
+        E_Y: Expected value of mixing variable
+        full_params: All classical parameters
+        mix_params: Mixing distribution parameters
+    &quot;&quot;&quot;
+    if name == &#39;MVN&#39;:
+        params = dist.classical_params
+        mu = params.mu
+        sigma_diag = np.sqrt(np.diag(params.sigma))
+        gamma = np.zeros_like(mu)  # No skewness parameter for MVN
+        E_Y = 1.0  # MVN is not a mixture
+        return mu, gamma, sigma_diag, E_Y, None, None
+    else:
+        params = dist.classical_params
+        mu = params.mu
+        gamma = params.gamma
+        sigma_diag = np.sqrt(np.diag(params.sigma))
+
+        # Get mixing distribution parameters
+        if name == &#39;VG&#39;:
+            mix_params = {&#39;shape&#39;: params.shape, &#39;rate&#39;: params.rate}
+        elif name == &#39;NInvG&#39;:
+            mix_params = {&#39;shape&#39;: params.shape, &#39;rate&#39;: params.rate}
+        elif name == &#39;NIG&#39;:
+            mix_params = {&#39;delta&#39;: params.delta, &#39;eta&#39;: params.eta}
+        elif name == &#39;GH&#39;:
+            mix_params = {&#39;p&#39;: params.p, &#39;a&#39;: params.a, &#39;b&#39;: params.b}
+        else:
+            mix_params = None
+
+        # Compute E[Y]
+        E_Y = compute_E_Y(name, params)
+
+        return mu, gamma, sigma_diag, E_Y, params, mix_params
+
+# Extract parameters for all mixture distributions
+param_data = {}
+for name, dist in fitted_dists.items():
+    try:
+        mu, gamma, sigma, E_Y, full_params, mix_params = extract_mixture_params(dist, name)
+        param_data[name] = {
+            &#39;mu&#39;: mu,
+            &#39;gamma&#39;: gamma,
+            &#39;sigma&#39;: sigma,
+            &#39;E_Y&#39;: E_Y,
+            &#39;mu_over_sigma&#39;: mu / sigma,
+            &#39;gamma_over_sigma&#39;: gamma / sigma,
+            &#39;gamma_E_Y_over_sigma&#39;: gamma * E_Y / sigma,  # The comparable quantity
+            &#39;full_params&#39;: full_params,
+            &#39;mix_params&#39;: mix_params
+        }
+        print(f&quot;{name}: μ range [{mu.min():.6f}, {mu.max():.6f}], γ range [{gamma.min():.6f}, {gamma.max():.6f}], E[Y] = {E_Y:.6f}&quot;)
+        print(f&quot;       γ*E[Y] range [{(gamma*E_Y).min():.6f}, {(gamma*E_Y).max():.6f}]&quot;)
+    except Exception as e:
+        print(f&quot;Error extracting params for {name}: {e}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+MVN: μ range [-0.000885, 0.002879], γ range [0.000000, 0.000000], E[Y] = 1.000000
+       γ*E[Y] range [0.000000, 0.000000]
+VG: μ range [-0.000381, 0.004421], γ range [-0.000963, 0.000496], E[Y] = 2.130790
+       γ*E[Y] range [-0.002052, 0.001057]
+NInvG: μ range [-0.000356, 0.004371], γ range [-0.004009, 0.002058], E[Y] = 0.460976
+       γ*E[Y] range [-0.001848, 0.000949]
+NIG: μ range [-0.000369, 0.004393], γ range [-0.002111, 0.001086], E[Y] = 0.943274
+       γ*E[Y] range [-0.001992, 0.001025]
+GH: μ range [-0.000369, 0.004396], γ range [-0.002117, 0.001089], E[Y] = 0.930902
+       γ*E[Y] range [-0.001971, 0.001014]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create scatter plots comparing μ/σ vs γ*E[Y]/σ for each stock
+# Note: For normal mixture X = μ + γY + √Y * Z, the contribution of γ to E[X] is γ*E[Y]
+# So comparing μ/σ to γ*E[Y]/σ gives a better sense of relative contributions
+mixture_dists = [n for n in [&#39;VG&#39;, &#39;NInvG&#39;, &#39;NIG&#39;, &#39;GH&#39;] if n in param_data]
+
+if mixture_dists:
+    n_plots = len(mixture_dists)
+    fig, axes = plt.subplots(1, n_plots, figsize=(5*n_plots, 5))
+    if n_plots == 1:
+        axes = [axes]
+
+    for idx, name in enumerate(mixture_dists):
+        ax = axes[idx]
+        data = param_data[name]
+
+        mu_norm = data[&#39;mu_over_sigma&#39;]
+        gamma_E_Y_norm = data[&#39;gamma_E_Y_over_sigma&#39;]  # γ*E[Y]/σ instead of γ/σ
+
+        # Scatter plot
+        scatter = ax.scatter(mu_norm, gamma_E_Y_norm, c=range(len(mu_norm)),
+                            cmap=&#39;viridis&#39;, s=50, alpha=0.7)
+
+        # Add diagonal line
+        lim = max(abs(mu_norm).max(), abs(gamma_E_Y_norm).max()) * 1.1
+        if np.isfinite(lim) and lim &gt; 0:
+            ax.plot([-lim, lim], [-lim, lim], &#39;k--&#39;, alpha=0.3, label=&#39;μ = γE[Y]&#39;)
+        ax.axhline(0, color=&#39;gray&#39;, linestyle=&#39;-&#39;, alpha=0.3)
+        ax.axvline(0, color=&#39;gray&#39;, linestyle=&#39;-&#39;, alpha=0.3)
+
+        # Labels
+        ax.set_xlabel(&#39;μ / σ (Location / Volatility)&#39;)
+        ax.set_ylabel(&#39;γ·E[Y] / σ (Skewness Contribution / Volatility)&#39;)
+        ax.set_title(f&#39;{name} (E[Y]={data[&quot;E_Y&quot;]:.4f})&#39;)
+
+        # Add colorbar to show stock index
+        plt.colorbar(scatter, ax=ax, label=&#39;Stock Index&#39;)
+
+        # Add labels for a few interesting points
+        n_labels = min(len(selected_tickers), 6)  # Label up to 6 stocks
+        step = max(1, len(selected_tickers) // n_labels)
+        for i, ticker in enumerate(selected_tickers):
+            if i % step == 0:
+                ax.annotate(ticker, (mu_norm[i], gamma_E_Y_norm[i]), fontsize=6, alpha=0.7)
+
+    plt.suptitle(&#39;Location vs Skewness Contribution (μ/σ vs γ·E[Y]/σ)&#39;, fontsize=14, y=1.02)
+    plt.tight_layout()
+    plt.savefig(&#39;mu_vs_gamma_E_Y_scatter.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+    plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_35_0.png" src="../_images/notebooks_sp500_stocks_multivariate_study_35_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create combined comparison plot using γ*E[Y]/σ for fair comparison
+if len(mixture_dists) &gt;= 2:
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    # Plot 1: μ/σ comparison across distributions
+    ax1 = axes[0, 0]
+    for name in mixture_dists:
+        data = param_data[name]
+        ax1.scatter(range(len(data[&#39;mu_over_sigma&#39;])), data[&#39;mu_over_sigma&#39;],
+                   label=name, alpha=0.7, s=30)
+    ax1.set_xlabel(&#39;Stock Index&#39;)
+    ax1.set_ylabel(&#39;μ / σ&#39;)
+    ax1.set_title(&#39;Location Parameter Across Stocks&#39;)
+    ax1.legend()
+    ax1.axhline(0, color=&#39;gray&#39;, linestyle=&#39;--&#39;, alpha=0.5)
+
+    # Plot 2: γ*E[Y]/σ comparison across distributions (scaled skewness contribution)
+    ax2 = axes[0, 1]
+    for name in mixture_dists:
+        data = param_data[name]
+        ax2.scatter(range(len(data[&#39;gamma_E_Y_over_sigma&#39;])), data[&#39;gamma_E_Y_over_sigma&#39;],
+                   label=f&quot;{name} (E[Y]={data[&#39;E_Y&#39;]:.2e})&quot;, alpha=0.7, s=30)
+    ax2.set_xlabel(&#39;Stock Index&#39;)
+    ax2.set_ylabel(&#39;γ·E[Y] / σ&#39;)
+    ax2.set_title(&#39;Skewness Contribution Across Stocks&#39;)
+    ax2.legend(fontsize=8)
+    ax2.axhline(0, color=&#39;gray&#39;, linestyle=&#39;--&#39;, alpha=0.5)
+
+    # Plot 3: μ/σ histograms
+    ax3 = axes[1, 0]
+    for name in mixture_dists:
+        data = param_data[name]
+        ax3.hist(data[&#39;mu_over_sigma&#39;], bins=15, alpha=0.5, label=name)
+    ax3.set_xlabel(&#39;μ / σ&#39;)
+    ax3.set_ylabel(&#39;Count&#39;)
+    ax3.set_title(&#39;Distribution of Location Parameters&#39;)
+    ax3.legend()
+
+    # Plot 4: γ*E[Y]/σ histograms (scaled skewness contribution)
+    ax4 = axes[1, 1]
+    for name in mixture_dists:
+        data = param_data[name]
+        ax4.hist(data[&#39;gamma_E_Y_over_sigma&#39;], bins=15, alpha=0.5, label=name)
+    ax4.set_xlabel(&#39;γ·E[Y] / σ&#39;)
+    ax4.set_ylabel(&#39;Count&#39;)
+    ax4.set_title(&#39;Distribution of Skewness Contributions&#39;)
+    ax4.legend()
+
+    plt.tight_layout()
+    plt.savefig(&#39;parameter_comparison.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+    plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_36_0.png" src="../_images/notebooks_sp500_stocks_multivariate_study_36_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compare Mean, Variance, and Skewness from Estimated Distributions
+# For normal variance-mean mixture X = μ + γY + √Y·ε where ε ~ N(0, Σ):
+# - E[X] = μ + γE[Y]
+# - Var[X]_i = E[Y]·Σ_ii + Var[Y]·γ_i²
+
+def compute_Var_Y(name, params):
+    &quot;&quot;&quot;
+    Compute Var[Y] for the mixing distribution.
+
+    - VG (Gamma):         Var[Y] = α / β² (shape / rate²)
+    - NInvG (InvGamma):   Var[Y] = β² / ((α-1)²(α-2)) for α &gt; 2
+    - NIG (InvGaussian):  Var[Y] = δ³ / η (delta³ / eta)
+    - GH (GIG):           Var[Y] = E[Y²] - E[Y]² computed via Bessel ratios
+    &quot;&quot;&quot;
+    if name == &#39;VG&#39;:
+        alpha = params[&#39;shape&#39;]
+        beta = params[&#39;rate&#39;]
+        return alpha / (beta ** 2)
+    elif name == &#39;NInvG&#39;:
+        alpha = params[&#39;shape&#39;]
+        beta = params[&#39;rate&#39;]
+        if alpha &gt; 2:
+            return (beta ** 2) / ((alpha - 1) ** 2 * (alpha - 2))
+        else:
+            return np.inf
+    elif name == &#39;NIG&#39;:
+        delta = params[&#39;delta&#39;]
+        eta = params[&#39;eta&#39;]
+        return (delta ** 3) / eta
+    elif name == &#39;GH&#39;:
+        p = params[&#39;p&#39;]
+        a = params[&#39;a&#39;]
+        b = params[&#39;b&#39;]
+        sqrt_ab = np.sqrt(a * b)
+        sqrt_b_over_a = np.sqrt(b / a) if a &gt; 0 else np.inf
+        log_kv_p = log_kv(p, sqrt_ab)
+        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
+        log_kv_pp2 = log_kv(p + 2, sqrt_ab)
+        E_Y = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
+        E_Y2 = (b / a) * np.exp(log_kv_pp2 - log_kv_p)
+        return E_Y2 - E_Y ** 2
+    else:
+        return 0.0
+
+print(&quot;=&quot;*80)
+print(&quot;MOMENT COMPARISON FROM ESTIMATED DISTRIBUTIONS&quot;)
+print(&quot;=&quot;*80)
+
+# Compare empirical moments with distribution moments
+empirical_mean = returns_train.mean(axis=0)
+empirical_var = returns_train.var(axis=0)
+empirical_skew = stats.skew(returns_train, axis=0)
+
+moment_comparison = {}
+
+for name in mixture_dists:
+    data = param_data[name]
+    mu = data[&#39;mu&#39;]
+    gamma = data[&#39;gamma&#39;]
+    sigma_diag_sq = data[&#39;sigma&#39;] ** 2  # Variance (diagonal of Σ)
+    E_Y = data[&#39;E_Y&#39;]
+    Var_Y = compute_Var_Y(name, data[&#39;full_params&#39;])
+
+    # Compute distribution mean: E[X] = μ + γE[Y]
+    dist_mean = mu + gamma * E_Y
+
+    # Compute distribution variance: Var[X]_i = E[Y]·Σ_ii + Var[Y]·γ_i²
+    dist_var = E_Y * sigma_diag_sq + Var_Y * (gamma ** 2)
+
+    moment_comparison[name] = {
+        &#39;E_Y&#39;: E_Y,
+        &#39;Var_Y&#39;: Var_Y,
+        &#39;dist_mean&#39;: dist_mean,
+        &#39;dist_var&#39;: dist_var,
+        &#39;dist_std&#39;: np.sqrt(dist_var),
+        &#39;mean_error&#39;: np.mean(np.abs(dist_mean - empirical_mean)),
+        &#39;var_error&#39;: np.mean(np.abs(dist_var - empirical_var))
+    }
+
+    print(f&quot;\n{name}:&quot;)
+    print(f&quot;  E[Y] = {E_Y:.6e}, Var[Y] = {Var_Y:.6e}&quot;)
+    print(f&quot;  Mean: Dist avg = {dist_mean.mean():.6e}, Empirical avg = {empirical_mean.mean():.6e}&quot;)
+    print(f&quot;         MAE = {moment_comparison[name][&#39;mean_error&#39;]:.6e}&quot;)
+    print(f&quot;  Var:  Dist avg = {dist_var.mean():.6e}, Empirical avg = {empirical_var.mean():.6e}&quot;)
+    print(f&quot;         MAE = {moment_comparison[name][&#39;var_error&#39;]:.6e}&quot;)
+
+# Create comparison visualization
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# Plot 1: Mean comparison (scatter: empirical vs estimated)
+ax1 = axes[0, 0]
+for name in mixture_dists:
+    mc = moment_comparison[name]
+    ax1.scatter(empirical_mean * 100, mc[&#39;dist_mean&#39;] * 100, label=name, alpha=0.6, s=20)
+# Add diagonal line
+lim = max(abs(empirical_mean).max(), max(abs(mc[&#39;dist_mean&#39;]).max() for mc in moment_comparison.values())) * 100 * 1.1
+ax1.plot([-lim, lim], [-lim, lim], &#39;k--&#39;, alpha=0.5, label=&#39;Perfect fit&#39;)
+ax1.set_xlabel(&#39;Empirical Mean (%)&#39;)
+ax1.set_ylabel(&#39;Estimated Mean (%)&#39;)
+ax1.set_title(&#39;Mean: Empirical vs Estimated&#39;)
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+# Plot 2: Variance comparison (scatter: empirical vs estimated)
+ax2 = axes[0, 1]
+for name in mixture_dists:
+    mc = moment_comparison[name]
+    ax2.scatter(empirical_var * 10000, mc[&#39;dist_var&#39;] * 10000, label=name, alpha=0.6, s=20)
+lim = max(empirical_var.max(), max(mc[&#39;dist_var&#39;].max() for mc in moment_comparison.values() if np.isfinite(mc[&#39;dist_var&#39;]).all())) * 10000 * 1.1
+ax2.plot([0, lim], [0, lim], &#39;k--&#39;, alpha=0.5, label=&#39;Perfect fit&#39;)
+ax2.set_xlabel(&#39;Empirical Variance (×10⁻⁴)&#39;)
+ax2.set_ylabel(&#39;Estimated Variance (×10⁻⁴)&#39;)
+ax2.set_title(&#39;Variance: Empirical vs Estimated&#39;)
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+
+# Plot 3: Mean error by stock
+ax3 = axes[1, 0]
+for name in mixture_dists:
+    mc = moment_comparison[name]
+    mean_errors = np.abs(mc[&#39;dist_mean&#39;] - empirical_mean) * 100
+    ax3.scatter(range(len(mean_errors)), mean_errors, label=name, alpha=0.6, s=20)
+ax3.set_xlabel(&#39;Stock Index&#39;)
+ax3.set_ylabel(&#39;|Mean Error| (%)&#39;)
+ax3.set_title(&#39;Absolute Mean Error by Stock&#39;)
+ax3.legend()
+
+# Plot 4: Summary statistics
+ax4 = axes[1, 1]
+names = list(moment_comparison.keys())
+mean_maes = [moment_comparison[n][&#39;mean_error&#39;] * 100 for n in names]
+var_maes = [moment_comparison[n][&#39;var_error&#39;] * 10000 for n in names]
+
+x = np.arange(len(names))
+width = 0.35
+bars1 = ax4.bar(x - width/2, mean_maes, width, label=&#39;Mean MAE (×10⁻²)&#39;, color=&#39;steelblue&#39;)
+ax4_twin = ax4.twinx()
+bars2 = ax4_twin.bar(x + width/2, var_maes, width, label=&#39;Var MAE (×10⁻⁴)&#39;, color=&#39;darkorange&#39;, alpha=0.7)
+
+ax4.set_xlabel(&#39;Distribution&#39;)
+ax4.set_ylabel(&#39;Mean MAE (×10⁻²)&#39;, color=&#39;steelblue&#39;)
+ax4_twin.set_ylabel(&#39;Variance MAE (×10⁻⁴)&#39;, color=&#39;darkorange&#39;)
+ax4.set_xticks(x)
+ax4.set_xticklabels(names)
+ax4.set_title(&#39;Mean Absolute Error Summary&#39;)
+ax4.legend(loc=&#39;upper left&#39;)
+ax4_twin.legend(loc=&#39;upper right&#39;)
+
+plt.tight_layout()
+plt.savefig(&#39;moment_comparison.png&#39;, dpi=150, bbox_inches=&#39;tight&#39;)
+plt.show()
+
+# Print summary table
+print(&quot;\n&quot; + &quot;=&quot;*80)
+print(&quot;SUMMARY TABLE: Distribution Moment Comparison&quot;)
+print(&quot;=&quot;*80)
+summary_df = pd.DataFrame({
+    &#39;Distribution&#39;: names,
+    &#39;E[Y]&#39;: [moment_comparison[n][&#39;E_Y&#39;] for n in names],
+    &#39;Var[Y]&#39;: [moment_comparison[n][&#39;Var_Y&#39;] for n in names],
+    &#39;Mean MAE&#39;: [moment_comparison[n][&#39;mean_error&#39;] for n in names],
+    &#39;Var MAE&#39;: [moment_comparison[n][&#39;var_error&#39;] for n in names]
+})
+print(summary_df.to_string(index=False))
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+================================================================================
+MOMENT COMPARISON FROM ESTIMATED DISTRIBUTIONS
+================================================================================
+
+VG:
+  E[Y] = 2.130790e+00, Var[Y] = 2.229780e+00
+  Mean: Dist avg = 5.226405e-04, Empirical avg = 5.226405e-04
+         MAE = 2.464937e-17
+  Var:  Dist avg = 3.526543e-04, Empirical avg = 4.178537e-04
+         MAE = 7.873155e-05
+
+NInvG:
+  E[Y] = 4.609764e-01, Var[Y] = 2.382077e-01
+  Mean: Dist avg = 5.522672e-04, Empirical avg = 5.226405e-04
+         MAE = 3.157227e-05
+  Var:  Dist avg = 3.439041e-04, Empirical avg = 4.178537e-04
+         MAE = 8.438055e-05
+
+NIG:
+  E[Y] = 9.432736e-01, Var[Y] = 5.249672e-01
+  Mean: Dist avg = 5.226405e-04, Empirical avg = 5.226405e-04
+         MAE = 1.786790e-17
+  Var:  Dist avg = 3.567892e-04, Empirical avg = 4.178537e-04
+         MAE = 7.660339e-05
+
+GH:
+  E[Y] = 9.309021e-01, Var[Y] = 4.867629e-01
+  Mean: Dist avg = 5.303291e-04, Empirical avg = 5.226405e-04
+         MAE = 8.222104e-06
+  Var:  Dist avg = 3.521624e-04, Empirical avg = 4.178537e-04
+         MAE = 7.925527e-05
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_stocks_multivariate_study_37_1.png" src="../_images/notebooks_sp500_stocks_multivariate_study_37_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+================================================================================
+SUMMARY TABLE: Distribution Moment Comparison
+================================================================================
+Distribution     E[Y]   Var[Y]     Mean MAE  Var MAE
+          VG 2.130790 2.229780 2.464937e-17 0.000079
+       NInvG 0.460976 0.238208 3.157227e-05 0.000084
+         NIG 0.943274 0.524967 1.786790e-17 0.000077
+          GH 0.930902 0.486763 8.222104e-06 0.000079
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create a detailed parameter table for one distribution (e.g., GH)
+best_dist = &#39;GH&#39; if &#39;GH&#39; in param_data else list(param_data.keys())[-1]
+
+if best_dist in param_data:
+    data = param_data[best_dist]
+
+    param_table = pd.DataFrame({
+        &#39;Ticker&#39;: selected_tickers,
+        &#39;μ&#39;: data[&#39;mu&#39;],
+        &#39;γ&#39;: data[&#39;gamma&#39;],
+        &#39;γ·E[Y]&#39;: data[&#39;gamma&#39;] * data[&#39;E_Y&#39;],  # Skewness contribution
+        &#39;σ&#39;: data[&#39;sigma&#39;],
+        &#39;μ/σ&#39;: data[&#39;mu_over_sigma&#39;],
+        &#39;γ/σ&#39;: data[&#39;gamma_over_sigma&#39;],
+        &#39;γ·E[Y]/σ&#39;: data[&#39;gamma_E_Y_over_sigma&#39;]  # Comparable skewness measure
+    })
+
+    # Sort by γ*E[Y]/σ to see which stocks have most skewness contribution
+    param_table_sorted = param_table.sort_values(&#39;γ·E[Y]/σ&#39;)
+
+    print(f&quot;\n{best_dist} Parameters by Stock (sorted by skewness contribution γ·E[Y]/σ):&quot;)
+    print(f&quot;Note: E[Y] = {data[&#39;E_Y&#39;]:.6e}&quot;)
+    print(&quot;=&quot;*100)
+    print(param_table_sorted.to_string(index=False))
+    print(&quot;=&quot;*100)
+
+    # Print mixing distribution parameters
+    if data[&#39;mix_params&#39;]:
+        print(f&quot;\n{best_dist} Mixing Distribution Parameters:&quot;)
+        for k, v in data[&#39;mix_params&#39;].items():
+            if isinstance(v, float):
+                print(f&quot;  {k}: {v:.6e}&quot;)
+            else:
+                print(f&quot;  {k}: {v}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+GH Parameters by Stock (sorted by skewness contribution γ·E[Y]/σ):
+Note: E[Y] = 9.309021e-01
+====================================================================================================
+Ticker         μ         γ    γ·E[Y]        σ       μ/σ       γ/σ  γ·E[Y]/σ
+  EQIX  0.002732 -0.002117 -0.001971 0.016250  0.168124 -0.130298 -0.121294
+   PLD  0.002697 -0.002047 -0.001905 0.015900  0.169643 -0.128726 -0.119831
+   AVB  0.001572 -0.001632 -0.001519 0.014332  0.109678 -0.113883 -0.106014
+   DLR  0.002471 -0.001936 -0.001802 0.017023  0.145175 -0.113722 -0.105864
+   BAX  0.002180 -0.001620 -0.001508 0.014438  0.150969 -0.112205 -0.104452
+   AMT  0.002267 -0.001627 -0.001515 0.014909  0.152069 -0.109153 -0.101611
+     V  0.002322 -0.001581 -0.001472 0.014910  0.155760 -0.106027 -0.098701
+   MCO  0.002518 -0.001727 -0.001608 0.016513  0.152459 -0.104580 -0.097354
+   ARE  0.002036 -0.001493 -0.001389 0.014504  0.140361 -0.102904 -0.095794
+     O  0.001797 -0.001570 -0.001461 0.016166  0.111162 -0.097088 -0.090379
+   STZ  0.001997 -0.001702 -0.001585 0.018145  0.110075 -0.093823 -0.087340
+   PEP  0.001399 -0.001050 -0.000978 0.011309  0.123745 -0.092881 -0.086463
+   EQR  0.001334 -0.001387 -0.001292 0.015030  0.088731 -0.092311 -0.085933
+   CCI  0.001874 -0.001332 -0.001240 0.014684  0.127649 -0.090706 -0.084438
+   ZBH  0.001811 -0.001532 -0.001426 0.017278  0.104799 -0.088642 -0.082517
+    KO  0.001222 -0.000984 -0.000916 0.011452  0.106712 -0.085904 -0.079968
+   LMT  0.001580 -0.001186 -0.001104 0.013962  0.113161 -0.084938 -0.079069
+  MDLZ  0.001393 -0.001155 -0.001075 0.014290  0.097484 -0.080795 -0.075212
+   ICE  0.001774 -0.001155 -0.001075 0.014357  0.123588 -0.080427 -0.074869
+   DHI  0.002192 -0.001652 -0.001538 0.020822  0.105276 -0.079321 -0.073840
+  WELL  0.001554 -0.001477 -0.001375 0.018990  0.081835 -0.077775 -0.072401
+   SPG  0.001088 -0.001631 -0.001518 0.021141  0.051467 -0.077130 -0.071801
+    MA  0.002202 -0.001246 -0.001160 0.016652  0.132255 -0.074842 -0.069671
+  SPGI  0.002147 -0.001185 -0.001103 0.016006  0.134159 -0.074051 -0.068934
+    MO  0.001023 -0.001128 -0.001050 0.015396  0.066440 -0.073286 -0.068222
+   MCD  0.001392 -0.000879 -0.000818 0.012290  0.113236 -0.071493 -0.066553
+   AIG  0.000979 -0.001355 -0.001261 0.019193  0.051021 -0.070595 -0.065717
+   FIS  0.001635 -0.001023 -0.000952 0.014644  0.111645 -0.069834 -0.065009
+   MMM  0.001162 -0.001032 -0.000960 0.014796  0.078518 -0.069717 -0.064899
+  VRTX  0.002219 -0.001820 -0.001694 0.026254  0.084504 -0.069306 -0.064518
+    ES  0.001361 -0.000889 -0.000828 0.013156  0.103473 -0.067569 -0.062900
+   PSA  0.001003 -0.000989 -0.000920 0.014670  0.068347 -0.067403 -0.062746
+   NOC  0.001381 -0.001019 -0.000949 0.015285  0.090336 -0.066674 -0.062067
+   BDX  0.001380 -0.000995 -0.000926 0.014946  0.092338 -0.066557 -0.061958
+    HD  0.001503 -0.000921 -0.000858 0.014127  0.106411 -0.065214 -0.060708
+    PM  0.001116 -0.001026 -0.000955 0.015773  0.070738 -0.065070 -0.060574
+    GD  0.001016 -0.000955 -0.000889 0.014742  0.068937 -0.064767 -0.060291
+  AMZN  0.002434 -0.001279 -0.001191 0.020011  0.121648 -0.063916 -0.059500
+   CVS  0.000986 -0.001187 -0.001105 0.018650  0.052868 -0.063645 -0.059247
+   MET  0.001381 -0.001259 -0.001172 0.019795  0.069788 -0.063618 -0.059223
+   LEN  0.001626 -0.001352 -0.001259 0.022065  0.073712 -0.061272 -0.057038
+   OXY  0.000671 -0.001652 -0.001538 0.027419  0.024487 -0.060244 -0.056081
+   EXR  0.001270 -0.000981 -0.000913 0.016287  0.078008 -0.060225 -0.056063
+   MKC  0.001488 -0.000857 -0.000797 0.014335  0.103816 -0.059761 -0.055632
+   MCK  0.001131 -0.001218 -0.001134 0.020780  0.054418 -0.058632 -0.054580
+  ISRG  0.002259 -0.001114 -0.001037 0.019096  0.118292 -0.058347 -0.054315
+   AEP  0.001120 -0.000738 -0.000687 0.012701  0.088154 -0.058070 -0.054058
+   TMO  0.001859 -0.000914 -0.000851 0.015750  0.118044 -0.058033 -0.054023
+   SYK  0.001642 -0.000897 -0.000835 0.015508  0.105871 -0.057843 -0.053846
+   BSX  0.001485 -0.001038 -0.000966 0.018023  0.082368 -0.057570 -0.053592
+   UAL  0.001311 -0.001666 -0.001551 0.029172  0.044947 -0.057100 -0.053154
+    CL  0.000951 -0.000709 -0.000660 0.012438  0.076432 -0.056963 -0.053027
+   RTX  0.001089 -0.000934 -0.000870 0.016431  0.066274 -0.056848 -0.052920
+     A  0.001762 -0.000945 -0.000879 0.017206  0.102394 -0.054908 -0.051114
+   PPG  0.001177 -0.000904 -0.000842 0.016506  0.071295 -0.054778 -0.050993
+  AAPL  0.002220 -0.001045 -0.000973 0.019162  0.115872 -0.054547 -0.050778
+  NVDA  0.003874 -0.001784 -0.001661 0.032714  0.118435 -0.054539 -0.050771
+     C  0.001262 -0.001137 -0.001058 0.020852  0.060513 -0.054521 -0.050754
+   DAL  0.001126 -0.001320 -0.001228 0.024302  0.046323 -0.054302 -0.050550
+   KHC  0.000507 -0.000966 -0.000899 0.017869  0.028381 -0.054043 -0.050309
+ GOOGL  0.001484 -0.000895 -0.000834 0.016625  0.089292 -0.053864 -0.050142
+   ETR  0.001158 -0.000753 -0.000701 0.013986  0.082796 -0.053838 -0.050118
+   PRU  0.001114 -0.001091 -0.001015 0.020330  0.054810 -0.053656 -0.049949
+   CAH  0.000774 -0.001100 -0.001024 0.020535  0.037678 -0.053557 -0.049856
+   KMB  0.000888 -0.000726 -0.000675 0.013581  0.065409 -0.053424 -0.049733
+  ADBE  0.002312 -0.001047 -0.000975 0.019677  0.117509 -0.053227 -0.049549
+   IBM  0.000867 -0.000820 -0.000763 0.015441  0.056130 -0.053089 -0.049421
+    ED  0.000877 -0.000685 -0.000637 0.012897  0.067963 -0.053080 -0.049412
+   OKE  0.001942 -0.001348 -0.001255 0.025807  0.075261 -0.052251 -0.048640
+    MU  0.002923 -0.001735 -0.001615 0.033660  0.086840 -0.051535 -0.047974
+   IRM  0.001178 -0.000911 -0.000848 0.017674  0.066628 -0.051521 -0.047961
+     D  0.000894 -0.000681 -0.000634 0.013227  0.067620 -0.051495 -0.047936
+   NEE  0.001577 -0.000651 -0.000606 0.012842  0.122822 -0.050710 -0.047206
+   ACN  0.001475 -0.000768 -0.000715 0.015193  0.097062 -0.050540 -0.047048
+  MSFT  0.001930 -0.000826 -0.000769 0.016629  0.116051 -0.049702 -0.046268
+    GM  0.001240 -0.001045 -0.000973 0.021068  0.058872 -0.049621 -0.046192
+  BIIB  0.001039 -0.001234 -0.001149 0.025054  0.041455 -0.049258 -0.045855
+    DD  0.000901 -0.000962 -0.000896 0.019746  0.045623 -0.048719 -0.045352
+  MSCI  0.002315 -0.000876 -0.000816 0.018103  0.127866 -0.048406 -0.045061
+   AWK  0.001448 -0.000664 -0.000619 0.013753  0.105292 -0.048313 -0.044975
+   NOW  0.002555 -0.001204 -0.001121 0.024948  0.102428 -0.048274 -0.044938
+  GOOG  0.001409 -0.000803 -0.000747 0.016646  0.084667 -0.048223 -0.044891
+   LOW  0.001496 -0.000891 -0.000829 0.018486  0.080918 -0.048176 -0.044847
+  CSCO  0.001296 -0.000821 -0.000764 0.017133  0.075643 -0.047904 -0.044594
+   TRV  0.000881 -0.000670 -0.000623 0.013997  0.062944 -0.047843 -0.044537
+   HLT  0.001555 -0.000888 -0.000826 0.018648  0.083406 -0.047596 -0.044307
+   LIN  0.001460 -0.000725 -0.000675 0.015371  0.094953 -0.047196 -0.043935
+   XEL  0.001166 -0.000589 -0.000548 0.012729  0.091638 -0.046238 -0.043043
+  INTC  0.001254 -0.000923 -0.000859 0.019972  0.062772 -0.046204 -0.043012
+  COST  0.001391 -0.000656 -0.000611 0.014393  0.096610 -0.045602 -0.042451
+   SYY  0.001284 -0.000786 -0.000731 0.017464  0.073502 -0.044992 -0.041884
+  AMGN  0.001091 -0.000740 -0.000689 0.016495  0.066125 -0.044881 -0.041780
+   WMB  0.001168 -0.001282 -0.001194 0.029333  0.039835 -0.043714 -0.040694
+     T  0.000755 -0.000598 -0.000557 0.013768  0.054870 -0.043463 -0.040460
+  BKNG  0.001199 -0.000845 -0.000787 0.019573  0.061271 -0.043192 -0.040208
+     F  0.000618 -0.000836 -0.000778 0.019486  0.031705 -0.042891 -0.039927
+  TTWO  0.002347 -0.001046 -0.000974 0.024457  0.095949 -0.042768 -0.039813
+   MPC  0.001074 -0.001189 -0.001107 0.027802  0.038617 -0.042755 -0.039800
+  META  0.001533 -0.000841 -0.000783 0.019729  0.077708 -0.042632 -0.039686
+   VLO  0.000958 -0.001024 -0.000953 0.024033  0.039858 -0.042595 -0.039652
+   HSY  0.001065 -0.000569 -0.000530 0.013364  0.079708 -0.042580 -0.039638
+   PEG  0.000987 -0.000586 -0.000545 0.013757  0.071755 -0.042562 -0.039621
+  NXPI  0.001440 -0.000978 -0.000910 0.023230  0.061997 -0.042098 -0.039189
+    CB  0.000846 -0.000582 -0.000542 0.014301  0.059168 -0.040698 -0.037886
+   AXP  0.001123 -0.000687 -0.000640 0.016892  0.066495 -0.040689 -0.037878
+   ABT  0.001372 -0.000636 -0.000592 0.015634  0.087727 -0.040683 -0.037872
+   APD  0.001260 -0.000588 -0.000548 0.014666  0.085902 -0.040106 -0.037334
+  GILD  0.000398 -0.000725 -0.000675 0.018148  0.021909 -0.039933 -0.037174
+    GE  0.000195 -0.000973 -0.000906 0.024830  0.007842 -0.039187 -0.036479
+   DTE  0.000932 -0.000512 -0.000476 0.013091  0.071166 -0.039100 -0.036398
+   ALL  0.000980 -0.000509 -0.000474 0.013247  0.073999 -0.038417 -0.035763
+    DG  0.001553 -0.000700 -0.000651 0.018308  0.084844 -0.038219 -0.035578
+   GIS  0.000686 -0.000573 -0.000533 0.015073  0.045492 -0.037992 -0.035367
+   SHW  0.001385 -0.000602 -0.000560 0.015891  0.087141 -0.037857 -0.035241
+  ABBV  0.001338 -0.000710 -0.000661 0.018755  0.071316 -0.037839 -0.035224
+   MDT  0.000914 -0.000543 -0.000506 0.014441  0.063265 -0.037628 -0.035028
+   AES  0.001586 -0.000759 -0.000706 0.020194  0.078516 -0.037579 -0.034982
+  DLTR  0.001010 -0.000815 -0.000758 0.021700  0.046566 -0.037540 -0.034946
+  SNPS  0.001948 -0.000631 -0.000588 0.016921  0.115115 -0.037317 -0.034738
+   CAG  0.000884 -0.000721 -0.000671 0.019531  0.045272 -0.036902 -0.034352
+   WEC  0.001031 -0.000471 -0.000438 0.012958  0.079573 -0.036310 -0.033801
+   AMD  0.004396 -0.001610 -0.001499 0.044745  0.098241 -0.035980 -0.033494
+   COF  0.000979 -0.000747 -0.000695 0.021300  0.045962 -0.035053 -0.032631
+   BLK  0.001234 -0.000599 -0.000558 0.017174  0.071823 -0.034874 -0.032464
+    PG  0.000942 -0.000398 -0.000371 0.011539  0.081673 -0.034528 -0.032142
+   CME  0.001161 -0.000519 -0.000483 0.015035  0.077201 -0.034524 -0.032138
+   BMY  0.000624 -0.000631 -0.000587 0.018327  0.034066 -0.034411 -0.032033
+   EXC  0.000954 -0.000502 -0.000468 0.014647  0.065155 -0.034298 -0.031928
+  REGN  0.000681 -0.000827 -0.000770 0.024656  0.027616 -0.033546 -0.031228
+    EA  0.001245 -0.000711 -0.000662 0.021763  0.057206 -0.032662 -0.030406
+   JNJ  0.000809 -0.000391 -0.000364 0.012143  0.066608 -0.032202 -0.029977
+   ECL  0.000942 -0.000447 -0.000416 0.013949  0.067501 -0.032068 -0.029853
+   HON  0.001099 -0.000445 -0.000414 0.013966  0.078709 -0.031865 -0.029663
+   TXN  0.001454 -0.000558 -0.000519 0.018001  0.080791 -0.031000 -0.028858
+  SBUX  0.000931 -0.000475 -0.000442 0.015324  0.060786 -0.030995 -0.028853
+   LLY  0.001100 -0.000502 -0.000467 0.016426  0.066949 -0.030560 -0.028448
+   ITW  0.001159 -0.000471 -0.000438 0.015581  0.074415 -0.030232 -0.028143
+   SLB -0.000129 -0.000705 -0.000657 0.023589 -0.005484 -0.029906 -0.027840
+   RSG  0.000989 -0.000330 -0.000308 0.011088  0.089237 -0.029800 -0.027741
+    BA  0.000981 -0.000667 -0.000621 0.023712  0.041379 -0.028147 -0.026202
+  AVGO  0.001555 -0.000621 -0.000578 0.022465  0.069237 -0.027639 -0.025729
+  FTNT  0.001788 -0.000654 -0.000609 0.023825  0.075025 -0.027468 -0.025570
+   SRE  0.000713 -0.000390 -0.000363 0.014448  0.049322 -0.026992 -0.025127
+   HAL  0.000227 -0.000746 -0.000695 0.027851  0.008163 -0.026793 -0.024941
+   MAR  0.001041 -0.000550 -0.000512 0.020690  0.050294 -0.026588 -0.024750
+  AMAT  0.001864 -0.000654 -0.000609 0.025178  0.074037 -0.025964 -0.024170
+  ORCL  0.000848 -0.000414 -0.000385 0.016009  0.052964 -0.025857 -0.024070
+   NSC  0.001295 -0.000469 -0.000436 0.018322  0.070670 -0.025574 -0.023807
+    SO  0.000697 -0.000320 -0.000298 0.013029  0.053529 -0.024579 -0.022881
+   XOM  0.000091 -0.000400 -0.000372 0.016267  0.005606 -0.024571 -0.022873
+  LRCX  0.002068 -0.000617 -0.000575 0.025148  0.082245 -0.024550 -0.022854
+   WMT  0.001132 -0.000351 -0.000327 0.014340  0.078938 -0.024474 -0.022783
+   CRM  0.001288 -0.000520 -0.000484 0.021490  0.059921 -0.024218 -0.022544
+   FDX  0.000941 -0.000496 -0.000461 0.020536  0.045798 -0.024134 -0.022466
+   SJM  0.000427 -0.000387 -0.000361 0.016271  0.026216 -0.023814 -0.022168
+   DUK  0.000647 -0.000284 -0.000265 0.012360  0.052350 -0.023013 -0.021423
+   CAT  0.001350 -0.000462 -0.000430 0.020097  0.067196 -0.023003 -0.021413
+    WM  0.000952 -0.000260 -0.000242 0.011398  0.083487 -0.022770 -0.021196
+  NFLX  0.001739 -0.000649 -0.000605 0.028627  0.060758 -0.022687 -0.021120
+    BK  0.000437 -0.000384 -0.000358 0.017224  0.025351 -0.022303 -0.020762
+   PFE  0.000569 -0.000295 -0.000275 0.013732  0.041426 -0.021483 -0.019998
+  TSLA  0.002960 -0.000820 -0.000764 0.038982  0.075926 -0.021044 -0.019590
+   MRK  0.000719 -0.000275 -0.000256 0.013957  0.051520 -0.019732 -0.018368
+  PYPL  0.001858 -0.000400 -0.000372 0.020574  0.090323 -0.019432 -0.018089
+   EOG  0.000167 -0.000501 -0.000466 0.026227  0.006372 -0.019096 -0.017776
+    EW  0.001302 -0.000390 -0.000363 0.020673  0.062975 -0.018848 -0.017545
+   ADI  0.001158 -0.000349 -0.000325 0.019525  0.059312 -0.017877 -0.016642
+   APA -0.000147 -0.000675 -0.000629 0.037888 -0.003867 -0.017821 -0.016590
+   ETN  0.001021 -0.000287 -0.000267 0.016973  0.060156 -0.016910 -0.015741
+   UPS  0.000753 -0.000260 -0.000242 0.015462  0.048723 -0.016814 -0.015652
+   COP  0.000344 -0.000429 -0.000399 0.025642  0.013428 -0.016722 -0.015566
+   PSX  0.000297 -0.000339 -0.000315 0.020497  0.014510 -0.016523 -0.015382
+  INTU  0.001344 -0.000275 -0.000256 0.017556  0.076529 -0.015646 -0.014565
+  SCHW  0.000741 -0.000345 -0.000321 0.022094  0.033535 -0.015603 -0.014525
+   NKE  0.000917 -0.000279 -0.000260 0.018363  0.049930 -0.015218 -0.014166
+    CI  0.000601 -0.000299 -0.000279 0.020070  0.029954 -0.014915 -0.013885
+   JPM  0.000859 -0.000250 -0.000233 0.016927  0.050736 -0.014777 -0.013756
+    VZ  0.000547 -0.000179 -0.000167 0.012658  0.043252 -0.014172 -0.013192
+ BRK-B  0.000597 -0.000175 -0.000163 0.012566  0.047487 -0.013918 -0.012956
+   NEM  0.001315 -0.000352 -0.000327 0.025713  0.051150 -0.013674 -0.012729
+   UNP  0.001055 -0.000226 -0.000210 0.016905  0.062432 -0.013351 -0.012428
+   DVN -0.000074 -0.000481 -0.000448 0.036368 -0.002047 -0.013223 -0.012309
+    GS  0.000600 -0.000247 -0.000230 0.018864  0.031815 -0.013085 -0.012181
+    KR  0.000147 -0.000285 -0.000265 0.021919  0.006698 -0.012992 -0.012094
+   TJX  0.000747 -0.000209 -0.000194 0.016821  0.044394 -0.012420 -0.011562
+ CMCSA  0.000689 -0.000197 -0.000183 0.016250  0.042376 -0.012102 -0.011266
+   BKR -0.000042 -0.000319 -0.000297 0.026913 -0.001551 -0.011844 -0.011026
+   CMI  0.001012 -0.000201 -0.000187 0.017724  0.057116 -0.011321 -0.010539
+  ROST  0.000820 -0.000191 -0.000178 0.019362  0.042330 -0.009864 -0.009182
+   BBY  0.001275 -0.000236 -0.000220 0.025880  0.049268 -0.009138 -0.008506
+  KLAC  0.001312 -0.000167 -0.000155 0.022834  0.057455 -0.007302 -0.006798
+  QCOM  0.001165 -0.000162 -0.000151 0.022647  0.051456 -0.007152 -0.006658
+   PNC  0.000588 -0.000118 -0.000110 0.017839  0.032976 -0.006599 -0.006143
+   HUM  0.000840 -0.000127 -0.000118 0.019460  0.043145 -0.006538 -0.006087
+   UNH  0.001020 -0.000092 -0.000085 0.016564  0.061564 -0.005543 -0.005160
+  CDNS  0.001537 -0.000082 -0.000076 0.018270  0.084126 -0.004489 -0.004178
+   EMR  0.000586 -0.000072 -0.000067 0.017501  0.033502 -0.004130 -0.003844
+   KMI  0.000072 -0.000078 -0.000073 0.021165  0.003410 -0.003692 -0.003437
+  CHTR  0.001047 -0.000070 -0.000065 0.019267  0.054331 -0.003643 -0.003392
+   TFC  0.000371 -0.000058 -0.000054 0.018971  0.019544 -0.003050 -0.002839
+   URI  0.000990 -0.000074 -0.000069 0.029141  0.033968 -0.002548 -0.002372
+   CSX  0.001088 -0.000040 -0.000037 0.018954  0.057427 -0.002122 -0.001976
+  MCHP  0.000967 -0.000031 -0.000028 0.023195  0.041703 -0.001317 -0.001226
+   CPB  0.000056 -0.000020 -0.000018 0.018044  0.003121 -0.001096 -0.001020
+   BAC  0.000499  0.000021  0.000019 0.020456  0.024415  0.001006  0.000936
+   WFC -0.000369  0.000031  0.000029 0.019072 -0.019328  0.001620  0.001508
+   CVX  0.000106  0.000039  0.000036 0.017311  0.006112  0.002254  0.002098
+   USB  0.000129  0.000049  0.000046 0.016250  0.007952  0.003009  0.002801
+   VMC  0.000314  0.000068  0.000064 0.020520  0.015289  0.003325  0.003096
+   NUE  0.000253  0.000090  0.000084 0.021610  0.011698  0.004185  0.003896
+   DIS  0.000336  0.000085  0.000080 0.015915  0.021101  0.005369  0.004998
+    DE  0.000924  0.000123  0.000115 0.019988  0.046229  0.006163  0.005737
+   FCX  0.000840  0.000264  0.000246 0.039415  0.021303  0.006700  0.006237
+   AZO  0.000205  0.000123  0.000114 0.018225  0.011264  0.006746  0.006280
+  TMUS  0.000878  0.000151  0.000140 0.018355  0.047845  0.008206  0.007639
+   TGT  0.000635  0.000209  0.000195 0.021027  0.030187  0.009961  0.009273
+    MS  0.000452  0.000219  0.000204 0.020587  0.021975  0.010656  0.009920
+   MLM  0.000316  0.000246  0.000229 0.020894  0.015123  0.011792  0.010977
+   ELV  0.000518  0.000239  0.000222 0.019182  0.027023  0.012459  0.011598
+  ORLY  0.000200  0.000260  0.000242 0.018083  0.011035  0.014351  0.013359
+    PH  0.000461  0.000422  0.000393 0.019399  0.023780  0.021755  0.020252
+   GWW -0.000023  0.000704  0.000655 0.019939 -0.001139  0.035287  0.032848
+  FAST -0.000236  0.001089  0.001014 0.019667 -0.012004  0.055392  0.051565
+   DHR  0.000442  0.000869  0.000809 0.014023  0.031545  0.061991  0.057708
+====================================================================================================
+
+GH Mixing Distribution Parameters:
+  p: -5.000000e-01
+  a: 1.912434e+00
+  b: 1.657275e+00
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sp500_index_empirical_study.html" class="btn btn-neutral float-left" title="S&amp;P 500 Empirical Study: Distribution Comparison" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../theory/index.html" class="btn btn-neutral float-right" title="Mathematical Background" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

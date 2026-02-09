@@ -1,0 +1,1072 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&amp;P 500 Empirical Study: Distribution Comparison &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="S&amp;P 500 Stocks Multivariate Empirical Study" href="sp500_stocks_multivariate_study.html" />
+    <link rel="prev" title="Comparison of Normal Mixture Distributions" href="mixture_distributions_comparison.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#multivariate-distributions">Multivariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../demos.html#mixture-distributions">Mixture Distributions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../demos.html#comparisons-applications">Comparisons &amp; Applications</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="mixture_distributions_comparison.html">Comparison of Normal Mixture Distributions</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">S&amp;P 500 Empirical Study: Distribution Comparison</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sp500_stocks_multivariate_study.html">S&amp;P 500 Stocks Multivariate Empirical Study</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../demos.html">Demos &amp; Notebooks</a></li>
+      <li class="breadcrumb-item active">S&amp;P 500 Empirical Study: Distribution Comparison</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/sp500_index_empirical_study.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/sp500_index_empirical_study.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="S&amp;P-500-Empirical-Study:-Distribution-Comparison">
+<h1>S&amp;P 500 Empirical Study: Distribution Comparison<a class="headerlink" href="#S&P-500-Empirical-Study:-Distribution-Comparison" title="Link to this heading"></a></h1>
+<p>This notebook compares various probability distributions for modeling S&amp;P 500 daily log returns.</p>
+<section id="Distributions-Compared">
+<h2>Distributions Compared<a class="headerlink" href="#Distributions-Compared" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Normal</strong> - Baseline Gaussian distribution</p></li>
+<li><p><strong>Student-t</strong> - Heavy-tailed symmetric distribution</p></li>
+<li><p><strong>Variance Gamma (VG)</strong> - Normal-Gamma mixture, semi-heavy tails</p></li>
+<li><p><strong>Normal Inverse Gamma (NInvG)</strong> - Normal-InverseGamma mixture, heavy tails</p></li>
+<li><p><strong>Normal Inverse Gaussian (NIG)</strong> - Normal-InverseGaussian mixture</p></li>
+<li><p><strong>Generalized Hyperbolic (GH)</strong> - Most general, encompasses VG, NInvG, NIG as special cases</p></li>
+<li><p><strong>Stable (Lévy)</strong> - Power-law tails, potentially infinite variance</p></li>
+</ol>
+</section>
+<section id="Methodology">
+<h2>Methodology<a class="headerlink" href="#Methodology" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Data</strong>: 10 years of S&amp;P 500 daily returns</p></li>
+<li><p><strong>Training</strong>: First 5 years (in-sample)</p></li>
+<li><p><strong>Testing</strong>: Last 5 years (out-of-sample)</p></li>
+<li><p><strong>Metrics</strong>: KS test, Anderson-Darling test, tail fit analysis, QQ plots</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+from scipy import stats
+from scipy.stats import ks_2samp, anderson_ksamp
+import warnings
+warnings.filterwarnings(&#39;ignore&#39;)
+
+# Import normix distributions
+from normix.distributions.mixtures import (
+    VarianceGamma, NormalInverseGamma, NormalInverseGaussian, GeneralizedHyperbolic
+)
+
+plt.style.use(&#39;seaborn-v0_8-whitegrid&#39;)
+%matplotlib inline
+
+print(&quot;Imports successful!&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Imports successful!
+</pre></div></div>
+</div>
+</section>
+<section id="1.-Download-and-Prepare-S&amp;P-500-Data">
+<h2>1. Download and Prepare S&amp;P 500 Data<a class="headerlink" href="#1.-Download-and-Prepare-S&P-500-Data" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import yfinance as yf
+from datetime import datetime, timedelta
+
+# Download 10 years of S&amp;P 500 data
+end_date = datetime.now()
+start_date = end_date - timedelta(days=365*10 + 30)  # Extra buffer for trading days
+
+print(f&quot;Downloading S&amp;P 500 data from {start_date.date()} to {end_date.date()}...&quot;)
+sp500 = yf.download(&#39;^GSPC&#39;, start=start_date, end=end_date, progress=False)
+
+print(f&quot;Downloaded {len(sp500)} trading days&quot;)
+print(f&quot;Date range: {sp500.index[0].date()} to {sp500.index[-1].date()}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Downloading S&amp;P 500 data from 2016-01-12 to 2026-02-08...
+Downloaded 2532 trading days
+Date range: 2016-01-13 to 2026-02-06
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Compute log returns
+sp500[&#39;Log_Return&#39;] = np.log(sp500[&#39;Close&#39;] / sp500[&#39;Close&#39;].shift(1))
+sp500 = sp500.dropna()
+
+# Split into training (first 5 years) and testing (last 5 years)
+n_total = len(sp500)
+n_train = n_total // 2
+
+train_data = sp500.iloc[:n_train]
+test_data = sp500.iloc[n_train:]
+
+# Extract log returns as numpy arrays
+returns_train = train_data[&#39;Log_Return&#39;].values
+returns_test = test_data[&#39;Log_Return&#39;].values
+
+print(f&quot;\nTraining period: {train_data.index[0].date()} to {train_data.index[-1].date()}&quot;)
+print(f&quot;Training samples: {len(returns_train)}&quot;)
+print(f&quot;\nTesting period: {test_data.index[0].date()} to {test_data.index[-1].date()}&quot;)
+print(f&quot;Testing samples: {len(returns_test)}&quot;)
+
+print(f&quot;\n--- Training Data Statistics ---&quot;)
+print(f&quot;Mean: {returns_train.mean()*100:.4f}%&quot;)
+print(f&quot;Std:  {returns_train.std()*100:.4f}%&quot;)
+print(f&quot;Skewness: {stats.skew(returns_train):.4f}&quot;)
+print(f&quot;Kurtosis: {stats.kurtosis(returns_train):.4f} (excess)&quot;)
+print(f&quot;Min:  {returns_train.min()*100:.4f}%&quot;)
+print(f&quot;Max:  {returns_train.max()*100:.4f}%&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Training period: 2016-01-14 to 2021-01-22
+Training samples: 1265
+
+Testing period: 2021-01-25 to 2026-02-06
+Testing samples: 1266
+
+--- Training Data Statistics ---
+Mean: 0.0561%
+Std:  1.2115%
+Skewness: -1.1471
+Kurtosis: 22.3473 (excess)
+Min:  -12.7652%
+Max:  8.9683%
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Visualize the data
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# Price history
+axes[0, 0].plot(sp500.index, sp500[&#39;Close&#39;], &#39;b-&#39;, linewidth=0.8)
+axes[0, 0].axvline(train_data.index[-1], color=&#39;red&#39;, linestyle=&#39;--&#39;, label=&#39;Train/Test split&#39;)
+axes[0, 0].set_title(&#39;S&amp;P 500 Price History&#39;, fontsize=14)
+axes[0, 0].set_ylabel(&#39;Price&#39;)
+axes[0, 0].legend()
+
+# Returns time series
+axes[0, 1].plot(sp500.index, sp500[&#39;Log_Return&#39;]*100, &#39;b-&#39;, linewidth=0.5, alpha=0.7)
+axes[0, 1].axvline(train_data.index[-1], color=&#39;red&#39;, linestyle=&#39;--&#39;)
+axes[0, 1].set_title(&#39;Daily Log Returns (%)&#39;, fontsize=14)
+axes[0, 1].set_ylabel(&#39;Return (%)&#39;)
+
+# Training histogram
+axes[1, 0].hist(returns_train*100, bins=100, density=True, alpha=0.7, color=&#39;steelblue&#39;)
+axes[1, 0].set_title(&#39;Training Data Distribution&#39;, fontsize=14)
+axes[1, 0].set_xlabel(&#39;Return (%)&#39;)
+axes[1, 0].set_ylabel(&#39;Density&#39;)
+
+# Testing histogram
+axes[1, 1].hist(returns_test*100, bins=100, density=True, alpha=0.7, color=&#39;darkorange&#39;)
+axes[1, 1].set_title(&#39;Testing Data Distribution&#39;, fontsize=14)
+axes[1, 1].set_xlabel(&#39;Return (%)&#39;)
+axes[1, 1].set_ylabel(&#39;Density&#39;)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_index_empirical_study_5_0.png" src="../_images/notebooks_sp500_index_empirical_study_5_0.png" />
+</div>
+</div>
+</section>
+<section id="2.-Fit-Distributions-to-Training-Data">
+<h2>2. Fit Distributions to Training Data<a class="headerlink" href="#2.-Fit-Distributions-to-Training-Data" title="Link to this heading"></a></h2>
+<p>We fit each distribution using Maximum Likelihood Estimation (MLE).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Reshape for normix (expects 2D input)
+X_train = returns_train.reshape(-1, 1)
+X_test = returns_test.reshape(-1, 1)
+
+# Dictionary to store fitted distributions
+fitted_dists = {}
+
+print(&quot;Fitting distributions to training data...\n&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting distributions to training data...
+
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 1. Normal distribution
+print(&quot;1. Fitting Normal distribution...&quot;)
+mu_norm, std_norm = stats.norm.fit(returns_train)
+fitted_dists[&#39;Normal&#39;] = stats.norm(loc=mu_norm, scale=std_norm)
+print(f&quot;   μ = {mu_norm:.6f}, σ = {std_norm:.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1. Fitting Normal distribution...
+   μ = 0.000561, σ = 0.012115
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 2. Student-t distribution
+print(&quot;2. Fitting Student-t distribution...&quot;)
+df_t, loc_t, scale_t = stats.t.fit(returns_train)
+fitted_dists[&#39;Student-t&#39;] = stats.t(df=df_t, loc=loc_t, scale=scale_t)
+print(f&quot;   df = {df_t:.4f}, loc = {loc_t:.6f}, scale = {scale_t:.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2. Fitting Student-t distribution...
+   df = 1.9546, loc = 0.001006, scale = 0.005114
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 3. Variance Gamma
+print(&quot;3. Fitting Variance Gamma distribution (EM algorithm)...&quot;)
+vg = VarianceGamma()
+vg.fit(X_train, max_iter=100, tol=1e-6, verbose=0)
+fitted_dists[&#39;Variance Gamma&#39;] = vg
+vg_params = vg.classical_params
+print(f&quot;   μ = {vg_params.mu[0]:.6f}, γ = {vg_params.gamma[0]:.6f}&quot;)
+print(f&quot;   σ² = {vg_params.sigma[0,0]:.8f}, α = {vg_params.shape:.4f}, β = {vg_params.rate:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+3. Fitting Variance Gamma distribution (EM algorithm)...
+   μ = 0.001560, γ = -0.000511
+   σ² = 0.00005560, α = 0.6843, β = 0.3497
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 4. Normal Inverse Gamma
+print(&quot;4. Fitting Normal Inverse Gamma distribution (EM algorithm)...&quot;)
+ninvg = NormalInverseGamma()
+ninvg.fit(X_train, max_iter=100, tol=1e-6, verbose=0)
+fitted_dists[&#39;Normal Inv Gamma&#39;] = ninvg
+ninvg_params = ninvg.classical_params
+print(f&quot;   μ = {ninvg_params.mu[0]:.6f}, γ = {ninvg_params.gamma[0]:.6f}&quot;)
+print(f&quot;   σ² = {ninvg_params.sigma[0,0]:.8f}, α = {ninvg_params.shape:.4f}, β = {ninvg_params.rate:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+4. Fitting Normal Inverse Gamma distribution (EM algorithm)...
+   μ = 0.001416, γ = -0.000885
+   σ² = 0.00012349, α = 1.5000, β = 0.4245
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 5. Normal Inverse Gaussian
+print(&quot;5. Fitting Normal Inverse Gaussian distribution (EM algorithm)...&quot;)
+nig = NormalInverseGaussian()
+nig.fit(X_train, max_iter=100, tol=1e-6, verbose=0)
+fitted_dists[&#39;Normal Inv Gaussian&#39;] = nig
+nig_params = nig.classical_params
+print(f&quot;   μ = {nig_params.mu[0]:.6f}, γ = {nig_params.gamma[0]:.6f}&quot;)
+print(f&quot;   σ² = {nig_params.sigma[0,0]:.8f}, δ = {nig_params.delta:.6f}, η = {nig_params.eta:.6f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+5. Fitting Normal Inverse Gaussian distribution (EM algorithm)...
+   μ = 0.001057, γ = -0.000265
+   σ² = 0.00007264, δ = 1.876384, η = 0.343700
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 6. Generalized Hyperbolic
+print(&quot;6. Fitting Generalized Hyperbolic distribution (EM algorithm)...&quot;)
+gh = GeneralizedHyperbolic()
+# Use fix_p regularization with p=-0.5 (NIG-like) for stability on return data
+gh.fit(X_train, max_iter=100, tol=1e-4, verbose=0,
+       regularization=&#39;fix_p&#39;, regularization_params={&#39;p_fixed&#39;: -0.5})
+fitted_dists[&#39;Gen. Hyperbolic&#39;] = gh
+gh_params = gh.classical_params
+print(f&quot;   μ = {gh_params.mu[0]:.6f}, γ = {gh_params.gamma[0]:.6f}&quot;)
+print(f&quot;   σ² = {gh_params.sigma[0,0]:.8f}&quot;)
+print(f&quot;   p = {gh_params.p:.4f}, a = {gh_params.a:.4f}, b = {gh_params.b:.4f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+6. Fitting Generalized Hyperbolic distribution (EM algorithm)...
+   μ = 0.001059, γ = -0.000017
+   σ² = 0.00000480
+   p = -0.5000, a = 0.0057, b = 5.3788
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># 7. Stable (Lévy) distribution
+print(&quot;7. Fitting Stable (Lévy) distribution...&quot;)
+print(&quot;   (This may take a while...)&quot;)
+alpha_s, beta_s, loc_s, scale_s = stats.levy_stable.fit(returns_train)
+fitted_dists[&#39;Stable&#39;] = stats.levy_stable(alpha=alpha_s, beta=beta_s, loc=loc_s, scale=scale_s)
+print(f&quot;   α = {alpha_s:.4f}, β = {beta_s:.4f}, loc = {loc_s:.6f}, scale = {scale_s:.6f}&quot;)
+
+print(&quot;\nAll distributions fitted!&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+7. Fitting Stable (Lévy) distribution...
+   (This may take a while...)
+   α = 1.3849, β = -0.0358, loc = 0.000903, scale = 0.004409
+
+All distributions fitted!
+</pre></div></div>
+</div>
+</section>
+<section id="3.-In-Sample-Comparison-(Training-Data)">
+<h2>3. In-Sample Comparison (Training Data)<a class="headerlink" href="#3.-In-Sample-Comparison-(Training-Data)" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def get_pdf_values(dist, x, dist_name):
+    &quot;&quot;&quot;Get PDF values for a distribution (handles both scipy and normix).&quot;&quot;&quot;
+    if dist_name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+        return dist.pdf(x)
+    else:
+        # normix distributions expect 2D input
+        return dist.pdf(x.reshape(-1, 1)).flatten()
+
+def generate_samples(dist, n_samples, dist_name, random_state=42):
+    &quot;&quot;&quot;Generate samples from a distribution.&quot;&quot;&quot;
+    if dist_name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+        return dist.rvs(size=n_samples, random_state=random_state)
+    else:
+        return dist.rvs(size=n_samples, random_state=random_state).flatten()
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Define x range for PDF plotting
+x_range = np.linspace(returns_train.min() * 1.2, returns_train.max() * 1.2, 500)
+
+# Colors for each distribution
+colors = {
+    &#39;Normal&#39;: &#39;blue&#39;,
+    &#39;Student-t&#39;: &#39;red&#39;,
+    &#39;Variance Gamma&#39;: &#39;green&#39;,
+    &#39;Normal Inv Gamma&#39;: &#39;purple&#39;,
+    &#39;Normal Inv Gaussian&#39;: &#39;orange&#39;,
+    &#39;Gen. Hyperbolic&#39;: &#39;brown&#39;,
+    &#39;Stable&#39;: &#39;cyan&#39;
+}
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Plot all distributions against training data histogram
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# Linear scale
+axes[0].hist(returns_train, bins=100, density=True, alpha=0.5, color=&#39;gray&#39;, label=&#39;Data&#39;)
+for name, dist in fitted_dists.items():
+    pdf_vals = get_pdf_values(dist, x_range, name)
+    axes[0].plot(x_range, pdf_vals, color=colors[name], linewidth=1.5, label=name)
+
+axes[0].set_xlabel(&#39;Log Return&#39;, fontsize=12)
+axes[0].set_ylabel(&#39;Density&#39;, fontsize=12)
+axes[0].set_title(&#39;In-Sample: PDF Comparison (Linear Scale)&#39;, fontsize=14)
+axes[0].legend(loc=&#39;upper right&#39;, fontsize=9)
+axes[0].set_xlim(returns_train.min() * 1.1, returns_train.max() * 1.1)
+
+# Log scale for tail comparison
+axes[1].hist(returns_train, bins=100, density=True, alpha=0.5, color=&#39;gray&#39;, label=&#39;Data&#39;)
+for name, dist in fitted_dists.items():
+    pdf_vals = get_pdf_values(dist, x_range, name)
+    pdf_vals = np.clip(pdf_vals, 1e-10, None)  # Avoid log(0)
+    axes[1].semilogy(x_range, pdf_vals, color=colors[name], linewidth=1.5, label=name)
+
+axes[1].set_xlabel(&#39;Log Return&#39;, fontsize=12)
+axes[1].set_ylabel(&#39;Density (log scale)&#39;, fontsize=12)
+axes[1].set_title(&#39;In-Sample: Tail Comparison (Log Scale)&#39;, fontsize=14)
+axes[1].legend(loc=&#39;upper right&#39;, fontsize=9)
+axes[1].set_xlim(returns_train.min() * 1.1, returns_train.max() * 1.1)
+axes[1].set_ylim(1e-4, None)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_index_empirical_study_18_0.png" src="../_images/notebooks_sp500_index_empirical_study_18_0.png" />
+</div>
+</div>
+</section>
+<section id="4.-Out-of-Sample-Comparison-(Testing-Data)">
+<h2>4. Out-of-Sample Comparison (Testing Data)<a class="headerlink" href="#4.-Out-of-Sample-Comparison-(Testing-Data)" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Plot all distributions against testing data histogram
+x_range_test = np.linspace(returns_test.min() * 1.2, returns_test.max() * 1.2, 500)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# Linear scale
+axes[0].hist(returns_test, bins=100, density=True, alpha=0.5, color=&#39;gray&#39;, label=&#39;Test Data&#39;)
+for name, dist in fitted_dists.items():
+    pdf_vals = get_pdf_values(dist, x_range_test, name)
+    axes[0].plot(x_range_test, pdf_vals, color=colors[name], linewidth=1.5, label=name)
+
+axes[0].set_xlabel(&#39;Log Return&#39;, fontsize=12)
+axes[0].set_ylabel(&#39;Density&#39;, fontsize=12)
+axes[0].set_title(&#39;Out-of-Sample: PDF Comparison (Linear Scale)&#39;, fontsize=14)
+axes[0].legend(loc=&#39;upper right&#39;, fontsize=9)
+axes[0].set_xlim(returns_test.min() * 1.1, returns_test.max() * 1.1)
+
+# Log scale for tail comparison
+axes[1].hist(returns_test, bins=100, density=True, alpha=0.5, color=&#39;gray&#39;, label=&#39;Test Data&#39;)
+for name, dist in fitted_dists.items():
+    pdf_vals = get_pdf_values(dist, x_range_test, name)
+    pdf_vals = np.clip(pdf_vals, 1e-10, None)
+    axes[1].semilogy(x_range_test, pdf_vals, color=colors[name], linewidth=1.5, label=name)
+
+axes[1].set_xlabel(&#39;Log Return&#39;, fontsize=12)
+axes[1].set_ylabel(&#39;Density (log scale)&#39;, fontsize=12)
+axes[1].set_title(&#39;Out-of-Sample: Tail Comparison (Log Scale)&#39;, fontsize=14)
+axes[1].legend(loc=&#39;upper right&#39;, fontsize=9)
+axes[1].set_xlim(returns_test.min() * 1.1, returns_test.max() * 1.1)
+axes[1].set_ylim(1e-4, None)
+
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_index_empirical_study_20_0.png" src="../_images/notebooks_sp500_index_empirical_study_20_0.png" />
+</div>
+</div>
+</section>
+<section id="5.-Statistical-Tests">
+<h2>5. Statistical Tests<a class="headerlink" href="#5.-Statistical-Tests" title="Link to this heading"></a></h2>
+<section id="5.1-Kolmogorov-Smirnov-Test-(Two-Sample)">
+<h3>5.1 Kolmogorov-Smirnov Test (Two-Sample)<a class="headerlink" href="#5.1-Kolmogorov-Smirnov-Test-(Two-Sample)" title="Link to this heading"></a></h3>
+<p>We compare samples generated from each fitted distribution against the actual data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Generate samples from each distribution for testing
+n_sim = 100000
+
+print(&quot;Kolmogorov-Smirnov Two-Sample Test&quot;)
+print(&quot;=&quot;*70)
+print(f&quot;{&#39;Distribution&#39;:&lt;20} {&#39;In-Sample KS&#39;:&lt;15} {&#39;p-value&#39;:&lt;12} {&#39;Out-Sample KS&#39;:&lt;15} {&#39;p-value&#39;:&lt;12}&quot;)
+print(&quot;-&quot;*70)
+
+ks_results = {}
+
+for name, dist in fitted_dists.items():
+    # Generate samples from fitted distribution
+    sim_samples = generate_samples(dist, n_sim, name)
+
+    # In-sample test
+    ks_in, pval_in = ks_2samp(returns_train, sim_samples)
+
+    # Out-of-sample test
+    ks_out, pval_out = ks_2samp(returns_test, sim_samples)
+
+    ks_results[name] = {
+        &#39;ks_in&#39;: ks_in, &#39;pval_in&#39;: pval_in,
+        &#39;ks_out&#39;: ks_out, &#39;pval_out&#39;: pval_out
+    }
+
+    print(f&quot;{name:&lt;20} {ks_in:&lt;15.4f} {pval_in:&lt;12.4f} {ks_out:&lt;15.4f} {pval_out:&lt;12.4f}&quot;)
+
+print(&quot;\nNote: Lower KS statistic = better fit. p-value &gt; 0.05 suggests distributions are similar.&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Kolmogorov-Smirnov Two-Sample Test
+======================================================================
+Distribution         In-Sample KS    p-value      Out-Sample KS   p-value
+----------------------------------------------------------------------
+Normal               0.1556          0.0000       0.0863          0.0000
+Student-t            0.0277          0.2885       0.0636          0.0001
+Variance Gamma       0.0462          0.0093       0.0497          0.0040
+Normal Inv Gamma     0.0387          0.0466       0.0528          0.0018
+Normal Inv Gaussian  0.0291          0.2371       0.0582          0.0004
+Gen. Hyperbolic      0.0283          0.2636       0.0537          0.0014
+Stable               0.0363          0.0730       0.0619          0.0001
+
+Note: Lower KS statistic = better fit. p-value &gt; 0.05 suggests distributions are similar.
+</pre></div></div>
+</div>
+</section>
+<section id="5.2-Anderson-Darling-Test-(Two-Sample)">
+<h3>5.2 Anderson-Darling Test (Two-Sample)<a class="headerlink" href="#5.2-Anderson-Darling-Test-(Two-Sample)" title="Link to this heading"></a></h3>
+<p>The Anderson-Darling test is more sensitive to the tails than KS.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&quot;Anderson-Darling Two-Sample Test&quot;)
+print(&quot;=&quot;*70)
+print(f&quot;{&#39;Distribution&#39;:&lt;20} {&#39;In-Sample AD&#39;:&lt;15} {&#39;Out-Sample AD&#39;:&lt;15} {&#39;Critical 5%&#39;:&lt;15}&quot;)
+print(&quot;-&quot;*70)
+
+ad_results = {}
+
+for name, dist in fitted_dists.items():
+    # Generate samples from fitted distribution
+    sim_samples = generate_samples(dist, n_sim, name)
+
+    # In-sample test
+    ad_in = anderson_ksamp([returns_train, sim_samples])
+
+    # Out-of-sample test
+    ad_out = anderson_ksamp([returns_test, sim_samples])
+
+    ad_results[name] = {
+        &#39;ad_in&#39;: ad_in.statistic, &#39;ad_out&#39;: ad_out.statistic,
+        &#39;critical&#39;: ad_in.critical_values[2]  # 5% significance level
+    }
+
+    print(f&quot;{name:&lt;20} {ad_in.statistic:&lt;15.4f} {ad_out.statistic:&lt;15.4f} {ad_in.critical_values[2]:&lt;15.4f}&quot;)
+
+print(&quot;\nNote: Lower AD statistic = better fit. Statistic &lt; Critical value suggests good fit.&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Anderson-Darling Two-Sample Test
+======================================================================
+Distribution         In-Sample AD    Out-Sample AD   Critical 5%
+----------------------------------------------------------------------
+Normal               70.7082         30.1942         1.9610
+Student-t            0.2328          12.8847         1.9610
+Variance Gamma       3.1342          4.7024          1.9610
+Normal Inv Gamma     2.2997          9.4993          1.9610
+Normal Inv Gaussian  0.3292          11.8352         1.9610
+Gen. Hyperbolic      0.4668          9.0548          1.9610
+Stable               0.8099          12.5652         1.9610
+
+Note: Lower AD statistic = better fit. Statistic &lt; Critical value suggests good fit.
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="6.-Tail-Analysis">
+<h2>6. Tail Analysis<a class="headerlink" href="#6.-Tail-Analysis" title="Link to this heading"></a></h2>
+<section id="6.1-Empirical-vs-Fitted-Tail-Probabilities">
+<h3>6.1 Empirical vs Fitted Tail Probabilities<a class="headerlink" href="#6.1-Empirical-vs-Fitted-Tail-Probabilities" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def get_cdf_values(dist, x, dist_name):
+    &quot;&quot;&quot;Get CDF values for a distribution.&quot;&quot;&quot;
+    if dist_name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+        return dist.cdf(x)
+    else:
+        # For normix, compute CDF by numerical integration or use empirical
+        samples = generate_samples(dist, 50000, dist_name, random_state=123)
+        return np.array([np.mean(samples &lt;= xi) for xi in x])
+
+# Compute tail probabilities at various quantiles
+tail_quantiles = [0.01, 0.025, 0.05, 0.95, 0.975, 0.99]
+
+print(&quot;Tail Probability Comparison (Out-of-Sample)&quot;)
+print(&quot;=&quot;*90)
+print(f&quot;{&#39;Quantile&#39;:&lt;10}&quot;, end=&quot;&quot;)
+print(f&quot;{&#39;Empirical&#39;:&lt;12}&quot;, end=&quot;&quot;)
+for name in fitted_dists.keys():
+    print(f&quot;{name[:10]:&lt;12}&quot;, end=&quot;&quot;)
+print()
+print(&quot;-&quot;*90)
+
+# Compute empirical quantiles from test data
+empirical_quantiles = np.quantile(returns_test, tail_quantiles)
+
+for i, q in enumerate(tail_quantiles):
+    emp_val = empirical_quantiles[i]
+    print(f&quot;{q:&lt;10.3f}&quot;, end=&quot;&quot;)
+    print(f&quot;{emp_val:&lt;12.6f}&quot;, end=&quot;&quot;)
+
+    for name, dist in fitted_dists.items():
+        if name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+            fitted_val = dist.ppf(q)
+        else:
+            # Use simulation for normix distributions
+            samples = generate_samples(dist, 50000, name, random_state=456)
+            fitted_val = np.quantile(samples, q)
+        print(f&quot;{fitted_val:&lt;12.6f}&quot;, end=&quot;&quot;)
+    print()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Tail Probability Comparison (Out-of-Sample)
+==========================================================================================
+Quantile  Empirical   Normal      Student-t   Variance G  Normal Inv  Normal Inv  Gen. Hyper  Stable
+------------------------------------------------------------------------------------------
+0.010     -0.029946   -0.027623   -0.035759   -0.031969   -0.028867   -0.038152   -0.039797   -0.044184
+0.025     -0.021651   -0.023184   -0.021495   -0.023617   -0.019301   -0.024392   -0.025947   -0.023197
+0.050     -0.016600   -0.019367   -0.014166   -0.017294   -0.013759   -0.016397   -0.017029   -0.014355
+0.950     0.016196    0.020488    0.016179    0.016404    0.014096    0.016167    0.016583    0.015858
+0.975     0.020344    0.024305    0.023508    0.021478    0.018144    0.023294    0.023512    0.024179
+0.990     0.025119    0.028744    0.037772    0.028384    0.025031    0.033517    0.034526    0.044019
+</pre></div></div>
+</div>
+</section>
+<section id="6.2-QQ-Plots">
+<h3>6.2 QQ Plots<a class="headerlink" href="#6.2-QQ-Plots" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def make_qq_plot(ax, data, dist, dist_name, title):
+    &quot;&quot;&quot;Create QQ plot comparing data to fitted distribution.&quot;&quot;&quot;
+    n = len(data)
+    sorted_data = np.sort(data)
+    theoretical_quantiles = np.linspace(0.001, 0.999, n)
+
+    if dist_name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+        theoretical_values = dist.ppf(theoretical_quantiles)
+    else:
+        # Use simulation for normix
+        samples = generate_samples(dist, 50000, dist_name, random_state=789)
+        theoretical_values = np.quantile(samples, theoretical_quantiles)
+
+    ax.scatter(theoretical_values, sorted_data, alpha=0.3, s=5)
+
+    # Add 45-degree line
+    lims = [min(theoretical_values.min(), sorted_data.min()),
+            max(theoretical_values.max(), sorted_data.max())]
+    ax.plot(lims, lims, &#39;r--&#39;, linewidth=1.5, label=&#39;Perfect fit&#39;)
+
+    ax.set_xlabel(&#39;Theoretical Quantiles&#39;, fontsize=10)
+    ax.set_ylabel(&#39;Sample Quantiles&#39;, fontsize=10)
+    ax.set_title(title, fontsize=11)
+    ax.legend(loc=&#39;lower right&#39;, fontsize=8)
+
+# Create QQ plots for out-of-sample data
+fig, axes = plt.subplots(2, 4, figsize=(16, 10))
+axes = axes.flatten()
+
+for i, (name, dist) in enumerate(fitted_dists.items()):
+    make_qq_plot(axes[i], returns_test, dist, name, f&#39;QQ Plot: {name}&#39;)
+
+# Hide empty subplot
+axes[-1].axis(&#39;off&#39;)
+
+plt.suptitle(&#39;Out-of-Sample QQ Plots&#39;, fontsize=14, y=1.02)
+plt.tight_layout()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_index_empirical_study_28_0.png" src="../_images/notebooks_sp500_index_empirical_study_28_0.png" />
+</div>
+</div>
+</section>
+<section id="6.3-Tail-Index-Estimation-(Hill-Estimator)">
+<h3>6.3 Tail Index Estimation (Hill Estimator)<a class="headerlink" href="#6.3-Tail-Index-Estimation-(Hill-Estimator)" title="Link to this heading"></a></h3>
+<p>The Hill estimator estimates the tail index <span class="math notranslate nohighlight">\(\alpha\)</span> for heavy-tailed distributions. For data with power-law tails: <span class="math notranslate nohighlight">\(P(X &gt; x) \sim x^{-\alpha}\)</span></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def hill_estimator(data, k):
+    &quot;&quot;&quot;Hill estimator for tail index using top k order statistics.&quot;&quot;&quot;
+    sorted_data = np.sort(np.abs(data))[::-1]  # Sort descending by absolute value
+    if k &gt;= len(data) or k &lt; 1:
+        return np.nan
+
+    log_ratios = np.log(sorted_data[:k]) - np.log(sorted_data[k])
+    return k / np.sum(log_ratios)
+
+# Compute Hill estimator for different k values
+k_values = np.arange(10, 200, 5)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Left tail (negative returns)
+left_tail_train = -returns_train[returns_train &lt; 0]
+left_tail_test = -returns_test[returns_test &lt; 0]
+
+hill_left_train = [hill_estimator(left_tail_train, k) for k in k_values]
+hill_left_test = [hill_estimator(left_tail_test, k) for k in k_values]
+
+axes[0].plot(k_values, hill_left_train, &#39;b-&#39;, linewidth=2, label=&#39;Training&#39;)
+axes[0].plot(k_values, hill_left_test, &#39;r--&#39;, linewidth=2, label=&#39;Testing&#39;)
+axes[0].axhline(y=3, color=&#39;gray&#39;, linestyle=&#39;:&#39;, label=&#39;α=3 (finite variance)&#39;)
+axes[0].axhline(y=2, color=&#39;gray&#39;, linestyle=&#39;-.&#39;, label=&#39;α=2 (finite mean)&#39;)
+axes[0].set_xlabel(&#39;Number of order statistics (k)&#39;, fontsize=12)
+axes[0].set_ylabel(&#39;Tail index α&#39;, fontsize=12)
+axes[0].set_title(&#39;Left Tail (Losses) - Hill Estimator&#39;, fontsize=14)
+axes[0].legend()
+axes[0].set_ylim(0, 6)
+
+# Right tail (positive returns)
+right_tail_train = returns_train[returns_train &gt; 0]
+right_tail_test = returns_test[returns_test &gt; 0]
+
+hill_right_train = [hill_estimator(right_tail_train, k) for k in k_values]
+hill_right_test = [hill_estimator(right_tail_test, k) for k in k_values]
+
+axes[1].plot(k_values, hill_right_train, &#39;b-&#39;, linewidth=2, label=&#39;Training&#39;)
+axes[1].plot(k_values, hill_right_test, &#39;r--&#39;, linewidth=2, label=&#39;Testing&#39;)
+axes[1].axhline(y=3, color=&#39;gray&#39;, linestyle=&#39;:&#39;, label=&#39;α=3&#39;)
+axes[1].axhline(y=2, color=&#39;gray&#39;, linestyle=&#39;-.&#39;, label=&#39;α=2&#39;)
+axes[1].set_xlabel(&#39;Number of order statistics (k)&#39;, fontsize=12)
+axes[1].set_ylabel(&#39;Tail index α&#39;, fontsize=12)
+axes[1].set_title(&#39;Right Tail (Gains) - Hill Estimator&#39;, fontsize=14)
+axes[1].legend()
+axes[1].set_ylim(0, 6)
+
+plt.tight_layout()
+plt.show()
+
+# Estimate stable tail index (using k=50)
+k_stable = 50
+print(f&quot;\nHill Tail Index Estimates (k={k_stable}):&quot;)
+print(f&quot;  Left tail (losses):  Train={hill_estimator(left_tail_train, k_stable):.3f}, Test={hill_estimator(left_tail_test, k_stable):.3f}&quot;)
+print(f&quot;  Right tail (gains):  Train={hill_estimator(right_tail_train, k_stable):.3f}, Test={hill_estimator(right_tail_test, k_stable):.3f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_sp500_index_empirical_study_30_0.png" src="../_images/notebooks_sp500_index_empirical_study_30_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Hill Tail Index Estimates (k=50):
+  Left tail (losses):  Train=2.020, Test=2.975
+  Right tail (gains):  Train=2.222, Test=3.924
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="7.-Value-at-Risk-(VaR)-Backtesting">
+<h2>7. Value at Risk (VaR) Backtesting<a class="headerlink" href="#7.-Value-at-Risk-(VaR)-Backtesting" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def compute_var(dist, alpha, dist_name):
+    &quot;&quot;&quot;Compute Value at Risk at level alpha.&quot;&quot;&quot;
+    if dist_name in [&#39;Normal&#39;, &#39;Student-t&#39;, &#39;Stable&#39;]:
+        return dist.ppf(alpha)
+    else:
+        samples = generate_samples(dist, 100000, dist_name, random_state=999)
+        return np.quantile(samples, alpha)
+
+# VaR levels to test
+var_levels = [0.01, 0.025, 0.05]
+
+print(&quot;Value at Risk Backtesting (Out-of-Sample)&quot;)
+print(&quot;=&quot;*80)
+
+for alpha in var_levels:
+    print(f&quot;\nVaR at {alpha*100:.1f}% level (Expected exceedances: {alpha*100:.1f}%)&quot;)
+    print(&quot;-&quot;*60)
+    print(f&quot;{&#39;Distribution&#39;:&lt;20} {&#39;VaR&#39;:&lt;15} {&#39;Exceedances&#39;:&lt;15} {&#39;Rate (%)&#39;:&lt;12}&quot;)
+    print(&quot;-&quot;*60)
+
+    for name, dist in fitted_dists.items():
+        var = compute_var(dist, alpha, name)
+        exceedances = np.sum(returns_test &lt; var)
+        rate = exceedances / len(returns_test) * 100
+
+        print(f&quot;{name:&lt;20} {var:&lt;15.6f} {exceedances:&lt;15d} {rate:&lt;12.2f}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Value at Risk Backtesting (Out-of-Sample)
+================================================================================
+
+VaR at 1.0% level (Expected exceedances: 1.0%)
+------------------------------------------------------------
+Distribution         VaR             Exceedances     Rate (%)
+------------------------------------------------------------
+Normal               -0.027623       18              1.42
+Student-t            -0.035759       7               0.55
+Variance Gamma       -0.031548       11              0.87
+Normal Inv Gamma     -0.028953       15              1.18
+Normal Inv Gaussian  -0.037818       5               0.39
+Gen. Hyperbolic      -0.039606       4               0.32
+Stable               -0.044184       3               0.24
+
+VaR at 2.5% level (Expected exceedances: 2.5%)
+------------------------------------------------------------
+Distribution         VaR             Exceedances     Rate (%)
+------------------------------------------------------------
+Normal               -0.023184       29              2.29
+Student-t            -0.021495       33              2.61
+Variance Gamma       -0.023377       29              2.29
+Normal Inv Gamma     -0.019077       47              3.71
+Normal Inv Gaussian  -0.024124       25              1.97
+Gen. Hyperbolic      -0.025413       21              1.66
+Stable               -0.023197       29              2.29
+
+VaR at 5.0% level (Expected exceedances: 5.0%)
+------------------------------------------------------------
+Distribution         VaR             Exceedances     Rate (%)
+------------------------------------------------------------
+Normal               -0.019367       44              3.48
+Student-t            -0.014166       94              7.42
+Variance Gamma       -0.017301       58              4.58
+Normal Inv Gamma     -0.013496       103             8.14
+Normal Inv Gaussian  -0.016315       67              5.29
+Gen. Hyperbolic      -0.016705       62              4.90
+Stable               -0.014355       93              7.35
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mixture_distributions_comparison.html" class="btn btn-neutral float-left" title="Comparison of Normal Mixture Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sp500_stocks_multivariate_study.html" class="btn btn-neutral float-right" title="S&amp;P 500 Stocks Multivariate Empirical Study" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

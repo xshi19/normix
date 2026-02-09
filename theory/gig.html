@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Generalized Inverse Gaussian Distribution &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Generalized Hyperbolic Distribution" href="gh.html" />
+    <link rel="prev" title="Mathematical Background" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The Generalized Inverse Gaussian Distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#definition">Definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alternative-parameterization">Alternative Parameterization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#moment-generating-function">Moment Generating Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#moments">Moments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exponential-family-form">Exponential Family Form</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numerical-challenges">Numerical Challenges</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hellinger-distance">Hellinger Distance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#special-cases">Special Cases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">The Generalized Inverse Gaussian Distribution</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/gig.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-generalized-inverse-gaussian-distribution">
+<h1>The Generalized Inverse Gaussian Distribution<a class="headerlink" href="#the-generalized-inverse-gaussian-distribution" title="Link to this heading"></a></h1>
+<p>In this section we review the definition and statistical properties of the
+generalized inverse Gaussian (GIG) distribution.</p>
+<section id="definition">
+<h2>Definition<a class="headerlink" href="#definition" title="Link to this heading"></a></h2>
+<p>The generalized inverse Gaussian distribution is a continuous probability
+distribution with the density function:</p>
+<div class="math notranslate nohighlight" id="equation-gig-pdf">
+<span class="eqno">(1)<a class="headerlink" href="#equation-gig-pdf" title="Link to this equation"></a></span>\[f(x|p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
+\exp\left(-\frac{1}{2}(b x^{-1} + a x)\right), \quad x &gt; 0,\]</div>
+<p>where <span class="math notranslate nohighlight">\(K_p(\cdot)\)</span> is the modified Bessel function of the second kind
+and the parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> satisfy:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{cases}
+b &gt; 0, \, a \geq 0 &amp; \text{if } p &lt; 0 \\
+b &gt; 0, \, a &gt; 0 &amp; \text{if } p = 0 \\
+b \geq 0, \, a &gt; 0 &amp; \text{if } p &gt; 0
+\end{cases}\end{split}\]</div>
+<p>Throughout this package we assume that <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span> for simplicity.</p>
+</section>
+<section id="alternative-parameterization">
+<h2>Alternative Parameterization<a class="headerlink" href="#alternative-parameterization" title="Link to this heading"></a></h2>
+<p>Another useful way to parameterize the GIG distribution is to set
+<span class="math notranslate nohighlight">\(\delta = \sqrt{b/a}\)</span> and <span class="math notranslate nohighlight">\(\eta = \sqrt{ab}\)</span>. In that case the
+density function can be written as:</p>
+<div class="math notranslate nohighlight" id="equation-gig-pdf-alt">
+<span class="eqno">(2)<a class="headerlink" href="#equation-gig-pdf-alt" title="Link to this equation"></a></span>\[f(x|p, \delta, \eta) = \frac{\delta^p}{2K_p(\eta)} x^{p-1}
+\exp\left(-\frac{\eta}{2}(\delta x^{-1} + \delta^{-1} x)\right), \quad x &gt; 0.\]</div>
+<p>Note that <span class="math notranslate nohighlight">\(\delta\)</span> serves as a scale parameter of the GIG distribution.</p>
+</section>
+<section id="moment-generating-function">
+<h2>Moment Generating Function<a class="headerlink" href="#moment-generating-function" title="Link to this heading"></a></h2>
+<p>The moment generating function of a GIG distributed random variable <span class="math notranslate nohighlight">\(X\)</span> is given by:</p>
+<div class="math notranslate nohighlight">
+\[E[e^{uX}] = \left(\sqrt{\frac{a}{a-2u}}\right)^p
+\frac{K_p(\sqrt{b(a-2u)})}{K_p(\sqrt{ab})}
+= \left(\sqrt{\frac{\eta}{\eta-2\delta u}}\right)^p
+\frac{K_p(\sqrt{\eta^2-2\delta u})}{K_p(\eta)}.\]</div>
+</section>
+<section id="moments">
+<h2>Moments<a class="headerlink" href="#moments" title="Link to this heading"></a></h2>
+<p>The moments of the GIG distribution have a particularly elegant form:</p>
+<div class="math notranslate nohighlight" id="equation-gig-moments">
+<span class="eqno">(3)<a class="headerlink" href="#equation-gig-moments" title="Link to this equation"></a></span>\[E[X^\alpha] = \left(\sqrt{\frac{b}{a}}\right)^\alpha
+\frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
+= \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.\]</div>
+<p>This formula is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">moment_alpha()</span></code> method.</p>
+</section>
+<section id="exponential-family-form">
+<h2>Exponential Family Form<a class="headerlink" href="#exponential-family-form" title="Link to this heading"></a></h2>
+<p>The GIG distribution belongs to the exponential family with density:</p>
+<div class="math notranslate nohighlight">
+\[f(x|\theta) = h(x) \exp\left(\theta^\top t(x) - \psi(\theta)\right)\]</div>
+<p><strong>Sufficient Statistics:</strong></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}t(x) = \begin{pmatrix} \log x \\ x^{-1} \\ x \end{pmatrix}\end{split}\]</div>
+<p><strong>Natural Parameters:</strong></p>
+<p>The natural parameters <span class="math notranslate nohighlight">\(\theta = (\theta_1, \theta_2, \theta_3)\)</span> are derived from
+the classical parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-gig-natural-params">
+<span class="eqno">(4)<a class="headerlink" href="#equation-gig-natural-params" title="Link to this equation"></a></span>\[\begin{split}\theta_1 &amp;= p - 1 \quad \text{(unbounded)} \\
+\theta_2 &amp;= -\frac{b}{2} &lt; 0 \\
+\theta_3 &amp;= -\frac{a}{2} &lt; 0\end{split}\]</div>
+<p>The inverse transformation is:</p>
+<div class="math notranslate nohighlight">
+\[p = \theta_1 + 1, \quad b = -2\theta_2, \quad a = -2\theta_3\]</div>
+<p><strong>Base Measure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x) = \mathbf{1}_{x &gt; 0}\]</div>
+<p><strong>Log Partition Function:</strong></p>
+<div class="math notranslate nohighlight" id="equation-gig-log-partition">
+<span class="eqno">(5)<a class="headerlink" href="#equation-gig-log-partition" title="Link to this equation"></a></span>\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(p = \theta_1 + 1\)</span>, <span class="math notranslate nohighlight">\(a = -2\theta_3\)</span>, and <span class="math notranslate nohighlight">\(b = -2\theta_2\)</span>.</p>
+<p><strong>Expectation Parameters:</strong></p>
+<p>The expectation parameters <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X)]\)</span> are:</p>
+<div class="math notranslate nohighlight" id="equation-gig-expectation-params">
+<span class="eqno">(6)<a class="headerlink" href="#equation-gig-expectation-params" title="Link to this equation"></a></span>\[\begin{split}\eta_1 &amp;= E[\log X] = \frac{\partial \psi}{\partial \theta_1} \\
+\eta_2 &amp;= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
+\eta_3 &amp;= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}\end{split}\]</div>
+<p>Unfortunately we do not have an analytical formula for <span class="math notranslate nohighlight">\(\eta_1 = E[\log X]\)</span>.
+In practice it can only be approximated numerically.</p>
+</section>
+<section id="maximum-likelihood-estimation">
+<h2>Maximum Likelihood Estimation<a class="headerlink" href="#maximum-likelihood-estimation" title="Link to this heading"></a></h2>
+<p>Given the expectation parameters <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span>, computing the
+natural parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> by solving the above equations is a challenging
+problem. Let <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_n\)</span> be a sequence of sample data, then the
+maximum likelihood estimator (MLE) of GIG is given by:</p>
+<div class="math notranslate nohighlight" id="equation-gig-mle">
+<span class="eqno">(7)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation"></a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
+<p>where <span class="math notranslate nohighlight">\(L_{GIG}\)</span> is the log-likelihood function (excluding constants):</p>
+<div class="math notranslate nohighlight" id="equation-gig-loglik">
+<span class="eqno">(8)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation"></a></span>\[L_{GIG}(p, a, b | \eta_1, \eta_2, \eta_3) =
+-\frac{1}{2} b \hat{\eta}_1 - \frac{1}{2} a \hat{\eta}_2 + p \hat{\eta}_3
++ \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),\]</div>
+<p>and the sufficient statistics are:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n \log(x_k)\)</span></p></li>
+</ul>
+<p>One can verify that the optimal solution <span class="math notranslate nohighlight">\((\hat{p}, \hat{a}, \hat{b})\)</span> must
+satisfy <a class="reference internal" href="#equation-gig-expectation-params">(6)</a> where <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> are
+replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3)\)</span>.</p>
+</section>
+<section id="numerical-challenges">
+<h2>Numerical Challenges<a class="headerlink" href="#numerical-challenges" title="Link to this heading"></a></h2>
+<p>As discussed in <a class="reference internal" href="#jorgensen2012" id="id1"><span>[Jorgensen2012]</span></a>, there is no analytical expression for
+<span class="math notranslate nohighlight">\(\hat{p}\)</span> or even its partial derivatives. Most literature suggests fixing
+<span class="math notranslate nohighlight">\(p\)</span> when maximizing the log-likelihood function.</p>
+<p>Even when <span class="math notranslate nohighlight">\(p\)</span> is fixed, <a class="reference internal" href="gh.html#hu2005" id="id2"><span>[Hu2005]</span></a> reports that when <span class="math notranslate nohighlight">\(|p|\)</span> is large
+(say, above 10), there might be no solution for the first two equations in
+<a class="reference internal" href="#equation-gig-expectation-params">(6)</a>.</p>
+</section>
+<section id="hellinger-distance">
+<h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading"></a></h2>
+<p>To measure estimation errors, one good choice is the Hellinger distance between
+the true and estimated parameters.</p>
+<p><strong>Proposition.</strong> Let <span class="math notranslate nohighlight">\((p_1, a_1, b_1)\)</span> and <span class="math notranslate nohighlight">\((p_2, a_2, b_2)\)</span> be the
+parameters of two GIG distributions. The squared Hellinger distance between the
+two distributions is given by:</p>
+<div class="math notranslate nohighlight">
+\[H_{GIG}^2(p_1, a_1, b_1 \| p_2, a_2, b_2) = 1 -
+\frac{(a_1/b_1)^{p_1/4} (a_2/b_2)^{p_2/4}}
+     {\sqrt{K_{p_1}(\sqrt{a_1 b_1}) K_{p_2}(\sqrt{a_2 b_2})}}
+\frac{K_{\bar{p}}(\sqrt{\bar{a}\bar{b}})}{(\bar{a}/\bar{b})^{\bar{p}/2}},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{p} = (p_1 + p_2)/2\)</span>, <span class="math notranslate nohighlight">\(\bar{a} = (a_1 + a_2)/2\)</span>, and
+<span class="math notranslate nohighlight">\(\bar{b} = (b_1 + b_2)/2\)</span>.</p>
+</section>
+<section id="special-cases">
+<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading"></a></h2>
+<p>There are several important special cases of the GIG distribution:</p>
+<ul class="simple">
+<li><p><strong>Inverse Gaussian (IG)</strong>: when <span class="math notranslate nohighlight">\(p = -1/2\)</span></p></li>
+<li><p><strong>Gamma</strong>: when <span class="math notranslate nohighlight">\(p &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\text{Gamma}(p, a/2)\)</span></p></li>
+<li><p><strong>Inverse Gamma</strong>: when <span class="math notranslate nohighlight">\(p &lt; 0\)</span> and <span class="math notranslate nohighlight">\(a \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\text{InvGamma}(-p, b/2)\)</span></p></li>
+</ul>
+<p>These special cases are implemented as separate classes in <code class="docutils literal notranslate"><span class="pre">normix</span></code>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="jorgensen2012" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Jorgensen2012</a><span class="fn-bracket">]</span></span>
+<p>Jørgensen, B. (2012). <em>Statistical Properties of the Generalized Inverse Gaussian Distribution</em>. Springer.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Mathematical Background" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gh.html" class="btn btn-neutral float-right" title="The Generalized Hyperbolic Distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
