@@ -16,6 +16,11 @@ All distributions are implemented as **exponential families** with support for:
 - Efficient **EM algorithms** for parameter estimation
 - Joint distributions $f(x,y)$ and marginal distributions $f(x)$
 
+## Documentation
+
+- Build locally: `make -C docs html`
+- Published docs (GitHub Pages): https://xshi19.github.io/normix/
+
 ## Installation
 
 ```bash
