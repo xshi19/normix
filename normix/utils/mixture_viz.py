@@ -116,7 +116,7 @@ def plot_joint_distribution_1d(
                   orientation='horizontal')
     # Use actual mixing distribution PDF (more accurate than numerical integration)
     try:
-        theta = joint_dist.get_natural_params()
+        theta = joint_dist.natural_params
         mixing_theta = joint_dist._get_mixing_natural_params(theta)
         mixing_class = joint_dist._get_mixing_distribution_class()
         mixing_dist = mixing_class.from_natural_params(mixing_theta)
@@ -364,7 +364,7 @@ def fit_and_track_convergence(
     marginal_dist_class,
     X_data: np.ndarray,
     max_iter: int = 100,
-    tol: float = 1e-6,
+    tol: float = 1e-3,
     random_state: int = 42,
     **fit_kwargs
 ) -> Tuple[Any, EMConvergenceResult]:
@@ -460,7 +460,7 @@ def fit_and_track_convergence(
         iterations=tracker.iterations,
         log_likelihoods=tracker.log_likelihoods,
         converged=converged,
-        final_params=dist.get_classical_params()
+        final_params=dist.classical_params
     )
 
 
@@ -549,7 +549,7 @@ def test_joint_fitting(
     
     # Fit
     fitted_dist = joint_dist_class().fit(X_data, Y_data)
-    fitted_params = fitted_dist.get_classical_params()
+    fitted_params = fitted_dist.classical_params
     
     # Compute errors
     param_errors = {}

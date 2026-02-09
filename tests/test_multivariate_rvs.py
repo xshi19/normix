@@ -119,7 +119,7 @@ class TestGetLSigma:
         for name, dist in dists:
             L, _ = dist.get_L_Sigma()
             Sigma_from_L = L @ L.T
-            Sigma_true = dist.get_classical_params()['sigma']
+            Sigma_true = dist.classical_params['sigma']
             np.testing.assert_allclose(
                 Sigma_from_L, Sigma_true, rtol=1e-10,
                 err_msg=f"{name}: L @ L.T != Sigma",
@@ -129,7 +129,7 @@ class TestGetLSigma:
         """log|Sigma| should match independent computation."""
         for name, dist in dists:
             L, log_det = dist.get_L_Sigma()
-            Sigma_true = dist.get_classical_params()['sigma']
+            Sigma_true = dist.classical_params['sigma']
             expected_log_det = np.linalg.slogdet(Sigma_true)[1]
             np.testing.assert_allclose(
                 log_det, expected_log_det, rtol=1e-10,
@@ -204,7 +204,7 @@ class TestRvsSampleCovariance:
         rng = np.random.default_rng(42)
 
         # Theoretical covariance: Cov(X) = E[Y]*Sigma + Var(Y)*gamma@gamma.T
-        params = dist.get_classical_params()
+        params = dist.classical_params
         Sigma = params['sigma']
         gamma = params['gamma']
         E_Y, Var_Y = self._get_mixing_moments(name, params)
@@ -237,7 +237,7 @@ class TestRvsSampleCovariance:
         n_samples = 50_000
         rng = np.random.default_rng(42)
 
-        params = dist.get_classical_params()
+        params = dist.classical_params
         mu = params['mu']
         gamma = params['gamma']
         E_Y, _ = self._get_mixing_moments(name, params)

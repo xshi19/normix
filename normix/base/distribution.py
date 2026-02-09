@@ -12,10 +12,28 @@ The API includes:
 - **Random sampling**: :meth:`rvs`
 - **Fitting**: :meth:`fit` (returns self for method chaining)
 - **Moments**: :meth:`mean`, :meth:`var`, :meth:`std`, :meth:`stats`
+
+Cache infrastructure
+--------------------
+
+All distributions support lazy caching of derived quantities via
+``functools.cached_property``. The cache is invalidated by calling
+:meth:`_invalidate_cache`, which removes all ``cached_property`` entries
+listed in the class-level :attr:`_cached_attrs` tuple.
+
+Subclasses extend :attr:`_cached_attrs` to register their own cached
+properties::
+
+    class MyDist(ExponentialFamily):
+        _cached_attrs = ExponentialFamily._cached_attrs + ('log_det_Sigma',)
+
+        @cached_property
+        def log_det_Sigma(self) -> float:
+            ...
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any, Optional, Tuple, Union
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
@@ -23,12 +41,13 @@ from numpy.typing import ArrayLike, NDArray
 class Distribution(ABC):
     """
     Abstract base class for probability distributions.
-    
+
     This class defines the standard API for probability distributions,
     similar to scipy.stats distributions. All concrete distributions
     should inherit from this class.
-    
+
     The API includes:
+
     - pdf/pmf: Probability density/mass function
     - logpdf/logpmf: Log of the probability density/mass function
     - cdf: Cumulative distribution function
@@ -47,15 +66,56 @@ class Distribution(ABC):
     - var: Variance of the distribution
     - std: Standard deviation of the distribution
     - interval: Confidence interval
+
+    Attributes
+    ----------
+    _fitted : bool
+        Whether parameters have been set (via factory methods, setters, or fit).
+    _cached_attrs : tuple of str
+        Names of ``cached_property`` attributes that :meth:`_invalidate_cache`
+        will clear. Subclasses extend this via tuple concatenation.
     """
-    
+
+    # Subclasses extend: _cached_attrs = Parent._cached_attrs + ('my_prop',)
+    _cached_attrs: Tuple[str, ...] = ()
+
     def __init__(self, *args, **kwargs):
         """
         Initialize the distribution.
-        
-        Parameters should be validated using Pydantic in subclasses.
+
+        Sets ``_fitted = False``. Subclasses should call ``super().__init__()``.
         """
-        pass
+        self._fitted = False
+
+    # ================================================================
+    # Cache infrastructure
+    # ================================================================
+
+    def _check_fitted(self) -> None:
+        """
+        Raise ``ValueError`` if parameters have not been set.
+
+        Raises
+        ------
+        ValueError
+            If ``_fitted`` is False.
+        """
+        if not self._fitted:
+            raise ValueError(
+                f"{self.__class__.__name__} parameters not set. "
+                "Use from_*_params() or fit()."
+            )
+
+    def _invalidate_cache(self) -> None:
+        """
+        Clear all ``cached_property`` values registered in :attr:`_cached_attrs`.
+
+        This method is safe to call even when no cached values exist (idempotent).
+        Subclasses that add ``cached_property`` attributes should extend
+        :attr:`_cached_attrs` and do **not** need to override this method.
+        """
+        for attr in self._cached_attrs:
+            self.__dict__.pop(attr, None)
     
     @abstractmethod
     def pdf(self, x: ArrayLike) -> NDArray[np.floating]:

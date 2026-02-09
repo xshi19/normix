@@ -137,14 +137,14 @@ def check_natural_expectation_roundtrip(config: DistributionTestConfig, rtol=2e-
         dist = config.pygh_class.from_classical_params(**params)
         
         # Get natural parameters
-        theta_original = dist.get_natural_params()
+        theta_original = dist.natural_params
         
         # Convert to expectation parameters
-        eta = dist.get_expectation_params()
+        eta = dist.expectation_params
         
         # Convert back to natural parameters
         dist_from_eta = config.pygh_class.from_expectation_params(eta)
-        theta_roundtrip = dist_from_eta.get_natural_params()
+        theta_roundtrip = dist_from_eta.natural_params
         
         assert np.allclose(theta_original, theta_roundtrip, rtol=rtol, atol=atol), \
             f"Natural→Expectation→Natural roundtrip failed for {config.name} with params {params}"
@@ -175,7 +175,7 @@ def check_sample_sufficient_statistics(
         dist = config.pygh_class.from_classical_params(**params)
         
         # Get expectation parameters (theoretical)
-        eta_theory = dist.get_expectation_params()
+        eta_theory = dist.expectation_params
         
         # Generate samples
         samples = dist.rvs(size=n_samples, random_state=random_state)
@@ -287,7 +287,7 @@ def check_gradient_consistency(config: DistributionTestConfig, epsilon=1e-6, rto
         dist = config.pygh_class.from_classical_params(**params)
         
         # Get natural parameters
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
         
         # Analytical gradient (natural_to_expectation)
         analytical_grad = dist._natural_to_expectation(theta)
@@ -324,7 +324,7 @@ def check_hessian_consistency(config: DistributionTestConfig, epsilon=1e-6, rtol
         dist = config.pygh_class.from_classical_params(**params)
         
         # Get natural parameters
-        theta = dist.get_natural_params()
+        theta = dist.natural_params
         
         # Analytical Hessian (fisher_information)
         analytical_hessian = dist.fisher_information(theta)
@@ -632,10 +632,10 @@ class TestGIGVsScipy:
             )
             
             # Check classical params match
-            classical = dist2.get_classical_params()
-            assert np.isclose(classical['p'], p, rtol=1e-10), f"p mismatch"
-            assert np.isclose(classical['a'], a, rtol=1e-10), f"a mismatch"
-            assert np.isclose(classical['b'], b, rtol=1e-10), f"b mismatch"
+            classical = dist2.classical_params
+            assert np.isclose(classical.p, p, rtol=1e-10), f"p mismatch"
+            assert np.isclose(classical.a, a, rtol=1e-10), f"a mismatch"
+            assert np.isclose(classical.b, b, rtol=1e-10), f"b mismatch"
     
     def test_moments(self):
         """Test moments against scipy."""
@@ -749,12 +749,12 @@ class TestMultivariateNormalVsScipy:
         dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
         
         # Get parameters
-        theta_original = dist.get_natural_params()
-        eta = dist.get_expectation_params()
+        theta_original = dist.natural_params
+        eta = dist.expectation_params
         
         # Roundtrip
         dist2 = MultivariateNormal(d=1).from_expectation_params(eta)
-        theta_roundtrip = dist2.get_natural_params()
+        theta_roundtrip = dist2.natural_params
         
         assert np.allclose(theta_original, theta_roundtrip, rtol=1e-4), \
             f"1D roundtrip failed: {theta_original} vs {theta_roundtrip}"
@@ -767,12 +767,12 @@ class TestMultivariateNormalVsScipy:
         dist = MultivariateNormal.from_classical_params(mu=mu, sigma=sigma)
         
         # Get parameters
-        theta_original = dist.get_natural_params()
-        eta = dist.get_expectation_params()
+        theta_original = dist.natural_params
+        eta = dist.expectation_params
         
         # Roundtrip
         dist2 = MultivariateNormal(d=2).from_expectation_params(eta)
-        theta_roundtrip = dist2.get_natural_params()
+        theta_roundtrip = dist2.natural_params
         
         assert np.allclose(theta_original, theta_roundtrip, rtol=1e-4), \
             f"2D roundtrip failed"
@@ -829,11 +829,11 @@ class TestMultivariateNormalVsScipy:
         
         # Fit
         fitted = MultivariateNormal(d=1).fit(data)
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
         
-        assert np.allclose(fitted_params['mu'], true_mu, rtol=0.05), \
+        assert np.allclose(fitted_params.mu, true_mu, rtol=0.05), \
             f"1D fitted mean mismatch"
-        assert np.allclose(fitted_params['sigma'], true_sigma, rtol=0.1), \
+        assert np.allclose(fitted_params.sigma, true_sigma, rtol=0.1), \
             f"1D fitted sigma mismatch"
     
     def test_fitting_2d(self):
@@ -848,11 +848,11 @@ class TestMultivariateNormalVsScipy:
         
         # Fit
         fitted = MultivariateNormal(d=2).fit(data)
-        fitted_params = fitted.get_classical_params()
+        fitted_params = fitted.classical_params
         
-        assert np.allclose(fitted_params['mu'], true_mu, rtol=0.05), \
+        assert np.allclose(fitted_params.mu, true_mu, rtol=0.05), \
             f"2D fitted mean mismatch"
-        assert np.allclose(fitted_params['sigma'], true_sigma, rtol=0.1), \
+        assert np.allclose(fitted_params.sigma, true_sigma, rtol=0.1), \
             f"2D fitted sigma mismatch"
     
     def test_scipy_conversion(self):
@@ -871,10 +871,10 @@ class TestMultivariateNormalVsScipy:
         
         # Convert back
         dist2 = MultivariateNormal.from_scipy(scipy_dist)
-        params = dist2.get_classical_params()
+        params = dist2.classical_params
         
-        assert np.allclose(params['mu'], mu), "Roundtrip mu mismatch"
-        assert np.allclose(params['sigma'], sigma), "Roundtrip sigma mismatch"
+        assert np.allclose(params.mu, mu), "Roundtrip mu mismatch"
+        assert np.allclose(params.sigma, sigma), "Roundtrip sigma mismatch"
     
     def test_entropy(self):
         """Test entropy matches scipy."""

@@ -90,14 +90,14 @@ class TestJointVarianceGamma1D:
             dist = JointVarianceGamma.from_classical_params(**params)
 
             # Get natural params
-            theta = dist.get_natural_params()
+            theta = dist.natural_params
 
             # Create from natural
             dist2 = JointVarianceGamma(d=1)
             dist2.set_natural_params(theta)
 
             # Get classical back
-            recovered = dist2.get_classical_params()
+            recovered = dist2.classical_params
 
             # Compare
             np.testing.assert_allclose(
@@ -130,7 +130,7 @@ class TestJointVarianceGamma1D:
             dist = JointVarianceGamma.from_classical_params(**params)
 
             # Get theoretical expectation parameters
-            eta_theory = dist.get_expectation_params()
+            eta_theory = dist.expectation_params
 
             # Skip if any are infinite (happens when α ≤ 1)
             if not np.all(np.isfinite(eta_theory)):
@@ -248,7 +248,7 @@ class TestVarianceGamma2D:
             vg = VarianceGamma.from_classical_params(**params)
 
             # Access via joint
-            classical = vg.get_classical_params()
+            classical = vg.classical_params
 
             np.testing.assert_allclose(classical['mu'], params['mu'])
             np.testing.assert_allclose(classical['gamma'], params['gamma'])
@@ -279,7 +279,7 @@ class TestVarianceGamma2D:
             assert isinstance(joint, JointVarianceGamma)
 
             # Parameters should match
-            joint_params = joint.get_classical_params()
+            joint_params = joint.classical_params
             np.testing.assert_allclose(joint_params['mu'], params['mu'])
             np.testing.assert_allclose(joint_params['shape'], params['shape'])
 

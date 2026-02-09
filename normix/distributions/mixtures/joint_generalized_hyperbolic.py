@@ -41,6 +41,7 @@ from scipy.linalg import solve as scipy_solve
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import GeneralizedInverseGaussian
+from normix.params import GHParams
 from normix.utils import log_kv
 
 
@@ -329,14 +330,9 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
 
-        return {
-            'mu': mu,
-            'gamma': gamma,
-            'sigma': Sigma,
-            'p': p,
-            'a': a,
-            'b': b
-        }
+        return GHParams(
+            mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
+        )
 
     # ========================================================================
     # Log partition function
@@ -576,10 +572,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
         try:
             gig.set_expectation_params(gig_eta, theta0=gig_theta0)
-            gig_classical = gig.get_classical_params()
-            p = gig_classical['p']
-            a = gig_classical['a']
-            b = gig_classical['b']
+            gig_classical = gig.classical_params
+            p = gig_classical.p
+            a = gig_classical.a
+            b = gig_classical.b
         except Exception:
             # Fallback to heuristic if optimization fails
             # Try to guess from moment relationships
@@ -677,12 +673,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
     def __repr__(self) -> str:
         """String representation."""
-        if self._natural_params is None:
+        if not self._fitted:
             if self._d is not None:
                 return f"JointGeneralizedHyperbolic(d={self._d}, not fitted)"
             return "JointGeneralizedHyperbolic(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         p = classical['p']
         a = classical['a']

@@ -1,5 +1,5 @@
 normix Documentation
-==================
+====================
 
 **normix** is a Python package for Generalized Hyperbolic distributions and related distributions,
 implemented as exponential families with an sklearn-style API.
@@ -94,14 +94,15 @@ Quick Example
    fitted_dist = Gamma().fit(samples)
 
    # Access parameters in different forms
-   print(fitted_dist.get_classical_params())
-   print(fitted_dist.get_natural_params())
-   print(fitted_dist.get_expectation_params())
+   print(fitted_dist.classical_params)
+   print(fitted_dist.natural_params)
+   print(fitted_dist.expectation_params)
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   demos
    theory/index
    api/index
 

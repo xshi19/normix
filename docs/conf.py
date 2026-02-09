@@ -22,6 +22,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.mathjax',
+    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -41,9 +42,44 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# Napoleon settings
+# -- Theme options -----------------------------------------------------------
+
+html_theme_options = {
+    'prev_next_buttons_location': 'bottom',
+    'navigation_depth': 3,
+}
+
+# GitHub link in the top-right corner
+html_context = {
+    'display_github': True,
+    'github_user': 'xshi19',
+    'github_repo': 'normix',
+    'github_version': 'main',
+    'conf_py_path': '/docs/',
+}
+
+# -- Napoleon settings -------------------------------------------------------
+
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_use_param = True
 napoleon_use_rtype = True
+
+# -- nbsphinx settings ------------------------------------------------------
+
+# Do not execute notebooks during build (use pre-executed outputs)
+nbsphinx_execute = 'never'
+
+# Link to the notebook on GitHub from each page
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
+
+.. raw:: html
+
+    <div class="admonition note">
+    <p>This page was generated from a Jupyter notebook. You can
+    <a href="https://github.com/xshi19/normix/blob/main/{{ docname }}">
+    view it on GitHub</a> or download and run it locally.</p>
+    </div>
+"""
 

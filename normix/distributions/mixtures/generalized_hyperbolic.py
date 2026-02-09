@@ -329,12 +329,10 @@ class GeneralizedHyperbolic(NormalMixture):
         logpdf : ndarray
             Log PDF values.
         """
-        from scipy.linalg import solve_triangular
-        
         x = np.asarray(x)
-        classical = self.get_classical_params()
-        mu = classical['mu']
-        gamma = classical['gamma']
+        mu = self._joint._mu
+        gamma = self._joint._gamma
+        classical = self.joint.classical_params
         p = classical['p']
         a = classical['a']
         b = classical['b']
@@ -349,17 +347,18 @@ class GeneralizedHyperbolic(NormalMixture):
 
         n = x.shape[0]
 
-        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
-        L, logdet_Sigma = self._joint.get_L_Sigma()
+        # Get cached L_Sigma_inv and log_det_Sigma
+        L_inv = self._joint.L_Sigma_inv
+        logdet_Sigma = self._joint.log_det_Sigma
         
         # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
         diff = x - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = L_inv @ diff.T  # (d, n)
         q = np.sum(z ** 2, axis=0)  # (n,)
         
         # Transform gamma: gamma_z = L^{-1} γ
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_z = L_inv @ gamma  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
@@ -407,7 +406,7 @@ class GeneralizedHyperbolic(NormalMixture):
         X: ArrayLike,
         *,
         max_iter: int = 100,
-        tol: float = 1e-4,
+        tol: float = 1e-2,
         verbose: int = 0,
         regularization: Union[str, Callable] = 'det_sigma_one',
         regularization_params: Optional[Dict] = None,
@@ -529,7 +528,7 @@ class GeneralizedHyperbolic(NormalMixture):
         regularization_params = regularization_params or {}
 
         # Initialize parameters using NIG warm start
-        if self._joint._natural_params is None:
+        if not self._joint._fitted:
             self._initialize_params(X, random_state)
 
         if verbose > 0:
@@ -538,8 +537,8 @@ class GeneralizedHyperbolic(NormalMixture):
 
         def _apply_regularization():
             """Apply regularization to current parameters."""
-            classical = self.get_classical_params()
-            _, log_det_sigma = self._joint.get_L_Sigma()
+            classical = self.classical_params
+            log_det_sigma = self._joint.log_det_Sigma
 
             if regularization == 'fix_p':
                 regularized = regularize_fn(
@@ -574,7 +573,7 @@ class GeneralizedHyperbolic(NormalMixture):
             _apply_regularization()
 
             # Save regularized parameters for convergence check
-            classical = self.get_classical_params()
+            classical = self.classical_params
             prev_mu = classical['mu'].copy()
             prev_gamma = classical['gamma'].copy()
             prev_sigma = classical['sigma'].copy()
@@ -589,7 +588,7 @@ class GeneralizedHyperbolic(NormalMixture):
             _apply_regularization()
 
             # Check convergence using relative parameter change on (mu, gamma, Sigma)
-            new_classical = self.get_classical_params()
+            new_classical = self.classical_params
             mu_new = new_classical['mu']
             gamma_new = new_classical['gamma']
             sigma_new = new_classical['sigma']
@@ -619,11 +618,15 @@ class GeneralizedHyperbolic(NormalMixture):
                 if verbose > 0:
                     print('Converged')
                 self.n_iter_ = iteration + 1
+                self._fitted = self._joint._fitted
+                self._invalidate_cache()
                 return self
 
         if verbose > 0:
             print('Not converged (max iterations reached)')
         self.n_iter_ = max_iter
+        self._fitted = self._joint._fitted
+        self._invalidate_cache()
         return self
 
     def _initialize_params(
@@ -657,7 +660,7 @@ class GeneralizedHyperbolic(NormalMixture):
                 nig = NormalInverseGaussian()
                 nig.fit(X, max_iter=5, verbose=0, random_state=random_state)
 
-            nig_params = nig.get_classical_params()
+            nig_params = nig.classical_params
             mu = nig_params['mu']
             gamma = nig_params['gamma']
             Sigma = nig_params['sigma']
@@ -734,7 +737,7 @@ class GeneralizedHyperbolic(NormalMixture):
         s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
 
         # Get current GIG parameters for initialization and fallback
-        current = self.get_classical_params()
+        current = self.joint.classical_params
         
         # Update GIG parameters if not fixed
         if not fix_tail:
@@ -755,10 +758,10 @@ class GeneralizedHyperbolic(NormalMixture):
                     warnings.simplefilter("ignore")
                     gig.set_expectation_params(gig_eta, theta0=current_gig_theta)
                     
-                gig_classical = gig.get_classical_params()
-                p_new = gig_classical['p']
-                a_new = gig_classical['a']
-                b_new = gig_classical['b']
+                gig_classical = gig.classical_params
+                p_new = gig_classical.p
+                a_new = gig_classical.a
+                b_new = gig_classical.b
                 
                 # Sanity check: reject if parameters are extreme or degenerate
                 # This prevents the optimization from diverging
@@ -852,7 +855,6 @@ class GeneralizedHyperbolic(NormalMixture):
             - 'E_inv_Y': E[1/Y | X], shape (n,)
             - 'E_log_Y': E[log Y | X], shape (n,)
         """
-        from scipy.linalg import solve_triangular
         from normix.utils import kv_ratio
         
         X = np.asarray(X)
@@ -863,27 +865,27 @@ class GeneralizedHyperbolic(NormalMixture):
         else:
             single_point = False
 
-        classical = self.get_classical_params()
-        mu = classical['mu']
-        gamma = classical['gamma']
+        mu = self._joint._mu
+        gamma = self._joint._gamma
+        classical = self.joint.classical_params
         p = classical['p']
         a = classical['a']
         b = classical['b']
         d = self.d
 
-        # Get cached lower Cholesky factor of Sigma (Σ = L @ L.T)
-        L, _ = self._joint.get_L_Sigma()
+        # Get cached L_Sigma_inv
+        L_inv = self._joint.L_Sigma_inv
         
         # Transform data: z = L^{-1}(x - μ)
         # Mahalanobis distance: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         diff = X - mu  # (n, d)
-        z = solve_triangular(L, diff.T, lower=True)  # (d, n)
+        z = L_inv @ diff.T  # (d, n)
         
         # Mahalanobis distances: q(x) = (x-μ)^T Σ^{-1} (x-μ) = ||z||^2
         q = np.sum(z ** 2, axis=0)  # (n,)
         
         # Transform gamma: L^{-1} γ
-        gamma_z = solve_triangular(L, gamma, lower=True)  # (d,)
+        gamma_z = L_inv @ gamma  # (d,)
         gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
         
         # Conditional GIG parameters (vectorized)
@@ -1059,9 +1061,9 @@ class GeneralizedHyperbolic(NormalMixture):
         mean : ndarray
             Mean vector, shape (d,).
         """
-        classical = self.get_classical_params()
-        mu = classical['mu']
-        gamma = classical['gamma']
+        mu = self._joint._mu
+        gamma = self._joint._gamma
+        classical = self.joint.classical_params
         p = classical['p']
         a = classical['a']
         b = classical['b']
@@ -1102,9 +1104,9 @@ class GeneralizedHyperbolic(NormalMixture):
         cov : ndarray
             Covariance matrix, shape (d, d).
         """
-        classical = self.get_classical_params()
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
+        gamma = self._joint._gamma
+        Sigma = self._joint._L_Sigma @ self._joint._L_Sigma.T
+        classical = self.joint.classical_params
         p = classical['p']
         a = classical['a']
         b = classical['b']
@@ -1128,10 +1130,10 @@ class GeneralizedHyperbolic(NormalMixture):
 
     def __repr__(self) -> str:
         """String representation."""
-        if self._joint is None or self._joint._natural_params is None:
+        if not self._fitted:
             return "GeneralizedHyperbolic(not fitted)"
 
-        classical = self.get_classical_params()
+        classical = self.classical_params
         d = self.d
         p = classical['p']
         a = classical['a']
