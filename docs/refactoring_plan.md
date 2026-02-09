@@ -90,7 +90,7 @@ class GammaParams:
 @dataclass(frozen=True, slots=True)
 class InverseGammaParams:
     shape: float
-    scale: float
+    rate: float
 
 @dataclass(frozen=True, slots=True)
 class InverseGaussianParams:
