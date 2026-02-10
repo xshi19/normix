@@ -42,8 +42,11 @@ def get_sp500_tickers_from_wikipedia() -> list[str]:
     response = requests.get(url, headers=headers, timeout=30)
     response.raise_for_status()
     
-    # Parse the HTML tables
-    tables = pd.read_html(StringIO(response.text))
+    # Parse the HTML tables (try lxml first, fall back to html.parser)
+    try:
+        tables = pd.read_html(StringIO(response.text), flavor='lxml')
+    except ImportError:
+        tables = pd.read_html(StringIO(response.text), flavor='html.parser')
     sp500_table = tables[0]  # First table contains current constituents
     
     # Extract ticker symbols
@@ -52,59 +55,6 @@ def get_sp500_tickers_from_wikipedia() -> list[str]:
     tickers = [str(t).replace('.', '-') for t in tickers]
     
     return tickers
-
-
-def get_curated_sp500_tickers() -> list[str]:
-    """
-    Return a curated list of ~200 S&P 500 stocks as fallback.
-    
-    Returns
-    -------
-    list[str]
-        Curated list of S&P 500 ticker symbols.
-    """
-    tickers = [
-        # Technology
-        'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA', 'AMD', 'INTC',
-        'CRM', 'ADBE', 'ORCL', 'CSCO', 'IBM', 'QCOM', 'TXN', 'AVGO', 'NOW', 'INTU',
-        'AMAT', 'MU', 'LRCX', 'SNPS', 'CDNS', 'KLAC', 'ADI', 'MCHP', 'NXPI', 'FTNT',
-        # Finance
-        'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'BLK', 'AXP', 'SCHW', 'USB',
-        'PNC', 'TFC', 'COF', 'BK', 'CME', 'ICE', 'SPGI', 'MCO', 'MSCI', 'FIS',
-        'FISV', 'V', 'MA', 'PYPL', 'PRU', 'MET', 'AIG', 'ALL', 'TRV', 'CB',
-        # Healthcare
-        'JNJ', 'UNH', 'PFE', 'ABBV', 'MRK', 'LLY', 'TMO', 'ABT', 'DHR', 'BMY',
-        'AMGN', 'GILD', 'MDT', 'ISRG', 'CVS', 'CI', 'HUM', 'ELV', 'MCK', 'CAH',
-        'REGN', 'VRTX', 'BIIB', 'BSX', 'EW', 'SYK', 'ZBH', 'BDX', 'BAX', 'A',
-        # Consumer Discretionary
-        'HD', 'NKE', 'MCD', 'SBUX', 'TGT', 'LOW', 'TJX', 'ROST', 'DG', 'DLTR',
-        'ORLY', 'AZO', 'BBY', 'DHI', 'LEN', 'F', 'GM', 'BKNG', 'MAR', 'HLT',
-        # Consumer Staples
-        'WMT', 'PG', 'KO', 'PEP', 'COST', 'MDLZ', 'CL', 'KMB', 'GIS', 'SJM',
-        'CPB', 'CAG', 'HSY', 'MKC', 'KHC', 'KR', 'SYY', 'PM', 'MO', 'STZ',
-        # Industrial
-        'CAT', 'BA', 'HON', 'UNP', 'RTX', 'GE', 'MMM', 'UPS', 'DE', 'LMT',
-        'NOC', 'GD', 'EMR', 'ETN', 'PH', 'ITW', 'CMI', 'DAL', 'UAL', 'FDX',
-        'CSX', 'NSC', 'GWW', 'FAST', 'URI', 'RSG', 'WM',
-        # Energy
-        'XOM', 'CVX', 'COP', 'SLB', 'EOG', 'OXY', 'PSX', 'VLO', 'MPC', 'KMI',
-        'WMB', 'OKE', 'HAL', 'BKR', 'DVN', 'APA',
-        # Materials
-        'LIN', 'APD', 'ECL', 'SHW', 'DD', 'PPG', 'NUE', 'FCX', 'NEM', 'VMC', 'MLM',
-        # Utilities
-        'NEE', 'DUK', 'SO', 'D', 'AEP', 'SRE', 'EXC', 'XEL', 'WEC', 'ED',
-        'DTE', 'ES', 'PEG', 'AWK', 'AES', 'ETR',
-        # Real Estate
-        'AMT', 'PLD', 'CCI', 'EQIX', 'SPG', 'O', 'PSA', 'DLR', 'WELL', 'AVB',
-        'EQR', 'ARE', 'IRM', 'EXR',
-        # Communication Services
-        'DIS', 'CMCSA', 'NFLX', 'T', 'VZ', 'TMUS', 'CHTR', 'EA', 'TTWO',
-        # Diversified
-        'BRK-B', 'ACN'
-    ]
-    # Remove duplicates while preserving order
-    seen = set()
-    return [x for x in tickers if not (x in seen or seen.add(x))]
 
 
 def download_sp500_data(
@@ -191,11 +141,24 @@ def download_sp500_data(
     if verbose:
         print(f"Stocks with at least {min_days} trading days: {len(valid_tickers)}")
     
-    # Remove stocks with any NaN in the period
-    log_returns_filtered = log_returns[valid_tickers].dropna(axis=1)
+    # Keep stocks with at least 99% non-NaN data, then forward-fill small gaps
+    log_returns_subset = log_returns[valid_tickers]
+    nan_frac = log_returns_subset.isna().mean()
+    nearly_complete = nan_frac[nan_frac < 0.01].index.tolist()
     
     if verbose:
-        print(f"Stocks with complete data: {len(log_returns_filtered.columns)}")
+        print(f"Stocks with <1% missing data: {len(nearly_complete)}")
+    
+    # Forward-fill remaining small gaps (e.g., trading halts), then drop any
+    # stocks that still have NaN at the very start (no prior value to fill from)
+    log_returns_filtered = (
+        log_returns[nearly_complete]
+        .ffill()
+        .dropna(axis=1, how='any')
+    )
+    
+    if verbose:
+        print(f"Stocks after forward-fill cleanup: {len(log_returns_filtered.columns)}")
         print(f"Final shape: {log_returns_filtered.shape}")
         print(f"Date range: {log_returns_filtered.index[0].date()} to {log_returns_filtered.index[-1].date()}")
     
