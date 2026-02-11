@@ -135,6 +135,9 @@
 <span class="sd">        (\\mu, |\\Sigma|^{-1/d} \\gamma, |\\Sigma|^{-1/d} \\Sigma,</span>
 <span class="sd">        p, |\\Sigma|^{-1/d} a, |\\Sigma|^{1/d} b)</span>
 
+<span class="sd">    All computations are done in log space to avoid underflow/overflow</span>
+<span class="sd">    of the determinant in high dimensions.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    mu, gamma, sigma, p, a, b : parameters</span>
@@ -150,17 +153,22 @@
 <span class="sd">    params : dict</span>
 <span class="sd">        Regularized parameters with |Σ| = 1.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Compute log determinant in a numerically stable way</span>
     <span class="k">if</span> <span class="n">log_det_sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Use precomputed log determinant</span>
-        <span class="n">det_sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_det_sigma</span><span class="p">)</span>
+        <span class="n">log_det</span> <span class="o">=</span> <span class="n">log_det_sigma</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">det_sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">det_sigma</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="c1"># Sigma is degenerate, can&#39;t regularize</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
+        <span class="n">sign</span><span class="p">,</span> <span class="n">log_det</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Sigma is degenerate, can&#39;t regularize</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
 
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">det_sigma</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">d</span><span class="p">)</span>
+    <span class="c1"># Work entirely in log space: scale = det^(1/d) = exp(log_det / d)</span>
+    <span class="n">log_scale</span> <span class="o">=</span> <span class="n">log_det</span> <span class="o">/</span> <span class="n">d</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
+
+    <span class="c1"># Guard against degenerate scale (e.g., scale=0 or inf)</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">scale</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="n">gamma</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">}</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu</span><span class="p">,</span>
@@ -760,7 +768,7 @@
 
             <span class="c1"># Convert NIG (IG) params to GIG params:</span>
             <span class="c1"># IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.45</span>
             <span class="n">a</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
             <span class="n">b</span> <span class="o">=</span> <span class="n">eta</span>
 
