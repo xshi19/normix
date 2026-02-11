@@ -59,6 +59,9 @@ def regularize_det_sigma_one(
         (\\mu, |\\Sigma|^{-1/d} \\gamma, |\\Sigma|^{-1/d} \\Sigma,
         p, |\\Sigma|^{-1/d} a, |\\Sigma|^{1/d} b)
 
+    All computations are done in log space to avoid underflow/overflow
+    of the determinant in high dimensions.
+
     Parameters
     ----------
     mu, gamma, sigma, p, a, b : parameters
@@ -74,17 +77,22 @@ def regularize_det_sigma_one(
     params : dict
         Regularized parameters with |Σ| = 1.
     """
+    # Compute log determinant in a numerically stable way
     if log_det_sigma is not None:
-        # Use precomputed log determinant
-        det_sigma = np.exp(log_det_sigma)
+        log_det = log_det_sigma
     else:
-        det_sigma = np.linalg.det(sigma)
-    
-    if det_sigma <= 0:
-        # Sigma is degenerate, can't regularize
-        return {'mu': mu, 'gamma': gamma, 'sigma': sigma, 'p': p, 'a': a, 'b': b}
+        sign, log_det = np.linalg.slogdet(sigma)
+        if sign <= 0:
+            # Sigma is degenerate, can't regularize
+            return {'mu': mu, 'gamma': gamma, 'sigma': sigma, 'p': p, 'a': a, 'b': b}
 
-    scale = det_sigma ** (1.0 / d)
+    # Work entirely in log space: scale = det^(1/d) = exp(log_det / d)
+    log_scale = log_det / d
+    scale = np.exp(log_scale)
+
+    # Guard against degenerate scale (e.g., scale=0 or inf)
+    if scale <= 0 or not np.isfinite(scale):
+        return {'mu': mu, 'gamma': gamma, 'sigma': sigma, 'p': p, 'a': a, 'b': b}
 
     return {
         'mu': mu,
@@ -669,7 +677,7 @@ class GeneralizedHyperbolic(NormalMixture):
 
             # Convert NIG (IG) params to GIG params:
             # IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)
-            p = -0.5
+            p = -0.45
             a = eta / (delta ** 2)
             b = eta
 
