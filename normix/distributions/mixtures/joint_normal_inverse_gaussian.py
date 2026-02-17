@@ -38,8 +38,6 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from scipy.linalg import solve as scipy_solve
-
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGaussian
 from normix.params import NormalInverseGaussianParams
@@ -116,67 +114,59 @@ class JointNormalInverseGaussian(JointNormalMixture):
     # Mixing distribution
     # ========================================================================
 
+    def __init__(self, d=None):
+        super().__init__(d)
+        self._delta: Optional[float] = None
+        self._eta: Optional[float] = None
+
     @classmethod
     def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
         """Return InverseGaussian as the mixing distribution class."""
         return InverseGaussian
 
-    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
-        """
-        Extract InverseGaussian natural parameters from joint natural params.
+    # ========================================================================
+    # Mixing parameter management
+    # ========================================================================
 
-        InverseGaussian natural params: :math:`[-\\lambda/(2\\mu^2), -\\lambda/2]`
-        where :math:`\\mu = \\delta` (mean) and :math:`\\lambda = \\eta` (shape).
+    def _store_mixing_params(self, *, delta, eta) -> None:
+        self._delta = float(delta)
+        self._eta = float(eta)
 
-        From joint NIG:
-        - :math:`\\theta_1 = -3/2 - d/2` (fixed for NIG)
-        - :math:`\\theta_2 = -(b + \\frac{1}{2} \\mu^T \\Lambda \\mu)` where :math:`b = \\eta`
-        - :math:`\\theta_3 = -(a + \\frac{1}{2} \\gamma^T \\Lambda \\gamma)` where :math:`a = \\eta / \\delta^2`
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector for joint distribution.
-
-        Returns
-        -------
-        theta_ig : ndarray
-            Natural parameters :math:`[-\\lambda/(2\\mu^2), -\\lambda/2]` for InverseGaussian.
-        """
+    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
+        theta_2 = theta[1]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
 
-        # Extract scalar components
-        theta_2 = theta[1]  # -(b + 1/2 μ^T Λ μ)
-        theta_3 = theta[2]  # -(a + 1/2 γ^T Λ γ)
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
+        mu_quad = 0.5 * (self._mu @ theta_5)
+        gamma_quad = 0.5 * (self._gamma @ theta_4)
+        b = -theta_2 - mu_quad
+        a = -theta_3 - gamma_quad
 
-        # Get normal params using helper
-        _, _, mu_vec, gamma_vec = self._extract_normal_params_from_theta(theta)
-
-        # Recover GIG parameters a and b using simplified quadratic forms
-        mu_quad = 0.5 * (mu_vec @ theta_5)
-        gamma_quad = 0.5 * (gamma_vec @ theta_4)
-        
-        b = -theta_2 - mu_quad  # b = η
-        a = -theta_3 - gamma_quad  # a = η / δ²
-
-        # From a and b, recover δ and η
-        # η = b, δ² = b/a, δ = √(b/a)
-        if a > 0 and b > 0:
-            eta = b
-            delta = np.sqrt(b / a)
+        if a > 1e-12 and b > 1e-12:
+            self._eta = float(b)
+            self._delta = float(np.sqrt(b / a))
         else:
-            # Edge case: set defaults
-            delta = 1.0
-            eta = 1.0
+            self._delta = 1.0
+            self._eta = max(float(b), 1e-6)
 
-        # InverseGaussian natural params: [-λ/(2μ²), -λ/2]
-        # where μ = delta (IG mean), λ = eta (IG shape)
-        theta_ig_1 = -eta / (2 * delta**2)
-        theta_ig_2 = -eta / 2
+    def _compute_mixing_theta(self, theta_4, theta_5):
+        d = self._d
+        delta = self._delta
+        eta = self._eta
+        a = eta / (delta ** 2)
+        b = eta
+        p = -0.5
+        theta_1 = p - 1 - d / 2
+        theta_2 = -(b + 0.5 * (self._mu @ theta_5))
+        theta_3 = -(a + 0.5 * (self._gamma @ theta_4))
+        return theta_1, theta_2, theta_3
 
-        return np.array([theta_ig_1, theta_ig_2])
+    def _create_mixing_distribution(self):
+        return InverseGaussian.from_classical_params(
+            mean=self._delta, shape=self._eta
+        )
 
     # ========================================================================
     # Natural parameter support
@@ -232,117 +222,24 @@ class JointNormalInverseGaussian(JointNormalMixture):
         return bounds
 
     # ========================================================================
-    # Parameter conversions
+    # Parameter setters / getters
     # ========================================================================
 
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters.
-
-        Parameters
-        ----------
-        mu : array_like
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : array_like
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        sigma : array_like
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        delta : float
-            InverseGaussian mean parameter :math:`\\delta > 0`.
-        eta : float
-            InverseGaussian shape parameter :math:`\\eta > 0`.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        mu = np.asarray(kwargs['mu']).flatten()
-        gamma = np.asarray(kwargs['gamma']).flatten()
-        sigma = np.asarray(kwargs['sigma'])
-        delta = kwargs['delta']
-        eta = kwargs['eta']
-
-        d = len(mu)
-        self._d = d
-
-        # Validate
-        if sigma.shape != (d, d):
-            raise ValueError(f"sigma shape {sigma.shape} doesn't match mu dimension {d}")
+    def _set_from_classical(self, *, mu, gamma, sigma, delta, eta) -> None:
         if delta <= 0:
             raise ValueError(f"Delta must be positive, got {delta}")
         if eta <= 0:
             raise ValueError(f"Eta must be positive, got {eta}")
+        self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
+        self._store_mixing_params(delta=delta, eta=eta)
+        self._fitted = True
+        self._invalidate_cache()
 
-        # Compute precision matrix (Σ is positive definite)
-        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
-
-        # GIG parameters for IG(δ, η): p = -1/2, a = η/δ², b = η
-        p = -0.5
-        a = eta / (delta ** 2)
-        b = eta
-
-        # Natural parameters
-        theta_1 = p - 1 - d / 2  # = -3/2 - d/2
-        theta_2 = -(b + 0.5 * mu @ Lambda @ mu)
-        theta_3 = -(a + 0.5 * gamma @ Lambda @ gamma)
-        theta_4 = Lambda @ gamma
-        theta_5 = Lambda @ mu
-        theta_6 = -0.5 * Lambda
-
-        # Flatten and concatenate
-        theta = np.concatenate([
-            [theta_1, theta_2, theta_3],
-            theta_4,
-            theta_5,
-            theta_6.flatten()
-        ])
-
-        return theta
-
-    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
-        """
-        Convert natural parameters to classical parameters.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameter vector.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with keys: mu, gamma, sigma, delta, eta.
-        """
-        # Extract scalar components
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + self.d]  # Λγ
-        theta_5 = theta[3 + self.d:3 + 2 * self.d]  # Λμ
-
-        # Get normal params using helper
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
-
-        # Recover a and b using simplified quadratic forms
-        mu_quad = 0.5 * (mu @ theta_5)
-        gamma_quad = 0.5 * (gamma @ theta_4)
-        
-        b = -theta_2 - mu_quad
-        a = -theta_3 - gamma_quad
-
-        # Recover δ and η from a and b
-        # a = η/δ², b = η
-        # So: η = b, δ² = b/a, δ = √(b/a)
-        if a > 1e-12 and b > 1e-12:
-            eta = b
-            delta = np.sqrt(b / a)
-        else:
-            # Edge case
-            delta = 1.0
-            eta = max(b, 1e-6)
-
+    def _compute_classical_params(self):
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return NormalInverseGaussianParams(
-            mu=mu, gamma=gamma, sigma=Sigma, delta=delta, eta=eta
+            mu=self._mu.copy(), gamma=self._gamma.copy(), sigma=Sigma,
+            delta=self._delta, eta=self._eta
         )
 
     # ========================================================================
@@ -447,12 +344,23 @@ class JointNormalInverseGaussian(JointNormalMixture):
             Expectation parameter vector.
         """
         d = self.d
-        classical = self._natural_to_classical(theta)
-        mu = classical['mu']
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
-        delta = classical['delta']
-        eta_param = classical['eta']
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, return_sigma=True
+        )
+        theta_2 = theta[1]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
+        b = -theta_2 - mu_quad
+        a = -theta_3 - gamma_quad
+        if a > 1e-12 and b > 1e-12:
+            eta_param = b
+            delta = np.sqrt(b / a)
+        else:
+            delta = 1.0
+            eta_param = max(b, 1e-6)
 
         # Inverse Gaussian expectations
         # E[Y] = δ (mean)
@@ -588,9 +496,10 @@ class JointNormalInverseGaussian(JointNormalMixture):
         # ================================================================
         # Convert to natural parameters
         # ================================================================
-        return self._classical_to_natural(
+        self._set_from_classical(
             mu=mu, gamma=gamma, sigma=Sigma, delta=delta, eta=eta_param
         )
+        return self._compute_natural_params()
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """

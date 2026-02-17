@@ -30,7 +30,6 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from scipy.linalg import solve as scipy_solve
 from scipy.special import gammaln
 
 from normix.base import JointNormalMixture, ExponentialFamily
@@ -96,48 +95,46 @@ class JointVarianceGamma(JointNormalMixture):
     # Mixing distribution
     # ========================================================================
 
+    def __init__(self, d=None):
+        super().__init__(d)
+        self._shape: Optional[float] = None
+        self._rate: Optional[float] = None
+
     @classmethod
     def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
         """Return Gamma as the mixing distribution class."""
         return Gamma
 
-    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
-        """
-        Extract Gamma natural parameters from joint natural params.
+    # ========================================================================
+    # Mixing parameter management
+    # ========================================================================
 
-        Gamma natural params: :math:`[\\alpha - 1, -\\beta]`
+    def _store_mixing_params(self, *, shape, rate) -> None:
+        self._shape = float(shape)
+        self._rate = float(rate)
 
-        From joint VG:
-
-        - :math:`\\theta_1 = \\alpha - 1 - d/2`, so :math:`\\alpha - 1 = \\theta_1 + d/2`
-        - :math:`\\theta_3 = -(\\beta + \\frac{1}{2} \\gamma^T \\Lambda \\gamma)`, need to solve for :math:`\\beta`
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector for joint distribution.
-
-        Returns
-        -------
-        theta_gamma : ndarray
-            Natural parameters :math:`[\\alpha - 1, -\\beta]` for Gamma distribution.
-        """
+    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
+        theta_1 = theta[0]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
 
-        # Extract scalar components
-        theta_1 = theta[0]  # α - 1 - d/2
-        theta_3 = theta[2]  # -(β + 1/2 γ^T Λ γ)
-        theta_4 = theta[3:3 + d]  # Λγ
+        alpha_minus_1 = theta_1 + d / 2
+        gamma_quad = 0.5 * (self._gamma @ theta_4)
+        self._shape = float(alpha_minus_1 + 1)
+        self._rate = float(-theta_3 - gamma_quad)
 
-        # Get normal params using helper
-        _, _, _, gamma = self._extract_normal_params_from_theta(theta)
+    def _compute_mixing_theta(self, theta_4, theta_5):
+        d = self._d
+        alpha = self._shape
+        beta = self._rate
+        theta_1 = alpha - 1 - d / 2
+        theta_2 = -0.5 * (self._mu @ theta_5)
+        theta_3 = -(beta + 0.5 * (self._gamma @ theta_4))
+        return theta_1, theta_2, theta_3
 
-        # Recover α and β using simplified quadratic form: γ^T Λ γ = γ^T θ₄
-        alpha_minus_1 = theta_1 + d / 2  # α - 1
-        gamma_quad = 0.5 * (gamma @ theta_4)
-        beta = -theta_3 - gamma_quad
-
-        return np.array([alpha_minus_1, -beta])
+    def _create_mixing_distribution(self):
+        return Gamma.from_classical_params(shape=self._shape, rate=self._rate)
 
     # ========================================================================
     # Natural parameter support
@@ -192,102 +189,24 @@ class JointVarianceGamma(JointNormalMixture):
         return bounds
 
     # ========================================================================
-    # Parameter conversions
+    # Parameter setters / getters
     # ========================================================================
 
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters.
+    def _set_from_classical(self, *, mu, gamma, sigma, shape, rate) -> None:
+        if shape <= 0:
+            raise ValueError(f"Shape must be positive, got {shape}")
+        if rate <= 0:
+            raise ValueError(f"Rate must be positive, got {rate}")
+        self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
+        self._store_mixing_params(shape=shape, rate=rate)
+        self._fitted = True
+        self._invalidate_cache()
 
-        Parameters
-        ----------
-        mu : array_like
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : array_like
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        sigma : array_like
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        shape : float
-            Gamma shape parameter :math:`\\alpha > 0`.
-        rate : float
-            Gamma rate parameter :math:`\\beta > 0`.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        mu = np.asarray(kwargs['mu']).flatten()
-        gamma = np.asarray(kwargs['gamma']).flatten()
-        sigma = np.asarray(kwargs['sigma'])
-        alpha = kwargs['shape']
-        beta = kwargs['rate']
-
-        d = len(mu)
-        self._d = d
-
-        # Validate
-        if sigma.shape != (d, d):
-            raise ValueError(f"sigma shape {sigma.shape} doesn't match mu dimension {d}")
-        if alpha <= 0:
-            raise ValueError(f"Shape must be positive, got {alpha}")
-        if beta <= 0:
-            raise ValueError(f"Rate must be positive, got {beta}")
-
-        # Compute precision matrix (Σ is positive definite)
-        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
-
-        # Natural parameters
-        theta_1 = alpha - 1 - d / 2
-        theta_2 = -0.5 * mu @ Lambda @ mu
-        theta_3 = -(beta + 0.5 * gamma @ Lambda @ gamma)
-        theta_4 = Lambda @ gamma
-        theta_5 = Lambda @ mu
-        theta_6 = -0.5 * Lambda
-
-        # Flatten and concatenate
-        theta = np.concatenate([
-            [theta_1, theta_2, theta_3],
-            theta_4,
-            theta_5,
-            theta_6.flatten()
-        ])
-
-        return theta
-
-    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
-        """
-        Convert natural parameters to classical parameters.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameter vector.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with keys: mu, gamma, sigma, shape, rate.
-        """
-        d = self.d
-
-        # Extract scalar components
-        theta_1 = theta[0]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]  # Λγ
-
-        # Get normal params using helper
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
-
-        # Recover α
-        alpha = theta_1 + 1 + d / 2
-
-        # Recover β using simplified quadratic form: γ^T Λ γ = γ^T θ₄
-        gamma_quad = 0.5 * (gamma @ theta_4)
-        beta = -theta_3 - gamma_quad
-
+    def _compute_classical_params(self):
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return VarianceGammaParams(
-            mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
+            mu=self._mu.copy(), gamma=self._gamma.copy(), sigma=Sigma,
+            shape=self._shape, rate=self._rate
         )
 
     # ========================================================================
@@ -373,12 +292,16 @@ class JointVarianceGamma(JointNormalMixture):
         from scipy.special import digamma
 
         d = self.d
-        classical = self._natural_to_classical(theta)
-        mu = classical['mu']
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
-        alpha = classical['shape']
-        beta = classical['rate']
+        # Extract classical from theta for standalone use (theta may not match internal state)
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, return_sigma=True
+        )
+        theta_1 = theta[0]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        alpha = theta_1 + 1 + d / 2
+        gamma_quad = 0.5 * (gamma @ theta_4)
+        beta = -theta_3 - gamma_quad
 
         # Gamma expectations
         E_log_Y = digamma(alpha) - np.log(beta)
@@ -534,11 +457,12 @@ class JointVarianceGamma(JointNormalMixture):
         beta = alpha / E_Y
 
         # ================================================================
-        # Convert to natural parameters
+        # Convert to natural parameters by setting state and reading back
         # ================================================================
-        return self._classical_to_natural(
+        self._set_from_classical(
             mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
         )
+        return self._compute_natural_params()
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """

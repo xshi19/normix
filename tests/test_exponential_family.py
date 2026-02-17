@@ -31,19 +31,39 @@ class Exponential(ExponentialFamily):
     Natural: θ = -λ, θ < 0
     Expectation: η = E[X] = 1/λ, η > 0
     """
+
+    def __init__(self):
+        super().__init__()
+        self._rate = None
     
     def _get_natural_param_support(self):
         """θ < 0"""
         return [(-np.inf, 0.0)]
+
+    def _set_from_classical(self, *, rate):
+        self._rate = float(rate)
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _set_from_natural(self, theta):
+        theta = np.asarray(theta)
+        self._validate_natural_params(theta)
+        self._rate = float(-theta[0])
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _compute_natural_params(self):
+        return np.array([-self._rate])
+
+    def _compute_classical_params(self):
+        return {'rate': self._rate}
     
     def _sufficient_statistics(self, x):
         """t(x) = x"""
         x = np.asarray(x)
         if x.ndim == 0 or x.shape == ():
-            # Scalar
             return np.array([x])
         else:
-            # Array - return as (n_samples, 1)
             return x.reshape(-1, 1)
     
     def _log_partition(self, theta):
@@ -57,40 +77,24 @@ class Exponential(ExponentialFamily):
         result[x < 0] = -np.inf
         return result
     
-    def _classical_to_natural(self, **kwargs):
-        """λ → θ = -λ"""
-        rate = kwargs['rate']
-        return np.array([-rate])
-    
-    def _natural_to_classical(self, theta):
-        """θ → λ = -θ"""
-        return {'rate': -theta[0]}
-    
-    # Override with analytical gradient for efficiency
     def _natural_to_expectation(self, theta):
         """η = ∇ψ(θ) = 1/|θ| = 1/λ"""
         return np.array([-1.0 / theta[0]])
     
-    # Override with analytical inverse for efficiency
     def _expectation_to_natural(self, eta, theta0=None):
         """θ = -1/η (inverse of natural_to_expectation)"""
         return np.array([-1.0 / eta[0]])
     
-    # Override with analytical Hessian for efficiency
     def fisher_information(self, theta=None):
         """I(θ) = ∇²ψ(θ) = 1/θ²"""
         if theta is None:
             theta = self.natural_params
         return np.array([[1.0 / theta[0]**2]])
     
-    # Implement required methods from Distribution
     def rvs(self, size=None, random_state=None):
         """Generate random samples"""
-        if self._natural_params is None:
-            raise ValueError("Parameters not set")
-        
-        classical = self.classical_params
-        rate = classical['rate']
+        self._check_fitted()
+        rate = self._rate
         
         if random_state is None:
             rng = np.random.default_rng()
@@ -99,19 +103,16 @@ class Exponential(ExponentialFamily):
         else:
             rng = random_state
         
-        # Exponential via inverse CDF
         u = rng.uniform(size=size)
         return -np.log(u) / rate
     
     def mean(self):
         """Mean = 1/λ"""
-        classical = self.classical_params
-        return 1.0 / classical['rate']
+        return 1.0 / self._rate
     
     def var(self):
         """Variance = 1/λ²"""
-        classical = self.classical_params
-        return 1.0 / classical['rate']**2
+        return 1.0 / self._rate**2
 
 
 # ============================================================

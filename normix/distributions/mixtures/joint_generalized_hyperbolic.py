@@ -37,8 +37,6 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from scipy.linalg import solve as scipy_solve
-
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import GeneralizedInverseGaussian
 from normix.params import GHParams
@@ -122,55 +120,54 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # Mixing distribution
     # ========================================================================
 
+    def __init__(self, d=None):
+        super().__init__(d)
+        self._p: Optional[float] = None
+        self._a: Optional[float] = None
+        self._b: Optional[float] = None
+
     @classmethod
     def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
         """Return GeneralizedInverseGaussian as the mixing distribution class."""
         return GeneralizedInverseGaussian
 
-    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
-        """
-        Extract GIG natural parameters from joint natural params.
+    # ========================================================================
+    # Mixing parameter management
+    # ========================================================================
 
-        GIG natural params: :math:`[p-1, -b/2, -a/2]`
+    def _store_mixing_params(self, *, p, a, b) -> None:
+        self._p = float(p)
+        self._a = float(a)
+        self._b = float(b)
 
-        From joint GH:
-        - :math:`\\theta_1 = p - 1 - d/2`, so :math:`p - 1 = \\theta_1 + d/2`
-        - :math:`\\theta_2 = -(b + \\frac{1}{2} \\mu^T \\Lambda \\mu)`
-        - :math:`\\theta_3 = -(a + \\frac{1}{2} \\gamma^T \\Lambda \\gamma)`
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector for joint distribution.
-
-        Returns
-        -------
-        theta_gig : ndarray
-            Natural parameters :math:`[p-1, -b/2, -a/2]` for GIG distribution.
-        """
+    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
+        theta_1 = theta[0]
+        theta_2 = theta[1]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
 
-        # Extract scalar components
-        theta_1 = theta[0]  # p - 1 - d/2
-        theta_2 = theta[1]  # -(b + 1/2 μ^T Λ μ)
-        theta_3 = theta[2]  # -(a + 1/2 γ^T Λ γ)
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
+        mu_quad = 0.5 * (self._mu @ theta_5)
+        gamma_quad = 0.5 * (self._gamma @ theta_4)
+        self._p = float(theta_1 + 1 + d / 2)
+        self._b = float(-theta_2 - mu_quad)
+        self._a = float(-theta_3 - gamma_quad)
 
-        # Get normal params using helper
-        _, _, mu, gamma = self._extract_normal_params_from_theta(theta)
+    def _compute_mixing_theta(self, theta_4, theta_5):
+        d = self._d
+        p = self._p
+        a = self._a
+        b = self._b
+        theta_1 = p - 1 - d / 2
+        theta_2 = -(b + 0.5 * (self._mu @ theta_5))
+        theta_3 = -(a + 0.5 * (self._gamma @ theta_4))
+        return theta_1, theta_2, theta_3
 
-        # Recover p, a, b
-        # Note: Since Λμ = θ₅ and Λγ = θ₄, we simplify:
-        #   μ^T Λ μ = μ^T θ₅  and  γ^T Λ γ = γ^T θ₄
-        p_minus_1 = theta_1 + d / 2  # p - 1
-        mu_quad = 0.5 * (mu @ theta_5)
-        gamma_quad = 0.5 * (gamma @ theta_4)
-
-        b = -theta_2 - mu_quad
-        a = -theta_3 - gamma_quad
-
-        return np.array([p_minus_1, -b / 2, -a / 2])
+    def _create_mixing_distribution(self):
+        return GeneralizedInverseGaussian.from_classical_params(
+            p=self._p, a=self._a, b=self._b
+        )
 
     # ========================================================================
     # Natural parameter support
@@ -224,112 +221,24 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         return bounds
 
     # ========================================================================
-    # Parameter conversions
+    # Parameter setters / getters
     # ========================================================================
 
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters.
-
-        Parameters
-        ----------
-        mu : array_like
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : array_like
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        sigma : array_like
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        p : float
-            GIG shape parameter (any real number).
-        a : float
-            GIG rate parameter :math:`a > 0`.
-        b : float
-            GIG rate parameter :math:`b > 0`.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        mu = np.asarray(kwargs['mu']).flatten()
-        gamma = np.asarray(kwargs['gamma']).flatten()
-        sigma = np.asarray(kwargs['sigma'])
-        p = kwargs['p']
-        a = kwargs['a']
-        b = kwargs['b']
-
-        d = len(mu)
-        self._d = d
-
-        # Validate
-        if sigma.shape != (d, d):
-            raise ValueError(f"sigma shape {sigma.shape} doesn't match mu dimension {d}")
+    def _set_from_classical(self, *, mu, gamma, sigma, p, a, b) -> None:
         if a <= 0:
             raise ValueError(f"Parameter 'a' must be positive, got {a}")
         if b <= 0:
             raise ValueError(f"Parameter 'b' must be positive, got {b}")
+        self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
+        self._store_mixing_params(p=p, a=a, b=b)
+        self._fitted = True
+        self._invalidate_cache()
 
-        # Compute precision matrix (Σ is positive definite)
-        # Solves Σ @ Λ = I for Λ using Cholesky decomposition
-        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
-
-        # Natural parameters
-        theta_1 = p - 1 - d / 2
-        theta_2 = -(b + 0.5 * mu @ Lambda @ mu)
-        theta_3 = -(a + 0.5 * gamma @ Lambda @ gamma)
-        theta_4 = Lambda @ gamma
-        theta_5 = Lambda @ mu
-        theta_6 = -0.5 * Lambda
-
-        # Flatten and concatenate
-        theta = np.concatenate([
-            [theta_1, theta_2, theta_3],
-            theta_4,
-            theta_5,
-            theta_6.flatten()
-        ])
-
-        return theta
-
-    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
-        """
-        Convert natural parameters to classical parameters.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameter vector.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with keys: mu, gamma, sigma, p, a, b.
-        """
-        d = self.d
-
-        # Extract scalar components
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]  # Λγ
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-
-        # Get normal params using helper
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
-
-        # Recover p
-        p = theta_1 + 1 + d / 2
-
-        # Recover a and b using simplified quadratic forms:
-        # μ^T Λ μ = μ^T θ₅  and  γ^T Λ γ = γ^T θ₄
-        mu_quad = 0.5 * (mu @ theta_5)
-        gamma_quad = 0.5 * (gamma @ theta_4)
-
-        b = -theta_2 - mu_quad
-        a = -theta_3 - gamma_quad
-
+    def _compute_classical_params(self):
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return GHParams(
-            mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
+            mu=self._mu.copy(), gamma=self._gamma.copy(), sigma=Sigma,
+            p=self._p, a=self._a, b=self._b
         )
 
     # ========================================================================
@@ -419,13 +328,19 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
             Expectation parameter vector.
         """
         d = self.d
-        classical = self._natural_to_classical(theta)
-        mu = classical['mu']
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, return_sigma=True
+        )
+        theta_1 = theta[0]
+        theta_2 = theta[1]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        p = theta_1 + 1 + d / 2
+        mu_quad = 0.5 * (mu @ theta_5)
+        gamma_quad = 0.5 * (gamma @ theta_4)
+        b = -theta_2 - mu_quad
+        a = -theta_3 - gamma_quad
 
         # GIG expectations using Bessel function ratios
         sqrt_ab = np.sqrt(a * b)
@@ -590,9 +505,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         # ================================================================
         # Convert to natural parameters
         # ================================================================
-        return self._classical_to_natural(
+        self._set_from_classical(
             mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
         )
+        return self._compute_natural_params()
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """

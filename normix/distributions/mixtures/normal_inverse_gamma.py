@@ -154,12 +154,10 @@ class NormalInverseGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        alpha = classical['shape']
-        beta = classical['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse and log-determinant
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
@@ -258,12 +256,10 @@ class NormalInverseGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        alpha = classical['shape']
-        beta = classical['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x

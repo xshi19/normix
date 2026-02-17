@@ -142,16 +142,13 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        mixing = self._joint.classical_params
-        alpha = mixing['shape']
-        beta = mixing['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse and log-determinant
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
-        # Handle single point vs multiple points
         if x.ndim == 1:
             x = x.reshape(1, -1)
             single_point = True
@@ -160,23 +157,17 @@ class VarianceGamma(NormalMixture):
 
         n = x.shape[0]
 
-        # Transform data: z = L^{-1}(x - μ)
-        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
-        diff = x - mu  # (n, d)
-        z = L_inv @ diff.T  # (d, n)
-        q = np.sum(z ** 2, axis=0)  # (n,)
+        diff = x - mu
+        z = L_inv @ diff.T
+        q = np.sum(z ** 2, axis=0)
 
-        # Transform gamma: gamma_z = L^{-1} γ
-        gamma_z = L_inv @ gamma  # (d,)
-        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+        gamma_z = L_inv @ gamma
+        gamma_quad = np.dot(gamma_z, gamma_z)
 
-        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
-        linear = z.T @ gamma_z  # (n,)
+        linear = z.T @ gamma_z
 
-        # Constant terms
-        c = beta + 0.5 * gamma_quad  # β + 1/2 γ^T Λ γ
+        c = beta + 0.5 * gamma_quad
 
-        # Log normalizing constant: C = 2 * β^α / ((2π)^{d/2} |Σ|^{1/2} Γ(α))
         log_C = (np.log(2) - 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
                  - gammaln(alpha) + alpha * np.log(beta))
 
@@ -250,12 +241,10 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        mixing = self._joint.classical_params
-        alpha = mixing['shape']
-        beta = mixing['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x

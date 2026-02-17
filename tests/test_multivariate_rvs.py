@@ -88,11 +88,11 @@ def get_joint_distributions_2d():
 
 
 # ============================================================
-# Test get_L_Sigma returns proper lower Cholesky
+# Test _L_Sigma is a proper lower Cholesky factor
 # ============================================================
 
 class TestGetLSigma:
-    """Test that get_L_Sigma returns a valid lower Cholesky factor."""
+    """Test that _L_Sigma attribute is a valid lower Cholesky factor."""
 
     @pytest.fixture
     def dists(self):
@@ -101,23 +101,23 @@ class TestGetLSigma:
     def test_L_is_lower_triangular(self, dists):
         """L_Sigma should be lower triangular."""
         for name, dist in dists:
-            L, _ = dist.get_L_Sigma()
+            L = dist._L_Sigma
             assert np.allclose(L, np.tril(L)), (
-                f"{name}: get_L_Sigma() did not return lower triangular matrix"
+                f"{name}: _L_Sigma is not lower triangular"
             )
 
     def test_L_has_positive_diagonal(self, dists):
         """L_Sigma should have positive diagonal (unique Cholesky)."""
         for name, dist in dists:
-            L, _ = dist.get_L_Sigma()
+            L = dist._L_Sigma
             assert np.all(np.diag(L) > 0), (
-                f"{name}: get_L_Sigma() diagonal has non-positive entries"
+                f"{name}: _L_Sigma diagonal has non-positive entries"
             )
 
     def test_L_reconstructs_sigma(self, dists):
         """L @ L.T should equal the actual Sigma from classical params."""
         for name, dist in dists:
-            L, _ = dist.get_L_Sigma()
+            L = dist._L_Sigma
             Sigma_from_L = L @ L.T
             Sigma_true = dist.classical_params['sigma']
             np.testing.assert_allclose(
@@ -128,7 +128,7 @@ class TestGetLSigma:
     def test_log_det_sigma(self, dists):
         """log|Sigma| should match independent computation."""
         for name, dist in dists:
-            L, log_det = dist.get_L_Sigma()
+            log_det = dist.log_det_Sigma
             Sigma_true = dist.classical_params['sigma']
             expected_log_det = np.linalg.slogdet(Sigma_true)[1]
             np.testing.assert_allclose(
@@ -138,48 +138,40 @@ class TestGetLSigma:
 
 
 # ============================================================
-# Test set_L_Sigma / get_L_Sigma consistency
+# Test _set_internal consistency
 # ============================================================
 
-class TestSetLSigma:
-    """Test that set_L_Sigma caches a consistent lower Cholesky factor."""
+class TestSetInternal:
+    """Test that _set_internal produces same state as set_classical_params."""
 
-    def test_set_lower_get_lower(self):
-        """Setting lower Cholesky should be retrievable unchanged."""
+    def test_set_internal_matches_classical(self):
+        """_set_internal with L_sigma should match set_classical_params."""
         Sigma = np.array([[2.0, 0.8], [0.8, 1.5]])
         L_true = cholesky(Sigma, lower=True)
 
-        dist = JointVarianceGamma.from_classical_params(
+        dist1 = JointVarianceGamma.from_classical_params(
             mu=np.array([0.0, 0.0]),
             gamma=np.array([0.0, 0.0]),
             sigma=Sigma,
             shape=2.0, rate=1.0,
         )
-        dist.set_L_Sigma(L_true, lower=True)
 
-        L_got, log_det = dist.get_L_Sigma()
-        np.testing.assert_allclose(L_got, L_true, rtol=1e-12)
+        dist2 = JointVarianceGamma()
+        dist2._d = 2
+        dist2._set_internal(
+            mu=np.array([0.0, 0.0]),
+            gamma=np.array([0.0, 0.0]),
+            L_sigma=L_true,
+            shape=2.0, rate=1.0,
+        )
+
+        np.testing.assert_allclose(dist2._L_Sigma, L_true, rtol=1e-12)
         np.testing.assert_allclose(
-            log_det, np.linalg.slogdet(Sigma)[1], rtol=1e-10
+            dist2.log_det_Sigma, np.linalg.slogdet(Sigma)[1], rtol=1e-10
         )
-
-    def test_set_upper_get_lower(self):
-        """Setting upper Cholesky should be converted to lower."""
-        Sigma = np.array([[2.0, 0.8], [0.8, 1.5]])
-        L_true = cholesky(Sigma, lower=True)
-        U = L_true.T  # upper, Sigma = U.T @ U
-
-        dist = JointVarianceGamma.from_classical_params(
-            mu=np.array([0.0, 0.0]),
-            gamma=np.array([0.0, 0.0]),
-            sigma=Sigma,
-            shape=2.0, rate=1.0,
+        np.testing.assert_allclose(
+            dist1.natural_params, dist2.natural_params, rtol=1e-10
         )
-        dist.set_L_Sigma(U, lower=False)
-
-        L_got, _ = dist.get_L_Sigma()
-        # Should be stored as lower = U.T = L_true
-        np.testing.assert_allclose(L_got, L_true, rtol=1e-12)
 
 
 # ============================================================

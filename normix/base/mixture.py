@@ -109,10 +109,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         super().__init__()
         self._d = d
-        # Internal state: normal distribution parameters
         self._mu: Optional[NDArray] = None
         self._gamma: Optional[NDArray] = None
-        self._L_Sigma: Optional[NDArray] = None  # Lower Cholesky of Sigma
+        self._L_Sigma: Optional[NDArray] = None
 
     @property
     def d(self) -> int:
@@ -139,68 +138,70 @@ class JointNormalMixture(ExponentialFamily, ABC):
         pass
 
     @abstractmethod
-    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
+    def _store_mixing_params(self, **kwargs) -> None:
         """
-        Extract mixing distribution natural parameters from joint natural params.
+        Store mixing distribution parameters as named attributes.
+
+        Called by ``_set_from_classical`` and ``_set_internal``.
+
+        Parameters
+        ----------
+        **kwargs
+            Mixing-specific parameters (e.g., shape, rate for VG/NInvG;
+            delta, eta for NIG; p, a, b for GH).
+        """
+        pass
+
+    @abstractmethod
+    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
+        """
+        Extract and store mixing parameters from natural parameter vector.
+
+        Called by ``_set_from_natural`` after normal params have been stored.
 
         Parameters
         ----------
         theta : ndarray
-            Full natural parameter vector for the joint distribution.
+            Full natural parameter vector.
+        """
+        pass
+
+    @abstractmethod
+    def _compute_mixing_theta(
+        self, theta_4: NDArray, theta_5: NDArray
+    ) -> Tuple[float, float, float]:
+        """
+        Compute the first three natural parameters from mixing params.
+
+        Parameters
+        ----------
+        theta_4 : ndarray
+            :math:`\\Lambda \\gamma`, shape (d,).
+        theta_5 : ndarray
+            :math:`\\Lambda \\mu`, shape (d,).
 
         Returns
         -------
-        theta_y : ndarray
-            Natural parameters for the mixing distribution of Y.
+        theta_1, theta_2, theta_3 : float
+            First three scalar natural parameters.
+        """
+        pass
+
+    @abstractmethod
+    def _create_mixing_distribution(self) -> ExponentialFamily:
+        """
+        Create mixing distribution from named internal attributes.
+
+        Returns
+        -------
+        mixing : ExponentialFamily
+            A fitted mixing distribution instance.
         """
         pass
 
     # ========================================================================
     # Helper methods for parameter extraction (shared across all subclasses)
     # ========================================================================
-
-    def _extract_normal_params_from_theta(
-        self, theta: NDArray
-    ) -> Tuple[NDArray, NDArray, NDArray, NDArray]:
-        """
-        Extract normal distribution parameters from natural parameter vector.
-
-        This helper method centralizes the common calculation of extracting
-        :math:`(\\Lambda, \\Sigma, \\mu, \\gamma)` from the natural parameters,
-        avoiding code duplication across multiple methods.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector.
-
-        Returns
-        -------
-        Lambda : ndarray
-            Precision matrix :math:`\\Lambda = \\Sigma^{-1}`, shape (d, d).
-        Sigma : ndarray
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        mu : ndarray
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : ndarray
-            Skewness parameter :math:`\\gamma`, shape (d,).
-
-        Notes
-        -----
-        This method delegates to :meth:`_extract_normal_params_with_cholesky`
-        and recovers Lambda from its Cholesky factor.
-
-        See Also
-        --------
-        _extract_normal_params_with_cholesky : Core implementation using Cholesky.
-        """
-        # Delegate to Cholesky version and recover Lambda from L @ L.T
-        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
-            theta, return_sigma=True
-        )
-        Lambda = L_Lambda @ L_Lambda.T
-
-        return Lambda, Sigma, mu, gamma
 
     def _extract_normal_params_with_cholesky(
         self, theta: NDArray, *, return_sigma: bool = False
@@ -287,45 +288,37 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         return L_Lambda, log_det_Lambda, mu, gamma
 
-    def _get_normal_params(self, theta: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
-        """
-        Extract normal distribution parameters from joint natural params.
-
-        Convenience method that returns the most commonly needed parameters
-        :math:`(\\mu, \\gamma, \\Sigma)`.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector for the joint distribution.
-
-        Returns
-        -------
-        mu : ndarray
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : ndarray
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        Sigma : ndarray
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-
-        See Also
-        --------
-        _extract_normal_params_from_theta : Returns (Lambda, Sigma, mu, gamma).
-        _extract_normal_params_with_cholesky : Cholesky-based version for efficiency.
-        """
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
-        return mu, gamma, Sigma
-
     # ========================================================================
     # Internal state management
     # ========================================================================
+
+    def _store_normal_params(self, *, mu, gamma, sigma) -> None:
+        """
+        Shared helper to store normal distribution parameters.
+
+        Parameters
+        ----------
+        mu : array_like
+            Location vector, shape (d,).
+        gamma : array_like
+            Skewness vector, shape (d,).
+        sigma : array_like
+            Covariance scale matrix, shape (d, d).
+        """
+        mu = np.asarray(mu, dtype=float).flatten()
+        gamma = np.asarray(gamma, dtype=float).flatten()
+        Sigma = np.asarray(sigma, dtype=float)
+        self._d = len(mu)
+        self._mu = mu
+        self._gamma = gamma
+        self._L_Sigma = robust_cholesky(Sigma)
 
     def _set_from_natural(self, theta: NDArray) -> None:
         """
         Set internal state from natural parameters.
 
         Extracts and stores :math:`\\mu`, :math:`\\gamma`, and the Cholesky
-        factor of :math:`\\Sigma` alongside the legacy tuple storage.
+        factor of :math:`\\Sigma` from the natural parameter vector.
 
         Parameters
         ----------
@@ -336,43 +329,79 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # Infer dimension if needed
         if self._d is None:
-            # theta has 3 + 2d + d^2 entries
-            # Solve d^2 + 2d + 3 - len(theta) = 0
             n = len(theta)
-            # d^2 + 2d + 3 = n => d = (-2 + sqrt(4 + 4*(n-3))) / 2
             disc = 4 + 4 * (n - 3)
             d = int((-2 + np.sqrt(disc)) / 2)
             if 3 + 2 * d + d * d != n:
                 raise ValueError(f"Cannot infer d from parameter length {n}")
             self._d = d
 
-        # Validate and store legacy
         self._validate_natural_params(theta)
-        self._natural_params = tuple(theta)
 
         # Extract normal params via Cholesky
         L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
             theta, return_sigma=True
         )
-        L_Sigma = robust_cholesky(Sigma)
-
-        # Store internal state
         self._mu = mu
         self._gamma = gamma
-        self._L_Sigma = L_Sigma
+        self._L_Sigma = robust_cholesky(Sigma)
+
+        # Store mixing params from theta (subclass-specific)
+        self._store_mixing_params_from_theta(theta)
 
         self._fitted = True
         self._invalidate_cache()
 
-    def _compute_classical_params(self):
+    def _set_internal(self, *, mu, gamma, L_sigma, **mixing_kwargs) -> None:
         """
-        Compute classical parameters from internal state.
+        EM fast path: set internal state from pre-computed values.
 
-        Delegates to the legacy ``_natural_to_classical`` for now.
-        Subclasses will override when migrated.
+        No Cholesky decomposition is performed -- the caller provides
+        the Cholesky factor directly.
+
+        Parameters
+        ----------
+        mu : array_like
+            Location vector, shape (d,).
+        gamma : array_like
+            Skewness vector, shape (d,).
+        L_sigma : ndarray
+            Lower Cholesky factor of Sigma, shape (d, d).
+        **mixing_kwargs
+            Mixing distribution parameters (passed to ``_store_mixing_params``).
         """
-        theta = self.natural_params
-        return self._natural_to_classical(theta)
+        self._mu = np.asarray(mu, dtype=float).flatten()
+        self._gamma = np.asarray(gamma, dtype=float).flatten()
+        self._L_Sigma = np.asarray(L_sigma, dtype=float)
+        self._d = len(self._mu)
+        self._store_mixing_params(**mixing_kwargs)
+        self._fitted = True
+        self._invalidate_cache()
+
+    def _compute_natural_params(self) -> NDArray:
+        """
+        Build natural parameter vector from named internal attributes.
+
+        Uses ``cho_solve`` and triangular solve on ``_L_Sigma``.
+
+        Returns
+        -------
+        theta : ndarray
+            Natural parameter vector.
+        """
+        d = self._d
+        theta_5 = cho_solve((self._L_Sigma, True), self._mu)
+        theta_4 = cho_solve((self._L_Sigma, True), self._gamma)
+        L_inv = solve_triangular(self._L_Sigma, np.eye(d), lower=True)
+        Lambda = L_inv.T @ L_inv
+        theta_6 = -0.5 * Lambda
+        theta_1, theta_2, theta_3 = self._compute_mixing_theta(theta_4, theta_5)
+        return np.concatenate([
+            [theta_1, theta_2, theta_3],
+            theta_4,
+            theta_5,
+            theta_6.flatten()
+        ])
 
     # ========================================================================
     # Cached derived quantities
@@ -422,56 +451,6 @@ class JointNormalMixture(ExponentialFamily, ABC):
         self._check_fitted()
         z = solve_triangular(self._L_Sigma, self._gamma, lower=True)
         return float(z @ z)
-
-    # ========================================================================
-    # Backward-compatible Cholesky factor access
-    # ========================================================================
-
-    def get_L_Sigma(self) -> Tuple[NDArray, float]:
-        """
-        Get the lower Cholesky factor of Sigma and its log determinant.
-
-        Returns
-        -------
-        L_Sigma : ndarray
-            Lower Cholesky factor of Sigma, shape (d, d).
-        log_det_Sigma : float
-            Log determinant of Sigma.
-
-        Notes
-        -----
-        This method now delegates to the internal ``_L_Sigma`` attribute
-        and the ``log_det_Sigma`` cached property.
-        """
-        self._check_fitted()
-        return self._L_Sigma, self.log_det_Sigma
-
-    def set_L_Sigma(self, L_Sigma: NDArray, lower: bool = True) -> None:
-        """
-        Set the Cholesky factor of Sigma.
-
-        Used by the M-step of the EM algorithm.
-
-        Parameters
-        ----------
-        L_Sigma : ndarray
-            Cholesky factor of Sigma, shape (d, d).
-        lower : bool, default True
-            If True, L_Sigma is lower triangular.
-            If False, converts to lower triangular.
-        """
-        if lower:
-            self._L_Sigma = L_Sigma.copy()
-        else:
-            self._L_Sigma = L_Sigma.T.copy()
-        # Invalidate cached properties that depend on L_Sigma
-        for attr in ('log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq'):
-            self.__dict__.pop(attr, None)
-
-    def clear_L_Sigma_cache(self) -> None:
-        """Clear cached Cholesky-derived quantities (backward compat)."""
-        for attr in ('log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq'):
-            self.__dict__.pop(attr, None)
 
     # ========================================================================
     # Exponential family components
@@ -681,17 +660,13 @@ class JointNormalMixture(ExponentialFamily, ABC):
         else:
             rng = random_state
 
-        # Use internal state directly
         mu = self._mu
         gamma = self._gamma
         L_Sigma = self._L_Sigma
         d = self._d
-        theta = self.natural_params
 
-        # Create mixing distribution instance
-        mixing_class = self._get_mixing_distribution_class()
-        mixing_theta = self._get_mixing_natural_params(theta)
-        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        # Create mixing distribution from named attributes
+        mixing_dist = self._create_mixing_distribution()
 
         # Sample Y from mixing distribution
         Y = mixing_dist.rvs(size=size, random_state=rng)
@@ -800,12 +775,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         mu = self._mu
         gamma = self._gamma
-        theta = self.natural_params
 
-        # Get E[Y] from mixing distribution
-        mixing_class = self._get_mixing_distribution_class()
-        mixing_theta = self._get_mixing_natural_params(theta)
-        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        mixing_dist = self._create_mixing_distribution()
         E_Y = float(mixing_dist.mean())
 
         E_X = mu + gamma * E_Y
@@ -844,12 +815,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         gamma = self._gamma
         Sigma = self._L_Sigma @ self._L_Sigma.T
-        theta = self.natural_params
 
-        # Get E[Y] and Var[Y] from mixing distribution
-        mixing_class = self._get_mixing_distribution_class()
-        mixing_theta = self._get_mixing_natural_params(theta)
-        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        mixing_dist = self._create_mixing_distribution()
         E_Y = float(mixing_dist.mean())
         Var_Y = float(mixing_dist.var())
 
@@ -1454,10 +1421,7 @@ class NormalMixture(Distribution, ABC):
         mixing : ExponentialFamily
             The mixing distribution (e.g., GIG, Gamma, InverseGaussian).
         """
-        theta = self.joint.natural_params
-        mixing_class = self.joint._get_mixing_distribution_class()
-        mixing_theta = self.joint._get_mixing_natural_params(theta)
-        return mixing_class.from_natural_params(mixing_theta)
+        return self.joint._create_mixing_distribution()
 
     # ========================================================================
     # Fitting (placeholder - to be implemented in subclasses)

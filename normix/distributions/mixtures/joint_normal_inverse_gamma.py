@@ -33,7 +33,6 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from scipy.linalg import solve as scipy_solve
 from scipy.special import gammaln, digamma, polygamma
 
 from normix.base import JointNormalMixture, ExponentialFamily
@@ -104,48 +103,44 @@ class JointNormalInverseGamma(JointNormalMixture):
     # Mixing distribution
     # ========================================================================
 
+    def __init__(self, d=None):
+        super().__init__(d)
+        self._shape: Optional[float] = None
+        self._rate: Optional[float] = None
+
     @classmethod
     def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
         """Return InverseGamma as the mixing distribution class."""
         return InverseGamma
 
-    def _get_mixing_natural_params(self, theta: NDArray) -> NDArray:
-        """
-        Extract InverseGamma natural parameters from joint natural params.
+    # ========================================================================
+    # Mixing parameter management
+    # ========================================================================
 
-        InverseGamma natural params: :math:`[\\beta, -(\\alpha + 1)]`
+    def _store_mixing_params(self, *, shape, rate) -> None:
+        self._shape = float(shape)
+        self._rate = float(rate)
 
-        From joint Normal-Inverse Gamma:
-
-        - :math:`\\theta_1 = -(\\alpha + 1) - d/2`, so :math:`-(\\alpha + 1) = \\theta_1 + d/2`
-        - :math:`\\theta_2 = -(\\beta + \\frac{1}{2} \\mu^T \\Lambda \\mu)`, need to solve for :math:`\\beta`
-
-        Parameters
-        ----------
-        theta : ndarray
-            Full natural parameter vector for joint distribution.
-
-        Returns
-        -------
-        theta_invgamma : ndarray
-            Natural parameters :math:`[\\beta, -(\\alpha + 1)]` for InverseGamma distribution.
-        """
+    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
+        theta_1 = theta[0]
+        theta_2 = theta[1]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        mu_quad = 0.5 * (self._mu @ theta_5)
+        self._shape = float(-(theta_1 + d / 2) - 1)
+        self._rate = float(-theta_2 - mu_quad)
 
-        # Extract scalar components
-        theta_1 = theta[0]  # -(α + 1) - d/2
-        theta_2 = theta[1]  # -(β + 1/2 μ^T Λ μ)
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
+    def _compute_mixing_theta(self, theta_4, theta_5):
+        d = self._d
+        alpha = self._shape
+        beta = self._rate
+        theta_1 = -(alpha + 1) - d / 2
+        theta_2 = -(beta + 0.5 * (self._mu @ theta_5))
+        theta_3 = -0.5 * (self._gamma @ theta_4)
+        return theta_1, theta_2, theta_3
 
-        # Get normal params using helper
-        _, _, mu, _ = self._extract_normal_params_from_theta(theta)
-
-        # Recover α and β using simplified quadratic form: μ^T Λ μ = μ^T θ₅
-        neg_alpha_plus_1 = theta_1 + d / 2  # -(α + 1)
-        mu_quad = 0.5 * (mu @ theta_5)
-        beta = -theta_2 - mu_quad
-
-        return np.array([beta, neg_alpha_plus_1])
+    def _create_mixing_distribution(self):
+        return InverseGamma.from_classical_params(shape=self._shape, rate=self._rate)
 
     # ========================================================================
     # Natural parameter support
@@ -200,109 +195,24 @@ class JointNormalInverseGamma(JointNormalMixture):
         return bounds
 
     # ========================================================================
-    # Parameter conversions
+    # Parameter setters / getters
     # ========================================================================
 
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters.
+    def _set_from_classical(self, *, mu, gamma, sigma, shape, rate) -> None:
+        if shape <= 0:
+            raise ValueError(f"Shape must be positive, got {shape}")
+        if rate <= 0:
+            raise ValueError(f"Rate must be positive, got {rate}")
+        self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
+        self._store_mixing_params(shape=shape, rate=rate)
+        self._fitted = True
+        self._invalidate_cache()
 
-        Parameters
-        ----------
-        mu : array_like
-            Location parameter :math:`\\mu`, shape (d,).
-        gamma : array_like
-            Skewness parameter :math:`\\gamma`, shape (d,).
-        sigma : array_like
-            Covariance scale matrix :math:`\\Sigma`, shape (d, d).
-        shape : float
-            InverseGamma shape parameter :math:`\\alpha > 0`.
-        rate : float
-            InverseGamma rate parameter :math:`\\beta > 0`.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        mu = np.asarray(kwargs['mu']).flatten()
-        gamma = np.asarray(kwargs['gamma']).flatten()
-        sigma = np.asarray(kwargs['sigma'])
-        alpha = kwargs['shape']
-        beta = kwargs['rate']
-
-        d = len(mu)
-        self._d = d
-
-        # Validate
-        if sigma.shape != (d, d):
-            raise ValueError(f"sigma shape {sigma.shape} doesn't match mu dimension {d}")
-        if alpha <= 0:
-            raise ValueError(f"Shape must be positive, got {alpha}")
-        if beta <= 0:
-            raise ValueError(f"Rate must be positive, got {beta}")
-
-        # Compute precision matrix (Σ is positive definite)
-        Lambda = scipy_solve(sigma, np.eye(d), assume_a='pos')
-
-        # Natural parameters
-        # For InvGamma mixing: coefficient of log(y) is -(α+1) from f(y) 
-        # and -d/2 from the normal, so θ₁ = -(α+1) - d/2
-        theta_1 = -(alpha + 1) - d / 2
-        
-        # Coefficient of 1/y: -β from InvGamma and -1/2 μ^T Λ μ from normal
-        theta_2 = -(beta + 0.5 * mu @ Lambda @ mu)
-        
-        # Coefficient of y: -1/2 γ^T Λ γ from normal
-        theta_3 = -0.5 * gamma @ Lambda @ gamma
-        
-        theta_4 = Lambda @ gamma
-        theta_5 = Lambda @ mu
-        theta_6 = -0.5 * Lambda
-
-        # Flatten and concatenate
-        theta = np.concatenate([
-            [theta_1, theta_2, theta_3],
-            theta_4,
-            theta_5,
-            theta_6.flatten()
-        ])
-
-        return theta
-
-    def _natural_to_classical(self, theta: NDArray) -> Dict[str, Any]:
-        """
-        Convert natural parameters to classical parameters.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameter vector.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with keys: mu, gamma, sigma, shape, rate.
-        """
-        d = self.d
-
-        # Extract scalar components
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
-
-        # Get normal params using helper
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
-
-        # Recover α: θ₁ = -(α+1) - d/2, so α = -(θ₁ + d/2) - 1
-        alpha = -(theta_1 + d / 2) - 1
-
-        # Recover β using simplified quadratic form: μ^T Λ μ = μ^T θ₅
-        mu_quad = 0.5 * (mu @ theta_5)
-        beta = -theta_2 - mu_quad
-
+    def _compute_classical_params(self):
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return NormalInverseGammaParams(
-            mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
+            mu=self._mu.copy(), gamma=self._gamma.copy(), sigma=Sigma,
+            shape=self._shape, rate=self._rate
         )
 
     # ========================================================================
@@ -385,12 +295,15 @@ class JointNormalInverseGamma(JointNormalMixture):
             Expectation parameter vector.
         """
         d = self.d
-        classical = self._natural_to_classical(theta)
-        mu = classical['mu']
-        gamma = classical['gamma']
-        Sigma = classical['sigma']
-        alpha = classical['shape']
-        beta = classical['rate']
+        L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
+            theta, return_sigma=True
+        )
+        theta_1 = theta[0]
+        theta_2 = theta[1]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        alpha = -(theta_1 + d / 2) - 1
+        mu_quad = 0.5 * (mu @ theta_5)
+        beta = -theta_2 - mu_quad
 
         # InverseGamma expectations
         # E[log Y] = log(β) - ψ(α)
@@ -558,9 +471,10 @@ class JointNormalInverseGamma(JointNormalMixture):
         # ================================================================
         # Convert to natural parameters
         # ================================================================
-        return self._classical_to_natural(
+        self._set_from_classical(
             mu=mu, gamma=gamma, sigma=Sigma, shape=alpha, rate=beta
         )
+        return self._compute_natural_params()
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """

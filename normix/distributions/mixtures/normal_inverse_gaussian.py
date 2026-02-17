@@ -148,17 +148,14 @@ class NormalInverseGaussian(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        delta = classical['delta']
-        eta = classical['eta']
+        delta = self._joint._delta
+        eta = self._joint._eta
         d = self.d
 
-        # GIG parameters for IG(δ, η): p = -1/2, a = η/δ², b = η
         p = -0.5
         a = eta / (delta ** 2)
         b = eta
 
-        # Get cached Cholesky quantities
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
@@ -250,16 +247,13 @@ class NormalInverseGaussian(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        delta = classical['delta']
-        eta = classical['eta']
+        delta = self._joint._delta
+        eta = self._joint._eta
         d = self.d
 
-        # GIG parameters for mixing: p = -1/2, a = η/δ², b = η
         a_mix = eta / (delta ** 2)
         b_mix = eta
 
-        # Get cached Cholesky quantities
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x

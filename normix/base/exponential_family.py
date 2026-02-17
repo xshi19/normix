@@ -75,7 +75,8 @@ class ExponentialFamily(Distribution):
     - ``_compute_classical_params()``: Derive classical params from internal state.
 
     Parameters should be stored as named internal attributes (e.g., ``_rate``,
-    ``_mu``, ``_L``) for efficient direct access.
+    ``_mu``, ``_L``) for efficient direct access. There is no ``_natural_params``
+    tuple at this level; named attributes are the single source of truth.
 
     Both interfaces use ``functools.cached_property`` for lazy caching of
     derived parametrizations, with ``_invalidate_cache()`` clearing all
@@ -83,10 +84,6 @@ class ExponentialFamily(Distribution):
 
     Attributes
     ----------
-    _natural_params : tuple or None
-        Legacy storage for natural parameters (tuple for hashability).
-        Set by the default ``_set_from_natural`` implementation.
-        Migrated subclasses may not use this.
     _fitted : bool
         Whether parameters have been set (inherited from Distribution).
 
@@ -132,7 +129,6 @@ class ExponentialFamily(Distribution):
         or fit() to set parameters.
         """
         super().__init__()
-        self._natural_params = None  # Legacy storage (tuple), kept for backward compat
 
     # ============================================================
     # Factory methods for initialization
@@ -284,77 +280,67 @@ class ExponentialFamily(Distribution):
         return self
 
     # ============================================================
-    # New interface: internal state management
+    # Internal state management (subclass contract)
     # ============================================================
-    # Default implementations use the legacy _classical_to_natural /
-    # _natural_to_classical methods. Migrated subclasses override these.
 
+    @abstractmethod
     def _set_from_classical(self, **kwargs) -> None:
         """
         Set internal state from classical parameters.
 
-        Default implementation converts to natural parameters via
-        ``_classical_to_natural`` and delegates to ``_set_from_natural``.
-        Migrated subclasses override to store named internal attributes
-        (e.g., ``self._rate``, ``self._mu``, ``self._L``).
+        Parse classical params, store as named attributes (e.g.,
+        ``self._rate``, ``self._mu``, ``self._L``), set
+        ``self._fitted = True``, and call ``self._invalidate_cache()``.
 
         Parameters
         ----------
         **kwargs
             Distribution-specific classical parameters.
         """
-        theta = self._classical_to_natural(**kwargs)
-        self._set_from_natural(np.asarray(theta))
+        pass
 
+    @abstractmethod
     def _set_from_natural(self, theta: NDArray) -> None:
         """
         Set internal state from natural parameters.
 
-        Default implementation validates and stores as a flat tuple in
-        ``_natural_params`` (legacy path). Migrated subclasses override
-        to store named internal attributes.
+        Decompose theta into named attributes, store them, set
+        ``self._fitted = True``, and call ``self._invalidate_cache()``.
 
         Parameters
         ----------
         theta : ndarray
             Natural parameter vector.
         """
-        theta = np.asarray(theta)
-        self._validate_natural_params(theta)
-        self._natural_params = tuple(theta)
-        self._fitted = True
-        self._invalidate_cache()
+        pass
 
+    @abstractmethod
     def _compute_natural_params(self) -> NDArray:
         """
         Compute natural parameters from internal state.
 
-        Default implementation returns the legacy ``_natural_params`` tuple
-        as a numpy array. Migrated subclasses override to derive from
-        their internal attributes.
+        Build and return a flat theta array from named internal attributes.
 
         Returns
         -------
         theta : ndarray
             Natural parameter vector.
         """
-        return np.array(self._natural_params)
+        pass
 
+    @abstractmethod
     def _compute_classical_params(self):
         """
         Compute classical parameters from internal state.
 
-        Default implementation calls ``_natural_to_classical`` on the
-        natural parameters. Migrated subclasses override to derive from
-        their internal attributes and return a frozen dataclass.
+        Build and return a frozen dataclass from named internal attributes.
 
         Returns
         -------
-        params : dict or dataclass
+        params : dataclass
             Classical parameters.
         """
-        theta = self.natural_params
-        return self._natural_to_classical(theta)
+        pass
 
     def _compute_expectation_params(self) -> NDArray:
         """
@@ -616,62 +602,6 @@ class ExponentialFamily(Distribution):
         >>> return -0.5 * np.log(2 * np.pi)
         """
         pass
-
-    # ============================================================
-    # Legacy parameter conversions (only for unmigrated subclasses)
-    # ============================================================
-
-    def _classical_to_natural(self, **kwargs) -> NDArray:
-        """
-        Convert classical parameters to natural parameters (legacy interface).
-
-        Only needed by subclasses that have NOT overridden
-        ``_set_from_classical``. Called by the default
-        ``_set_from_classical`` implementation.
-
-        Migrated subclasses (which override ``_set_from_classical``)
-        do not need to implement this method.
-
-        Parameters
-        ----------
-        **kwargs
-            Distribution-specific classical parameters.
-
-        Returns
-        -------
-        theta : ndarray
-            Natural parameter vector.
-        """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must override _set_from_classical() "
-            f"or implement _classical_to_natural()."
-        )
-
-    def _natural_to_classical(self, theta: NDArray) -> Union[Dict[str, Any], Tuple]:
-        """
-        Convert natural parameters to classical parameters (legacy interface).
-
-        Only needed by subclasses that have NOT overridden
-        ``_compute_classical_params``. Called by the default
-        ``_compute_classical_params`` implementation.
-
-        Migrated subclasses (which override ``_compute_classical_params``)
-        do not need to implement this method.
-
-        Parameters
-        ----------
-        theta : ndarray
-            Natural parameter vector.
-
-        Returns
-        -------
-        params : dict or tuple
-            Classical parameters.
-        """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must override _compute_classical_params() "
-            f"or implement _natural_to_classical()."
-        )
 
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """

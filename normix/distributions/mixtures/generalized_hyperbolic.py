@@ -340,10 +340,9 @@ class GeneralizedHyperbolic(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self.joint.classical_params
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        p = self._joint._p
+        a = self._joint._a
+        b = self._joint._b
         d = self.d
 
         # Handle single point vs multiple points
@@ -545,25 +544,26 @@ class GeneralizedHyperbolic(NormalMixture):
 
         def _apply_regularization():
             """Apply regularization to current parameters."""
-            classical = self.classical_params
-            log_det_sigma = self._joint.log_det_Sigma
+            jt = self._joint
+            mu = jt._mu
+            gamma = jt._gamma
+            sigma = jt._L_Sigma @ jt._L_Sigma.T
+            p_val, a_val, b_val = jt._p, jt._a, jt._b
+            log_det_sigma = jt.log_det_Sigma
 
             if regularization == 'fix_p':
                 regularized = regularize_fn(
-                    classical['mu'], classical['gamma'], classical['sigma'],
-                    classical['p'], classical['a'], classical['b'], d,
+                    mu, gamma, sigma, p_val, a_val, b_val, d,
                     **regularization_params
                 )
             elif regularization == 'det_sigma_one':
                 regularized = regularize_fn(
-                    classical['mu'], classical['gamma'], classical['sigma'],
-                    classical['p'], classical['a'], classical['b'], d,
+                    mu, gamma, sigma, p_val, a_val, b_val, d,
                     log_det_sigma=log_det_sigma
                 )
             else:
                 regularized = regularize_fn(
-                    classical['mu'], classical['gamma'], classical['sigma'],
-                    classical['p'], classical['a'], classical['b'], d
+                    mu, gamma, sigma, p_val, a_val, b_val, d
                 )
 
             # Sanity check: clamp degenerate GIG parameters
@@ -580,11 +580,9 @@ class GeneralizedHyperbolic(NormalMixture):
             # Apply regularization BEFORE E-step (following legacy)
             _apply_regularization()
 
-            # Save regularized parameters for convergence check
-            classical = self.classical_params
-            prev_mu = classical['mu'].copy()
-            prev_gamma = classical['gamma'].copy()
-            prev_sigma = classical['sigma'].copy()
+            prev_mu = self._joint._mu.copy()
+            prev_gamma = self._joint._gamma.copy()
+            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
 
             # E-step: compute conditional expectations
             cond_exp = self._conditional_expectation_y_given_x(X)
@@ -595,11 +593,9 @@ class GeneralizedHyperbolic(NormalMixture):
             # Apply regularization AFTER M-step to ensure constraints hold
             _apply_regularization()
 
-            # Check convergence using relative parameter change on (mu, gamma, Sigma)
-            new_classical = self.classical_params
-            mu_new = new_classical['mu']
-            gamma_new = new_classical['gamma']
-            sigma_new = new_classical['sigma']
+            mu_new = self._joint._mu
+            gamma_new = self._joint._gamma
+            sigma_new = self._joint._L_Sigma @ self._joint._L_Sigma.T
 
             mu_norm = np.linalg.norm(mu_new - prev_mu)
             mu_denom = max(np.linalg.norm(prev_mu), 1e-10)
@@ -744,7 +740,9 @@ class GeneralizedHyperbolic(NormalMixture):
         s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
 
         # Get current GIG parameters for initialization and fallback
-        current = self.joint.classical_params
+        current_p = self._joint._p
+        current_a = self._joint._a
+        current_b = self._joint._b
         
         # Update GIG parameters if not fixed
         if not fix_tail:
@@ -752,11 +750,10 @@ class GeneralizedHyperbolic(NormalMixture):
             # Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]
             gig_eta = np.array([s3, s1, s2])
             
-            # Use current GIG parameters as initial point
             current_gig_theta = np.array([
-                current['p'] - 1, 
-                -current['b'] / 2, 
-                -current['a'] / 2
+                current_p - 1, 
+                -current_b / 2, 
+                -current_a / 2
             ])
             
             try:
@@ -774,24 +771,21 @@ class GeneralizedHyperbolic(NormalMixture):
                 # This prevents the optimization from diverging
                 if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10 or
                     a_new < 1e-10 or b_new < 1e-10):
-                    # Keep current parameters
-                    p = current['p']
-                    a = current['a']
-                    b = current['b']
+                    p = current_p
+                    a = current_a
+                    b = current_b
                 else:
                     p = p_new
                     a = a_new
                     b = b_new
             except Exception:
-                # Fallback: keep current GIG parameters
-                p = current['p']
-                a = current['a']
-                b = current['b']
+                p = current_p
+                a = current_a
+                b = current_b
         else:
-            # Keep current GIG parameters
-            p = current['p']
-            a = current['a']
-            b = current['b']
+            p = current_p
+            a = current_a
+            b = current_b
 
         # M-step for normal parameters (closed-form, following legacy)
         # mu = (s4 - s2 * s5) / (1 - s1 * s2)
@@ -818,12 +812,13 @@ class GeneralizedHyperbolic(NormalMixture):
         a = max(a, 1e-6)
         b = max(b, 1e-6)
 
-        # Update joint distribution and cache L_Sigma
-        self._joint.set_classical_params(
-            mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
+        # Update joint distribution via fast path (no redundant Cholesky)
+        self._joint._set_internal(
+            mu=mu, gamma=gamma, L_sigma=L_Sigma,
+            p=p, a=a, b=b
         )
-        # Cache the Cholesky factor (set_classical_params clears cache, so set after)
-        self._joint.set_L_Sigma(L_Sigma)
+        self._fitted = True
+        self._invalidate_cache()
 
     # ========================================================================
     # Conditional Expectations (E-step helper)
@@ -868,13 +863,11 @@ class GeneralizedHyperbolic(NormalMixture):
 
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self.joint.classical_params
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        p = self._joint._p
+        a = self._joint._a
+        b = self._joint._b
         d = self.d
 
-        # Get cached L_Sigma_inv
         L_inv = self._joint.L_Sigma_inv
         
         # Transform data: z = L^{-1}(x - μ)
@@ -1064,12 +1057,10 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self.joint.classical_params
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        p = self._joint._p
+        a = self._joint._a
+        b = self._joint._b
 
-        # E[Y] from GIG
         sqrt_ab = np.sqrt(a * b)
         sqrt_b_over_a = np.sqrt(b / a)
         log_kv_p = log_kv(p, sqrt_ab)
@@ -1107,10 +1098,9 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         gamma = self._joint._gamma
         Sigma = self._joint._L_Sigma @ self._joint._L_Sigma.T
-        classical = self.joint.classical_params
-        p = classical['p']
-        a = classical['a']
-        b = classical['b']
+        p = self._joint._p
+        a = self._joint._a
+        b = self._joint._b
 
         # E[Y] and E[Y²] from GIG
         sqrt_ab = np.sqrt(a * b)
