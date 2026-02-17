@@ -117,7 +117,6 @@ class Gamma(ExponentialFamily):
             raise ValueError(f"Rate must be positive, got {rate}")
         self._shape = float(shape)
         self._rate = float(rate)
-        self._natural_params = tuple(np.array([shape - 1, -rate]))
         self._fitted = True
         self._invalidate_cache()
     

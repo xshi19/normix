@@ -150,7 +150,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self._p = float(p)
         self._a = float(a)
         self._b = float(b)
-        self._natural_params = tuple(np.array([p - 1, -b / 2, -a / 2]))
         self._fitted = True
         self._invalidate_cache()
     
