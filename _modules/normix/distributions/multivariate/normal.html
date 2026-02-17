@@ -120,6 +120,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cholesky</span><span class="p">,</span> <span class="n">solve_triangular</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_cholesky</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormalParams</span>
 
@@ -344,9 +345,6 @@
         <span class="n">Lambda_half</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
         <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Lambda_half</span>
 
-        <span class="c1"># Ensure symmetry</span>
-        <span class="n">Lambda</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-
         <span class="c1"># Cholesky of Lambda (validates positive definiteness)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -362,10 +360,10 @@
         <span class="n">Lambda_inv</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span>
             <span class="n">L_Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="n">I_d</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
-        <span class="n">Sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lambda_inv</span> <span class="o">+</span> <span class="n">Lambda_inv</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># Ensure symmetry</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Lambda_inv</span>
 
         <span class="c1"># Cholesky of Sigma</span>
-        <span class="n">L</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
 
         <span class="c1"># Compute mu = Sigma @ eta</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">@</span> <span class="n">eta</span>
@@ -598,14 +596,9 @@
         <span class="c1"># Σ = E[XX^T] - μμ^T</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="n">second_moment</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
 
-        <span class="c1"># Ensure symmetry</span>
-        <span class="n">Sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-
-        <span class="c1"># Ensure positive definiteness (with small regularization if needed)</span>
-        <span class="n">eigvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">eigvals</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">eigvals</span><span class="p">)</span>
-            <span class="n">Sigma</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="n">min_eig</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="c1"># Ensure positive definiteness via robust Cholesky</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
         <span class="c1"># Convert to natural parameters</span>
         <span class="n">Lambda</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
@@ -878,10 +871,9 @@
         <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">Sigma_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">Sigma_hat</span><span class="p">]])</span>
 
-        <span class="c1"># Regularization for numerical stability</span>
-        <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma_hat</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-            <span class="n">Sigma_hat</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1e-10</span> <span class="o">-</span> <span class="n">min_eig</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="c1"># Regularization for numerical stability via robust Cholesky</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma_hat</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">Sigma_hat</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
         <span class="c1"># Set parameters via new interface</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_classical</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu_hat</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma_hat</span><span class="p">)</span>

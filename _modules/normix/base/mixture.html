@@ -114,7 +114,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cholesky</span><span class="p">,</span> <span class="n">cho_solve</span><span class="p">,</span> <span class="n">solve_triangular</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_solve</span><span class="p">,</span> <span class="n">solve_triangular</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_cholesky</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Distribution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
@@ -234,7 +236,7 @@
     <span class="c1"># ========================================================================</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_normal_params_from_theta</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">symmetrize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract normal distribution parameters from natural parameter vector.</span>
@@ -247,9 +249,6 @@
 <span class="sd">        ----------</span>
 <span class="sd">        theta : ndarray</span>
 <span class="sd">            Full natural parameter vector.</span>
-<span class="sd">        symmetrize : bool, optional</span>
-<span class="sd">            Whether to symmetrize Lambda for numerical stability.</span>
-<span class="sd">            Default is False.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -273,14 +272,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Delegate to Cholesky version and recover Lambda from L @ L.T</span>
         <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_normal_params_with_cholesky</span><span class="p">(</span>
-            <span class="n">theta</span><span class="p">,</span> <span class="n">symmetrize</span><span class="o">=</span><span class="n">symmetrize</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
         <span class="n">Lambda</span> <span class="o">=</span> <span class="n">L_Lambda</span> <span class="o">@</span> <span class="n">L_Lambda</span><span class="o">.</span><span class="n">T</span>
 
         <span class="k">return</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_normal_params_with_cholesky</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">symmetrize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">return_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract normal parameters using Cholesky decomposition.</span>
@@ -289,12 +288,14 @@
 <span class="sd">        for computing log determinants and avoids explicit matrix inversion when</span>
 <span class="sd">        only :math:`\\mu` and :math:`\\gamma` are needed.</span>
 
+<span class="sd">        Uses :func:`~normix.utils.robust_cholesky` for the Cholesky factorization,</span>
+<span class="sd">        which handles near-singular matrices via diagonal regularization. Since</span>
+<span class="sd">        LAPACK only reads one triangle, explicit symmetrization is unnecessary.</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        theta : ndarray</span>
 <span class="sd">            Full natural parameter vector.</span>
-<span class="sd">        symmetrize : bool, optional</span>
-<span class="sd">            Whether to symmetrize Lambda for numerical stability. Default False.</span>
 <span class="sd">        return_sigma : bool, optional</span>
 <span class="sd">            If True, also compute and return Sigma. Default False.</span>
 
@@ -339,11 +340,8 @@
         <span class="c1"># Recover Λ from θ₆ = -1/2 Λ</span>
         <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta_6</span>
 
-        <span class="k">if</span> <span class="n">symmetrize</span><span class="p">:</span>
-            <span class="n">Lambda</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-
         <span class="c1"># Cholesky factorization: Λ = L @ L.T</span>
-        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
 
         <span class="c1"># Log determinant: log|Λ| = 2 * Σ log(L_ii)</span>
         <span class="n">log_det_Lambda</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">)))</span>
@@ -430,9 +428,9 @@
 
         <span class="c1"># Extract normal params via Cholesky</span>
         <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_normal_params_with_cholesky</span><span class="p">(</span>
-            <span class="n">theta</span><span class="p">,</span> <span class="n">symmetrize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">return_sigma</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
 
         <span class="c1"># Store internal state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="n">mu</span>
@@ -1109,6 +1107,13 @@
 <span class="sd">        Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.</span>
 
 <span class="sd">        These conditional expectations are used in the E-step of the EM algorithm.</span>
+<span class="sd">        The returned keys depend on the sufficient statistics of the mixing</span>
+<span class="sd">        distribution:</span>
+
+<span class="sd">        - **GH** (GIG mixing): ``E_Y``, ``E_inv_Y``, ``E_log_Y``</span>
+<span class="sd">        - **VG** (Gamma mixing): ``E_Y``, ``E_log_Y``</span>
+<span class="sd">        - **NIG** (InvGauss mixing): ``E_Y``, ``E_inv_Y``</span>
+<span class="sd">        - **NInvG** (InvGamma mixing): ``E_inv_Y``, ``E_log_Y``</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1118,10 +1123,12 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        expectations : dict</span>
-<span class="sd">            Dictionary containing:</span>
-<span class="sd">            - &#39;E_Y&#39;: :math:`E[Y | X]`</span>
-<span class="sd">            - &#39;E_inv_Y&#39;: :math:`E[1/Y | X]`</span>
-<span class="sd">            - &#39;E_log_Y&#39;: :math:`E[\\log Y | X]`</span>
+<span class="sd">            Dictionary containing conditional expectations needed for the</span>
+<span class="sd">            M-step. Always includes at least two of:</span>
+
+<span class="sd">            - ``&#39;E_Y&#39;``: :math:`E[Y | X]`</span>
+<span class="sd">            - ``&#39;E_inv_Y&#39;``: :math:`E[1/Y | X]`</span>
+<span class="sd">            - ``&#39;E_log_Y&#39;``: :math:`E[\\log Y | X]`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 

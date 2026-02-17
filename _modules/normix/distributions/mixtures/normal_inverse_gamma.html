@@ -110,7 +110,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">JointNormalMixture</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">robust_cholesky</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.joint_normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalInverseGamma</span>
 
 
@@ -553,11 +553,9 @@
         <span class="n">Var_Y_init</span> <span class="o">=</span> <span class="n">beta_init</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">((</span><span class="n">alpha_init</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha_init</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
         <span class="n">Sigma_init</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_cov</span> <span class="o">-</span> <span class="n">Var_Y_init</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_init</span><span class="p">,</span> <span class="n">gamma_init</span><span class="p">))</span> <span class="o">/</span> <span class="n">E_Y_init</span>
 
-        <span class="c1"># Ensure Sigma is positive definite</span>
-        <span class="n">Sigma_init</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sigma_init</span> <span class="o">+</span> <span class="n">Sigma_init</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma_init</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
-            <span class="n">Sigma_init</span> <span class="o">=</span> <span class="n">Sigma_init</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1e-6</span> <span class="o">-</span> <span class="n">min_eig</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="c1"># Ensure Sigma is positive definite via robust Cholesky</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma_init</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">Sigma_init</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
         <span class="c1"># Set initial parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
@@ -626,13 +624,9 @@
                          <span class="o">+</span> <span class="n">eta_1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
                          <span class="o">-</span> <span class="n">eta_2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">))</span>
 
-            <span class="c1"># Symmetrize</span>
-            <span class="n">Sigma_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sigma_new</span> <span class="o">+</span> <span class="n">Sigma_new</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-
-            <span class="c1"># Ensure positive definiteness</span>
-            <span class="n">min_eig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">Sigma_new</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
-                <span class="n">Sigma_new</span> <span class="o">=</span> <span class="n">Sigma_new</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1e-8</span> <span class="o">-</span> <span class="n">min_eig</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="c1"># Ensure positive definiteness via robust Cholesky</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma_new</span><span class="p">)</span>
+            <span class="n">Sigma_new</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
             <span class="c1"># InverseGamma parameters via Newton&#39;s method</span>
             <span class="c1"># For InvGamma: E[1/Y] = α/β, E[log Y] = log(β) - ψ(α)</span>
