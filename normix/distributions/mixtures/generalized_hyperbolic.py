@@ -804,9 +804,7 @@ class GeneralizedHyperbolic(NormalMixture):
         Sigma = -np.outer(s5, mu)
         Sigma = Sigma + Sigma.T + s6 + s1 * np.outer(mu, mu) - s2 * np.outer(gamma, gamma)
 
-        # Compute Cholesky factor of Sigma (with regularization if needed)
         L_Sigma = robust_cholesky(Sigma)
-        Sigma = L_Sigma @ L_Sigma.T
 
         # Bound GIG parameters
         a = max(a, 1e-6)
