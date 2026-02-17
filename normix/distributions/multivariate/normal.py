@@ -44,7 +44,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, List, Optional, Tuple, Union
 from scipy import stats
-from scipy.linalg import cholesky, solve_triangular
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 
 from normix.utils import robust_cholesky
 from normix.base import ExponentialFamily
@@ -224,14 +224,6 @@ class MultivariateNormal(ExponentialFamily):
         self._mu = mu.copy()
         self._L = L
 
-        # Legacy storage for backward compat
-        Lambda = solve_triangular(
-            L.T, solve_triangular(L, np.eye(d), lower=True), lower=False
-        )
-        eta = Lambda @ mu
-        Lambda_half = -0.5 * Lambda
-        self._natural_params = tuple(np.concatenate([eta, Lambda_half.flatten()]))
-
         self._fitted = True
         self._invalidate_cache()
 
@@ -295,7 +287,6 @@ class MultivariateNormal(ExponentialFamily):
         # Store internal state
         self._mu = mu
         self._L = L
-        self._natural_params = tuple(theta)
 
         self._fitted = True
         self._invalidate_cache()
@@ -428,30 +419,26 @@ class MultivariateNormal(ExponentialFamily):
 
     def _log_partition(self, theta: NDArray) -> float:
         """
-        Log partition function: ψ(θ) = 1/2 μ^T Λ μ - 1/2 log|Λ| + d/2 log(2π).
-classical_params
-        Given θ = [η, vec(Λ_half)] where η = Λμ and Λ_half = -1/2 Λ:
-        - Λ = -2 * Λ_half
-        - μ = Λ^{-1} η = Σ η
+        Log partition function: psi(theta) = 1/2 eta^T mu - 1/2 log|Lambda| + d/2 log(2pi).
+
+        .. math::
+            \\psi(\\theta) = \\frac{1}{2} \\eta^T \\Lambda^{-1} \\eta
+            - \\frac{1}{2} \\log|\\Lambda| + \\frac{d}{2} \\log(2\\pi)
+
+        Uses Cholesky of Lambda for numerical stability.
         """
         d = self.d
 
-        # Extract parameters
         eta = theta[:d]
         Lambda_half = theta[d:].reshape(d, d)
-        Lambda = -2 * Lambda_half  # Precision matrix
+        Lambda = -2 * Lambda_half
 
-        # Compute Σ = Λ^{-1} and μ = Σ η
-        Sigma = np.linalg.inv(Lambda)
-        mu = Sigma @ eta
+        L_Lambda = cholesky(Lambda, lower=True)
+        log_det_Lambda = 2.0 * np.sum(np.log(np.diag(L_Lambda)))
 
-        # ψ(θ) = 1/2 μ^T Λ μ - 1/2 log|Λ| + d/2 log(2π)
-        #      = 1/2 η^T Σ η - 1/2 log|Λ| + d/2 log(2π)
-        psi = 0.5 * eta @ Sigma @ eta
-        _, logdet_Lambda = np.linalg.slogdet(Lambda)
-        psi -= 0.5 * logdet_Lambda
-        psi += 0.5 * d * np.log(2 * np.pi)
+        mu = cho_solve((L_Lambda, True), eta)
 
+        psi = 0.5 * eta @ mu - 0.5 * log_det_Lambda + 0.5 * d * np.log(2 * np.pi)
         return float(psi)
 
     def _log_base_measure(self, x: ArrayLike) -> NDArray:
@@ -468,25 +455,28 @@ classical_params
 
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
-        Convert natural to expectation parameters.
+        Convert natural to expectation parameters using Cholesky.
 
-        η = [E[X], E[XX^T]] = [μ, Σ + μμ^T]
+        .. math::
+            \\eta = [E[X], E[XX^T]] = [\\mu, \\Sigma + \\mu\\mu^T]
 
         Returns
         -------
         eta : ndarray
-            Expectation parameters [μ, vec(Σ + μμ^T)].
+            Expectation parameters :math:`[\\mu, \\text{vec}(\\Sigma + \\mu\\mu^T)]`.
         """
         d = self.d
 
-        # Extract classical parameters from theta
         eta = theta[:d]
         Lambda_half = theta[d:].reshape(d, d)
-        Lambda = -2 * Lambda_half  # Precision matrix
-        Sigma = np.linalg.inv(Lambda)  # Covariance matrix
-        mu = Sigma @ eta  # μ = Σ η = Λ^{-1} η
+        Lambda = -2 * Lambda_half
 
-        # Compute expectation parameters
+        L_Lambda = cholesky(Lambda, lower=True)
+        mu = cho_solve((L_Lambda, True), eta)
+
+        L_inv = solve_triangular(L_Lambda, np.eye(d), lower=True)
+        Sigma = L_inv.T @ L_inv
+
         eta1 = mu
         eta2 = (Sigma + np.outer(mu, mu)).flatten()
 
@@ -494,15 +484,12 @@ classical_params
 
     def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
         """
-        Convert expectation to natural parameters.
+        Convert expectation to natural parameters using Cholesky.
 
-        From η = [μ, vec(Σ + μμ^T)]:
-        - μ = η₁
-        - Σ = η₂.reshape(d,d) - μμ^T
-
-        Then compute natural parameters.
+        From :math:`\\eta = [\\mu, \\text{vec}(\\Sigma + \\mu\\mu^T)]`:
+        - :math:`\\mu = \\eta_1`
+        - :math:`\\Sigma = \\eta_2 - \\mu\\mu^T`
         """
-        # Infer dimension from eta length: len(eta) = d + d^2
         n = len(eta)
         d_inferred = int((-1 + np.sqrt(1 + 4 * n)) / 2)
         if d_inferred * (d_inferred + 1) != n:
@@ -513,34 +500,21 @@ classical_params
 
         d = self._d
 
-        # Extract expectation parameters
         mu = eta[:d]
-        second_moment = eta[d:].reshape(d, d)
+        Sigma = eta[d:].reshape(d, d) - np.outer(mu, mu)
 
-        # Σ = E[XX^T] - μμ^T
-        Sigma = second_moment - np.outer(mu, mu)
-
-        # Ensure positive definiteness via robust Cholesky
         L = robust_cholesky(Sigma, eps=1e-6)
         Sigma = L @ L.T
 
-        # Convert to natural parameters
-        Lambda = np.linalg.inv(Sigma)
-        eta_nat = Lambda @ mu
+        eta_nat = cho_solve((L, True), mu)
+        L_inv = solve_triangular(L, np.eye(d), lower=True)
+        Lambda = L_inv.T @ L_inv
         Lambda_half = -0.5 * Lambda
         return np.concatenate([eta_nat, Lambda_half.flatten()])
 
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """Get initial guess for natural parameters."""
         return self._expectation_to_natural(eta)
-
-    def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
-        """
-        Fisher information matrix.
-
-        Uses numerical differentiation from base class.
-        """
-        return super().fisher_information(theta)
 
     # ============================================================
     # Override logpdf for Cholesky-based computation

@@ -154,12 +154,10 @@ class NormalInverseGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        alpha = classical['shape']
-        beta = classical['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse and log-determinant
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
@@ -258,12 +256,10 @@ class NormalInverseGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        alpha = classical['shape']
-        beta = classical['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x
@@ -496,11 +492,11 @@ class NormalInverseGamma(NormalMixture):
         # EM iterations
         # ================================================================
         for iteration in range(max_iter):
-            # Save current parameters for convergence check
-            old_params = self.classical_params
-            prev_mu = old_params['mu'].copy()
-            prev_gamma = old_params['gamma'].copy()
-            prev_sigma = old_params['sigma'].copy()
+            prev_mu = self._joint._mu.copy()
+            prev_gamma = self._joint._gamma.copy()
+            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
+            prev_shape = self._joint._shape
+            prev_rate = self._joint._rate
 
             # ==============================================================
             # E-step: Compute conditional expectations E[g(Y) | X]
@@ -546,17 +542,14 @@ class NormalInverseGamma(NormalMixture):
                          + eta_1 * np.outer(mu_new, mu_new)
                          - eta_2 * np.outer(gamma_new, gamma_new))
 
-            # Ensure positive definiteness via robust Cholesky
             L = robust_cholesky(Sigma_new)
-            Sigma_new = L @ L.T
 
             # InverseGamma parameters via Newton's method
             # For InvGamma: E[1/Y] = α/β, E[log Y] = log(β) - ψ(α)
             # Solve: ψ(α) - log(α) = -η̂₃ - log(η̂₁)
             target = -eta_3 - np.log(eta_1)
 
-            # Initial guess from current parameters
-            alpha_new = old_params['shape']
+            alpha_new = prev_shape
 
             for _ in range(50):
                 psi_val = digamma(alpha_new)
@@ -582,20 +575,25 @@ class NormalInverseGamma(NormalMixture):
             beta_new = alpha_new / eta_1
 
             # ==============================================================
-            # Update parameters
+            # Update parameters via _set_internal
             # ==============================================================
             try:
-                self.set_classical_params(
-                    mu=mu_new,
-                    gamma=gamma_new,
-                    sigma=Sigma_new,
-                    shape=alpha_new,
-                    rate=beta_new
+                self._joint._set_internal(
+                    mu=mu_new, gamma=gamma_new, L_sigma=L,
+                    shape=alpha_new, rate=beta_new
                 )
-            except ValueError as e:
+                self._fitted = True
+                self._invalidate_cache()
+            except (ValueError, np.linalg.LinAlgError) as e:
                 if verbose >= 1:
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
-                self.set_classical_params(**old_params)
+                self._joint._set_internal(
+                    mu=prev_mu, gamma=prev_gamma,
+                    L_sigma=robust_cholesky(prev_sigma),
+                    shape=prev_shape, rate=prev_rate
+                )
+                self._fitted = True
+                self._invalidate_cache()
                 self.n_iter_ = iteration + 1
                 break
 
@@ -610,7 +608,8 @@ class NormalInverseGamma(NormalMixture):
             gamma_denom_val = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom_val
 
-            sigma_norm = np.linalg.norm(Sigma_new - prev_sigma, 'fro')
+            Sigma_curr = L @ L.T
+            sigma_norm = np.linalg.norm(Sigma_curr - prev_sigma, 'fro')
             sigma_denom_val = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
             rel_sigma = sigma_norm / sigma_denom_val
 

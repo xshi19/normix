@@ -111,7 +111,6 @@ class Exponential(ExponentialFamily):
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
         self._rate = float(-theta[0])
-        self._natural_params = tuple(theta)
         self._fitted = True
         self._invalidate_cache()
     

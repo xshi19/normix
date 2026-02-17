@@ -67,7 +67,7 @@ normix/
 └── ROADMAP.md                   # Implementation roadmap
 ```
 
-## Current Status (Updated: 2026-02-07)
+## Current Status (Updated: 2026-02-17)
 
 **Completed:**
 - Step 1: Base classes (ExponentialFamily with 3 parametrizations, NormalMixture base)
@@ -83,6 +83,13 @@ normix/
   - Cholesky-first storage for multivariate distributions
   - Direct attribute access in marginal mixture distributions
   - Frozen dataclass parameter containers (`normix.params`)
+- Refactoring: Parameter storage redesign (`docs/redesign_parameter_storage.md`)
+  - Named attributes as single source of truth (no `_natural_params` tuple)
+  - Abstract `_set_from_classical` / `_set_from_natural` in ExponentialFamily
+  - Cholesky everywhere in MultivariateNormal
+  - `_set_internal()` zero-overhead EM fast path
+  - `_create_mixing_distribution()` replaces theta-based construction
+  - Removed deprecated methods
 
 **Next Steps:**
 - Step 7: Package integration (clean public API, documentation, examples)
@@ -104,6 +111,10 @@ $$ p(x|\theta) = h(x) \exp (\theta^T t(x) - \psi(\theta)) $$
 
 5. **Caching Strategy**: `functools.cached_property` with `_invalidate_cache()` via `__dict__.pop()`
 
-6. **Internal Storage**: Each subclass stores its own optimal internal representation (e.g., `_rate` for Exponential, `_mu` + `_L` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` for JointNormalMixture)
+6. **Internal Storage**: Named attributes are the single source of truth (no `_natural_params` tuple). Each subclass stores its own optimal representation (e.g., `_rate` for Exponential, `_mu` + `_L` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` + mixing attrs for JointNormalMixture subclasses)
 
 7. **Parameter Containers**: `@dataclass(frozen=True, slots=True)` for classical parameter output
+
+8. **Setter Paths Are Independent**: `_set_from_classical` and `_set_from_natural` each write directly to named attributes; they never call each other. `_set_internal()` provides a zero-overhead fast path for EM.
+
+9. **Cholesky Everywhere**: All linear algebra on covariance/precision uses Cholesky factors (`cho_solve`, `solve_triangular`) instead of `np.linalg.inv` / `np.linalg.slogdet`

@@ -142,16 +142,13 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        mixing = self._joint.classical_params
-        alpha = mixing['shape']
-        beta = mixing['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse and log-determinant
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
-        # Handle single point vs multiple points
         if x.ndim == 1:
             x = x.reshape(1, -1)
             single_point = True
@@ -160,23 +157,17 @@ class VarianceGamma(NormalMixture):
 
         n = x.shape[0]
 
-        # Transform data: z = L^{-1}(x - μ)
-        # Mahalanobis distance: q(x) = ||z||^2 = (x-μ)^T Σ^{-1} (x-μ)
-        diff = x - mu  # (n, d)
-        z = L_inv @ diff.T  # (d, n)
-        q = np.sum(z ** 2, axis=0)  # (n,)
+        diff = x - mu
+        z = L_inv @ diff.T
+        q = np.sum(z ** 2, axis=0)
 
-        # Transform gamma: gamma_z = L^{-1} γ
-        gamma_z = L_inv @ gamma  # (d,)
-        gamma_quad = np.dot(gamma_z, gamma_z)  # γ^T Σ^{-1} γ
+        gamma_z = L_inv @ gamma
+        gamma_quad = np.dot(gamma_z, gamma_z)
 
-        # Linear term: (x-μ)^T Σ^{-1} γ = z.T @ gamma_z
-        linear = z.T @ gamma_z  # (n,)
+        linear = z.T @ gamma_z
 
-        # Constant terms
-        c = beta + 0.5 * gamma_quad  # β + 1/2 γ^T Λ γ
+        c = beta + 0.5 * gamma_quad
 
-        # Log normalizing constant: C = 2 * β^α / ((2π)^{d/2} |Σ|^{1/2} Γ(α))
         log_C = (np.log(2) - 0.5 * d * np.log(2 * np.pi) - 0.5 * logdet_Sigma
                  - gammaln(alpha) + alpha * np.log(beta))
 
@@ -250,12 +241,10 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        mixing = self._joint.classical_params
-        alpha = mixing['shape']
-        beta = mixing['rate']
+        alpha = self._joint._shape
+        beta = self._joint._rate
         d = self.d
 
-        # Get cached Cholesky inverse
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x
@@ -489,11 +478,11 @@ class VarianceGamma(NormalMixture):
         # EM iterations
         # ================================================================
         for iteration in range(max_iter):
-            # Save current parameters for convergence check
-            old_params = self.classical_params
-            prev_mu = old_params['mu'].copy()
-            prev_gamma = old_params['gamma'].copy()
-            prev_sigma = old_params['sigma'].copy()
+            prev_mu = self._joint._mu.copy()
+            prev_gamma = self._joint._gamma.copy()
+            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
+            prev_shape = self._joint._shape
+            prev_rate = self._joint._rate
 
             # ==============================================================
             # E-step: Compute conditional expectations E[g(Y) | X]
@@ -548,17 +537,14 @@ class VarianceGamma(NormalMixture):
                          + eta_1 * np.outer(mu_new, mu_new)
                          - eta_2 * np.outer(gamma_new, gamma_new))
 
-            # Ensure positive definiteness via robust Cholesky
             L = robust_cholesky(Sigma_new)
-            Sigma_new = L @ L.T
 
             # Gamma parameters via Newton's method
             # Solve: ψ(α) - log(α/η̂₂) = η̂₃
             # i.e., ψ(α) - log(α) = η̂₃ - log(η̂₂)
             target = eta_3 - np.log(eta_2)
 
-            # Initial guess from current parameters
-            alpha_new = old_params['shape']
+            alpha_new = prev_shape
 
             for _ in range(50):
                 psi_val = digamma(alpha_new)
@@ -584,21 +570,28 @@ class VarianceGamma(NormalMixture):
             beta_new = alpha_new / eta_2
 
             # ==============================================================
-            # Update parameters
+            # Update parameters via _set_internal (1 Cholesky, already done)
             # ==============================================================
             try:
-                self.set_classical_params(
+                self._joint._set_internal(
                     mu=mu_new,
                     gamma=gamma_new,
-                    sigma=Sigma_new,
+                    L_sigma=L,
                     shape=alpha_new,
                     rate=beta_new
                 )
-            except ValueError as e:
+                self._fitted = True
+                self._invalidate_cache()
+            except (ValueError, np.linalg.LinAlgError) as e:
                 if verbose >= 1:
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
-                # Revert to old parameters
-                self.set_classical_params(**old_params)
+                self._joint._set_internal(
+                    mu=prev_mu, gamma=prev_gamma,
+                    L_sigma=robust_cholesky(prev_sigma),
+                    shape=prev_shape, rate=prev_rate
+                )
+                self._fitted = True
+                self._invalidate_cache()
                 self.n_iter_ = iteration + 1
                 break
 
@@ -614,7 +607,8 @@ class VarianceGamma(NormalMixture):
             gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom
 
-            sigma_norm = np.linalg.norm(Sigma_new - prev_sigma, 'fro')
+            Sigma_curr = L @ L.T
+            sigma_norm = np.linalg.norm(Sigma_curr - prev_sigma, 'fro')
             sigma_denom = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
             rel_sigma = sigma_norm / sigma_denom
 

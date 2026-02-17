@@ -148,17 +148,14 @@ class NormalInverseGaussian(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        delta = classical['delta']
-        eta = classical['eta']
+        delta = self._joint._delta
+        eta = self._joint._eta
         d = self.d
 
-        # GIG parameters for IG(δ, η): p = -1/2, a = η/δ², b = η
         p = -0.5
         a = eta / (delta ** 2)
         b = eta
 
-        # Get cached Cholesky quantities
         L_inv = self._joint.L_Sigma_inv
         logdet_Sigma = self._joint.log_det_Sigma
 
@@ -250,16 +247,13 @@ class NormalInverseGaussian(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        classical = self._joint.classical_params
-        delta = classical['delta']
-        eta = classical['eta']
+        delta = self._joint._delta
+        eta = self._joint._eta
         d = self.d
 
-        # GIG parameters for mixing: p = -1/2, a = η/δ², b = η
         a_mix = eta / (delta ** 2)
         b_mix = eta
 
-        # Get cached Cholesky quantities
         L_inv = self._joint.L_Sigma_inv
 
         # GIG parameters for Y | X = x
@@ -459,11 +453,11 @@ class NormalInverseGaussian(NormalMixture):
         # EM iterations
         # ================================================================
         for iteration in range(max_iter):
-            # Save current parameters for convergence check
-            old_params = self.classical_params
-            prev_mu = old_params['mu'].copy()
-            prev_gamma = old_params['gamma'].copy()
-            prev_sigma = old_params['sigma'].copy()
+            prev_mu = self._joint._mu.copy()
+            prev_gamma = self._joint._gamma.copy()
+            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
+            prev_delta = self._joint._delta
+            prev_eta = self._joint._eta
 
             # ==============================================================
             # E-step: Compute conditional expectations E[g(Y) | X]
@@ -507,9 +501,7 @@ class NormalInverseGaussian(NormalMixture):
                          + eta_1 * np.outer(mu_new, mu_new)
                          - eta_2 * np.outer(gamma_new, gamma_new))
 
-            # Ensure positive definiteness via robust Cholesky
             L = robust_cholesky(Sigma_new)
-            Sigma_new = L @ L.T
 
             # Inverse Gaussian parameters
             # For IG: E[Y] = δ, E[1/Y] = 1/δ + 1/η
@@ -529,20 +521,25 @@ class NormalInverseGaussian(NormalMixture):
             eta_new = max(eta_new, 1e-6)
 
             # ==============================================================
-            # Update parameters
+            # Update parameters via _set_internal
             # ==============================================================
             try:
-                self.set_classical_params(
-                    mu=mu_new,
-                    gamma=gamma_new,
-                    sigma=Sigma_new,
-                    delta=delta_new,
-                    eta=eta_new
+                self._joint._set_internal(
+                    mu=mu_new, gamma=gamma_new, L_sigma=L,
+                    delta=delta_new, eta=eta_new
                 )
+                self._fitted = True
+                self._invalidate_cache()
             except (ValueError, np.linalg.LinAlgError) as e:
                 if verbose >= 1:
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
-                self.set_classical_params(**old_params)
+                self._joint._set_internal(
+                    mu=prev_mu, gamma=prev_gamma,
+                    L_sigma=robust_cholesky(prev_sigma),
+                    delta=prev_delta, eta=prev_eta
+                )
+                self._fitted = True
+                self._invalidate_cache()
                 self.n_iter_ = iteration + 1
                 break
 
@@ -557,7 +554,8 @@ class NormalInverseGaussian(NormalMixture):
             gamma_denom_val = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom_val
 
-            sigma_norm = np.linalg.norm(Sigma_new - prev_sigma, 'fro')
+            Sigma_curr = L @ L.T
+            sigma_norm = np.linalg.norm(Sigma_curr - prev_sigma, 'fro')
             sigma_denom_val = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
             rel_sigma = sigma_norm / sigma_denom_val
 

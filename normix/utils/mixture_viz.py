@@ -116,10 +116,7 @@ def plot_joint_distribution_1d(
                   orientation='horizontal')
     # Use actual mixing distribution PDF (more accurate than numerical integration)
     try:
-        theta = joint_dist.natural_params
-        mixing_theta = joint_dist._get_mixing_natural_params(theta)
-        mixing_class = joint_dist._get_mixing_distribution_class()
-        mixing_dist = mixing_class.from_natural_params(mixing_theta)
+        mixing_dist = joint_dist._create_mixing_distribution()
         y_pdf = mixing_dist.pdf(y_range)
     except (AttributeError, TypeError):
         # Fallback to numerical integration if mixing distribution not accessible
