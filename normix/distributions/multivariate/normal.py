@@ -46,6 +46,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from scipy import stats
 from scipy.linalg import cholesky, solve_triangular
 
+from normix.utils import robust_cholesky
 from normix.base import ExponentialFamily
 from normix.params import MultivariateNormalParams
 
@@ -268,9 +269,6 @@ class MultivariateNormal(ExponentialFamily):
         Lambda_half = theta[d:].reshape(d, d)
         Lambda = -2 * Lambda_half
 
-        # Ensure symmetry
-        Lambda = (Lambda + Lambda.T) / 2
-
         # Cholesky of Lambda (validates positive definiteness)
         try:
             L_Lambda = cholesky(Lambda, lower=True)
@@ -286,10 +284,10 @@ class MultivariateNormal(ExponentialFamily):
         Lambda_inv = solve_triangular(
             L_Lambda.T, solve_triangular(L_Lambda, I_d, lower=True), lower=False
         )
-        Sigma = (Lambda_inv + Lambda_inv.T) / 2  # Ensure symmetry
+        Sigma = Lambda_inv
 
         # Cholesky of Sigma
-        L = cholesky(Sigma, lower=True)
+        L = robust_cholesky(Sigma)
 
         # Compute mu = Sigma @ eta
         mu = Sigma @ eta
@@ -522,14 +520,9 @@ classical_params
         # Σ = E[XX^T] - μμ^T
         Sigma = second_moment - np.outer(mu, mu)
 
-        # Ensure symmetry
-        Sigma = (Sigma + Sigma.T) / 2
-
-        # Ensure positive definiteness (with small regularization if needed)
-        eigvals = np.linalg.eigvalsh(Sigma)
-        if np.any(eigvals <= 0):
-            min_eig = np.min(eigvals)
-            Sigma += (-min_eig + 1e-6) * np.eye(d)
+        # Ensure positive definiteness via robust Cholesky
+        L = robust_cholesky(Sigma, eps=1e-6)
+        Sigma = L @ L.T
 
         # Convert to natural parameters
         Lambda = np.linalg.inv(Sigma)
@@ -773,10 +766,9 @@ classical_params
         if d == 1:
             Sigma_hat = np.array([[Sigma_hat]])
 
-        # Regularization for numerical stability
-        min_eig = np.min(np.linalg.eigvalsh(Sigma_hat))
-        if min_eig < 1e-10:
-            Sigma_hat += (1e-10 - min_eig) * np.eye(d)
+        # Regularization for numerical stability via robust Cholesky
+        L = robust_cholesky(Sigma_hat, eps=1e-10)
+        Sigma_hat = L @ L.T
 
         # Set parameters via new interface
         self._set_from_classical(mu=mu_hat, sigma=Sigma_hat)

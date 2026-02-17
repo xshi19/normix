@@ -42,7 +42,7 @@ from scipy.linalg import solve as scipy_solve
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import GeneralizedInverseGaussian
 from normix.params import GHParams
-from normix.utils import log_kv
+from normix.utils import log_kv, robust_cholesky
 
 
 class JointGeneralizedHyperbolic(JointNormalMixture):
@@ -314,10 +314,8 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         theta_4 = theta[3:3 + d]  # Λγ
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
-        # Get normal params using helper (with symmetrization for stability)
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
-            theta, symmetrize=True
-        )
+        # Get normal params using helper
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
 
         # Recover p
         p = theta_1 + 1 + d / 2
@@ -366,9 +364,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
         # Get normal params using Cholesky (more efficient for log determinant)
-        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(
-            theta, symmetrize=True
-        )
+        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(theta)
 
         # Log determinant of Σ = -log|Λ|
         log_det_Sigma = -log_det_Lambda
@@ -544,13 +540,9 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
                  + E_inv_Y * np.outer(mu, mu)
                  - E_Y * np.outer(gamma, gamma))
 
-        # Symmetrize and ensure positive definiteness
-        Sigma = (Sigma + Sigma.T) / 2
-
-        # Add small regularization if needed
-        min_eig = np.linalg.eigvalsh(Sigma).min()
-        if min_eig < 1e-8:
-            Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+        # Ensure positive definiteness via robust Cholesky
+        L = robust_cholesky(Sigma)
+        Sigma = L @ L.T
 
         # ================================================================
         # M-step for GIG parameters

@@ -35,6 +35,7 @@ from scipy.special import gammaln
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import Gamma
+from normix.utils import robust_cholesky
 from normix.params import VarianceGammaParams
 
 
@@ -275,10 +276,8 @@ class JointVarianceGamma(JointNormalMixture):
         theta_3 = theta[2]
         theta_4 = theta[3:3 + d]  # Λγ
 
-        # Get normal params using helper (with symmetrization)
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
-            theta, symmetrize=True
-        )
+        # Get normal params using helper
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
 
         # Recover α
         alpha = theta_1 + 1 + d / 2
@@ -321,9 +320,7 @@ class JointVarianceGamma(JointNormalMixture):
         theta_4 = theta[3:3 + d]  # Λγ
 
         # Get normal params using Cholesky (more efficient for log determinant)
-        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(
-            theta, symmetrize=True
-        )
+        _, log_det_Lambda, mu, gamma = self._extract_normal_params_with_cholesky(theta)
 
         # Log determinant of Σ = -log|Λ|
         log_det_Sigma = -log_det_Lambda
@@ -494,13 +491,9 @@ class JointVarianceGamma(JointNormalMixture):
                  + E_inv_Y * np.outer(mu, mu)
                  - E_Y * np.outer(gamma, gamma))
 
-        # Symmetrize and ensure positive definiteness
-        Sigma = (Sigma + Sigma.T) / 2
-
-        # Add small regularization if needed
-        min_eig = np.linalg.eigvalsh(Sigma).min()
-        if min_eig < 1e-8:
-            Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+        # Ensure positive definiteness via robust Cholesky
+        L = robust_cholesky(Sigma)
+        Sigma = L @ L.T
 
         # ================================================================
         # M-step for Gamma parameters (Newton's method)

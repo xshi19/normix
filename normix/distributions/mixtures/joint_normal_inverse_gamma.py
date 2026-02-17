@@ -39,6 +39,7 @@ from scipy.special import gammaln, digamma, polygamma
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGamma
 from normix.params import NormalInverseGammaParams
+from normix.utils import robust_cholesky
 
 
 class JointNormalInverseGamma(JointNormalMixture):
@@ -290,10 +291,8 @@ class JointNormalInverseGamma(JointNormalMixture):
         theta_2 = theta[1]
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
-        # Get normal params using helper (with symmetrization)
-        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(
-            theta, symmetrize=True
-        )
+        # Get normal params using helper
+        _, Sigma, mu, gamma = self._extract_normal_params_from_theta(theta)
 
         # Recover α: θ₁ = -(α+1) - d/2, so α = -(θ₁ + d/2) - 1
         alpha = -(theta_1 + d / 2) - 1
@@ -337,9 +336,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         theta_5 = theta[3 + d:3 + 2 * d]  # Λμ
 
         # Get normal params using Cholesky (more efficient for log determinant)
-        _, log_det_Lambda, mu, _ = self._extract_normal_params_with_cholesky(
-            theta, symmetrize=True
-        )
+        _, log_det_Lambda, mu, _ = self._extract_normal_params_with_cholesky(theta)
 
         # Log determinant of Σ = -log|Λ|
         log_det_Sigma = -log_det_Lambda
@@ -501,13 +498,9 @@ class JointNormalInverseGamma(JointNormalMixture):
                  + E_inv_Y * np.outer(mu, mu)
                  - E_Y * np.outer(gamma, gamma))
 
-        # Symmetrize and ensure positive definiteness
-        Sigma = (Sigma + Sigma.T) / 2
-
-        # Add small regularization if needed
-        min_eig = np.linalg.eigvalsh(Sigma).min()
-        if min_eig < 1e-8:
-            Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+        # Ensure positive definiteness via robust Cholesky
+        L = robust_cholesky(Sigma)
+        Sigma = L @ L.T
 
         # ================================================================
         # M-step for InverseGamma parameters (Newton's method)

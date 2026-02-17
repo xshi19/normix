@@ -33,7 +33,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, Optional, Tuple, Union
 
 from normix.base import NormalMixture, JointNormalMixture
-from normix.utils import log_kv
+from normix.utils import log_kv, robust_cholesky
 from .joint_normal_inverse_gaussian import JointNormalInverseGaussian
 
 
@@ -230,6 +230,11 @@ class NormalInverseGaussian(NormalMixture):
         where :math:`a = \\eta/\\delta^2`, :math:`b = \\eta`, and the GIG parameters are
         :math:`(p, a, b)` in our notation.
 
+        Since the Inverse Gaussian sufficient statistics are :math:`t_Y(y) = (y, y^{-1})`,
+        only :math:`E[Y | X]` and :math:`E[1/Y | X]` are needed for the M-step.
+        :math:`E[\\log Y | X]` is not required and is omitted to avoid unnecessary
+        Bessel function evaluations.
+
         Parameters
         ----------
         x : array_like
@@ -241,7 +246,6 @@ class NormalInverseGaussian(NormalMixture):
             Dictionary with:
             - 'E_Y': :math:`E[Y | X]`, shape (n,)
             - 'E_inv_Y': :math:`E[1/Y | X]`, shape (n,)
-            - 'E_log_Y': :math:`E[\\log Y | X]`, shape (n,)
         """
         x = np.asarray(x)
         mu = self._joint._mu
@@ -301,30 +305,76 @@ class NormalInverseGaussian(NormalMixture):
         # E[1/Y] = √(a/b) * K_{p-1}(√(ab)) / K_p(√(ab))
         E_inv_Y = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
 
-        # E[log Y] = ∂/∂p log(K_p(√(ab))) + (1/2) log(b/a)
-        # Numerical derivative for ∂/∂p log(K_p(z))
-        eps = 1e-6
-        log_kv_p_plus = log_kv(p_cond + eps, sqrt_ab)
-        log_kv_p_minus = log_kv(p_cond - eps, sqrt_ab)
-        d_log_kv_dp = (log_kv_p_plus - log_kv_p_minus) / (2 * eps)
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b_cond / a_cond)
-
         if single_point:
             return {
                 'E_Y': float(E_Y[0]),
                 'E_inv_Y': float(E_inv_Y[0]),
-                'E_log_Y': float(E_log_Y[0])
             }
 
         return {
             'E_Y': E_Y,
             'E_inv_Y': E_inv_Y,
-            'E_log_Y': E_log_Y
         }
 
     # ========================================================================
     # Fitting via EM algorithm
     # ========================================================================
+
+    def _initialize_params(
+        self,
+        X: NDArray,
+        random_state: Optional[Union[int, np.random.Generator]] = None
+    ) -> None:
+        """
+        Initialize NIG parameters using method of moments.
+
+        Estimates initial values of :math:`(\\mu, \\gamma, \\Sigma, \\delta, \\eta)`
+        from sample statistics.
+
+        Parameters
+        ----------
+        X : ndarray
+            Data array, shape (n_samples, d).
+        random_state : int or Generator, optional
+            Random state (reserved for future use).
+        """
+        n, d = X.shape
+
+        X_mean = np.mean(X, axis=0)
+        X_cov = np.cov(X, rowvar=False)
+        if X_cov.ndim == 0:
+            X_cov = np.array([[X_cov]])
+
+        # For NIG: E[X] = μ + γ δ, Var[X] = δ Σ + (δ³/η) γγ^T
+        delta_init = 1.0
+        eta_init = 1.0
+
+        # Estimate skewness to get initial gamma
+        X_centered = X - X_mean
+        X_std = np.std(X, axis=0)
+        X_std = np.maximum(X_std, 1e-10)
+
+        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
+        gamma_init = skewness * X_std * 0.1
+
+        # μ = E[X] - γ δ
+        mu_init = X_mean - gamma_init * delta_init
+
+        # Σ from sample covariance, adjusted for gamma contribution
+        Var_Y_init = delta_init**3 / eta_init
+        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / delta_init
+
+        # Ensure Sigma is positive definite via robust Cholesky
+        L = robust_cholesky(Sigma_init, eps=1e-6)
+        Sigma_init = L @ L.T
+
+        self.set_classical_params(
+            mu=mu_init,
+            gamma=gamma_init,
+            sigma=Sigma_init,
+            delta=delta_init,
+            eta=eta_init
+        )
 
     def fit(
         self,
@@ -357,7 +407,7 @@ class NormalInverseGaussian(NormalMixture):
             Maximum number of EM iterations. Default is 100.
         tol : float, optional
             Convergence tolerance for relative parameter change.
-            Default is 1e-6.
+            Default is 1e-3.
         verbose : int, optional
             Verbosity level. 0 = silent, 1 = progress with llh,
             2 = detailed with parameter norms. Default is 0.
@@ -376,7 +426,7 @@ class NormalInverseGaussian(NormalMixture):
         **E-step**: Compute conditional expectations
 
         .. math::
-            E[Y | X = x_j], \\quad E[1/Y | X = x_j], \\quad E[\\log Y | X = x_j]
+            E[Y | X = x_j], \\quad E[1/Y | X = x_j]
 
         **M-step**: Update parameters using closed-form formulas
 
@@ -397,56 +447,9 @@ class NormalInverseGaussian(NormalMixture):
             self._joint = self._create_joint_distribution()
         self._joint._d = d
 
-        # Set up RNG for initialization
-        if random_state is None:
-            rng = np.random.default_rng()
-        elif isinstance(random_state, int):
-            rng = np.random.default_rng(random_state)
-        else:
-            rng = random_state
-
-        # ================================================================
         # Initialize parameters using method of moments
-        # ================================================================
-        X_mean = np.mean(X, axis=0)
-        X_cov = np.cov(X, rowvar=False)
-        if X_cov.ndim == 0:
-            X_cov = np.array([[X_cov]])
-
-        # For NIG: E[X] = μ + γ δ, Var[X] = δ Σ + (δ³/η) γγ^T
-        # Initial guesses:
-        delta_init = 1.0
-        eta_init = 1.0
-
-        # Estimate skewness to get initial gamma
-        X_centered = X - X_mean
-        X_std = np.std(X, axis=0)
-        X_std = np.maximum(X_std, 1e-10)
-
-        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
-        gamma_init = skewness * X_std * 0.1
-
-        # μ = E[X] - γ δ
-        mu_init = X_mean - gamma_init * delta_init
-
-        # Σ from sample covariance, adjusted for gamma contribution
-        Var_Y_init = delta_init**3 / eta_init
-        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / delta_init
-
-        # Ensure Sigma is positive definite
-        Sigma_init = (Sigma_init + Sigma_init.T) / 2
-        min_eig = np.linalg.eigvalsh(Sigma_init).min()
-        if min_eig < 1e-6:
-            Sigma_init = Sigma_init + (1e-6 - min_eig + 1e-6) * np.eye(d)
-
-        # Set initial parameters
-        self.set_classical_params(
-            mu=mu_init,
-            gamma=gamma_init,
-            sigma=Sigma_init,
-            delta=delta_init,
-            eta=eta_init
-        )
+        if not self._joint._fitted:
+            self._initialize_params(X, random_state)
 
         if verbose >= 1:
             init_ll = np.mean(self.logpdf(X))
@@ -468,12 +471,10 @@ class NormalInverseGaussian(NormalMixture):
             cond_exp = self._conditional_expectation_y_given_x(X)
             E_Y = cond_exp['E_Y']          # (n,)
             E_inv_Y = cond_exp['E_inv_Y']  # (n,)
-            E_log_Y = cond_exp['E_log_Y']  # (n,)
 
             # Compute weighted statistics
             eta_1 = np.mean(E_inv_Y)
             eta_2 = np.mean(E_Y)
-            eta_3 = np.mean(E_log_Y)
             eta_4 = np.mean(X, axis=0)  # (d,)
             eta_5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # (d,)
 
@@ -506,13 +507,9 @@ class NormalInverseGaussian(NormalMixture):
                          + eta_1 * np.outer(mu_new, mu_new)
                          - eta_2 * np.outer(gamma_new, gamma_new))
 
-            # Symmetrize
-            Sigma_new = (Sigma_new + Sigma_new.T) / 2
-
-            # Ensure positive definiteness
-            min_eig = np.linalg.eigvalsh(Sigma_new).min()
-            if min_eig < 1e-8:
-                Sigma_new = Sigma_new + (1e-8 - min_eig + 1e-8) * np.eye(d)
+            # Ensure positive definiteness via robust Cholesky
+            L = robust_cholesky(Sigma_new)
+            Sigma_new = L @ L.T
 
             # Inverse Gaussian parameters
             # For IG: E[Y] = δ, E[1/Y] = 1/δ + 1/η
@@ -542,7 +539,7 @@ class NormalInverseGaussian(NormalMixture):
                     delta=delta_new,
                     eta=eta_new
                 )
-            except ValueError as e:
+            except (ValueError, np.linalg.LinAlgError) as e:
                 if verbose >= 1:
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
                 self.set_classical_params(**old_params)

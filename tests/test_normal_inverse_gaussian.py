@@ -586,7 +586,6 @@ class TestConditionalExpectationsNIG:
 
         assert np.all(np.isfinite(cond_exp['E_Y'])), "E[Y|X] should be finite"
         assert np.all(np.isfinite(cond_exp['E_inv_Y'])), "E[1/Y|X] should be finite"
-        assert np.all(np.isfinite(cond_exp['E_log_Y'])), "E[log Y|X] should be finite"
 
     def test_conditional_expectations_positive(self):
         """Test that E[Y|X] and E[1/Y|X] are positive."""
@@ -621,7 +620,6 @@ class TestConditionalExpectationsNIG:
         # Should return scalars
         assert isinstance(cond_exp['E_Y'], float), "E[Y|X] should be scalar for single point"
         assert isinstance(cond_exp['E_inv_Y'], float), "E[1/Y|X] should be scalar"
-        assert isinstance(cond_exp['E_log_Y'], float), "E[log Y|X] should be scalar"
 
 
 # ============================================================

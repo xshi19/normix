@@ -36,7 +36,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, Optional, Tuple, Union
 
 from normix.base import NormalMixture, JointNormalMixture
-from normix.utils import log_kv
+from normix.utils import log_kv, robust_cholesky
 from .joint_normal_inverse_gamma import JointNormalInverseGamma
 
 
@@ -475,11 +475,9 @@ class NormalInverseGamma(NormalMixture):
         Var_Y_init = beta_init**2 / ((alpha_init - 1)**2 * (alpha_init - 2))
         Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / E_Y_init
 
-        # Ensure Sigma is positive definite
-        Sigma_init = (Sigma_init + Sigma_init.T) / 2
-        min_eig = np.linalg.eigvalsh(Sigma_init).min()
-        if min_eig < 1e-6:
-            Sigma_init = Sigma_init + (1e-6 - min_eig + 1e-6) * np.eye(d)
+        # Ensure Sigma is positive definite via robust Cholesky
+        L = robust_cholesky(Sigma_init, eps=1e-6)
+        Sigma_init = L @ L.T
 
         # Set initial parameters
         self.set_classical_params(
@@ -548,13 +546,9 @@ class NormalInverseGamma(NormalMixture):
                          + eta_1 * np.outer(mu_new, mu_new)
                          - eta_2 * np.outer(gamma_new, gamma_new))
 
-            # Symmetrize
-            Sigma_new = (Sigma_new + Sigma_new.T) / 2
-
-            # Ensure positive definiteness
-            min_eig = np.linalg.eigvalsh(Sigma_new).min()
-            if min_eig < 1e-8:
-                Sigma_new = Sigma_new + (1e-8 - min_eig + 1e-8) * np.eye(d)
+            # Ensure positive definiteness via robust Cholesky
+            L = robust_cholesky(Sigma_new)
+            Sigma_new = L @ L.T
 
             # InverseGamma parameters via Newton's method
             # For InvGamma: E[1/Y] = α/β, E[log Y] = log(β) - ψ(α)

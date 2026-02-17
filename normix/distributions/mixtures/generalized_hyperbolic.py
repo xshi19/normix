@@ -30,7 +30,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 from normix.base import NormalMixture, JointNormalMixture
-from normix.utils import log_kv
+from normix.utils import log_kv, robust_cholesky
 from .joint_generalized_hyperbolic import JointGeneralizedHyperbolic
 
 
@@ -692,9 +692,8 @@ class GeneralizedHyperbolic(NormalMixture):
             if d == 1:
                 Sigma = np.array([[Sigma]])
 
-            min_eig = np.linalg.eigvalsh(Sigma).min()
-            if min_eig < 1e-8:
-                Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
+            L = robust_cholesky(Sigma)
+            Sigma = L @ L.T
 
             gamma = np.zeros(d)
             p = 1.0
@@ -811,15 +810,9 @@ class GeneralizedHyperbolic(NormalMixture):
         Sigma = -np.outer(s5, mu)
         Sigma = Sigma + Sigma.T + s6 + s1 * np.outer(mu, mu) - s2 * np.outer(gamma, gamma)
 
-        # Symmetrize and ensure positive definiteness
-        Sigma = (Sigma + Sigma.T) / 2
-        min_eig = np.linalg.eigvalsh(Sigma).min()
-        if min_eig < 1e-8:
-            Sigma = Sigma + (1e-8 - min_eig + 1e-8) * np.eye(d)
-
-        # Compute Cholesky factor of Sigma once and cache it
-        from scipy.linalg import cholesky
-        L_Sigma = cholesky(Sigma, lower=True)
+        # Compute Cholesky factor of Sigma (with regularization if needed)
+        L_Sigma = robust_cholesky(Sigma)
+        Sigma = L_Sigma @ L_Sigma.T
 
         # Bound GIG parameters
         a = max(a, 1e-6)

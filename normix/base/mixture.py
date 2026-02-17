@@ -40,7 +40,9 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from scipy.linalg import cholesky, cho_solve, solve_triangular
+from scipy.linalg import cho_solve, solve_triangular
+
+from normix.utils import robust_cholesky
 
 from .distribution import Distribution
 from .exponential_family import ExponentialFamily
@@ -158,7 +160,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
     # ========================================================================
 
     def _extract_normal_params_from_theta(
-        self, theta: NDArray, *, symmetrize: bool = False
+        self, theta: NDArray
     ) -> Tuple[NDArray, NDArray, NDArray, NDArray]:
         """
         Extract normal distribution parameters from natural parameter vector.
@@ -171,9 +173,6 @@ class JointNormalMixture(ExponentialFamily, ABC):
         ----------
         theta : ndarray
             Full natural parameter vector.
-        symmetrize : bool, optional
-            Whether to symmetrize Lambda for numerical stability.
-            Default is False.
 
         Returns
         -------
@@ -197,14 +196,14 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         # Delegate to Cholesky version and recover Lambda from L @ L.T
         L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
-            theta, symmetrize=symmetrize, return_sigma=True
+            theta, return_sigma=True
         )
         Lambda = L_Lambda @ L_Lambda.T
 
         return Lambda, Sigma, mu, gamma
 
     def _extract_normal_params_with_cholesky(
-        self, theta: NDArray, *, symmetrize: bool = False, return_sigma: bool = False
+        self, theta: NDArray, *, return_sigma: bool = False
     ) -> Tuple[NDArray, float, NDArray, NDArray] | Tuple[NDArray, float, NDArray, NDArray, NDArray]:
         """
         Extract normal parameters using Cholesky decomposition.
@@ -213,12 +212,14 @@ class JointNormalMixture(ExponentialFamily, ABC):
         for computing log determinants and avoids explicit matrix inversion when
         only :math:`\\mu` and :math:`\\gamma` are needed.
 
+        Uses :func:`~normix.utils.robust_cholesky` for the Cholesky factorization,
+        which handles near-singular matrices via diagonal regularization. Since
+        LAPACK only reads one triangle, explicit symmetrization is unnecessary.
+
         Parameters
         ----------
         theta : ndarray
             Full natural parameter vector.
-        symmetrize : bool, optional
-            Whether to symmetrize Lambda for numerical stability. Default False.
         return_sigma : bool, optional
             If True, also compute and return Sigma. Default False.
 
@@ -263,11 +264,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
         # Recover Λ from θ₆ = -1/2 Λ
         Lambda = -2 * theta_6
 
-        if symmetrize:
-            Lambda = (Lambda + Lambda.T) / 2
-
         # Cholesky factorization: Λ = L @ L.T
-        L_Lambda = cholesky(Lambda, lower=True)
+        L_Lambda = robust_cholesky(Lambda)
 
         # Log determinant: log|Λ| = 2 * Σ log(L_ii)
         log_det_Lambda = 2.0 * np.sum(np.log(np.diag(L_Lambda)))
@@ -354,9 +352,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # Extract normal params via Cholesky
         L_Lambda, _, mu, gamma, Sigma = self._extract_normal_params_with_cholesky(
-            theta, symmetrize=True, return_sigma=True
+            theta, return_sigma=True
         )
-        L_Sigma = cholesky(Sigma, lower=True)
+        L_Sigma = robust_cholesky(Sigma)
 
         # Store internal state
         self._mu = mu
@@ -997,6 +995,13 @@ class NormalMixture(Distribution, ABC):
         Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.
 
         These conditional expectations are used in the E-step of the EM algorithm.
+        The returned keys depend on the sufficient statistics of the mixing
+        distribution:
+
+        - **GH** (GIG mixing): ``E_Y``, ``E_inv_Y``, ``E_log_Y``
+        - **VG** (Gamma mixing): ``E_Y``, ``E_log_Y``
+        - **NIG** (InvGauss mixing): ``E_Y``, ``E_inv_Y``
+        - **NInvG** (InvGamma mixing): ``E_inv_Y``, ``E_log_Y``
 
         Parameters
         ----------
@@ -1006,10 +1011,12 @@ class NormalMixture(Distribution, ABC):
         Returns
         -------
         expectations : dict
-            Dictionary containing:
-            - 'E_Y': :math:`E[Y | X]`
-            - 'E_inv_Y': :math:`E[1/Y | X]`
-            - 'E_log_Y': :math:`E[\\log Y | X]`
+            Dictionary containing conditional expectations needed for the
+            M-step. Always includes at least two of:
+
+            - ``'E_Y'``: :math:`E[Y | X]`
+            - ``'E_inv_Y'``: :math:`E[1/Y | X]`
+            - ``'E_log_Y'``: :math:`E[\\log Y | X]`
         """
         pass
 
