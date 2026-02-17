@@ -69,8 +69,10 @@ class JointNormalInverseGaussian(JointNormalMixture):
     ----------
     _d : int or None
         Dimension of X.
-    _natural_params : tuple or None
-        Natural parameters stored as tuple for caching.
+    _delta : float or None
+        InverseGaussian mean parameter.
+    _eta : float or None
+        InverseGaussian shape parameter.
 
     Examples
     --------

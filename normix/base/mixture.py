@@ -75,18 +75,15 @@ class JointNormalMixture(ExponentialFamily, ABC):
     Subclasses must implement:
 
     - :meth:`_get_mixing_distribution_class`: Return the mixing distribution class
-    - :meth:`_mixing_natural_params`: Extract mixing distribution natural params
-    - :meth:`_mixing_sufficient_statistics`: Compute mixing dist sufficient stats
-    - :meth:`_mixing_log_partition`: Compute mixing distribution log partition
-    - :meth:`_classical_to_natural`: Convert classical to natural parameters
-    - :meth:`_natural_to_classical`: Convert natural to classical parameters
+    - :meth:`_store_mixing_params`: Store mixing params from kwargs
+    - :meth:`_store_mixing_params_from_theta`: Extract mixing params from theta
+    - :meth:`_compute_mixing_theta`: Build theta_1, theta_2, theta_3
+    - :meth:`_create_mixing_distribution`: Construct mixing dist from named attrs
 
     Attributes
     ----------
     _d : int or None
         Dimension of the observed variable :math:`X`.
-    _natural_params : tuple or None
-        Internal storage for natural parameters.
 
     See Also
     --------
@@ -209,8 +206,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         Extract normal parameters using Cholesky decomposition.
 
-        More numerically efficient than :meth:`_extract_normal_params_from_theta`
-        for computing log determinants and avoids explicit matrix inversion when
+        Numerically efficient method for extracting parameters from theta
+        using Cholesky decomposition. Avoids explicit matrix inversion when
         only :math:`\\mu` and :math:`\\gamma` are needed.
 
         Uses :func:`~normix.utils.robust_cholesky` for the Cholesky factorization,

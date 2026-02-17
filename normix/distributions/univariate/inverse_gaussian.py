@@ -126,7 +126,6 @@ class InverseGaussian(ExponentialFamily):
         self._mean_param = float(mean)
         self._shape = float(shape)
         theta = np.array([-shape / (2 * mean**2), -shape / 2])
-        self._natural_params = tuple(theta)
         self._fitted = True
         self._invalidate_cache()
 
@@ -136,7 +135,6 @@ class InverseGaussian(ExponentialFamily):
         self._validate_natural_params(theta)
         self._shape = float(-2 * theta[1])
         self._mean_param = float(np.sqrt(theta[1] / theta[0]))
-        self._natural_params = tuple(theta)
         self._fitted = True
         self._invalidate_cache()
 

@@ -64,8 +64,10 @@ class JointNormalInverseGamma(JointNormalMixture):
     ----------
     _d : int or None
         Dimension of X.
-    _natural_params : tuple or None
-        Natural parameters stored as tuple for caching.
+    _shape : float or None
+        InverseGamma shape parameter.
+    _rate : float or None
+        InverseGamma rate parameter.
 
     Examples
     --------

@@ -161,7 +161,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self._p = float(theta[0] + 1)
         self._b = float(-2 * theta[1])
         self._a = float(-2 * theta[2])
-        self._natural_params = tuple(theta)
         self._fitted = True
         self._invalidate_cache()
     

@@ -131,7 +131,6 @@ class Gamma(ExponentialFamily):
             raise ValueError(f"Shape must be positive, got {self._shape}")
         if self._rate <= 0:
             raise ValueError(f"Rate must be positive, got {self._rate}")
-        self._natural_params = tuple(theta)
         self._fitted = True
         self._invalidate_cache()
     

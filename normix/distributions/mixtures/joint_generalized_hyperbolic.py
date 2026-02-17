@@ -70,8 +70,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     ----------
     _d : int or None
         Dimension of X.
-    _natural_params : tuple or None
-        Natural parameters stored as tuple for caching.
+    _p : float or None
+        GIG shape parameter.
+    _a : float or None
+        GIG rate parameter (coefficient of y).
+    _b : float or None
+        GIG rate parameter (coefficient of 1/y).
 
     Examples
     --------
