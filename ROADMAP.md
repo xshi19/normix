@@ -456,9 +456,19 @@ These files are kept for reference during refactoring. Do not import from legacy
   - [x] Phase 6: `NormalMixture` base class using `cached_property`
   - [x] Phase 7: Marginal mixture distributions direct attribute access
   - [x] Phase 8: Cleanup (removed backward compat shims, updated exports)
+- [x] Refactoring: Parameter storage redesign (`docs/redesign_parameter_storage.md`)
+  - [x] Named attributes as single source of truth (no `_natural_params` tuple)
+  - [x] `_set_from_classical` / `_set_from_natural` are abstract in ExponentialFamily
+  - [x] `_compute_natural_params` / `_compute_classical_params` are abstract
+  - [x] Removed legacy `_classical_to_natural` / `_natural_to_classical`
+  - [x] Cholesky everywhere in MultivariateNormal (`cho_solve` in `_log_partition`, etc.)
+  - [x] `_set_internal()` zero-overhead EM fast path for JointNormalMixture
+  - [x] `_create_mixing_distribution()` replaces theta-based mixing construction
+  - [x] Direct attribute access in marginal logpdf / EM (no `classical_params` getter)
+  - [x] Removed deprecated: `get_L_Sigma`, `set_L_Sigma`, `clear_L_Sigma_cache`, `_extract_normal_params_from_theta`, `_get_normal_params`
 - [ ] Step 7: Package integration
 
-### Tests Completed (269 tests)
+### Tests Completed (268 tests)
 - [x] `tests/test_exponential_family.py` - Base class tests
 - [x] `tests/test_distributions_vs_scipy.py` - Generic scipy comparison framework
 - [x] `tests/test_variance_gamma.py` - Variance Gamma tests
