@@ -1,0 +1,997 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Demos &amp; Notebooks" href="demos.html" />
+    <link rel="prev" title="normix Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#class-hierarchy">Class Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design-principles">Design Principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exponentialfamily">ExponentialFamily</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#internal-attributes">Internal attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#public-api">Public API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#subclass-contract-internal">Subclass contract (internal)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optional-overrides-internal">Optional overrides (internal)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#jointnormalmixture">JointNormalMixture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Internal attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cached-properties">Cached properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#public-api-additional-to-exponentialfamily">Public API (additional to ExponentialFamily)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Subclass contract (internal)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#normalmixture">NormalMixture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Internal attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Public API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Subclass contract (internal)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-flow">Parameter Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#concrete-distributions">Concrete Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#univariate-exponentialfamily">Univariate (ExponentialFamily)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multivariate-exponentialfamily">Multivariate (ExponentialFamily)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mixture-distributions">Mixture distributions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/architecture.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h1>
+<p>This page describes the high-level class hierarchy, key attributes, and methods
+in <code class="docutils literal notranslate"><span class="pre">normix</span></code>. It serves as a reference for both users and developers.</p>
+<section id="class-hierarchy">
+<h2>Class Hierarchy<a class="headerlink" href="#class-hierarchy" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Distribution (abstract)
+├── ExponentialFamily (abstract)
+│   ├── Exponential
+│   ├── Gamma
+│   ├── InverseGamma
+│   ├── InverseGaussian
+│   ├── GeneralizedInverseGaussian
+│   ├── MultivariateNormal
+│   └── JointNormalMixture (abstract)
+│       ├── JointVarianceGamma
+│       ├── JointNormalInverseGamma
+│       ├── JointNormalInverseGaussian
+│       └── JointGeneralizedHyperbolic
+└── NormalMixture (abstract)
+    ├── VarianceGamma
+    ├── NormalInverseGamma
+    ├── NormalInverseGaussian
+    └── GeneralizedHyperbolic
+</pre></div>
+</div>
+<p>There are two parallel branches:</p>
+<ul class="simple">
+<li><p><strong>ExponentialFamily</strong> branch: every class stores its own named internal
+attributes and exposes classical, natural, and expectation parametrizations
+as lazy cached properties.</p></li>
+<li><p><strong>NormalMixture</strong> branch: marginal distributions <span class="math notranslate nohighlight">\(f(x)\)</span> that are
+<em>not</em> exponential families.  Each owns a <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> instance
+(accessible via <code class="docutils literal notranslate"><span class="pre">.joint</span></code>) and delegates parameter storage to it.</p></li>
+</ul>
+</section>
+<section id="design-principles">
+<h2>Design Principles<a class="headerlink" href="#design-principles" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Named attributes are the single source of truth</strong> – there is no
+centralized <code class="docutils literal notranslate"><span class="pre">_natural_params</span></code> tuple.  Each subclass stores its own
+canonical representation (e.g., <code class="docutils literal notranslate"><span class="pre">_shape</span></code> / <code class="docutils literal notranslate"><span class="pre">_rate</span></code> for Gamma,
+<code class="docutils literal notranslate"><span class="pre">_mu</span></code> / <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> for MultivariateNormal).</p></li>
+<li><p><strong>Cached properties are lazy</strong> – <code class="docutils literal notranslate"><span class="pre">natural_params</span></code>, <code class="docutils literal notranslate"><span class="pre">classical_params</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">expectation_params</span></code> are computed on demand from internal state
+and invalidated when state changes.</p></li>
+<li><p><strong>Setter paths are independent</strong> – <code class="docutils literal notranslate"><span class="pre">_set_from_classical</span></code> and
+<code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code> each write directly to named attributes; they
+never call each other.</p></li>
+<li><p><strong>Cholesky-first storage</strong> – all covariance and precision matrices are
+stored and manipulated via Cholesky factors (<code class="docutils literal notranslate"><span class="pre">solve_triangular</span></code>,
+<code class="docutils literal notranslate"><span class="pre">cho_solve</span></code>), avoiding <code class="docutils literal notranslate"><span class="pre">np.linalg.inv</span></code>.</p></li>
+<li><p><strong>EM fast path</strong> – <code class="docutils literal notranslate"><span class="pre">JointNormalMixture._set_internal()</span></code> accepts
+pre-computed Cholesky factors directly, avoiding redundant
+decompositions during the EM M-step.</p></li>
+</ol>
+</section>
+<section id="exponentialfamily">
+<h2>ExponentialFamily<a class="headerlink" href="#exponentialfamily" title="Link to this heading"></a></h2>
+<p>All distributions with a density of the form</p>
+<div class="math notranslate nohighlight">
+\[p(x|\theta) = h(x) \exp\!\bigl(\theta^T t(x) - \psi(\theta)\bigr)\]</div>
+<p>inherit from <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>.</p>
+<section id="internal-attributes">
+<h3>Internal attributes<a class="headerlink" href="#internal-attributes" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code> itself stores <strong>no</strong> parameter attributes.  Each
+subclass defines its own (see table below).</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 30.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Subclass</p></th>
+<th class="head"><p>Internal attributes</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p>Rate <span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Gamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p>Shape <span class="math notranslate nohighlight">\(\alpha\)</span>, rate <span class="math notranslate nohighlight">\(\beta\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p>Shape <span class="math notranslate nohighlight">\(\alpha\)</span>, rate <span class="math notranslate nohighlight">\(\beta\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_delta</span></code>, <code class="docutils literal notranslate"><span class="pre">_eta</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\delta\)</span>, <span class="math notranslate nohighlight">\(\eta\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_p</span></code>, <code class="docutils literal notranslate"><span class="pre">_a</span></code>, <code class="docutils literal notranslate"><span class="pre">_b</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(p\)</span>, <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_L</span></code></p></td>
+<td><p>Mean <span class="math notranslate nohighlight">\(\mu\)</span>, lower Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> subclasses</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code>, + mixing params</p></td>
+<td><p>See <a class="reference internal" href="#joint-mixture-attrs"><span class="std std-ref">JointNormalMixture</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="public-api">
+<h3>Public API<a class="headerlink" href="#public-api" title="Link to this heading"></a></h3>
+<p>The following methods and properties are intended for end users.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 38.0%" />
+<col style="width: 12.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method / Property</p></th>
+<th class="head"><p>Kind</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">from_classical_params(**kw)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create instance from classical parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">from_natural_params(theta)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create instance from natural parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">from_expectation_params(eta)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create instance from expectation parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set_classical_params(**kw)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Set params from classical, returns <code class="docutils literal notranslate"><span class="pre">self</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">set_natural_params(theta)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Set params from natural, returns <code class="docutils literal notranslate"><span class="pre">self</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set_expectation_params(eta)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Set params from expectation, returns <code class="docutils literal notranslate"><span class="pre">self</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">classical_params</span></code></p></td>
+<td><p>cached property</p></td>
+<td><p>Frozen dataclass of classical parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">natural_params</span></code></p></td>
+<td><p>cached property</p></td>
+<td><p>Flat numpy array of natural parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">expectation_params</span></code></p></td>
+<td><p>cached property</p></td>
+<td><p>Flat numpy array of expectation parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf(x)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Log probability density</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pdf(x)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Probability density</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fit(X)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>MLE via sufficient statistics, returns <code class="docutils literal notranslate"><span class="pre">self</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">score(X)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Mean log-likelihood (sklearn convention)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fisher_information(theta)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Fisher information matrix (Hessian of <span class="math notranslate nohighlight">\(\psi\)</span>)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="subclass-contract-internal">
+<h3>Subclass contract (internal)<a class="headerlink" href="#subclass-contract-internal" title="Link to this heading"></a></h3>
+<p>Methods that every <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code> subclass <strong>must</strong> implement.
+These are <code class="docutils literal notranslate"><span class="pre">&#64;abstractmethod</span></code> and are never called by users directly.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_set_from_classical(**kw)</span></code></p></td>
+<td><p>Store classical params as named attrs, set <code class="docutils literal notranslate"><span class="pre">_fitted</span></code>, invalidate cache</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_set_from_natural(theta)</span></code></p></td>
+<td><p>Decompose <code class="docutils literal notranslate"><span class="pre">theta</span></code> into named attrs, set <code class="docutils literal notranslate"><span class="pre">_fitted</span></code>, invalidate cache</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_natural_params()</span></code></p></td>
+<td><p>Build flat <code class="docutils literal notranslate"><span class="pre">theta</span></code> from named attrs (backs <code class="docutils literal notranslate"><span class="pre">natural_params</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_classical_params()</span></code></p></td>
+<td><p>Build frozen dataclass from named attrs (backs <code class="docutils literal notranslate"><span class="pre">classical_params</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_sufficient_statistics(x)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(t(x)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_log_partition(theta)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(\psi(\theta)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_log_base_measure(x)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(\log h(x)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_get_natural_param_support()</span></code></p></td>
+<td><p>Return bounds for <code class="docutils literal notranslate"><span class="pre">theta</span></code> validation</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="optional-overrides-internal">
+<h3>Optional overrides (internal)<a class="headerlink" href="#optional-overrides-internal" title="Link to this heading"></a></h3>
+<p>Methods with default implementations that subclasses <strong>may</strong> override for
+efficiency.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 35.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Default behaviour</p></th>
+<th class="head"><p>Overridden by</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_expectation_params()</span></code></p></td>
+<td><p>Calls <code class="docutils literal notranslate"><span class="pre">_natural_to_expectation(natural_params)</span></code></p></td>
+<td><p>(none currently)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_natural_to_expectation(theta)</span></code></p></td>
+<td><p>Numerical gradient of <code class="docutils literal notranslate"><span class="pre">_log_partition</span></code> via <code class="docutils literal notranslate"><span class="pre">scipy.differentiate</span></code></p></td>
+<td><p>Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_expectation_to_natural(eta)</span></code></p></td>
+<td><p>L-BFGS-B optimisation</p></td>
+<td><p>Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fisher_information(theta)</span></code></p></td>
+<td><p>Numerical Hessian of <code class="docutils literal notranslate"><span class="pre">_log_partition</span></code> via <code class="docutils literal notranslate"><span class="pre">scipy.differentiate</span></code></p></td>
+<td><p>Exponential, Gamma</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf(x)</span></code></p></td>
+<td><p>Generic <span class="math notranslate nohighlight">\(\log h + \theta^T t - \psi\)</span></p></td>
+<td><p>MultivariateNormal (Cholesky-based)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jointnormalmixture">
+<span id="joint-mixture-attrs"></span><h2>JointNormalMixture<a class="headerlink" href="#jointnormalmixture" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> extends <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code> for the joint density
+<span class="math notranslate nohighlight">\(f(x, y)\)</span> where <span class="math notranslate nohighlight">\(X|Y \sim N(\mu + \gamma Y,\; \Sigma Y)\)</span>.</p>
+<section id="id1">
+<h3>Internal attributes<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>All subclasses share three normal-component attributes stored at the
+<code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> level, plus mixing-specific attributes in each child.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+<col style="width: 40.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Set by</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NDArray</span></code></p></td>
+<td><p>Location vector, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_store_normal_params</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_internal</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_gamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NDArray</span></code></p></td>
+<td><p>Skewness vector, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_store_normal_params</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_internal</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NDArray</span></code></p></td>
+<td><p>Lower Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_store_normal_params</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code>, <code class="docutils literal notranslate"><span class="pre">_set_internal</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_d</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
+<td><p>Dimension of <span class="math notranslate nohighlight">\(X\)</span></p></td>
+<td><p>Inferred from <code class="docutils literal notranslate"><span class="pre">_mu</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mixing-specific attributes (subclass level):</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Subclass</p></th>
+<th class="head"><p>Attributes</p></th>
+<th class="head"><p>Mixing distribution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_delta</span></code>, <code class="docutils literal notranslate"><span class="pre">_eta</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGaussian}(\delta, \eta)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_p</span></code>, <code class="docutils literal notranslate"><span class="pre">_a</span></code>, <code class="docutils literal notranslate"><span class="pre">_b</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cached-properties">
+<h3>Cached properties<a class="headerlink" href="#cached-properties" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 55.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Property</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Inherited from</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">natural_params</span></code></p></td>
+<td><p>Flat natural parameter vector</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">classical_params</span></code></p></td>
+<td><p>Frozen dataclass of classical parameters</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">expectation_params</span></code></p></td>
+<td><p>Expectation parameter vector</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log_det_Sigma</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\log|\Sigma| = 2\sum_i \log L_{ii}\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">L_Sigma_inv</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(L_\Sigma^{-1}\)</span> via <code class="docutils literal notranslate"><span class="pre">solve_triangular</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gamma_mahal_sq</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\gamma^T \Sigma^{-1} \gamma\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="public-api-additional-to-exponentialfamily">
+<h3>Public API (additional to ExponentialFamily)<a class="headerlink" href="#public-api-additional-to-exponentialfamily" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 38.0%" />
+<col style="width: 12.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method / Property</p></th>
+<th class="head"><p>Kind</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">d</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Dimension of <span class="math notranslate nohighlight">\(X\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rvs(size,</span> <span class="pre">random_state)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Sample <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">Y)</span></code> from the joint distribution</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mean()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[X]\)</span> and <span class="math notranslate nohighlight">\(E[Y]\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">var()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Var}[X]\)</span> and <span class="math notranslate nohighlight">\(\text{Var}[Y]\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cov()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Cov}[X]\)</span> and <span class="math notranslate nohighlight">\(\text{Var}[Y]\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">conditional_mean_x_given_y(y)</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[X|Y=y] = \mu + \gamma y\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">conditional_cov_x_given_y(y)</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Cov}[X|Y=y] = \Sigma y\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id2">
+<h3>Subclass contract (internal)<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Abstract methods that every <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> child must implement.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_get_mixing_distribution_class()</span></code></p></td>
+<td><p>Return the mixing distribution class (e.g., <code class="docutils literal notranslate"><span class="pre">Gamma</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_store_mixing_params(**kw)</span></code></p></td>
+<td><p>Store mixing params as named attrs (e.g., <code class="docutils literal notranslate"><span class="pre">_delta</span></code>, <code class="docutils literal notranslate"><span class="pre">_eta</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_store_mixing_params_from_theta(theta)</span></code></p></td>
+<td><p>Extract and store mixing params from the natural parameter vector</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_mixing_theta(theta_4,</span> <span class="pre">theta_5)</span></code></p></td>
+<td><p>Build <span class="math notranslate nohighlight">\(\theta_1, \theta_2, \theta_3\)</span> from mixing attrs and quadratic forms</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_create_mixing_distribution()</span></code></p></td>
+<td><p>Construct a fitted mixing distribution from named attrs</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_set_from_classical(**kw)</span></code></p></td>
+<td><p>Parse all classical params (normal + mixing), store, set fitted</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_classical_params()</span></code></p></td>
+<td><p>Build frozen dataclass from all named attrs</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implemented at JointNormalMixture level</strong> (not overridden by children):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_store_normal_params(mu,</span> <span class="pre">gamma,</span> <span class="pre">sigma)</span></code></p></td>
+<td><p>Validate and store <code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> (Cholesky of sigma)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_set_from_natural(theta)</span></code></p></td>
+<td><p>Extract normal params via Cholesky, delegate mixing to <code class="docutils literal notranslate"><span class="pre">_store_mixing_params_from_theta</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_set_internal(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_sigma,</span> <span class="pre">**mixing_kw)</span></code></p></td>
+<td><p>EM fast path: store pre-computed values directly, zero decompositions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_natural_params()</span></code></p></td>
+<td><p>Build full theta via <code class="docutils literal notranslate"><span class="pre">cho_solve</span></code> from <code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> + <code class="docutils literal notranslate"><span class="pre">_compute_mixing_theta</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_extract_normal_params_with_cholesky(theta)</span></code></p></td>
+<td><p>Extract <span class="math notranslate nohighlight">\(\mu, \gamma\)</span> from an arbitrary <code class="docutils literal notranslate"><span class="pre">theta</span></code> vector via Cholesky of <span class="math notranslate nohighlight">\(\Lambda\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_sufficient_statistics(x,</span> <span class="pre">y)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(t(x, y)\)</span> for the joint exponential family</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_log_base_measure(x,</span> <span class="pre">y)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(\log h(x, y)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Overridden by children</strong> (distribution-specific):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Overriding subclasses</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_log_partition(theta)</span></code></p></td>
+<td><p>All four (VG, NInvG, NIG, GH) – mixing-specific terms</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_natural_to_expectation(theta)</span></code></p></td>
+<td><p>All four – analytical gradient</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_get_natural_param_support()</span></code></p></td>
+<td><p>All four – mixing-specific bounds</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="normalmixture">
+<h2>NormalMixture<a class="headerlink" href="#normalmixture" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code> extends <code class="docutils literal notranslate"><span class="pre">Distribution</span></code> (not <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>) for the
+marginal density <span class="math notranslate nohighlight">\(f(x) = \int f(x,y)\,dy\)</span>.  It owns a <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code>
+instance and delegates all parameter storage to it.</p>
+<section id="id3">
+<h3>Internal attributes<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_joint</span></code></p></td>
+<td><p>The underlying <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> instance (source of truth for all parameters)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id4">
+<h3>Public API<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 38.0%" />
+<col style="width: 12.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method / Property</p></th>
+<th class="head"><p>Kind</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">from_classical_params(**kw)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create from classical parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">from_natural_params(theta)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create from natural parameters (of the joint)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">from_expectation_params(eta)</span></code></p></td>
+<td><p>classmethod</p></td>
+<td><p>Factory: create from expectation parameters (of the joint)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set_classical_params(**kw)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Forward to <code class="docutils literal notranslate"><span class="pre">_joint.set_classical_params</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">set_natural_params(theta)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Forward to <code class="docutils literal notranslate"><span class="pre">_joint.set_natural_params</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set_expectation_params(eta)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Forward to <code class="docutils literal notranslate"><span class="pre">_joint.set_expectation_params</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">natural_params</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Delegates to <code class="docutils literal notranslate"><span class="pre">_joint.natural_params</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">classical_params</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Delegates to <code class="docutils literal notranslate"><span class="pre">_joint.classical_params</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">expectation_params</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Delegates to <code class="docutils literal notranslate"><span class="pre">_joint.expectation_params</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">joint</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Access the underlying <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">d</span></code></p></td>
+<td><p>property</p></td>
+<td><p>Dimension of <span class="math notranslate nohighlight">\(X\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mixing_distribution</span></code></p></td>
+<td><p>property</p></td>
+<td><p>The mixing distribution of <span class="math notranslate nohighlight">\(Y\)</span>, built from joint named attrs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pdf(x)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Marginal PDF <span class="math notranslate nohighlight">\(f(x)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf(x)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Marginal log PDF <span class="math notranslate nohighlight">\(\log f(x)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rvs(size,</span> <span class="pre">random_state)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Sample <span class="math notranslate nohighlight">\(X\)</span> only (marginal)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pdf_joint(x,</span> <span class="pre">y)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Convenience alias for <code class="docutils literal notranslate"><span class="pre">joint.pdf(x,</span> <span class="pre">y)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf_joint(x,</span> <span class="pre">y)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Convenience alias for <code class="docutils literal notranslate"><span class="pre">joint.logpdf(x,</span> <span class="pre">y)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rvs_joint(size,</span> <span class="pre">random_state)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Sample <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">Y)</span></code> from the joint</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mean()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[X]\)</span> of the marginal</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">var()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Var}[X]\)</span> of the marginal</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cov()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><span class="math notranslate nohighlight">\(\text{Cov}[X]\)</span> of the marginal</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fit(X,</span> <span class="pre">**kwargs)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>EM algorithm, returns <code class="docutils literal notranslate"><span class="pre">self</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fit_complete(X,</span> <span class="pre">Y,</span> <span class="pre">**kwargs)</span></code></p></td>
+<td><p>method</p></td>
+<td><p>Fit from complete <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">Y)</span></code> data</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3>Subclass contract (internal)<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_create_joint_distribution()</span></code></p></td>
+<td><p>Factory: return a new <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> instance</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_marginal_logpdf(x)</span></code></p></td>
+<td><p>Compute the closed-form marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span> (Bessel functions)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_conditional_expectation_y_given_x(x)</span></code></p></td>
+<td><p>Compute <span class="math notranslate nohighlight">\(E[g(Y)|X=x]\)</span> for the EM E-step</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Which methods are overridden by each child</strong> (the analytical closed forms
+differ per mixing distribution):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Overriding subclasses</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_marginal_logpdf(x)</span></code></p></td>
+<td><p>All four (VG, NInvG, NIG, GH) – different Bessel-function formulae</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_conditional_expectation_y_given_x(x)</span></code></p></td>
+<td><p>All four – different GIG conditional distributions</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_initialize_params(X)</span></code></p></td>
+<td><p>All four – method-of-moments initialisation for EM</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fit(X,</span> <span class="pre">**kwargs)</span></code></p></td>
+<td><p>All four – EM algorithm with distribution-specific M-step</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="parameter-flow">
+<h2>Parameter Flow<a class="headerlink" href="#parameter-flow" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>┌────────────────────────────────────────────────────────────┐
+│  Setters (write to named attrs)                           │
+│                                                           │
+│  set_classical_params ──► _set_from_classical             │
+│  set_natural_params   ──► _set_from_natural               │
+│  set_expectation_params ► _expectation_to_natural         │
+│                            then _set_from_natural         │
+│  (EM fast path)       ──► _set_internal                   │
+└──────────────────┬─────────────────────────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────────┐
+│  Named Internal Attributes (source of truth)              │
+│                                                           │
+│  _mu, _gamma, _L_Sigma, _delta, _eta, _shape, _rate, ... │
+└──────────────────┬─────────────────────────────────────────┘
+                   │ _invalidate_cache()
+                   ▼
+┌────────────────────────────────────────────────────────────┐
+│  Cached Properties (lazy, computed on demand)             │
+│                                                           │
+│  classical_params  ◄── _compute_classical_params()        │
+│  natural_params    ◄── _compute_natural_params()          │
+│  expectation_params◄── _compute_expectation_params()      │
+│  log_det_Sigma, L_Sigma_inv, gamma_mahal_sq               │
+└────────────────────────────────────────────────────────────┘
+</pre></div>
+</div>
+<p>All three setter paths are <strong>independent</strong>: <code class="docutils literal notranslate"><span class="pre">_set_from_classical</span></code> never calls
+<code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code>.  Each writes directly to named attributes.</p>
+<p>The EM fast path <code class="docutils literal notranslate"><span class="pre">_set_internal(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_sigma,</span> <span class="pre">**mixing_kw)</span></code> accepts
+pre-computed Cholesky factors, bypassing all matrix decompositions.</p>
+</section>
+<section id="concrete-distributions">
+<h2>Concrete Distributions<a class="headerlink" href="#concrete-distributions" title="Link to this heading"></a></h2>
+<section id="univariate-exponentialfamily">
+<h3>Univariate (ExponentialFamily)<a class="headerlink" href="#univariate-exponentialfamily" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Class</p></th>
+<th class="head"><p>Classical params</p></th>
+<th class="head"><p>Natural params</p></th>
+<th class="head"><p>Expectation params</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta = -\lambda\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\eta = 1/\lambda\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Gamma</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\alpha, \beta\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([\alpha-1, -\beta]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([\psi(\alpha)-\log\beta,\; \alpha/\beta]\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGamma</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\alpha, \beta\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([\beta, -(\alpha+1)]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([-\psi(\alpha)+\log\beta,\; \beta/(\alpha-1)]\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\delta, \eta\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([-\eta^2/2,\; -\delta^2/2]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([E[1/Y],\; E[Y]]\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GIG</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(p, a, b\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([p-1, -b/2, -a/2]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([E[\log Y],\; E[1/Y],\; E[Y]]\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="multivariate-exponentialfamily">
+<h3>Multivariate (ExponentialFamily)<a class="headerlink" href="#multivariate-exponentialfamily" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> stores <code class="docutils literal notranslate"><span class="pre">_mu</span></code> (mean) and <code class="docutils literal notranslate"><span class="pre">_L</span></code> (lower Cholesky of
+<span class="math notranslate nohighlight">\(\Sigma\)</span>).  Overrides <code class="docutils literal notranslate"><span class="pre">logpdf</span></code> with a Cholesky-based implementation
+using <code class="docutils literal notranslate"><span class="pre">solve_triangular</span></code>.</p>
+</section>
+<section id="mixture-distributions">
+<h3>Mixture distributions<a class="headerlink" href="#mixture-distributions" title="Link to this heading"></a></h3>
+<p>Each mixture has a <strong>marginal</strong> class (<code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code> subclass) and a
+<strong>joint</strong> class (<code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> subclass):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Family</p></th>
+<th class="head"><p>Marginal class</p></th>
+<th class="head"><p>Joint class</p></th>
+<th class="head"><p>Mixing distribution</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Variance Gamma</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">VarianceGamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Normal-Inverse Gamma</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Normal-Inverse Gaussian</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGaussian}(\delta, \eta)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Generalized Hyperbolic</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(Y \sim \text{GIG}(p, a, b)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>The marginal class is what users interact with.  It provides <code class="docutils literal notranslate"><span class="pre">pdf</span></code>,
+<code class="docutils literal notranslate"><span class="pre">logpdf</span></code>, <code class="docutils literal notranslate"><span class="pre">rvs</span></code>, <code class="docutils literal notranslate"><span class="pre">fit</span></code>, and delegates exponential family operations
+to the joint via the <code class="docutils literal notranslate"><span class="pre">.joint</span></code> property.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="normix Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="demos.html" class="btn btn-neutral float-right" title="Demos &amp; Notebooks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

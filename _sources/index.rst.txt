@@ -102,6 +102,7 @@ Quick Example
    :maxdepth: 2
    :caption: Contents:
 
+   architecture
    demos
    theory/index
    api/index
