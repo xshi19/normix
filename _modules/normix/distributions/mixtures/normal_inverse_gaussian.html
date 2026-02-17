@@ -224,17 +224,14 @@
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_delta</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_eta</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
 
-        <span class="c1"># GIG parameters for IG(δ, η): p = -1/2, a = η/δ², b = η</span>
         <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">eta</span>
 
-        <span class="c1"># Get cached Cholesky quantities</span>
         <span class="n">L_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma_inv</span>
         <span class="n">logdet_Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_Sigma</span>
 
@@ -326,16 +323,13 @@
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_delta</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_eta</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
 
-        <span class="c1"># GIG parameters for mixing: p = -1/2, a = η/δ², b = η</span>
         <span class="n">a_mix</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">b_mix</span> <span class="o">=</span> <span class="n">eta</span>
 
-        <span class="c1"># Get cached Cholesky quantities</span>
         <span class="n">L_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma_inv</span>
 
         <span class="c1"># GIG parameters for Y | X = x</span>
@@ -537,11 +531,11 @@
         <span class="c1"># EM iterations</span>
         <span class="c1"># ================================================================</span>
         <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
-            <span class="c1"># Save current parameters for convergence check</span>
-            <span class="n">old_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
-            <span class="n">prev_mu</span> <span class="o">=</span> <span class="n">old_params</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">prev_gamma</span> <span class="o">=</span> <span class="n">old_params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">prev_sigma</span> <span class="o">=</span> <span class="n">old_params</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_sigma</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_delta</span>
+            <span class="n">prev_eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_eta</span>
 
             <span class="c1"># ==============================================================</span>
             <span class="c1"># E-step: Compute conditional expectations E[g(Y) | X]</span>
@@ -585,9 +579,7 @@
                          <span class="o">+</span> <span class="n">eta_1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
                          <span class="o">-</span> <span class="n">eta_2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">))</span>
 
-            <span class="c1"># Ensure positive definiteness via robust Cholesky</span>
             <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma_new</span><span class="p">)</span>
-            <span class="n">Sigma_new</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
             <span class="c1"># Inverse Gaussian parameters</span>
             <span class="c1"># For IG: E[Y] = δ, E[1/Y] = 1/δ + 1/η</span>
@@ -607,20 +599,25 @@
             <span class="n">eta_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eta_new</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
 
             <span class="c1"># ==============================================================</span>
-            <span class="c1"># Update parameters</span>
+            <span class="c1"># Update parameters via _set_internal</span>
             <span class="c1"># ==============================================================</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
-                    <span class="n">mu</span><span class="o">=</span><span class="n">mu_new</span><span class="p">,</span>
-                    <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span>
-                    <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma_new</span><span class="p">,</span>
-                    <span class="n">delta</span><span class="o">=</span><span class="n">delta_new</span><span class="p">,</span>
-                    <span class="n">eta</span><span class="o">=</span><span class="n">eta_new</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_set_internal</span><span class="p">(</span>
+                    <span class="n">mu</span><span class="o">=</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_sigma</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
+                    <span class="n">delta</span><span class="o">=</span><span class="n">delta_new</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta_new</span>
                 <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: parameter update failed at iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span><span class="o">**</span><span class="n">old_params</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_set_internal</span><span class="p">(</span>
+                    <span class="n">mu</span><span class="o">=</span><span class="n">prev_mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">prev_gamma</span><span class="p">,</span>
+                    <span class="n">L_sigma</span><span class="o">=</span><span class="n">robust_cholesky</span><span class="p">(</span><span class="n">prev_sigma</span><span class="p">),</span>
+                    <span class="n">delta</span><span class="o">=</span><span class="n">prev_delta</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">prev_eta</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">n_iter_</span> <span class="o">=</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
                 <span class="k">break</span>
 
@@ -635,7 +632,8 @@
             <span class="n">gamma_denom_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_gamma</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
             <span class="n">rel_gamma</span> <span class="o">=</span> <span class="n">gamma_norm</span> <span class="o">/</span> <span class="n">gamma_denom_val</span>
 
-            <span class="n">sigma_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Sigma_new</span> <span class="o">-</span> <span class="n">prev_sigma</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">)</span>
+            <span class="n">Sigma_curr</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">sigma_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Sigma_curr</span> <span class="o">-</span> <span class="n">prev_sigma</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">)</span>
             <span class="n">sigma_denom_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_sigma</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
             <span class="n">rel_sigma</span> <span class="o">=</span> <span class="n">sigma_norm</span> <span class="o">/</span> <span class="n">sigma_denom_val</span>
 

@@ -428,10 +428,9 @@
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
 
         <span class="c1"># Handle single point vs multiple points</span>
@@ -635,25 +634,26 @@
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_apply_regularization</span><span class="p">():</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Apply regularization to current parameters.&quot;&quot;&quot;</span>
-            <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
-            <span class="n">log_det_sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_Sigma</span>
+            <span class="n">jt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="n">jt</span><span class="o">.</span><span class="n">_mu</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">jt</span><span class="o">.</span><span class="n">_gamma</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">jt</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="n">jt</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">p_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span> <span class="o">=</span> <span class="n">jt</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="n">jt</span><span class="o">.</span><span class="n">_a</span><span class="p">,</span> <span class="n">jt</span><span class="o">.</span><span class="n">_b</span>
+            <span class="n">log_det_sigma</span> <span class="o">=</span> <span class="n">jt</span><span class="o">.</span><span class="n">log_det_Sigma</span>
 
             <span class="k">if</span> <span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;fix_p&#39;</span><span class="p">:</span>
                 <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span>
+                    <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">regularization_params</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">:</span>
                 <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span>
+                    <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span>
                     <span class="n">log_det_sigma</span><span class="o">=</span><span class="n">log_det_sigma</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">regularized</span> <span class="o">=</span> <span class="n">regularize_fn</span><span class="p">(</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span>
-                    <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="n">d</span>
+                    <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p_val</span><span class="p">,</span> <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span><span class="p">,</span> <span class="n">d</span>
                 <span class="p">)</span>
 
             <span class="c1"># Sanity check: clamp degenerate GIG parameters</span>
@@ -670,11 +670,9 @@
             <span class="c1"># Apply regularization BEFORE E-step (following legacy)</span>
             <span class="n">_apply_regularization</span><span class="p">()</span>
 
-            <span class="c1"># Save regularized parameters for convergence check</span>
-            <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
-            <span class="n">prev_mu</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">prev_gamma</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">prev_sigma</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">prev_sigma</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
             <span class="c1"># E-step: compute conditional expectations</span>
             <span class="n">cond_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditional_expectation_y_given_x</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -685,11 +683,9 @@
             <span class="c1"># Apply regularization AFTER M-step to ensure constraints hold</span>
             <span class="n">_apply_regularization</span><span class="p">()</span>
 
-            <span class="c1"># Check convergence using relative parameter change on (mu, gamma, Sigma)</span>
-            <span class="n">new_classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classical_params</span>
-            <span class="n">mu_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
-            <span class="n">gamma_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span>
-            <span class="n">sigma_new</span> <span class="o">=</span> <span class="n">new_classical</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+            <span class="n">mu_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
+            <span class="n">gamma_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+            <span class="n">sigma_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
 
             <span class="n">mu_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">mu_new</span> <span class="o">-</span> <span class="n">prev_mu</span><span class="p">)</span>
             <span class="n">mu_denom</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_mu</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
@@ -835,7 +831,9 @@
         <span class="n">s6</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ik,i-&gt;jk&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># E[XX^T/Y]</span>
 
         <span class="c1"># Get current GIG parameters for initialization and fallback</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
+        <span class="n">current_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">current_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
+        <span class="n">current_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
         
         <span class="c1"># Update GIG parameters if not fixed</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">fix_tail</span><span class="p">:</span>
@@ -843,11 +841,10 @@
             <span class="c1"># Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]</span>
             <span class="n">gig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s3</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">])</span>
             
-            <span class="c1"># Use current GIG parameters as initial point</span>
             <span class="n">current_gig_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-                <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> 
-                <span class="o">-</span><span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> 
-                <span class="o">-</span><span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="n">current_p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> 
+                <span class="o">-</span><span class="n">current_b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> 
+                <span class="o">-</span><span class="n">current_a</span> <span class="o">/</span> <span class="mi">2</span>
             <span class="p">])</span>
             
             <span class="k">try</span><span class="p">:</span>
@@ -865,24 +862,21 @@
                 <span class="c1"># This prevents the optimization from diverging</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span>
                     <span class="n">a_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">):</span>
-                    <span class="c1"># Keep current parameters</span>
-                    <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-                    <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-                    <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="n">current_p</span>
+                    <span class="n">a</span> <span class="o">=</span> <span class="n">current_a</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">current_b</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">p</span> <span class="o">=</span> <span class="n">p_new</span>
                     <span class="n">a</span> <span class="o">=</span> <span class="n">a_new</span>
                     <span class="n">b</span> <span class="o">=</span> <span class="n">b_new</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="c1"># Fallback: keep current GIG parameters</span>
-                <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-                <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-                <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">current_p</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">current_a</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">current_b</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Keep current GIG parameters</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">current_p</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">current_a</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">current_b</span>
 
         <span class="c1"># M-step for normal parameters (closed-form, following legacy)</span>
         <span class="c1"># mu = (s4 - s2 * s5) / (1 - s1 * s2)</span>
@@ -901,20 +895,19 @@
         <span class="n">Sigma</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s5</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">s6</span> <span class="o">+</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
 
-        <span class="c1"># Compute Cholesky factor of Sigma (with regularization if needed)</span>
         <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
-        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L_Sigma</span> <span class="o">@</span> <span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span>
 
         <span class="c1"># Bound GIG parameters</span>
         <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
         <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
 
-        <span class="c1"># Update joint distribution and cache L_Sigma</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
+        <span class="c1"># Update joint distribution via fast path (no redundant Cholesky)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_set_internal</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
         <span class="p">)</span>
-        <span class="c1"># Cache the Cholesky factor (set_classical_params clears cache, so set after)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_L_Sigma</span><span class="p">(</span><span class="n">L_Sigma</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
     <span class="c1"># ========================================================================</span>
     <span class="c1"># Conditional Expectations (E-step helper)</span>
@@ -959,13 +952,11 @@
 
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
 
-        <span class="c1"># Get cached L_Sigma_inv</span>
         <span class="n">L_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma_inv</span>
         
         <span class="c1"># Transform data: z = L^{-1}(x - μ)</span>
@@ -1166,12 +1157,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
 
-        <span class="c1"># E[Y] from GIG</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
         <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
         <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
@@ -1215,10 +1204,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
-        <span class="n">classical</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">classical_params</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">classical</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
 
         <span class="c1"># E[Y] and E[Y²] from GIG</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>

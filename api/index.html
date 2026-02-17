@@ -614,23 +614,11 @@ Default is ‘mv’.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">_compute_classical_params()</span></code>: Derive classical params from internal state.</p></li>
 </ul>
 <p>Parameters should be stored as named internal attributes (e.g., <code class="docutils literal notranslate"><span class="pre">_rate</span></code>,
-<code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_L</span></code>) for efficient direct access.</p>
+<code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_L</span></code>) for efficient direct access. There is no <code class="docutils literal notranslate"><span class="pre">_natural_params</span></code>
+tuple at this level; named attributes are the single source of truth.</p>
 <p>Both interfaces use <code class="docutils literal notranslate"><span class="pre">functools.cached_property</span></code> for lazy caching of
 derived parametrizations, with <code class="docutils literal notranslate"><span class="pre">_invalidate_cache()</span></code> clearing all
 entries when state changes.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.base.exponential_family.ExponentialFamily._natural_params">
-<span class="sig-name descname"><span class="pre">_natural_params</span></span><a class="headerlink" href="#normix.base.exponential_family.ExponentialFamily._natural_params" title="Link to this definition"></a></dt>
-<dd><p>Legacy storage for natural parameters (tuple for hashability).
-Set by the default <code class="docutils literal notranslate"><span class="pre">_set_from_natural</span></code> implementation.
-Migrated subclasses may not use this.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple or None</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.base.exponential_family.ExponentialFamily._fitted">
 <span class="sig-name descname"><span class="pre">_fitted</span></span><a class="headerlink" href="#normix.base.exponential_family.ExponentialFamily._fitted" title="Link to this definition"></a></dt>
@@ -1010,11 +998,10 @@ statistics:</p>
 <p>Subclasses must implement:</p>
 <ul class="simple">
 <li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_mixing_distribution_class()</span></code>: Return the mixing distribution class</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_mixing_natural_params()</span></code>: Extract mixing distribution natural params</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_mixing_sufficient_statistics()</span></code>: Compute mixing dist sufficient stats</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_mixing_log_partition()</span></code>: Compute mixing distribution log partition</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_classical_to_natural()</span></code>: Convert classical to natural parameters</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_natural_to_classical()</span></code>: Convert natural to classical parameters</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_mixing_params()</span></code>: Store mixing params from kwargs</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_mixing_params_from_theta()</span></code>: Extract mixing params from theta</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_mixing_theta()</span></code>: Build theta_1, theta_2, theta_3</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_create_mixing_distribution()</span></code>: Construct mixing dist from named attrs</p></li>
 </ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture._d">
@@ -1023,17 +1010,6 @@ statistics:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture._natural_params">
-<span class="sig-name descname"><span class="pre">_natural_params</span></span><a class="headerlink" href="#normix.base.mixture.JointNormalMixture._natural_params" title="Link to this definition"></a></dt>
-<dd><p>Internal storage for natural parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1060,12 +1036,6 @@ statistics:</p>
 <dd class="field-even"><p>ndarray, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code></p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.clear_L_Sigma_cache">
-<span class="sig-name descname"><span class="pre">clear_L_Sigma_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/normix/base/mixture.html#JointNormalMixture.clear_L_Sigma_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.clear_L_Sigma_cache" title="Link to this definition"></a></dt>
-<dd><p>Clear cached Cholesky-derived quantities (backward compat).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1141,24 +1111,6 @@ statistics:</p>
 <dd class="field-odd"><p>Mahalanobis norm of gamma</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.get_L_Sigma">
-<span class="sig-name descname"><span class="pre">get_L_Sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/base/mixture.html#JointNormalMixture.get_L_Sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.get_L_Sigma" title="Link to this definition"></a></dt>
-<dd><p>Get the lower Cholesky factor of Sigma and its log determinant.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><ul class="simple">
-<li><p><strong>L_Sigma</strong> (<em>ndarray</em>) – Lower Cholesky factor of Sigma, shape (d, d).</p></li>
-<li><p><strong>log_det_Sigma</strong> (<em>float</em>) – Log determinant of Sigma.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>This method now delegates to the internal <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> attribute
-and the <code class="docutils literal notranslate"><span class="pre">log_det_Sigma</span></code> cached property.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -1256,22 +1208,6 @@ and the <code class="docutils literal notranslate"><span class="pre">log_det_Sig
 <li><p><strong>Y</strong> (<em>ndarray</em>) – Sampled Y values. Shape () if size is None, (n,) otherwise.</p></li>
 </ul>
 </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.set_L_Sigma">
-<span class="sig-name descname"><span class="pre">set_L_Sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/normix/base/mixture.html#JointNormalMixture.set_L_Sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.set_L_Sigma" title="Link to this definition"></a></dt>
-<dd><p>Set the Cholesky factor of Sigma.</p>
-<p>Used by the M-step of the EM algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>L_Sigma</strong> (<em>ndarray</em>) – Cholesky factor of Sigma, shape (d, d).</p></li>
-<li><p><strong>lower</strong> (<em>bool</em><em>, </em><em>default True</em>) – If True, L_Sigma is lower triangular.
-If False, converts to lower triangular.</p></li>
-</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -2963,13 +2899,6 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.fisher_information">
-<span class="sig-name descname"><span class="pre">fisher_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.fisher_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.fisher_information" title="Link to this definition"></a></dt>
-<dd><p>Fisher information matrix.</p>
-<p>Uses numerical differentiation from base class.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit distribution parameters using Maximum Likelihood Estimation.</p>
@@ -2994,7 +2923,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fa87166b8c0&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f45a3d70200&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3073,7 +3002,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fa87166b8c0&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f45a3d70200&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 

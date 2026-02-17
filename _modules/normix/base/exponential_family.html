@@ -151,7 +151,8 @@
 <span class="sd">    - ``_compute_classical_params()``: Derive classical params from internal state.</span>
 
 <span class="sd">    Parameters should be stored as named internal attributes (e.g., ``_rate``,</span>
-<span class="sd">    ``_mu``, ``_L``) for efficient direct access.</span>
+<span class="sd">    ``_mu``, ``_L``) for efficient direct access. There is no ``_natural_params``</span>
+<span class="sd">    tuple at this level; named attributes are the single source of truth.</span>
 
 <span class="sd">    Both interfaces use ``functools.cached_property`` for lazy caching of</span>
 <span class="sd">    derived parametrizations, with ``_invalidate_cache()`` clearing all</span>
@@ -159,10 +160,6 @@
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    _natural_params : tuple or None</span>
-<span class="sd">        Legacy storage for natural parameters (tuple for hashability).</span>
-<span class="sd">        Set by the default ``_set_from_natural`` implementation.</span>
-<span class="sd">        Migrated subclasses may not use this.</span>
 <span class="sd">    _fitted : bool</span>
 <span class="sd">        Whether parameters have been set (inherited from Distribution).</span>
 
@@ -208,7 +205,6 @@
 <span class="sd">        or fit() to set parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Legacy storage (tuple), kept for backward compat</span>
 
     <span class="c1"># ============================================================</span>
     <span class="c1"># Factory methods for initialization</span>
@@ -378,77 +374,67 @@
 
 
     <span class="c1"># ============================================================</span>
-    <span class="c1"># New interface: internal state management</span>
+    <span class="c1"># Internal state management (subclass contract)</span>
     <span class="c1"># ============================================================</span>
-    <span class="c1"># Default implementations use the legacy _classical_to_natural /</span>
-    <span class="c1"># _natural_to_classical methods. Migrated subclasses override these.</span>
 
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set internal state from classical parameters.</span>
 
-<span class="sd">        Default implementation converts to natural parameters via</span>
-<span class="sd">        ``_classical_to_natural`` and delegates to ``_set_from_natural``.</span>
-<span class="sd">        Migrated subclasses override to store named internal attributes</span>
-<span class="sd">        (e.g., ``self._rate``, ``self._mu``, ``self._L``).</span>
+<span class="sd">        Parse classical params, store as named attributes (e.g.,</span>
+<span class="sd">        ``self._rate``, ``self._mu``, ``self._L``), set</span>
+<span class="sd">        ``self._fitted = True``, and call ``self._invalidate_cache()``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        **kwargs</span>
 <span class="sd">            Distribution-specific classical parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classical_to_natural</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+        <span class="k">pass</span>
 
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set internal state from natural parameters.</span>
 
-<span class="sd">        Default implementation validates and stores as a flat tuple in</span>
-<span class="sd">        ``_natural_params`` (legacy path). Migrated subclasses override</span>
-<span class="sd">        to store named internal attributes.</span>
+<span class="sd">        Decompose theta into named attributes, store them, set</span>
+<span class="sd">        ``self._fitted = True``, and call ``self._invalidate_cache()``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        theta : ndarray</span>
 <span class="sd">            Natural parameter vector.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">pass</span>
 
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute natural parameters from internal state.</span>
 
-<span class="sd">        Default implementation returns the legacy ``_natural_params`` tuple</span>
-<span class="sd">        as a numpy array. Migrated subclasses override to derive from</span>
-<span class="sd">        their internal attributes.</span>
+<span class="sd">        Build and return a flat theta array from named internal attributes.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        theta : ndarray</span>
 <span class="sd">            Natural parameter vector.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_natural_params</span><span class="p">)</span>
+        <span class="k">pass</span>
 
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute classical parameters from internal state.</span>
 
-<span class="sd">        Default implementation calls ``_natural_to_classical`` on the</span>
-<span class="sd">        natural parameters. Migrated subclasses override to derive from</span>
-<span class="sd">        their internal attributes and return a frozen dataclass.</span>
+<span class="sd">        Build and return a frozen dataclass from named internal attributes.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        params : dict or dataclass</span>
+<span class="sd">        params : dataclass</span>
 <span class="sd">            Classical parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_natural_to_classical</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -710,62 +696,6 @@
 <span class="sd">        &gt;&gt;&gt; return -0.5 * np.log(2 * np.pi)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
-
-    <span class="c1"># ============================================================</span>
-    <span class="c1"># Legacy parameter conversions (only for unmigrated subclasses)</span>
-    <span class="c1"># ============================================================</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_classical_to_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert classical parameters to natural parameters (legacy interface).</span>
-
-<span class="sd">        Only needed by subclasses that have NOT overridden</span>
-<span class="sd">        ``_set_from_classical``. Called by the default</span>
-<span class="sd">        ``_set_from_classical`` implementation.</span>
-
-<span class="sd">        Migrated subclasses (which override ``_set_from_classical``)</span>
-<span class="sd">        do not need to implement this method.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        **kwargs</span>
-<span class="sd">            Distribution-specific classical parameters.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        theta : ndarray</span>
-<span class="sd">            Natural parameter vector.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must override _set_from_classical() &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;or implement _classical_to_natural().&quot;</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert natural parameters to classical parameters (legacy interface).</span>
-
-<span class="sd">        Only needed by subclasses that have NOT overridden</span>
-<span class="sd">        ``_compute_classical_params``. Called by the default</span>
-<span class="sd">        ``_compute_classical_params`` implementation.</span>
-
-<span class="sd">        Migrated subclasses (which override ``_compute_classical_params``)</span>
-<span class="sd">        do not need to implement this method.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        theta : ndarray</span>
-<span class="sd">            Natural parameter vector.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        params : dict or tuple</span>
-<span class="sd">            Classical parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must override _compute_classical_params() &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;or implement _natural_to_classical().&quot;</span>
-        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
