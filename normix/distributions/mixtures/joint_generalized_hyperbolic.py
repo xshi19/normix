@@ -307,6 +307,45 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # Expectation parameters (analytical)
     # ========================================================================
 
+    def _compute_expectation_params(self) -> NDArray:
+        """
+        Compute expectation parameters directly from internal attributes.
+
+        Avoids the round-trip through natural parameters (which would require
+        computing :math:`\\Lambda = \\Sigma^{-1}` and then extracting it back).
+        """
+        mu = self._mu
+        gamma = self._gamma
+        Sigma = self._L_Sigma @ self._L_Sigma.T
+        p = self._p
+        a = self._a
+        b = self._b
+
+        sqrt_ab = np.sqrt(a * b)
+        sqrt_b_over_a = np.sqrt(b / a)
+
+        log_kv_p_val = log_kv(p, sqrt_ab)
+        log_kv_pm1 = log_kv(p - 1, sqrt_ab)
+        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
+
+        E_Y = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p_val)
+        E_inv_Y = np.exp(log_kv_pm1 - log_kv_p_val) / sqrt_b_over_a
+
+        eps = 1e-6
+        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
+        E_log_Y = d_log_kv_dp + 0.5 * np.log(b / a)
+
+        E_X = mu + gamma * E_Y
+        E_X_inv_Y = mu * E_inv_Y + gamma
+        E_XXT_inv_Y = (Sigma + np.outer(mu, mu) * E_inv_Y +
+                      np.outer(gamma, gamma) * E_Y +
+                      np.outer(mu, gamma) + np.outer(gamma, mu))
+
+        return np.concatenate([
+            [E_log_Y, E_inv_Y, E_Y],
+            E_X, E_X_inv_Y, E_XXT_inv_Y.flatten()
+        ])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Convert natural to expectation parameters: :math:`\\eta = E[t(X, Y)]`.

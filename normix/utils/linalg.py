@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from scipy.linalg import cholesky, LinAlgError
 
 
-def robust_cholesky(A: NDArray, *, eps: float = 1e-8) -> NDArray:
+def robust_cholesky(A: NDArray, *, eps: float = 1e-6) -> NDArray:
     r"""
     Compute lower Cholesky factor with eigenvalue-based regularization.
 

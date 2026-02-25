@@ -33,7 +33,7 @@ After migration, the distribution stores the Cholesky decomposition of the
 covariance matrix rather than the full covariance or its inverse:
 
 - ``_mu``: mean vector, shape ``(d,)``
-- ``_L``: lower Cholesky factor of :math:`\\Sigma`, shape ``(d, d)``
+- ``_L_Sigma``: lower Cholesky factor of :math:`\\Sigma`, shape ``(d, d)``
 
 Derived quantities ``log_det_Sigma`` and ``L_inv`` are cached properties,
 computed on demand and invalidated when parameters change.
@@ -72,9 +72,9 @@ class MultivariateNormal(ExponentialFamily):
     ----------
     _mu : ndarray or None
         Mean vector, shape ``(d,)``.
-    _L : ndarray or None
+    _L_Sigma : ndarray or None
         Lower Cholesky factor of :math:`\\Sigma`, shape ``(d, d)``.
-        :math:`\\Sigma = L L^T`.
+        :math:`\\Sigma = L_\\Sigma L_\\Sigma^T`.
     _d : int or None
         Dimension of the distribution.
 
@@ -134,7 +134,7 @@ class MultivariateNormal(ExponentialFamily):
         super().__init__()
         self._d = d
         self._mu: Optional[NDArray] = None
-        self._L: Optional[NDArray] = None  # Lower Cholesky of Sigma
+        self._L_Sigma: Optional[NDArray] = None  # Lower Cholesky of Sigma
 
     @property
     def d(self) -> int:
@@ -160,7 +160,7 @@ class MultivariateNormal(ExponentialFamily):
         log_det : float
         """
         self._check_fitted()
-        return 2.0 * np.sum(np.log(np.diag(self._L)))
+        return 2.0 * np.sum(np.log(np.diag(self._L_Sigma)))
 
     @cached_property
     def L_inv(self) -> NDArray:
@@ -175,7 +175,7 @@ class MultivariateNormal(ExponentialFamily):
             Lower triangular matrix.
         """
         self._check_fitted()
-        return solve_triangular(self._L, np.eye(self._d), lower=True)
+        return solve_triangular(self._L_Sigma, np.eye(self._d), lower=True)
 
     # ============================================================
     # New interface: internal state management
@@ -222,7 +222,7 @@ class MultivariateNormal(ExponentialFamily):
 
         # Store internal state
         self._mu = mu.copy()
-        self._L = L
+        self._L_Sigma = L
 
         self._fitted = True
         self._invalidate_cache()
@@ -286,7 +286,7 @@ class MultivariateNormal(ExponentialFamily):
 
         # Store internal state
         self._mu = mu
-        self._L = L
+        self._L_Sigma = L
 
         self._fitted = True
         self._invalidate_cache()
@@ -302,7 +302,7 @@ class MultivariateNormal(ExponentialFamily):
 
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        Sigma = self._L @ self._L.T
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return MultivariateNormalParams(mu=self._mu.copy(), sigma=Sigma)
 
     # ============================================================
@@ -453,6 +453,13 @@ class MultivariateNormal(ExponentialFamily):
         else:
             return np.zeros(x.shape[0])
 
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly: η = [μ, vec(Σ + μμᵀ)]."""
+        mu = self._mu
+        Sigma = self._L_Sigma @ self._L_Sigma.T
+        eta2 = (Sigma + np.outer(mu, mu)).flatten()
+        return np.concatenate([mu, eta2])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Convert natural to expectation parameters using Cholesky.
@@ -550,7 +557,7 @@ class MultivariateNormal(ExponentialFamily):
         x = np.asarray(x, dtype=float)
         d = self._d
         mu = self._mu
-        L = self._L
+        L = self._L_Sigma
         log_det = self.log_det_Sigma  # Cached
 
         const = -0.5 * d * np.log(2 * np.pi) - 0.5 * log_det
@@ -608,7 +615,7 @@ class MultivariateNormal(ExponentialFamily):
         self._check_fitted()
 
         mu = self._mu
-        L = self._L
+        L = self._L_Sigma
         d = self._d
 
         # Set up RNG
@@ -639,12 +646,12 @@ class MultivariateNormal(ExponentialFamily):
         """Variance (diagonal of covariance matrix)."""
         self._check_fitted()
         # diag(Σ) = diag(L L^T) = sum of squares of rows of L
-        return np.sum(self._L ** 2, axis=1)
+        return np.sum(self._L_Sigma ** 2, axis=1)
 
     def cov(self) -> NDArray:
         """Covariance matrix Σ = L L^T."""
         self._check_fitted()
-        return self._L @ self._L.T
+        return self._L_Sigma @ self._L_Sigma.T
 
     def cdf(self, x: ArrayLike) -> Union[float, NDArray[np.floating]]:
         """
@@ -667,7 +674,7 @@ class MultivariateNormal(ExponentialFamily):
 
         x = np.asarray(x)
         mu = self._mu
-        Sigma = self._L @ self._L.T
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         d = self._d
 
         # Use scipy's implementation
@@ -758,7 +765,7 @@ class MultivariateNormal(ExponentialFamily):
         Convert to scipy.stats.multivariate_normal.
         """
         self._check_fitted()
-        Sigma = self._L @ self._L.T
+        Sigma = self._L_Sigma @ self._L_Sigma.T
         return stats.multivariate_normal(mean=self._mu, cov=Sigma)
 
     @classmethod
@@ -783,7 +790,7 @@ class MultivariateNormal(ExponentialFamily):
         mu = self._mu
 
         if d == 1:
-            sigma_sq = self._L[0, 0] ** 2
+            sigma_sq = self._L_Sigma[0, 0] ** 2
             return f"MultivariateNormal(μ={mu[0]:.4f}, σ²={sigma_sq:.4f})"
         elif d <= 3:
             mu_str = ", ".join(f"{x:.4f}" for x in mu)

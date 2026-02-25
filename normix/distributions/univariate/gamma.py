@@ -102,8 +102,8 @@ class Gamma(ExponentialFamily):
     
     def __init__(self):
         super().__init__()
-        self._shape = None
-        self._rate = None
+        self._alpha = None
+        self._beta = None
     
     # ================================================================
     # New interface: internal state management
@@ -115,8 +115,8 @@ class Gamma(ExponentialFamily):
             raise ValueError(f"Shape must be positive, got {shape}")
         if rate <= 0:
             raise ValueError(f"Rate must be positive, got {rate}")
-        self._shape = float(shape)
-        self._rate = float(rate)
+        self._alpha = float(shape)
+        self._beta = float(rate)
         self._fitted = True
         self._invalidate_cache()
     
@@ -124,22 +124,22 @@ class Gamma(ExponentialFamily):
         """Set internal state from natural parameters."""
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
-        self._shape = float(theta[0] + 1)
-        self._rate = float(-theta[1])
-        if self._shape <= 0:
-            raise ValueError(f"Shape must be positive, got {self._shape}")
-        if self._rate <= 0:
-            raise ValueError(f"Rate must be positive, got {self._rate}")
+        self._alpha = float(theta[0] + 1)
+        self._beta = float(-theta[1])
+        if self._alpha <= 0:
+            raise ValueError(f"Shape must be positive, got {self._alpha}")
+        if self._beta <= 0:
+            raise ValueError(f"Rate must be positive, got {self._beta}")
         self._fitted = True
         self._invalidate_cache()
     
     def _compute_natural_params(self):
         """Compute natural parameters from internal state: θ = [α-1, -β]."""
-        return np.array([self._shape - 1, -self._rate])
+        return np.array([self._alpha - 1, -self._beta])
     
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        return GammaParams(shape=self._shape, rate=self._rate)
+        return GammaParams(shape=self._alpha, rate=self._beta)
     
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ > -1, θ₂ < 0."""
@@ -195,6 +195,11 @@ class Gamma(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly: η = [ψ(α) - log(β), α/β]."""
+        return np.array([digamma(self._alpha) - np.log(self._beta),
+                         self._alpha / self._beta])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: eta = grad psi(theta) = [digamma(alpha) - log(beta), alpha/beta].
@@ -346,8 +351,8 @@ class Gamma(ExponentialFamily):
             Random samples from the distribution.
         """
         self._check_fitted()
-        shape = self._shape
-        rate = self._rate
+        shape = self._alpha
+        rate = self._beta
         
         # Set up random number generator
         if random_state is None:
@@ -373,7 +378,7 @@ class Gamma(ExponentialFamily):
             Mean of the distribution.
         """
         self._check_fitted()
-        return self._shape / self._rate
+        return self._alpha / self._beta
     
     def var(self) -> float:
         """
@@ -388,7 +393,7 @@ class Gamma(ExponentialFamily):
             Variance of the distribution.
         """
         self._check_fitted()
-        return self._shape / (self._rate**2)
+        return self._alpha / (self._beta**2)
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -409,8 +414,8 @@ class Gamma(ExponentialFamily):
         from scipy.special import gammainc
         
         x = np.asarray(x)
-        shape = self._shape
-        rate = self._rate
+        shape = self._alpha
+        rate = self._beta
         
         # CDF: P(X ≤ x) = gammainc(α, βx) (regularized lower incomplete gamma)
         result = np.where(x > 0, gammainc(shape, rate * x), 0.0)

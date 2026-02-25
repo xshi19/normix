@@ -455,7 +455,7 @@ class NormalInverseGaussian(NormalMixture):
         for iteration in range(max_iter):
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
-            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
+            prev_L = self._joint._L_Sigma.copy()
             prev_delta = self._joint._delta
             prev_eta = self._joint._eta
 
@@ -535,7 +535,7 @@ class NormalInverseGaussian(NormalMixture):
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
                 self._joint._set_internal(
                     mu=prev_mu, gamma=prev_gamma,
-                    L_sigma=robust_cholesky(prev_sigma),
+                    L_sigma=prev_L,
                     delta=prev_delta, eta=prev_eta
                 )
                 self._fitted = True
@@ -554,10 +554,9 @@ class NormalInverseGaussian(NormalMixture):
             gamma_denom_val = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom_val
 
-            Sigma_curr = L @ L.T
-            sigma_norm = np.linalg.norm(Sigma_curr - prev_sigma, 'fro')
-            sigma_denom_val = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
-            rel_sigma = sigma_norm / sigma_denom_val
+            L_norm = np.linalg.norm(L - prev_L, 'fro')
+            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
+            rel_sigma = L_norm / L_denom
 
             max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
 

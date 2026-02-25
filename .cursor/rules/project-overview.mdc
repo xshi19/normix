@@ -67,7 +67,7 @@ normix/
 └── ROADMAP.md                   # Implementation roadmap
 ```
 
-## Current Status (Updated: 2026-02-17)
+## Current Status (Updated: 2026-02-18)
 
 **Completed:**
 - Step 1: Base classes (ExponentialFamily with 3 parametrizations, NormalMixture base)
@@ -83,6 +83,12 @@ normix/
   - Cholesky-first storage for multivariate distributions
   - Direct attribute access in marginal mixture distributions
   - Frozen dataclass parameter containers (`normix.params`)
+- Refactoring: Greek-letter naming, Cholesky logpdf, expectation params optimization
+  - Internal attributes use Greek letters matching docstrings (e.g., `_alpha`, `_beta`)
+  - `_L_Sigma` for Cholesky factor of covariance everywhere
+  - `_compute_expectation_params()` overridden in all distributions
+  - Cholesky-based `logpdf` in `JointNormalMixture`
+  - EM convergence uses Cholesky factor norm directly
 - Refactoring: Parameter storage redesign (`docs/redesign_parameter_storage.md`)
   - Named attributes as single source of truth (no `_natural_params` tuple)
   - Abstract `_set_from_classical` / `_set_from_natural` in ExponentialFamily
@@ -111,7 +117,7 @@ $$ p(x|\theta) = h(x) \exp (\theta^T t(x) - \psi(\theta)) $$
 
 5. **Caching Strategy**: `functools.cached_property` with `_invalidate_cache()` via `__dict__.pop()`
 
-6. **Internal Storage**: Named attributes are the single source of truth (no `_natural_params` tuple). Each subclass stores its own optimal representation (e.g., `_rate` for Exponential, `_mu` + `_L` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` + mixing attrs for JointNormalMixture subclasses)
+6. **Internal Storage**: Named attributes (Greek-letter names matching docstrings) are the single source of truth (no `_natural_params` tuple). Each subclass stores its own optimal representation (e.g., `_lambda` for Exponential, `_mu` + `_L_Sigma` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` + mixing attrs for JointNormalMixture subclasses)
 
 7. **Parameter Containers**: `@dataclass(frozen=True, slots=True)` for classical parameter output
 

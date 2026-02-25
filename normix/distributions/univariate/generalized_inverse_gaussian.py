@@ -222,6 +222,27 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly from (p, a, b)."""
+        p = self._p
+        a = self._a
+        b = self._b
+        sqrt_ab = np.sqrt(a * b)
+        sqrt_b_over_a = np.sqrt(b / a)
+
+        log_kv_p = log_kv(p, sqrt_ab)
+        log_kv_pm1 = log_kv(p - 1, sqrt_ab)
+        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
+
+        E_inv_x = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
+        E_x = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
+
+        eps = 1e-6
+        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
+        E_log_x = d_log_kv_dp + 0.5 * np.log(b / a)
+
+        return np.array([E_log_x, E_inv_x, E_x])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Convert natural parameters to expectation parameters: η = ∇A(θ).

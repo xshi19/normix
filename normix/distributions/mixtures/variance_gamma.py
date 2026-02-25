@@ -142,8 +142,8 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        alpha = self._joint._shape
-        beta = self._joint._rate
+        alpha = self._joint._alpha
+        beta = self._joint._beta
         d = self.d
 
         L_inv = self._joint.L_Sigma_inv
@@ -241,8 +241,8 @@ class VarianceGamma(NormalMixture):
         x = np.asarray(x)
         mu = self._joint._mu
         gamma = self._joint._gamma
-        alpha = self._joint._shape
-        beta = self._joint._rate
+        alpha = self._joint._alpha
+        beta = self._joint._beta
         d = self.d
 
         L_inv = self._joint.L_Sigma_inv
@@ -480,9 +480,9 @@ class VarianceGamma(NormalMixture):
         for iteration in range(max_iter):
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
-            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
-            prev_shape = self._joint._shape
-            prev_rate = self._joint._rate
+            prev_L = self._joint._L_Sigma.copy()
+            prev_shape = self._joint._alpha
+            prev_rate = self._joint._beta
 
             # ==============================================================
             # E-step: Compute conditional expectations E[g(Y) | X]
@@ -587,7 +587,7 @@ class VarianceGamma(NormalMixture):
                     print(f"Warning: parameter update failed at iteration {iteration}: {e}")
                 self._joint._set_internal(
                     mu=prev_mu, gamma=prev_gamma,
-                    L_sigma=robust_cholesky(prev_sigma),
+                    L_sigma=prev_L,
                     shape=prev_shape, rate=prev_rate
                 )
                 self._fitted = True
@@ -607,10 +607,9 @@ class VarianceGamma(NormalMixture):
             gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom
 
-            Sigma_curr = L @ L.T
-            sigma_norm = np.linalg.norm(Sigma_curr - prev_sigma, 'fro')
-            sigma_denom = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
-            rel_sigma = sigma_norm / sigma_denom
+            L_norm = np.linalg.norm(L - prev_L, 'fro')
+            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
+            rel_sigma = L_norm / L_denom
 
             max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
 

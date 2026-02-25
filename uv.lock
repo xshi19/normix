@@ -1015,6 +1015,9 @@ docs = [
 [package.dev-dependencies]
 dev = [
     { name = "nbconvert" },
+    { name = "nbsphinx" },
+    { name = "sphinx" },
+    { name = "sphinx-rtd-theme" },
 ]
 
 [package.metadata]
@@ -1034,7 +1037,12 @@ requires-dist = [
 provides-extras = ["dev", "docs"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "nbconvert", specifier = ">=7.17.0" }]
+dev = [
+    { name = "nbconvert", specifier = ">=7.17.0" },
+    { name = "nbsphinx", specifier = ">=0.9.8" },
+    { name = "sphinx", specifier = ">=9.1.0" },
+    { name = "sphinx-rtd-theme", specifier = ">=3.1.0" },
+]
 
 [[package]]
 name = "numpy"

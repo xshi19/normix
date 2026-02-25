@@ -582,7 +582,7 @@ class GeneralizedHyperbolic(NormalMixture):
 
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
-            prev_sigma = (self._joint._L_Sigma @ self._joint._L_Sigma.T).copy()
+            prev_L = self._joint._L_Sigma.copy()
 
             # E-step: compute conditional expectations
             cond_exp = self._conditional_expectation_y_given_x(X)
@@ -595,7 +595,7 @@ class GeneralizedHyperbolic(NormalMixture):
 
             mu_new = self._joint._mu
             gamma_new = self._joint._gamma
-            sigma_new = self._joint._L_Sigma @ self._joint._L_Sigma.T
+            L_new = self._joint._L_Sigma
 
             mu_norm = np.linalg.norm(mu_new - prev_mu)
             mu_denom = max(np.linalg.norm(prev_mu), 1e-10)
@@ -605,9 +605,9 @@ class GeneralizedHyperbolic(NormalMixture):
             gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
             rel_gamma = gamma_norm / gamma_denom
 
-            sigma_norm = np.linalg.norm(sigma_new - prev_sigma, 'fro')
-            sigma_denom = max(np.linalg.norm(prev_sigma, 'fro'), 1e-10)
-            rel_sigma = sigma_norm / sigma_denom
+            L_norm = np.linalg.norm(L_new - prev_L, 'fro')
+            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
+            rel_sigma = L_norm / L_denom
 
             max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
 

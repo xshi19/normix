@@ -92,7 +92,7 @@ class Exponential(ExponentialFamily):
     
     def __init__(self):
         super().__init__()
-        self._rate = None
+        self._lambda = None
     
     # ================================================================
     # New interface: internal state management
@@ -102,7 +102,7 @@ class Exponential(ExponentialFamily):
         """Set internal state from classical parameters."""
         if rate <= 0:
             raise ValueError(f"Rate must be positive, got {rate}")
-        self._rate = float(rate)
+        self._lambda = float(rate)
         self._fitted = True
         self._invalidate_cache()
     
@@ -110,17 +110,17 @@ class Exponential(ExponentialFamily):
         """Set internal state from natural parameters."""
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
-        self._rate = float(-theta[0])
+        self._lambda = float(-theta[0])
         self._fitted = True
         self._invalidate_cache()
     
     def _compute_natural_params(self):
         """Compute natural parameters from internal state: θ = -λ."""
-        return np.array([-self._rate])
+        return np.array([-self._lambda])
     
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        return ExponentialParams(rate=self._rate)
+        return ExponentialParams(rate=self._lambda)
     
     def _get_natural_param_support(self):
         """Natural parameter support: θ < 0."""
@@ -173,6 +173,10 @@ class Exponential(ExponentialFamily):
         result[x < 0] = -np.inf
         return result
     
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly: η = [1/λ]."""
+        return np.array([1.0 / self._lambda])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = 1/(-θ) = 1/λ.
@@ -241,7 +245,7 @@ class Exponential(ExponentialFamily):
             Random samples from the distribution.
         """
         self._check_fitted()
-        rate = self._rate
+        rate = self._lambda
         
         # Set up random number generator
         if random_state is None:
@@ -268,7 +272,7 @@ class Exponential(ExponentialFamily):
             Mean of the distribution.
         """
         self._check_fitted()
-        return 1.0 / self._rate
+        return 1.0 / self._lambda
     
     def var(self) -> float:
         """
@@ -283,7 +287,7 @@ class Exponential(ExponentialFamily):
             Variance of the distribution.
         """
         self._check_fitted()
-        return 1.0 / self._rate**2
+        return 1.0 / self._lambda**2
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -302,7 +306,7 @@ class Exponential(ExponentialFamily):
         self._check_fitted()
         
         x = np.asarray(x)
-        rate = self._rate
+        rate = self._lambda
         
         result = np.zeros_like(x, dtype=float)
         mask = x >= 0

@@ -16,6 +16,29 @@ alwaysApply: true
 
 This is important because probability distributions are math-heavy.
 
+## Internal Attribute Naming Convention
+
+Internal parameter attributes **MUST** use Greek letter names matching the mathematical notation in docstrings. This ensures the code reads naturally alongside the formulas.
+
+| Distribution | Attributes | Math Symbols |
+|---|---|---|
+| Exponential | `_lambda` | $\lambda$ |
+| Gamma | `_alpha`, `_beta` | $\alpha$, $\beta$ |
+| InverseGamma | `_alpha`, `_beta` | $\alpha$, $\beta$ |
+| InverseGaussian | `_mu`, `_lambda` | $\mu$, $\lambda$ |
+| GeneralizedInverseGaussian | `_p`, `_a`, `_b` | $p$, $a$, $b$ |
+| MultivariateNormal | `_mu`, `_L_Sigma` | $\mu$, $L_\Sigma$ |
+| JointNormalMixture (base) | `_mu`, `_gamma`, `_L_Sigma` | $\mu$, $\gamma$, $L_\Sigma$ |
+| JointVarianceGamma | `_alpha`, `_beta` | $\alpha$, $\beta$ (Gamma) |
+| JointNormalInverseGamma | `_alpha`, `_beta` | $\alpha$, $\beta$ (InvGamma) |
+| JointNormalInverseGaussian | `_delta`, `_eta` | $\delta$, $\eta$ (IG) |
+| JointGeneralizedHyperbolic | `_p`, `_a`, `_b` | $p$, $a$, $b$ (GIG) |
+
+**Key rules:**
+- **Cholesky factors** of covariance matrices are always `_L_Sigma` (never `_L`).
+- **Public API** keyword arguments (e.g., `from_classical_params(shape=..., rate=...)`) keep readable English names; only internal attributes use Greek letters.
+- Marginal distributions (e.g., `VarianceGamma`) store no parameters directly; they delegate to `self._joint`.
+
 ## Function Design
 
 1. **Use keyword-only arguments** for non-obvious parameters (SciPy):

@@ -585,10 +585,18 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
     def logpdf(self, x: ArrayLike, y: ArrayLike) -> NDArray:
         """
-        Log joint probability density function :math:`\\log f(x, y)`.
+        Log joint probability density using Cholesky-based computation.
+
+        Decomposes as :math:`\\log f(x,y) = \\log f(x|y) + \\log f_Y(y)`:
 
         .. math::
-            \\log f(x, y) = \\log h(x, y) + \\theta^T t(x, y) - \\psi(\\theta)
+            \\log f(x|y) = -\\frac{d}{2}\\log(2\\pi y)
+            - \\frac{1}{2}\\log|\\Sigma|
+            - \\frac{1}{2y}(x-\\mu-\\gamma y)^T \\Sigma^{-1}(x-\\mu-\\gamma y)
+
+        Uses ``solve_triangular`` with the stored Cholesky factor
+        :math:`L_\\Sigma` instead of constructing the full natural parameter
+        vector and sufficient statistics.
 
         Parameters
         ----------
@@ -604,17 +612,49 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         self._check_fitted()
 
-        theta = self.natural_params
-        t_xy = self._sufficient_statistics(x, y)
-        log_h = self._log_base_measure(x, y)
-        psi = self._log_partition(theta)
+        x = np.asarray(x, dtype=float)
+        y = np.asarray(y, dtype=float)
+        d = self._d
+        mu = self._mu
+        gamma = self._gamma
+        L = self._L_Sigma
+        log_det = self.log_det_Sigma
 
-        # Handle single vs multiple observations
-        if t_xy.ndim == 1:
-            log_h_scalar = float(log_h) if np.ndim(log_h) == 0 else float(log_h.flat[0])
-            return log_h_scalar + np.dot(theta, t_xy) - psi
-        else:
-            return log_h + t_xy @ theta - psi
+        # Mixing distribution logpdf
+        mixing_dist = self._create_mixing_distribution()
+
+        # Handle single observation
+        if y.ndim == 0 or (y.ndim == 1 and len(y) == 1):
+            y_scalar = float(y)
+            if x.ndim == 2 and x.shape[0] == 1:
+                x = x[0]
+
+            diff = x - mu - gamma * y_scalar
+            z = solve_triangular(L, diff, lower=True)
+            mahal = float(z @ z) / y_scalar
+
+            log_normal = (-0.5 * d * np.log(2 * np.pi * y_scalar)
+                         - 0.5 * log_det - 0.5 * mahal)
+            log_mixing = float(mixing_dist.logpdf(np.atleast_1d(y_scalar)))
+            return log_normal + log_mixing
+
+        # Handle multiple observations
+        n = len(y)
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
+
+        # diff_i = x_i - mu - gamma * y_i, shape (n, d)
+        diff = x - mu - np.outer(y, gamma)
+
+        # z_i = L^{-1} diff_i via solve_triangular, shape (d, n)
+        Z = solve_triangular(L, diff.T, lower=True)
+        mahal = np.sum(Z ** 2, axis=0) / y  # (n,)
+
+        log_normal = (-0.5 * d * np.log(2 * np.pi * y)
+                     - 0.5 * log_det - 0.5 * mahal)
+        log_mixing = mixing_dist.logpdf(y)
+
+        return log_normal + log_mixing
 
     # ========================================================================
     # Random sampling

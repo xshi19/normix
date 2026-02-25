@@ -289,7 +289,7 @@ class ExponentialFamily(Distribution):
         Set internal state from classical parameters.
 
         Parse classical params, store as named attributes (e.g.,
-        ``self._rate``, ``self._mu``, ``self._L``), set
+        ``self._alpha``, ``self._mu``, ``self._L_Sigma``), set
         ``self._fitted = True``, and call ``self._invalidate_cache()``.
 
         Parameters

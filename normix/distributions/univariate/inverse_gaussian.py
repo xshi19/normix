@@ -110,8 +110,8 @@ class InverseGaussian(ExponentialFamily):
     
     def __init__(self):
         super().__init__()
-        self._mean_param = None
-        self._shape = None
+        self._mu = None
+        self._lambda = None
 
     # ================================================================
     # New interface: internal state management
@@ -123,8 +123,8 @@ class InverseGaussian(ExponentialFamily):
             raise ValueError(f"Mean must be positive, got {mean}")
         if shape <= 0:
             raise ValueError(f"Shape must be positive, got {shape}")
-        self._mean_param = float(mean)
-        self._shape = float(shape)
+        self._mu = float(mean)
+        self._lambda = float(shape)
         theta = np.array([-shape / (2 * mean**2), -shape / 2])
         self._fitted = True
         self._invalidate_cache()
@@ -133,18 +133,18 @@ class InverseGaussian(ExponentialFamily):
         """Set internal state from natural parameters."""
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
-        self._shape = float(-2 * theta[1])
-        self._mean_param = float(np.sqrt(theta[1] / theta[0]))
+        self._lambda = float(-2 * theta[1])
+        self._mu = float(np.sqrt(theta[1] / theta[0]))
         self._fitted = True
         self._invalidate_cache()
 
     def _compute_natural_params(self):
         """Compute natural parameters: θ = [-λ/(2μ²), -λ/2]."""
-        return np.array([-self._shape / (2 * self._mean_param**2), -self._shape / 2])
+        return np.array([-self._lambda / (2 * self._mu**2), -self._lambda / 2])
 
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        return InverseGaussianParams(mean=self._mean_param, shape=self._shape)
+        return InverseGaussianParams(mean=self._mu, shape=self._lambda)
 
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ < 0, θ₂ < 0."""
@@ -189,6 +189,10 @@ class InverseGaussian(ExponentialFamily):
         result[~mask] = -np.inf
         return result
     
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly: η = [μ, 1/μ + 1/λ]."""
+        return np.array([self._mu, 1.0 / self._mu + 1.0 / self._lambda])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = [μ, 1/μ + 1/λ].
@@ -269,7 +273,7 @@ class InverseGaussian(ExponentialFamily):
         
         # numpy.random.wald uses the same parameterization:
         # mean = μ, scale = λ
-        return rng.wald(mean=self._mean_param, scale=self._shape, size=size)
+        return rng.wald(mean=self._mu, scale=self._lambda, size=size)
     
     def mean(self) -> float:
         """
@@ -284,7 +288,7 @@ class InverseGaussian(ExponentialFamily):
             Mean of the distribution.
         """
         self._check_fitted()
-        return self._mean_param
+        return self._mu
     
     def var(self) -> float:
         """
@@ -299,7 +303,7 @@ class InverseGaussian(ExponentialFamily):
             Variance of the distribution.
         """
         self._check_fitted()
-        return (self._mean_param**3) / self._shape
+        return (self._mu**3) / self._lambda
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -323,8 +327,8 @@ class InverseGaussian(ExponentialFamily):
         
         # scipy.stats.invgauss uses (mu, scale) where:
         # scipy_mu = μ/λ, scipy_scale = λ
-        scipy_mu = self._mean_param / self._shape
-        scipy_scale = self._shape
+        scipy_mu = self._mu / self._lambda
+        scipy_scale = self._lambda
         
         result = invgauss.cdf(x, mu=scipy_mu, scale=scipy_scale)
         

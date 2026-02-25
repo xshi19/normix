@@ -64,10 +64,10 @@ class JointNormalInverseGamma(JointNormalMixture):
     ----------
     _d : int or None
         Dimension of X.
-    _shape : float or None
-        InverseGamma shape parameter.
-    _rate : float or None
-        InverseGamma rate parameter.
+    _alpha : float or None
+        InverseGamma shape parameter :math:`\\alpha`.
+    _beta : float or None
+        InverseGamma rate parameter :math:`\\beta`.
 
     Examples
     --------
@@ -107,8 +107,8 @@ class JointNormalInverseGamma(JointNormalMixture):
 
     def __init__(self, d=None):
         super().__init__(d)
-        self._shape: Optional[float] = None
-        self._rate: Optional[float] = None
+        self._alpha: Optional[float] = None
+        self._beta: Optional[float] = None
 
     @classmethod
     def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
@@ -120,8 +120,8 @@ class JointNormalInverseGamma(JointNormalMixture):
     # ========================================================================
 
     def _store_mixing_params(self, *, shape, rate) -> None:
-        self._shape = float(shape)
-        self._rate = float(rate)
+        self._alpha = float(shape)
+        self._beta = float(rate)
 
     def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
@@ -129,20 +129,20 @@ class JointNormalInverseGamma(JointNormalMixture):
         theta_2 = theta[1]
         theta_5 = theta[3 + d:3 + 2 * d]
         mu_quad = 0.5 * (self._mu @ theta_5)
-        self._shape = float(-(theta_1 + d / 2) - 1)
-        self._rate = float(-theta_2 - mu_quad)
+        self._alpha = float(-(theta_1 + d / 2) - 1)
+        self._beta = float(-theta_2 - mu_quad)
 
     def _compute_mixing_theta(self, theta_4, theta_5):
         d = self._d
-        alpha = self._shape
-        beta = self._rate
+        alpha = self._alpha
+        beta = self._beta
         theta_1 = -(alpha + 1) - d / 2
         theta_2 = -(beta + 0.5 * (self._mu @ theta_5))
         theta_3 = -0.5 * (self._gamma @ theta_4)
         return theta_1, theta_2, theta_3
 
     def _create_mixing_distribution(self):
-        return InverseGamma.from_classical_params(shape=self._shape, rate=self._rate)
+        return InverseGamma.from_classical_params(shape=self._alpha, rate=self._beta)
 
     # ========================================================================
     # Natural parameter support
@@ -214,7 +214,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         Sigma = self._L_Sigma @ self._L_Sigma.T
         return NormalInverseGammaParams(
             mu=self._mu.copy(), gamma=self._gamma.copy(), sigma=Sigma,
-            shape=self._shape, rate=self._rate
+            shape=self._alpha, rate=self._beta
         )
 
     # ========================================================================
@@ -271,6 +271,42 @@ class JointNormalInverseGamma(JointNormalMixture):
     # ========================================================================
     # Expectation parameters (analytical)
     # ========================================================================
+
+    def _compute_expectation_params(self) -> NDArray:
+        """
+        Compute expectation parameters directly from internal attributes.
+
+        Avoids the round-trip through natural parameters.
+        """
+        mu = self._mu
+        gamma = self._gamma
+        Sigma = self._L_Sigma @ self._L_Sigma.T
+        alpha = self._alpha
+        beta = self._beta
+        d = self._d
+
+        E_log_Y = np.log(beta) - digamma(alpha)
+        E_inv_Y = alpha / beta
+        E_Y = beta / (alpha - 1) if alpha > 1 else np.inf
+
+        if np.isfinite(E_Y):
+            E_X = mu + gamma * E_Y
+        else:
+            E_X = np.full(d, np.inf)
+
+        E_X_inv_Y = mu * E_inv_Y + gamma
+
+        if np.isfinite(E_Y):
+            E_XXT_inv_Y = (Sigma + np.outer(mu, mu) * E_inv_Y +
+                          np.outer(gamma, gamma) * E_Y +
+                          np.outer(mu, gamma) + np.outer(gamma, mu))
+        else:
+            E_XXT_inv_Y = np.full((d, d), np.inf)
+
+        return np.concatenate([
+            [E_log_Y, E_inv_Y, E_Y],
+            E_X, E_X_inv_Y, E_XXT_inv_Y.flatten()
+        ])
 
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """

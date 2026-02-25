@@ -108,8 +108,8 @@ class InverseGamma(ExponentialFamily):
     
     def __init__(self):
         super().__init__()
-        self._shape = None
-        self._rate = None
+        self._alpha = None
+        self._beta = None
 
     # ================================================================
     # New interface: internal state management
@@ -121,8 +121,8 @@ class InverseGamma(ExponentialFamily):
             raise ValueError(f"Shape must be positive, got {shape}")
         if rate <= 0:
             raise ValueError(f"Rate must be positive, got {rate}")
-        self._shape = float(shape)
-        self._rate = float(rate)
+        self._alpha = float(shape)
+        self._beta = float(rate)
         self._fitted = True
         self._invalidate_cache()
 
@@ -130,18 +130,18 @@ class InverseGamma(ExponentialFamily):
         """Set internal state from natural parameters."""
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
-        self._shape = float(-theta[1] - 1)
-        self._rate = float(theta[0])
+        self._alpha = float(-theta[1] - 1)
+        self._beta = float(theta[0])
         self._fitted = True
         self._invalidate_cache()
 
     def _compute_natural_params(self):
         """Compute natural parameters from internal state: θ = [β, -(α+1)]."""
-        return np.array([self._rate, -(self._shape + 1)])
+        return np.array([self._beta, -(self._alpha + 1)])
 
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        return InverseGammaParams(shape=self._shape, rate=self._rate)
+        return InverseGammaParams(shape=self._alpha, rate=self._beta)
 
     def _get_natural_param_support(self):
         """Natural parameter support: θ₁ > 0, θ₂ < -1."""
@@ -198,6 +198,11 @@ class InverseGamma(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
+    def _compute_expectation_params(self) -> NDArray:
+        """Compute expectation parameters directly: η = [-α/β, log(β) - ψ(α)]."""
+        return np.array([-self._alpha / self._beta,
+                         np.log(self._beta) - digamma(self._alpha)])
+
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
         """
         Analytical gradient: η = ∇ψ(θ) = [-α/β, log(β) - ψ(α)].
@@ -324,7 +329,7 @@ class InverseGamma(ExponentialFamily):
         # Generate using scipy parameterization (a, scale)
         # scipy uses scale parameter, we use rate, so scale = rate
         from scipy.stats import invgamma
-        return invgamma.rvs(a=self._shape, scale=self._rate, size=size, random_state=rng)
+        return invgamma.rvs(a=self._alpha, scale=self._beta, size=size, random_state=rng)
     
     def mean(self) -> float:
         """
@@ -341,9 +346,9 @@ class InverseGamma(ExponentialFamily):
             Mean of the distribution, or infinity if undefined.
         """
         self._check_fitted()
-        if self._shape <= 1:
+        if self._alpha <= 1:
             return np.inf
-        return self._rate / (self._shape - 1)
+        return self._beta / (self._alpha - 1)
     
     def var(self) -> float:
         """
@@ -360,9 +365,9 @@ class InverseGamma(ExponentialFamily):
             Variance of the distribution, or infinity if undefined.
         """
         self._check_fitted()
-        if self._shape <= 2:
+        if self._alpha <= 2:
             return np.inf
-        return (self._rate**2) / ((self._shape - 1)**2 * (self._shape - 2))
+        return (self._beta**2) / ((self._alpha - 1)**2 * (self._alpha - 2))
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -385,7 +390,7 @@ class InverseGamma(ExponentialFamily):
         x = np.asarray(x)
         
         # CDF: scipy uses scale parameter
-        result = invgamma.cdf(x, a=self._shape, scale=self._rate)
+        result = invgamma.cdf(x, a=self._alpha, scale=self._beta)
         
         # Return scalar if input was scalar
         if np.isscalar(x) or (hasattr(x, 'shape') and x.shape == ()):

@@ -43,7 +43,8 @@ Design Principles
 
 1. **Named attributes are the single source of truth** -- there is no
    centralized ``_natural_params`` tuple.  Each subclass stores its own
-   canonical representation (e.g., ``_shape`` / ``_rate`` for Gamma,
+   canonical representation using Greek-letter names matching the
+   mathematical notation (e.g., ``_alpha`` / ``_beta`` for Gamma,
    ``_mu`` / ``_L_Sigma`` for MultivariateNormal).
 
 2. **Cached properties are lazy** -- ``natural_params``, ``classical_params``,
@@ -88,22 +89,22 @@ subclass defines its own (see table below).
      - Internal attributes
      - Description
    * - ``Exponential``
-     - ``_rate``
+     - ``_lambda``
      - Rate :math:`\lambda`
    * - ``Gamma``
-     - ``_shape``, ``_rate``
+     - ``_alpha``, ``_beta``
      - Shape :math:`\alpha`, rate :math:`\beta`
    * - ``InverseGamma``
-     - ``_shape``, ``_rate``
+     - ``_alpha``, ``_beta``
      - Shape :math:`\alpha`, rate :math:`\beta`
    * - ``InverseGaussian``
-     - ``_delta``, ``_eta``
-     - :math:`\delta`, :math:`\eta`
+     - ``_mu``, ``_lambda``
+     - Mean :math:`\mu`, shape :math:`\lambda`
    * - ``GeneralizedInverseGaussian``
      - ``_p``, ``_a``, ``_b``
      - :math:`p`, :math:`a`, :math:`b`
    * - ``MultivariateNormal``
-     - ``_mu``, ``_L``
+     - ``_mu``, ``_L_Sigma``
      - Mean :math:`\mu`, lower Cholesky of :math:`\Sigma`
    * - ``JointNormalMixture`` subclasses
      - ``_mu``, ``_gamma``, ``_L_Sigma``, + mixing params
@@ -208,19 +209,20 @@ efficiency.
      - Overridden by
    * - ``_compute_expectation_params()``
      - Calls ``_natural_to_expectation(natural_params)``
-     - (none currently)
+     - All distributions (direct from internal attrs, avoids natural param round-trip)
    * - ``_natural_to_expectation(theta)``
      - Numerical gradient of ``_log_partition`` via ``scipy.differentiate``
-     - Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal
+     - Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal,
+       all JointNormalMixture subclasses
    * - ``_expectation_to_natural(eta)``
      - L-BFGS-B optimisation
      - Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal
    * - ``fisher_information(theta)``
      - Numerical Hessian of ``_log_partition`` via ``scipy.differentiate``
      - Exponential, Gamma
-   * - ``logpdf(x)``
+   * - ``logpdf(x)`` / ``logpdf(x, y)``
      - Generic :math:`\log h + \theta^T t - \psi`
-     - MultivariateNormal (Cholesky-based)
+     - MultivariateNormal, JointNormalMixture (Cholesky-based)
 
 
 .. _joint-mixture-attrs:
@@ -272,10 +274,10 @@ All subclasses share three normal-component attributes stored at the
      - Attributes
      - Mixing distribution
    * - ``JointVarianceGamma``
-     - ``_shape``, ``_rate``
+     - ``_alpha``, ``_beta``
      - :math:`Y \sim \text{Gamma}(\alpha, \beta)`
    * - ``JointNormalInverseGamma``
-     - ``_shape``, ``_rate``
+     - ``_alpha``, ``_beta``
      - :math:`Y \sim \text{InvGamma}(\alpha, \beta)`
    * - ``JointNormalInverseGaussian``
      - ``_delta``, ``_eta``
@@ -563,7 +565,7 @@ Parameter Flow
    ┌────────────────────────────────────────────────────────────┐
    │  Named Internal Attributes (source of truth)              │
    │                                                           │
-   │  _mu, _gamma, _L_Sigma, _delta, _eta, _shape, _rate, ... │
+   │  _mu, _gamma, _L_Sigma, _alpha, _beta, _delta, _eta, ... │
    └──────────────────┬─────────────────────────────────────────┘
                       │ _invalidate_cache()
                       ▼
@@ -610,9 +612,9 @@ Univariate (ExponentialFamily)
      - :math:`[\beta, -(\alpha+1)]`
      - :math:`[-\psi(\alpha)+\log\beta,\; \beta/(\alpha-1)]`
    * - ``InverseGaussian``
-     - :math:`\delta, \eta`
-     - :math:`[-\eta^2/2,\; -\delta^2/2]`
-     - :math:`[E[1/Y],\; E[Y]]`
+     - :math:`\mu, \lambda`
+     - :math:`[-\lambda/(2\mu^2),\; -\lambda/2]`
+     - :math:`[\mu,\; 1/\mu + 1/\lambda]`
    * - ``GIG``
      - :math:`p, a, b`
      - :math:`[p-1, -b/2, -a/2]`
@@ -621,7 +623,7 @@ Univariate (ExponentialFamily)
 Multivariate (ExponentialFamily)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``MultivariateNormal`` stores ``_mu`` (mean) and ``_L`` (lower Cholesky of
+``MultivariateNormal`` stores ``_mu`` (mean) and ``_L_Sigma`` (lower Cholesky of
 :math:`\Sigma`).  Overrides ``logpdf`` with a Cholesky-based implementation
 using ``solve_triangular``.
 

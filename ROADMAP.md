@@ -466,6 +466,12 @@ These files are kept for reference during refactoring. Do not import from legacy
   - [x] `_create_mixing_distribution()` replaces theta-based mixing construction
   - [x] Direct attribute access in marginal logpdf / EM (no `classical_params` getter)
   - [x] Removed deprecated: `get_L_Sigma`, `set_L_Sigma`, `clear_L_Sigma_cache`, `_extract_normal_params_from_theta`, `_get_normal_params`
+- [x] Refactoring: Greek-letter naming, Cholesky logpdf, expectation params optimization
+  - [x] Unified internal attribute naming to Greek letters (e.g., `_shape`/`_rate` → `_alpha`/`_beta`)
+  - [x] `_L` → `_L_Sigma` in MultivariateNormal for consistency with mixtures
+  - [x] `_compute_expectation_params()` overridden in all distributions (avoids natural param round-trip)
+  - [x] Cholesky-based `logpdf` in JointNormalMixture (decomposes as log f(x|y) + log f(y))
+  - [x] EM convergence simplified: uses Cholesky factor norm instead of reconstructing Σ
 - [ ] Step 7: Package integration
 
 ### Tests Completed (268 tests)

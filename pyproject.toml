@@ -105,5 +105,8 @@ exclude_lines = [
 [dependency-groups]
 dev = [
     "nbconvert>=7.17.0",
+    "nbsphinx>=0.9.8",
+    "sphinx>=9.1.0",
+    "sphinx-rtd-theme>=3.1.0",
 ]
 
