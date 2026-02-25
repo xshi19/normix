@@ -667,10 +667,18 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.base.mixture.JointNormalMixture.logpdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Log joint probability density function :math:`\\log f(x, y)`.</span>
+<span class="sd">        Log joint probability density using Cholesky-based computation.</span>
+
+<span class="sd">        Decomposes as :math:`\\log f(x,y) = \\log f(x|y) + \\log f_Y(y)`:</span>
 
 <span class="sd">        .. math::</span>
-<span class="sd">            \\log f(x, y) = \\log h(x, y) + \\theta^T t(x, y) - \\psi(\\theta)</span>
+<span class="sd">            \\log f(x|y) = -\\frac{d}{2}\\log(2\\pi y)</span>
+<span class="sd">            - \\frac{1}{2}\\log|\\Sigma|</span>
+<span class="sd">            - \\frac{1}{2y}(x-\\mu-\\gamma y)^T \\Sigma^{-1}(x-\\mu-\\gamma y)</span>
+
+<span class="sd">        Uses ``solve_triangular`` with the stored Cholesky factor</span>
+<span class="sd">        :math:`L_\\Sigma` instead of constructing the full natural parameter</span>
+<span class="sd">        vector and sufficient statistics.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -686,17 +694,49 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
 
-        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
-        <span class="n">t_xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">log_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">psi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span>
+        <span class="n">log_det</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_det_Sigma</span>
 
-        <span class="c1"># Handle single vs multiple observations</span>
-        <span class="k">if</span> <span class="n">t_xy</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">log_h_scalar</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_h</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">log_h</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_h</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">log_h_scalar</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">t_xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">log_h</span> <span class="o">+</span> <span class="n">t_xy</span> <span class="o">@</span> <span class="n">theta</span> <span class="o">-</span> <span class="n">psi</span></div>
+        <span class="c1"># Mixing distribution logpdf</span>
+        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
+
+        <span class="c1"># Handle single observation</span>
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">y_scalar</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">y_scalar</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">diff</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">mahal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">z</span> <span class="o">@</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="n">y_scalar</span>
+
+            <span class="n">log_normal</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">y_scalar</span><span class="p">)</span>
+                         <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mahal</span><span class="p">)</span>
+            <span class="n">log_mixing</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">y_scalar</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_mixing</span>
+
+        <span class="c1"># Handle multiple observations</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># diff_i = x_i - mu - gamma * y_i, shape (n, d)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+
+        <span class="c1"># z_i = L^{-1} diff_i via solve_triangular, shape (d, n)</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">diff</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">mahal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">y</span>  <span class="c1"># (n,)</span>
+
+        <span class="n">log_normal</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+                     <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mahal</span><span class="p">)</span>
+        <span class="n">log_mixing</span> <span class="o">=</span> <span class="n">mixing_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_mixing</span></div>
 
 
     <span class="c1"># ========================================================================</span>

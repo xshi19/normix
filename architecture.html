@@ -149,7 +149,8 @@ as lazy cached properties.</p></li>
 <ol class="arabic simple">
 <li><p><strong>Named attributes are the single source of truth</strong> – there is no
 centralized <code class="docutils literal notranslate"><span class="pre">_natural_params</span></code> tuple.  Each subclass stores its own
-canonical representation (e.g., <code class="docutils literal notranslate"><span class="pre">_shape</span></code> / <code class="docutils literal notranslate"><span class="pre">_rate</span></code> for Gamma,
+canonical representation using Greek-letter names matching the
+mathematical notation (e.g., <code class="docutils literal notranslate"><span class="pre">_alpha</span></code> / <code class="docutils literal notranslate"><span class="pre">_beta</span></code> for Gamma,
 <code class="docutils literal notranslate"><span class="pre">_mu</span></code> / <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> for MultivariateNormal).</p></li>
 <li><p><strong>Cached properties are lazy</strong> – <code class="docutils literal notranslate"><span class="pre">natural_params</span></code>, <code class="docutils literal notranslate"><span class="pre">classical_params</span></code>,
 and <code class="docutils literal notranslate"><span class="pre">expectation_params</span></code> are computed on demand from internal state
@@ -189,27 +190,27 @@ subclass defines its own (see table below).</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_lambda</span></code></p></td>
 <td><p>Rate <span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Gamma</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">_beta</span></code></p></td>
 <td><p>Shape <span class="math notranslate nohighlight">\(\alpha\)</span>, rate <span class="math notranslate nohighlight">\(\beta\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGamma</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">_beta</span></code></p></td>
 <td><p>Shape <span class="math notranslate nohighlight">\(\alpha\)</span>, rate <span class="math notranslate nohighlight">\(\beta\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_delta</span></code>, <code class="docutils literal notranslate"><span class="pre">_eta</span></code></p></td>
-<td><p><span class="math notranslate nohighlight">\(\delta\)</span>, <span class="math notranslate nohighlight">\(\eta\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_lambda</span></code></p></td>
+<td><p>Mean <span class="math notranslate nohighlight">\(\mu\)</span>, shape <span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">_p</span></code>, <code class="docutils literal notranslate"><span class="pre">_a</span></code>, <code class="docutils literal notranslate"><span class="pre">_b</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(p\)</span>, <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_L</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>, <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code></p></td>
 <td><p>Mean <span class="math notranslate nohighlight">\(\mu\)</span>, lower Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> subclasses</p></td>
@@ -355,11 +356,12 @@ efficiency.</p>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_compute_expectation_params()</span></code></p></td>
 <td><p>Calls <code class="docutils literal notranslate"><span class="pre">_natural_to_expectation(natural_params)</span></code></p></td>
-<td><p>(none currently)</p></td>
+<td><p>All distributions (direct from internal attrs, avoids natural param round-trip)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_natural_to_expectation(theta)</span></code></p></td>
 <td><p>Numerical gradient of <code class="docutils literal notranslate"><span class="pre">_log_partition</span></code> via <code class="docutils literal notranslate"><span class="pre">scipy.differentiate</span></code></p></td>
-<td><p>Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal</p></td>
+<td><p>Exponential, Gamma, InverseGamma, InverseGaussian, GIG, MultivariateNormal,
+all JointNormalMixture subclasses</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_expectation_to_natural(eta)</span></code></p></td>
 <td><p>L-BFGS-B optimisation</p></td>
@@ -369,9 +371,9 @@ efficiency.</p>
 <td><p>Numerical Hessian of <code class="docutils literal notranslate"><span class="pre">_log_partition</span></code> via <code class="docutils literal notranslate"><span class="pre">scipy.differentiate</span></code></p></td>
 <td><p>Exponential, Gamma</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf(x)</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">logpdf(x)</span></code> / <code class="docutils literal notranslate"><span class="pre">logpdf(x,</span> <span class="pre">y)</span></code></p></td>
 <td><p>Generic <span class="math notranslate nohighlight">\(\log h + \theta^T t - \psi\)</span></p></td>
-<td><p>MultivariateNormal (Cholesky-based)</p></td>
+<td><p>MultivariateNormal, JointNormalMixture (Cholesky-based)</p></td>
 </tr>
 </tbody>
 </table>
@@ -437,11 +439,11 @@ efficiency.</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">_beta</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">_shape</span></code>, <code class="docutils literal notranslate"><span class="pre">_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">_alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">_beta</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code></p></td>
@@ -843,7 +845,7 @@ differ per mixing distribution):</p>
 ┌────────────────────────────────────────────────────────────┐
 │  Named Internal Attributes (source of truth)              │
 │                                                           │
-│  _mu, _gamma, _L_Sigma, _delta, _eta, _shape, _rate, ... │
+│  _mu, _gamma, _L_Sigma, _alpha, _beta, _delta, _eta, ... │
 └──────────────────┬─────────────────────────────────────────┘
                    │ _invalidate_cache()
                    ▼
@@ -897,9 +899,9 @@ pre-computed Cholesky factors, bypassing all matrix decompositions.</p>
 <td><p><span class="math notranslate nohighlight">\([-\psi(\alpha)+\log\beta,\; \beta/(\alpha-1)]\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></td>
-<td><p><span class="math notranslate nohighlight">\(\delta, \eta\)</span></p></td>
-<td><p><span class="math notranslate nohighlight">\([-\eta^2/2,\; -\delta^2/2]\)</span></p></td>
-<td><p><span class="math notranslate nohighlight">\([E[1/Y],\; E[Y]]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mu, \lambda\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([-\lambda/(2\mu^2),\; -\lambda/2]\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([\mu,\; 1/\mu + 1/\lambda]\)</span></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GIG</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(p, a, b\)</span></p></td>
@@ -911,7 +913,7 @@ pre-computed Cholesky factors, bypassing all matrix decompositions.</p>
 </section>
 <section id="multivariate-exponentialfamily">
 <h3>Multivariate (ExponentialFamily)<a class="headerlink" href="#multivariate-exponentialfamily" title="Link to this heading"></a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> stores <code class="docutils literal notranslate"><span class="pre">_mu</span></code> (mean) and <code class="docutils literal notranslate"><span class="pre">_L</span></code> (lower Cholesky of
+<p><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> stores <code class="docutils literal notranslate"><span class="pre">_mu</span></code> (mean) and <code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code> (lower Cholesky of
 <span class="math notranslate nohighlight">\(\Sigma\)</span>).  Overrides <code class="docutils literal notranslate"><span class="pre">logpdf</span></code> with a Cholesky-based implementation
 using <code class="docutils literal notranslate"><span class="pre">solve_triangular</span></code>.</p>
 </section>

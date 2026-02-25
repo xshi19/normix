@@ -1133,9 +1133,15 @@ statistics:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.logpdf">
 <span class="sig-name descname"><span class="pre">logpdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/base/mixture.html#JointNormalMixture.logpdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.logpdf" title="Link to this definition"></a></dt>
-<dd><p>Log joint probability density function <span class="math notranslate nohighlight">\(\log f(x, y)\)</span>.</p>
+<dd><p>Log joint probability density using Cholesky-based computation.</p>
+<p>Decomposes as <span class="math notranslate nohighlight">\(\log f(x,y) = \log f(x|y) + \log f_Y(y)\)</span>:</p>
 <div class="math notranslate nohighlight">
-\[\log f(x, y) = \log h(x, y) + \theta^T t(x, y) - \psi(\theta)\]</div>
+\[\log f(x|y) = -\frac{d}{2}\log(2\pi y)
+- \frac{1}{2}\log|\Sigma|
+- \frac{1}{2y}(x-\mu-\gamma y)^T \Sigma^{-1}(x-\mu-\gamma y)\]</div>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">solve_triangular</span></code> with the stored Cholesky factor
+<span class="math notranslate nohighlight">\(L_\Sigma\)</span> instead of constructing the full natural parameter
+vector and sufficient statistics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2748,7 +2754,7 @@ For d=1: <span class="math notranslate nohighlight">\(\mu\)</span> is scalar, <s
 covariance matrix rather than the full covariance or its inverse:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">_mu</span></code>: mean vector, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_L</span></code>: lower Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_L_Sigma</span></code>: lower Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code></p></li>
 </ul>
 <p>Derived quantities <code class="docutils literal notranslate"><span class="pre">log_det_Sigma</span></code> and <code class="docutils literal notranslate"><span class="pre">L_inv</span></code> are cached properties,
 computed on demand and invalidated when parameters change.</p>
@@ -2786,10 +2792,10 @@ computed on demand and invalidated when parameters change.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal._L">
-<span class="sig-name descname"><span class="pre">_L</span></span><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal._L" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal._L_Sigma">
+<span class="sig-name descname"><span class="pre">_L_Sigma</span></span><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal._L_Sigma" title="Link to this definition"></a></dt>
 <dd><p>Lower Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.
-<span class="math notranslate nohighlight">\(\Sigma = L L^T\)</span>.</p>
+<span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^T\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray or None</p>
@@ -2924,7 +2930,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f12ab4c94f0&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f0cc688ea50&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3003,7 +3009,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f12ab4c94f0&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f0cc688ea50&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
