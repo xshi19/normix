@@ -625,7 +625,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         # Handle single observation
         if y.ndim == 0 or (y.ndim == 1 and len(y) == 1):
-            y_scalar = float(y)
+            y_scalar = float(y) if y.ndim == 0 else float(y[0])
             if x.ndim == 2 and x.shape[0] == 1:
                 x = x[0]
 
@@ -635,7 +635,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
             log_normal = (-0.5 * d * np.log(2 * np.pi * y_scalar)
                          - 0.5 * log_det - 0.5 * mahal)
-            log_mixing = float(mixing_dist.logpdf(np.atleast_1d(y_scalar)))
+            log_mixing = float(np.atleast_1d(mixing_dist.logpdf(np.atleast_1d(y_scalar)))[0])
             return log_normal + log_mixing
 
         # Handle multiple observations
