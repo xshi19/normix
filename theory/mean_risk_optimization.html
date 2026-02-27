@@ -1,0 +1,306 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mean-Risk Optimization for Normal Mixture Distributions &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CVaR Derivatives for Normal Mixture Distributions" href="cvar_derivatives.html" />
+    <link rel="prev" title="Online EM Algorithm" href="online_em.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Mean-Risk Optimization for Normal Mixture Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#coherent-risk-measures">Coherent Risk Measures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#risk-monotonicity-for-normal-mixtures">Risk Monotonicity for Normal Mixtures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Mean-Risk Optimization for Normal Mixture Distributions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/mean_risk_optimization.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mean-risk-optimization-for-normal-mixture-distributions">
+<h1>Mean-Risk Optimization for Normal Mixture Distributions<a class="headerlink" href="#mean-risk-optimization-for-normal-mixture-distributions" title="Link to this heading"></a></h1>
+<p>This section develops the mean-risk portfolio optimization framework for
+normal mixture distributions. The key insight is that the normal mixture
+structure <a class="reference internal" href="gh.html#equation-gh-def">(1)</a> enables a dimension reduction from <span class="math notranslate nohighlight">\(d\)</span> assets
+to a two-dimensional problem.</p>
+<section id="coherent-risk-measures">
+<h2>Coherent Risk Measures<a class="headerlink" href="#coherent-risk-measures" title="Link to this heading"></a></h2>
+<p><strong>Definition.</strong> Let <span class="math notranslate nohighlight">\((\Omega, \mathcal{F}, \mathbb{P})\)</span> be a
+probability space and <span class="math notranslate nohighlight">\(\mathcal{L}(\Omega, \mathcal{F})\)</span> the set of
+real-valued random variables. A <strong>coherent risk measure</strong> is a function
+<span class="math notranslate nohighlight">\(\rho : \mathcal{L} \to \mathbb{R}\)</span> satisfying <a class="reference internal" href="#artzner1999" id="id1"><span>[Artzner1999]</span></a>:</p>
+<ol class="arabic simple">
+<li><p><em>Monotonicity:</em> If <span class="math notranslate nohighlight">\(X \leq Y\)</span>, then <span class="math notranslate nohighlight">\(\rho(X) \geq \rho(Y)\)</span>.</p></li>
+<li><p><em>Translation invariance:</em> <span class="math notranslate nohighlight">\(\rho(X + c) = \rho(X) - c\)</span> for all <span class="math notranslate nohighlight">\(c \in \mathbb{R}\)</span>.</p></li>
+<li><p><em>Positive homogeneity:</em> <span class="math notranslate nohighlight">\(\rho(\lambda X) = \lambda \rho(X)\)</span> for all <span class="math notranslate nohighlight">\(\lambda \geq 0\)</span>.</p></li>
+<li><p><em>Subadditivity:</em> <span class="math notranslate nohighlight">\(\rho(X + Y) \leq \rho(X) + \rho(Y)\)</span>.</p></li>
+</ol>
+<p><strong>Definition.</strong> For a continuous random variable <span class="math notranslate nohighlight">\(X\)</span> and
+<span class="math notranslate nohighlight">\(\alpha \in (0, 1)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\operatorname{VaR}_\alpha(X) &amp;:= -\inf\{x \in \mathbb{R} :
+\mathbb{P}(X \leq x) &gt; \alpha\}, \\
+\operatorname{CVaR}_\alpha(X) &amp;:= -E[X \mid X \leq
+-\operatorname{VaR}_\alpha(X)].\end{split}\]</div>
+<p>VaR is widely used but is <strong>not</strong> coherent (it lacks subadditivity). CVaR
+is coherent.</p>
+</section>
+<section id="risk-monotonicity-for-normal-mixtures">
+<h2>Risk Monotonicity for Normal Mixtures<a class="headerlink" href="#risk-monotonicity-for-normal-mixtures" title="Link to this heading"></a></h2>
+<p>Recall that a normal mixture random vector can be written as:</p>
+<div class="math notranslate nohighlight" id="equation-nm-def">
+<span class="eqno">(1)<a class="headerlink" href="#equation-nm-def" title="Link to this equation"></a></span>\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mu, \gamma \in \mathbb{R}^d\)</span>, <span class="math notranslate nohighlight">\(Y \geq 0\)</span> is a univariate
+random variable, and <span class="math notranslate nohighlight">\(Z \sim N(0, \Sigma)\)</span> is independent of <span class="math notranslate nohighlight">\(Y\)</span>.</p>
+<p>Consider the univariate case <span class="math notranslate nohighlight">\(d = 1\)</span> with <span class="math notranslate nohighlight">\(Z \sim N(0, \sigma^2)\)</span>,
+<span class="math notranslate nohighlight">\(\sigma &gt; 0\)</span>.</p>
+<p><strong>Theorem 1.</strong> Let <span class="math notranslate nohighlight">\(\rho\)</span> be a coherent risk measure that depends only
+on the distribution. If <span class="math notranslate nohighlight">\(X\)</span> follows <a class="reference internal" href="#equation-nm-def">(1)</a>, then:</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(\mu \mapsto \rho(X)\)</span> is decreasing.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\gamma \mapsto \rho(X)\)</span> is non-increasing.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\sigma \mapsto \rho(X)\)</span> is non-decreasing on <span class="math notranslate nohighlight">\(\mathbb{R}^+\)</span>.</p></li>
+</ol>
+<p><em>Proof.</em></p>
+<p>(i) By translation invariance:
+<span class="math notranslate nohighlight">\(\rho(X) = \rho(\gamma Y + \sqrt{Y} \sigma Z) - \mu\)</span>, which is
+decreasing in <span class="math notranslate nohighlight">\(\mu\)</span>.</p>
+<ol class="lowerroman simple" start="2">
+<li><p>For any <span class="math notranslate nohighlight">\(\Delta\gamma \geq 0\)</span>:</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\begin{split}\rho((\gamma + \Delta\gamma) Y + \sqrt{Y} \sigma Z)
+&amp;\leq \rho(\gamma Y + \sqrt{Y} \sigma Z)
++ \rho(\Delta\gamma \, Y) \\
+&amp;\leq \rho(\gamma Y + \sqrt{Y} \sigma Z),\end{split}\]</div>
+<p>since <span class="math notranslate nohighlight">\(\rho(\Delta\gamma \, Y) \leq \rho(0) = 0\)</span> by monotonicity
+(<span class="math notranslate nohighlight">\(\Delta\gamma \, Y \geq 0\)</span>).</p>
+<p>(iii) The map <span class="math notranslate nohighlight">\(\sigma \mapsto \rho(\gamma Y + \sigma \sqrt{Y} Z)\)</span> is
+convex:</p>
+<div class="math notranslate nohighlight">
+\[\rho(\gamma Y + (a \sigma_1 + (1-a) \sigma_2) \sqrt{Y} Z)
+\leq a \, \rho(\gamma Y + \sigma_1 \sqrt{Y} Z)
++ (1-a) \, \rho(\gamma Y + \sigma_2 \sqrt{Y} Z),\]</div>
+<p>and symmetric about zero (since
+<span class="math notranslate nohighlight">\(\gamma Y + \sigma \sqrt{Y} Z \stackrel{d}{=}
+\gamma Y - \sigma \sqrt{Y} Z\)</span>). A convex symmetric function is
+non-decreasing on <span class="math notranslate nohighlight">\(\mathbb{R}^+\)</span>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>Intuitively, <a class="reference internal" href="#equation-nm-def">(1)</a> can be viewed as a portfolio with a risk-free
+component <span class="math notranslate nohighlight">\(\mu\)</span>, a non-negative-return asset with weight <span class="math notranslate nohighlight">\(\gamma\)</span>,
+and a risky asset with weight <span class="math notranslate nohighlight">\(\sigma\)</span>. Any coherent risk measure
+prefers large <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\gamma\)</span> and small <span class="math notranslate nohighlight">\(\sigma\)</span>.</p>
+</section>
+<section id="portfolio-return-as-normal-mixture">
+<h2>Portfolio Return as Normal Mixture<a class="headerlink" href="#portfolio-return-as-normal-mixture" title="Link to this heading"></a></h2>
+<p>In the <span class="math notranslate nohighlight">\(d\)</span>-dimensional case, a portfolio with weight
+<span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span> (<span class="math notranslate nohighlight">\(w^\top \mathbf{e} = 1\)</span>) has return:</p>
+<div class="math notranslate nohighlight" id="equation-nm-portfolio">
+<span class="eqno">(2)<a class="headerlink" href="#equation-nm-portfolio" title="Link to this equation"></a></span>\[w^\top X \stackrel{d}{=} w^\top \mu
++ w^\top \gamma \, Y + \sqrt{w^\top \Sigma w \, Y} \, Z,\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z \sim N(0, 1)\)</span>. The expected return is:</p>
+<div class="math notranslate nohighlight">
+\[E[w^\top X] = w^\top \mu + w^\top \gamma \, E[Y].\]</div>
+</section>
+<section id="mean-risk-optimization">
+<h2>Mean-Risk Optimization<a class="headerlink" href="#mean-risk-optimization" title="Link to this heading"></a></h2>
+<p>The generalized mean-risk optimization problem is:</p>
+<div class="math notranslate nohighlight" id="equation-mean-risk-opt">
+<span class="eqno">(3)<a class="headerlink" href="#equation-mean-risk-opt" title="Link to this equation"></a></span>\[\min_w \; \rho(w^\top X) \quad
+\text{s.t.} \quad w^\top \mathbf{e} = 1, \quad
+E[w^\top X] \geq m,\]</div>
+<p>where <span class="math notranslate nohighlight">\(m \in \mathbb{R}\)</span>.</p>
+</section>
+<section id="dimension-reduction-via-the-efficient-surface">
+<h2>Dimension Reduction via the Efficient Surface<a class="headerlink" href="#dimension-reduction-via-the-efficient-surface" title="Link to this heading"></a></h2>
+<p><strong>Proposition.</strong> The solution of <a class="reference internal" href="#equation-mean-risk-opt">(3)</a> is:</p>
+<div class="math notranslate nohighlight">
+\[w^* = \Sigma^{-1} [\mu \; \gamma \; \mathbf{e}] \, A^{-1}
+[\tilde{\mu}^* \; \tilde{\gamma}^* \; 1]^\top,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tilde{\mu}^*, \tilde{\gamma}^* \in \mathbb{R}\)</span> solve the
+two-dimensional problem:</p>
+<div class="math notranslate nohighlight">
+\[\min_{\tilde{\mu}, \tilde{\gamma}} \;
+\rho\!\left(\tilde{\mu} + \tilde{\gamma} \, Y
++ \sqrt{g(\tilde{\mu}, \tilde{\gamma}) \, Y} \, Z\right)
+\quad \text{s.t.} \quad
+\tilde{\mu} + \tilde{\gamma} \, E[Y] \geq m,\]</div>
+<p>with</p>
+<div class="math notranslate nohighlight">
+\[g(\tilde{\mu}, \tilde{\gamma}) = [\tilde{\mu}, \tilde{\gamma}, 1] \,
+A^{-1} [\tilde{\mu}, \tilde{\gamma}, 1]^\top, \qquad
+A = [\mu \; \gamma \; \mathbf{e}]^\top \Sigma^{-1}
+[\mu \; \gamma \; \mathbf{e}].\]</div>
+<p><em>Proof.</em> Define <span class="math notranslate nohighlight">\(w^*(\tilde{\mu}, \tilde{\gamma})\)</span> as the solution of:</p>
+<div class="math notranslate nohighlight" id="equation-constrained-opt">
+<span class="eqno">(4)<a class="headerlink" href="#equation-constrained-opt" title="Link to this equation"></a></span>\[w^*(\tilde{\mu}, \tilde{\gamma}) := \arg\min_w \rho(w^\top X)
+\quad \text{s.t.} \quad w^\top \mathbf{e} = 1, \;
+w^\top \mu = \tilde{\mu}, \; w^\top \gamma = \tilde{\gamma}.\]</div>
+<p>Then <a class="reference internal" href="#equation-mean-risk-opt">(3)</a> is equivalent to optimizing over
+<span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma})\)</span> with constraint
+<span class="math notranslate nohighlight">\(\tilde{\mu} + \tilde{\gamma} E[Y] \geq m\)</span>.</p>
+<p>By Theorem 1 and <a class="reference internal" href="#equation-nm-portfolio">(2)</a>, when <span class="math notranslate nohighlight">\(w^\top \mu\)</span> and
+<span class="math notranslate nohighlight">\(w^\top \gamma\)</span> are fixed, <span class="math notranslate nohighlight">\(\rho(w^\top X)\)</span> is non-decreasing
+in <span class="math notranslate nohighlight">\(w^\top \Sigma w\)</span>. Therefore <a class="reference internal" href="#equation-constrained-opt">(4)</a> reduces to:</p>
+<div class="math notranslate nohighlight">
+\[w^*(\tilde{\mu}, \tilde{\gamma}) = \arg\min_w w^\top \Sigma w\]</div>
+<p>with the same constraints. By Lagrange multipliers:</p>
+<div class="math notranslate nohighlight">
+\[w^*(\tilde{\mu}, \tilde{\gamma}) = \Sigma^{-1}
+[\mu \; \gamma \; \mathbf{e}] \, A^{-1}
+[\tilde{\mu} \; \tilde{\gamma} \; 1]^\top.\]</div>
+<p>Substituting into <a class="reference internal" href="#equation-nm-portfolio">(2)</a> completes the proof. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>This reduces the <span class="math notranslate nohighlight">\(d\)</span>-dimensional problem to a two-dimensional one in
+<span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma})\)</span>. The surface
+<span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma}) \mapsto \rho\)</span> is the <strong>efficient surface</strong>,
+generalizing the classical efficient frontier.</p>
+</section>
+<section id="worst-case-risk-measures">
+<h2>Worst-Case Risk Measures<a class="headerlink" href="#worst-case-risk-measures" title="Link to this heading"></a></h2>
+<p><strong>Definition.</strong> Let <span class="math notranslate nohighlight">\(\mathcal{P}\)</span> be a set of probability distributions.
+The <strong>worst-case</strong> coherent risk measure is:</p>
+<div class="math notranslate nohighlight">
+\[\rho^*(w) := \sup_{f \in \mathcal{P}} \rho(w^\top X).\]</div>
+<p>For the <strong>box uncertainty set</strong> of normal mixture models:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{P} = \{f_X(\cdot | \mu, \gamma, \Sigma) :
+\underline{\mu} \preceq \mu \preceq \overline{\mu}, \;
+\underline{\gamma} \preceq \gamma \preceq \overline{\gamma}, \;
+\underline{\Sigma} \preceq \Sigma \preceq \overline{\Sigma}, \;
+f_Y \text{ fixed}\},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\preceq\)</span> denotes element-wise inequality, the following holds:</p>
+<p><strong>Proposition.</strong> For any <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d_+\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\rho^*(w) = \rho\!\left(w^\top \underline{\mu}
++ w^\top \underline{\gamma} \, Y
++ \sqrt{w^\top \overline{\Sigma} w \, Y} \, Z\right).\]</div>
+<p>This follows directly from Theorem 1: the worst case uses the smallest
+<span class="math notranslate nohighlight">\(\mu\)</span>, smallest <span class="math notranslate nohighlight">\(\gamma\)</span>, and largest <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="artzner1999" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Artzner1999</a><span class="fn-bracket">]</span></span>
+<p>Artzner, P., Delbaen, F., Eber, J.-M., &amp; Heath, D. (1999).
+Coherent measures of risk. <em>Mathematical Finance</em>, 9(3), 203-228.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="online_em.html" class="btn btn-neutral float-left" title="Online EM Algorithm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cvar_derivatives.html" class="btn btn-neutral float-right" title="CVaR Derivatives for Normal Mixture Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

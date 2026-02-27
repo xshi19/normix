@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVaR Derivatives for Normal Mixture Distributions &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Portfolio Optimization with Transaction Costs" href="transaction_costs.html" />
+    <link rel="prev" title="Mean-Risk Optimization for Normal Mixture Distributions" href="mean_risk_optimization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CVaR Derivatives for Normal Mixture Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-cvar-derivatives">General CVaR Derivatives</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-to-univariate-normal-mixtures">Application to Univariate Normal Mixtures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#portfolio-cvar-gradient-and-hessian">Portfolio CVaR Gradient and Hessian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">CVaR Derivatives for Normal Mixture Distributions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/cvar_derivatives.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cvar-derivatives-for-normal-mixture-distributions">
+<h1>CVaR Derivatives for Normal Mixture Distributions<a class="headerlink" href="#cvar-derivatives-for-normal-mixture-distributions" title="Link to this heading"></a></h1>
+<p>This section computes the first and second derivatives of CVaR for normal
+mixture distributions, following <a class="reference internal" href="#rauhasanov2004" id="id1"><span>[RauHasanov2004]</span></a> and <a class="reference internal" href="#tasche1999" id="id2"><span>[Tasche1999]</span></a>.</p>
+<section id="general-cvar-derivatives">
+<h2>General CVaR Derivatives<a class="headerlink" href="#general-cvar-derivatives" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(X = (X_1, \ldots, X_n)\)</span> be a random vector with portfolio weights
+<span class="math notranslate nohighlight">\(w \in \mathbb{R}^n\)</span>, and define:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}r_{\operatorname{VaR}_\alpha}(w) &amp;:= \operatorname{VaR}_\alpha(w^\top X), \\
+r_{\operatorname{CVaR}_\alpha}(w) &amp;:= \operatorname{CVaR}_\alpha(w^\top X).\end{split}\]</div>
+<p><strong>Assumption.</strong> Let <span class="math notranslate nohighlight">\(p(x_1 | x_2, \ldots, x_n)\)</span> be the conditional
+density of <span class="math notranslate nohighlight">\(X_1\)</span> given <span class="math notranslate nohighlight">\(X_2, \ldots, X_n\)</span>. Assume:</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(y \mapsto p(y | x_2, \ldots, x_n)\)</span> is continuous.</p></li>
+<li><p><span class="math notranslate nohighlight">\((y, w) \mapsto E[p(w_1^{-1}(y - \sum_{l=2}^n w_l X_l) | X_2, \ldots, X_n)]\)</span> is finite and continuous.</p></li>
+<li><p>The density at the VaR quantile is strictly positive.</p></li>
+<li><p><span class="math notranslate nohighlight">\((y, w) \mapsto E[X_j \, p(w_1^{-1}(y - \sum_{l=2}^n w_l X_l) | X_2, \ldots, X_n)]\)</span> is finite and continuous.</p></li>
+<li><p><span class="math notranslate nohighlight">\((y, w) \mapsto E[X_j X_k \, p(w_1^{-1}(y - \sum_{l=2}^n w_l X_l) | X_2, \ldots, X_n)]\)</span> is finite and continuous.</p></li>
+</ol>
+<section id="first-derivatives">
+<h3>First Derivatives<a class="headerlink" href="#first-derivatives" title="Link to this heading"></a></h3>
+<p>Under conditions 1–4 above, for <span class="math notranslate nohighlight">\(w_1 \neq 0\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial w_j}(w)
+&amp;= -\frac{E\!\left[X_j \, p\!\left(w_1^{-1}\!\left(
+-r_{\operatorname{VaR}_\alpha}(w) - \sum_{l=2}^n w_l X_l\right)
+\middle| X_2, \ldots, X_n\right)\right]}
+{E\!\left[p\!\left(w_1^{-1}\!\left(
+-r_{\operatorname{VaR}_\alpha}(w) - \sum_{l=2}^n w_l X_l\right)
+\middle| X_2, \ldots, X_n\right)\right]},
+\quad j = 2, \ldots, n, \\
+\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial w_1}(w)
+&amp;= w_1^{-1} \left(r_{\operatorname{VaR}_\alpha}(w)
+- \sum_{j=2}^n w_j
+\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial w_j}(w)\right),\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-cvar-gradient">
+<span class="eqno">(1)<a class="headerlink" href="#equation-cvar-gradient" title="Link to this equation"></a></span>\[\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial w_j}(w)
+= -E[X_j \mid w^\top X \leq -r_{\operatorname{VaR}_\alpha}(w)]
+= -\alpha^{-1} E\!\left[X_j \,
+\mathbf{1}_{\{w^\top X \leq -r_{\operatorname{VaR}_\alpha}(w)\}}\right],\]</div>
+<p>for <span class="math notranslate nohighlight">\(j = 1, \ldots, n\)</span>.</p>
+</section>
+<section id="second-derivatives">
+<h3>Second Derivatives<a class="headerlink" href="#second-derivatives" title="Link to this heading"></a></h3>
+<p>Under the full assumption, for <span class="math notranslate nohighlight">\(j, k = 2, \ldots, n\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-cvar-hessian">
+<span class="eqno">(2)<a class="headerlink" href="#equation-cvar-hessian" title="Link to this equation"></a></span>\[\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial w_j \partial w_k}(w)
+= \frac{1}{\alpha |w_1|}
+E\!\left[X_k \left(
+\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial w_j}(w)
++ X_j\right) p\!\left(w_1^{-1}\!\left(
+-r_{\operatorname{VaR}_\alpha}(w)
+- \sum_{l=2}^n w_l X_l\right)
+\middle| X_2, \ldots, X_n\right)\right],\]</div>
+<p>and for <span class="math notranslate nohighlight">\(j = 1, \ldots, n\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial w_j \partial w_1}(w)
+= -w_1^{-1} \sum_{k=2}^n w_k
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial w_j \partial w_k}(w).\]</div>
+<p>This second equation follows from the 1-homogeneity of CVaR:
+<span class="math notranslate nohighlight">\(\sum_{k=1}^n w_k \,
+\partial^2 r_{\operatorname{CVaR}_\alpha} / \partial w_j \partial w_k = 0\)</span>.</p>
+</section>
+</section>
+<section id="application-to-univariate-normal-mixtures">
+<h2>Application to Univariate Normal Mixtures<a class="headerlink" href="#application-to-univariate-normal-mixtures" title="Link to this heading"></a></h2>
+<p>The univariate normal mixture <a class="reference internal" href="mean_risk_optimization.html#equation-nm-def">(1)</a> can be viewed as a “portfolio”
+with two risky assets. Define:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}r_{\operatorname{VaR}_\alpha}(\mu, \gamma, \sigma) &amp;:=
+\operatorname{VaR}_\alpha(\mu + \gamma Y + \sigma \sqrt{Y} Z), \\
+r_{\operatorname{CVaR}_\alpha}(\mu, \gamma, \sigma) &amp;:=
+\operatorname{CVaR}_\alpha(\mu + \gamma Y + \sigma \sqrt{Y} Z),\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z \sim N(0, 1)\)</span> and <span class="math notranslate nohighlight">\(\sigma &gt; 0\)</span>. Denote the standard
+normal density by <span class="math notranslate nohighlight">\(\varphi\)</span> and CDF by <span class="math notranslate nohighlight">\(\Phi\)</span>.</p>
+<section id="id3">
+<h3>First Derivatives<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial \mu} &amp;= -1, \\
+\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial \gamma}
+&amp;= -\frac{E\!\left[\sqrt{Y} \, \varphi\!\left(
+\frac{-r_{\operatorname{VaR}_\alpha} - \mu - \gamma Y}
+{\sigma \sqrt{Y}}\right)\right]}
+{E\!\left[\frac{1}{\sqrt{Y}} \, \varphi\!\left(
+\frac{-r_{\operatorname{VaR}_\alpha} - \mu - \gamma Y}
+{\sigma \sqrt{Y}}\right)\right]}, \\
+\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial \sigma}
+&amp;= \sigma^{-1} \left(r_{\operatorname{VaR}_\alpha} + \mu
+- \gamma \frac{\partial r_{\operatorname{VaR}_\alpha}}
+{\partial \gamma}\right),\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight" id="equation-cvar-nm-grad">
+<span class="eqno">(3)<a class="headerlink" href="#equation-cvar-nm-grad" title="Link to this equation"></a></span>\[\begin{split}\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \mu} &amp;= -1, \\
+\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \gamma}
+&amp;= -\alpha^{-1} E\!\left[Y \, \Phi\!\left(
+\frac{-r_{\operatorname{VaR}_\alpha} - \mu - \gamma Y}
+{\sigma \sqrt{Y}}\right)\right], \\
+\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \sigma}
+&amp;= \sigma^{-1} \left(r_{\operatorname{CVaR}_\alpha} + \mu
+- \gamma \frac{\partial r_{\operatorname{CVaR}_\alpha}}
+{\partial \gamma}\right).\end{split}\]</div>
+</section>
+<section id="id4">
+<h3>Second Derivatives<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<div class="math notranslate nohighlight" id="equation-cvar-nm-hessian">
+<span class="eqno">(4)<a class="headerlink" href="#equation-cvar-nm-hessian" title="Link to this equation"></a></span>\[\begin{split}\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \mu^2}
+= \frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial \mu \, \partial \gamma}
+= \frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial \mu \, \partial \sigma} &amp;= 0, \\
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \gamma^2}
+&amp;= \frac{1}{\alpha \sigma} E\!\left[\sqrt{Y} \, \varphi\!\left(
+\frac{-r_{\operatorname{VaR}_\alpha} - \mu - \gamma Y}
+{\sigma \sqrt{Y}}\right)
+\left(\frac{\partial r_{\operatorname{VaR}_\alpha}}{\partial \gamma}
++ Y\right)\right], \\
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial \gamma \, \partial \sigma}
+&amp;= -\frac{\gamma}{\sigma}
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \gamma^2}, \\
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \sigma^2}
+&amp;= -\frac{\gamma}{\sigma}
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial \gamma \, \partial \sigma}.\end{split}\]</div>
+<p>All derivatives can be computed via Monte Carlo by generating i.i.d. samples
+of the mixing variable <span class="math notranslate nohighlight">\(Y\)</span>.</p>
+</section>
+</section>
+<section id="portfolio-cvar-gradient-and-hessian">
+<h2>Portfolio CVaR Gradient and Hessian<a class="headerlink" href="#portfolio-cvar-gradient-and-hessian" title="Link to this heading"></a></h2>
+<p>For a portfolio <span class="math notranslate nohighlight">\(w\)</span>, using <a class="reference internal" href="mean_risk_optimization.html#equation-nm-portfolio">(2)</a> we can write
+<span class="math notranslate nohighlight">\(r_{\operatorname{CVaR}_\alpha}(w) =
+r_{\operatorname{CVaR}_\alpha}(w^\top \mu, w^\top \gamma,
+\sqrt{w^\top \Sigma w})\)</span>. The chain rule gives:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial w_j}(w)
+= -\mu_j + \gamma_j \frac{\partial r_{\operatorname{CVaR}_\alpha}}
+{\partial \gamma}
++ \frac{(\Sigma w)_j}{\sqrt{w^\top \Sigma w}}
+\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \sigma},\]</div>
+<p>where the partial derivatives on the right are evaluated at
+<span class="math notranslate nohighlight">\((w^\top \mu, w^\top \gamma, \sqrt{w^\top \Sigma w})\)</span>.</p>
+<p>The <strong>Hessian matrix</strong> is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}H_{r_{\operatorname{CVaR}_\alpha}}(w)
+&amp;= \gamma \gamma^\top
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \gamma^2}
++ (w^\top \Sigma w)^{-1/2}
+(\gamma w^\top \Sigma + \Sigma w \, \gamma^\top)
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}
+{\partial \gamma \, \partial \sigma} \\
+&amp;\quad + (w^\top \Sigma w)^{-1}
+\Sigma w \, w^\top \Sigma
+\frac{\partial^2 r_{\operatorname{CVaR}_\alpha}}{\partial \sigma^2} \\
+&amp;\quad + (w^\top \Sigma w)^{-3/2}
+(\Sigma \, w^\top \Sigma w - \Sigma w \, w^\top \Sigma)
+\frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \sigma}.\end{split}\]</div>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="rauhasanov2004" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">RauHasanov2004</a><span class="fn-bracket">]</span></span>
+<p>Rau-Bredow, H. (2004). Value-at-risk, expected shortfall,
+and marginal risk contribution. In <em>Risk Measures for the 21st Century</em>,
+Wiley.</p>
+</div>
+<div class="citation" id="tasche1999" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Tasche1999</a><span class="fn-bracket">]</span></span>
+<p>Tasche, D. (1999). Risk contributions and performance
+measurement. Report of the Lehrstuhl für mathematische Statistik, TU München.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mean_risk_optimization.html" class="btn btn-neutral float-left" title="Mean-Risk Optimization for Normal Mixture Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="transaction_costs.html" class="btn btn-neutral float-right" title="Portfolio Optimization with Transaction Costs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

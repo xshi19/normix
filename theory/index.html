@@ -51,6 +51,14 @@
 <li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
@@ -126,6 +134,69 @@ in <code class="docutils literal notranslate"><span class="pre">normix</span></c
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html#numerical-considerations">Numerical Considerations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html#implementation-in-normix">Implementation in normix</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html#penalized-likelihood-framework">Penalized Likelihood Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html#penalized-em-algorithm">Penalized EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html#shrunk-sufficient-statistics">Shrunk Sufficient Statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#joint-distribution">Joint Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#curved-exponential-family">Curved Exponential Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#log-likelihood-function">Log-Likelihood Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#m-step-closed-form-solutions">M-Step: Closed-Form Solutions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#conditional-expectations-for-the-e-step">Conditional Expectations for the E-Step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#e-step">E-Step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="online_em.html">Online EM Algorithm</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html#online-em-for-exponential-families">Online EM for Exponential Families</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html#application-to-the-gh-distribution">Application to the GH Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html#limitations-for-curved-exponential-families">Limitations for Curved Exponential Families</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#coherent-risk-measures">Coherent Risk Measures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#risk-monotonicity-for-normal-mixtures">Risk Monotonicity for Normal Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#mean-risk-optimization">Mean-Risk Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html#general-cvar-derivatives">General CVaR Derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html#application-to-univariate-normal-mixtures">Application to Univariate Normal Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html#portfolio-cvar-gradient-and-hessian">Portfolio CVaR Gradient and Hessian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html#problem-formulation">Problem Formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html#quadratic-approximation">Quadratic Approximation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html#reduction-to-quadratic-programming">Reduction to Quadratic Programming</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#variance-based-risk-decomposition">Variance-Based Risk Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#uncorrelated-factor-decomposition">Uncorrelated Factor Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#effective-number-of-bets">Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#characterizing-diagonalizations">Characterizing Diagonalizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#minimum-torsion">Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html#homogeneous-functions-and-risk-decomposition">Homogeneous Functions and Risk Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html#local-diagonalization-via-the-hessian">Local Diagonalization via the Hessian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html#generalized-enb">Generalized ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html#application-to-coherent-risk-measures">Application to Coherent Risk Measures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html#references">References</a></li>
 </ul>
 </li>
 </ul>

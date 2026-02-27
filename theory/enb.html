@@ -1,0 +1,250 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Effective Number of Bets and Minimum Torsion &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generalized Effective Number of Bets" href="generalized_enb.html" />
+    <link rel="prev" title="Portfolio Optimization with Transaction Costs" href="transaction_costs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Effective Number of Bets and Minimum Torsion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#variance-based-risk-decomposition">Variance-Based Risk Decomposition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uncorrelated-factor-decomposition">Uncorrelated Factor Decomposition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#effective-number-of-bets">Effective Number of Bets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#characterizing-diagonalizations">Characterizing Diagonalizations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#minimum-torsion">Minimum Torsion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Effective Number of Bets and Minimum Torsion</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/enb.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="effective-number-of-bets-and-minimum-torsion">
+<h1>Effective Number of Bets and Minimum Torsion<a class="headerlink" href="#effective-number-of-bets-and-minimum-torsion" title="Link to this heading"></a></h1>
+<p>This section reviews the effective number of bets (ENB) and the minimum
+torsion approach for measuring portfolio diversification, following
+<a class="reference internal" href="#meucci2010" id="id1"><span>[Meucci2010]</span></a> and <a class="reference internal" href="#meucci2014" id="id2"><span>[Meucci2014]</span></a>.</p>
+<section id="variance-based-risk-decomposition">
+<h2>Variance-Based Risk Decomposition<a class="headerlink" href="#variance-based-risk-decomposition" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(X \in \mathbb{R}^n\)</span> be a random vector of asset returns with
+covariance <span class="math notranslate nohighlight">\(\Sigma\)</span>, and let <span class="math notranslate nohighlight">\(w \in \mathbb{R}^n\)</span> with
+<span class="math notranslate nohighlight">\(w^\top \mathbf{e} = 1\)</span> be the portfolio weights. The portfolio
+variance is:</p>
+<div class="math notranslate nohighlight">
+\[r_{\operatorname{Var}}(w) = w^\top \Sigma w.\]</div>
+<p>The gradient is <span class="math notranslate nohighlight">\(\nabla r_{\operatorname{Var}}(w) = 2 \Sigma w\)</span>, so the
+marginal contribution of asset <span class="math notranslate nohighlight">\(k\)</span> to variance is
+<span class="math notranslate nohighlight">\(w_k (\Sigma w)_k\)</span>. These contributions are generally <strong>not</strong>
+independent.</p>
+</section>
+<section id="uncorrelated-factor-decomposition">
+<h2>Uncorrelated Factor Decomposition<a class="headerlink" href="#uncorrelated-factor-decomposition" title="Link to this heading"></a></h2>
+<p>To obtain independent contributions, we seek an invertible matrix
+<span class="math notranslate nohighlight">\(T \in \mathbb{R}^{n \times n}\)</span> such that <span class="math notranslate nohighlight">\(T \Sigma T^\top = D\)</span>
+is diagonal. Let <span class="math notranslate nohighlight">\(Y = TX\)</span> be the transformed returns and
+<span class="math notranslate nohighlight">\(v = (T^\top)^{-1} w\)</span> the adjusted weights. Then:</p>
+<div class="math notranslate nohighlight">
+\[w^\top X = v^\top Y, \qquad
+w^\top \Sigma w = v^\top D v = \sum_{k=1}^n d_k v_k^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(d_k\)</span> are the diagonal entries of <span class="math notranslate nohighlight">\(D\)</span>. The risk
+contributions <span class="math notranslate nohighlight">\(d_k v_k^2\)</span> are now independent.</p>
+</section>
+<section id="effective-number-of-bets">
+<h2>Effective Number of Bets<a class="headerlink" href="#effective-number-of-bets" title="Link to this heading"></a></h2>
+<p>The <strong>normalized risk contributions</strong> form a discrete distribution:</p>
+<div class="math notranslate nohighlight" id="equation-enb-weights">
+<span class="eqno">(1)<a class="headerlink" href="#equation-enb-weights" title="Link to this equation"></a></span>\[p_k = \frac{d_k v_k^2}{w^\top \Sigma w}, \quad k = 1, \ldots, n.\]</div>
+<p>Since <span class="math notranslate nohighlight">\(p_k \geq 0\)</span> and <span class="math notranslate nohighlight">\(\sum_k p_k = 1\)</span>, the <strong>ENB</strong> is defined
+as the exponential entropy:</p>
+<div class="math notranslate nohighlight">
+\[N = \exp\!\left(-\sum_{k=1}^n p_k \log p_k\right).\]</div>
+<p>The ENB ranges from 1 (risk concentrated in one factor) to <span class="math notranslate nohighlight">\(n\)</span>
+(equally distributed among all factors). Equivalently,
+<span class="math notranslate nohighlight">\(-\log N\)</span> is proportional to the KL divergence between
+<span class="math notranslate nohighlight">\(\{p_k\}\)</span> and the uniform distribution.</p>
+</section>
+<section id="characterizing-diagonalizations">
+<h2>Characterizing Diagonalizations<a class="headerlink" href="#characterizing-diagonalizations" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(C = U S U^\top\)</span> be the eigendecomposition of the correlation matrix
+<span class="math notranslate nohighlight">\(C = \operatorname{diag}(\Sigma)^{-1/2} \Sigma \,
+\operatorname{diag}(\Sigma)^{-1/2}\)</span>, where <span class="math notranslate nohighlight">\(U\)</span> is orthogonal and
+<span class="math notranslate nohighlight">\(S\)</span> is diagonal.</p>
+<p><strong>Proposition.</strong> Let <span class="math notranslate nohighlight">\(\Sigma\)</span> be positive definite and <span class="math notranslate nohighlight">\(T\)</span> be
+invertible with <span class="math notranslate nohighlight">\(T \Sigma T^\top = D\)</span> diagonal. Then there exists an
+orthogonal matrix <span class="math notranslate nohighlight">\(V\)</span> such that:</p>
+<div class="math notranslate nohighlight" id="equation-t-representation">
+<span class="eqno">(2)<a class="headerlink" href="#equation-t-representation" title="Link to this equation"></a></span>\[T = D^{1/2} V S^{-1/2} U^\top
+\operatorname{diag}(\Sigma)^{-1/2}.\]</div>
+<p><strong>Lemma.</strong> The ENB <span class="math notranslate nohighlight">\(N\)</span> is independent of the choice of <span class="math notranslate nohighlight">\(D\)</span>.</p>
+<p><em>Proof.</em> Let <span class="math notranslate nohighlight">\(u = V S^{-1/2} U^\top
+\operatorname{diag}(\Sigma)^{1/2} w\)</span> and <span class="math notranslate nohighlight">\(v = D^{-1/2} u\)</span>. Then
+<span class="math notranslate nohighlight">\(p_k = u_k^2 / (w^\top \Sigma w)\)</span>, which does not depend on
+<span class="math notranslate nohighlight">\(D\)</span>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>Therefore, it suffices to choose only the orthogonal matrix <span class="math notranslate nohighlight">\(V\)</span>.
+Since <span class="math notranslate nohighlight">\(V\)</span> is a rotation, it can map the vector
+<span class="math notranslate nohighlight">\(S^{-1/2} U^\top \operatorname{diag}(\Sigma)^{1/2} w\)</span> to any
+direction. In particular:</p>
+<ul class="simple">
+<li><p>Choosing <span class="math notranslate nohighlight">\(V\)</span> so that all <span class="math notranslate nohighlight">\(v_k\)</span> are equal gives <span class="math notranslate nohighlight">\(N = n\)</span> (maximal diversification).</p></li>
+<li><p>Choosing <span class="math notranslate nohighlight">\(V\)</span> to concentrate on one component gives <span class="math notranslate nohighlight">\(N = 1\)</span>.</p></li>
+</ul>
+<p>Thus, the diagonalization <span class="math notranslate nohighlight">\(T\)</span> must be chosen carefully.</p>
+</section>
+<section id="minimum-torsion">
+<h2>Minimum Torsion<a class="headerlink" href="#minimum-torsion" title="Link to this heading"></a></h2>
+<p>The <strong>minimum torsion</strong> approach <a class="reference internal" href="#meucci2014" id="id3"><span>[Meucci2014]</span></a> selects <span class="math notranslate nohighlight">\(T\)</span> to minimize
+the change from the original weights. The rationale is that if <span class="math notranslate nohighlight">\(w\)</span> is
+close to equally weighted, then <span class="math notranslate nohighlight">\(v = (T^\top)^{-1} w\)</span> should also be
+close to equally weighted.</p>
+<p>The degree of change is measured by the <strong>normalized tracking error</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\operatorname{NTE}(T) = \sqrt{\frac{1}{n}
+\operatorname{tr}\!\left(\operatorname{diag}(\Sigma)^{-1/2}
+(T - I) \Sigma (T - I)^\top
+\operatorname{diag}(\Sigma)^{-1/2}\right)}.\]</div>
+<p>Using representation <a class="reference internal" href="#equation-t-representation">(2)</a>, the minimization problem becomes:</p>
+<div class="math notranslate nohighlight">
+\[\min_{D, V} \; \operatorname{tr}\!\left(D
+- 2 D^{1/2} V S^{1/2} U^\top\right)
+\quad \text{s.t.} \quad
+D \text{ diagonal}, \; V \text{ orthogonal}.\]</div>
+<p>If <span class="math notranslate nohighlight">\(D\)</span> is fixed to the identity matrix, the optimal solution is simply
+<span class="math notranslate nohighlight">\(V^* = U\)</span>, giving the <strong>constrained minimum torsion</strong> transformation:</p>
+<div class="math notranslate nohighlight">
+\[T_{MT} = U S^{-1/2} U^\top
+\operatorname{diag}(\Sigma)^{-1/2}.\]</div>
+<p>For the general case (unconstrained <span class="math notranslate nohighlight">\(D\)</span>), an iterative algorithm that
+converges rapidly is described in <a class="reference internal" href="#meucci2014" id="id4"><span>[Meucci2014]</span></a>.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="meucci2010" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Meucci2010</a><span class="fn-bracket">]</span></span>
+<p>Meucci, A. (2010). Managing diversification.
+<em>Risk Magazine</em>, 22(5), 74-79.</p>
+</div>
+<div class="citation" id="meucci2014" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Meucci2014<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id3">2</a>,<a role="doc-backlink" href="#id4">3</a>)</span>
+<p>Meucci, A., Santangelo, A., &amp; Deguest, R. (2014).
+Measuring portfolio diversification based on optimized uncorrelated
+factors. <em>SSRN Electronic Journal</em>.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="transaction_costs.html" class="btn btn-neutral float-left" title="Portfolio Optimization with Transaction Costs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generalized_enb.html" class="btn btn-neutral float-right" title="Generalized Effective Number of Bets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

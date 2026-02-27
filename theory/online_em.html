@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online EM Algorithm &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mean-Risk Optimization for Normal Mixture Distributions" href="mean_risk_optimization.html" />
+    <link rel="prev" title="Factor Analysis for Generalized Hyperbolic Distributions" href="factor_analysis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Online EM Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#online-em-for-exponential-families">Online EM for Exponential Families</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-to-the-gh-distribution">Application to the GH Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations-for-curved-exponential-families">Limitations for Curved Exponential Families</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Online EM Algorithm</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/online_em.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="online-em-algorithm">
+<h1>Online EM Algorithm<a class="headerlink" href="#online-em-algorithm" title="Link to this heading"></a></h1>
+<p>In this section we review the online EM algorithm for exponential families
+with hidden data <a class="reference internal" href="#cappe2009" id="id1"><span>[Cappe2009]</span></a>, and apply it to the Generalized Hyperbolic
+distribution.</p>
+<section id="online-em-for-exponential-families">
+<h2>Online EM for Exponential Families<a class="headerlink" href="#online-em-for-exponential-families" title="Link to this heading"></a></h2>
+<p>Consider the exponential family with density:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y | \theta) = h(x, y)
+\exp\!\left(\theta^\top t(x, y) - \psi(\theta)\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(x\)</span> is observable, <span class="math notranslate nohighlight">\(y\)</span> is hidden, and</p>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log \int h(x, y)
+\exp\!\left(\theta^\top t(x, y)\right) dx \, dy.\]</div>
+<p>The expectation parameter is <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>, and the
+Legendre dual of <span class="math notranslate nohighlight">\(\psi\)</span> is
+<span class="math notranslate nohighlight">\(\phi(\eta) = \eta^\top \theta - \psi(\theta)\)</span>,
+with <span class="math notranslate nohighlight">\(\theta = \nabla\phi(\eta)\)</span>.</p>
+<section id="regret-framework">
+<h3>Regret Framework<a class="headerlink" href="#regret-framework" title="Link to this heading"></a></h3>
+<p>The parameter estimation process can be viewed as an online game. At time
+<span class="math notranslate nohighlight">\(t-1\)</span> we make a prediction <span class="math notranslate nohighlight">\(\theta_{t-1}\)</span>. At time <span class="math notranslate nohighlight">\(t\)</span> the
+environment reveals an observation <span class="math notranslate nohighlight">\(x_t\)</span>, and the loss is
+<span class="math notranslate nohighlight">\(l(x_t, \theta_{t-1}) = -\log f(x_t | \theta_{t-1})\)</span>. The <strong>regret</strong>
+from <span class="math notranslate nohighlight">\(t = 1\)</span> to <span class="math notranslate nohighlight">\(T\)</span> is:</p>
+<div class="math notranslate nohighlight" id="equation-regret-def">
+<span class="eqno">(1)<a class="headerlink" href="#equation-regret-def" title="Link to this equation"></a></span>\[r_T(\theta_0, \ldots, \theta_{T-1}) =
+-\sum_{t=1}^T \log f(x_t | \theta_{t-1})
+- \min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
++ \tau_0 \, D_\psi(\theta \| \theta_0)\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(D_\psi(\theta \| \theta_0) = \psi(\theta) - \psi(\theta_0)
+- \nabla\psi(\theta_0)^\top (\theta - \theta_0)\)</span> is the Bregman divergence,
+which coincides with the KL divergence <span class="math notranslate nohighlight">\(D_{KL}(\theta_0 \| \theta)\)</span>.</p>
+</section>
+<section id="update-rules">
+<h3>Update Rules<a class="headerlink" href="#update-rules" title="Link to this heading"></a></h3>
+<p>The online EM algorithm updates the expectation parameters as follows.
+Starting from <span class="math notranslate nohighlight">\(\eta_0 = \nabla\psi(\theta_0)\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-online-em-update">
+<span class="eqno">(2)<a class="headerlink" href="#equation-online-em-update" title="Link to this equation"></a></span>\[\begin{split}\eta_t &amp;= \eta_{t-1} + \tau_t^{-1}
+\left(\bar{t}(x_t | \theta_{t-1}) - \eta_{t-1}\right), \\
+\theta_t &amp;= \nabla\phi(\eta_t),\end{split}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\bar{t}(x_t | \theta_{t-1}) := E[t(X, Y) | X = x_t, \theta_{t-1}]\]</div>
+<p>is the conditional expectation of the sufficient statistics, and
+<span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span> is the step size.</p>
+</section>
+<section id="regret-bound">
+<h3>Regret Bound<a class="headerlink" href="#regret-bound" title="Link to this heading"></a></h3>
+<p><strong>Theorem.</strong> With <span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span>, the regret
+<a class="reference internal" href="#equation-regret-def">(1)</a> of the online EM algorithm <a class="reference internal" href="#equation-online-em-update">(2)</a> is:</p>
+<div class="math notranslate nohighlight" id="equation-regret-decomp">
+<span class="eqno">(3)<a class="headerlink" href="#equation-regret-decomp" title="Link to this equation"></a></span>\[r_T = \sum_{t=1}^T \tau_t \, D_\psi(\theta_{t-1} \| \theta_t)
++ \sum_{t=1}^T D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})
+- \tau_T \, D_\phi(\eta_T \| \eta_{ML}),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\theta_{ML}\)</span> is the penalized MLE:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{ML} = \arg\min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
++ \tau_0 \, D_\psi(\theta \| \theta_0)\right),\]</div>
+<p><span class="math notranslate nohighlight">\(\eta_{ML} = \nabla\psi(\theta_{ML})\)</span>, and
+<span class="math notranslate nohighlight">\(D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})\)</span> is the KL divergence
+between the conditional densities <span class="math notranslate nohighlight">\(f(y | x_t, \theta_{t-1})\)</span> and
+<span class="math notranslate nohighlight">\(f(y | x_t, \theta_{ML})\)</span>.</p>
+<p><em>Proof.</em> The first part of the regret is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}-\sum_{t=1}^T \log f(x_t | \theta_{t-1})
+&amp;= -\sum_{t=1}^T E[\log f(X, Y | \theta_{t-1}) | X = x_t, \theta_{t-1}] \\
+&amp;\quad + \sum_{t=1}^T E[\log f(Y | X, \theta_{t-1}) | X = x_t, \theta_{t-1}].\end{split}\]</div>
+<p>The conditional expectation of the joint log-density satisfies:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}&amp;\sum_{t=1}^T \left(\psi(\theta_{t-1})
+- \theta_{t-1}^\top \bar{t}(x_t | \theta_{t-1})\right) \\
+&amp;= \sum_{t=1}^T \left(-\phi(\eta_{t-1})
+- \tau_t \theta_{t-1}^\top (\eta_t - \eta_{t-1})\right) \\
+&amp;= \sum_{t=1}^T \tau_t D_\phi(\eta_t \| \eta_{t-1})
++ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T) \\
+&amp;= \sum_{t=1}^T \tau_t D_\psi(\theta_{t-1} \| \theta_t)
++ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T),\end{split}\]</div>
+<p>using <span class="math notranslate nohighlight">\(\phi(\eta) = \theta^\top \eta - \psi(\theta)\)</span> and
+<span class="math notranslate nohighlight">\(D_\phi(\eta_t \| \eta_{t-1}) = D_\psi(\theta_{t-1} \| \theta_t)\)</span>.</p>
+<p>The key identity for the accumulated conditional expectations is:</p>
+<div class="math notranslate nohighlight">
+\[\eta_T = \tau_T^{-1} \left(\tau_0 \eta_0
++ \sum_{t=1}^T \bar{t}(x_t | \theta_{t-1})\right).\]</div>
+<p>Applying this to the second part of the regret:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}&amp;-\sum_{t=1}^T E[\log f(X, Y | \theta_{ML}) | X = x_t, \theta_{t-1}]
++ \tau_0 \, D_\psi(\theta_{ML} \| \theta_0) \\
+&amp;= \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T)
++ \tau_T D_\phi(\eta_T \| \eta_{ML}).\end{split}\]</div>
+<p>Combining both parts yields <a class="reference internal" href="#equation-regret-decomp">(3)</a>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+</section>
+</section>
+<section id="application-to-the-gh-distribution">
+<h2>Application to the GH Distribution<a class="headerlink" href="#application-to-the-gh-distribution" title="Link to this heading"></a></h2>
+<p>For the joint GH distribution <a class="reference internal" href="gh.html#equation-gh-joint">(2)</a>, which is an exponential family,
+the online EM algorithm updates the sufficient statistics as follows. Given
+a sequence of observations <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_T\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}s_1^{(t+1)} &amp;= s_1^{(t)} + \tau_{t+1}^{-1}
+\left(E[Y^{-1} | X = x_{t+1}, \theta_t] - s_1^{(t)}\right), \\
+s_2^{(t+1)} &amp;= s_2^{(t)} + \tau_{t+1}^{-1}
+\left(E[Y | X = x_{t+1}, \theta_t] - s_2^{(t)}\right), \\
+s_3^{(t+1)} &amp;= s_3^{(t)} + \tau_{t+1}^{-1}
+\left(E[\log Y | X = x_{t+1}, \theta_t] - s_3^{(t)}\right), \\
+s_4^{(t+1)} &amp;= s_4^{(t)} + \tau_{t+1}^{-1}
+\left(x_{t+1} - s_4^{(t)}\right), \\
+s_5^{(t+1)} &amp;= s_5^{(t)} + \tau_{t+1}^{-1}
+\left(x_{t+1} \, E[Y^{-1} | X = x_{t+1}, \theta_t] - s_5^{(t)}\right), \\
+s_6^{(t+1)} &amp;= s_6^{(t)} + \tau_{t+1}^{-1}
+\left(x_{t+1} x_{t+1}^\top E[Y^{-1} | X = x_{t+1}, \theta_t]
+- s_6^{(t)}\right),\end{split}\]</div>
+<p>where the conditional expectations are given by <a class="reference internal" href="em_algorithm.html#equation-gig-moment-cond">(1)</a>.</p>
+<p>The parameters <span class="math notranslate nohighlight">\(\theta_t = (\mu_t, \gamma_t, \Sigma_t, p_t, a_t, b_t)\)</span>
+are then recovered from the sufficient statistics using the same formulas as
+the M-step (see <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a>):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mu_t &amp;= \frac{s_4^{(t)} - s_2^{(t)} s_5^{(t)}}
+{1 - s_1^{(t)} s_2^{(t)}}, \\
+\gamma_t &amp;= \frac{s_5^{(t)} - s_1^{(t)} s_4^{(t)}}
+{1 - s_1^{(t)} s_2^{(t)}}, \\
+\Sigma_t &amp;= s_6^{(t)} - s_5^{(t)} \mu_t^\top
+- \mu_t (s_5^{(t)})^\top + s_1^{(t)} \mu_t \mu_t^\top
+- s_2^{(t)} \gamma_t \gamma_t^\top,\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[(p_t, a_t, b_t) = \arg\max_{p, a, b}
+L_{GIG}(p, a, b \,|\, s_1^{(t)}, s_2^{(t)}, s_3^{(t)}).\]</div>
+<p>The online EM algorithm has comparable convergence rate to the batch EM
+algorithm, but each step processes only a single observation, making it
+much faster per iteration. The step size <span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span>
+corresponds to starting with an initial weight of <span class="math notranslate nohighlight">\(\tau_0\)</span> “pseudo-observations.”</p>
+</section>
+<section id="limitations-for-curved-exponential-families">
+<h2>Limitations for Curved Exponential Families<a class="headerlink" href="#limitations-for-curved-exponential-families" title="Link to this heading"></a></h2>
+<p>The online EM algorithm of <a class="reference internal" href="#cappe2009" id="id2"><span>[Cappe2009]</span></a> may not converge for <strong>curved
+exponential families</strong> of the form:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y | u) = h(x, y) \exp\!\left(\theta(u)^\top t(x, y)
+- \psi(\theta(u))\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\theta(u)\)</span> is a nonlinear mapping projecting the parameter
+<span class="math notranslate nohighlight">\(u\)</span> to a higher-dimensional space. The batch EM algorithm for curved
+exponential families solves:</p>
+<div class="math notranslate nohighlight">
+\[\nabla\theta(u)^\top \left(\frac{1}{n} \sum_{j=1}^n
+E[t(X, Y) | x_j, \theta(u)] - \nabla\psi(\theta(u))\right) = 0,\]</div>
+<p>while the online EM tends to solve:</p>
+<div class="math notranslate nohighlight">
+\[\frac{1}{n} \sum_{j=1}^n E[t(X, Y) | x_j, \theta(u)]
+- \nabla\psi(\theta(u)) = 0,\]</div>
+<p>which may not have a solution when <span class="math notranslate nohighlight">\(\dim(u) &lt; \dim(\theta)\)</span>. Therefore,
+the online EM algorithm cannot be directly applied to the factor analysis
+model described in <a class="reference internal" href="factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="cappe2009" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Cappe2009<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p>Cappé, O. &amp; Moulines, E. (2009). On-line expectation-maximization
+algorithm for latent data models. <em>Journal of the Royal Statistical Society:
+Series B</em>, 71(3), 593-613.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="factor_analysis.html" class="btn btn-neutral float-left" title="Factor Analysis for Generalized Hyperbolic Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mean_risk_optimization.html" class="btn btn-neutral float-right" title="Mean-Risk Optimization for Normal Mixture Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

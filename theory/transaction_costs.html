@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Optimization with Transaction Costs &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Effective Number of Bets and Minimum Torsion" href="enb.html" />
+    <link rel="prev" title="CVaR Derivatives for Normal Mixture Distributions" href="cvar_derivatives.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Portfolio Optimization with Transaction Costs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem-formulation">Problem Formulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quadratic-approximation">Quadratic Approximation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reduction-to-quadratic-programming">Reduction to Quadratic Programming</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Portfolio Optimization with Transaction Costs</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/transaction_costs.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="portfolio-optimization-with-transaction-costs">
+<h1>Portfolio Optimization with Transaction Costs<a class="headerlink" href="#portfolio-optimization-with-transaction-costs" title="Link to this heading"></a></h1>
+<p>This section extends the mean-risk optimization framework to include
+transaction costs by using a quadratic programming approximation.</p>
+<section id="problem-formulation">
+<h2>Problem Formulation<a class="headerlink" href="#problem-formulation" title="Link to this heading"></a></h2>
+<p>Consider the <span class="math notranslate nohighlight">\(d\)</span>-dimensional portfolio optimization problem:</p>
+<div class="math notranslate nohighlight" id="equation-tc-opt">
+<span class="eqno">(1)<a class="headerlink" href="#equation-tc-opt" title="Link to this equation"></a></span>\[\max_{w \in \mathbb{R}^d} \;
+w^\top m - c_1 \, r(w) - c_2 \|w - w_0\|_1
+\quad \text{s.t.} \quad
+w^\top \mathbf{e} = 1, \;
+A w \leq b,\]</div>
+<p>where <span class="math notranslate nohighlight">\(w\)</span> is the portfolio weight, <span class="math notranslate nohighlight">\(m \in \mathbb{R}^d\)</span> is the
+expected return, <span class="math notranslate nohighlight">\(r : \mathbb{R}^d \to \mathbb{R}\)</span> is a convex
+non-negative risk function, <span class="math notranslate nohighlight">\(w_0\)</span> is the current portfolio weight
+satisfying the constraints, and <span class="math notranslate nohighlight">\(c_1, c_2 &gt; 0\)</span> are constants.</p>
+<p>The three terms in the objective are:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(w^\top m\)</span>: expected return,</p></li>
+<li><p><span class="math notranslate nohighlight">\(c_1 \, r(w)\)</span>: risk penalty,</p></li>
+<li><p><span class="math notranslate nohighlight">\(c_2 \|w - w_0\|_1\)</span>: transaction cost (turnover penalty).</p></li>
+</ul>
+<p>When <span class="math notranslate nohighlight">\(r(w) = \rho(w^\top X)\)</span> for a coherent risk measure <span class="math notranslate nohighlight">\(\rho\)</span>
+and normal mixture returns <span class="math notranslate nohighlight">\(X\)</span>, the dimension reduction of
+<a class="reference internal" href="mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a> cannot be applied directly due to the
+transaction cost term.</p>
+</section>
+<section id="quadratic-approximation">
+<h2>Quadratic Approximation<a class="headerlink" href="#quadratic-approximation" title="Link to this heading"></a></h2>
+<p>When transaction costs constrain the solution to be close to <span class="math notranslate nohighlight">\(w_0\)</span>, we
+can approximate the convex risk function by its Taylor expansion:</p>
+<div class="math notranslate nohighlight">
+\[r(w) \approx r(w_0) + (w - w_0)^\top \nabla r(w_0)
++ \frac{1}{2} (w - w_0)^\top H_r(w_0) (w - w_0),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\nabla r\)</span> is the gradient and <span class="math notranslate nohighlight">\(H_r\)</span> is the Hessian of
+<span class="math notranslate nohighlight">\(r\)</span>. The approximate optimization problem becomes:</p>
+<div class="math notranslate nohighlight" id="equation-tc-approx">
+<span class="eqno">(2)<a class="headerlink" href="#equation-tc-approx" title="Link to this equation"></a></span>\[\max_{w \in \mathbb{R}^d} \;
+w^\top (m - c_1 \nabla r(w_0))
+- \frac{c_1}{2} (w - w_0)^\top H_r(w_0) (w - w_0)
+- c_2 \|w - w_0\|_1
+\quad \text{s.t.} \quad
+w^\top \mathbf{e} = 1, \;
+A w \leq b.\]</div>
+</section>
+<section id="reduction-to-quadratic-programming">
+<h2>Reduction to Quadratic Programming<a class="headerlink" href="#reduction-to-quadratic-programming" title="Link to this heading"></a></h2>
+<p>Problem <a class="reference internal" href="#equation-tc-approx">(2)</a> is convex but non-smooth at <span class="math notranslate nohighlight">\(w_0\)</span>. It can be
+reformulated as a quadratic program by introducing buy and sell variables.
+Let <span class="math notranslate nohighlight">\(v = (v^+; v^-)\)</span> where <span class="math notranslate nohighlight">\(v^+, v^- \in \mathbb{R}^d\)</span> with
+<span class="math notranslate nohighlight">\(v^+, v^- \geq 0\)</span> and <span class="math notranslate nohighlight">\(w = w_0 + v^+ - v^-\)</span>. Then:</p>
+<div class="math notranslate nohighlight" id="equation-tc-qp">
+<span class="eqno">(3)<a class="headerlink" href="#equation-tc-qp" title="Link to this equation"></a></span>\[\max_{v \geq 0} \;
+v^\top \tilde{m} - \frac{c_1}{2} v^\top \tilde{H} v
+\quad \text{s.t.} \quad
+v^\top \tilde{\mathbf{e}} = 0, \;
+\tilde{A} v \leq \tilde{b},\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{m} = \begin{pmatrix}
+m - c_1 \nabla r(w_0) - c_2 \mathbf{e} \\
+-m + c_1 \nabla r(w_0) - c_2 \mathbf{e}
+\end{pmatrix}, \quad
+\tilde{H} = \begin{pmatrix}
+H_r(w_0) &amp; -H_r(w_0) \\
+-H_r(w_0) &amp; H_r(w_0)
+\end{pmatrix},\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{\mathbf{e}} = \begin{pmatrix}
+\mathbf{e} \\ -\mathbf{e}
+\end{pmatrix}, \quad
+\tilde{A} = (A \; -A), \quad
+\tilde{b} = b - A w_0.\end{split}\]</div>
+<p>If <span class="math notranslate nohighlight">\(v^*\)</span> is the solution of <a class="reference internal" href="#equation-tc-qp">(3)</a>, then the optimal portfolio
+weight is:</p>
+<div class="math notranslate nohighlight">
+\[w^* = w_0 + (I \; -I) \, v^*.\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The matrix <span class="math notranslate nohighlight">\(\tilde{H}\)</span> is not full rank, so <a class="reference internal" href="#equation-tc-qp">(3)</a> is not
+strictly convex. In practice, a small regularization of the zero
+eigenvalues may be needed for certain QP solvers. One should verify that
+the objective at <span class="math notranslate nohighlight">\(w^*\)</span> exceeds the objective at <span class="math notranslate nohighlight">\(w_0\)</span>;
+otherwise, holding the current position is preferable.</p>
+</div>
+<p>The gradient <span class="math notranslate nohighlight">\(\nabla r(w_0)\)</span> and Hessian <span class="math notranslate nohighlight">\(H_r(w_0)\)</span> for CVaR
+risk can be computed using the formulas in <a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>. The QP
+formulation is typically orders of magnitude faster than solving the
+original non-smooth convex problem.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cvar_derivatives.html" class="btn btn-neutral float-left" title="CVaR Derivatives for Normal Mixture Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="enb.html" class="btn btn-neutral float-right" title="Effective Number of Bets and Minimum Torsion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

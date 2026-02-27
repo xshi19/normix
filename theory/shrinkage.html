@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shrinkage with Penalized Likelihood &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Factor Analysis for Generalized Hyperbolic Distributions" href="factor_analysis.html" />
+    <link rel="prev" title="EM Algorithm for Generalized Hyperbolic Distributions" href="em_algorithm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Shrinkage with Penalized Likelihood</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#penalized-likelihood-framework">Penalized Likelihood Framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#penalized-em-algorithm">Penalized EM Algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shrunk-sufficient-statistics">Shrunk Sufficient Statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Shrinkage with Penalized Likelihood</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/shrinkage.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="shrinkage-with-penalized-likelihood">
+<h1>Shrinkage with Penalized Likelihood<a class="headerlink" href="#shrinkage-with-penalized-likelihood" title="Link to this heading"></a></h1>
+<p>By setting <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> we ensure that the covariance matrix is
+numerically invertible in each iteration of the EM algorithm. However, this
+does not guarantee that the matrix inversion is well-conditioned. The formula
+for <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> in <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a> has the same problem as the sample
+covariance: the condition number of <span class="math notranslate nohighlight">\(\Sigma_k\)</span> can be huge when the
+sample size is relatively small. Shrinkage estimators based on penalized
+likelihood can improve the conditioning.</p>
+<section id="penalized-likelihood-framework">
+<h2>Penalized Likelihood Framework<a class="headerlink" href="#penalized-likelihood-framework" title="Link to this heading"></a></h2>
+<p>Consider a general exponential family with density:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y | \theta) = h(x, y) \exp\left(\theta^\top t(x, y) - \psi(\theta)\right),\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log \int h(x, y) \exp\left(\theta^\top t(x, y)\right) dx \, dy.\]</div>
+<p>The Kullback-Leibler divergence between two members of this family is:</p>
+<div class="math notranslate nohighlight">
+\[D_{KL}(\theta_1 \| \theta_2) = \psi(\theta_2) - \psi(\theta_1)
++ \eta_1^\top (\theta_1 - \theta_2),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta_1 = E[t(X, Y) | \theta_1] = \nabla\psi(\theta_1)\)</span>. This is
+also the Bregman divergence with potential function <span class="math notranslate nohighlight">\(\psi\)</span>.</p>
+<p>Assume that <span class="math notranslate nohighlight">\(x\)</span> is observable while <span class="math notranslate nohighlight">\(y\)</span> is hidden. Given a sample
+<span class="math notranslate nohighlight">\(x_1, \ldots, x_n\)</span> and a prior parameter <span class="math notranslate nohighlight">\(\theta_0\)</span>, the
+<strong>penalized likelihood</strong> maximization is:</p>
+<div class="math notranslate nohighlight">
+\[\max_\theta \frac{1}{n} \sum_{j=1}^n \log f(x_j | \theta)
+- \tau \, D_{KL}(\theta_0 \| \theta),\]</div>
+<p>where <span class="math notranslate nohighlight">\(f(x|\theta) = \int f(x,y|\theta) \, dy\)</span> is the marginal density
+and <span class="math notranslate nohighlight">\(\tau \geq 0\)</span> controls the amount of shrinkage. When <span class="math notranslate nohighlight">\(\tau = 0\)</span>
+this reduces to standard maximum likelihood. As <span class="math notranslate nohighlight">\(\tau\)</span> increases, the
+solution is pulled toward <span class="math notranslate nohighlight">\(\theta_0\)</span>.</p>
+</section>
+<section id="penalized-em-algorithm">
+<h2>Penalized EM Algorithm<a class="headerlink" href="#penalized-em-algorithm" title="Link to this heading"></a></h2>
+<p>This problem can be solved iteratively by the following EM algorithm:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \arg\max_\theta \frac{1}{n} \sum_{j=1}^n
+E\!\left[\log f(X, Y | \theta) \mid X = x_j, \theta_k\right]
+- \tau \, D_{KL}(\theta_0 \| \theta).\]</div>
+<p>One can show that the penalized likelihood is non-decreasing:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}&amp;\frac{1}{n} \sum_{j=1}^n \log f(x_j | \theta_{k+1})
+- \tau \, D_{KL}(\theta_0 \| \theta_{k+1}) \\
+&amp;\geq \frac{1}{n} \sum_{j=1}^n \log f(x_j | \theta_k)
+- \tau \, D_{KL}(\theta_0 \| \theta_k),\end{split}\]</div>
+<p>since the difference includes a non-negative KL divergence between
+conditional distributions <span class="math notranslate nohighlight">\(f(y|x,\theta_k)\)</span> and
+<span class="math notranslate nohighlight">\(f(y|x,\theta_{k+1})\)</span>.</p>
+<p>Using the exponential family representation, the penalized M-step reduces to:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \arg\max_\theta \,
+\theta^\top \left(\frac{1}{n} \sum_{j=1}^n
+E[t(X, Y) | x_j, \theta_k] + \tau \, \eta_0\right)
+- (1 + \tau) \psi(\theta),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta_0 = E[t(X, Y) | \theta_0]\)</span> are the expectation parameters
+at the prior.</p>
+</section>
+<section id="shrunk-sufficient-statistics">
+<h2>Shrunk Sufficient Statistics<a class="headerlink" href="#shrunk-sufficient-statistics" title="Link to this heading"></a></h2>
+<p>As a result, the E-step computes <strong>shrunk</strong> sufficient statistics by
+taking a convex combination of the conditional expectations and the prior
+expectations:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\hat{\eta}_1^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n
+E[Y^{-1} | X = x_j, \theta_k] + \frac{\tau}{1+\tau} E[Y^{-1} | \theta_0] \\
+\hat{\eta}_2^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n
+E[Y | X = x_j, \theta_k] + \frac{\tau}{1+\tau} E[Y | \theta_0] \\
+\hat{\eta}_3^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n
+E[\log Y | X = x_j, \theta_k] + \frac{\tau}{1+\tau} E[\log Y | \theta_0] \\
+\hat{\eta}_4^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n x_j
++ \frac{\tau}{1+\tau} E[X | \theta_0] \\
+\hat{\eta}_5^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n
+x_j \, E[Y^{-1} | X = x_j, \theta_k]
++ \frac{\tau}{1+\tau} E[X Y^{-1} | \theta_0] \\
+\hat{\eta}_6^{(k)} &amp;= \frac{1}{(1+\tau)n} \sum_{j=1}^n
+x_j x_j^\top E[Y^{-1} | X = x_j, \theta_k]
++ \frac{\tau}{1+\tau} E[X X^\top Y^{-1} | \theta_0]\end{split}\]</div>
+<p>where the <strong>prior expectations</strong> are computed from the GH expectation
+parameters (see <a class="reference internal" href="gh.html#equation-gh-expectation">(6)</a>):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[Y^\alpha | \theta_0] &amp;= \left(\sqrt{\frac{b_0}{a_0}}\right)^\alpha
+\frac{K_{p_0 + \alpha}(\sqrt{a_0 b_0})}{K_{p_0}(\sqrt{a_0 b_0})} \\
+E[\log Y | \theta_0] &amp;= \left.\frac{\partial}{\partial \alpha}
+E[Y^\alpha | \theta_0]\right|_{\alpha=0} \\
+E[X | \theta_0] &amp;= \mu_0 + \gamma_0 \, E[Y | \theta_0] \\
+E[X Y^{-1} | \theta_0] &amp;= \mu_0 \, E[Y^{-1} | \theta_0] + \gamma_0 \\
+E[X X^\top Y^{-1} | \theta_0] &amp;= \Sigma_0
++ \mu_0 \mu_0^\top E[Y^{-1} | \theta_0]
++ \gamma_0 \gamma_0^\top E[Y | \theta_0]
++ \mu_0 \gamma_0^\top + \gamma_0 \mu_0^\top\end{split}\]</div>
+<p>The penalized maximum likelihood thus amounts to a <strong>linear shrinkage</strong> of the
+conditional expectation parameters toward the prior <span class="math notranslate nohighlight">\(\theta_0\)</span>. The
+M-step is identical to the standard EM algorithm (see <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a>).</p>
+<p>Furthermore, the linear relationship between <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> and
+<span class="math notranslate nohighlight">\(\hat{\eta}_6^{(k)}\)</span> implies that <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> is shrunk
+toward <span class="math notranslate nohighlight">\(\Sigma_0\)</span> directly. By choosing an appropriate
+<span class="math notranslate nohighlight">\(\Sigma_0\)</span> (e.g., a well-conditioned target), one can improve the
+conditioning of <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> at each iteration.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="em_algorithm.html" class="btn btn-neutral float-left" title="EM Algorithm for Generalized Hyperbolic Distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="factor_analysis.html" class="btn btn-neutral float-right" title="Factor Analysis for Generalized Hyperbolic Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

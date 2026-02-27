@@ -1,0 +1,248 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generalized Effective Number of Bets &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="Effective Number of Bets and Minimum Torsion" href="enb.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Generalized Effective Number of Bets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#homogeneous-functions-and-risk-decomposition">Homogeneous Functions and Risk Decomposition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#local-diagonalization-via-the-hessian">Local Diagonalization via the Hessian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalized-enb">Generalized ENB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-to-coherent-risk-measures">Application to Coherent Risk Measures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Generalized Effective Number of Bets</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/generalized_enb.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generalized-effective-number-of-bets">
+<h1>Generalized Effective Number of Bets<a class="headerlink" href="#generalized-effective-number-of-bets" title="Link to this heading"></a></h1>
+<p>This section extends the ENB framework from <a class="reference internal" href="enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a> to general convex
+risk measures by diagonalizing the Hessian of the risk function.</p>
+<section id="homogeneous-functions-and-risk-decomposition">
+<h2>Homogeneous Functions and Risk Decomposition<a class="headerlink" href="#homogeneous-functions-and-risk-decomposition" title="Link to this heading"></a></h2>
+<p><strong>Definition.</strong> A function <span class="math notranslate nohighlight">\(r : \mathbb{R}^n \to \mathbb{R}\)</span> is
+<span class="math notranslate nohighlight">\(\tau\)</span>-<strong>homogeneous</strong> if <span class="math notranslate nohighlight">\(r(tw) = t^\tau r(w)\)</span> for all
+<span class="math notranslate nohighlight">\(w \in \mathbb{R}^n\)</span> and <span class="math notranslate nohighlight">\(t &gt; 0\)</span>.</p>
+<p><strong>Proposition</strong> (Tasche <a class="reference internal" href="#tasche1999b" id="id1"><span>[Tasche1999b]</span></a>). Let <span class="math notranslate nohighlight">\(r\)</span> be a totally
+differentiable, <span class="math notranslate nohighlight">\(\tau\)</span>-homogeneous function with <span class="math notranslate nohighlight">\(\tau \neq 0\)</span>.
+Then:</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(\partial r / \partial w_k\)</span> is <span class="math notranslate nohighlight">\((\tau - 1)\)</span>-homogeneous.</p></li>
+<li><p>Euler’s theorem: <span class="math notranslate nohighlight">\(\tau \, r(w) = w^\top \nabla r(w) = \sum_{k=1}^n w_k \, \frac{\partial r}{\partial w_k}(w)\)</span>.</p></li>
+</ol>
+<p>This decomposes the risk <span class="math notranslate nohighlight">\(r(w)\)</span> into marginal contributions
+<span class="math notranslate nohighlight">\(\frac{w_k}{\tau} \frac{\partial r}{\partial w_k}(w)\)</span>, analogous to
+the variance case where <span class="math notranslate nohighlight">\(\tau = 2\)</span>.</p>
+</section>
+<section id="local-diagonalization-via-the-hessian">
+<h2>Local Diagonalization via the Hessian<a class="headerlink" href="#local-diagonalization-via-the-hessian" title="Link to this heading"></a></h2>
+<p>For a general convex risk function, the marginal contributions
+<span class="math notranslate nohighlight">\(\frac{\partial r}{\partial w_k}\)</span> are not independent. To extract
+locally independent contributions, we use the Taylor expansion:</p>
+<div class="math notranslate nohighlight">
+\[r(w + \Delta w) \approx r(w) + \Delta w^\top \nabla r(w)
++ \frac{1}{2} \Delta w^\top H_r(w) \, \Delta w,\]</div>
+<p>where <span class="math notranslate nohighlight">\(H_r(w)\)</span> is the (positive semi-definite) Hessian matrix.</p>
+<p>Let <span class="math notranslate nohighlight">\(T(w)\)</span> diagonalize the Hessian: <span class="math notranslate nohighlight">\(T(w) \, H_r(w) \, T(w)^\top
+= D(w)\)</span>, and set <span class="math notranslate nohighlight">\(v = (T(w)^\top)^{-1} w\)</span>. Using
+<span class="math notranslate nohighlight">\((\tau - 1) \nabla r(w) = H_r(w) w\)</span> (from differentiating Euler’s
+identity), we obtain:</p>
+<div class="math notranslate nohighlight">
+\[(\tau - 1) \, T(w) \nabla r(w) = D(w) \, v.\]</div>
+<p>For <span class="math notranslate nohighlight">\(\tau &gt; 1\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[r(w) = \frac{1}{\tau} w^\top \nabla r(w)
+= \frac{1}{\tau(\tau - 1)} v^\top D(w) \, v
+= \sum_{k=1}^n \frac{d_k(w) \, v_k^2}{\tau(\tau - 1)},\]</div>
+<p>where <span class="math notranslate nohighlight">\(d_k(w)\)</span> are the diagonal entries of <span class="math notranslate nohighlight">\(D(w)\)</span>. Since
+<span class="math notranslate nohighlight">\(H_r(w)\)</span> is positive semi-definite, we have <span class="math notranslate nohighlight">\(d_k(w) \geq 0\)</span>,
+which ensures that the risk contributions are non-negative when
+<span class="math notranslate nohighlight">\(\tau &gt; 1\)</span>.</p>
+<section id="local-independence">
+<h3>Local Independence<a class="headerlink" href="#local-independence" title="Link to this heading"></a></h3>
+<p>The Taylor expansion in the transformed coordinates is:</p>
+<div class="math notranslate nohighlight">
+\[r(w + \Delta w) &amp;\approx r(w) + \frac{1}{\tau - 1} \Delta v^\top D(w) \, v
++ \frac{1}{\tau} \Delta v^\top D(w) \, \Delta v,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta v = (T(w)^\top)^{-1} \Delta w\)</span>. Each component of
+<span class="math notranslate nohighlight">\(\Delta v\)</span> has an approximately independent contribution to the change
+<span class="math notranslate nohighlight">\(r(w + \Delta w) - r(w)\)</span>, justifying the decomposition.</p>
+</section>
+</section>
+<section id="generalized-enb">
+<h2>Generalized ENB<a class="headerlink" href="#generalized-enb" title="Link to this heading"></a></h2>
+<p>The generalized ENB is defined as:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}p_k(w) &amp;= \frac{d_k(w) \, v_k^2}{\tau(\tau - 1) \, r(w)},
+\quad k = 1, \ldots, n, \\
+N(w) &amp;= \exp\!\left(-\sum_{k=1}^n p_k(w) \log p_k(w)\right).\end{split}\]</div>
+<p>Unlike the variance case, the Hessian <span class="math notranslate nohighlight">\(H_r(w)\)</span> depends on <span class="math notranslate nohighlight">\(w\)</span>,
+so the transformation <span class="math notranslate nohighlight">\(T(w)\)</span> must be recomputed for each portfolio.
+However, the structural results from <a class="reference internal" href="enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a> still apply:</p>
+<p>Let</p>
+<div class="math notranslate nohighlight">
+\[C(w) = \operatorname{diag}(H_r(w))^{-1/2} \, H_r(w) \,
+\operatorname{diag}(H_r(w))^{-1/2}\]</div>
+<p>be the “correlation” of the Hessian, with eigendecomposition
+<span class="math notranslate nohighlight">\(C(w) = U(w) \, S(w) \, U(w)^\top\)</span>. Then <span class="math notranslate nohighlight">\(T(w)\)</span> has the
+representation:</p>
+<div class="math notranslate nohighlight">
+\[T(w) = D^{1/2} V \, S(w)^{-1/2} U(w)^\top
+\operatorname{diag}(H_r(w))^{-1/2},\]</div>
+<p>where <span class="math notranslate nohighlight">\(D\)</span> is diagonal and <span class="math notranslate nohighlight">\(V\)</span> is orthogonal. The ENB is again
+independent of <span class="math notranslate nohighlight">\(D\)</span>, and the <strong>constrained minimum torsion</strong>
+transformation is:</p>
+<div class="math notranslate nohighlight">
+\[T_{MT}(w) = U(w) \, S(w)^{-1/2} U(w)^\top
+\operatorname{diag}(H_r(w))^{-1/2}.\]</div>
+</section>
+<section id="application-to-coherent-risk-measures">
+<h2>Application to Coherent Risk Measures<a class="headerlink" href="#application-to-coherent-risk-measures" title="Link to this heading"></a></h2>
+<p>Given a coherent risk measure <span class="math notranslate nohighlight">\(\rho\)</span>, define
+<span class="math notranslate nohighlight">\(r_\rho(w) = \rho(w^\top X)\)</span>. By positive homogeneity and
+subadditivity, <span class="math notranslate nohighlight">\(r_\rho\)</span> is convex and <strong>1-homogeneous</strong>
+(<span class="math notranslate nohighlight">\(\tau = 1\)</span>).</p>
+<p>Since the generalized ENB requires <span class="math notranslate nohighlight">\(\tau &gt; 1\)</span>, we work with the
+<strong>squared risk</strong> <span class="math notranslate nohighlight">\(r_\rho^2(w)\)</span>, which is 2-homogeneous. This is
+analogous to using variance (the square of standard deviation) in the
+original ENB framework.</p>
+<p>The Hessian of <span class="math notranslate nohighlight">\(r_\rho^2(w)\)</span> can be computed from the CVaR gradient
+and Hessian formulas in <a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[H_{r_\rho^2}(w) = 2 \nabla r_\rho(w) \, \nabla r_\rho(w)^\top
++ 2 \, r_\rho(w) \, H_{r_\rho}(w).\]</div>
+<p>The CVaR-based ENB can reveal tail-risk concentrations that the
+variance-based ENB misses. For example, in a portfolio of independent assets
+where one has heavier tails, the variance-based ENB treats all assets equally
+(since the covariance is diagonal), while the CVaR-based ENB correctly
+assigns a larger risk contribution to the heavy-tailed asset.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="tasche1999b" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Tasche1999b</a><span class="fn-bracket">]</span></span>
+<p>Tasche, D. (1999). Risk contributions and performance
+measurement. Report of the Lehrstuhl für mathematische Statistik, TU München.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="enb.html" class="btn btn-neutral float-left" title="Effective Number of Bets and Minimum Torsion" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

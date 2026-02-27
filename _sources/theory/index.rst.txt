@@ -11,6 +11,14 @@ in ``normix``, based on [Shi2016]_.
    gig
    gh
    em_algorithm
+   shrinkage
+   factor_analysis
+   online_em
+   mean_risk_optimization
+   cvar_derivatives
+   transaction_costs
+   enb
+   generalized_enb
 
 References
 ----------

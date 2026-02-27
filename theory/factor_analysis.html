@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factor Analysis for Generalized Hyperbolic Distributions &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Online EM Algorithm" href="online_em.html" />
+    <link rel="prev" title="Shrinkage with Penalized Likelihood" href="shrinkage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Factor Analysis for Generalized Hyperbolic Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#joint-distribution">Joint Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#curved-exponential-family">Curved Exponential Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#log-likelihood-function">Log-Likelihood Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#m-step-closed-form-solutions">M-Step: Closed-Form Solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditional-expectations-for-the-e-step">Conditional Expectations for the E-Step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#e-step">E-Step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
+      <li class="breadcrumb-item active">Factor Analysis for Generalized Hyperbolic Distributions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/factor_analysis.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="factor-analysis-for-generalized-hyperbolic-distributions">
+<h1>Factor Analysis for Generalized Hyperbolic Distributions<a class="headerlink" href="#factor-analysis-for-generalized-hyperbolic-distributions" title="Link to this heading"></a></h1>
+<p>Another way to improve the conditioning of <span class="math notranslate nohighlight">\(\Sigma\)</span> is the factor
+analysis approach <a class="reference internal" href="#tortora2013" id="id1"><span>[Tortora2013]</span></a>. Instead of estimating a full covariance
+matrix, we assume the structure <span class="math notranslate nohighlight">\(\Sigma = F F^\top + D\)</span> where
+<span class="math notranslate nohighlight">\(F \in \mathbb{R}^{d \times r}\)</span> with <span class="math notranslate nohighlight">\(r &lt; d\)</span> and
+<span class="math notranslate nohighlight">\(D \in \mathbb{R}^{d \times d}\)</span> is a positive definite diagonal matrix.</p>
+<p>This is equivalent to saying that a GH random vector <span class="math notranslate nohighlight">\(X\)</span> can be
+expressed as:</p>
+<div class="math notranslate nohighlight">
+\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}(F Z + \varepsilon),\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z \in \mathbb{R}^r \sim N(0, I)\)</span> and
+<span class="math notranslate nohighlight">\(\varepsilon \sim N(0, D)\)</span> are independent.</p>
+<section id="joint-distribution">
+<h2>Joint Distribution<a class="headerlink" href="#joint-distribution" title="Link to this heading"></a></h2>
+<p>The conditional distribution of <span class="math notranslate nohighlight">\(X\)</span> given <span class="math notranslate nohighlight">\(Y\)</span> and <span class="math notranslate nohighlight">\(Z\)</span>
+is <span class="math notranslate nohighlight">\(N(\mu + \gamma Y + \sqrt{Y} F Z, \, D Y)\)</span>. The joint distribution
+of <span class="math notranslate nohighlight">\((X, Y, Z)\)</span> is:</p>
+<div class="math notranslate nohighlight" id="equation-fa-joint">
+<span class="eqno">(1)<a class="headerlink" href="#equation-fa-joint" title="Link to this equation"></a></span>\[\begin{split}&amp;f(x, y, z | \mu, \gamma, F, D, p, a, b) \\
+&amp;= \frac{1}{\sqrt{(2\pi)^{d+r} |D|}}
+\frac{(a/b)^{p/2}}{2 K_p(\sqrt{ab})}
+y^{p - 1 - d/2} \\
+&amp;\quad \times \exp\!\left(-\frac{1}{2} z^\top z
+- \frac{1}{2}(b \, y^{-1} + a \, y)
+- \frac{1}{2}(x - \mu - \gamma y - F \sqrt{y} \, z)^\top
+D^{-1}(x - \mu - \gamma y - F \sqrt{y} \, z) \, y^{-1}\right)\end{split}\]</div>
+<p>for <span class="math notranslate nohighlight">\(y &gt; 0\)</span>.</p>
+</section>
+<section id="curved-exponential-family">
+<h2>Curved Exponential Family<a class="headerlink" href="#curved-exponential-family" title="Link to this heading"></a></h2>
+<p>The density <a class="reference internal" href="#equation-fa-joint">(1)</a> belongs to a <strong>curved exponential family</strong>:</p>
+<div class="math notranslate nohighlight">
+\[f(x, y, z) = h(x, y, z) \exp\!\left(\theta(u)^\top t(x, y, z)
+- \psi(\theta(u))\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\theta(\cdot)\)</span> is a nonlinear mapping from the parameter
+<span class="math notranslate nohighlight">\(u = (\mu, \gamma, F, D, p, a, b)\)</span> to a higher-dimensional space.</p>
+<p>The sufficient statistics <span class="math notranslate nohighlight">\(t(x, y, z)\)</span> consist of ten components:</p>
+<div class="math notranslate nohighlight">
+\[s_1 = y^{-1}, \quad s_2 = y, \quad s_3 = \log y, \quad
+s_4 = x, \quad s_5 = x y^{-1}, \quad s_6 = x x^\top y^{-1},\]</div>
+<div class="math notranslate nohighlight">
+\[s_7 = x z^\top y^{-1/2}, \quad s_8 = z y^{-1/2}, \quad
+s_9 = z y^{1/2}, \quad s_{10} = z z^\top.\]</div>
+</section>
+<section id="log-likelihood-function">
+<h2>Log-Likelihood Function<a class="headerlink" href="#log-likelihood-function" title="Link to this heading"></a></h2>
+<p>The log-likelihood function for the factor analysis model is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}L_{FA}(u | s) &amp;= -\frac{1}{2} \log|D|
+- \frac{1}{2} \mu^\top D^{-1} \mu \, s_1
+- \frac{1}{2} \gamma^\top D^{-1} \gamma \, s_2
++ \gamma^\top D^{-1} s_4
++ \mu^\top D^{-1} s_5 \\
+&amp;\quad - \frac{1}{2} \operatorname{tr}(D^{-1} s_6)
++ \operatorname{tr}(F^\top D^{-1} s_7)
+- \mu^\top D^{-1} F s_8
+- \gamma^\top D^{-1} F s_9 \\
+&amp;\quad - \frac{1}{2} \operatorname{tr}(F^\top D^{-1} F s_{10})
+- \mu^\top D^{-1} \gamma
++ L_{GIG}(p, a, b | s_1, s_2, s_3),\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(L_{GIG}\)</span> is the GIG log-likelihood defined in <a class="reference internal" href="gig.html#equation-gig-loglik">(8)</a>.</p>
+</section>
+<section id="m-step-closed-form-solutions">
+<h2>M-Step: Closed-Form Solutions<a class="headerlink" href="#m-step-closed-form-solutions" title="Link to this heading"></a></h2>
+<p>Setting the partial derivatives of <span class="math notranslate nohighlight">\(L_{FA}\)</span> to zero yields analytic
+formulas for the M-step. Define:</p>
+<div class="math notranslate nohighlight" id="equation-fa-aux">
+<span class="eqno">(2)<a class="headerlink" href="#equation-fa-aux" title="Link to this equation"></a></span>\[\begin{split}q_1 &amp;= s_8^\top s_{10}^{-1} s_8 - s_1, \\
+q_2 &amp;= s_9^\top s_{10}^{-1} s_8 - 1, \\
+q_3 &amp;= s_9^\top s_{10}^{-1} s_9 - s_2, \\
+q_4 &amp;= s_7^\top s_{10}^{-1} s_8 - s_5, \\
+q_5 &amp;= s_7^\top s_{10}^{-1} s_9 - s_4.\end{split}\]</div>
+<p>Then the parameter updates are:</p>
+<div class="math notranslate nohighlight" id="equation-fa-mstep">
+<span class="eqno">(3)<a class="headerlink" href="#equation-fa-mstep" title="Link to this equation"></a></span>\[\begin{split}\mu &amp;= \frac{q_2 \, q_5 - q_3 \, q_4}{q_2^2 - q_1 \, q_3}, \\
+\gamma &amp;= \frac{q_2 \, q_4 - q_1 \, q_5}{q_2^2 - q_1 \, q_3}, \\
+F &amp;= (s_7 - \mu \, s_8^\top - \gamma \, s_9^\top) \, s_{10}^{-1}, \\
+D &amp;= \operatorname{diag}\!\big(
+s_1 \mu \mu^\top + s_2 \gamma \gamma^\top
+- s_4 \gamma^\top - \gamma s_4^\top
+- s_5 \mu^\top - \mu s_5^\top + s_6 \\
+&amp;\qquad - s_7 F^\top - F s_7^\top
++ F s_8 \mu^\top + \mu (F s_8)^\top
++ F s_9 \gamma^\top + \gamma (F s_9)^\top \\
+&amp;\qquad + F s_{10} F^\top
++ \mu \gamma^\top + \gamma \mu^\top\big), \\
+(p, a, b) &amp;= \arg\max_{p, a, b} L_{GIG}(p, a, b | s_1, s_2, s_3).\end{split}\]</div>
+</section>
+<section id="conditional-expectations-for-the-e-step">
+<h2>Conditional Expectations for the E-Step<a class="headerlink" href="#conditional-expectations-for-the-e-step" title="Link to this heading"></a></h2>
+<p>Integrating <a class="reference internal" href="#equation-fa-joint">(1)</a> over <span class="math notranslate nohighlight">\(z\)</span>, the joint distribution of
+<span class="math notranslate nohighlight">\((X, Y)\)</span> has covariance structure <span class="math notranslate nohighlight">\(\Sigma = F F^\top + D\)</span>.
+Therefore the conditional distribution of <span class="math notranslate nohighlight">\(Y\)</span> given <span class="math notranslate nohighlight">\(X\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[Y | X = x \sim \operatorname{GIG}\!\left(p - \frac{d}{2}, \,
+a + \gamma^\top (F F^\top + D)^{-1} \gamma, \,
+b + (x - \mu)^\top (F F^\top + D)^{-1} (x - \mu)\right),\]</div>
+<p>and the conditional moments <span class="math notranslate nohighlight">\(E[Y^\alpha | X, u]\)</span> and
+<span class="math notranslate nohighlight">\(E[\log Y | X, u]\)</span> are computed using <a class="reference internal" href="em_algorithm.html#equation-gig-moment-cond">(1)</a>.</p>
+<p>The conditional distribution of <span class="math notranslate nohighlight">\((X, Z)\)</span> given <span class="math notranslate nohighlight">\(Y\)</span> is Gaussian:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix} (X - \mu - \gamma Y)/\sqrt{Y} \\ Z \end{pmatrix}
+\Bigg| Y, u
+\sim N\!\left(0, \begin{pmatrix}
+F F^\top + D &amp; F \\ F^\top &amp; I
+\end{pmatrix}\right).\end{split}\]</div>
+<p>Define <span class="math notranslate nohighlight">\(\beta = F^\top (F F^\top + D)^{-1}\)</span>. The conditional
+expectations of the latent factor <span class="math notranslate nohighlight">\(Z\)</span> are:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E[Z Y^{-1/2} | X, u] &amp;= \beta(X - \mu) E[Y^{-1} | X, u] - \beta \gamma, \\
+E[Z Y^{1/2} | X, u] &amp;= \beta(X - \mu) - \beta \gamma \, E[Y | X, u], \\
+E[Z Z^\top | X, u] &amp;= I - \beta F
++ \beta(X - \mu)(X - \mu)^\top \beta^\top E[Y^{-1} | X, u] \\
+&amp;\quad - \beta(X - \mu)\gamma^\top \beta^\top
+- \beta \gamma (X - \mu)^\top \beta^\top
++ \beta \gamma \gamma^\top \beta^\top E[Y | X, u].\end{split}\]</div>
+</section>
+<section id="e-step">
+<h2>E-Step<a class="headerlink" href="#e-step" title="Link to this heading"></a></h2>
+<p>Given i.i.d. samples <span class="math notranslate nohighlight">\(x_1, \ldots, x_n\)</span> and current parameters
+<span class="math notranslate nohighlight">\(u_k = (\mu_k, \gamma_k, F_k, D_k, p_k, a_k, b_k)\)</span>, the E-step
+computes all ten sufficient statistics. The first six are the same as the
+standard EM algorithm (see <a class="reference internal" href="em_algorithm.html#equation-e-step">(2)</a>):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}s_1^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, u_k], \\
+s_2^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, u_k], \\
+s_3^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, u_k], \\
+s_4^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j, \\
+s_5^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j \, E[Y^{-1} | X = x_j, u_k], \\
+s_6^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n
+x_j x_j^\top E[Y^{-1} | X = x_j, u_k].\end{split}\]</div>
+<p>The remaining four are determined by the first six using
+<span class="math notranslate nohighlight">\(\beta_k = F_k^\top (F_k F_k^\top + D_k)^{-1}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}s_7^{(k)} &amp;= (s_6^{(k)} - s_5^{(k)} \mu_k^\top
+- s_4^{(k)} \gamma_k^\top) \beta_k^\top, \\
+s_8^{(k)} &amp;= \beta_k (s_5^{(k)} - \mu_k \, s_1^{(k)} - \gamma_k), \\
+s_9^{(k)} &amp;= \beta_k (s_4^{(k)} - \mu_k - \gamma_k \, s_2^{(k)}), \\
+s_{10}^{(k)} &amp;= I - \beta_k F_k
++ \beta_k \big(s_6^{(k)} - s_5^{(k)} \mu_k^\top
+- \mu_k (s_5^{(k)})^\top + \mu_k \mu_k^\top s_1^{(k)} \\
+&amp;\quad - (s_4^{(k)} - \mu_k) \gamma_k^\top
+- \gamma_k (s_4^{(k)} - \mu_k)^\top
++ \gamma_k \gamma_k^\top s_2^{(k)}\big) \beta_k^\top.\end{split}\]</div>
+<p>The M-step then applies <a class="reference internal" href="#equation-fa-mstep">(3)</a> and <a class="reference internal" href="#equation-fa-aux">(2)</a> with
+<span class="math notranslate nohighlight">\(s = (s_1^{(k)}, \ldots, s_{10}^{(k)})\)</span>.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="tortora2013" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Tortora2013</a><span class="fn-bracket">]</span></span>
+<p>Tortora, C., McNicholas, P. D., &amp; Browne, R. P. (2013).
+Mixtures of multivariate generalized hyperbolic distributions.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="shrinkage.html" class="btn btn-neutral float-left" title="Shrinkage with Penalized Likelihood" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="online_em.html" class="btn btn-neutral float-right" title="Online EM Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
