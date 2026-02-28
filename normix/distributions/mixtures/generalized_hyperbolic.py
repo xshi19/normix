@@ -512,7 +512,10 @@ class GeneralizedHyperbolic(NormalMixture):
         if X.ndim == 1:
             X = X.reshape(-1, 1)
 
-        n_samples, d = X.shape
+        # Normalize data for numerical stability
+        X_norm, center, scale = self._normalize_data(X)
+
+        n_samples, d = X_norm.shape
 
         # Initialize joint distribution if needed
         if self._joint is None:
@@ -536,10 +539,10 @@ class GeneralizedHyperbolic(NormalMixture):
 
         # Initialize parameters using NIG warm start
         if not self._joint._fitted:
-            self._initialize_params(X, random_state)
+            self._initialize_params(X_norm, random_state)
 
         if verbose > 0:
-            init_ll = np.mean(self.logpdf(X))
+            init_ll = np.mean(self.logpdf(X_norm))
             print(f"Initial log-likelihood: {init_ll:.6f}")
 
         def _apply_regularization():
@@ -577,60 +580,40 @@ class GeneralizedHyperbolic(NormalMixture):
 
         # EM iterations
         for iteration in range(max_iter):
-            # Apply regularization BEFORE E-step (following legacy)
             _apply_regularization()
 
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
             prev_L = self._joint._L_Sigma.copy()
 
-            # E-step: compute conditional expectations
-            cond_exp = self._conditional_expectation_y_given_x(X)
+            cond_exp = self._conditional_expectation_y_given_x(X_norm)
+            self._m_step(X_norm, cond_exp, fix_tail=fix_tail, verbose=verbose)
 
-            # M-step: update parameters
-            self._m_step(X, cond_exp, fix_tail=fix_tail)
-
-            # Apply regularization AFTER M-step to ensure constraints hold
             _apply_regularization()
 
-            mu_new = self._joint._mu
-            gamma_new = self._joint._gamma
-            L_new = self._joint._L_Sigma
-
-            mu_norm = np.linalg.norm(mu_new - prev_mu)
-            mu_denom = max(np.linalg.norm(prev_mu), 1e-10)
-            rel_mu = mu_norm / mu_denom
-
-            gamma_norm = np.linalg.norm(gamma_new - prev_gamma)
-            gamma_denom = max(np.linalg.norm(prev_gamma), 1e-10)
-            rel_gamma = gamma_norm / gamma_denom
-
-            L_norm = np.linalg.norm(L_new - prev_L, 'fro')
-            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
-            rel_sigma = L_norm / L_denom
-
-            max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
-
-            if verbose > 0:
-                ll = np.mean(self.logpdf(X))
-                print(f"Iteration {iteration + 1}: log-likelihood = {ll:.6f}")
-                if verbose > 1:
-                    print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
-                          f"Sigma={rel_sigma:.2e}")
+            max_rel_change = self._check_convergence(
+                prev_mu, prev_gamma, prev_L,
+                verbose=verbose, iteration=iteration, X=X_norm,
+            )
 
             if max_rel_change < tol:
-                if verbose > 0:
-                    print('Converged')
+                if verbose >= 1:
+                    print(f"Converged at iteration {iteration + 1}")
                 self.n_iter_ = iteration + 1
+                self._denormalize_params(center, scale)
                 self._fitted = self._joint._fitted
                 self._invalidate_cache()
                 return self
 
-        if verbose > 0:
-            print('Not converged (max iterations reached)')
         self.n_iter_ = max_iter
+        self._denormalize_params(center, scale)
         self._fitted = self._joint._fitted
         self._invalidate_cache()
+
+        if verbose >= 1:
+            final_ll = np.mean(self.logpdf(X))
+            print(f"Final log-likelihood: {final_ll:.6f}")
+
         return self
 
     def _initialize_params(
@@ -705,7 +688,9 @@ class GeneralizedHyperbolic(NormalMixture):
         self, 
         X: NDArray, 
         cond_exp: Dict[str, NDArray],
-        fix_tail: bool = False
+        fix_tail: bool = False,
+        *,
+        verbose: int = 0,
     ) -> None:
         """
         M-step: update parameters given conditional expectations.
@@ -718,6 +703,8 @@ class GeneralizedHyperbolic(NormalMixture):
             Dictionary with keys 'E_Y', 'E_inv_Y', 'E_log_Y'.
         fix_tail : bool, optional
             If True, do not update GIG parameters (p, a, b). Default False.
+        verbose : int, optional
+            Verbosity level for diagnostics.
         """
         from normix.distributions.univariate import GeneralizedInverseGaussian
 
@@ -761,14 +748,18 @@ class GeneralizedHyperbolic(NormalMixture):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     gig.set_expectation_params(gig_eta, theta0=current_gig_theta)
-                    
+
+                if verbose >= 1:
+                    recovered = gig._compute_expectation_params()
+                    eta_diff = np.max(np.abs(recovered - gig_eta))
+                    if eta_diff > 1e-6:
+                        print(f"  Warning: GIG expectation param roundtrip error = {eta_diff:.2e}")
+
                 gig_classical = gig.classical_params
                 p_new = gig_classical.p
                 a_new = gig_classical.a
                 b_new = gig_classical.b
                 
-                # Sanity check: reject if parameters are extreme or degenerate
-                # This prevents the optimization from diverging
                 if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10 or
                     a_new < 1e-10 or b_new < 1e-10):
                     p = current_p

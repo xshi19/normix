@@ -42,7 +42,7 @@ from numpy.typing import ArrayLike, NDArray
 
 from scipy.linalg import cho_solve, solve_triangular
 
-from normix.utils import robust_cholesky
+from normix.utils import robust_cholesky, column_median_mad
 
 from .distribution import Distribution
 from .exponential_family import ExponentialFamily
@@ -1459,6 +1459,127 @@ class NormalMixture(Distribution, ABC):
             The mixing distribution (e.g., GIG, Gamma, InverseGaussian).
         """
         return self.joint._create_mixing_distribution()
+
+    # ========================================================================
+    # EM helpers
+    # ========================================================================
+
+    def _check_convergence(
+        self,
+        prev_mu: NDArray,
+        prev_gamma: NDArray,
+        prev_L: NDArray,
+        *,
+        verbose: int,
+        iteration: int,
+        X: NDArray,
+    ) -> float:
+        """
+        Compute relative parameter change for EM convergence checking.
+
+        Measures the maximum relative change in the normal parameters
+        :math:`(\\mu, \\gamma, L_\\Sigma)` between the current and previous
+        EM iteration.  Optionally prints log-likelihood and per-parameter
+        diagnostics.
+
+        Parameters
+        ----------
+        prev_mu : ndarray
+            Previous iteration's :math:`\\mu`.
+        prev_gamma : ndarray
+            Previous iteration's :math:`\\gamma`.
+        prev_L : ndarray
+            Previous iteration's Cholesky factor :math:`L_\\Sigma`.
+        verbose : int
+            Verbosity level (0 = silent, 1 = log-likelihood,
+            2 = per-parameter relative changes).
+        iteration : int
+            Current iteration index (0-based).
+        X : ndarray
+            Data array, shape ``(n_samples, d)``.
+
+        Returns
+        -------
+        max_rel_change : float
+            Maximum of the three relative changes.
+        """
+        mu_new = self._joint._mu
+        gamma_new = self._joint._gamma
+        L_new = self._joint._L_Sigma
+
+        rel_mu = np.linalg.norm(mu_new - prev_mu) / max(np.linalg.norm(prev_mu), 1e-10)
+        rel_gamma = np.linalg.norm(gamma_new - prev_gamma) / max(np.linalg.norm(prev_gamma), 1e-10)
+        rel_sigma = np.linalg.norm(L_new - prev_L, 'fro') / max(np.linalg.norm(prev_L, 'fro'), 1e-10)
+
+        max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
+
+        if verbose >= 1:
+            ll = np.mean(self.logpdf(X))
+            print(f"Iteration {iteration + 1}: log-likelihood = {ll:.6f}")
+            if verbose >= 2:
+                print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
+                      f"Sigma={rel_sigma:.2e}")
+
+        return max_rel_change
+
+    # ========================================================================
+    # Data normalization for EM
+    # ========================================================================
+
+    @staticmethod
+    def _normalize_data(X: NDArray) -> tuple[NDArray, NDArray, NDArray]:
+        """
+        Normalize data columns by median and MAD for numerical stability.
+
+        Computes :math:`X_{\\text{norm}} = \\text{diag}(m)^{-1} (X - c)` where
+        :math:`c` is the column-wise median and :math:`m` is the scaled MAD.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n, d)
+            Raw data matrix.
+
+        Returns
+        -------
+        X_norm : ndarray, shape (n, d)
+            Normalized data.
+        center : ndarray, shape (d,)
+            Column medians.
+        scale : ndarray, shape (d,)
+            Column scaled-MAD values.
+        """
+        center, scale = column_median_mad(X)
+        X_norm = (X - center) / scale
+        return X_norm, center, scale
+
+    def _denormalize_params(self, center: NDArray, scale: NDArray) -> None:
+        """
+        Transform fitted parameters from normalized space back to original.
+
+        If the EM was run on :math:`X_{\\text{norm}} = D^{-1}(X - c)` where
+        :math:`D = \\text{diag}(\\text{scale})`, then the original-space
+        parameters are:
+
+        .. math::
+            \\mu_{\\text{orig}} &= c + D\\,\\mu_{\\text{norm}} \\\\
+            \\gamma_{\\text{orig}} &= D\\,\\gamma_{\\text{norm}} \\\\
+            L_{\\Sigma,\\text{orig}} &= D\\,L_{\\Sigma,\\text{norm}}
+
+        Mixing distribution parameters are unchanged.
+
+        Parameters
+        ----------
+        center : ndarray, shape (d,)
+            Column medians used for centering.
+        scale : ndarray, shape (d,)
+            Column scaled-MAD values used for scaling.
+        """
+        jt = self._joint
+        jt._mu = center + scale * jt._mu
+        jt._gamma = scale * jt._gamma
+        jt._L_Sigma = scale[:, np.newaxis] * jt._L_Sigma
+        jt._invalidate_cache()
+        self._invalidate_cache()
 
     # ========================================================================
     # Fitting (placeholder - to be implemented in subclasses)

@@ -351,6 +351,128 @@ class NormalInverseGamma(NormalMixture):
     # Fitting via EM algorithm
     # ========================================================================
 
+    def _initialize_params(
+        self,
+        X: NDArray,
+        random_state: Optional[Union[int, np.random.Generator]] = None
+    ) -> None:
+        """
+        Initialize NInvG parameters using method of moments.
+
+        Parameters
+        ----------
+        X : ndarray
+            Data array, shape (n_samples, d).
+        random_state : int or Generator, optional
+            Random state (reserved for future use).
+        """
+        n, d = X.shape
+
+        X_mean = np.mean(X, axis=0)
+        X_cov = np.cov(X, rowvar=False)
+        if X_cov.ndim == 0:
+            X_cov = np.array([[X_cov]])
+
+        alpha_init = 3.0
+        beta_init = 1.0
+        E_Y_init = beta_init / (alpha_init - 1)
+
+        X_centered = X - X_mean
+        X_std = np.std(X, axis=0)
+        X_std = np.maximum(X_std, 1e-10)
+        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
+        gamma_init = skewness * X_std * 0.1
+
+        mu_init = X_mean - gamma_init * E_Y_init
+
+        Var_Y_init = beta_init**2 / ((alpha_init - 1)**2 * (alpha_init - 2))
+        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / E_Y_init
+
+        L = robust_cholesky(Sigma_init, eps=1e-6)
+        Sigma_init = L @ L.T
+
+        self.set_classical_params(
+            mu=mu_init,
+            gamma=gamma_init,
+            sigma=Sigma_init,
+            shape=alpha_init,
+            rate=beta_init
+        )
+
+    def _m_step(
+        self,
+        X: NDArray,
+        cond_exp: Dict[str, NDArray],
+        *,
+        verbose: int = 0,
+    ) -> None:
+        """
+        M-step: update parameters given conditional expectations.
+
+        Parameters
+        ----------
+        X : ndarray
+            Data array, shape (n_samples, d).
+        cond_exp : dict
+            Dictionary with keys ``'E_Y'``, ``'E_inv_Y'``, ``'E_log_Y'``.
+        verbose : int, optional
+            Verbosity level for diagnostics.
+        """
+        from normix.distributions.univariate import InverseGamma
+
+        n, d = X.shape
+
+        E_Y = cond_exp['E_Y']
+        E_inv_Y = cond_exp['E_inv_Y']
+        E_log_Y = cond_exp['E_log_Y']
+
+        s1 = np.mean(E_inv_Y)
+        s2 = np.mean(E_Y)
+        s3 = np.mean(E_log_Y)
+        s4 = np.mean(X, axis=0)
+        s5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)
+        s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n
+
+        # Normal parameters (closed-form)
+        denom = 1.0 - s1 * s2
+        if abs(denom) < 1e-10:
+            denom = np.sign(denom) * 1e-10 if denom != 0 else 1e-10
+
+        mu = (s4 - s2 * s5) / denom
+        gamma = (s5 - s1 * s4) / denom
+
+        Sigma = -np.outer(s5, mu)
+        Sigma = Sigma + Sigma.T + s6 + s1 * np.outer(mu, mu) - s2 * np.outer(gamma, gamma)
+
+        L_Sigma = robust_cholesky(Sigma)
+
+        # InverseGamma parameters via set_expectation_params
+        # InvGamma expectation params: [-alpha/beta, log(beta) - digamma(alpha)] = [E[-1/Y], E[log Y]]
+        # From EM: E[-1/Y] = -s1, E[log Y] = s3
+        ig_dist = InverseGamma()
+        ig_eta = np.array([-s1, s3])
+        current_theta = np.array([
+            self._joint._beta,
+            -(self._joint._alpha + 1)
+        ])
+        ig_dist.set_expectation_params(ig_eta, theta0=current_theta)
+
+        if verbose >= 1:
+            recovered = ig_dist._compute_expectation_params()
+            eta_diff = np.max(np.abs(recovered - ig_eta))
+            if eta_diff > 1e-6:
+                print(f"  Warning: InverseGamma expectation param roundtrip error = {eta_diff:.2e}")
+
+        alpha_new = ig_dist.classical_params.shape
+        beta_new = ig_dist.classical_params.rate
+
+        self._joint._set_internal(
+            mu=mu, gamma=gamma, L_sigma=L_Sigma,
+            shape=alpha_new, rate=beta_new
+        )
+        self._fitted = True
+        self._invalidate_cache()
+
     def fit(
         self,
         X: ArrayLike,
@@ -363,10 +485,6 @@ class NormalInverseGamma(NormalMixture):
     ) -> 'NormalInverseGamma':
         """
         Fit distribution to data using the EM algorithm.
-
-        When only X is observed (Y is latent), uses the EM algorithm described
-        in the theory documentation. The E-step computes conditional expectations
-        of Y given X, and the M-step updates parameters using closed-form formulas.
 
         Convergence is checked based on the relative change in the normal
         parameters :math:`(\\mu, \\gamma, \\Sigma)`. Log-likelihood is optionally
@@ -382,7 +500,7 @@ class NormalInverseGamma(NormalMixture):
             Maximum number of EM iterations. Default is 100.
         tol : float, optional
             Convergence tolerance for relative parameter change.
-            Default is 1e-6.
+            Default is 1e-3.
         verbose : int, optional
             Verbosity level. 0 = silent, 1 = progress with llh,
             2 = detailed with parameter norms. Default is 0.
@@ -393,233 +511,41 @@ class NormalInverseGamma(NormalMixture):
         -------
         self : NormalInverseGamma
             Fitted distribution (returns self for method chaining).
-
-        Notes
-        -----
-        The EM algorithm iterates between:
-
-        **E-step**: Compute conditional expectations
-
-        .. math::
-            E[Y | X = x_j], \\quad E[1/Y | X = x_j], \\quad E[\\log Y | X = x_j]
-
-        **M-step**: Update parameters using closed-form formulas
-
-        The InverseGamma parameters :math:`(\\alpha, \\beta)` are updated via Newton's method.
-
-        For valid estimates, we need :math:`\\alpha > 1` for the mean to exist.
         """
-        from scipy.special import digamma, polygamma
-
         X = np.asarray(X)
-
-        # Handle 1D X
         if X.ndim == 1:
             X = X.reshape(-1, 1)
 
-        n_samples, d = X.shape
+        # Normalize data for numerical stability
+        X_norm, center, scale = self._normalize_data(X)
+
+        n_samples, d = X_norm.shape
 
         # Initialize joint distribution if needed
         if self._joint is None:
             self._joint = self._create_joint_distribution()
         self._joint._d = d
 
-        # Set up RNG for initialization
-        if random_state is None:
-            rng = np.random.default_rng()
-        elif isinstance(random_state, int):
-            rng = np.random.default_rng(random_state)
-        else:
-            rng = random_state
-
-        # ================================================================
-        # Initialize parameters using method of moments
-        # ================================================================
-        X_mean = np.mean(X, axis=0)
-        X_cov = np.cov(X, rowvar=False)
-        if X_cov.ndim == 0:
-            X_cov = np.array([[X_cov]])
-
-        # For NInvG: E[X] = μ + γ E[Y] = μ + γ β/(α-1)
-        # Var[X] = E[Y] Σ + Var[Y] γγ^T
-        # 
-        # Initial guesses using heuristics:
-        # - Start with α = 3, β = 1 (so E[Y] = 0.5, Var[Y] = 0.25)
-        # - Estimate γ from skewness (if available)
-        # - μ = E[X] - γ E[Y]
-        # - Σ from residual variance
-
-        alpha_init = 3.0  # Need α > 2 for finite variance
-        beta_init = 1.0
-        E_Y_init = beta_init / (alpha_init - 1)
-
-        # Estimate skewness to get initial gamma
-        X_centered = X - X_mean
-        X_std = np.std(X, axis=0)
-        X_std = np.maximum(X_std, 1e-10)  # Avoid division by zero
-
-        # Skewness: E[(X - μ_X)³] / σ³
-        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
-
-        # Heuristic: γ ≈ skewness * σ / (some factor)
-        gamma_init = skewness * X_std * 0.1
-
-        # μ = E[X] - γ E[Y]
-        mu_init = X_mean - gamma_init * E_Y_init
-
-        # Σ from sample covariance, adjusted for gamma contribution
-        Var_Y_init = beta_init**2 / ((alpha_init - 1)**2 * (alpha_init - 2))
-        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / E_Y_init
-
-        # Ensure Sigma is positive definite via robust Cholesky
-        L = robust_cholesky(Sigma_init, eps=1e-6)
-        Sigma_init = L @ L.T
-
-        # Set initial parameters
-        self.set_classical_params(
-            mu=mu_init,
-            gamma=gamma_init,
-            sigma=Sigma_init,
-            shape=alpha_init,
-            rate=beta_init
-        )
+        if not self._joint._fitted:
+            self._initialize_params(X_norm, random_state)
 
         if verbose >= 1:
-            init_ll = np.mean(self.logpdf(X))
+            init_ll = np.mean(self.logpdf(X_norm))
             print(f"Initial log-likelihood: {init_ll:.6f}")
 
-        # ================================================================
         # EM iterations
-        # ================================================================
         for iteration in range(max_iter):
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
             prev_L = self._joint._L_Sigma.copy()
-            prev_shape = self._joint._alpha
-            prev_rate = self._joint._beta
 
-            # ==============================================================
-            # E-step: Compute conditional expectations E[g(Y) | X]
-            # ==============================================================
-            cond_exp = self._conditional_expectation_y_given_x(X)
-            E_Y = cond_exp['E_Y']          # (n,)
-            E_inv_Y = cond_exp['E_inv_Y']  # (n,)
-            E_log_Y = cond_exp['E_log_Y']  # (n,)
+            cond_exp = self._conditional_expectation_y_given_x(X_norm)
+            self._m_step(X_norm, cond_exp, verbose=verbose)
 
-            # Compute weighted statistics
-            eta_1 = np.mean(E_inv_Y)
-            eta_2 = np.mean(E_Y)
-            eta_3 = np.mean(E_log_Y)
-            eta_4 = np.mean(X, axis=0)  # (d,)
-            eta_5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # (d,)
-
-            # η̂₆ = (1/n) Σ X_j X_j^T E[1/Y | X_j]
-            eta_6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n_samples
-
-            # ==============================================================
-            # M-step: Update parameters
-            # ==============================================================
-
-            # Denominator: 1 - η̂₁ η̂₂
-            denom = 1.0 - eta_1 * eta_2
-
-            # Handle edge case
-            if abs(denom) < 1e-10:
-                if verbose >= 1:
-                    print(f"Warning: denominator near zero at iteration {iteration}")
-                denom = np.sign(denom) * 1e-10 if denom != 0 else 1e-10
-
-            # μ = (η̂₄ - η̂₂ η̂₅) / (1 - η̂₁ η̂₂)
-            mu_new = (eta_4 - eta_2 * eta_5) / denom
-
-            # γ = (η̂₅ - η̂₁ η̂₄) / (1 - η̂₁ η̂₂)
-            gamma_new = (eta_5 - eta_1 * eta_4) / denom
-
-            # Σ = η̂₆ - η̂₅ μ^T - μ η̂₅^T + η̂₁ μ μ^T - η̂₂ γ γ^T
-            Sigma_new = (eta_6
-                         - np.outer(eta_5, mu_new)
-                         - np.outer(mu_new, eta_5)
-                         + eta_1 * np.outer(mu_new, mu_new)
-                         - eta_2 * np.outer(gamma_new, gamma_new))
-
-            L = robust_cholesky(Sigma_new)
-
-            # InverseGamma parameters via Newton's method
-            # For InvGamma: E[1/Y] = α/β, E[log Y] = log(β) - ψ(α)
-            # Solve: ψ(α) - log(α) = -η̂₃ - log(η̂₁)
-            target = -eta_3 - np.log(eta_1)
-
-            alpha_new = prev_shape
-
-            for _ in range(50):
-                psi_val = digamma(alpha_new)
-                psi_prime = polygamma(1, alpha_new)
-
-                f_val = psi_val - np.log(alpha_new) - target
-                f_prime = psi_prime - 1.0 / alpha_new
-
-                step = f_val / f_prime
-                alpha_candidate = alpha_new - step
-
-                # Keep α > 1.5 (need α > 1 for finite mean)
-                alpha_candidate = max(alpha_candidate, 1.5)
-                alpha_candidate = min(alpha_candidate, 1000.0)
-
-                if abs(alpha_candidate - alpha_new) / max(abs(alpha_new), 1e-10) < 1e-10:
-                    alpha_new = alpha_candidate
-                    break
-
-                alpha_new = alpha_candidate
-
-            # β = α / η̂₁
-            beta_new = alpha_new / eta_1
-
-            # ==============================================================
-            # Update parameters via _set_internal
-            # ==============================================================
-            try:
-                self._joint._set_internal(
-                    mu=mu_new, gamma=gamma_new, L_sigma=L,
-                    shape=alpha_new, rate=beta_new
-                )
-                self._fitted = True
-                self._invalidate_cache()
-            except (ValueError, np.linalg.LinAlgError) as e:
-                if verbose >= 1:
-                    print(f"Warning: parameter update failed at iteration {iteration}: {e}")
-                self._joint._set_internal(
-                    mu=prev_mu, gamma=prev_gamma,
-                    L_sigma=prev_L,
-                    shape=prev_shape, rate=prev_rate
-                )
-                self._fitted = True
-                self._invalidate_cache()
-                self.n_iter_ = iteration + 1
-                break
-
-            # ==============================================================
-            # Check convergence using relative parameter change
-            # ==============================================================
-            mu_norm = np.linalg.norm(mu_new - prev_mu)
-            mu_denom_val = max(np.linalg.norm(prev_mu), 1e-10)
-            rel_mu = mu_norm / mu_denom_val
-
-            gamma_norm = np.linalg.norm(gamma_new - prev_gamma)
-            gamma_denom_val = max(np.linalg.norm(prev_gamma), 1e-10)
-            rel_gamma = gamma_norm / gamma_denom_val
-
-            L_norm = np.linalg.norm(L - prev_L, 'fro')
-            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
-            rel_sigma = L_norm / L_denom
-
-            max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
-
-            if verbose >= 1:
-                current_ll = np.mean(self.logpdf(X))
-                print(f"Iteration {iteration + 1}: log-likelihood = {current_ll:.6f}")
-                if verbose >= 2:
-                    print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
-                          f"Sigma={rel_sigma:.2e}")
+            max_rel_change = self._check_convergence(
+                prev_mu, prev_gamma, prev_L,
+                verbose=verbose, iteration=iteration, X=X_norm,
+            )
 
             if max_rel_change < tol:
                 if verbose >= 1:
@@ -628,6 +554,9 @@ class NormalInverseGamma(NormalMixture):
                 break
         else:
             self.n_iter_ = max_iter
+
+        # Transform parameters back to original scale
+        self._denormalize_params(center, scale)
 
         self._fitted = self._joint._fitted
         self._invalidate_cache()

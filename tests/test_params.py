@@ -81,14 +81,14 @@ class TestInverseGammaParams:
 
 class TestInverseGaussianParams:
     def test_construction(self):
-        p = InverseGaussianParams(mean=1.0, shape=2.0)
-        assert p.mean == 1.0
-        assert p.shape == 2.0
+        p = InverseGaussianParams(delta=1.0, eta=2.0)
+        assert p.delta == 1.0
+        assert p.eta == 2.0
 
     def test_frozen(self):
-        p = InverseGaussianParams(mean=1.0, shape=2.0)
+        p = InverseGaussianParams(delta=1.0, eta=2.0)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            p.mean = 3.0
+            p.delta = 3.0
 
 
 class TestGIGParams:

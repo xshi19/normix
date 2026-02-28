@@ -370,6 +370,77 @@ class NormalInverseGaussian(NormalMixture):
             eta=eta_init
         )
 
+    def _m_step(
+        self,
+        X: NDArray,
+        cond_exp: Dict[str, NDArray],
+        *,
+        verbose: int = 0,
+    ) -> None:
+        """
+        M-step: update parameters given conditional expectations.
+
+        Parameters
+        ----------
+        X : ndarray
+            Data array, shape (n_samples, d).
+        cond_exp : dict
+            Dictionary with keys ``'E_Y'``, ``'E_inv_Y'``.
+        verbose : int, optional
+            Verbosity level for diagnostics.
+        """
+        from normix.distributions.univariate import InverseGaussian
+
+        n, d = X.shape
+
+        E_Y = cond_exp['E_Y']
+        E_inv_Y = cond_exp['E_inv_Y']
+
+        s1 = np.mean(E_inv_Y)
+        s2 = np.mean(E_Y)
+        s4 = np.mean(X, axis=0)
+        s5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)
+        s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n
+
+        # Normal parameters (closed-form)
+        denom = 1.0 - s1 * s2
+        if abs(denom) < 1e-10:
+            denom = np.sign(denom) * 1e-10 if denom != 0 else 1e-10
+
+        mu = (s4 - s2 * s5) / denom
+        gamma = (s5 - s1 * s4) / denom
+
+        Sigma = -np.outer(s5, mu)
+        Sigma = Sigma + Sigma.T + s6 + s1 * np.outer(mu, mu) - s2 * np.outer(gamma, gamma)
+
+        L_Sigma = robust_cholesky(Sigma)
+
+        # InverseGaussian parameters via set_expectation_params
+        # IG expectation params: [delta, 1/delta + 1/eta] = [E[Y], E[1/Y]]
+        ig_dist = InverseGaussian()
+        ig_eta = np.array([s2, s1])
+        ig_dist.set_expectation_params(ig_eta)
+
+        if verbose >= 1:
+            recovered = ig_dist._compute_expectation_params()
+            eta_diff = np.max(np.abs(recovered - ig_eta))
+            if eta_diff > 1e-6:
+                print(f"  Warning: InverseGaussian expectation param roundtrip error = {eta_diff:.2e}")
+
+        delta_new = ig_dist.classical_params.delta
+        eta_new = ig_dist.classical_params.eta
+
+        # Bound parameters
+        delta_new = max(delta_new, 1e-6)
+        eta_new = max(eta_new, 1e-6)
+
+        self._joint._set_internal(
+            mu=mu, gamma=gamma, L_sigma=L_Sigma,
+            delta=delta_new, eta=eta_new
+        )
+        self._fitted = True
+        self._invalidate_cache()
+
     def fit(
         self,
         X: ArrayLike,
@@ -382,10 +453,6 @@ class NormalInverseGaussian(NormalMixture):
     ) -> 'NormalInverseGaussian':
         """
         Fit distribution to data using the EM algorithm.
-
-        When only X is observed (Y is latent), uses the EM algorithm described
-        in the theory documentation. The E-step computes conditional expectations
-        of Y given X, and the M-step updates parameters using closed-form formulas.
 
         Convergence is checked based on the relative change in the normal
         parameters :math:`(\\mu, \\gamma, \\Sigma)`. Log-likelihood is optionally
@@ -412,160 +479,41 @@ class NormalInverseGaussian(NormalMixture):
         -------
         self : NormalInverseGaussian
             Fitted distribution (returns self for method chaining).
-
-        Notes
-        -----
-        The EM algorithm iterates between:
-
-        **E-step**: Compute conditional expectations
-
-        .. math::
-            E[Y | X = x_j], \\quad E[1/Y | X = x_j]
-
-        **M-step**: Update parameters using closed-form formulas
-
-        The Inverse Gaussian parameters :math:`(\\delta, \\eta)` are updated analytically:
-        - :math:`\\delta = E[Y]`
-        - :math:`\\eta = 1 / (E[1/Y] - 1/\\delta)`
         """
         X = np.asarray(X)
-
-        # Handle 1D X
         if X.ndim == 1:
             X = X.reshape(-1, 1)
 
-        n_samples, d = X.shape
+        # Normalize data for numerical stability
+        X_norm, center, scale = self._normalize_data(X)
+
+        n_samples, d = X_norm.shape
 
         # Initialize joint distribution if needed
         if self._joint is None:
             self._joint = self._create_joint_distribution()
         self._joint._d = d
 
-        # Initialize parameters using method of moments
         if not self._joint._fitted:
-            self._initialize_params(X, random_state)
+            self._initialize_params(X_norm, random_state)
 
         if verbose >= 1:
-            init_ll = np.mean(self.logpdf(X))
+            init_ll = np.mean(self.logpdf(X_norm))
             print(f"Initial log-likelihood: {init_ll:.6f}")
 
-        # ================================================================
         # EM iterations
-        # ================================================================
         for iteration in range(max_iter):
             prev_mu = self._joint._mu.copy()
             prev_gamma = self._joint._gamma.copy()
             prev_L = self._joint._L_Sigma.copy()
-            prev_delta = self._joint._delta
-            prev_eta = self._joint._eta
 
-            # ==============================================================
-            # E-step: Compute conditional expectations E[g(Y) | X]
-            # ==============================================================
-            cond_exp = self._conditional_expectation_y_given_x(X)
-            E_Y = cond_exp['E_Y']          # (n,)
-            E_inv_Y = cond_exp['E_inv_Y']  # (n,)
+            cond_exp = self._conditional_expectation_y_given_x(X_norm)
+            self._m_step(X_norm, cond_exp, verbose=verbose)
 
-            # Compute weighted statistics
-            eta_1 = np.mean(E_inv_Y)
-            eta_2 = np.mean(E_Y)
-            eta_4 = np.mean(X, axis=0)  # (d,)
-            eta_5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # (d,)
-
-            # η̂₆ = (1/n) Σ X_j X_j^T E[1/Y | X_j]
-            eta_6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n_samples
-
-            # ==============================================================
-            # M-step: Update parameters
-            # ==============================================================
-
-            # Denominator: 1 - η̂₁ η̂₂
-            denom = 1.0 - eta_1 * eta_2
-
-            # Handle edge case
-            if abs(denom) < 1e-10:
-                if verbose >= 1:
-                    print(f"Warning: denominator near zero at iteration {iteration}")
-                denom = np.sign(denom) * 1e-10 if denom != 0 else 1e-10
-
-            # μ = (η̂₄ - η̂₂ η̂₅) / (1 - η̂₁ η̂₂)
-            mu_new = (eta_4 - eta_2 * eta_5) / denom
-
-            # γ = (η̂₅ - η̂₁ η̂₄) / (1 - η̂₁ η̂₂)
-            gamma_new = (eta_5 - eta_1 * eta_4) / denom
-
-            # Σ = η̂₆ - η̂₅ μ^T - μ η̂₅^T + η̂₁ μ μ^T - η̂₂ γ γ^T
-            Sigma_new = (eta_6
-                         - np.outer(eta_5, mu_new)
-                         - np.outer(mu_new, eta_5)
-                         + eta_1 * np.outer(mu_new, mu_new)
-                         - eta_2 * np.outer(gamma_new, gamma_new))
-
-            L = robust_cholesky(Sigma_new)
-
-            # Inverse Gaussian parameters
-            # For IG: E[Y] = δ, E[1/Y] = 1/δ + 1/η
-            # δ = η̂₂ = E[Y]
-            delta_new = eta_2
-
-            # η = 1 / (E[1/Y] - 1/δ) = 1 / (η̂₁ - 1/η̂₂)
-            inv_eta = eta_1 - 1.0 / delta_new
-            if inv_eta > 1e-10:
-                eta_new = 1.0 / inv_eta
-            else:
-                # Edge case: large η
-                eta_new = 1000.0
-
-            # Bound parameters
-            delta_new = max(delta_new, 1e-6)
-            eta_new = max(eta_new, 1e-6)
-
-            # ==============================================================
-            # Update parameters via _set_internal
-            # ==============================================================
-            try:
-                self._joint._set_internal(
-                    mu=mu_new, gamma=gamma_new, L_sigma=L,
-                    delta=delta_new, eta=eta_new
-                )
-                self._fitted = True
-                self._invalidate_cache()
-            except (ValueError, np.linalg.LinAlgError) as e:
-                if verbose >= 1:
-                    print(f"Warning: parameter update failed at iteration {iteration}: {e}")
-                self._joint._set_internal(
-                    mu=prev_mu, gamma=prev_gamma,
-                    L_sigma=prev_L,
-                    delta=prev_delta, eta=prev_eta
-                )
-                self._fitted = True
-                self._invalidate_cache()
-                self.n_iter_ = iteration + 1
-                break
-
-            # ==============================================================
-            # Check convergence using relative parameter change
-            # ==============================================================
-            mu_norm = np.linalg.norm(mu_new - prev_mu)
-            mu_denom_val = max(np.linalg.norm(prev_mu), 1e-10)
-            rel_mu = mu_norm / mu_denom_val
-
-            gamma_norm = np.linalg.norm(gamma_new - prev_gamma)
-            gamma_denom_val = max(np.linalg.norm(prev_gamma), 1e-10)
-            rel_gamma = gamma_norm / gamma_denom_val
-
-            L_norm = np.linalg.norm(L - prev_L, 'fro')
-            L_denom = max(np.linalg.norm(prev_L, 'fro'), 1e-10)
-            rel_sigma = L_norm / L_denom
-
-            max_rel_change = max(rel_mu, rel_gamma, rel_sigma)
-
-            if verbose >= 1:
-                current_ll = np.mean(self.logpdf(X))
-                print(f"Iteration {iteration + 1}: log-likelihood = {current_ll:.6f}")
-                if verbose >= 2:
-                    print(f"  rel_change: mu={rel_mu:.2e}, gamma={rel_gamma:.2e}, "
-                          f"Sigma={rel_sigma:.2e}")
+            max_rel_change = self._check_convergence(
+                prev_mu, prev_gamma, prev_L,
+                verbose=verbose, iteration=iteration, X=X_norm,
+            )
 
             if max_rel_change < tol:
                 if verbose >= 1:
@@ -574,6 +522,9 @@ class NormalInverseGaussian(NormalMixture):
                 break
         else:
             self.n_iter_ = max_iter
+
+        # Transform parameters back to original scale
+        self._denormalize_params(center, scale)
 
         self._fitted = self._joint._fitted
         self._invalidate_cache()

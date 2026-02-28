@@ -7,31 +7,31 @@ Also belongs to the exponential family.
 The Inverse Gaussian distribution has PDF:
 
 .. math::
-    p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} 
-    \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)
+    p(x|\\delta, \\eta) = \\sqrt{\\frac{\\eta}{2\\pi x^3}} 
+    \\exp\\left(-\\frac{\\eta(x-\\delta)^2}{2\\delta^2 x}\\right)
 
-for :math:`x > 0`, where :math:`\\mu > 0` is the mean and :math:`\\lambda > 0` 
+for :math:`x > 0`, where :math:`\\delta > 0` is the mean and :math:`\\eta > 0` 
 is the shape parameter.
 
 Exponential family form:
 
 - :math:`h(x) = 1/\\sqrt{2\\pi x^3}` for :math:`x > 0` (base measure)
 - :math:`t(x) = [x, 1/x]` (sufficient statistics)
-- :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]` (natural parameters)
+- :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]` (natural parameters)
 - :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)` (log partition)
 
 Parametrizations:
 
-- Classical: :math:`\\mu` (mean), :math:`\\lambda` (shape), :math:`\\mu > 0, \\lambda > 0`
-- Natural: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`, :math:`\\theta_1 < 0, \\theta_2 < 0`
-- Expectation: :math:`\\eta = [\\mu, 1/\\mu + 1/\\lambda]`
+- Classical: :math:`\\delta` (mean), :math:`\\eta` (shape), :math:`\\delta > 0, \\eta > 0`
+- Natural: :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]`, :math:`\\theta_1 < 0, \\theta_2 < 0`
+- Expectation: :math:`\\eta_{exp} = [\\delta, 1/\\delta + 1/\\eta]`
 
 Note: scipy uses (mu, scale) where:
 
-- scipy_mu = :math:`\\mu/\\lambda` (shape parameter, confusingly named)
-- scipy_scale = :math:`\\lambda` (our shape parameter)
-- Relationship: :math:`\\mu = \\text{scipy\\_mu} \\times \\text{scipy\\_scale}`, 
-  :math:`\\lambda = \\text{scipy\\_scale}`
+- scipy_mu = :math:`\\delta/\\eta` (shape parameter, confusingly named)
+- scipy_scale = :math:`\\eta` (our shape parameter)
+- Relationship: :math:`\\delta = \\text{scipy\\_mu} \\times \\text{scipy\\_scale}`, 
+  :math:`\\eta = \\text{scipy\\_scale}`
 """
 
 import numpy as np
@@ -51,28 +51,23 @@ class InverseGaussian(ExponentialFamily):
     The Inverse Gaussian distribution has PDF:
     
     .. math::
-        p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} 
-        \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)
+        p(x|\\delta, \\eta) = \\sqrt{\\frac{\\eta}{2\\pi x^3}} 
+        \\exp\\left(-\\frac{\\eta(x-\\delta)^2}{2\\delta^2 x}\\right)
     
-    for :math:`x > 0`, where :math:`\\mu` is the mean and :math:`\\lambda` 
+    for :math:`x > 0`, where :math:`\\delta` is the mean and :math:`\\eta` 
     is the shape parameter.
     
     Parameters
     ----------
-    mean : float, optional
-        Mean parameter :math:`\\mu > 0`. Use ``from_classical_params(mean=..., shape=...)``.
-    shape : float, optional
-        Shape parameter :math:`\\lambda > 0`. Use ``from_classical_params(mean=..., shape=...)``.
-    
-    Attributes
-    ----------
-    _natural_params : tuple or None
-        Internal storage for natural parameters :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`.
+    delta : float, optional
+        Mean parameter :math:`\\delta > 0`. Use ``from_classical_params(delta=..., eta=...)``.
+    eta : float, optional
+        Shape parameter :math:`\\eta > 0`. Use ``from_classical_params(delta=..., eta=...)``.
     
     Examples
     --------
-    >>> # Create from mean and shape parameters
-    >>> dist = InverseGaussian.from_classical_params(mean=1.0, shape=1.0)
+    >>> # Create from classical parameters
+    >>> dist = InverseGaussian.from_classical_params(delta=1.0, eta=1.0)
     >>> dist.mean()
     1.0
     
@@ -93,13 +88,13 @@ class InverseGaussian(ExponentialFamily):
     The Inverse Gaussian distribution belongs to the exponential family with:
     
     - Sufficient statistics: :math:`t(x) = [x, 1/x]`
-    - Natural parameters: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`
+    - Natural parameters: :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]`
     - Log partition: :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)`
     
     It is a special case of the Generalized Inverse Gaussian (GIG) with :math:`p = -1/2`:
     
     .. math::
-        \\text{InvGauss}(\\mu, \\lambda) = \\text{GIG}(p=-1/2, a=\\lambda/\\mu^2, b=\\lambda)
+        \\text{InvGauss}(\\delta, \\eta) = \\text{GIG}(p=-1/2, a=\\eta/\\delta^2, b=\\eta)
     
     References
     ----------
@@ -110,22 +105,21 @@ class InverseGaussian(ExponentialFamily):
     
     def __init__(self):
         super().__init__()
-        self._mu = None
-        self._lambda = None
+        self._delta = None
+        self._eta = None
 
     # ================================================================
     # New interface: internal state management
     # ================================================================
 
-    def _set_from_classical(self, *, mean, shape) -> None:
+    def _set_from_classical(self, *, delta, eta) -> None:
         """Set internal state from classical parameters."""
-        if mean <= 0:
-            raise ValueError(f"Mean must be positive, got {mean}")
-        if shape <= 0:
-            raise ValueError(f"Shape must be positive, got {shape}")
-        self._mu = float(mean)
-        self._lambda = float(shape)
-        theta = np.array([-shape / (2 * mean**2), -shape / 2])
+        if delta <= 0:
+            raise ValueError(f"delta must be positive, got {delta}")
+        if eta <= 0:
+            raise ValueError(f"eta must be positive, got {eta}")
+        self._delta = float(delta)
+        self._eta = float(eta)
         self._fitted = True
         self._invalidate_cache()
 
@@ -133,21 +127,21 @@ class InverseGaussian(ExponentialFamily):
         """Set internal state from natural parameters."""
         theta = np.asarray(theta)
         self._validate_natural_params(theta)
-        self._lambda = float(-2 * theta[1])
-        self._mu = float(np.sqrt(theta[1] / theta[0]))
+        self._eta = float(-2 * theta[1])
+        self._delta = float(np.sqrt(theta[1] / theta[0]))
         self._fitted = True
         self._invalidate_cache()
 
     def _compute_natural_params(self):
-        """Compute natural parameters: θ = [-λ/(2μ²), -λ/2]."""
-        return np.array([-self._lambda / (2 * self._mu**2), -self._lambda / 2])
+        """Compute natural parameters: theta = [-eta/(2*delta^2), -eta/2]."""
+        return np.array([-self._eta / (2 * self._delta**2), -self._eta / 2])
 
     def _compute_classical_params(self):
         """Return frozen dataclass of classical parameters."""
-        return InverseGaussianParams(mean=self._mu, shape=self._lambda)
+        return InverseGaussianParams(delta=self._delta, eta=self._eta)
 
     def _get_natural_param_support(self):
-        """Natural parameter support: θ₁ < 0, θ₂ < 0."""
+        """Natural parameter support: theta_1 < 0, theta_2 < 0."""
         return [(-np.inf, 0.0), (-np.inf, 0.0)]
     
     def _sufficient_statistics(self, x: ArrayLike) -> NDArray:
@@ -161,26 +155,24 @@ class InverseGaussian(ExponentialFamily):
         """
         x = np.asarray(x)
         if x.ndim == 0 or x.shape == ():
-            # Scalar input
             return np.array([x, 1.0/x])
         else:
-            # Array input
             inv_x = 1.0 / x
             return np.column_stack([x, inv_x])
     
     def _log_partition(self, theta: NDArray) -> float:
-        """
-        Log partition function: ψ(θ) = -2√(θ₁θ₂) - (1/2)log(-2θ₂).
+        r"""
+        Log partition function: :math:`\psi(\theta) = -2\sqrt{\theta_1\theta_2} - \frac{1}{2}\log(-2\theta_2)`.
         
-        This matches ψ(θ) = -λ/μ - (1/2)log(λ) in classical parameters.
+        This matches :math:`\psi(\theta) = -\eta/\delta - \frac{1}{2}\log(\eta)` in classical parameters.
         """
         sqrt_product = np.sqrt(theta[0] * theta[1])
-        lam = -2.0 * theta[1]
-        return -2.0 * sqrt_product - 0.5 * np.log(lam)
+        eta = -2.0 * theta[1]
+        return -2.0 * sqrt_product - 0.5 * np.log(eta)
     
     def _log_base_measure(self, x: ArrayLike) -> NDArray:
-        """
-        Log base measure: log h(x) = -1/2 * log(2πx³) for x > 0.
+        r"""
+        Log base measure: :math:`\log h(x) = -\frac{1}{2} \log(2\pi x^3)` for :math:`x > 0`.
         """
         x = np.asarray(x)
         result = np.zeros_like(x, dtype=float)
@@ -190,53 +182,53 @@ class InverseGaussian(ExponentialFamily):
         return result
     
     def _compute_expectation_params(self) -> NDArray:
-        """Compute expectation parameters directly: η = [μ, 1/μ + 1/λ]."""
-        return np.array([self._mu, 1.0 / self._mu + 1.0 / self._lambda])
+        r"""Compute expectation parameters directly: :math:`\eta_{exp} = [\delta, 1/\delta + 1/\eta]`."""
+        return np.array([self._delta, 1.0 / self._delta + 1.0 / self._eta])
 
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
+        r"""
+        Analytical gradient: :math:`\eta_{exp} = \nabla\psi(\theta) = [\delta, 1/\delta + 1/\eta]`.
         """
-        Analytical gradient: η = ∇ψ(θ) = [μ, 1/μ + 1/λ].
-        """
-        lam = -2 * theta[1]
-        mu = np.sqrt(theta[1] / theta[0])
-        eta1 = mu
-        eta2 = 1.0 / mu + 1.0 / lam
+        eta = -2 * theta[1]
+        delta = np.sqrt(theta[1] / theta[0])
+        eta1 = delta
+        eta2 = 1.0 / delta + 1.0 / eta
         return np.array([eta1, eta2])
     
-    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
+    def _expectation_to_natural(self, eta_exp: NDArray, theta0=None) -> NDArray:
+        r"""
+        Analytical inverse from expectation parameters :math:`\eta_{exp} = [\delta, 1/\delta + 1/\eta]`.
         """
-        Analytical inverse from expectation parameters η = [μ, 1/μ + 1/λ].
-        """
-        mu = eta[0]
-        denom = eta[1] - 1.0 / mu
+        delta = eta_exp[0]
+        denom = eta_exp[1] - 1.0 / delta
         if denom <= 0:
             raise ValueError("Invalid expectation parameters for Inverse Gaussian.")
-        lam = 1.0 / denom
-        theta1 = -lam / (2 * mu**2)
-        theta2 = -lam / 2
+        eta = 1.0 / denom
+        theta1 = -eta / (2 * delta**2)
+        theta2 = -eta / 2
         return np.array([theta1, theta2])
     
-    def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
+    def _get_initial_natural_params(self, eta_exp: NDArray) -> NDArray:
         """
         Get initial guess for natural parameters from expectation parameters.
         
         Uses the analytical inverse.
         """
-        return self._expectation_to_natural(eta)
+        return self._expectation_to_natural(eta_exp)
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
-        """
-        Analytical Fisher information: I(θ) = ∇²ψ(θ).
+        r"""
+        Analytical Fisher information: :math:`I(\theta) = \nabla^2\psi(\theta)`.
         """
         if theta is None:
             theta = self.natural_params
         
-        lam = -2 * theta[1]
-        mu = np.sqrt(theta[1] / theta[0])
+        eta = -2 * theta[1]
+        delta = np.sqrt(theta[1] / theta[0])
         
-        I_11 = mu**3 / lam
-        I_12 = I_21 = -mu / lam
-        I_22 = 1.0 / (mu * lam) + 2.0 / (lam**2)
+        I_11 = delta**3 / eta
+        I_12 = I_21 = -delta / eta
+        I_22 = 1.0 / (delta * eta) + 2.0 / (eta**2)
         
         return np.array([[I_11, I_12],
                         [I_21, I_22]])
@@ -263,7 +255,6 @@ class InverseGaussian(ExponentialFamily):
         """
         self._check_fitted()
         
-        # Set up random number generator
         if random_state is None:
             rng = np.random.default_rng()
         elif isinstance(random_state, int):
@@ -271,16 +262,12 @@ class InverseGaussian(ExponentialFamily):
         else:
             rng = random_state
         
-        # numpy.random.wald uses the same parameterization:
-        # mean = μ, scale = λ
-        return rng.wald(mean=self._mu, scale=self._lambda, size=size)
+        # numpy.random.wald: mean = delta, scale = eta
+        return rng.wald(mean=self._delta, scale=self._eta, size=size)
     
     def mean(self) -> float:
-        """
-        Mean of Inverse Gaussian distribution: E[X] = mu.
-        
-        .. math::
-            E[X] = \\mu
+        r"""
+        Mean of Inverse Gaussian distribution: :math:`E[X] = \delta`.
         
         Returns
         -------
@@ -288,14 +275,11 @@ class InverseGaussian(ExponentialFamily):
             Mean of the distribution.
         """
         self._check_fitted()
-        return self._mu
+        return self._delta
     
     def var(self) -> float:
-        """
-        Variance of Inverse Gaussian distribution: Var[X] = mu^3/lambda.
-        
-        .. math::
-            \\text{Var}[X] = \\frac{\\mu^3}{\\lambda}
+        r"""
+        Variance of Inverse Gaussian distribution: :math:`\text{Var}[X] = \delta^3/\eta`.
         
         Returns
         -------
@@ -303,7 +287,7 @@ class InverseGaussian(ExponentialFamily):
             Variance of the distribution.
         """
         self._check_fitted()
-        return (self._mu**3) / self._lambda
+        return (self._delta**3) / self._eta
     
     def cdf(self, x: ArrayLike) -> NDArray:
         """
@@ -326,13 +310,12 @@ class InverseGaussian(ExponentialFamily):
         x = np.asarray(x)
         
         # scipy.stats.invgauss uses (mu, scale) where:
-        # scipy_mu = μ/λ, scipy_scale = λ
-        scipy_mu = self._mu / self._lambda
-        scipy_scale = self._lambda
+        # scipy_mu = delta/eta, scipy_scale = eta
+        scipy_mu = self._delta / self._eta
+        scipy_scale = self._eta
         
         result = invgauss.cdf(x, mu=scipy_mu, scale=scipy_scale)
         
-        # Return scalar if input was scalar
         if np.isscalar(x) or (hasattr(x, 'shape') and x.shape == ()):
             return float(result)
         

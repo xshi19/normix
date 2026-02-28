@@ -167,7 +167,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
 
     def _create_mixing_distribution(self):
         return InverseGaussian.from_classical_params(
-            mean=self._delta, shape=self._eta
+            delta=self._delta, eta=self._eta
         )
 
     # ========================================================================

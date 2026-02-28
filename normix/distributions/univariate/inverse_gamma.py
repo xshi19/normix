@@ -217,61 +217,52 @@ class InverseGamma(ExponentialFamily):
         
         return np.array([eta1, eta2])
     
+    def _expectation_to_natural(self, eta: NDArray, theta0=None) -> NDArray:
+        r"""
+        Analytical inverse using Newton's method.
+        
+        From :math:`\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`:
+        
+        - :math:`\beta = -\alpha / \eta_0`
+        - Solve :math:`\psi(\alpha) - \log(\alpha) = -\eta_1 - \log(-\eta_0)` for :math:`\alpha`
+        
+        Returns :math:`\theta = [\beta,\; -(\alpha+1)]`.
+        """
+        target = -eta[1] - np.log(-eta[0])
+        
+        # Initial guess from theta0 or heuristic
+        if theta0 is not None:
+            theta0 = np.asarray(theta0)
+            alpha = float(-theta0[1] - 1)
+        else:
+            alpha = 5.0
+        alpha = max(alpha, 1.5)
+        
+        for _ in range(100):
+            psi_val = digamma(alpha)
+            psi_prime = polygamma(1, alpha)
+            
+            f_val = psi_val - np.log(alpha) - target
+            f_prime = psi_prime - 1.0 / alpha
+            
+            alpha_new = alpha - f_val / f_prime
+            alpha_new = max(alpha_new, 1.5)
+            
+            if abs(alpha_new - alpha) / max(abs(alpha), 1e-10) < 1e-12:
+                alpha = alpha_new
+                break
+            alpha = alpha_new
+        
+        beta = -alpha / eta[0]
+        return np.array([beta, -(alpha + 1)])
+
     def _get_initial_natural_params(self, eta: NDArray) -> NDArray:
         """
         Get initial guess for natural parameters from expectation parameters.
         
-        For Inverse Gamma: η = [-α/β, log(β) - ψ(α)]
-        
-        We use a more robust iterative approach:
-        1. Start with α using the relationship: η₁ ≈ -E[X] where E[X] = β/(α-1)
-        2. Iteratively solve the system of equations
-        
-        Returns θ = [β, -(α+1)]
+        Uses the analytical inverse (Newton's method).
         """
-        # Better initial guess: use approximate relationship
-        # Since E[-1/X] = -α/β and E[X] = β/(α-1), we can use:
-        # η₁ ≈ -1/E[X] (rough approximation for initial guess)
-        # So E[X] ≈ -1/η₁
-        
-        # Start with: E[X] ≈ -1/η₁, and E[X] = β/(α-1)
-        # So β/(α-1) ≈ -1/η₁
-        # Use α = 3 initially, solve for β
-        alpha = 5.0  # Start with a safe value > 2
-        
-        # Do more iterations for better convergence
-        for outer_iter in range(15):
-            # Solve β from -α/β = η₁
-            beta = -alpha / eta[0]
-            
-            # Ensure beta is positive and reasonable
-            beta = max(beta, 0.01)
-            
-            # Update α using Newton's method on: ψ(α) = log(β) - η₂
-            target = np.log(beta) - eta[1]
-            
-            for inner_iter in range(30):
-                psi_val = digamma(alpha)
-                psi_prime = polygamma(1, alpha)
-                
-                # Newton step with damping for stability
-                delta = (psi_val - target) / psi_prime
-                alpha_new = alpha - 0.5 * delta  # Damping factor
-                
-                # Ensure α stays > 1.5 (we need α > 2 for finite variance)
-                alpha_new = max(alpha_new, 2.1)
-                
-                # Check convergence
-                if abs(alpha_new - alpha) < 1e-10:
-                    alpha = alpha_new
-                    break
-                    
-                alpha = alpha_new
-        
-        # Final computation of β
-        beta = -alpha / eta[0]
-        
-        return np.array([beta, -(alpha + 1)])
+        return self._expectation_to_natural(eta)
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """

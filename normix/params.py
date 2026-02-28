@@ -120,13 +120,13 @@ class InverseGaussianParams(_ParamsBase):
 
     Attributes
     ----------
-    mean : float
-        Mean parameter :math:`\\mu > 0`.
-    shape : float
-        Shape parameter :math:`\\lambda > 0`.
+    delta : float
+        Mean parameter :math:`\\delta > 0`.
+    eta : float
+        Shape parameter :math:`\\eta > 0`.
     """
-    mean: float
-    shape: float
+    delta: float
+    eta: float
 
 
 @dataclass(frozen=True, slots=True)
