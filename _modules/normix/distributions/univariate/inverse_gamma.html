@@ -294,61 +294,52 @@
         
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">])</span>
     
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_to_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analytical inverse using Newton&#39;s method.</span>
+<span class="sd">        </span>
+<span class="sd">        From :math:`\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`:</span>
+<span class="sd">        </span>
+<span class="sd">        - :math:`\beta = -\alpha / \eta_0`</span>
+<span class="sd">        - Solve :math:`\psi(\alpha) - \log(\alpha) = -\eta_1 - \log(-\eta_0)` for :math:`\alpha`</span>
+<span class="sd">        </span>
+<span class="sd">        Returns :math:`\theta = [\beta,\; -(\alpha+1)]`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        
+        <span class="c1"># Initial guess from theta0 or heuristic</span>
+        <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">theta0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">theta0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="mf">5.0</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">psi_val</span> <span class="o">=</span> <span class="n">digamma</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+            <span class="n">psi_prime</span> <span class="o">=</span> <span class="n">polygamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+            
+            <span class="n">f_val</span> <span class="o">=</span> <span class="n">psi_val</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">target</span>
+            <span class="n">f_prime</span> <span class="o">=</span> <span class="n">psi_prime</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">alpha</span>
+            
+            <span class="n">alpha_new</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">f_val</span> <span class="o">/</span> <span class="n">f_prime</span>
+            <span class="n">alpha_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">alpha_new</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">alpha_new</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">alpha</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">:</span>
+                <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_new</span>
+                <span class="k">break</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_new</span>
+        
+        <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha</span> <span class="o">/</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">beta</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get initial guess for natural parameters from expectation parameters.</span>
 <span class="sd">        </span>
-<span class="sd">        For Inverse Gamma: η = [-α/β, log(β) - ψ(α)]</span>
-<span class="sd">        </span>
-<span class="sd">        We use a more robust iterative approach:</span>
-<span class="sd">        1. Start with α using the relationship: η₁ ≈ -E[X] where E[X] = β/(α-1)</span>
-<span class="sd">        2. Iteratively solve the system of equations</span>
-<span class="sd">        </span>
-<span class="sd">        Returns θ = [β, -(α+1)]</span>
+<span class="sd">        Uses the analytical inverse (Newton&#39;s method).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Better initial guess: use approximate relationship</span>
-        <span class="c1"># Since E[-1/X] = -α/β and E[X] = β/(α-1), we can use:</span>
-        <span class="c1"># η₁ ≈ -1/E[X] (rough approximation for initial guess)</span>
-        <span class="c1"># So E[X] ≈ -1/η₁</span>
-        
-        <span class="c1"># Start with: E[X] ≈ -1/η₁, and E[X] = β/(α-1)</span>
-        <span class="c1"># So β/(α-1) ≈ -1/η₁</span>
-        <span class="c1"># Use α = 3 initially, solve for β</span>
-        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">5.0</span>  <span class="c1"># Start with a safe value &gt; 2</span>
-        
-        <span class="c1"># Do more iterations for better convergence</span>
-        <span class="k">for</span> <span class="n">outer_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
-            <span class="c1"># Solve β from -α/β = η₁</span>
-            <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha</span> <span class="o">/</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            
-            <span class="c1"># Ensure beta is positive and reasonable</span>
-            <span class="n">beta</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
-            
-            <span class="c1"># Update α using Newton&#39;s method on: ψ(α) = log(β) - η₂</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            
-            <span class="k">for</span> <span class="n">inner_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
-                <span class="n">psi_val</span> <span class="o">=</span> <span class="n">digamma</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
-                <span class="n">psi_prime</span> <span class="o">=</span> <span class="n">polygamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
-                
-                <span class="c1"># Newton step with damping for stability</span>
-                <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">psi_val</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">/</span> <span class="n">psi_prime</span>
-                <span class="n">alpha_new</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">delta</span>  <span class="c1"># Damping factor</span>
-                
-                <span class="c1"># Ensure α stays &gt; 1.5 (we need α &gt; 2 for finite variance)</span>
-                <span class="n">alpha_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">alpha_new</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">)</span>
-                
-                <span class="c1"># Check convergence</span>
-                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">alpha_new</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-                    <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_new</span>
-                    <span class="k">break</span>
-                    
-                <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_new</span>
-        
-        <span class="c1"># Final computation of β</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha</span> <span class="o">/</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">beta</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
     
 <div class="viewcode-block" id="InverseGamma.fisher_information">
 <a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.inverse_gamma.InverseGamma.fisher_information">[docs]</a>

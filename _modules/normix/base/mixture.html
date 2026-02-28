@@ -117,7 +117,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_solve</span><span class="p">,</span> <span class="n">solve_triangular</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_cholesky</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">robust_cholesky</span><span class="p">,</span> <span class="n">column_median_mad</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">Distribution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
@@ -1611,6 +1611,127 @@
 <span class="sd">            The mixing distribution (e.g., GIG, Gamma, InverseGaussian).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># EM helpers</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_convergence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">prev_mu</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">prev_gamma</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">prev_L</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute relative parameter change for EM convergence checking.</span>
+
+<span class="sd">        Measures the maximum relative change in the normal parameters</span>
+<span class="sd">        :math:`(\\mu, \\gamma, L_\\Sigma)` between the current and previous</span>
+<span class="sd">        EM iteration.  Optionally prints log-likelihood and per-parameter</span>
+<span class="sd">        diagnostics.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prev_mu : ndarray</span>
+<span class="sd">            Previous iteration&#39;s :math:`\\mu`.</span>
+<span class="sd">        prev_gamma : ndarray</span>
+<span class="sd">            Previous iteration&#39;s :math:`\\gamma`.</span>
+<span class="sd">        prev_L : ndarray</span>
+<span class="sd">            Previous iteration&#39;s Cholesky factor :math:`L_\\Sigma`.</span>
+<span class="sd">        verbose : int</span>
+<span class="sd">            Verbosity level (0 = silent, 1 = log-likelihood,</span>
+<span class="sd">            2 = per-parameter relative changes).</span>
+<span class="sd">        iteration : int</span>
+<span class="sd">            Current iteration index (0-based).</span>
+<span class="sd">        X : ndarray</span>
+<span class="sd">            Data array, shape ``(n_samples, d)``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        max_rel_change : float</span>
+<span class="sd">            Maximum of the three relative changes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">gamma_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">L_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_L_Sigma</span>
+
+        <span class="n">rel_mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">mu_new</span> <span class="o">-</span> <span class="n">prev_mu</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_mu</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">rel_gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gamma_new</span> <span class="o">-</span> <span class="n">prev_gamma</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_gamma</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">rel_sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">L_new</span> <span class="o">-</span> <span class="n">prev_L</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">prev_L</span><span class="p">,</span> <span class="s1">&#39;fro&#39;</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+        <span class="n">max_rel_change</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">rel_mu</span><span class="p">,</span> <span class="n">rel_gamma</span><span class="p">,</span> <span class="n">rel_sigma</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">iteration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: log-likelihood = </span><span class="si">{</span><span class="n">ll</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  rel_change: mu=</span><span class="si">{</span><span class="n">rel_mu</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, gamma=</span><span class="si">{</span><span class="n">rel_gamma</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">, &quot;</span>
+                      <span class="sa">f</span><span class="s2">&quot;Sigma=</span><span class="si">{</span><span class="n">rel_sigma</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">max_rel_change</span>
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Data normalization for EM</span>
+    <span class="c1"># ========================================================================</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_data</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize data columns by median and MAD for numerical stability.</span>
+
+<span class="sd">        Computes :math:`X_{\\text{norm}} = \\text{diag}(m)^{-1} (X - c)` where</span>
+<span class="sd">        :math:`c` is the column-wise median and :math:`m` is the scaled MAD.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : ndarray, shape (n, d)</span>
+<span class="sd">            Raw data matrix.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X_norm : ndarray, shape (n, d)</span>
+<span class="sd">            Normalized data.</span>
+<span class="sd">        center : ndarray, shape (d,)</span>
+<span class="sd">            Column medians.</span>
+<span class="sd">        scale : ndarray, shape (d,)</span>
+<span class="sd">            Column scaled-MAD values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">center</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="n">column_median_mad</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">X_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="k">return</span> <span class="n">X_norm</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">scale</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_denormalize_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transform fitted parameters from normalized space back to original.</span>
+
+<span class="sd">        If the EM was run on :math:`X_{\\text{norm}} = D^{-1}(X - c)` where</span>
+<span class="sd">        :math:`D = \\text{diag}(\\text{scale})`, then the original-space</span>
+<span class="sd">        parameters are:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \\mu_{\\text{orig}} &amp;= c + D\\,\\mu_{\\text{norm}} \\\\</span>
+<span class="sd">            \\gamma_{\\text{orig}} &amp;= D\\,\\gamma_{\\text{norm}} \\\\</span>
+<span class="sd">            L_{\\Sigma,\\text{orig}} &amp;= D\\,L_{\\Sigma,\\text{norm}}</span>
+
+<span class="sd">        Mixing distribution parameters are unchanged.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        center : ndarray, shape (d,)</span>
+<span class="sd">            Column medians used for centering.</span>
+<span class="sd">        scale : ndarray, shape (d,)</span>
+<span class="sd">            Column scaled-MAD values used for scaling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">jt</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="n">center</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">jt</span><span class="o">.</span><span class="n">_mu</span>
+        <span class="n">jt</span><span class="o">.</span><span class="n">_gamma</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">jt</span><span class="o">.</span><span class="n">_gamma</span>
+        <span class="n">jt</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">scale</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">jt</span><span class="o">.</span><span class="n">_L_Sigma</span>
+        <span class="n">jt</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
     <span class="c1"># ========================================================================</span>
     <span class="c1"># Fitting (placeholder - to be implemented in subclasses)</span>

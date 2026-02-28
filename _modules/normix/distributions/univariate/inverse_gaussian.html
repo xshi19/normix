@@ -82,31 +82,31 @@
 <span class="sd">The Inverse Gaussian distribution has PDF:</span>
 
 <span class="sd">.. math::</span>
-<span class="sd">    p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} </span>
-<span class="sd">    \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)</span>
+<span class="sd">    p(x|\\delta, \\eta) = \\sqrt{\\frac{\\eta}{2\\pi x^3}} </span>
+<span class="sd">    \\exp\\left(-\\frac{\\eta(x-\\delta)^2}{2\\delta^2 x}\\right)</span>
 
-<span class="sd">for :math:`x &gt; 0`, where :math:`\\mu &gt; 0` is the mean and :math:`\\lambda &gt; 0` </span>
+<span class="sd">for :math:`x &gt; 0`, where :math:`\\delta &gt; 0` is the mean and :math:`\\eta &gt; 0` </span>
 <span class="sd">is the shape parameter.</span>
 
 <span class="sd">Exponential family form:</span>
 
 <span class="sd">- :math:`h(x) = 1/\\sqrt{2\\pi x^3}` for :math:`x &gt; 0` (base measure)</span>
 <span class="sd">- :math:`t(x) = [x, 1/x]` (sufficient statistics)</span>
-<span class="sd">- :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]` (natural parameters)</span>
+<span class="sd">- :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]` (natural parameters)</span>
 <span class="sd">- :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)` (log partition)</span>
 
 <span class="sd">Parametrizations:</span>
 
-<span class="sd">- Classical: :math:`\\mu` (mean), :math:`\\lambda` (shape), :math:`\\mu &gt; 0, \\lambda &gt; 0`</span>
-<span class="sd">- Natural: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`, :math:`\\theta_1 &lt; 0, \\theta_2 &lt; 0`</span>
-<span class="sd">- Expectation: :math:`\\eta = [\\mu, 1/\\mu + 1/\\lambda]`</span>
+<span class="sd">- Classical: :math:`\\delta` (mean), :math:`\\eta` (shape), :math:`\\delta &gt; 0, \\eta &gt; 0`</span>
+<span class="sd">- Natural: :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]`, :math:`\\theta_1 &lt; 0, \\theta_2 &lt; 0`</span>
+<span class="sd">- Expectation: :math:`\\eta_{exp} = [\\delta, 1/\\delta + 1/\\eta]`</span>
 
 <span class="sd">Note: scipy uses (mu, scale) where:</span>
 
-<span class="sd">- scipy_mu = :math:`\\mu/\\lambda` (shape parameter, confusingly named)</span>
-<span class="sd">- scipy_scale = :math:`\\lambda` (our shape parameter)</span>
-<span class="sd">- Relationship: :math:`\\mu = \\text{scipy\\_mu} \\times \\text{scipy\\_scale}`, </span>
-<span class="sd">  :math:`\\lambda = \\text{scipy\\_scale}`</span>
+<span class="sd">- scipy_mu = :math:`\\delta/\\eta` (shape parameter, confusingly named)</span>
+<span class="sd">- scipy_scale = :math:`\\eta` (our shape parameter)</span>
+<span class="sd">- Relationship: :math:`\\delta = \\text{scipy\\_mu} \\times \\text{scipy\\_scale}`, </span>
+<span class="sd">  :math:`\\eta = \\text{scipy\\_scale}`</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -128,28 +128,23 @@
 <span class="sd">    The Inverse Gaussian distribution has PDF:</span>
 <span class="sd">    </span>
 <span class="sd">    .. math::</span>
-<span class="sd">        p(x|\\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi x^3}} </span>
-<span class="sd">        \\exp\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right)</span>
+<span class="sd">        p(x|\\delta, \\eta) = \\sqrt{\\frac{\\eta}{2\\pi x^3}} </span>
+<span class="sd">        \\exp\\left(-\\frac{\\eta(x-\\delta)^2}{2\\delta^2 x}\\right)</span>
 <span class="sd">    </span>
-<span class="sd">    for :math:`x &gt; 0`, where :math:`\\mu` is the mean and :math:`\\lambda` </span>
+<span class="sd">    for :math:`x &gt; 0`, where :math:`\\delta` is the mean and :math:`\\eta` </span>
 <span class="sd">    is the shape parameter.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    mean : float, optional</span>
-<span class="sd">        Mean parameter :math:`\\mu &gt; 0`. Use ``from_classical_params(mean=..., shape=...)``.</span>
-<span class="sd">    shape : float, optional</span>
-<span class="sd">        Shape parameter :math:`\\lambda &gt; 0`. Use ``from_classical_params(mean=..., shape=...)``.</span>
-<span class="sd">    </span>
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    _natural_params : tuple or None</span>
-<span class="sd">        Internal storage for natural parameters :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`.</span>
+<span class="sd">    delta : float, optional</span>
+<span class="sd">        Mean parameter :math:`\\delta &gt; 0`. Use ``from_classical_params(delta=..., eta=...)``.</span>
+<span class="sd">    eta : float, optional</span>
+<span class="sd">        Shape parameter :math:`\\eta &gt; 0`. Use ``from_classical_params(delta=..., eta=...)``.</span>
 <span class="sd">    </span>
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; # Create from mean and shape parameters</span>
-<span class="sd">    &gt;&gt;&gt; dist = InverseGaussian.from_classical_params(mean=1.0, shape=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; # Create from classical parameters</span>
+<span class="sd">    &gt;&gt;&gt; dist = InverseGaussian.from_classical_params(delta=1.0, eta=1.0)</span>
 <span class="sd">    &gt;&gt;&gt; dist.mean()</span>
 <span class="sd">    1.0</span>
 <span class="sd">    </span>
@@ -170,13 +165,13 @@
 <span class="sd">    The Inverse Gaussian distribution belongs to the exponential family with:</span>
 <span class="sd">    </span>
 <span class="sd">    - Sufficient statistics: :math:`t(x) = [x, 1/x]`</span>
-<span class="sd">    - Natural parameters: :math:`\\theta = [-\\lambda/(2\\mu^2), -\\lambda/2]`</span>
+<span class="sd">    - Natural parameters: :math:`\\theta = [-\\eta/(2\\delta^2), -\\eta/2]`</span>
 <span class="sd">    - Log partition: :math:`\\psi(\\theta) = -2\\sqrt{\\theta_1\\theta_2} - \\frac{1}{2}\\log(-2\\theta_2)`</span>
 <span class="sd">    </span>
 <span class="sd">    It is a special case of the Generalized Inverse Gaussian (GIG) with :math:`p = -1/2`:</span>
 <span class="sd">    </span>
 <span class="sd">    .. math::</span>
-<span class="sd">        \\text{InvGauss}(\\mu, \\lambda) = \\text{GIG}(p=-1/2, a=\\lambda/\\mu^2, b=\\lambda)</span>
+<span class="sd">        \\text{InvGauss}(\\delta, \\eta) = \\text{GIG}(p=-1/2, a=\\eta/\\delta^2, b=\\eta)</span>
 <span class="sd">    </span>
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -187,22 +182,21 @@
     
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># ================================================================</span>
     <span class="c1"># New interface: internal state management</span>
     <span class="c1"># ================================================================</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from classical parameters.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">mean</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean must be positive, got </span><span class="si">{</span><span class="n">mean</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">shape</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape must be positive, got </span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">shape</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">mean</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">shape</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;delta must be positive, got </span><span class="si">{</span><span class="n">delta</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eta</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;eta must be positive, got </span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
@@ -210,21 +204,21 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from natural parameters.&quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute natural parameters: θ = [-λ/(2μ²), -λ/2].&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute natural parameters: theta = [-eta/(2*delta^2), -eta/2].&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_classical_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return frozen dataclass of classical parameters.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">InverseGaussianParams</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">InverseGaussianParams</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delta</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_natural_param_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Natural parameter support: θ₁ &lt; 0, θ₂ &lt; 0.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Natural parameter support: theta_1 &lt; 0, theta_2 &lt; 0.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_sufficient_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
@@ -238,26 +232,24 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">():</span>
-            <span class="c1"># Scalar input</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">x</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Array input</span>
             <span class="n">inv_x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">x</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">inv_x</span><span class="p">])</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Log partition function: ψ(θ) = -2√(θ₁θ₂) - (1/2)log(-2θ₂).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log partition function: :math:`\psi(\theta) = -2\sqrt{\theta_1\theta_2} - \frac{1}{2}\log(-2\theta_2)`.</span>
 <span class="sd">        </span>
-<span class="sd">        This matches ψ(θ) = -λ/μ - (1/2)log(λ) in classical parameters.</span>
+<span class="sd">        This matches :math:`\psi(\theta) = -\eta/\delta - \frac{1}{2}\log(\eta)` in classical parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">sqrt_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">lam</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sqrt_product</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sqrt_product</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Log base measure: log h(x) = -1/2 * log(2πx³) for x &gt; 0.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log base measure: :math:`\log h(x) = -\frac{1}{2} \log(2\pi x^3)` for :math:`x &gt; 0`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
@@ -267,55 +259,55 @@
         <span class="k">return</span> <span class="n">result</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute expectation parameters directly: η = [μ, 1/μ + 1/λ].&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">])</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute expectation parameters directly: :math:`\eta_{exp} = [\delta, 1/\delta + 1/\eta]`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_delta</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Analytical gradient: η = ∇ψ(θ) = [μ, 1/μ + 1/λ].</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analytical gradient: :math:`\eta_{exp} = \nabla\psi(\theta) = [\delta, 1/\delta + 1/\eta]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">lam</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">eta1</span> <span class="o">=</span> <span class="n">mu</span>
-        <span class="n">eta2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">lam</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">eta1</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="n">eta2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">eta</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">])</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_to_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Analytical inverse from expectation parameters η = [μ, 1/μ + 1/λ].</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_to_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta_exp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analytical inverse from expectation parameters :math:`\eta_{exp} = [\delta, 1/\delta + 1/\eta]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">denom</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">mu</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">eta_exp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">eta_exp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">delta</span>
         <span class="k">if</span> <span class="n">denom</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid expectation parameters for Inverse Gaussian.&quot;</span><span class="p">)</span>
-        <span class="n">lam</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">denom</span>
-        <span class="n">theta1</span> <span class="o">=</span> <span class="o">-</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">mu</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">theta2</span> <span class="o">=</span> <span class="o">-</span><span class="n">lam</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">theta1</span> <span class="o">=</span> <span class="o">-</span><span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">delta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">theta2</span> <span class="o">=</span> <span class="o">-</span><span class="n">eta</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">])</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta_exp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get initial guess for natural parameters from expectation parameters.</span>
 <span class="sd">        </span>
 <span class="sd">        Uses the analytical inverse.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta_exp</span><span class="p">)</span>
     
 <div class="viewcode-block" id="InverseGaussian.fisher_information">
 <a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.inverse_gaussian.InverseGaussian.fisher_information">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fisher_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Analytical Fisher information: I(θ) = ∇²ψ(θ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analytical Fisher information: :math:`I(\theta) = \nabla^2\psi(\theta)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span>
         
-        <span class="n">lam</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         
-        <span class="n">I_11</span> <span class="o">=</span> <span class="n">mu</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="n">lam</span>
-        <span class="n">I_12</span> <span class="o">=</span> <span class="n">I_21</span> <span class="o">=</span> <span class="o">-</span><span class="n">mu</span> <span class="o">/</span> <span class="n">lam</span>
-        <span class="n">I_22</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">mu</span> <span class="o">*</span> <span class="n">lam</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">I_11</span> <span class="o">=</span> <span class="n">delta</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="n">eta</span>
+        <span class="n">I_12</span> <span class="o">=</span> <span class="n">I_21</span> <span class="o">=</span> <span class="o">-</span><span class="n">delta</span> <span class="o">/</span> <span class="n">eta</span>
+        <span class="n">I_22</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">eta</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">eta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">I_11</span><span class="p">,</span> <span class="n">I_12</span><span class="p">],</span>
                         <span class="p">[</span><span class="n">I_21</span><span class="p">,</span> <span class="n">I_22</span><span class="p">]])</span></div>
@@ -345,7 +337,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
         
-        <span class="c1"># Set up random number generator</span>
         <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">random_state</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -353,19 +344,15 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">rng</span> <span class="o">=</span> <span class="n">random_state</span>
         
-        <span class="c1"># numpy.random.wald uses the same parameterization:</span>
-        <span class="c1"># mean = μ, scale = λ</span>
-        <span class="k">return</span> <span class="n">rng</span><span class="o">.</span><span class="n">wald</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span></div>
+        <span class="c1"># numpy.random.wald: mean = delta, scale = eta</span>
+        <span class="k">return</span> <span class="n">rng</span><span class="o">.</span><span class="n">wald</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delta</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">)</span></div>
 
     
 <div class="viewcode-block" id="InverseGaussian.mean">
 <a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.inverse_gaussian.InverseGaussian.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Mean of Inverse Gaussian distribution: E[X] = mu.</span>
-<span class="sd">        </span>
-<span class="sd">        .. math::</span>
-<span class="sd">            E[X] = \\mu</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean of Inverse Gaussian distribution: :math:`E[X] = \delta`.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -373,17 +360,14 @@
 <span class="sd">            Mean of the distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span></div>
 
     
 <div class="viewcode-block" id="InverseGaussian.var">
 <a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.inverse_gaussian.InverseGaussian.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Variance of Inverse Gaussian distribution: Var[X] = mu^3/lambda.</span>
-<span class="sd">        </span>
-<span class="sd">        .. math::</span>
-<span class="sd">            \\text{Var}[X] = \\frac{\\mu^3}{\\lambda}</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance of Inverse Gaussian distribution: :math:`\text{Var}[X] = \delta^3/\eta`.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -391,7 +375,7 @@
 <span class="sd">            Variance of the distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_delta</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span></div>
 
     
 <div class="viewcode-block" id="InverseGaussian.cdf">
@@ -417,13 +401,12 @@
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         
         <span class="c1"># scipy.stats.invgauss uses (mu, scale) where:</span>
-        <span class="c1"># scipy_mu = μ/λ, scipy_scale = λ</span>
-        <span class="n">scipy_mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
-        <span class="n">scipy_scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda</span>
+        <span class="c1"># scipy_mu = delta/eta, scipy_scale = eta</span>
+        <span class="n">scipy_mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span>
+        <span class="n">scipy_scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span>
         
         <span class="n">result</span> <span class="o">=</span> <span class="n">invgauss</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">scipy_mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scipy_scale</span><span class="p">)</span>
         
-        <span class="c1"># Return scalar if input was scalar</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()):</span>
             <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         

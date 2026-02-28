@@ -2283,29 +2283,29 @@ I₂₂ = ψ’(α) (trigamma function)</p>
 Also belongs to the exponential family.</p>
 <p>The Inverse Gaussian distribution has PDF:</p>
 <div class="math notranslate nohighlight">
-\[p(x|\mu, \lambda) = \sqrt{\frac{\lambda}{2\pi x^3}}
-\exp\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right)\]</div>
-<p>for <span class="math notranslate nohighlight">\(x &gt; 0\)</span>, where <span class="math notranslate nohighlight">\(\mu &gt; 0\)</span> is the mean and <span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>
+\[p(x|\delta, \eta) = \sqrt{\frac{\eta}{2\pi x^3}}
+\exp\left(-\frac{\eta(x-\delta)^2}{2\delta^2 x}\right)\]</div>
+<p>for <span class="math notranslate nohighlight">\(x &gt; 0\)</span>, where <span class="math notranslate nohighlight">\(\delta &gt; 0\)</span> is the mean and <span class="math notranslate nohighlight">\(\eta &gt; 0\)</span>
 is the shape parameter.</p>
 <p>Exponential family form:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(h(x) = 1/\sqrt{2\pi x^3}\)</span> for <span class="math notranslate nohighlight">\(x &gt; 0\)</span> (base measure)</p></li>
 <li><p><span class="math notranslate nohighlight">\(t(x) = [x, 1/x]\)</span> (sufficient statistics)</p></li>
-<li><p><span class="math notranslate nohighlight">\(\theta = [-\lambda/(2\mu^2), -\lambda/2]\)</span> (natural parameters)</p></li>
+<li><p><span class="math notranslate nohighlight">\(\theta = [-\eta/(2\delta^2), -\eta/2]\)</span> (natural parameters)</p></li>
 <li><p><span class="math notranslate nohighlight">\(\psi(\theta) = -2\sqrt{\theta_1\theta_2} - \frac{1}{2}\log(-2\theta_2)\)</span> (log partition)</p></li>
 </ul>
 <p>Parametrizations:</p>
 <ul class="simple">
-<li><p>Classical: <span class="math notranslate nohighlight">\(\mu\)</span> (mean), <span class="math notranslate nohighlight">\(\lambda\)</span> (shape), <span class="math notranslate nohighlight">\(\mu &gt; 0, \lambda &gt; 0\)</span></p></li>
-<li><p>Natural: <span class="math notranslate nohighlight">\(\theta = [-\lambda/(2\mu^2), -\lambda/2]\)</span>, <span class="math notranslate nohighlight">\(\theta_1 &lt; 0, \theta_2 &lt; 0\)</span></p></li>
-<li><p>Expectation: <span class="math notranslate nohighlight">\(\eta = [\mu, 1/\mu + 1/\lambda]\)</span></p></li>
+<li><p>Classical: <span class="math notranslate nohighlight">\(\delta\)</span> (mean), <span class="math notranslate nohighlight">\(\eta\)</span> (shape), <span class="math notranslate nohighlight">\(\delta &gt; 0, \eta &gt; 0\)</span></p></li>
+<li><p>Natural: <span class="math notranslate nohighlight">\(\theta = [-\eta/(2\delta^2), -\eta/2]\)</span>, <span class="math notranslate nohighlight">\(\theta_1 &lt; 0, \theta_2 &lt; 0\)</span></p></li>
+<li><p>Expectation: <span class="math notranslate nohighlight">\(\eta_{exp} = [\delta, 1/\delta + 1/\eta]\)</span></p></li>
 </ul>
 <p>Note: scipy uses (mu, scale) where:</p>
 <ul class="simple">
-<li><p>scipy_mu = <span class="math notranslate nohighlight">\(\mu/\lambda\)</span> (shape parameter, confusingly named)</p></li>
-<li><p>scipy_scale = <span class="math notranslate nohighlight">\(\lambda\)</span> (our shape parameter)</p></li>
-<li><p>Relationship: <span class="math notranslate nohighlight">\(\mu = \text{scipy\_mu} \times \text{scipy\_scale}\)</span>,
-<span class="math notranslate nohighlight">\(\lambda = \text{scipy\_scale}\)</span></p></li>
+<li><p>scipy_mu = <span class="math notranslate nohighlight">\(\delta/\eta\)</span> (shape parameter, confusingly named)</p></li>
+<li><p>scipy_scale = <span class="math notranslate nohighlight">\(\eta\)</span> (our shape parameter)</p></li>
+<li><p>Relationship: <span class="math notranslate nohighlight">\(\delta = \text{scipy\_mu} \times \text{scipy\_scale}\)</span>,
+<span class="math notranslate nohighlight">\(\eta = \text{scipy\_scale}\)</span></p></li>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.univariate.inverse_gaussian.InverseGaussian">
@@ -2315,32 +2315,21 @@ is the shape parameter.</p>
 <p>Also known as the Wald distribution. Special case of GIG with <span class="math notranslate nohighlight">\(p = -1/2\)</span>.</p>
 <p>The Inverse Gaussian distribution has PDF:</p>
 <div class="math notranslate nohighlight">
-\[p(x|\mu, \lambda) = \sqrt{\frac{\lambda}{2\pi x^3}}
-\exp\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right)\]</div>
-<p>for <span class="math notranslate nohighlight">\(x &gt; 0\)</span>, where <span class="math notranslate nohighlight">\(\mu\)</span> is the mean and <span class="math notranslate nohighlight">\(\lambda\)</span>
+\[p(x|\delta, \eta) = \sqrt{\frac{\eta}{2\pi x^3}}
+\exp\left(-\frac{\eta(x-\delta)^2}{2\delta^2 x}\right)\]</div>
+<p>for <span class="math notranslate nohighlight">\(x &gt; 0\)</span>, where <span class="math notranslate nohighlight">\(\delta\)</span> is the mean and <span class="math notranslate nohighlight">\(\eta\)</span>
 is the shape parameter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> (<em>float</em><em>, </em><em>optional</em>) – Mean parameter <span class="math notranslate nohighlight">\(\mu &gt; 0\)</span>. Use <code class="docutils literal notranslate"><span class="pre">from_classical_params(mean=...,</span> <span class="pre">shape=...)</span></code>.</p></li>
-<li><p><strong>shape</strong> (<em>float</em><em>, </em><em>optional</em>) – Shape parameter <span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>. Use <code class="docutils literal notranslate"><span class="pre">from_classical_params(mean=...,</span> <span class="pre">shape=...)</span></code>.</p></li>
+<li><p><strong>delta</strong> (<em>float</em><em>, </em><em>optional</em>) – Mean parameter <span class="math notranslate nohighlight">\(\delta &gt; 0\)</span>. Use <code class="docutils literal notranslate"><span class="pre">from_classical_params(delta=...,</span> <span class="pre">eta=...)</span></code>.</p></li>
+<li><p><strong>eta</strong> (<em>float</em><em>, </em><em>optional</em>) – Shape parameter <span class="math notranslate nohighlight">\(\eta &gt; 0\)</span>. Use <code class="docutils literal notranslate"><span class="pre">from_classical_params(delta=...,</span> <span class="pre">eta=...)</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.distributions.univariate.inverse_gaussian.InverseGaussian._natural_params">
-<span class="sig-name descname"><span class="pre">_natural_params</span></span><a class="headerlink" href="#normix.distributions.univariate.inverse_gaussian.InverseGaussian._natural_params" title="Link to this definition"></a></dt>
-<dd><p>Internal storage for natural parameters <span class="math notranslate nohighlight">\(\theta = [-\lambda/(2\mu^2), -\lambda/2]\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple or None</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create from mean and shape parameters</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dist</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create from classical parameters</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dist</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 <span class="go">1.0</span>
 </pre></div>
@@ -2366,12 +2355,12 @@ is the shape parameter.</p>
 <p>The Inverse Gaussian distribution belongs to the exponential family with:</p>
 <ul class="simple">
 <li><p>Sufficient statistics: <span class="math notranslate nohighlight">\(t(x) = [x, 1/x]\)</span></p></li>
-<li><p>Natural parameters: <span class="math notranslate nohighlight">\(\theta = [-\lambda/(2\mu^2), -\lambda/2]\)</span></p></li>
+<li><p>Natural parameters: <span class="math notranslate nohighlight">\(\theta = [-\eta/(2\delta^2), -\eta/2]\)</span></p></li>
 <li><p>Log partition: <span class="math notranslate nohighlight">\(\psi(\theta) = -2\sqrt{\theta_1\theta_2} - \frac{1}{2}\log(-2\theta_2)\)</span></p></li>
 </ul>
 <p>It is a special case of the Generalized Inverse Gaussian (GIG) with <span class="math notranslate nohighlight">\(p = -1/2\)</span>:</p>
 <div class="math notranslate nohighlight">
-\[\text{InvGauss}(\mu, \lambda) = \text{GIG}(p=-1/2, a=\lambda/\mu^2, b=\lambda)\]</div>
+\[\text{InvGauss}(\delta, \eta) = \text{GIG}(p=-1/2, a=\eta/\delta^2, b=\eta)\]</div>
 <p class="rubric">References</p>
 <p>Barndorff-Nielsen, O. E. (1978). Information and exponential families.</p>
 <p>Chhikara, R. S. &amp; Folks, J. L. (1989). The Inverse Gaussian Distribution.</p>
@@ -2395,15 +2384,13 @@ is the shape parameter.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.univariate.inverse_gaussian.InverseGaussian.fisher_information">
 <span class="sig-name descname"><span class="pre">fisher_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/distributions/univariate/inverse_gaussian.html#InverseGaussian.fisher_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.univariate.inverse_gaussian.InverseGaussian.fisher_information" title="Link to this definition"></a></dt>
-<dd><p>Analytical Fisher information: I(θ) = ∇²ψ(θ).</p>
+<dd><p>Analytical Fisher information: <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.univariate.inverse_gaussian.InverseGaussian.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/normix/distributions/univariate/inverse_gaussian.html#InverseGaussian.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.univariate.inverse_gaussian.InverseGaussian.mean" title="Link to this definition"></a></dt>
-<dd><p>Mean of Inverse Gaussian distribution: E[X] = mu.</p>
-<div class="math notranslate nohighlight">
-\[E[X] = \mu\]</div>
+<dd><p>Mean of Inverse Gaussian distribution: <span class="math notranslate nohighlight">\(E[X] = \delta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>mean</strong> – Mean of the distribution.</p>
@@ -2438,9 +2425,7 @@ is the shape parameter.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.univariate.inverse_gaussian.InverseGaussian.var">
 <span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/normix/distributions/univariate/inverse_gaussian.html#InverseGaussian.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.univariate.inverse_gaussian.InverseGaussian.var" title="Link to this definition"></a></dt>
-<dd><p>Variance of Inverse Gaussian distribution: Var[X] = mu^3/lambda.</p>
-<div class="math notranslate nohighlight">
-\[\text{Var}[X] = \frac{\mu^3}{\lambda}\]</div>
+<dd><p>Variance of Inverse Gaussian distribution: <span class="math notranslate nohighlight">\(\text{Var}[X] = \delta^3/\eta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>var</strong> – Variance of the distribution.</p>
@@ -2930,7 +2915,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fc60de60080&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f373591bb90&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3009,7 +2994,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fc60de60080&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f373591bb90&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3120,9 +3105,6 @@ Smaller <span class="math notranslate nohighlight">\(\alpha\)</span> leads to he
 <dt class="sig sig-object py" id="normix.distributions.mixtures.variance_gamma.VarianceGamma.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.variance_gamma.VarianceGamma" title="normix.distributions.mixtures.variance_gamma.VarianceGamma"><span class="pre">VarianceGamma</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/variance_gamma.html#VarianceGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.variance_gamma.VarianceGamma.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit distribution to data using the EM algorithm.</p>
-<p>When only X is observed (Y is latent), uses the EM algorithm described
-in the theory documentation. The E-step computes conditional expectations
-of Y given X, and the M-step updates parameters using closed-form formulas.</p>
 <p>Convergence is checked based on the relative change in the normal
 parameters <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span>. Log-likelihood is optionally
 displayed per iteration when <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p>
@@ -3133,7 +3115,7 @@ displayed per iteration when <code class="docutils literal notranslate"><span cl
 <li><p><strong>y</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Ignored (for sklearn API compatibility).</p></li>
 <li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of EM iterations. Default is 100.</p></li>
 <li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Convergence tolerance for relative parameter change.
-Default is 1e-6.</p></li>
+Default is 1e-3.</p></li>
 <li><p><strong>verbose</strong> (<em>int</em><em>, </em><em>optional</em>) – Verbosity level. 0 = silent, 1 = progress with llh,
 2 = detailed with parameter norms. Default is 0.</p></li>
 <li><p><strong>random_state</strong> (<em>int</em><em> or </em><em>Generator</em><em>, </em><em>optional</em>) – Random state for initialization.</p></li>
@@ -3146,29 +3128,6 @@ Default is 1e-6.</p></li>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.mixtures.variance_gamma.VarianceGamma" title="normix.distributions.mixtures.variance_gamma.VarianceGamma">VarianceGamma</a></p>
 </dd>
 </dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate data from known distribution</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">true_dist</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]),</span> <span class="n">gamma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]),</span>
-<span class="gp">... </span>    <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">]]),</span> <span class="n">shape</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">1.0</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">true_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Fit new distribution</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fitted</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">fitted</span><span class="o">.</span><span class="n">classical_params</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="rubric">Notes</p>
-<p>The EM algorithm iterates between:</p>
-<p><strong>E-step</strong>: Compute conditional expectations</p>
-<div class="math notranslate nohighlight">
-\[E[Y | X = x_j], \quad E[1/Y | X = x_j], \quad E[\log Y | X = x_j]\]</div>
-<p><strong>M-step</strong>: Update parameters using closed-form formulas</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}\mu &amp;= \frac{\bar{X} - \bar{E[Y]} \cdot \overline{X/Y}}{1 - \overline{E[1/Y]} \cdot \overline{E[Y]}} \\
-\gamma &amp;= \frac{\overline{X/Y} - \overline{E[1/Y]} \cdot \bar{X}}{1 - \overline{E[1/Y]} \cdot \overline{E[Y]}}\end{split}\]</div>
-<p>The Gamma parameters <span class="math notranslate nohighlight">\((\alpha, \beta)\)</span> are updated via Newton’s method.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -3308,9 +3267,6 @@ For the variance to exist, we need <span class="math notranslate nohighlight">\(
 <dt class="sig sig-object py" id="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma"><span class="pre">NormalInverseGamma</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/normal_inverse_gamma.html#NormalInverseGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit distribution to data using the EM algorithm.</p>
-<p>When only X is observed (Y is latent), uses the EM algorithm described
-in the theory documentation. The E-step computes conditional expectations
-of Y given X, and the M-step updates parameters using closed-form formulas.</p>
 <p>Convergence is checked based on the relative change in the normal
 parameters <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span>. Log-likelihood is optionally
 displayed per iteration when <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p>
@@ -3321,7 +3277,7 @@ displayed per iteration when <code class="docutils literal notranslate"><span cl
 <li><p><strong>y</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Ignored (for sklearn API compatibility).</p></li>
 <li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of EM iterations. Default is 100.</p></li>
 <li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Convergence tolerance for relative parameter change.
-Default is 1e-6.</p></li>
+Default is 1e-3.</p></li>
 <li><p><strong>verbose</strong> (<em>int</em><em>, </em><em>optional</em>) – Verbosity level. 0 = silent, 1 = progress with llh,
 2 = detailed with parameter norms. Default is 0.</p></li>
 <li><p><strong>random_state</strong> (<em>int</em><em> or </em><em>Generator</em><em>, </em><em>optional</em>) – Random state for initialization.</p></li>
@@ -3334,14 +3290,6 @@ Default is 1e-6.</p></li>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma">NormalInverseGamma</a></p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>The EM algorithm iterates between:</p>
-<p><strong>E-step</strong>: Compute conditional expectations</p>
-<div class="math notranslate nohighlight">
-\[E[Y | X = x_j], \quad E[1/Y | X = x_j], \quad E[\log Y | X = x_j]\]</div>
-<p><strong>M-step</strong>: Update parameters using closed-form formulas</p>
-<p>The InverseGamma parameters <span class="math notranslate nohighlight">\((\alpha, \beta)\)</span> are updated via Newton’s method.</p>
-<p>For valid estimates, we need <span class="math notranslate nohighlight">\(\alpha &gt; 1\)</span> for the mean to exist.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -3468,9 +3416,6 @@ gives heavier tails.</p>
 <dt class="sig sig-object py" id="normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian"><span class="pre">NormalInverseGaussian</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/normal_inverse_gaussian.html#NormalInverseGaussian.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit distribution to data using the EM algorithm.</p>
-<p>When only X is observed (Y is latent), uses the EM algorithm described
-in the theory documentation. The E-step computes conditional expectations
-of Y given X, and the M-step updates parameters using closed-form formulas.</p>
 <p>Convergence is checked based on the relative change in the normal
 parameters <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span>. Log-likelihood is optionally
 displayed per iteration when <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p>
@@ -3494,15 +3439,6 @@ Default is 1e-3.</p></li>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian">NormalInverseGaussian</a></p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>The EM algorithm iterates between:</p>
-<p><strong>E-step</strong>: Compute conditional expectations</p>
-<div class="math notranslate nohighlight">
-\[E[Y | X = x_j], \quad E[1/Y | X = x_j]\]</div>
-<p><strong>M-step</strong>: Update parameters using closed-form formulas</p>
-<p>The Inverse Gaussian parameters <span class="math notranslate nohighlight">\((\delta, \eta)\)</span> are updated analytically:
-- <span class="math notranslate nohighlight">\(\delta = E[Y]\)</span>
-- <span class="math notranslate nohighlight">\(\eta = 1 / (E[1/Y] - 1/\delta)\)</span></p>
 </dd></dl>
 
 <dl class="py method">
