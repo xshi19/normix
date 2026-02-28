@@ -377,16 +377,9 @@ class NormalInverseGamma(NormalMixture):
         beta_init = 1.0
         E_Y_init = beta_init / (alpha_init - 1)
 
-        X_centered = X - X_mean
-        X_std = np.std(X, axis=0)
-        X_std = np.maximum(X_std, 1e-10)
-        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
-        gamma_init = skewness * X_std * 0.1
-
-        mu_init = X_mean - gamma_init * E_Y_init
-
-        Var_Y_init = beta_init**2 / ((alpha_init - 1)**2 * (alpha_init - 2))
-        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / E_Y_init
+        gamma_init = np.zeros(d)
+        mu_init = X_mean
+        Sigma_init = X_cov / E_Y_init
 
         L = robust_cholesky(Sigma_init, eps=1e-6)
         Sigma_init = L @ L.T
