@@ -125,11 +125,35 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">digamma</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIGParams</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_z</span>
+
+<span class="c1"># When √(ab) falls below this threshold, switch to Gamma/InvGamma limit</span>
+<span class="c1"># formulas to avoid ∞−∞ and ∞×0 in the Bessel-based expressions.</span>
+<span class="n">_DEGEN_THRESHOLD</span> <span class="o">=</span> <span class="mf">1e-10</span>
+
+<span class="c1"># Module-level helpers for degenerate-case computations.</span>
+<span class="c1"># Import lazily to avoid circular imports at module load time.</span>
+<span class="n">_gamma_helper</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_invgamma_helper</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_gamma</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_gamma_helper</span>
+    <span class="k">if</span> <span class="n">_gamma_helper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">_gamma_helper</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_gamma_helper</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_invgamma</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_invgamma_helper</span>
+    <span class="k">if</span> <span class="n">_invgamma_helper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
+        <span class="n">_invgamma_helper</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_invgamma_helper</span>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian">
@@ -219,11 +243,25 @@
     <span class="c1"># ================================================================</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_classical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from classical parameters.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;a&#39; must be positive, got </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;b&#39; must be positive, got </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from classical parameters.</span>
+
+<span class="sd">        Allows ``a = 0`` (Inverse-Gamma limit, requires ``p &lt; 0``) or</span>
+<span class="sd">        ``b = 0`` (Gamma limit, requires ``p &gt; 0``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;a&#39; must be non-negative, got </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter &#39;b&#39; must be non-negative, got </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameters &#39;a&#39; and &#39;b&#39; cannot both be zero&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Inverse-Gamma limit (a=0) requires p &lt; 0, got p=</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Gamma limit (b=0) requires p &gt; 0, got p=</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
@@ -231,14 +269,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_from_natural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from natural parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set internal state from natural parameters.</span>
+
+<span class="sd">        Allows ``θ₂ = 0`` (Inverse-Gamma limit) or ``θ₃ = 0``</span>
+<span class="sd">        (Gamma limit).  Delegates to ``_set_from_classical`` which</span>
+<span class="sd">        validates the degenerate-case constraints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_natural_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_classical</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute natural parameters from internal state: θ = [p-1, -b/2, -a/2].&quot;&quot;&quot;</span>
@@ -250,13 +291,18 @@
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_natural_param_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Natural parameter support.</span>
-<span class="sd">        </span>
-<span class="sd">        θ₁ = p - 1: unbounded</span>
-<span class="sd">        θ₂ = -b/2: &lt; 0 (since b &gt; 0)</span>
-<span class="sd">        θ₃ = -a/2: &lt; 0 (since a &gt; 0)</span>
+<span class="sd">        Natural parameter support (boundaries included for Gamma/InvGamma</span>
+<span class="sd">        limits).</span>
+
+<span class="sd">        - :math:`\\theta_1 = p - 1`: unbounded</span>
+<span class="sd">        - :math:`\\theta_2 = -b/2 \\le 0`</span>
+<span class="sd">        - :math:`\\theta_3 = -a/2 \\le 0`</span>
+
+<span class="sd">        The base-class validator uses *strict* inequality, so we set the</span>
+<span class="sd">        upper bound to a tiny positive epsilon to effectively include 0.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
+        <span class="n">_EPS</span> <span class="o">=</span> <span class="mf">1e-30</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">_EPS</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">_EPS</span><span class="p">)]</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_sufficient_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -274,20 +320,29 @@
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Log partition function: A(θ) = log(2) + log(K_p(√(ab))) + (p/2)log(b/a).</span>
-<span class="sd">        </span>
-<span class="sd">        where:</span>
-<span class="sd">            p = θ₁ + 1</span>
-<span class="sd">            b = -2θ₂</span>
-<span class="sd">            a = -2θ₃</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log partition function.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            A(\theta) = \log 2 + \log K_p(\sqrt{ab})</span>
+<span class="sd">                        + \tfrac{p}{2}\bigl(\log b - \log a\bigr)</span>
+
+<span class="sd">        Falls back to closed-form Gamma / Inverse-Gamma limits when</span>
+<span class="sd">        :math:`\sqrt{ab}` is below ``_DEGEN_THRESHOLD``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-        
+        <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
-        
+
+        <span class="k">if</span> <span class="n">sqrt_ab</span> <span class="o">&lt;</span> <span class="n">_DEGEN_THRESHOLD</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">:</span>
+                <span class="c1"># a ≈ 0  →  InvGamma(α=-p, β=b/2), θ_IG = [β, -(α+1)]</span>
+                <span class="k">return</span> <span class="n">_get_invgamma</span><span class="p">()</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># b ≈ 0  →  Gamma(α=p, β=a/2), θ_Γ = [α-1, -β]</span>
+                <span class="k">return</span> <span class="n">_get_gamma</span><span class="p">()</span><span class="o">.</span><span class="n">_log_partition</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
@@ -299,140 +354,126 @@
         <span class="n">result</span><span class="p">[</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
         <span class="k">return</span> <span class="n">result</span>
     
-    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute expectation parameters directly from (p, a, b).&quot;&quot;&quot;</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_b</span>
-        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
-        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
-
-        <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-        <span class="n">log_kv_pm1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-        <span class="n">log_kv_pp1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-
-        <span class="n">E_inv_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pm1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
-        <span class="n">E_x</span> <span class="o">=</span> <span class="n">sqrt_b_over_a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
-
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_natural_to_expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert natural parameters to expectation parameters: η = ∇A(θ).</span>
-<span class="sd">        </span>
-<span class="sd">        η = [E[log X], E[1/X], E[X]]</span>
-<span class="sd">        </span>
-<span class="sd">        Using analytical formulas from Wikipedia:</span>
-<span class="sd">        - E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))</span>
-<span class="sd">        - E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab)) - 2p/b  [Note: Wikipedia formula]</span>
-<span class="sd">        - E[log X] = log(√(b/a)) + ∂/∂p log(K_p(√(ab)))</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \eta = [E[\log X],\; E[1/X],\; E[X]]</span>
+
+<span class="sd">        Uses Bessel-ratio formulas in log-space for the general case,</span>
+<span class="sd">        with closed-form Inverse-Gamma / Gamma limits when</span>
+<span class="sd">        :math:`\sqrt{ab}` falls below ``_DEGEN_THRESHOLD``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
-        <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
-        
+
+        <span class="c1"># ---------- degenerate limits -----------------------------------</span>
+        <span class="k">if</span> <span class="n">sqrt_ab</span> <span class="o">&lt;</span> <span class="n">_DEGEN_THRESHOLD</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">:</span>
+                <span class="c1"># a ≈ 0  →  InvGamma(α=-p, β=b/2), θ_IG = [β, -(α+1)]</span>
+                <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">_get_invgamma</span><span class="p">()</span><span class="o">.</span><span class="n">_natural_to_expectation</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">)</span>
+                <span class="c1"># ig_eta = [-α/β, log(β)-ψ(α)]</span>
+                <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">ig_eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">E_inv_x</span> <span class="o">=</span> <span class="o">-</span><span class="n">ig_eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">alpha_ig</span> <span class="o">=</span> <span class="o">-</span><span class="n">p</span>
+                <span class="n">E_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha_ig</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">alpha_ig</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># b ≈ 0  →  Gamma(α=p, β=a/2), θ_Γ = [α-1, -β]</span>
+                <span class="n">g_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+                <span class="n">g_eta</span> <span class="o">=</span> <span class="n">_get_gamma</span><span class="p">()</span><span class="o">.</span><span class="n">_natural_to_expectation</span><span class="p">(</span><span class="n">g_theta</span><span class="p">)</span>
+                <span class="c1"># g_eta = [ψ(α)-log(β), α/β]</span>
+                <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">g_eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">E_x</span> <span class="o">=</span> <span class="n">g_eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">E_inv_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
+
+        <span class="c1"># ---------- general Bessel case --------------------------------</span>
         <span class="n">log_kv_p</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
         <span class="n">log_kv_pm1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
         <span class="n">log_kv_pp1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-        
-        <span class="c1"># E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab))</span>
-        <span class="c1"># Note: Using the recurrence relation form which is more stable</span>
-        <span class="n">E_inv_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pm1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
-        
-        <span class="c1"># E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))</span>
-        <span class="n">E_x</span> <span class="o">=</span> <span class="n">sqrt_b_over_a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span><span class="p">)</span>
-        
-        <span class="c1"># E[log X] = ∂A/∂θ₁ = ∂/∂p[log K_p(√(ab))] + (1/2)(log b - log a)</span>
+
+        <span class="n">log_sqrt_ba</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+        <span class="n">E_inv_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pm1</span> <span class="o">-</span> <span class="n">log_kv_p</span> <span class="o">-</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+        <span class="n">E_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+
         <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
         <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span>
-        
+        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
+
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get initial guesses for natural parameters from expectation parameters.</span>
-<span class="sd">        </span>
-<span class="sd">        Uses the three special cases of GIG distribution:</span>
-<span class="sd">        1. Inverse Gaussian (p = -1/2): uses E[X] and E[1/X]</span>
-<span class="sd">        2. Gamma (b → small): uses E[log X] and E[X]</span>
-<span class="sd">        3. Inverse Gamma (a → small): uses E[log X] and E[1/X]</span>
-<span class="sd">        </span>
-<span class="sd">        Returns multiple starting points for multi-start optimization.</span>
+
+<span class="sd">        Fits the three special-case sub-distributions (Inverse Gaussian,</span>
+<span class="sd">        Gamma, Inverse Gamma) to the relevant subsets of ``eta`` and</span>
+<span class="sd">        converts their parameters to GIG natural parameters.  Each</span>
+<span class="sd">        solution is also perturbed to provide additional starting points</span>
+<span class="sd">        away from the exact boundary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
+
         <span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span> <span class="o">=</span> <span class="n">eta</span>
-        <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Small value for nearly-degenerate cases</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        
-        <span class="c1"># === Special case 1: Inverse Gaussian (p = -1/2) ===</span>
-        <span class="c1"># For IG: E[X] = μ, E[1/X] = 1/μ + 1/(μ²λ)</span>
-        <span class="c1"># With GIG params: a = λ/μ, b = λμ, p = -1/2</span>
-        <span class="c1"># E[X] = √(b/a), so b/a = E[X]²</span>
-        <span class="c1"># E[1/X] = √(a/b) · K_{-3/2}(√(ab)) / K_{-1/2}(√(ab))</span>
-        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">p_ig</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
-            <span class="c1"># Approximate: for IG, √(b/a) ≈ E[X]</span>
-            <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">E_x</span>
-            <span class="c1"># Product ab from the ratio E[1/X]/E[X] ≈ a/b for moderate √(ab)</span>
-            <span class="c1"># Simple heuristic: set √(ab) = 1</span>
-            <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">E_x</span> <span class="o">*</span> <span class="n">E_inv_x</span><span class="p">))</span>
-            <span class="n">a_ig</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
-            <span class="n">b_ig</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">*</span> <span class="n">sqrt_b_over_a</span>
-            <span class="n">a_ig</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_ig</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-            <span class="n">b_ig</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b_ig</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_ig</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_ig</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_ig</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
-        
-        <span class="c1"># === Special case 2: Gamma (b → small) ===</span>
-        <span class="c1"># Gamma(α, β) with α = p, β = a/2, b → 0</span>
-        <span class="c1"># E[X] = α/β = 2p/a</span>
-        <span class="c1"># E[log X] = ψ(α) - log(β) = ψ(p) - log(a/2)</span>
-        <span class="c1"># From E[X]: a = 2p/E[X]</span>
-        <span class="c1"># From E[log X]: p satisfies ψ(p) = E[log X] + log(a/2)</span>
+        <span class="n">starting_points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+        <span class="c1"># ── 1. Inverse Gaussian (p = -1/2): match E[X] and E[1/X] ────</span>
+        <span class="c1">#    IG θ = [-η/(2δ²), -η/2]</span>
+        <span class="c1">#    → GIG θ = [-3/2, ig_θ₂, ig_θ₁]</span>
+        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">E_x</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">])</span>
+                <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="p">()</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">)</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">FloatingPointError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># ── 2. Gamma (b ≈ 0): match E[log X] and E[X] ───────────────</span>
+        <span class="c1">#    Γ θ = [α-1, -β]</span>
+        <span class="c1">#    → GIG θ = [γ_θ₁, -ε/2, γ_θ₂]</span>
         <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Try a few values of p &gt; 0 for Gamma</span>
-            <span class="k">for</span> <span class="n">p_gamma</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]:</span>
-                <span class="n">a_gamma</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">p_gamma</span> <span class="o">/</span> <span class="n">E_x</span>
-                <span class="n">a_gamma</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_gamma</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-                <span class="n">b_gamma</span> <span class="o">=</span> <span class="n">eps</span>  <span class="c1"># Small b for Gamma limit</span>
-                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_gamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_gamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_gamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
-        
-        <span class="c1"># === Special case 3: Inverse Gamma (a → small) ===</span>
-        <span class="c1"># InvGamma(α, β) with α = -p, β = b/2, a → 0</span>
-        <span class="c1"># E[1/X] = α/β = -2p/b (for p &lt; 0)</span>
-        <span class="c1"># E[log X] = log(β) - ψ(α) = log(b/2) - ψ(-p)</span>
-        <span class="c1"># From E[1/X]: b = -2p/E[1/X]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">g_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
+                <span class="n">g_theta</span> <span class="o">=</span> <span class="n">_get_gamma</span><span class="p">()</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">g_eta</span><span class="p">)</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">g_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">FloatingPointError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># ── 3. Inverse Gamma (a ≈ 0): match E[1/X] and E[log X] ─────</span>
+        <span class="c1">#    IG θ = [β, -(α+1)]</span>
+        <span class="c1">#    → GIG θ = [ig_θ₂, -ig_θ₁, -ε/2]</span>
         <span class="k">if</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Try a few values of p &lt; 0 for Inverse Gamma</span>
-            <span class="k">for</span> <span class="n">p_invgamma</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">]:</span>
-                <span class="n">b_invgamma</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">p_invgamma</span> <span class="o">/</span> <span class="n">E_inv_x</span>
-                <span class="n">b_invgamma</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b_invgamma</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
-                <span class="n">a_invgamma</span> <span class="o">=</span> <span class="n">eps</span>  <span class="c1"># Small a for Inverse Gamma limit</span>
-                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_invgamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_invgamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_invgamma</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
-        
-        <span class="c1"># === General heuristic: moment matching ===</span>
-        <span class="c1"># E[X]/E[1/X] ≈ b/a for moderate √(ab)</span>
-        <span class="k">if</span> <span class="n">E_x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">E_inv_x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">ratio</span> <span class="o">=</span> <span class="n">E_x</span> <span class="o">/</span> <span class="n">E_inv_x</span>  <span class="c1"># ≈ b/a</span>
-            <span class="n">sqrt_b_over_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">eps</span><span class="p">))</span>
-            
-            <span class="k">for</span> <span class="n">sqrt_ab</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]:</span>
-                <span class="n">a_heur</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">/</span> <span class="n">sqrt_b_over_a</span>
-                <span class="n">b_heur</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">*</span> <span class="n">sqrt_b_over_a</span>
-                <span class="k">for</span> <span class="n">p_heur</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]:</span>
-                    <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_heur</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">b_heur</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">a_heur</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
-        
-        <span class="c1"># Fallback: simple default</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">starting_points</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]))</span>  <span class="c1"># p=1, a=1, b=1</span>
-        
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_log_x</span><span class="p">])</span>
+                <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">_get_invgamma</span><span class="p">()</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">)</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">FloatingPointError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># ── 4. Perturbed copies — move boundary params toward interior ─</span>
+        <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">starting_points</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]:</span>
+                <span class="n">perturbed</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perturbed</span><span class="p">)</span>
+
+        <span class="c1"># ── 5. Fallback ──────────────────────────────────────────────</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">starting_points</span><span class="p">:</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]))</span>
+
         <span class="k">return</span> <span class="n">starting_points</span>
     
 <div class="viewcode-block" id="GeneralizedInverseGaussian.fisher_information">

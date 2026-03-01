@@ -959,8 +959,8 @@ If provided, these are used instead of the default initial points.</p></li>
 <div class="math notranslate nohighlight">
 \[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\]</div>
 <p>where <span class="math notranslate nohighlight">\(Z \sim N(0, \Sigma)\)</span> is a Gaussian random vector independent of
-<span class="math notranslate nohighlight">\(Y\)</span>, and <span class="math notranslate nohighlight">\(Y\)</span> follows some positive mixing distribution (GIG, Gamma,
-Inverse Gaussian, etc.).</p>
+<span class="math notranslate nohighlight">\(Y\)</span>, and <span class="math notranslate nohighlight">\(Y\)</span> follows some positive subordinator distribution (GIG,
+Gamma, Inverse Gaussian, etc.).</p>
 <p>This module provides two abstract base classes:</p>
 <ol class="arabic simple">
 <li><p><strong>JointNormalMixture</strong>: The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> which IS an
@@ -989,20 +989,20 @@ when both variables are observed.</p>
 <p>Abstract base class for joint normal mixture distributions <span class="math notranslate nohighlight">\(f(x, y)\)</span>.</p>
 <p>The joint distribution of <span class="math notranslate nohighlight">\((X, Y)\)</span> where:</p>
 <div class="math notranslate nohighlight">
-\[ \begin{align}\begin{aligned}X | Y \sim N(\mu + \gamma Y, \Sigma Y)\\Y \sim \text{Mixing distribution}\end{aligned}\end{align} \]</div>
+\[ \begin{align}\begin{aligned}X | Y \sim N(\mu + \gamma Y, \Sigma Y)\\Y \sim \text{Subordinator distribution}\end{aligned}\end{align} \]</div>
 <p>This joint distribution belongs to the exponential family with sufficient
 statistics:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}t(x, y) = \begin{pmatrix} \log y \\ y^{-1} \\ y \\ x \\ x y^{-1} \\ x x^T y^{-1} \end{pmatrix}\end{split}\]</div>
 <p>The natural parameters are derived from the classical parameters
-<span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, \text{mixing params})\)</span>.</p>
+<span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, \text{subordinator params})\)</span>.</p>
 <p>Subclasses must implement:</p>
 <ul class="simple">
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_mixing_distribution_class()</span></code>: Return the mixing distribution class</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_mixing_params()</span></code>: Store mixing params from kwargs</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_mixing_params_from_theta()</span></code>: Extract mixing params from theta</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_mixing_theta()</span></code>: Build theta_1, theta_2, theta_3</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_create_mixing_distribution()</span></code>: Construct mixing dist from named attrs</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_subordinator_class()</span></code>: Return the subordinator distribution class</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_subordinator_params()</span></code>: Store subordinator params from kwargs</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_store_subordinator_params_from_theta()</span></code>: Extract subordinator params from theta</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_compute_subordinator_theta()</span></code>: Build theta_1, theta_2, theta_3</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_create_subordinator()</span></code>: Construct subordinator dist from named attrs</p></li>
 </ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture._d">
@@ -1083,7 +1083,7 @@ statistics:</p>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><strong>Cov_X</strong> (<em>ndarray</em>) – Covariance matrix of X, shape (d, d)</p></li>
-<li><p><strong>Var_Y</strong> (<em>float</em>) – Variance of Y from the mixing distribution</p></li>
+<li><p><strong>Var_Y</strong> (<em>float</em>) – Variance of Y from the subordinator distribution</p></li>
 </ul>
 </p>
 </dd>
@@ -1166,7 +1166,7 @@ vector and sufficient statistics.</p>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><strong>E_X</strong> (<em>ndarray</em>) – <span class="math notranslate nohighlight">\(E[X] = \mu + \gamma E[Y]\)</span></p></li>
-<li><p><strong>E_Y</strong> (<em>float</em>) – <span class="math notranslate nohighlight">\(E[Y]\)</span> from the mixing distribution</p></li>
+<li><p><strong>E_Y</strong> (<em>float</em>) – <span class="math notranslate nohighlight">\(E[Y]\)</span> from the subordinator distribution</p></li>
 </ul>
 </p>
 </dd>
@@ -1199,7 +1199,7 @@ vector and sufficient statistics.</p>
 <dd><p>Generate random samples from the joint distribution.</p>
 <p>Samples <span class="math notranslate nohighlight">\((X, Y)\)</span> pairs where:</p>
 <ol class="arabic simple">
-<li><p><span class="math notranslate nohighlight">\(Y \sim\)</span> mixing distribution</p></li>
+<li><p><span class="math notranslate nohighlight">\(Y \sim\)</span> subordinator distribution</p></li>
 <li><p><span class="math notranslate nohighlight">\(X | Y \sim N(\mu + \gamma Y, \Sigma Y)\)</span></p></li>
 </ol>
 <dl class="field-list simple">
@@ -1219,6 +1219,22 @@ vector and sufficient statistics.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.subordinator">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subordinator</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily"><span class="pre">ExponentialFamily</span></a></span><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.subordinator" title="Link to this definition"></a></dt>
+<dd><p>The subordinator (stochastic time-change) distribution of <span class="math notranslate nohighlight">\(Y\)</span> (cached).</p>
+<p>Lazily creates the subordinator from named internal attributes and caches
+the result.  Invalidated automatically when parameters change.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subordinator</strong> – The subordinator distribution (e.g., Gamma, InverseGaussian, GIG).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily">ExponentialFamily</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.base.mixture.JointNormalMixture.var">
 <span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/base/mixture.html#JointNormalMixture.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.base.mixture.JointNormalMixture.var" title="Link to this definition"></a></dt>
@@ -1227,7 +1243,7 @@ vector and sufficient statistics.</p>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><strong>Var_X</strong> (<em>ndarray</em>) – Variance of X (diagonal of covariance matrix)</p></li>
-<li><p><strong>Var_Y</strong> (<em>float</em>) – Variance of Y from the mixing distribution</p></li>
+<li><p><strong>Var_Y</strong> (<em>float</em>) – Variance of Y from the subordinator distribution</p></li>
 </ul>
 </p>
 </dd>
@@ -1415,7 +1431,7 @@ Common parameters:
 - mu : Location parameter (d,)
 - gamma : Skewness parameter (d,)
 - sigma : Covariance scale matrix (d, d)
-- Plus mixing distribution parameters</p>
+- Plus subordinator distribution parameters</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>dist</strong> – Distribution instance with parameters set.</p>
@@ -1547,20 +1563,6 @@ Fisher information, etc.).</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="normix.base.mixture.NormalMixture.mixing_distribution">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mixing_distribution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily"><span class="pre">ExponentialFamily</span></a></span><a class="headerlink" href="#normix.base.mixture.NormalMixture.mixing_distribution" title="Link to this definition"></a></dt>
-<dd><p>Access the mixing distribution of Y.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mixing</strong> – The mixing distribution (e.g., GIG, Gamma, InverseGaussian).</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily">ExponentialFamily</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
 <dt class="sig sig-object py" id="normix.base.mixture.NormalMixture.natural_params">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">natural_params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#normix.base.mixture.NormalMixture.natural_params" title="Link to this definition"></a></dt>
 <dd><p>Natural parameters <span class="math notranslate nohighlight">\(\theta\)</span> of the joint distribution.</p>
@@ -1653,7 +1655,7 @@ so these are the natural parameters of the joint distribution.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>X</strong> (<em>ndarray</em>) – Sampled X values.</p></li>
-<li><p><strong>Y</strong> (<em>ndarray</em>) – Sampled Y values (latent mixing variable).</p></li>
+<li><p><strong>Y</strong> (<em>ndarray</em>) – Sampled Y values (latent subordinator variable).</p></li>
 </ul>
 </p>
 </dd>
@@ -1721,6 +1723,20 @@ so these are the natural parameters of the joint distribution.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.base.mixture.NormalMixture.subordinator">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subordinator</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily"><span class="pre">ExponentialFamily</span></a></span><a class="headerlink" href="#normix.base.mixture.NormalMixture.subordinator" title="Link to this definition"></a></dt>
+<dd><p>Access the subordinator (stochastic time-change) distribution of <span class="math notranslate nohighlight">\(Y\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subordinator</strong> – The subordinator distribution (e.g., GIG, Gamma, InverseGaussian).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.base.exponential_family.ExponentialFamily" title="normix.base.exponential_family.ExponentialFamily">ExponentialFamily</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2915,7 +2931,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fa91c5bf410&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f38e1b89250&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -2994,7 +3010,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fa91c5bf410&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f38e1b89250&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3032,7 +3048,7 @@ distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an
 <dd><p>Bases: <a class="reference internal" href="#normix.base.mixture.NormalMixture" title="normix.base.mixture.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
 <p>Variance Gamma (VG) marginal distribution.</p>
 <p>The Variance Gamma distribution is a normal variance-mean mixture where
-the mixing distribution is Gamma. It is a special case of the Generalized
+the subordinator distribution is Gamma. It is a special case of the Generalized
 Hyperbolic distribution with GIG parameter <span class="math notranslate nohighlight">\(b \to 0\)</span>.</p>
 <p>The marginal distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is NOT an exponential family.
 The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an exponential family and can
@@ -3085,9 +3101,9 @@ be accessed via the <code class="docutils literal notranslate"><span class="pre"
 <dl class="simple">
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code></dt><dd><p>Joint distribution (exponential family)</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG subordinator</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></dt><dd><p>Special case with Inverse Gaussian mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></dt><dd><p>Special case with Inverse Gaussian subordinator</p>
 </dd>
 </dl>
 </div>
@@ -3140,7 +3156,7 @@ the closed-form MLE via the joint distribution’s fit method.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>array_like</em>) – Observed X data, shape (n_samples, d) or (n_samples,) for d=1.</p></li>
-<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (mixing variable), shape (n_samples,).</p></li>
+<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (subordinator variable), shape (n_samples,).</p></li>
 <li><p><strong>**kwargs</strong> – Additional fitting parameters passed to joint.fit().</p></li>
 </ul>
 </dd>
@@ -3185,14 +3201,14 @@ and <span class="math notranslate nohighlight">\(c\)</span> depends on the skewn
 <p>Note: The marginal distribution is NOT an exponential family, but the joint
 distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an exponential family (accessible via <code class="docutils literal notranslate"><span class="pre">.joint</span></code>).</p>
 <p>This is a special case of the Generalized Hyperbolic distribution with GIG
-parameter <span class="math notranslate nohighlight">\(a \to 0\)</span> (inverse gamma mixing).</p>
+parameter <span class="math notranslate nohighlight">\(a \to 0\)</span> (inverse gamma subordinator).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.mixtures.normal_inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">NormalInverseGamma</span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/normal_inverse_gamma.html#NormalInverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.base.mixture.NormalMixture" title="normix.base.mixture.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
 <p>Normal Inverse Gamma (NInvG) marginal distribution.</p>
 <p>The Normal Inverse Gamma distribution is a normal variance-mean mixture where
-the mixing distribution is InverseGamma. It is a special case of the Generalized
+the subordinator distribution is InverseGamma. It is a special case of the Generalized
 Hyperbolic distribution with GIG parameter <span class="math notranslate nohighlight">\(a \to 0\)</span>.</p>
 <p>The marginal distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is NOT an exponential family.
 The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an exponential family and can
@@ -3245,9 +3261,9 @@ be accessed via the <code class="docutils literal notranslate"><span class="pre"
 <dl class="simple">
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code></dt><dd><p>Joint distribution (exponential family)</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG subordinator</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma subordinator</p>
 </dd>
 </dl>
 </div>
@@ -3302,7 +3318,7 @@ the closed-form MLE via the joint distribution’s fit method.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>array_like</em>) – Observed X data, shape (n_samples, d) or (n_samples,) for d=1.</p></li>
-<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (mixing variable), shape (n_samples,).</p></li>
+<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (subordinator variable), shape (n_samples,).</p></li>
 <li><p><strong>**kwargs</strong> – Additional fitting parameters passed to joint.fit().</p></li>
 </ul>
 </dd>
@@ -3339,7 +3355,7 @@ distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an
 <dd><p>Bases: <a class="reference internal" href="#normix.base.mixture.NormalMixture" title="normix.base.mixture.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
 <p>Normal Inverse Gaussian (NIG) marginal distribution.</p>
 <p>The Normal Inverse Gaussian distribution is a normal variance-mean mixture where
-the mixing distribution is Inverse Gaussian. It is a special case of the Generalized
+the subordinator distribution is Inverse Gaussian. It is a special case of the Generalized
 Hyperbolic distribution with GIG parameter <span class="math notranslate nohighlight">\(p = -1/2\)</span>.</p>
 <p>The marginal distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is NOT an exponential family.
 The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an exponential family and can
@@ -3392,11 +3408,11 @@ be accessed via the <code class="docutils literal notranslate"><span class="pre"
 <dl class="simple">
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code></dt><dd><p>Joint distribution (exponential family)</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></dt><dd><p>General case with GIG subordinator</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma subordinator</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></dt><dd><p>Special case with InverseGamma mixing</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></dt><dd><p>Special case with InverseGamma subordinator</p>
 </dd>
 </dl>
 </div>
@@ -3451,7 +3467,7 @@ the closed-form MLE via the joint distribution’s fit method.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>array_like</em>) – Observed X data, shape (n_samples, d) or (n_samples,) for d=1.</p></li>
-<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (mixing variable), shape (n_samples,).</p></li>
+<li><p><strong>Y</strong> (<em>array_like</em>) – Observed Y data (subordinator variable), shape (n_samples,).</p></li>
 <li><p><strong>**kwargs</strong> – Additional fitting parameters passed to joint.fit().</p></li>
 </ul>
 </dd>
@@ -3487,7 +3503,7 @@ distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an
 <dd><p>Bases: <a class="reference internal" href="#normix.base.mixture.NormalMixture" title="normix.base.mixture.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
 <p>Generalized Hyperbolic (GH) marginal distribution.</p>
 <p>The Generalized Hyperbolic distribution is a normal variance-mean mixture where
-the mixing distribution is Generalized Inverse Gaussian (GIG). It is the most
+the subordinator distribution is Generalized Inverse Gaussian (GIG). It is the most
 general form of the normal variance-mean mixture family.</p>
 <p>The marginal distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is NOT an exponential family.
 The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> IS an exponential family and can
@@ -3538,9 +3554,9 @@ be accessed via the <code class="docutils literal notranslate"><span class="pre"
 <dl class="simple">
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code></dt><dd><p>Joint distribution (exponential family)</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></dt><dd><p>The mixing distribution for Y</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></dt><dd><p>The subordinator distribution for Y</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma mixing (b → 0)</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">VarianceGamma</span></code></dt><dd><p>Special case with Gamma subordinator (b → 0)</p>
 </dd>
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></dt><dd><p>Special case with p = -1/2</p>
 </dd>
@@ -3552,9 +3568,9 @@ be accessed via the <code class="docutils literal notranslate"><span class="pre"
 <p>The GH distribution is widely used in finance for modeling asset returns.
 It includes many important distributions as special cases:</p>
 <ul class="simple">
-<li><p><strong>Variance Gamma (VG)</strong>: <span class="math notranslate nohighlight">\(b \to 0, p &gt; 0\)</span> (Gamma mixing)</p></li>
-<li><p><strong>Normal-Inverse Gaussian (NIG)</strong>: <span class="math notranslate nohighlight">\(p = -1/2\)</span> (IG mixing)</p></li>
-<li><p><strong>Normal-Inverse Gamma (NInvG)</strong>: <span class="math notranslate nohighlight">\(a \to 0, p &lt; 0\)</span> (InvGamma mixing)</p></li>
+<li><p><strong>Variance Gamma (VG)</strong>: <span class="math notranslate nohighlight">\(b \to 0, p &gt; 0\)</span> (Gamma subordinator)</p></li>
+<li><p><strong>Normal-Inverse Gaussian (NIG)</strong>: <span class="math notranslate nohighlight">\(p = -1/2\)</span> (IG subordinator)</p></li>
+<li><p><strong>Normal-Inverse Gamma (NInvG)</strong>: <span class="math notranslate nohighlight">\(a \to 0, p &lt; 0\)</span> (InvGamma subordinator)</p></li>
 <li><p><strong>Hyperbolic</strong>: <span class="math notranslate nohighlight">\(p = 1\)</span></p></li>
 <li><p><strong>Student-t</strong>: <span class="math notranslate nohighlight">\(p = -\nu/2, a \to 0, b = \nu\)</span> gives Student-t with ν d.f.</p></li>
 </ul>
@@ -3572,7 +3588,7 @@ for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. Use regu
 <dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gamma">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">as_normal_inverse_gamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic"><span class="pre">GeneralizedHyperbolic</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.as_normal_inverse_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gamma" title="Link to this definition"></a></dt>
 <dd><p>Create a GH distribution equivalent to Normal-Inverse Gamma.</p>
-<p>NInvG is GH with a → 0 (Inverse Gamma mixing).</p>
+<p>NInvG is GH with a → 0 (Inverse Gamma subordinator).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3596,7 +3612,7 @@ for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. Use regu
 <dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gaussian">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">as_normal_inverse_gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic"><span class="pre">GeneralizedHyperbolic</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.as_normal_inverse_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_normal_inverse_gaussian" title="Link to this definition"></a></dt>
 <dd><p>Create a GH distribution equivalent to Normal-Inverse Gaussian.</p>
-<p>NIG is GH with p = -1/2 (Inverse Gaussian mixing).</p>
+<p>NIG is GH with p = -1/2 (Inverse Gaussian subordinator).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3620,7 +3636,7 @@ for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. Use regu
 <dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_variance_gamma">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">as_variance_gamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic"><span class="pre">GeneralizedHyperbolic</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.as_variance_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.as_variance_gamma" title="Link to this definition"></a></dt>
 <dd><p>Create a GH distribution equivalent to Variance Gamma.</p>
-<p>VG is GH with b → 0 (Gamma mixing).</p>
+<p>VG is GH with b → 0 (Gamma subordinator).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

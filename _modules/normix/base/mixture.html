@@ -82,8 +82,8 @@
 <span class="sd">    X \\stackrel{d}{=} \\mu + \\gamma Y + \\sqrt{Y} Z</span>
 
 <span class="sd">where :math:`Z \\sim N(0, \\Sigma)` is a Gaussian random vector independent of</span>
-<span class="sd">:math:`Y`, and :math:`Y` follows some positive mixing distribution (GIG, Gamma,</span>
-<span class="sd">Inverse Gaussian, etc.).</span>
+<span class="sd">:math:`Y`, and :math:`Y` follows some positive subordinator distribution (GIG,</span>
+<span class="sd">Gamma, Inverse Gaussian, etc.).</span>
 
 <span class="sd">This module provides two abstract base classes:</span>
 
@@ -138,7 +138,7 @@
 <span class="sd">    .. math::</span>
 <span class="sd">        X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)</span>
 
-<span class="sd">        Y \\sim \\text{Mixing distribution}</span>
+<span class="sd">        Y \\sim \\text{Subordinator distribution}</span>
 
 <span class="sd">    This joint distribution belongs to the exponential family with sufficient</span>
 <span class="sd">    statistics:</span>
@@ -147,15 +147,15 @@
 <span class="sd">        t(x, y) = \\begin{pmatrix} \\log y \\\\ y^{-1} \\\\ y \\\\ x \\\\ x y^{-1} \\\\ x x^T y^{-1} \\end{pmatrix}</span>
 
 <span class="sd">    The natural parameters are derived from the classical parameters</span>
-<span class="sd">    :math:`(\\mu, \\gamma, \\Sigma, \\text{mixing params})`.</span>
+<span class="sd">    :math:`(\\mu, \\gamma, \\Sigma, \\text{subordinator params})`.</span>
 
 <span class="sd">    Subclasses must implement:</span>
 
-<span class="sd">    - :meth:`_get_mixing_distribution_class`: Return the mixing distribution class</span>
-<span class="sd">    - :meth:`_store_mixing_params`: Store mixing params from kwargs</span>
-<span class="sd">    - :meth:`_store_mixing_params_from_theta`: Extract mixing params from theta</span>
-<span class="sd">    - :meth:`_compute_mixing_theta`: Build theta_1, theta_2, theta_3</span>
-<span class="sd">    - :meth:`_create_mixing_distribution`: Construct mixing dist from named attrs</span>
+<span class="sd">    - :meth:`_get_subordinator_class`: Return the subordinator distribution class</span>
+<span class="sd">    - :meth:`_store_subordinator_params`: Store subordinator params from kwargs</span>
+<span class="sd">    - :meth:`_store_subordinator_params_from_theta`: Extract subordinator params from theta</span>
+<span class="sd">    - :meth:`_compute_subordinator_theta`: Build theta_1, theta_2, theta_3</span>
+<span class="sd">    - :meth:`_create_subordinator`: Construct subordinator dist from named attrs</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -169,7 +169,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_cached_attrs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ExponentialFamily</span><span class="o">.</span><span class="n">_cached_attrs</span> <span class="o">+</span> <span class="p">(</span>
-        <span class="s1">&#39;log_det_Sigma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma_inv&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma_mahal_sq&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;log_det_Sigma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma_inv&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma_mahal_sq&#39;</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -195,41 +195,41 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
 
     <span class="c1"># ========================================================================</span>
-    <span class="c1"># Abstract methods for mixing distribution</span>
+    <span class="c1"># Abstract methods for subordinator distribution</span>
     <span class="c1"># ========================================================================</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_mixing_distribution_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">ExponentialFamily</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_subordinator_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">ExponentialFamily</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the class of the mixing distribution.</span>
+<span class="sd">        Return the class of the subordinator distribution.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        cls : Type[ExponentialFamily]</span>
-<span class="sd">            The mixing distribution class (e.g., Gamma, InverseGaussian, GIG).</span>
+<span class="sd">            The subordinator class (e.g., Gamma, InverseGaussian, GIG).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_store_mixing_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_store_subordinator_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Store mixing distribution parameters as named attributes.</span>
+<span class="sd">        Store subordinator distribution parameters as named attributes.</span>
 
 <span class="sd">        Called by ``_set_from_classical`` and ``_set_internal``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        **kwargs</span>
-<span class="sd">            Mixing-specific parameters (e.g., shape, rate for VG/NInvG;</span>
+<span class="sd">            Subordinator-specific parameters (e.g., shape, rate for VG/NInvG;</span>
 <span class="sd">            delta, eta for NIG; p, a, b for GH).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_store_mixing_params_from_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_store_subordinator_params_from_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extract and store mixing parameters from natural parameter vector.</span>
+<span class="sd">        Extract and store subordinator parameters from natural parameter vector.</span>
 
 <span class="sd">        Called by ``_set_from_natural`` after normal params have been stored.</span>
 
@@ -241,11 +241,11 @@
         <span class="k">pass</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_mixing_theta</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_subordinator_theta</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">theta_4</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">:</span> <span class="n">NDArray</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the first three natural parameters from mixing params.</span>
+<span class="sd">        Compute the first three natural parameters from subordinator params.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -262,14 +262,14 @@
         <span class="k">pass</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create_mixing_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create mixing distribution from named internal attributes.</span>
+<span class="sd">        Create subordinator distribution from named internal attributes.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        mixing : ExponentialFamily</span>
-<span class="sd">            A fitted mixing distribution instance.</span>
+<span class="sd">        subordinator : ExponentialFamily</span>
+<span class="sd">            A fitted subordinator distribution instance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 
@@ -420,13 +420,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span> <span class="o">=</span> <span class="n">gamma</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
 
-        <span class="c1"># Store mixing params from theta (subclass-specific)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_store_mixing_params_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="c1"># Store subordinator params from theta (subclass-specific)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_subordinator_params_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_sigma</span><span class="p">,</span> <span class="o">**</span><span class="n">mixing_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_sigma</span><span class="p">,</span> <span class="o">**</span><span class="n">subordinator_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        EM fast path: set internal state from pre-computed values.</span>
 
@@ -441,14 +441,14 @@
 <span class="sd">            Skewness vector, shape (d,).</span>
 <span class="sd">        L_sigma : ndarray</span>
 <span class="sd">            Lower Cholesky factor of Sigma, shape (d, d).</span>
-<span class="sd">        **mixing_kwargs</span>
-<span class="sd">            Mixing distribution parameters (passed to ``_store_mixing_params``).</span>
+<span class="sd">        **subordinator_kwargs</span>
+<span class="sd">            Subordinator parameters (passed to ``_store_subordinator_params``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">L_sigma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_store_mixing_params</span><span class="p">(</span><span class="o">**</span><span class="n">mixing_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_subordinator_params</span><span class="p">(</span><span class="o">**</span><span class="n">subordinator_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
 
@@ -469,7 +469,7 @@
         <span class="n">L_inv</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">Lambda</span> <span class="o">=</span> <span class="n">L_inv</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_inv</span>
         <span class="n">theta_6</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">Lambda</span>
-        <span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_mixing_theta</span><span class="p">(</span><span class="n">theta_4</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">)</span>
+        <span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_subordinator_theta</span><span class="p">(</span><span class="n">theta_4</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
             <span class="p">[</span><span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">],</span>
             <span class="n">theta_4</span><span class="p">,</span>
@@ -510,6 +510,22 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The subordinator (stochastic time-change) distribution of :math:`Y` (cached).</span>
+
+<span class="sd">        Lazily creates the subordinator from named internal attributes and caches</span>
+<span class="sd">        the result.  Invalidated automatically when parameters change.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        subordinator : ExponentialFamily</span>
+<span class="sd">            The subordinator distribution (e.g., Gamma, InverseGaussian, GIG).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_subordinator</span><span class="p">()</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gamma_mahal_sq</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -702,8 +718,7 @@
         <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span>
         <span class="n">log_det</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_det_Sigma</span>
 
-        <span class="c1"># Mixing distribution logpdf</span>
-        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span>
 
         <span class="c1"># Handle single observation</span>
         <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
@@ -717,8 +732,8 @@
 
             <span class="n">log_normal</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">y_scalar</span><span class="p">)</span>
                          <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mahal</span><span class="p">)</span>
-            <span class="n">log_mixing</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">y_scalar</span><span class="p">)))[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_mixing</span>
+            <span class="n">log_sub</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">y_scalar</span><span class="p">)))[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_sub</span>
 
         <span class="c1"># Handle multiple observations</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
@@ -734,9 +749,9 @@
 
         <span class="n">log_normal</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
                      <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mahal</span><span class="p">)</span>
-        <span class="n">log_mixing</span> <span class="o">=</span> <span class="n">mixing_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">log_sub</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_mixing</span></div>
+        <span class="k">return</span> <span class="n">log_normal</span> <span class="o">+</span> <span class="n">log_sub</span></div>
 
 
     <span class="c1"># ========================================================================</span>
@@ -755,7 +770,7 @@
 
 <span class="sd">        Samples :math:`(X, Y)` pairs where:</span>
 
-<span class="sd">        1. :math:`Y \\sim` mixing distribution</span>
+<span class="sd">        1. :math:`Y \\sim` subordinator distribution</span>
 <span class="sd">        2. :math:`X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)`</span>
 
 <span class="sd">        Parameters</span>
@@ -787,11 +802,10 @@
         <span class="n">L_Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span>
 
-        <span class="c1"># Create mixing distribution from named attributes</span>
-        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span>
 
-        <span class="c1"># Sample Y from mixing distribution</span>
-        <span class="n">Y</span> <span class="o">=</span> <span class="n">mixing_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+        <span class="c1"># Sample Y from subordinator distribution</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
 
         <span class="c1"># Sample X | Y ~ N(mu + gamma * Y, Sigma * Y)</span>
         <span class="c1"># Using the representation: X = mu + gamma * Y + sqrt(Y) * Z, Z ~ N(0, Sigma)</span>
@@ -900,15 +914,14 @@
 <span class="sd">        E_X : ndarray</span>
 <span class="sd">            :math:`E[X] = \\mu + \\gamma E[Y]`</span>
 <span class="sd">        E_Y : float</span>
-<span class="sd">            :math:`E[Y]` from the mixing distribution</span>
+<span class="sd">            :math:`E[Y]` from the subordinator distribution</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
 
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
 
-        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 
         <span class="n">E_X</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span>
 
@@ -926,7 +939,7 @@
 <span class="sd">        Var_X : ndarray</span>
 <span class="sd">            Variance of X (diagonal of covariance matrix)</span>
 <span class="sd">        Var_Y : float</span>
-<span class="sd">            Variance of Y from the mixing distribution</span>
+<span class="sd">            Variance of Y from the subordinator distribution</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cov_X</span><span class="p">,</span> <span class="n">var_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov_X</span><span class="p">),</span> <span class="n">var_Y</span></div>
@@ -946,16 +959,16 @@
 <span class="sd">        Cov_X : ndarray</span>
 <span class="sd">            Covariance matrix of X, shape (d, d)</span>
 <span class="sd">        Var_Y : float</span>
-<span class="sd">            Variance of Y from the mixing distribution</span>
+<span class="sd">            Variance of Y from the subordinator distribution</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
 
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gamma</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L_Sigma</span><span class="o">.</span><span class="n">T</span>
 
-        <span class="n">mixing_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-        <span class="n">Var_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mixing_dist</span><span class="o">.</span><span class="n">var</span><span class="p">())</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">Var_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">var</span><span class="p">())</span>
 
         <span class="c1"># Cov[X] = E[Y] * Sigma + Var[Y] * gamma * gamma^T</span>
         <span class="n">Cov_X</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
@@ -1103,13 +1116,13 @@
 <span class="sd">        Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.</span>
 
 <span class="sd">        These conditional expectations are used in the E-step of the EM algorithm.</span>
-<span class="sd">        The returned keys depend on the sufficient statistics of the mixing</span>
-<span class="sd">        distribution:</span>
+<span class="sd">        The returned keys depend on the sufficient statistics of the</span>
+<span class="sd">        subordinator distribution:</span>
 
-<span class="sd">        - **GH** (GIG mixing): ``E_Y``, ``E_inv_Y``, ``E_log_Y``</span>
-<span class="sd">        - **VG** (Gamma mixing): ``E_Y``, ``E_log_Y``</span>
-<span class="sd">        - **NIG** (InvGauss mixing): ``E_Y``, ``E_inv_Y``</span>
-<span class="sd">        - **NInvG** (InvGamma mixing): ``E_inv_Y``, ``E_log_Y``</span>
+<span class="sd">        - **GH** (GIG subordinator): ``E_Y``, ``E_inv_Y``, ``E_log_Y``</span>
+<span class="sd">        - **VG** (Gamma subordinator): ``E_Y``, ``E_log_Y``</span>
+<span class="sd">        - **NIG** (InvGauss subordinator): ``E_Y``, ``E_inv_Y``</span>
+<span class="sd">        - **NInvG** (InvGamma subordinator): ``E_inv_Y``, ``E_log_Y``</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1181,7 +1194,7 @@
 <span class="sd">            - mu : Location parameter (d,)</span>
 <span class="sd">            - gamma : Skewness parameter (d,)</span>
 <span class="sd">            - sigma : Covariance scale matrix (d, d)</span>
-<span class="sd">            - Plus mixing distribution parameters</span>
+<span class="sd">            - Plus subordinator distribution parameters</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1523,7 +1536,7 @@
 <span class="sd">        X : ndarray</span>
 <span class="sd">            Sampled X values.</span>
 <span class="sd">        Y : ndarray</span>
-<span class="sd">            Sampled Y values (latent mixing variable).</span>
+<span class="sd">            Sampled Y values (latent subordinator variable).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span></div>
 
@@ -1597,20 +1610,20 @@
 
 
     <span class="c1"># ========================================================================</span>
-    <span class="c1"># Mixing distribution access</span>
+    <span class="c1"># Subordinator access</span>
     <span class="c1"># ========================================================================</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mixing_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Access the mixing distribution of Y.</span>
+<span class="sd">        Access the subordinator (stochastic time-change) distribution of :math:`Y`.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        mixing : ExponentialFamily</span>
-<span class="sd">            The mixing distribution (e.g., GIG, Gamma, InverseGaussian).</span>
+<span class="sd">        subordinator : ExponentialFamily</span>
+<span class="sd">            The subordinator distribution (e.g., GIG, Gamma, InverseGaussian).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">_create_mixing_distribution</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span>
 
     <span class="c1"># ========================================================================</span>
     <span class="c1"># EM helpers</span>
@@ -1717,7 +1730,7 @@
 <span class="sd">            \\gamma_{\\text{orig}} &amp;= D\\,\\gamma_{\\text{norm}} \\\\</span>
 <span class="sd">            L_{\\Sigma,\\text{orig}} &amp;= D\\,L_{\\Sigma,\\text{norm}}</span>
 
-<span class="sd">        Mixing distribution parameters are unchanged.</span>
+<span class="sd">        Subordinator distribution parameters are unchanged.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>

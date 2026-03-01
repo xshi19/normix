@@ -119,7 +119,7 @@
 <span class="sd">    Normal Inverse Gaussian (NIG) marginal distribution.</span>
 
 <span class="sd">    The Normal Inverse Gaussian distribution is a normal variance-mean mixture where</span>
-<span class="sd">    the mixing distribution is Inverse Gaussian. It is a special case of the Generalized</span>
+<span class="sd">    the subordinator distribution is Inverse Gaussian. It is a special case of the Generalized</span>
 <span class="sd">    Hyperbolic distribution with GIG parameter :math:`p = -1/2`.</span>
 
 <span class="sd">    The marginal distribution :math:`f(x)` is NOT an exponential family.</span>
@@ -163,9 +163,9 @@
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    JointNormalInverseGaussian : Joint distribution (exponential family)</span>
-<span class="sd">    GeneralizedHyperbolic : General case with GIG mixing</span>
-<span class="sd">    VarianceGamma : Special case with Gamma mixing</span>
-<span class="sd">    NormalInverseGamma : Special case with InverseGamma mixing</span>
+<span class="sd">    GeneralizedHyperbolic : General case with GIG subordinator</span>
+<span class="sd">    VarianceGamma : Special case with Gamma subordinator</span>
+<span class="sd">    NormalInverseGamma : Special case with InverseGamma subordinator</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -391,11 +391,7 @@
     <span class="c1"># Fitting via EM algorithm</span>
     <span class="c1"># ========================================================================</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
-        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize NIG parameters using method of moments.</span>
 
@@ -406,45 +402,19 @@
 <span class="sd">        ----------</span>
 <span class="sd">        X : ndarray</span>
 <span class="sd">            Data array, shape (n_samples, d).</span>
-<span class="sd">        random_state : int or Generator, optional</span>
-<span class="sd">            Random state (reserved for future use).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 
-        <span class="n">X_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">X_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">X_cov</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">X_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">X_cov</span><span class="p">]])</span>
+        <span class="n">mu_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Sigma_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Sigma_init</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">Sigma_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">Sigma_init</span><span class="p">]])</span>
 
-        <span class="c1"># For NIG: E[X] = μ + γ δ, Var[X] = δ Σ + (δ³/η) γγ^T</span>
-        <span class="n">delta_init</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="n">eta_init</span> <span class="o">=</span> <span class="mf">1.0</span>
-
-        <span class="c1"># Estimate skewness to get initial gamma</span>
-        <span class="n">X_centered</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">X_mean</span>
-        <span class="n">X_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">X_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">X_std</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">)</span>
-
-        <span class="n">skewness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">X_centered</span> <span class="o">/</span> <span class="n">X_std</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">gamma_init</span> <span class="o">=</span> <span class="n">skewness</span> <span class="o">*</span> <span class="n">X_std</span> <span class="o">*</span> <span class="mf">0.1</span>
-
-        <span class="c1"># μ = E[X] - γ δ</span>
-        <span class="n">mu_init</span> <span class="o">=</span> <span class="n">X_mean</span> <span class="o">-</span> <span class="n">gamma_init</span> <span class="o">*</span> <span class="n">delta_init</span>
-
-        <span class="c1"># Σ from sample covariance, adjusted for gamma contribution</span>
-        <span class="n">Var_Y_init</span> <span class="o">=</span> <span class="n">delta_init</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="n">eta_init</span>
-        <span class="n">Sigma_init</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_cov</span> <span class="o">-</span> <span class="n">Var_Y_init</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_init</span><span class="p">,</span> <span class="n">gamma_init</span><span class="p">))</span> <span class="o">/</span> <span class="n">delta_init</span>
-
-        <span class="c1"># Ensure Sigma is positive definite via robust Cholesky</span>
         <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma_init</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
-        <span class="n">Sigma_init</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu_init</span><span class="p">,</span>
-            <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_init</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma_init</span><span class="p">,</span>
-            <span class="n">delta</span><span class="o">=</span><span class="n">delta_init</span><span class="p">,</span>
-            <span class="n">eta</span><span class="o">=</span><span class="n">eta_init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_set_internal</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu_init</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">L_sigma</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
+            <span class="n">delta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_m_step</span><span class="p">(</span>
@@ -466,8 +436,6 @@
 <span class="sd">        verbose : int, optional</span>
 <span class="sd">            Verbosity level for diagnostics.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
-
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="n">E_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]</span>
@@ -492,24 +460,20 @@
 
         <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
 
-        <span class="c1"># InverseGaussian parameters via set_expectation_params</span>
+        <span class="c1"># InverseGaussian parameters via subordinator.set_expectation_params</span>
         <span class="c1"># IG expectation params: [delta, 1/delta + 1/eta] = [E[Y], E[1/Y]]</span>
-        <span class="n">ig_dist</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="p">()</span>
-        <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s2</span><span class="p">,</span> <span class="n">s1</span><span class="p">])</span>
-        <span class="n">ig_dist</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">)</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">subordinator</span>
+        <span class="n">sub_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s2</span><span class="p">,</span> <span class="n">s1</span><span class="p">])</span>
+        <span class="n">sub</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">sub_eta</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">recovered</span> <span class="o">=</span> <span class="n">ig_dist</span><span class="o">.</span><span class="n">_compute_expectation_params</span><span class="p">()</span>
-            <span class="n">eta_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recovered</span> <span class="o">-</span> <span class="n">ig_eta</span><span class="p">))</span>
+            <span class="n">recovered</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">_compute_expectation_params</span><span class="p">()</span>
+            <span class="n">eta_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recovered</span> <span class="o">-</span> <span class="n">sub_eta</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">eta_diff</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Warning: InverseGaussian expectation param roundtrip error = </span><span class="si">{</span><span class="n">eta_diff</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="n">delta_new</span> <span class="o">=</span> <span class="n">ig_dist</span><span class="o">.</span><span class="n">classical_params</span><span class="o">.</span><span class="n">delta</span>
-        <span class="n">eta_new</span> <span class="o">=</span> <span class="n">ig_dist</span><span class="o">.</span><span class="n">classical_params</span><span class="o">.</span><span class="n">eta</span>
-
-        <span class="c1"># Bound parameters</span>
-        <span class="n">delta_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">delta_new</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
-        <span class="n">eta_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eta_new</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">delta_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">classical_params</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">eta_new</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">classical_params</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_set_internal</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span>
@@ -574,7 +538,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_fitted</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_params</span><span class="p">(</span><span class="n">X_norm</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_params</span><span class="p">(</span><span class="n">X_norm</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">init_ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X_norm</span><span class="p">))</span>
@@ -634,7 +598,7 @@
 <span class="sd">        X : array_like</span>
 <span class="sd">            Observed X data, shape (n_samples, d) or (n_samples,) for d=1.</span>
 <span class="sd">        Y : array_like</span>
-<span class="sd">            Observed Y data (mixing variable), shape (n_samples,).</span>
+<span class="sd">            Observed Y data (subordinator variable), shape (n_samples,).</span>
 <span class="sd">        **kwargs</span>
 <span class="sd">            Additional fitting parameters passed to joint.fit().</span>
 

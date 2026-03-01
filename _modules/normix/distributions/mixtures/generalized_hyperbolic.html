@@ -318,7 +318,7 @@
 <span class="sd">    Generalized Hyperbolic (GH) marginal distribution.</span>
 
 <span class="sd">    The Generalized Hyperbolic distribution is a normal variance-mean mixture where</span>
-<span class="sd">    the mixing distribution is Generalized Inverse Gaussian (GIG). It is the most</span>
+<span class="sd">    the subordinator distribution is Generalized Inverse Gaussian (GIG). It is the most</span>
 <span class="sd">    general form of the normal variance-mean mixture family.</span>
 
 <span class="sd">    The marginal distribution :math:`f(x)` is NOT an exponential family.</span>
@@ -360,8 +360,8 @@
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    JointGeneralizedHyperbolic : Joint distribution (exponential family)</span>
-<span class="sd">    GeneralizedInverseGaussian : The mixing distribution for Y</span>
-<span class="sd">    VarianceGamma : Special case with Gamma mixing (b → 0)</span>
+<span class="sd">    GeneralizedInverseGaussian : The subordinator distribution for Y</span>
+<span class="sd">    VarianceGamma : Special case with Gamma subordinator (b → 0)</span>
 <span class="sd">    NormalInverseGaussian : Special case with p = -1/2</span>
 <span class="sd">    NormalInverseGamma : Special case with a → 0</span>
 
@@ -370,9 +370,9 @@
 <span class="sd">    The GH distribution is widely used in finance for modeling asset returns.</span>
 <span class="sd">    It includes many important distributions as special cases:</span>
 
-<span class="sd">    - **Variance Gamma (VG)**: :math:`b \\to 0, p &gt; 0` (Gamma mixing)</span>
-<span class="sd">    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG mixing)</span>
-<span class="sd">    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p &lt; 0` (InvGamma mixing)</span>
+<span class="sd">    - **Variance Gamma (VG)**: :math:`b \\to 0, p &gt; 0` (Gamma subordinator)</span>
+<span class="sd">    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG subordinator)</span>
+<span class="sd">    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p &lt; 0` (InvGamma subordinator)</span>
 <span class="sd">    - **Hyperbolic**: :math:`p = 1`</span>
 <span class="sd">    - **Student-t**: :math:`p = -\\nu/2, a \\to 0, b = \\nu` gives Student-t with ν d.f.</span>
 
@@ -798,8 +798,6 @@
 <span class="sd">        verbose : int, optional</span>
 <span class="sd">            Verbosity level for diagnostics.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedInverseGaussian</span>
-
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="n">E_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]</span>
@@ -807,51 +805,42 @@
         <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">cond_exp</span><span class="p">[</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">]</span>
 
         <span class="c1"># Average conditional expectations (sufficient statistics for GIG)</span>
-        <span class="c1"># Following legacy naming: s1 = E[1/Y], s2 = E[Y], s3 = E[log Y]</span>
         <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span>  <span class="c1"># E[E[1/Y|X]]</span>
         <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_Y</span><span class="p">)</span>      <span class="c1"># E[E[Y|X]]</span>
         <span class="n">s3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">)</span>  <span class="c1"># E[E[log Y|X]]</span>
 
         <span class="c1"># Weighted sums for normal parameters</span>
-        <span class="c1"># s4 = E[X], s5 = E[X/Y], s6 = E[XX^T/Y]</span>
         <span class="n">s4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># E[X]</span>
         <span class="n">s5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># E[X/Y]</span>
         <span class="n">s6</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ik,i-&gt;jk&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># E[XX^T/Y]</span>
 
-        <span class="c1"># Get current GIG parameters for initialization and fallback</span>
+        <span class="c1"># Get current GIG parameters for fallback</span>
         <span class="n">current_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_p</span>
         <span class="n">current_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_a</span>
         <span class="n">current_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">_b</span>
-        
+
         <span class="c1"># Update GIG parameters if not fixed</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">fix_tail</span><span class="p">:</span>
-            <span class="n">gig</span> <span class="o">=</span> <span class="n">GeneralizedInverseGaussian</span><span class="p">()</span>
-            <span class="c1"># Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]</span>
-            <span class="n">gig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s3</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">])</span>
-            
-            <span class="n">current_gig_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-                <span class="n">current_p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> 
-                <span class="o">-</span><span class="n">current_b</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> 
-                <span class="o">-</span><span class="n">current_a</span> <span class="o">/</span> <span class="mi">2</span>
-            <span class="p">])</span>
-            
+            <span class="n">sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">subordinator</span>
+            <span class="n">sub_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s3</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">])</span>
+
             <span class="k">try</span><span class="p">:</span>
                 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
                 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
                     <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-                    <span class="n">gig</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">gig_eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig_theta</span><span class="p">)</span>
+                    <span class="n">sub</span><span class="o">.</span><span class="n">set_expectation_params</span><span class="p">(</span><span class="n">sub_eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="n">sub</span><span class="o">.</span><span class="n">natural_params</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">recovered</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">_compute_expectation_params</span><span class="p">()</span>
-                    <span class="n">eta_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recovered</span> <span class="o">-</span> <span class="n">gig_eta</span><span class="p">))</span>
+                    <span class="n">recovered</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">_compute_expectation_params</span><span class="p">()</span>
+                    <span class="n">eta_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recovered</span> <span class="o">-</span> <span class="n">sub_eta</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">eta_diff</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Warning: GIG expectation param roundtrip error = </span><span class="si">{</span><span class="n">eta_diff</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-                <span class="n">gig_classical</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">classical_params</span>
-                <span class="n">p_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">p</span>
-                <span class="n">a_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">a</span>
-                <span class="n">b_new</span> <span class="o">=</span> <span class="n">gig_classical</span><span class="o">.</span><span class="n">b</span>
-                
+                <span class="n">sub_classical</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">classical_params</span>
+                <span class="n">p_new</span> <span class="o">=</span> <span class="n">sub_classical</span><span class="o">.</span><span class="n">p</span>
+                <span class="n">a_new</span> <span class="o">=</span> <span class="n">sub_classical</span><span class="o">.</span><span class="n">a</span>
+                <span class="n">b_new</span> <span class="o">=</span> <span class="n">sub_classical</span><span class="o">.</span><span class="n">b</span>
+
                 <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span>
                     <span class="n">a_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">):</span>
                     <span class="n">p</span> <span class="o">=</span> <span class="n">current_p</span>
@@ -1015,7 +1004,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a GH distribution equivalent to Variance Gamma.</span>
 
-<span class="sd">        VG is GH with b → 0 (Gamma mixing).</span>
+<span class="sd">        VG is GH with b → 0 (Gamma subordinator).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1059,7 +1048,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a GH distribution equivalent to Normal-Inverse Gaussian.</span>
 
-<span class="sd">        NIG is GH with p = -1/2 (Inverse Gaussian mixing).</span>
+<span class="sd">        NIG is GH with p = -1/2 (Inverse Gaussian subordinator).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1103,7 +1092,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a GH distribution equivalent to Normal-Inverse Gamma.</span>
 
-<span class="sd">        NInvG is GH with a → 0 (Inverse Gamma mixing).</span>
+<span class="sd">        NInvG is GH with a → 0 (Inverse Gamma subordinator).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
