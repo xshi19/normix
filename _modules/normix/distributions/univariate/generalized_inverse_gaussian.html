@@ -756,10 +756,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
 
         <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span>
-        <span class="n">gamma_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">()</span>
-        <span class="n">g</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">gamma_eta</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">g</span></div>
+        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation_params</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]]))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gamma">
@@ -791,10 +788,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
 
         <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span>
-        <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-        <span class="n">ig</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="p">()</span>
-        <span class="n">ig</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">ig</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">ig</span></div>
+        <span class="k">return</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation_params</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gaussian">
@@ -825,10 +819,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
 
         <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span>
-        <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-        <span class="n">ig</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="p">()</span>
-        <span class="n">ig</span><span class="o">.</span><span class="n">_set_from_natural</span><span class="p">(</span><span class="n">ig</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">ig</span></div>
+        <span class="k">return</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation_params</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.ppf">
