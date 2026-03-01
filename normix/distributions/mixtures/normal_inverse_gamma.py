@@ -28,7 +28,7 @@ Note: The marginal distribution is NOT an exponential family, but the joint
 distribution :math:`f(x, y)` IS an exponential family (accessible via ``.joint``).
 
 This is a special case of the Generalized Hyperbolic distribution with GIG
-parameter :math:`a \\to 0` (inverse gamma mixing).
+parameter :math:`a \\to 0` (inverse gamma subordinator).
 """
 
 import numpy as np
@@ -45,7 +45,7 @@ class NormalInverseGamma(NormalMixture):
     Normal Inverse Gamma (NInvG) marginal distribution.
 
     The Normal Inverse Gamma distribution is a normal variance-mean mixture where
-    the mixing distribution is InverseGamma. It is a special case of the Generalized
+    the subordinator distribution is InverseGamma. It is a special case of the Generalized
     Hyperbolic distribution with GIG parameter :math:`a \\to 0`.
 
     The marginal distribution :math:`f(x)` is NOT an exponential family.
@@ -89,8 +89,8 @@ class NormalInverseGamma(NormalMixture):
     See Also
     --------
     JointNormalInverseGamma : Joint distribution (exponential family)
-    GeneralizedHyperbolic : General case with GIG mixing
-    VarianceGamma : Special case with Gamma mixing
+    GeneralizedHyperbolic : General case with GIG subordinator
+    VarianceGamma : Special case with Gamma subordinator
 
     Notes
     -----
@@ -351,11 +351,7 @@ class NormalInverseGamma(NormalMixture):
     # Fitting via EM algorithm
     # ========================================================================
 
-    def _initialize_params(
-        self,
-        X: NDArray,
-        random_state: Optional[Union[int, np.random.Generator]] = None
-    ) -> None:
+    def _initialize_params(self, X: NDArray) -> None:
         """
         Initialize NInvG parameters using method of moments.
 
@@ -363,8 +359,6 @@ class NormalInverseGamma(NormalMixture):
         ----------
         X : ndarray
             Data array, shape (n_samples, d).
-        random_state : int or Generator, optional
-            Random state (reserved for future use).
         """
         n, d = X.shape
 
@@ -373,19 +367,11 @@ class NormalInverseGamma(NormalMixture):
         if Sigma_init.ndim == 0:
             Sigma_init = np.array([[Sigma_init]])
 
-        alpha_init = 3.0
-        beta_init = 1.0
-        gamma_init = np.zeros(d)
-
         L = robust_cholesky(Sigma_init, eps=1e-6)
-        Sigma_init = L @ L.T
 
-        self.set_classical_params(
-            mu=mu_init,
-            gamma=gamma_init,
-            sigma=Sigma_init,
-            shape=alpha_init,
-            rate=beta_init
+        self._joint._set_internal(
+            mu=mu_init, gamma=np.zeros(d), L_sigma=L,
+            shape=3.0, rate=1.0,
         )
 
     def _m_step(
@@ -407,8 +393,6 @@ class NormalInverseGamma(NormalMixture):
         verbose : int, optional
             Verbosity level for diagnostics.
         """
-        from normix.distributions.univariate import InverseGamma
-
         n, d = X.shape
 
         E_Y = cond_exp['E_Y']
@@ -435,25 +419,20 @@ class NormalInverseGamma(NormalMixture):
 
         L_Sigma = robust_cholesky(Sigma)
 
-        # InverseGamma parameters via set_expectation_params
+        # InverseGamma parameters via subordinator.set_expectation_params
         # InvGamma expectation params: [-alpha/beta, log(beta) - digamma(alpha)] = [E[-1/Y], E[log Y]]
-        # From EM: E[-1/Y] = -s1, E[log Y] = s3
-        ig_dist = InverseGamma()
-        ig_eta = np.array([-s1, s3])
-        current_theta = np.array([
-            self._joint._beta,
-            -(self._joint._alpha + 1)
-        ])
-        ig_dist.set_expectation_params(ig_eta, theta0=current_theta)
+        sub = self._joint.subordinator
+        sub_eta = np.array([-s1, s3])
+        sub.set_expectation_params(sub_eta, theta0=sub.natural_params)
 
         if verbose >= 1:
-            recovered = ig_dist._compute_expectation_params()
-            eta_diff = np.max(np.abs(recovered - ig_eta))
+            recovered = sub._compute_expectation_params()
+            eta_diff = np.max(np.abs(recovered - sub_eta))
             if eta_diff > 1e-6:
                 print(f"  Warning: InverseGamma expectation param roundtrip error = {eta_diff:.2e}")
 
-        alpha_new = ig_dist.classical_params.shape
-        beta_new = ig_dist.classical_params.rate
+        alpha_new = sub.classical_params.shape
+        beta_new = sub.classical_params.rate
 
         self._joint._set_internal(
             mu=mu, gamma=gamma, L_sigma=L_Sigma,
@@ -516,7 +495,7 @@ class NormalInverseGamma(NormalMixture):
         self._joint._d = d
 
         if not self._joint._fitted:
-            self._initialize_params(X_norm, random_state)
+            self._initialize_params(X_norm)
 
         if verbose >= 1:
             init_ll = np.mean(self.logpdf(X_norm))
@@ -573,7 +552,7 @@ class NormalInverseGamma(NormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters passed to joint.fit().
 

@@ -42,7 +42,7 @@ class VarianceGamma(NormalMixture):
     Variance Gamma (VG) marginal distribution.
 
     The Variance Gamma distribution is a normal variance-mean mixture where
-    the mixing distribution is Gamma. It is a special case of the Generalized
+    the subordinator distribution is Gamma. It is a special case of the Generalized
     Hyperbolic distribution with GIG parameter :math:`b \\to 0`.
 
     The marginal distribution :math:`f(x)` is NOT an exponential family.
@@ -86,8 +86,8 @@ class VarianceGamma(NormalMixture):
     See Also
     --------
     JointVarianceGamma : Joint distribution (exponential family)
-    GeneralizedHyperbolic : General case with GIG mixing
-    NormalInverseGaussian : Special case with Inverse Gaussian mixing
+    GeneralizedHyperbolic : General case with GIG subordinator
+    NormalInverseGaussian : Special case with Inverse Gaussian subordinator
 
     Notes
     -----
@@ -318,11 +318,7 @@ class VarianceGamma(NormalMixture):
     # Fitting via EM algorithm
     # ========================================================================
 
-    def _initialize_params(
-        self,
-        X: NDArray,
-        random_state: Optional[Union[int, np.random.Generator]] = None
-    ) -> None:
+    def _initialize_params(self, X: NDArray) -> None:
         """
         Initialize VG parameters using method of moments.
 
@@ -330,8 +326,6 @@ class VarianceGamma(NormalMixture):
         ----------
         X : ndarray
             Data array, shape (n_samples, d).
-        random_state : int or Generator, optional
-            Random state (reserved for future use).
         """
         n, d = X.shape
 
@@ -340,20 +334,11 @@ class VarianceGamma(NormalMixture):
         if Sigma_init.ndim == 0:
             Sigma_init = np.array([[Sigma_init]])
 
-        alpha_init = 2.0
-        beta_init = 1.0
-        
-        gamma_init = np.zeros(d)
-
         L = robust_cholesky(Sigma_init, eps=1e-6)
-        Sigma_init = L @ L.T
 
-        self.set_classical_params(
-            mu=mu_init,
-            gamma=gamma_init,
-            sigma=Sigma_init,
-            shape=alpha_init,
-            rate=beta_init
+        self._joint._set_internal(
+            mu=mu_init, gamma=np.zeros(d), L_sigma=L,
+            shape=2.0, rate=1.0,
         )
 
     def _m_step(
@@ -375,8 +360,6 @@ class VarianceGamma(NormalMixture):
         verbose : int, optional
             Verbosity level for diagnostics.
         """
-        from normix.distributions.univariate import Gamma
-
         n, d = X.shape
 
         E_Y = cond_exp['E_Y']
@@ -403,25 +386,20 @@ class VarianceGamma(NormalMixture):
 
         L_Sigma = robust_cholesky(Sigma)
 
-        # Gamma parameters via set_expectation_params
+        # Gamma parameters via subordinator.set_expectation_params
         # Gamma expectation params: [digamma(alpha) - log(beta), alpha/beta] = [E[log Y], E[Y]]
-        gamma_dist = Gamma()
-        gamma_eta = np.array([s3, s2])
-        current_theta = np.array([
-            self._joint._alpha - 1,
-            -self._joint._beta
-        ])
-        # gamma_dist.set_expectation_params(gamma_eta, theta0=current_theta)
-        gamma_dist.set_expectation_params(gamma_eta)
+        sub = self._joint.subordinator
+        sub_eta = np.array([s3, s2])
+        sub.set_expectation_params(sub_eta)
 
         if verbose >= 1:
-            recovered = gamma_dist._compute_expectation_params()
-            eta_diff = np.max(np.abs(recovered - gamma_eta))
+            recovered = sub._compute_expectation_params()
+            eta_diff = np.max(np.abs(recovered - sub_eta))
             if eta_diff > 1e-6:
                 print(f"  Warning: Gamma expectation param roundtrip error = {eta_diff:.2e}")
 
-        alpha_new = gamma_dist.classical_params.shape
-        beta_new = gamma_dist.classical_params.rate
+        alpha_new = sub.classical_params.shape
+        beta_new = sub.classical_params.rate
 
         self._joint._set_internal(
             mu=mu, gamma=gamma, L_sigma=L_Sigma,
@@ -484,7 +462,7 @@ class VarianceGamma(NormalMixture):
         self._joint._d = d
 
         if not self._joint._fitted:
-            self._initialize_params(X_norm, random_state)
+            self._initialize_params(X_norm)
 
         if verbose >= 1:
             init_ll = np.mean(self.logpdf(X_norm))
@@ -541,7 +519,7 @@ class VarianceGamma(NormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters passed to joint.fit().
 

@@ -42,7 +42,7 @@ class NormalInverseGaussian(NormalMixture):
     Normal Inverse Gaussian (NIG) marginal distribution.
 
     The Normal Inverse Gaussian distribution is a normal variance-mean mixture where
-    the mixing distribution is Inverse Gaussian. It is a special case of the Generalized
+    the subordinator distribution is Inverse Gaussian. It is a special case of the Generalized
     Hyperbolic distribution with GIG parameter :math:`p = -1/2`.
 
     The marginal distribution :math:`f(x)` is NOT an exponential family.
@@ -86,9 +86,9 @@ class NormalInverseGaussian(NormalMixture):
     See Also
     --------
     JointNormalInverseGaussian : Joint distribution (exponential family)
-    GeneralizedHyperbolic : General case with GIG mixing
-    VarianceGamma : Special case with Gamma mixing
-    NormalInverseGamma : Special case with InverseGamma mixing
+    GeneralizedHyperbolic : General case with GIG subordinator
+    VarianceGamma : Special case with Gamma subordinator
+    NormalInverseGamma : Special case with InverseGamma subordinator
 
     Notes
     -----
@@ -314,11 +314,7 @@ class NormalInverseGaussian(NormalMixture):
     # Fitting via EM algorithm
     # ========================================================================
 
-    def _initialize_params(
-        self,
-        X: NDArray,
-        random_state: Optional[Union[int, np.random.Generator]] = None
-    ) -> None:
+    def _initialize_params(self, X: NDArray) -> None:
         """
         Initialize NIG parameters using method of moments.
 
@@ -329,8 +325,6 @@ class NormalInverseGaussian(NormalMixture):
         ----------
         X : ndarray
             Data array, shape (n_samples, d).
-        random_state : int or Generator, optional
-            Random state (reserved for future use).
         """
         n, d = X.shape
 
@@ -339,21 +333,11 @@ class NormalInverseGaussian(NormalMixture):
         if Sigma_init.ndim == 0:
             Sigma_init = np.array([[Sigma_init]])
 
-        # For NIG: E[X] = μ + γ δ, Var[X] = δ Σ + (δ³/η) γγ^T
-        delta_init = 1.0
-        eta_init = 1.0
-        gamma_init = np.zeros(d)
-
-        # Ensure Sigma is positive definite via robust Cholesky
         L = robust_cholesky(Sigma_init, eps=1e-6)
-        Sigma_init = L @ L.T
 
-        self.set_classical_params(
-            mu=mu_init,
-            gamma=gamma_init,
-            sigma=Sigma_init,
-            delta=delta_init,
-            eta=eta_init
+        self._joint._set_internal(
+            mu=mu_init, gamma=np.zeros(d), L_sigma=L,
+            delta=1.0, eta=1.0,
         )
 
     def _m_step(
@@ -375,8 +359,6 @@ class NormalInverseGaussian(NormalMixture):
         verbose : int, optional
             Verbosity level for diagnostics.
         """
-        from normix.distributions.univariate import InverseGaussian
-
         n, d = X.shape
 
         E_Y = cond_exp['E_Y']
@@ -401,24 +383,20 @@ class NormalInverseGaussian(NormalMixture):
 
         L_Sigma = robust_cholesky(Sigma)
 
-        # InverseGaussian parameters via set_expectation_params
+        # InverseGaussian parameters via subordinator.set_expectation_params
         # IG expectation params: [delta, 1/delta + 1/eta] = [E[Y], E[1/Y]]
-        ig_dist = InverseGaussian()
-        ig_eta = np.array([s2, s1])
-        ig_dist.set_expectation_params(ig_eta)
+        sub = self._joint.subordinator
+        sub_eta = np.array([s2, s1])
+        sub.set_expectation_params(sub_eta)
 
         if verbose >= 1:
-            recovered = ig_dist._compute_expectation_params()
-            eta_diff = np.max(np.abs(recovered - ig_eta))
+            recovered = sub._compute_expectation_params()
+            eta_diff = np.max(np.abs(recovered - sub_eta))
             if eta_diff > 1e-6:
                 print(f"  Warning: InverseGaussian expectation param roundtrip error = {eta_diff:.2e}")
 
-        delta_new = ig_dist.classical_params.delta
-        eta_new = ig_dist.classical_params.eta
-
-        # Bound parameters
-        delta_new = max(delta_new, 1e-6)
-        eta_new = max(eta_new, 1e-6)
+        delta_new = max(sub.classical_params.delta, 1e-6)
+        eta_new = max(sub.classical_params.eta, 1e-6)
 
         self._joint._set_internal(
             mu=mu, gamma=gamma, L_sigma=L_Sigma,
@@ -481,7 +459,7 @@ class NormalInverseGaussian(NormalMixture):
         self._joint._d = d
 
         if not self._joint._fitted:
-            self._initialize_params(X_norm, random_state)
+            self._initialize_params(X_norm)
 
         if verbose >= 1:
             init_ll = np.mean(self.logpdf(X_norm))
@@ -538,7 +516,7 @@ class NormalInverseGaussian(NormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters passed to joint.fit().
 

@@ -6,7 +6,7 @@ Normal mixture distributions have the form:
 .. math::
     X = \\mu + \\gamma Y + \\sqrt{Y} Z
 
-where :math:`Z \\sim N(0, \\Sigma)` and :math:`Y` follows a mixing distribution.
+where :math:`Z \\sim N(0, \\Sigma)` and :math:`Y` follows a subordinator distribution.
 
 Joint distributions :math:`f(x, y)` are exponential families.
 Marginal distributions :math:`f(x)` are NOT exponential families.

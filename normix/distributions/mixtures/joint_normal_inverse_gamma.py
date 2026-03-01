@@ -26,7 +26,7 @@ Natural parameters derived from classical :math:`(\\mu, \\gamma, \\Sigma, \\alph
     \\theta_6 &= -\\frac{1}{2} \\text{vec}(\\Sigma^{-1})
 
 This is a special case of the Joint Generalized Hyperbolic distribution
-with GIG parameter :math:`a \\to 0` (inverse gamma mixing).
+with GIG parameter :math:`a \\to 0` (inverse gamma subordinator).
 """
 
 import numpy as np
@@ -93,7 +93,7 @@ class JointNormalInverseGamma(JointNormalMixture):
     See Also
     --------
     NormalInverseGamma : Marginal distribution (X only)
-    InverseGamma : The mixing distribution for Y
+    InverseGamma : The subordinator distribution for Y
 
     Notes
     -----
@@ -102,7 +102,7 @@ class JointNormalInverseGamma(JointNormalMixture):
     """
 
     # ========================================================================
-    # Mixing distribution
+    # Subordinator distribution
     # ========================================================================
 
     def __init__(self, d=None):
@@ -111,19 +111,19 @@ class JointNormalInverseGamma(JointNormalMixture):
         self._beta: Optional[float] = None
 
     @classmethod
-    def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
-        """Return InverseGamma as the mixing distribution class."""
+    def _get_subordinator_class(cls) -> Type[ExponentialFamily]:
+        """Return InverseGamma as the subordinator class."""
         return InverseGamma
 
     # ========================================================================
-    # Mixing parameter management
+    # Subordinator parameter management
     # ========================================================================
 
-    def _store_mixing_params(self, *, shape, rate) -> None:
+    def _store_subordinator_params(self, *, shape, rate) -> None:
         self._alpha = float(shape)
         self._beta = float(rate)
 
-    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
+    def _store_subordinator_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
         theta_1 = theta[0]
         theta_2 = theta[1]
@@ -132,7 +132,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         self._alpha = float(-(theta_1 + d / 2) - 1)
         self._beta = float(-theta_2 - mu_quad)
 
-    def _compute_mixing_theta(self, theta_4, theta_5):
+    def _compute_subordinator_theta(self, theta_4, theta_5):
         d = self._d
         alpha = self._alpha
         beta = self._beta
@@ -141,7 +141,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         theta_3 = -0.5 * (self._gamma @ theta_4)
         return theta_1, theta_2, theta_3
 
-    def _create_mixing_distribution(self):
+    def _create_subordinator(self):
         return InverseGamma.from_classical_params(shape=self._alpha, rate=self._beta)
 
     # ========================================================================
@@ -206,7 +206,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         if rate <= 0:
             raise ValueError(f"Rate must be positive, got {rate}")
         self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
-        self._store_mixing_params(shape=shape, rate=rate)
+        self._store_subordinator_params(shape=shape, rate=rate)
         self._fitted = True
         self._invalidate_cache()
 
@@ -543,7 +543,7 @@ class JointNormalInverseGamma(JointNormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters (currently unused).
 

@@ -177,7 +177,7 @@ class VarianceGammaParams(_ParamsBase):
     """
     Classical parameters for the Variance Gamma distribution.
 
-    The mixing distribution is :math:`Y \\sim \\text{Gamma}(\\alpha, \\beta)`.
+    The subordinator distribution is :math:`Y \\sim \\text{Gamma}(\\alpha, \\beta)`.
 
     Attributes
     ----------
@@ -204,7 +204,7 @@ class NormalInverseGammaParams(_ParamsBase):
     """
     Classical parameters for the Normal-Inverse Gamma distribution.
 
-    The mixing distribution is :math:`Y \\sim \\text{InverseGamma}(\\alpha, \\beta)`.
+    The subordinator distribution is :math:`Y \\sim \\text{InverseGamma}(\\alpha, \\beta)`.
 
     Attributes
     ----------
@@ -231,7 +231,7 @@ class NormalInverseGaussianParams(_ParamsBase):
     """
     Classical parameters for the Normal-Inverse Gaussian distribution.
 
-    The mixing distribution is :math:`Y \\sim \\text{InverseGaussian}(\\delta, \\eta)`.
+    The subordinator distribution is :math:`Y \\sim \\text{InverseGaussian}(\\delta, \\eta)`.
 
     Attributes
     ----------
@@ -258,7 +258,7 @@ class GHParams(_ParamsBase):
     """
     Classical parameters for the Generalized Hyperbolic distribution.
 
-    The mixing distribution is :math:`Y \\sim \\text{GIG}(p, a, b)`.
+    The subordinator distribution is :math:`Y \\sim \\text{GIG}(p, a, b)`.
 
     Attributes
     ----------

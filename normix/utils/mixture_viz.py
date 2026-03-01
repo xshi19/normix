@@ -34,7 +34,7 @@ def plot_joint_distribution_1d(
     Creates a figure with:
     - Center: 2D contour plot of joint PDF with scatter plot of samples
     - Top: Marginal histogram and PDF of X
-    - Right: Marginal histogram and PDF of Y (mixing variable)
+    - Right: Marginal histogram and PDF of Y (subordinator variable)
     
     Parameters
     ----------
@@ -99,7 +99,7 @@ def plot_joint_distribution_1d(
     ax_main.contourf(X_grid, Y_grid, Z, levels=20, cmap='Blues', alpha=0.7)
     ax_main.scatter(X_samples, Y_samples, alpha=0.1, s=3, c='darkblue', label='Samples')
     ax_main.set_xlabel('X', fontsize=12)
-    ax_main.set_ylabel('Y (mixing variable)', fontsize=12)
+    ax_main.set_ylabel('Y (subordinator variable)', fontsize=12)
     
     # Top marginal: X histogram and PDF
     ax_top.hist(X_samples, bins=50, density=True, alpha=0.7, color='steelblue')
@@ -114,12 +114,12 @@ def plot_joint_distribution_1d(
     # Right marginal: Y histogram and PDF
     ax_right.hist(Y_samples, bins=50, density=True, alpha=0.7, color='steelblue',
                   orientation='horizontal')
-    # Use actual mixing distribution PDF (more accurate than numerical integration)
+    # Use actual subordinator PDF (more accurate than numerical integration)
     try:
-        mixing_dist = joint_dist._create_mixing_distribution()
+        mixing_dist = joint_dist.subordinator
         y_pdf = mixing_dist.pdf(y_range)
     except (AttributeError, TypeError):
-        # Fallback to numerical integration if mixing distribution not accessible
+        # Fallback to numerical integration if subordinator not accessible
         y_pdf = np.sum(Z, axis=1) * (x_range[1] - x_range[0])
         y_pdf = y_pdf / np.trapezoid(y_pdf, y_range)  # Normalize
     ax_right.plot(y_pdf, y_range, 'r-', linewidth=2, label='PDF')

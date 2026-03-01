@@ -229,7 +229,7 @@ class GeneralizedHyperbolic(NormalMixture):
     Generalized Hyperbolic (GH) marginal distribution.
 
     The Generalized Hyperbolic distribution is a normal variance-mean mixture where
-    the mixing distribution is Generalized Inverse Gaussian (GIG). It is the most
+    the subordinator distribution is Generalized Inverse Gaussian (GIG). It is the most
     general form of the normal variance-mean mixture family.
 
     The marginal distribution :math:`f(x)` is NOT an exponential family.
@@ -271,8 +271,8 @@ class GeneralizedHyperbolic(NormalMixture):
     See Also
     --------
     JointGeneralizedHyperbolic : Joint distribution (exponential family)
-    GeneralizedInverseGaussian : The mixing distribution for Y
-    VarianceGamma : Special case with Gamma mixing (b → 0)
+    GeneralizedInverseGaussian : The subordinator distribution for Y
+    VarianceGamma : Special case with Gamma subordinator (b → 0)
     NormalInverseGaussian : Special case with p = -1/2
     NormalInverseGamma : Special case with a → 0
 
@@ -281,9 +281,9 @@ class GeneralizedHyperbolic(NormalMixture):
     The GH distribution is widely used in finance for modeling asset returns.
     It includes many important distributions as special cases:
 
-    - **Variance Gamma (VG)**: :math:`b \\to 0, p > 0` (Gamma mixing)
-    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG mixing)
-    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p < 0` (InvGamma mixing)
+    - **Variance Gamma (VG)**: :math:`b \\to 0, p > 0` (Gamma subordinator)
+    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG subordinator)
+    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p < 0` (InvGamma subordinator)
     - **Hyperbolic**: :math:`p = 1`
     - **Student-t**: :math:`p = -\\nu/2, a \\to 0, b = \\nu` gives Student-t with ν d.f.
 
@@ -706,8 +706,6 @@ class GeneralizedHyperbolic(NormalMixture):
         verbose : int, optional
             Verbosity level for diagnostics.
         """
-        from normix.distributions.univariate import GeneralizedInverseGaussian
-
         n, d = X.shape
 
         E_Y = cond_exp['E_Y']
@@ -715,51 +713,42 @@ class GeneralizedHyperbolic(NormalMixture):
         E_log_Y = cond_exp['E_log_Y']
 
         # Average conditional expectations (sufficient statistics for GIG)
-        # Following legacy naming: s1 = E[1/Y], s2 = E[Y], s3 = E[log Y]
         s1 = np.mean(E_inv_Y)  # E[E[1/Y|X]]
         s2 = np.mean(E_Y)      # E[E[Y|X]]
         s3 = np.mean(E_log_Y)  # E[E[log Y|X]]
 
         # Weighted sums for normal parameters
-        # s4 = E[X], s5 = E[X/Y], s6 = E[XX^T/Y]
         s4 = np.mean(X, axis=0)  # E[X]
         s5 = np.mean(X * E_inv_Y[:, np.newaxis], axis=0)  # E[X/Y]
         s6 = np.einsum('ij,ik,i->jk', X, X, E_inv_Y) / n  # E[XX^T/Y]
 
-        # Get current GIG parameters for initialization and fallback
+        # Get current GIG parameters for fallback
         current_p = self._joint._p
         current_a = self._joint._a
         current_b = self._joint._b
-        
+
         # Update GIG parameters if not fixed
         if not fix_tail:
-            gig = GeneralizedInverseGaussian()
-            # Sufficient statistics for GIG: [E[log Y], E[1/Y], E[Y]]
-            gig_eta = np.array([s3, s1, s2])
-            
-            current_gig_theta = np.array([
-                current_p - 1, 
-                -current_b / 2, 
-                -current_a / 2
-            ])
-            
+            sub = self._joint.subordinator
+            sub_eta = np.array([s3, s1, s2])
+
             try:
                 import warnings
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    gig.set_expectation_params(gig_eta, theta0=current_gig_theta)
+                    sub.set_expectation_params(sub_eta, theta0=sub.natural_params)
 
                 if verbose >= 1:
-                    recovered = gig._compute_expectation_params()
-                    eta_diff = np.max(np.abs(recovered - gig_eta))
+                    recovered = sub._compute_expectation_params()
+                    eta_diff = np.max(np.abs(recovered - sub_eta))
                     if eta_diff > 1e-6:
                         print(f"  Warning: GIG expectation param roundtrip error = {eta_diff:.2e}")
 
-                gig_classical = gig.classical_params
-                p_new = gig_classical.p
-                a_new = gig_classical.a
-                b_new = gig_classical.b
-                
+                sub_classical = sub.classical_params
+                p_new = sub_classical.p
+                a_new = sub_classical.a
+                b_new = sub_classical.b
+
                 if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10 or
                     a_new < 1e-10 or b_new < 1e-10):
                     p = current_p
@@ -921,7 +910,7 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         Create a GH distribution equivalent to Variance Gamma.
 
-        VG is GH with b → 0 (Gamma mixing).
+        VG is GH with b → 0 (Gamma subordinator).
 
         Parameters
         ----------
@@ -962,7 +951,7 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         Create a GH distribution equivalent to Normal-Inverse Gaussian.
 
-        NIG is GH with p = -1/2 (Inverse Gaussian mixing).
+        NIG is GH with p = -1/2 (Inverse Gaussian subordinator).
 
         Parameters
         ----------
@@ -1003,7 +992,7 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         Create a GH distribution equivalent to Normal-Inverse Gamma.
 
-        NInvG is GH with a → 0 (Inverse Gamma mixing).
+        NInvG is GH with a → 0 (Inverse Gamma subordinator).
 
         Parameters
         ----------

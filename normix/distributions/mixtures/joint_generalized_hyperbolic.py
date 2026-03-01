@@ -103,8 +103,8 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     See Also
     --------
     GeneralizedHyperbolic : Marginal distribution (X only)
-    GeneralizedInverseGaussian : The mixing distribution for Y
-    JointVarianceGamma : Special case with Gamma mixing (b → 0)
+    GeneralizedInverseGaussian : The subordinator distribution for Y
+    JointVarianceGamma : Special case with Gamma subordinator (b → 0)
     JointNormalInverseGaussian : Special case with p = -1/2
     JointNormalInverseGamma : Special case with a → 0
 
@@ -113,15 +113,15 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     The GH distribution is widely used in finance for modeling asset returns.
     It includes many important distributions as special cases:
 
-    - **Variance Gamma (VG)**: :math:`b \\to 0, p > 0` (Gamma mixing)
-    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG mixing)
-    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p < 0` (InvGamma mixing)
+    - **Variance Gamma (VG)**: :math:`b \\to 0, p > 0` (Gamma subordinator)
+    - **Normal-Inverse Gaussian (NIG)**: :math:`p = -1/2` (IG subordinator)
+    - **Normal-Inverse Gamma (NInvG)**: :math:`a \\to 0, p < 0` (InvGamma subordinator)
     - **Hyperbolic**: :math:`p = 1`
     - **Student-t**: :math:`p = -\\nu/2, a \\to 0, b = \\nu` gives Student-t with ν d.f.
     """
 
     # ========================================================================
-    # Mixing distribution
+    # Subordinator distribution
     # ========================================================================
 
     def __init__(self, d=None):
@@ -131,20 +131,20 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         self._b: Optional[float] = None
 
     @classmethod
-    def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
-        """Return GeneralizedInverseGaussian as the mixing distribution class."""
+    def _get_subordinator_class(cls) -> Type[ExponentialFamily]:
+        """Return GeneralizedInverseGaussian as the subordinator class."""
         return GeneralizedInverseGaussian
 
     # ========================================================================
-    # Mixing parameter management
+    # Subordinator parameter management
     # ========================================================================
 
-    def _store_mixing_params(self, *, p, a, b) -> None:
+    def _store_subordinator_params(self, *, p, a, b) -> None:
         self._p = float(p)
         self._a = float(a)
         self._b = float(b)
 
-    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
+    def _store_subordinator_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
         theta_1 = theta[0]
         theta_2 = theta[1]
@@ -158,7 +158,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         self._b = float(-theta_2 - mu_quad)
         self._a = float(-theta_3 - gamma_quad)
 
-    def _compute_mixing_theta(self, theta_4, theta_5):
+    def _compute_subordinator_theta(self, theta_4, theta_5):
         d = self._d
         p = self._p
         a = self._a
@@ -168,7 +168,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         theta_3 = -(a + 0.5 * (self._gamma @ theta_4))
         return theta_1, theta_2, theta_3
 
-    def _create_mixing_distribution(self):
+    def _create_subordinator(self):
         return GeneralizedInverseGaussian.from_classical_params(
             p=self._p, a=self._a, b=self._b
         )
@@ -234,7 +234,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         if b <= 0:
             raise ValueError(f"Parameter 'b' must be positive, got {b}")
         self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
-        self._store_mixing_params(p=p, a=a, b=b)
+        self._store_subordinator_params(p=p, a=a, b=b)
         self._fitted = True
         self._invalidate_cache()
 
@@ -582,7 +582,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters (currently unused).
 

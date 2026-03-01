@@ -7,8 +7,8 @@ Normal mixture distributions have the form:
     X \\stackrel{d}{=} \\mu + \\gamma Y + \\sqrt{Y} Z
 
 where :math:`Z \\sim N(0, \\Sigma)` is a Gaussian random vector independent of
-:math:`Y`, and :math:`Y` follows some positive mixing distribution (GIG, Gamma,
-Inverse Gaussian, etc.).
+:math:`Y`, and :math:`Y` follows some positive subordinator distribution (GIG,
+Gamma, Inverse Gaussian, etc.).
 
 This module provides two abstract base classes:
 
@@ -61,7 +61,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
     .. math::
         X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)
 
-        Y \\sim \\text{Mixing distribution}
+        Y \\sim \\text{Subordinator distribution}
 
     This joint distribution belongs to the exponential family with sufficient
     statistics:
@@ -70,15 +70,15 @@ class JointNormalMixture(ExponentialFamily, ABC):
         t(x, y) = \\begin{pmatrix} \\log y \\\\ y^{-1} \\\\ y \\\\ x \\\\ x y^{-1} \\\\ x x^T y^{-1} \\end{pmatrix}
 
     The natural parameters are derived from the classical parameters
-    :math:`(\\mu, \\gamma, \\Sigma, \\text{mixing params})`.
+    :math:`(\\mu, \\gamma, \\Sigma, \\text{subordinator params})`.
 
     Subclasses must implement:
 
-    - :meth:`_get_mixing_distribution_class`: Return the mixing distribution class
-    - :meth:`_store_mixing_params`: Store mixing params from kwargs
-    - :meth:`_store_mixing_params_from_theta`: Extract mixing params from theta
-    - :meth:`_compute_mixing_theta`: Build theta_1, theta_2, theta_3
-    - :meth:`_create_mixing_distribution`: Construct mixing dist from named attrs
+    - :meth:`_get_subordinator_class`: Return the subordinator distribution class
+    - :meth:`_store_subordinator_params`: Store subordinator params from kwargs
+    - :meth:`_store_subordinator_params_from_theta`: Extract subordinator params from theta
+    - :meth:`_compute_subordinator_theta`: Build theta_1, theta_2, theta_3
+    - :meth:`_create_subordinator`: Construct subordinator dist from named attrs
 
     Attributes
     ----------
@@ -92,7 +92,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
     """
 
     _cached_attrs: Tuple[str, ...] = ExponentialFamily._cached_attrs + (
-        'log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq',
+        'log_det_Sigma', 'L_Sigma_inv', 'gamma_mahal_sq', 'subordinator',
     )
 
     def __init__(self, d: Optional[int] = None):
@@ -118,41 +118,41 @@ class JointNormalMixture(ExponentialFamily, ABC):
         return self._d
 
     # ========================================================================
-    # Abstract methods for mixing distribution
+    # Abstract methods for subordinator distribution
     # ========================================================================
 
     @classmethod
     @abstractmethod
-    def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
+    def _get_subordinator_class(cls) -> Type[ExponentialFamily]:
         """
-        Return the class of the mixing distribution.
+        Return the class of the subordinator distribution.
 
         Returns
         -------
         cls : Type[ExponentialFamily]
-            The mixing distribution class (e.g., Gamma, InverseGaussian, GIG).
+            The subordinator class (e.g., Gamma, InverseGaussian, GIG).
         """
         pass
 
     @abstractmethod
-    def _store_mixing_params(self, **kwargs) -> None:
+    def _store_subordinator_params(self, **kwargs) -> None:
         """
-        Store mixing distribution parameters as named attributes.
+        Store subordinator distribution parameters as named attributes.
 
         Called by ``_set_from_classical`` and ``_set_internal``.
 
         Parameters
         ----------
         **kwargs
-            Mixing-specific parameters (e.g., shape, rate for VG/NInvG;
+            Subordinator-specific parameters (e.g., shape, rate for VG/NInvG;
             delta, eta for NIG; p, a, b for GH).
         """
         pass
 
     @abstractmethod
-    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
+    def _store_subordinator_params_from_theta(self, theta: NDArray) -> None:
         """
-        Extract and store mixing parameters from natural parameter vector.
+        Extract and store subordinator parameters from natural parameter vector.
 
         Called by ``_set_from_natural`` after normal params have been stored.
 
@@ -164,11 +164,11 @@ class JointNormalMixture(ExponentialFamily, ABC):
         pass
 
     @abstractmethod
-    def _compute_mixing_theta(
+    def _compute_subordinator_theta(
         self, theta_4: NDArray, theta_5: NDArray
     ) -> Tuple[float, float, float]:
         """
-        Compute the first three natural parameters from mixing params.
+        Compute the first three natural parameters from subordinator params.
 
         Parameters
         ----------
@@ -185,14 +185,14 @@ class JointNormalMixture(ExponentialFamily, ABC):
         pass
 
     @abstractmethod
-    def _create_mixing_distribution(self) -> ExponentialFamily:
+    def _create_subordinator(self) -> ExponentialFamily:
         """
-        Create mixing distribution from named internal attributes.
+        Create subordinator distribution from named internal attributes.
 
         Returns
         -------
-        mixing : ExponentialFamily
-            A fitted mixing distribution instance.
+        subordinator : ExponentialFamily
+            A fitted subordinator distribution instance.
         """
         pass
 
@@ -343,13 +343,13 @@ class JointNormalMixture(ExponentialFamily, ABC):
         self._gamma = gamma
         self._L_Sigma = robust_cholesky(Sigma)
 
-        # Store mixing params from theta (subclass-specific)
-        self._store_mixing_params_from_theta(theta)
+        # Store subordinator params from theta (subclass-specific)
+        self._store_subordinator_params_from_theta(theta)
 
         self._fitted = True
         self._invalidate_cache()
 
-    def _set_internal(self, *, mu, gamma, L_sigma, **mixing_kwargs) -> None:
+    def _set_internal(self, *, mu, gamma, L_sigma, **subordinator_kwargs) -> None:
         """
         EM fast path: set internal state from pre-computed values.
 
@@ -364,14 +364,14 @@ class JointNormalMixture(ExponentialFamily, ABC):
             Skewness vector, shape (d,).
         L_sigma : ndarray
             Lower Cholesky factor of Sigma, shape (d, d).
-        **mixing_kwargs
-            Mixing distribution parameters (passed to ``_store_mixing_params``).
+        **subordinator_kwargs
+            Subordinator parameters (passed to ``_store_subordinator_params``).
         """
         self._mu = np.asarray(mu, dtype=float).flatten()
         self._gamma = np.asarray(gamma, dtype=float).flatten()
         self._L_Sigma = np.asarray(L_sigma, dtype=float)
         self._d = len(self._mu)
-        self._store_mixing_params(**mixing_kwargs)
+        self._store_subordinator_params(**subordinator_kwargs)
         self._fitted = True
         self._invalidate_cache()
 
@@ -392,7 +392,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
         L_inv = solve_triangular(self._L_Sigma, np.eye(d), lower=True)
         Lambda = L_inv.T @ L_inv
         theta_6 = -0.5 * Lambda
-        theta_1, theta_2, theta_3 = self._compute_mixing_theta(theta_4, theta_5)
+        theta_1, theta_2, theta_3 = self._compute_subordinator_theta(theta_4, theta_5)
         return np.concatenate([
             [theta_1, theta_2, theta_3],
             theta_4,
@@ -433,6 +433,22 @@ class JointNormalMixture(ExponentialFamily, ABC):
         """
         self._check_fitted()
         return solve_triangular(self._L_Sigma, np.eye(self._d), lower=True)
+
+    @cached_property
+    def subordinator(self) -> ExponentialFamily:
+        r"""
+        The subordinator (stochastic time-change) distribution of :math:`Y` (cached).
+
+        Lazily creates the subordinator from named internal attributes and caches
+        the result.  Invalidated automatically when parameters change.
+
+        Returns
+        -------
+        subordinator : ExponentialFamily
+            The subordinator distribution (e.g., Gamma, InverseGaussian, GIG).
+        """
+        self._check_fitted()
+        return self._create_subordinator()
 
     @cached_property
     def gamma_mahal_sq(self) -> float:
@@ -620,8 +636,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
         L = self._L_Sigma
         log_det = self.log_det_Sigma
 
-        # Mixing distribution logpdf
-        mixing_dist = self._create_mixing_distribution()
+        sub = self.subordinator
 
         # Handle single observation
         if y.ndim == 0 or (y.ndim == 1 and len(y) == 1):
@@ -635,8 +650,8 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
             log_normal = (-0.5 * d * np.log(2 * np.pi * y_scalar)
                          - 0.5 * log_det - 0.5 * mahal)
-            log_mixing = float(np.atleast_1d(mixing_dist.logpdf(np.atleast_1d(y_scalar)))[0])
-            return log_normal + log_mixing
+            log_sub = float(np.atleast_1d(sub.logpdf(np.atleast_1d(y_scalar)))[0])
+            return log_normal + log_sub
 
         # Handle multiple observations
         n = len(y)
@@ -652,9 +667,9 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         log_normal = (-0.5 * d * np.log(2 * np.pi * y)
                      - 0.5 * log_det - 0.5 * mahal)
-        log_mixing = mixing_dist.logpdf(y)
+        log_sub = sub.logpdf(y)
 
-        return log_normal + log_mixing
+        return log_normal + log_sub
 
     # ========================================================================
     # Random sampling
@@ -670,7 +685,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
 
         Samples :math:`(X, Y)` pairs where:
 
-        1. :math:`Y \\sim` mixing distribution
+        1. :math:`Y \\sim` subordinator distribution
         2. :math:`X | Y \\sim N(\\mu + \\gamma Y, \\Sigma Y)`
 
         Parameters
@@ -702,11 +717,10 @@ class JointNormalMixture(ExponentialFamily, ABC):
         L_Sigma = self._L_Sigma
         d = self._d
 
-        # Create mixing distribution from named attributes
-        mixing_dist = self._create_mixing_distribution()
+        sub = self.subordinator
 
-        # Sample Y from mixing distribution
-        Y = mixing_dist.rvs(size=size, random_state=rng)
+        # Sample Y from subordinator distribution
+        Y = sub.rvs(size=size, random_state=rng)
 
         # Sample X | Y ~ N(mu + gamma * Y, Sigma * Y)
         # Using the representation: X = mu + gamma * Y + sqrt(Y) * Z, Z ~ N(0, Sigma)
@@ -806,15 +820,14 @@ class JointNormalMixture(ExponentialFamily, ABC):
         E_X : ndarray
             :math:`E[X] = \\mu + \\gamma E[Y]`
         E_Y : float
-            :math:`E[Y]` from the mixing distribution
+            :math:`E[Y]` from the subordinator distribution
         """
         self._check_fitted()
 
         mu = self._mu
         gamma = self._gamma
 
-        mixing_dist = self._create_mixing_distribution()
-        E_Y = float(mixing_dist.mean())
+        E_Y = float(self.subordinator.mean())
 
         E_X = mu + gamma * E_Y
 
@@ -829,7 +842,7 @@ class JointNormalMixture(ExponentialFamily, ABC):
         Var_X : ndarray
             Variance of X (diagonal of covariance matrix)
         Var_Y : float
-            Variance of Y from the mixing distribution
+            Variance of Y from the subordinator distribution
         """
         cov_X, var_Y = self.cov()
         return np.diag(cov_X), var_Y
@@ -846,16 +859,16 @@ class JointNormalMixture(ExponentialFamily, ABC):
         Cov_X : ndarray
             Covariance matrix of X, shape (d, d)
         Var_Y : float
-            Variance of Y from the mixing distribution
+            Variance of Y from the subordinator distribution
         """
         self._check_fitted()
 
         gamma = self._gamma
         Sigma = self._L_Sigma @ self._L_Sigma.T
 
-        mixing_dist = self._create_mixing_distribution()
-        E_Y = float(mixing_dist.mean())
-        Var_Y = float(mixing_dist.var())
+        sub = self.subordinator
+        E_Y = float(sub.mean())
+        Var_Y = float(sub.var())
 
         # Cov[X] = E[Y] * Sigma + Var[Y] * gamma * gamma^T
         Cov_X = E_Y * Sigma + Var_Y * np.outer(gamma, gamma)
@@ -999,13 +1012,13 @@ class NormalMixture(Distribution, ABC):
         Compute conditional expectations :math:`E[g(Y) | X = x]` for EM algorithm.
 
         These conditional expectations are used in the E-step of the EM algorithm.
-        The returned keys depend on the sufficient statistics of the mixing
-        distribution:
+        The returned keys depend on the sufficient statistics of the
+        subordinator distribution:
 
-        - **GH** (GIG mixing): ``E_Y``, ``E_inv_Y``, ``E_log_Y``
-        - **VG** (Gamma mixing): ``E_Y``, ``E_log_Y``
-        - **NIG** (InvGauss mixing): ``E_Y``, ``E_inv_Y``
-        - **NInvG** (InvGamma mixing): ``E_inv_Y``, ``E_log_Y``
+        - **GH** (GIG subordinator): ``E_Y``, ``E_inv_Y``, ``E_log_Y``
+        - **VG** (Gamma subordinator): ``E_Y``, ``E_log_Y``
+        - **NIG** (InvGauss subordinator): ``E_Y``, ``E_inv_Y``
+        - **NInvG** (InvGamma subordinator): ``E_inv_Y``, ``E_log_Y``
 
         Parameters
         ----------
@@ -1075,7 +1088,7 @@ class NormalMixture(Distribution, ABC):
             - mu : Location parameter (d,)
             - gamma : Skewness parameter (d,)
             - sigma : Covariance scale matrix (d, d)
-            - Plus mixing distribution parameters
+            - Plus subordinator distribution parameters
 
         Returns
         -------
@@ -1384,7 +1397,7 @@ class NormalMixture(Distribution, ABC):
         X : ndarray
             Sampled X values.
         Y : ndarray
-            Sampled Y values (latent mixing variable).
+            Sampled Y values (latent subordinator variable).
         """
         return self.joint.rvs(size=size, random_state=random_state)
 
@@ -1445,20 +1458,20 @@ class NormalMixture(Distribution, ABC):
         return np.sqrt(self.var())
 
     # ========================================================================
-    # Mixing distribution access
+    # Subordinator access
     # ========================================================================
 
     @property
-    def mixing_distribution(self) -> ExponentialFamily:
+    def subordinator(self) -> ExponentialFamily:
         """
-        Access the mixing distribution of Y.
+        Access the subordinator (stochastic time-change) distribution of :math:`Y`.
 
         Returns
         -------
-        mixing : ExponentialFamily
-            The mixing distribution (e.g., GIG, Gamma, InverseGaussian).
+        subordinator : ExponentialFamily
+            The subordinator distribution (e.g., GIG, Gamma, InverseGaussian).
         """
-        return self.joint._create_mixing_distribution()
+        return self.joint.subordinator
 
     # ========================================================================
     # EM helpers
@@ -1565,7 +1578,7 @@ class NormalMixture(Distribution, ABC):
             \\gamma_{\\text{orig}} &= D\\,\\gamma_{\\text{norm}} \\\\
             L_{\\Sigma,\\text{orig}} &= D\\,L_{\\Sigma,\\text{norm}}
 
-        Mixing distribution parameters are unchanged.
+        Subordinator distribution parameters are unchanged.
 
         Parameters
         ----------

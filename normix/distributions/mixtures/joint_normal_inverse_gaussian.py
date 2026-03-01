@@ -28,7 +28,7 @@ Natural parameters derived from classical :math:`(\\mu, \\gamma, \\Sigma, \\delt
     \\theta_5 &= \\Sigma^{-1} \\mu \\\\
     \\theta_6 &= -\\frac{1}{2} \\text{vec}(\\Sigma^{-1})
 
-The GIG parameters for the mixing distribution are:
+The GIG parameters for the subordinator distribution are:
 - :math:`p = -1/2` (Inverse Gaussian special case)
 - :math:`a = \\eta / \\delta^2` (coefficient of :math:`y` in exponent)
 - :math:`b = \\eta` (coefficient of :math:`1/y` in exponent)
@@ -98,8 +98,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
     See Also
     --------
     NormalInverseGaussian : Marginal distribution (X only)
-    InverseGaussian : The mixing distribution for Y
-    JointGeneralizedHyperbolic : General case with GIG mixing
+    InverseGaussian : The subordinator distribution for Y
+    JointGeneralizedHyperbolic : General case with GIG subordinator
 
     Notes
     -----
@@ -107,13 +107,13 @@ class JointNormalInverseGaussian(JointNormalMixture):
     and ability to model skewness. It provides a good fit for asset returns
     that exhibit non-Gaussian behavior.
 
-    The Inverse Gaussian mixing distribution has:
+    The Inverse Gaussian subordinator distribution has:
     - Mean: :math:`E[Y] = \\delta`
     - Variance: :math:`\\text{Var}[Y] = \\delta^3 / \\eta`
     """
 
     # ========================================================================
-    # Mixing distribution
+    # Subordinator distribution
     # ========================================================================
 
     def __init__(self, d=None):
@@ -122,19 +122,19 @@ class JointNormalInverseGaussian(JointNormalMixture):
         self._eta: Optional[float] = None
 
     @classmethod
-    def _get_mixing_distribution_class(cls) -> Type[ExponentialFamily]:
-        """Return InverseGaussian as the mixing distribution class."""
+    def _get_subordinator_class(cls) -> Type[ExponentialFamily]:
+        """Return InverseGaussian as the subordinator class."""
         return InverseGaussian
 
     # ========================================================================
-    # Mixing parameter management
+    # Subordinator parameter management
     # ========================================================================
 
-    def _store_mixing_params(self, *, delta, eta) -> None:
+    def _store_subordinator_params(self, *, delta, eta) -> None:
         self._delta = float(delta)
         self._eta = float(eta)
 
-    def _store_mixing_params_from_theta(self, theta: NDArray) -> None:
+    def _store_subordinator_params_from_theta(self, theta: NDArray) -> None:
         d = self.d
         theta_2 = theta[1]
         theta_3 = theta[2]
@@ -153,7 +153,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
             self._delta = 1.0
             self._eta = max(float(b), 1e-6)
 
-    def _compute_mixing_theta(self, theta_4, theta_5):
+    def _compute_subordinator_theta(self, theta_4, theta_5):
         d = self._d
         delta = self._delta
         eta = self._eta
@@ -165,7 +165,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         theta_3 = -(a + 0.5 * (self._gamma @ theta_4))
         return theta_1, theta_2, theta_3
 
-    def _create_mixing_distribution(self):
+    def _create_subordinator(self):
         return InverseGaussian.from_classical_params(
             delta=self._delta, eta=self._eta
         )
@@ -233,7 +233,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         if eta <= 0:
             raise ValueError(f"Eta must be positive, got {eta}")
         self._store_normal_params(mu=mu, gamma=gamma, sigma=sigma)
-        self._store_mixing_params(delta=delta, eta=eta)
+        self._store_subordinator_params(delta=delta, eta=eta)
         self._fitted = True
         self._invalidate_cache()
 
@@ -363,7 +363,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         """
         Convert natural to expectation parameters: :math:`\\eta = E[t(X, Y)]`.
 
-        For NIG with Inverse Gaussian mixing (mean δ, shape η):
+        For NIG with Inverse Gaussian subordinator (mean δ, shape η):
 
         .. math::
             \\eta_1 &= E[\\log Y] \\\\
@@ -570,7 +570,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         X : array_like
             Observed X data, shape (n_samples, d) or (n_samples,) for d=1.
         Y : array_like
-            Observed Y data (mixing variable), shape (n_samples,).
+            Observed Y data (subordinator variable), shape (n_samples,).
         **kwargs
             Additional fitting parameters (currently unused).
 
