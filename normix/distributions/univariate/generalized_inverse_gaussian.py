@@ -624,6 +624,103 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             return float(result)
         return result
     
+    # ============================================================
+    # Projection to special-case distributions via expectation params
+    # ============================================================
+
+    def to_gamma(self) -> 'Gamma':
+        r"""
+        Project to the closest Gamma distribution via expectation parameters.
+
+        The Gamma sufficient statistics are :math:`t(x) = [\log x,\; x]`,
+        so its expectation parameters are :math:`\eta_\Gamma = [E[\log X],\; E[X]]`.
+        These are extracted from the GIG expectation parameters
+        :math:`\eta = [E[\log X],\; E[1/X],\; E[X]]` at indices ``[0, 2]``,
+        then passed through the Gamma inverse-expectation map.
+
+        Returns
+        -------
+        gamma : Gamma
+            Gamma distribution whose :math:`E[\log X]` and :math:`E[X]`
+            match those of this GIG.
+
+        Examples
+        --------
+        >>> gig = GIG.from_classical_params(p=2.0, a=1.0, b=1e-12)
+        >>> g = gig.to_gamma()
+        """
+        self._check_fitted()
+        from normix.distributions.univariate.gamma import Gamma
+
+        eta = self.expectation_params
+        gamma_eta = np.array([eta[0], eta[2]])
+        g = Gamma()
+        g._set_from_natural(g._expectation_to_natural(gamma_eta))
+        return g
+
+    def to_inverse_gamma(self) -> 'InverseGamma':
+        r"""
+        Project to the closest Inverse Gamma distribution via expectation parameters.
+
+        The Inverse Gamma sufficient statistics are
+        :math:`t(x) = [-1/x,\; \log x]`, so its expectation parameters are
+        :math:`\eta_{IG} = [-E[1/X],\; E[\log X]]`.  These are extracted
+        from the GIG expectation parameters
+        :math:`\eta = [E[\log X],\; E[1/X],\; E[X]]` as
+        ``[-η[1], η[0]]``, then passed through the Inverse Gamma
+        inverse-expectation map.
+
+        Returns
+        -------
+        inv_gamma : InverseGamma
+            Inverse Gamma distribution whose :math:`E[1/X]` and
+            :math:`E[\log X]` match those of this GIG.
+
+        Examples
+        --------
+        >>> gig = GIG.from_classical_params(p=-2.0, a=1e-12, b=1.0)
+        >>> ig = gig.to_inverse_gamma()
+        """
+        self._check_fitted()
+        from normix.distributions.univariate.inverse_gamma import InverseGamma
+
+        eta = self.expectation_params
+        ig_eta = np.array([-eta[1], eta[0]])
+        ig = InverseGamma()
+        ig._set_from_natural(ig._expectation_to_natural(ig_eta))
+        return ig
+
+    def to_inverse_gaussian(self) -> 'InverseGaussian':
+        r"""
+        Project to the closest Inverse Gaussian distribution via expectation parameters.
+
+        The Inverse Gaussian sufficient statistics are
+        :math:`t(x) = [x,\; 1/x]`, so its expectation parameters are
+        :math:`\eta_{IG} = [E[X],\; E[1/X]]`.  These are extracted from
+        the GIG expectation parameters
+        :math:`\eta = [E[\log X],\; E[1/X],\; E[X]]` at indices ``[2, 1]``,
+        then passed through the Inverse Gaussian inverse-expectation map.
+
+        Returns
+        -------
+        inv_gauss : InverseGaussian
+            Inverse Gaussian distribution whose :math:`E[X]` and
+            :math:`E[1/X]` match those of this GIG.
+
+        Examples
+        --------
+        >>> gig = GIG.from_classical_params(p=-0.5, a=1.0, b=1.0)
+        >>> ig = gig.to_inverse_gaussian()
+        """
+        self._check_fitted()
+        from normix.distributions.univariate.inverse_gaussian import InverseGaussian
+
+        eta = self.expectation_params
+        ig_eta = np.array([eta[2], eta[1]])
+        ig = InverseGaussian()
+        ig._set_from_natural(ig._expectation_to_natural(ig_eta))
+        return ig
+
     def ppf(self, q: ArrayLike) -> NDArray:
         """
         Percent point function (inverse of CDF).
