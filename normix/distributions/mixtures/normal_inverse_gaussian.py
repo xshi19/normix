@@ -334,29 +334,15 @@ class NormalInverseGaussian(NormalMixture):
         """
         n, d = X.shape
 
-        X_mean = np.mean(X, axis=0)
-        X_cov = np.cov(X, rowvar=False)
-        if X_cov.ndim == 0:
-            X_cov = np.array([[X_cov]])
+        mu_init = np.mean(X, axis=0)
+        Sigma_init = np.cov(X, rowvar=False)
+        if Sigma_init.ndim == 0:
+            Sigma_init = np.array([[Sigma_init]])
 
         # For NIG: E[X] = μ + γ δ, Var[X] = δ Σ + (δ³/η) γγ^T
         delta_init = 1.0
         eta_init = 1.0
-
-        # Estimate skewness to get initial gamma
-        X_centered = X - X_mean
-        X_std = np.std(X, axis=0)
-        X_std = np.maximum(X_std, 1e-10)
-
-        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
-        gamma_init = skewness * X_std * 0.1
-
-        # μ = E[X] - γ δ
-        mu_init = X_mean - gamma_init * delta_init
-
-        # Σ from sample covariance, adjusted for gamma contribution
-        Var_Y_init = delta_init**3 / eta_init
-        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / delta_init
+        gamma_init = np.zeros(d)
 
         # Ensure Sigma is positive definite via robust Cholesky
         L = robust_cholesky(Sigma_init, eps=1e-6)

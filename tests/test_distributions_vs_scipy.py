@@ -670,6 +670,55 @@ class TestGIGVsScipy:
         assert np.isclose(fitted.mean(), true_dist.mean(), rtol=0.05), \
             f"Fitted mean {fitted.mean():.4f} != True mean {true_dist.mean():.4f}"
 
+    def test_fitting_boundary_invgamma(self):
+        """Test fitting when MLE degenerates to InvGamma (a → 0).
+
+        When data comes from an InverseGamma (or a GIG with very small
+        'a'), the MLE pushes a to the boundary.  After the Bug 1-3 fixes,
+        fit() must handle this gracefully and achieve log-likelihood at
+        least as good as scipy.stats.geninvgauss.fit(floc=0).
+        """
+        from scipy.stats import invgamma as invgamma_scipy
+
+        rng = np.random.default_rng(42)
+        data = invgamma_scipy.rvs(a=3.0, scale=2.0, size=2000,
+                                  random_state=rng)
+
+        fitted = GeneralizedInverseGaussian().fit(data)
+
+        # 'a' should be very small (InvGamma limit)
+        assert fitted._a < 0.1, f"Expected a ≈ 0, got a={fitted._a}"
+
+        # Compare to scipy
+        sp = stats.geninvgauss.fit(data, floc=0)
+        sp_dist = GeneralizedInverseGaussian.from_scipy_params(sp[0], sp[1],
+                                                                sp[3])
+        ll_fit = np.mean(fitted.logpdf(data))
+        ll_scipy = np.mean(sp_dist.logpdf(data))
+        assert ll_fit >= ll_scipy - 1e-6, (
+            f"fit() ℓ={ll_fit:.8f} < scipy ℓ={ll_scipy:.8f}"
+        )
+
+    def test_fitting_boundary_gamma(self):
+        """Test fitting when MLE degenerates to Gamma (b → 0)."""
+        rng = np.random.default_rng(123)
+        data = rng.gamma(shape=2.5, scale=1.0 / 1.5, size=2000)
+
+        fitted = GeneralizedInverseGaussian().fit(data)
+
+        # 'b' should be very small (Gamma limit)
+        assert fitted._b < 0.1, f"Expected b ≈ 0, got b={fitted._b}"
+
+        # Compare to scipy
+        sp = stats.geninvgauss.fit(data, floc=0)
+        sp_dist = GeneralizedInverseGaussian.from_scipy_params(sp[0], sp[1],
+                                                                sp[3])
+        ll_fit = np.mean(fitted.logpdf(data))
+        ll_scipy = np.mean(sp_dist.logpdf(data))
+        assert ll_fit >= ll_scipy - 1e-6, (
+            f"fit() ℓ={ll_fit:.8f} < scipy ℓ={ll_scipy:.8f}"
+        )
+
 
 # ============================================================
 # Multivariate Normal Distribution Tests

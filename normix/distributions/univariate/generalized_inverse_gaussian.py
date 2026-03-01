@@ -50,11 +50,35 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Optional, Union, List
 from scipy.interpolate import interp1d
-from scipy.special import digamma
 
 from normix.params import GIGParams
 from normix.base import ExponentialFamily
 from normix.utils import log_kv, log_kv_derivative_z
+
+# When √(ab) falls below this threshold, switch to Gamma/InvGamma limit
+# formulas to avoid ∞−∞ and ∞×0 in the Bessel-based expressions.
+_DEGEN_THRESHOLD = 1e-10
+
+# Module-level helpers for degenerate-case computations.
+# Import lazily to avoid circular imports at module load time.
+_gamma_helper = None
+_invgamma_helper = None
+
+
+def _get_gamma():
+    global _gamma_helper
+    if _gamma_helper is None:
+        from normix.distributions.univariate.gamma import Gamma
+        _gamma_helper = Gamma()
+    return _gamma_helper
+
+
+def _get_invgamma():
+    global _invgamma_helper
+    if _invgamma_helper is None:
+        from normix.distributions.univariate.inverse_gamma import InverseGamma
+        _invgamma_helper = InverseGamma()
+    return _invgamma_helper
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
@@ -142,11 +166,25 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     # ================================================================
     
     def _set_from_classical(self, *, p, a, b) -> None:
-        """Set internal state from classical parameters."""
-        if a <= 0:
-            raise ValueError(f"Parameter 'a' must be positive, got {a}")
-        if b <= 0:
-            raise ValueError(f"Parameter 'b' must be positive, got {b}")
+        """Set internal state from classical parameters.
+
+        Allows ``a = 0`` (Inverse-Gamma limit, requires ``p < 0``) or
+        ``b = 0`` (Gamma limit, requires ``p > 0``).
+        """
+        if a < 0:
+            raise ValueError(f"Parameter 'a' must be non-negative, got {a}")
+        if b < 0:
+            raise ValueError(f"Parameter 'b' must be non-negative, got {b}")
+        if a == 0 and b == 0:
+            raise ValueError("Parameters 'a' and 'b' cannot both be zero")
+        if a == 0 and p >= 0:
+            raise ValueError(
+                f"Inverse-Gamma limit (a=0) requires p < 0, got p={p}"
+            )
+        if b == 0 and p <= 0:
+            raise ValueError(
+                f"Gamma limit (b=0) requires p > 0, got p={p}"
+            )
         self._p = float(p)
         self._a = float(a)
         self._b = float(b)
@@ -154,14 +192,17 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self._invalidate_cache()
     
     def _set_from_natural(self, theta) -> None:
-        """Set internal state from natural parameters."""
+        """Set internal state from natural parameters.
+
+        Allows ``θ₂ = 0`` (Inverse-Gamma limit) or ``θ₃ = 0``
+        (Gamma limit).  Delegates to ``_set_from_classical`` which
+        validates the degenerate-case constraints.
+        """
         theta = np.asarray(theta)
-        self._validate_natural_params(theta)
-        self._p = float(theta[0] + 1)
-        self._b = float(-2 * theta[1])
-        self._a = float(-2 * theta[2])
-        self._fitted = True
-        self._invalidate_cache()
+        p = float(theta[0] + 1)
+        b = float(max(-2 * theta[1], 0.0))
+        a = float(max(-2 * theta[2], 0.0))
+        self._set_from_classical(p=p, a=a, b=b)
     
     def _compute_natural_params(self):
         """Compute natural parameters from internal state: θ = [p-1, -b/2, -a/2]."""
@@ -173,13 +214,18 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     
     def _get_natural_param_support(self):
         """
-        Natural parameter support.
-        
-        θ₁ = p - 1: unbounded
-        θ₂ = -b/2: < 0 (since b > 0)
-        θ₃ = -a/2: < 0 (since a > 0)
+        Natural parameter support (boundaries included for Gamma/InvGamma
+        limits).
+
+        - :math:`\\theta_1 = p - 1`: unbounded
+        - :math:`\\theta_2 = -b/2 \\le 0`
+        - :math:`\\theta_3 = -a/2 \\le 0`
+
+        The base-class validator uses *strict* inequality, so we set the
+        upper bound to a tiny positive epsilon to effectively include 0.
         """
-        return [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
+        _EPS = 1e-30
+        return [(-np.inf, np.inf), (-np.inf, _EPS), (-np.inf, _EPS)]
     
     def _sufficient_statistics(self, x: ArrayLike) -> NDArray:
         """
@@ -197,20 +243,29 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             return np.column_stack([np.log(x), 1.0/x, x])
     
     def _log_partition(self, theta: NDArray) -> float:
-        """
-        Log partition function: A(θ) = log(2) + log(K_p(√(ab))) + (p/2)log(b/a).
-        
-        where:
-            p = θ₁ + 1
-            b = -2θ₂
-            a = -2θ₃
+        r"""
+        Log partition function.
+
+        .. math::
+            A(\theta) = \log 2 + \log K_p(\sqrt{ab})
+                        + \tfrac{p}{2}\bigl(\log b - \log a\bigr)
+
+        Falls back to closed-form Gamma / Inverse-Gamma limits when
+        :math:`\sqrt{ab}` is below ``_DEGEN_THRESHOLD``.
         """
         p = theta[0] + 1
-        b = -2 * theta[1]
-        a = -2 * theta[2]
-        
+        b = max(-2 * theta[1], 0.0)
+        a = max(-2 * theta[2], 0.0)
         sqrt_ab = np.sqrt(a * b)
-        
+
+        if sqrt_ab < _DEGEN_THRESHOLD:
+            if a <= b:
+                # a ≈ 0  →  InvGamma(α=-p, β=b/2), θ_IG = [β, -(α+1)]
+                return _get_invgamma()._log_partition(np.array([b / 2, p - 1]))
+            else:
+                # b ≈ 0  →  Gamma(α=p, β=a/2), θ_Γ = [α-1, -β]
+                return _get_gamma()._log_partition(np.array([p - 1, -a / 2]))
+
         return np.log(2) + log_kv(p, sqrt_ab) + (p / 2) * (np.log(b) - np.log(a))
     
     def _log_base_measure(self, x: ArrayLike) -> NDArray:
@@ -222,140 +277,126 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         result[x <= 0] = -np.inf
         return result
     
-    def _compute_expectation_params(self) -> NDArray:
-        """Compute expectation parameters directly from (p, a, b)."""
-        p = self._p
-        a = self._a
-        b = self._b
-        sqrt_ab = np.sqrt(a * b)
-        sqrt_b_over_a = np.sqrt(b / a)
-
-        log_kv_p = log_kv(p, sqrt_ab)
-        log_kv_pm1 = log_kv(p - 1, sqrt_ab)
-        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
-
-        E_inv_x = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
-        E_x = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
-
-        eps = 1e-6
-        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
-        E_log_x = d_log_kv_dp + 0.5 * np.log(b / a)
-
-        return np.array([E_log_x, E_inv_x, E_x])
-
     def _natural_to_expectation(self, theta: NDArray) -> NDArray:
-        """
+        r"""
         Convert natural parameters to expectation parameters: η = ∇A(θ).
-        
-        η = [E[log X], E[1/X], E[X]]
-        
-        Using analytical formulas from Wikipedia:
-        - E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))
-        - E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab)) - 2p/b  [Note: Wikipedia formula]
-        - E[log X] = log(√(b/a)) + ∂/∂p log(K_p(√(ab)))
+
+        .. math::
+            \eta = [E[\log X],\; E[1/X],\; E[X]]
+
+        Uses Bessel-ratio formulas in log-space for the general case,
+        with closed-form Inverse-Gamma / Gamma limits when
+        :math:`\sqrt{ab}` falls below ``_DEGEN_THRESHOLD``.
         """
         p = theta[0] + 1
-        b = -2 * theta[1]
-        a = -2 * theta[2]
+        b = max(-2 * theta[1], 0.0)
+        a = max(-2 * theta[2], 0.0)
         sqrt_ab = np.sqrt(a * b)
-        sqrt_b_over_a = np.sqrt(b / a)
-        
+
+        # ---------- degenerate limits -----------------------------------
+        if sqrt_ab < _DEGEN_THRESHOLD:
+            if a <= b:
+                # a ≈ 0  →  InvGamma(α=-p, β=b/2), θ_IG = [β, -(α+1)]
+                ig_theta = np.array([b / 2, p - 1])
+                ig_eta = _get_invgamma()._natural_to_expectation(ig_theta)
+                # ig_eta = [-α/β, log(β)-ψ(α)]
+                E_log_x = ig_eta[1]
+                E_inv_x = -ig_eta[0]
+                alpha_ig = -p
+                E_x = (b / 2) / (alpha_ig - 1) if alpha_ig > 1 else np.inf
+            else:
+                # b ≈ 0  →  Gamma(α=p, β=a/2), θ_Γ = [α-1, -β]
+                g_theta = np.array([p - 1, -a / 2])
+                g_eta = _get_gamma()._natural_to_expectation(g_theta)
+                # g_eta = [ψ(α)-log(β), α/β]
+                E_log_x = g_eta[0]
+                E_x = g_eta[1]
+                E_inv_x = (a / 2) / (p - 1) if p > 1 else np.inf
+            return np.array([E_log_x, E_inv_x, E_x])
+
+        # ---------- general Bessel case --------------------------------
         log_kv_p = log_kv(p, sqrt_ab)
         log_kv_pm1 = log_kv(p - 1, sqrt_ab)
         log_kv_pp1 = log_kv(p + 1, sqrt_ab)
-        
-        # E[1/X] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab))
-        # Note: Using the recurrence relation form which is more stable
-        E_inv_x = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
-        
-        # E[X] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))
-        E_x = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
-        
-        # E[log X] = ∂A/∂θ₁ = ∂/∂p[log K_p(√(ab))] + (1/2)(log b - log a)
+
+        log_sqrt_ba = 0.5 * (np.log(b) - np.log(a))
+
+        E_inv_x = np.exp(log_kv_pm1 - log_kv_p - log_sqrt_ba)
+        E_x = np.exp(log_kv_pp1 - log_kv_p + log_sqrt_ba)
+
         eps = 1e-6
         d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
-        E_log_x = d_log_kv_dp + 0.5 * np.log(b / a)
-        
+        E_log_x = d_log_kv_dp + log_sqrt_ba
+
         return np.array([E_log_x, E_inv_x, E_x])
     
     def _get_initial_natural_params(self, eta: NDArray) -> List[NDArray]:
         """
         Get initial guesses for natural parameters from expectation parameters.
-        
-        Uses the three special cases of GIG distribution:
-        1. Inverse Gaussian (p = -1/2): uses E[X] and E[1/X]
-        2. Gamma (b → small): uses E[log X] and E[X]
-        3. Inverse Gamma (a → small): uses E[log X] and E[1/X]
-        
-        Returns multiple starting points for multi-start optimization.
+
+        Fits the three special-case sub-distributions (Inverse Gaussian,
+        Gamma, Inverse Gamma) to the relevant subsets of ``eta`` and
+        converts their parameters to GIG natural parameters.  Each
+        solution is also perturbed to provide additional starting points
+        away from the exact boundary.
         """
+        from normix.distributions.univariate.inverse_gaussian import InverseGaussian
+
         E_log_x, E_inv_x, E_x = eta
-        starting_points = []
-        
-        # Small value for nearly-degenerate cases
-        eps = 1e-6
-        
-        # === Special case 1: Inverse Gaussian (p = -1/2) ===
-        # For IG: E[X] = μ, E[1/X] = 1/μ + 1/(μ²λ)
-        # With GIG params: a = λ/μ, b = λμ, p = -1/2
-        # E[X] = √(b/a), so b/a = E[X]²
-        # E[1/X] = √(a/b) · K_{-3/2}(√(ab)) / K_{-1/2}(√(ab))
-        if E_x > 0 and E_inv_x > 0:
-            p_ig = -0.5
-            # Approximate: for IG, √(b/a) ≈ E[X]
-            sqrt_b_over_a = E_x
-            # Product ab from the ratio E[1/X]/E[X] ≈ a/b for moderate √(ab)
-            # Simple heuristic: set √(ab) = 1
-            sqrt_ab = max(1.0, np.sqrt(E_x * E_inv_x))
-            a_ig = sqrt_ab / sqrt_b_over_a
-            b_ig = sqrt_ab * sqrt_b_over_a
-            a_ig = max(a_ig, eps)
-            b_ig = max(b_ig, eps)
-            starting_points.append(np.array([p_ig - 1, -b_ig / 2, -a_ig / 2]))
-        
-        # === Special case 2: Gamma (b → small) ===
-        # Gamma(α, β) with α = p, β = a/2, b → 0
-        # E[X] = α/β = 2p/a
-        # E[log X] = ψ(α) - log(β) = ψ(p) - log(a/2)
-        # From E[X]: a = 2p/E[X]
-        # From E[log X]: p satisfies ψ(p) = E[log X] + log(a/2)
+        starting_points: List[NDArray] = []
+        eps = 1e-4
+
+        # ── 1. Inverse Gaussian (p = -1/2): match E[X] and E[1/X] ────
+        #    IG θ = [-η/(2δ²), -η/2]
+        #    → GIG θ = [-3/2, ig_θ₂, ig_θ₁]
+        if E_x > 0 and E_inv_x > 1.0 / E_x:
+            try:
+                ig_eta = np.array([E_x, E_inv_x])
+                ig_theta = InverseGaussian()._expectation_to_natural(ig_eta)
+                starting_points.append(
+                    np.array([-1.5, ig_theta[1], ig_theta[0]])
+                )
+            except (ValueError, FloatingPointError):
+                pass
+
+        # ── 2. Gamma (b ≈ 0): match E[log X] and E[X] ───────────────
+        #    Γ θ = [α-1, -β]
+        #    → GIG θ = [γ_θ₁, -ε/2, γ_θ₂]
         if E_x > 0:
-            # Try a few values of p > 0 for Gamma
-            for p_gamma in [0.5, 1.0, 2.0, 5.0]:
-                a_gamma = 2 * p_gamma / E_x
-                a_gamma = max(a_gamma, eps)
-                b_gamma = eps  # Small b for Gamma limit
-                starting_points.append(np.array([p_gamma - 1, -b_gamma / 2, -a_gamma / 2]))
-        
-        # === Special case 3: Inverse Gamma (a → small) ===
-        # InvGamma(α, β) with α = -p, β = b/2, a → 0
-        # E[1/X] = α/β = -2p/b (for p < 0)
-        # E[log X] = log(β) - ψ(α) = log(b/2) - ψ(-p)
-        # From E[1/X]: b = -2p/E[1/X]
+            try:
+                g_eta = np.array([E_log_x, E_x])
+                g_theta = _get_gamma()._expectation_to_natural(g_eta)
+                starting_points.append(
+                    np.array([g_theta[0], -eps / 2, g_theta[1]])
+                )
+            except (ValueError, FloatingPointError):
+                pass
+
+        # ── 3. Inverse Gamma (a ≈ 0): match E[1/X] and E[log X] ─────
+        #    IG θ = [β, -(α+1)]
+        #    → GIG θ = [ig_θ₂, -ig_θ₁, -ε/2]
         if E_inv_x > 0:
-            # Try a few values of p < 0 for Inverse Gamma
-            for p_invgamma in [-0.5, -1.0, -2.0, -5.0]:
-                b_invgamma = -2 * p_invgamma / E_inv_x
-                b_invgamma = max(b_invgamma, eps)
-                a_invgamma = eps  # Small a for Inverse Gamma limit
-                starting_points.append(np.array([p_invgamma - 1, -b_invgamma / 2, -a_invgamma / 2]))
-        
-        # === General heuristic: moment matching ===
-        # E[X]/E[1/X] ≈ b/a for moderate √(ab)
-        if E_x > 0 and E_inv_x > 0:
-            ratio = E_x / E_inv_x  # ≈ b/a
-            sqrt_b_over_a = np.sqrt(max(ratio, eps))
-            
-            for sqrt_ab in [0.5, 1.0, 2.0, 5.0]:
-                a_heur = sqrt_ab / sqrt_b_over_a
-                b_heur = sqrt_ab * sqrt_b_over_a
-                for p_heur in [-1.0, 0.0, 1.0, 2.0]:
-                    starting_points.append(np.array([p_heur - 1, -b_heur / 2, -a_heur / 2]))
-        
-        # Fallback: simple default
-        if len(starting_points) == 0:
-            starting_points.append(np.array([0.0, -0.5, -0.5]))  # p=1, a=1, b=1
-        
+            try:
+                ig_eta = np.array([-E_inv_x, E_log_x])
+                ig_theta = _get_invgamma()._expectation_to_natural(ig_eta)
+                starting_points.append(
+                    np.array([ig_theta[1], -ig_theta[0], -eps / 2])
+                )
+            except (ValueError, FloatingPointError):
+                pass
+
+        # ── 4. Perturbed copies — move boundary params toward interior ─
+        for sp in list(starting_points):
+            for scale in [0.1, 0.5, 2.0, 10.0]:
+                perturbed = sp.copy()
+                perturbed[1] = min(perturbed[1], -eps * scale / 2)
+                perturbed[2] = min(perturbed[2], -eps * scale / 2)
+                starting_points.append(perturbed)
+
+        # ── 5. Fallback ──────────────────────────────────────────────
+        if not starting_points:
+            starting_points.append(np.array([0.0, -0.5, -0.5]))
+
         return starting_points
     
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:

@@ -335,25 +335,15 @@ class VarianceGamma(NormalMixture):
         """
         n, d = X.shape
 
-        X_mean = np.mean(X, axis=0)
-        X_cov = np.cov(X, rowvar=False)
-        if X_cov.ndim == 0:
-            X_cov = np.array([[X_cov]])
+        mu_init = np.mean(X, axis=0)
+        Sigma_init = np.cov(X, rowvar=False)
+        if Sigma_init.ndim == 0:
+            Sigma_init = np.array([[Sigma_init]])
 
         alpha_init = 2.0
         beta_init = 1.0
-        E_Y_init = alpha_init / beta_init
-
-        X_centered = X - X_mean
-        X_std = np.std(X, axis=0)
-        X_std = np.maximum(X_std, 1e-10)
-        skewness = np.mean((X_centered / X_std) ** 3, axis=0)
-        gamma_init = skewness * X_std * 0.1
-
-        mu_init = X_mean - gamma_init * E_Y_init
-
-        Var_Y_init = alpha_init / (beta_init ** 2)
-        Sigma_init = (X_cov - Var_Y_init * np.outer(gamma_init, gamma_init)) / E_Y_init
+        
+        gamma_init = np.zeros(d)
 
         L = robust_cholesky(Sigma_init, eps=1e-6)
         Sigma_init = L @ L.T
