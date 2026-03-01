@@ -653,10 +653,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         from normix.distributions.univariate.gamma import Gamma
 
         eta = self.expectation_params
-        gamma_eta = np.array([eta[0], eta[2]])
-        g = Gamma()
-        g._set_from_natural(g._expectation_to_natural(gamma_eta))
-        return g
+        return Gamma.from_expectation_params(np.array([eta[0], eta[2]]))
 
     def to_inverse_gamma(self) -> 'InverseGamma':
         r"""
@@ -685,10 +682,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         from normix.distributions.univariate.inverse_gamma import InverseGamma
 
         eta = self.expectation_params
-        ig_eta = np.array([-eta[1], eta[0]])
-        ig = InverseGamma()
-        ig._set_from_natural(ig._expectation_to_natural(ig_eta))
-        return ig
+        return InverseGamma.from_expectation_params(np.array([-eta[1], eta[0]]))
 
     def to_inverse_gaussian(self) -> 'InverseGaussian':
         r"""
@@ -716,10 +710,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         from normix.distributions.univariate.inverse_gaussian import InverseGaussian
 
         eta = self.expectation_params
-        ig_eta = np.array([eta[2], eta[1]])
-        ig = InverseGaussian()
-        ig._set_from_natural(ig._expectation_to_natural(ig_eta))
-        return ig
+        return InverseGaussian.from_expectation_params(np.array([eta[2], eta[1]]))
 
     def ppf(self, q: ArrayLike) -> NDArray:
         """
