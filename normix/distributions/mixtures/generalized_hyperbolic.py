@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from .normal_inverse_gamma import NormalInverseGamma
 
 from normix.base import NormalMixture, JointNormalMixture
-from normix.utils import log_kv, robust_cholesky
+from normix.utils import log_kv, log_kv_derivative_v, robust_cholesky
 from .joint_generalized_hyperbolic import JointGeneralizedHyperbolic
 
 
@@ -925,10 +925,7 @@ class GeneralizedHyperbolic(NormalMixture):
         E_inv_Y = kv_ratio(p_cond - 1, p_cond, eta) / delta
         
         # E[log Y | X] = ∂/∂p log(K_p(eta)) + log(delta)
-        # Numerical derivative for ∂/∂p log(K_p(eta))
-        eps = 1e-5
-        d_log_kv_dp = (log_kv(p_cond + eps, eta) - log_kv(p_cond - eps, eta)) / (2 * eps)
-        E_log_Y = d_log_kv_dp + np.log(delta)
+        E_log_Y = log_kv_derivative_v(p_cond, eta) + np.log(delta)
 
         if single_point:
             return {

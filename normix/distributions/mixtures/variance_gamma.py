@@ -33,7 +33,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Any, Dict, Optional, Tuple, Union
 
 from normix.base import NormalMixture, JointNormalMixture
-from normix.utils import log_kv, robust_cholesky
+from normix.utils import log_kv, log_kv_derivative_v, robust_cholesky
 from .joint_variance_gamma import JointVarianceGamma
 
 
@@ -295,11 +295,7 @@ class VarianceGamma(NormalMixture):
 
         # E[log Y] = ∂/∂p log(K_p(√(ab))) + (1/2) log(b/a)
         # Numerical derivative for ∂/∂p log(K_p(z))
-        eps = 1e-6
-        log_kv_p_plus = log_kv(p_cond + eps, sqrt_ab)
-        log_kv_p_minus = log_kv(p_cond - eps, sqrt_ab)
-        d_log_kv_dp = (log_kv_p_plus - log_kv_p_minus) / (2 * eps)
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b_cond / a_cond)
+        E_log_Y = log_kv_derivative_v(p_cond, sqrt_ab) + 0.5 * np.log(b_cond / a_cond)
 
         if single_point:
             return {

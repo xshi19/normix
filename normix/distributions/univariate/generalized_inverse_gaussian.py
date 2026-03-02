@@ -53,7 +53,7 @@ from scipy.interpolate import interp1d
 
 from normix.params import GIGParams
 from normix.base import ExponentialFamily
-from normix.utils import log_kv, log_kv_derivative_z
+from normix.utils import log_kv, log_kv_derivative_v, log_kv_derivative_z
 
 # When √(ab) falls below this threshold, switch to Gamma/InvGamma limit
 # formulas to avoid ∞−∞ and ∞×0 in the Bessel-based expressions.
@@ -324,9 +324,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         E_inv_x = np.exp(log_kv_pm1 - log_kv_p - log_sqrt_ba)
         E_x = np.exp(log_kv_pp1 - log_kv_p + log_sqrt_ba)
 
-        eps = 1e-6
-        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
-        E_log_x = d_log_kv_dp + log_sqrt_ba
+        E_log_x = log_kv_derivative_v(p, sqrt_ab) + log_sqrt_ba
 
         return np.array([E_log_x, E_inv_x, E_x])
     

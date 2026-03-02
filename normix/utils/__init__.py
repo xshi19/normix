@@ -1,6 +1,6 @@
 """Utility functions for normix package."""
 
-from .bessel import log_kv, log_kv_vectorized, log_kv_derivative_z, kv_ratio
+from .bessel import log_kv, log_kv_vectorized, log_kv_derivative_v, log_kv_derivative_z, kv_ratio
 from .linalg import robust_cholesky
 from .scaling import column_median_mad
 from .mixture_viz import (
@@ -17,7 +17,7 @@ from .mixture_viz import (
 )
 
 __all__ = [
-    'log_kv', 'log_kv_vectorized', 'log_kv_derivative_z', 'kv_ratio',
+    'log_kv', 'log_kv_vectorized', 'log_kv_derivative_v', 'log_kv_derivative_z', 'kv_ratio',
     'robust_cholesky',
     'column_median_mad',
     'plot_joint_distribution_1d', 'plot_marginal_distribution_2d',

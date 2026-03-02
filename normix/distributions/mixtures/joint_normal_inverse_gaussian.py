@@ -41,7 +41,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import InverseGaussian
 from normix.params import NormalInverseGaussianParams
-from normix.utils import log_kv, robust_cholesky
+from normix.utils import log_kv, log_kv_derivative_v, robust_cholesky
 
 
 class JointNormalInverseGaussian(JointNormalMixture):
@@ -342,11 +342,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         b = eta_param
         sqrt_ab = np.sqrt(a * b)
         p = -0.5
-        eps = 1e-6
-        log_kv_p_plus = log_kv(p + eps, sqrt_ab)
-        log_kv_p_minus = log_kv(p - eps, sqrt_ab)
-        d_log_kv_dp = (log_kv_p_plus - log_kv_p_minus) / (2 * eps)
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b / a)
+        E_log_Y = log_kv_derivative_v(p, sqrt_ab) + 0.5 * np.log(b / a)
 
         E_X = mu + gamma * E_Y
         E_X_inv_Y = mu * E_inv_Y + gamma
@@ -417,14 +413,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
         b = eta_param
         sqrt_ab = np.sqrt(a * b)  # = η/δ
         
-        # Numerical derivative of log K_p at p = -1/2
         p = -0.5
-        eps = 1e-6
-        log_kv_p_plus = log_kv(p + eps, sqrt_ab)
-        log_kv_p_minus = log_kv(p - eps, sqrt_ab)
-        d_log_kv_dp = (log_kv_p_plus - log_kv_p_minus) / (2 * eps)
-        
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b / a)
+        E_log_Y = log_kv_derivative_v(p, sqrt_ab) + 0.5 * np.log(b / a)
 
         # E[X] = μ + γ E[Y]
         E_X = mu + gamma * E_Y

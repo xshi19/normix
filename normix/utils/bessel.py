@@ -163,6 +163,42 @@ def log_kv_vectorized(v: Union[float, NDArray], z: Union[float, NDArray]) -> Uni
     return result
 
 
+def log_kv_derivative_v(v: float, z: Union[float, NDArray], *, eps: float = 1e-6) -> Union[float, NDArray]:
+    """
+    Derivative of log(K_v(z)) with respect to the order v.
+
+    Computed via central differences:
+
+    .. math::
+
+        \\frac{\\partial}{\\partial\\nu} \\log K_\\nu(z)
+        \\approx \\frac{\\log K_{\\nu+\\varepsilon}(z) - \\log K_{\\nu-\\varepsilon}(z)}{2\\varepsilon}
+
+    There is no closed-form recurrence for the order derivative (unlike the
+    argument derivative), so numerical differentiation is the standard approach.
+
+    Parameters
+    ----------
+    v : float
+        Order of Bessel function :math:`\\nu` (scalar).
+    z : float or ndarray
+        Argument (must be > 0), can be vectorized.
+    eps : float, optional
+        Step size for central differences. Default is 1e-6.
+
+    Returns
+    -------
+    deriv : float or ndarray
+        Derivative of :math:`\\log K_\\nu(z)` with respect to :math:`\\nu`.
+
+    Examples
+    --------
+    >>> log_kv_derivative_v(1.0, 2.0)
+    -0.4250407...
+    """
+    return (log_kv(v + eps, z) - log_kv(v - eps, z)) / (2 * eps)
+
+
 def log_kv_derivative_z(v: float, z: Union[float, NDArray]) -> Union[float, NDArray]:
     """
     Derivative of log(K_v(z)) with respect to z.
