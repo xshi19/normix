@@ -108,7 +108,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">JointNormalMixture</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">robust_cholesky</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_v</span><span class="p">,</span> <span class="n">robust_cholesky</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.joint_variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointVarianceGamma</span>
 
 
@@ -372,11 +372,7 @@
 
         <span class="c1"># E[log Y] = ∂/∂p log(K_p(√(ab))) + (1/2) log(b/a)</span>
         <span class="c1"># Numerical derivative for ∂/∂p log(K_p(z))</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        <span class="n">log_kv_p_plus</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-        <span class="n">log_kv_p_minus</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
-        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv_p_plus</span> <span class="o">-</span> <span class="n">log_kv_p_minus</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_cond</span> <span class="o">/</span> <span class="n">a_cond</span><span class="p">)</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">log_kv_derivative_v</span><span class="p">(</span><span class="n">p_cond</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_cond</span> <span class="o">/</span> <span class="n">a_cond</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">single_point</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span>

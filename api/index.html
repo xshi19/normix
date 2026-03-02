@@ -87,6 +87,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-normix.utils.bessel">Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#normix.utils.bessel.kv_ratio"><code class="docutils literal notranslate"><span class="pre">kv_ratio()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#normix.utils.bessel.log_kv"><code class="docutils literal notranslate"><span class="pre">log_kv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#normix.utils.bessel.log_kv_derivative_v"><code class="docutils literal notranslate"><span class="pre">log_kv_derivative_v()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#normix.utils.bessel.log_kv_derivative_z"><code class="docutils literal notranslate"><span class="pre">log_kv_derivative_z()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#normix.utils.bessel.log_kv_vectorized"><code class="docutils literal notranslate"><span class="pre">log_kv_vectorized()</span></code></a></li>
 </ul>
@@ -3009,7 +3010,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f9ded586030&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7ff589db4bc0&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3088,7 +3089,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f9ded586030&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7ff589db4bc0&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -4126,6 +4127,38 @@ numerical stability when <span class="math notranslate nohighlight">\(z\)</span>
 <span class="go">-1.9670713500717493</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">log_kv</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]))</span>
 <span class="go">array([ 0.68024015, -0.38318674, -1.71531713])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.bessel.log_kv_derivative_v">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.bessel.</span></span><span class="sig-name descname"><span class="pre">log_kv_derivative_v</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/normix/utils/bessel.html#log_kv_derivative_v"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.bessel.log_kv_derivative_v" title="Link to this definition"></a></dt>
+<dd><p>Derivative of log(K_v(z)) with respect to the order v.</p>
+<p>Computed via central differences:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial}{\partial\nu} \log K_\nu(z)
+\approx \frac{\log K_{\nu+\varepsilon}(z) - \log K_{\nu-\varepsilon}(z)}{2\varepsilon}\]</div>
+<p>There is no closed-form recurrence for the order derivative (unlike the
+argument derivative), so numerical differentiation is the standard approach.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<em>float</em>) – Order of Bessel function <span class="math notranslate nohighlight">\(\nu\)</span> (scalar).</p></li>
+<li><p><strong>z</strong> (<em>float</em><em> or </em><em>ndarray</em>) – Argument (must be &gt; 0), can be vectorized.</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional</em>) – Step size for central differences. Default is 1e-6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>deriv</strong> – Derivative of <span class="math notranslate nohighlight">\(\log K_\nu(z)\)</span> with respect to <span class="math notranslate nohighlight">\(\nu\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">log_kv_derivative_v</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">-0.4250407...</span>
 </pre></div>
 </div>
 </dd></dl>

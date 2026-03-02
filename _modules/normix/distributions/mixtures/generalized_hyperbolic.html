@@ -110,7 +110,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">JointNormalMixture</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">robust_cholesky</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_v</span><span class="p">,</span> <span class="n">robust_cholesky</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.joint_generalized_hyperbolic</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointGeneralizedHyperbolic</span>
 
 
@@ -1017,10 +1017,7 @@
         <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">kv_ratio</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_cond</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span>
         
         <span class="c1"># E[log Y | X] = ∂/∂p log(K_p(eta)) + log(delta)</span>
-        <span class="c1"># Numerical derivative for ∂/∂p log(K_p(eta))</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-5</span>
-        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_cond</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eta</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">log_kv_derivative_v</span><span class="p">(</span><span class="n">p_cond</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">single_point</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span>

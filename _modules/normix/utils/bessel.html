@@ -244,6 +244,45 @@
 
 
 
+<div class="viewcode-block" id="log_kv_derivative_v">
+<a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv_derivative_v">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_kv_derivative_v</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Derivative of log(K_v(z)) with respect to the order v.</span>
+
+<span class="sd">    Computed via central differences:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\frac{\\partial}{\\partial\\nu} \\log K_\\nu(z)</span>
+<span class="sd">        \\approx \\frac{\\log K_{\\nu+\\varepsilon}(z) - \\log K_{\\nu-\\varepsilon}(z)}{2\\varepsilon}</span>
+
+<span class="sd">    There is no closed-form recurrence for the order derivative (unlike the</span>
+<span class="sd">    argument derivative), so numerical differentiation is the standard approach.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    v : float</span>
+<span class="sd">        Order of Bessel function :math:`\\nu` (scalar).</span>
+<span class="sd">    z : float or ndarray</span>
+<span class="sd">        Argument (must be &gt; 0), can be vectorized.</span>
+<span class="sd">    eps : float, optional</span>
+<span class="sd">        Step size for central differences. Default is 1e-6.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    deriv : float or ndarray</span>
+<span class="sd">        Derivative of :math:`\\log K_\\nu(z)` with respect to :math:`\\nu`.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; log_kv_derivative_v(1.0, 2.0)</span>
+<span class="sd">    -0.4250407...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="log_kv_derivative_z">
 <a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv_derivative_z">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_kv_derivative_z</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>

@@ -128,7 +128,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIGParams</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_z</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_derivative_v</span><span class="p">,</span> <span class="n">log_kv_derivative_z</span>
 
 <span class="c1"># When √(ab) falls below this threshold, switch to Gamma/InvGamma limit</span>
 <span class="c1"># formulas to avoid ∞−∞ and ∞×0 in the Bessel-based expressions.</span>
@@ -401,9 +401,7 @@
         <span class="n">E_inv_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pm1</span> <span class="o">-</span> <span class="n">log_kv_p</span> <span class="o">-</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
         <span class="n">E_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_pp1</span> <span class="o">-</span> <span class="n">log_kv_p</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
 
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        <span class="n">d_log_kv_dp</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">d_log_kv_dp</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
+        <span class="n">E_log_x</span> <span class="o">=</span> <span class="n">log_kv_derivative_v</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_x</span><span class="p">,</span> <span class="n">E_inv_x</span><span class="p">,</span> <span class="n">E_x</span><span class="p">])</span>
     
