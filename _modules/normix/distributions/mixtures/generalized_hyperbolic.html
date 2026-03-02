@@ -102,7 +102,12 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">JointNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">robust_cholesky</span>
@@ -575,9 +580,11 @@
 <span class="sd">        The recommended regularization is :math:`|\\Sigma| = 1`, which doesn&#39;t</span>
 <span class="sd">        affect EM convergence (see em_algorithm.rst for proof).</span>
 
-<span class="sd">        The initial parameters are obtained by running a short NIG EM</span>
-<span class="sd">        (5 iterations) to get a reasonable starting point for</span>
-<span class="sd">        :math:`(\\mu, \\gamma, \\Sigma)` and the GIG parameters.</span>
+<span class="sd">        The initial parameters are obtained by running a short EM</span>
+<span class="sd">        (5 iterations) for each special case (NIG, VG, NInvG) and</span>
+<span class="sd">        selecting the candidate with the highest log-likelihood as the</span>
+<span class="sd">        starting point for :math:`(\\mu, \\gamma, \\Sigma)` and the GIG</span>
+<span class="sd">        parameters.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -714,11 +721,18 @@
         <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize GH parameters using a short NIG EM warm start.</span>
+<span class="sd">        Initialize GH parameters by fitting special-case sub-models and</span>
+<span class="sd">        selecting the one with highest log-likelihood.</span>
 
-<span class="sd">        Runs a Normal-Inverse Gaussian EM for a few iterations to obtain</span>
-<span class="sd">        reasonable initial values for :math:`(\\mu, \\gamma, \\Sigma)` and</span>
-<span class="sd">        the GIG parameters :math:`(p, a, b)`.</span>
+<span class="sd">        Runs a short EM (5 iterations) for each of three special cases:</span>
+
+<span class="sd">        - **NIG** (Normal-Inverse Gaussian): :math:`p = -1/2`</span>
+<span class="sd">        - **VG** (Variance Gamma): :math:`b \\to 0`</span>
+<span class="sd">        - **NInvG** (Normal-Inverse Gamma): :math:`a \\to 0`</span>
+
+<span class="sd">        Each fitted sub-model is converted to GH parametrisation and scored</span>
+<span class="sd">        on mean log-likelihood.  The best candidate is used as the starting</span>
+<span class="sd">        point for the full GH EM.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -729,49 +743,84 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
 
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (name, mean_llh, mu, gamma, Sigma, p, a, b)</span>
 
+        <span class="c1"># --- Candidate: NIG (p = -1/2) ---</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Use NIG with a few EM iterations to get a warm start</span>
             <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
                 <span class="n">nig</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="p">()</span>
                 <span class="n">nig</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
 
-            <span class="n">nig_params</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">classical_params</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
-            <span class="n">gamma</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span>
-            <span class="n">Sigma</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
-            <span class="n">delta</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span>
-            <span class="n">eta</span> <span class="o">=</span> <span class="n">nig_params</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span>
-
-            <span class="c1"># Convert NIG (IG) params to GIG params:</span>
-            <span class="c1"># IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.45</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">eta</span>
-
-            <span class="c1"># Clamp GIG parameters to reasonable range</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-
+            <span class="n">par</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.4999</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+            <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">):</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;NIG&#39;</span><span class="p">,</span> <span class="n">ll</span><span class="p">,</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+                <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="c1"># Fallback: method of moments initialization</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># --- Candidate: VG (b → 0, Gamma subordinator) ---</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                <span class="n">vg</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="p">()</span>
+                <span class="n">vg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+
+            <span class="n">par</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;rate&#39;</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="mf">1e-4</span>
+            <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vg</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">):</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;VG&#39;</span><span class="p">,</span> <span class="n">ll</span><span class="p">,</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># --- Candidate: NInvG (a → 0, InverseGamma subordinator) ---</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                <span class="n">ninvg</span> <span class="o">=</span> <span class="n">NormalInverseGamma</span><span class="p">()</span>
+                <span class="n">ninvg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+
+            <span class="n">par</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">classical_params</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="n">par</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="mf">1e-4</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;rate&#39;</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+            <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ninvg</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">):</span>
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;NInvG&#39;</span><span class="p">,</span> <span class="n">ll</span><span class="p">,</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">best</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">Sigma</span><span class="p">]])</span>
-
             <span class="n">L</span> <span class="o">=</span> <span class="n">robust_cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
             <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
-
             <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
             <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span>
             <span class="n">a</span> <span class="o">=</span> <span class="mf">1.0</span>
             <span class="n">b</span> <span class="o">=</span> <span class="mf">1.0</span>
 
-        <span class="c1"># Set initial parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">set_classical_params</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span>
         <span class="p">)</span>
@@ -1119,6 +1168,107 @@
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_arr</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
             <span class="n">p</span><span class="o">=-</span><span class="n">shape</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_small</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rate</span>
         <span class="p">)</span></div>
+
+
+    <span class="c1"># ========================================================================</span>
+    <span class="c1"># Conversion to special cases (instance methods, using expectation params)</span>
+    <span class="c1"># ========================================================================</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_variance_gamma">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_variance_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;VarianceGamma&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert to the closest :class:`VarianceGamma` distribution by matching</span>
+<span class="sd">        expectation parameters.</span>
+
+<span class="sd">        Projects the GH expectation-parameter vector onto the Variance Gamma</span>
+<span class="sd">        submanifold (:math:`b \\to 0`, Gamma subordinator) by fitting a</span>
+<span class="sd">        :class:`JointVarianceGamma` to the current expectation parameters and</span>
+<span class="sd">        wrapping it in a :class:`VarianceGamma` marginal.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        vg : VarianceGamma</span>
+<span class="sd">            Fitted Variance Gamma distribution.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        JointGeneralizedHyperbolic.to_joint_variance_gamma</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="n">jvg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_variance_gamma</span><span class="p">()</span>
+        <span class="n">vg</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="p">()</span>
+        <span class="n">vg</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="n">jvg</span>
+        <span class="n">vg</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">vg</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">vg</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gaussian">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalInverseGaussian&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert to the closest :class:`NormalInverseGaussian` distribution by</span>
+<span class="sd">        matching expectation parameters.</span>
+
+<span class="sd">        Projects the GH expectation-parameter vector onto the Normal-Inverse</span>
+<span class="sd">        Gaussian submanifold (:math:`p = -1/2`, Inverse Gaussian subordinator)</span>
+<span class="sd">        by fitting a :class:`JointNormalInverseGaussian` to the current</span>
+<span class="sd">        expectation parameters and wrapping it in a</span>
+<span class="sd">        :class:`NormalInverseGaussian` marginal.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        nig : NormalInverseGaussian</span>
+<span class="sd">            Fitted Normal-Inverse Gaussian distribution.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="n">jnig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_normal_inverse_gaussian</span><span class="p">()</span>
+        <span class="n">nig</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="p">()</span>
+        <span class="n">nig</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="n">jnig</span>
+        <span class="n">nig</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">nig</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">nig</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gamma">
+<a class="viewcode-back" href="../../../../api/index.html#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NormalInverseGamma&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert to the closest :class:`NormalInverseGamma` distribution by</span>
+<span class="sd">        matching expectation parameters.</span>
+
+<span class="sd">        Projects the GH expectation-parameter vector onto the Normal-Inverse</span>
+<span class="sd">        Gamma submanifold (:math:`a \\to 0`, Inverse Gamma subordinator) by</span>
+<span class="sd">        fitting a :class:`JointNormalInverseGamma` to the current expectation</span>
+<span class="sd">        parameters and wrapping it in a :class:`NormalInverseGamma` marginal.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ning : NormalInverseGamma</span>
+<span class="sd">            Fitted Normal-Inverse Gamma distribution.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_fitted</span><span class="p">()</span>
+        <span class="n">jning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_normal_inverse_gamma</span><span class="p">()</span>
+        <span class="n">ning</span> <span class="o">=</span> <span class="n">NormalInverseGamma</span><span class="p">()</span>
+        <span class="n">ning</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="n">jning</span>
+        <span class="n">ning</span><span class="o">.</span><span class="n">_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">ning</span><span class="o">.</span><span class="n">_invalidate_cache</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ning</span></div>
 
 
     <span class="c1"># ========================================================================</span>

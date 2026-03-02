@@ -3009,7 +3009,7 @@ For d&gt;1, uses scipy’s multivariate_normal.cdf.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.from_scipy">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fc47fb1f290&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f9ded586030&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.multivariate.normal.MultivariateNormal" title="normix.distributions.multivariate.normal.MultivariateNormal"><span class="pre">MultivariateNormal</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.from_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.from_scipy" title="Link to this definition"></a></dt>
 <dd><p>Create from scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3088,7 +3088,7 @@ Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.multivariate.normal.MultivariateNormal.to_scipy">
-<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7fc47fb1f290&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_scipy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;scipy.stats._multivariate.multivariate_normal_gen</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x7f9ded586030&gt;</span></span></span><a class="reference internal" href="../_modules/normix/distributions/multivariate/normal.html#MultivariateNormal.to_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.multivariate.normal.MultivariateNormal.to_scipy" title="Link to this definition"></a></dt>
 <dd><p>Convert to scipy.stats.multivariate_normal.</p>
 </dd></dl>
 
@@ -3804,9 +3804,11 @@ parameters and numerical optimization for GIG parameters.</p>
 <p>After each M-step, regularization is applied to ensure identifiability.
 The recommended regularization is <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>, which doesn’t
 affect EM convergence (see em_algorithm.rst for proof).</p>
-<p>The initial parameters are obtained by running a short NIG EM
-(5 iterations) to get a reasonable starting point for
-<span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span> and the GIG parameters.</p>
+<p>The initial parameters are obtained by running a short EM
+(5 iterations) for each special case (NIG, VG, NInvG) and
+selecting the candidate with the highest log-likelihood as the
+starting point for <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span> and the GIG
+parameters.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Default regularization (|Σ| = 1)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">gh</span> <span class="o">=</span> <span class="n">GeneralizedHyperbolic</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -3841,6 +3843,76 @@ affect EM convergence (see em_algorithm.rst for proof).</p>
 <dd class="field-even"><p>ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">
+<span class="sig-name descname"><span class="pre">to_normal_inverse_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma"><span class="pre">NormalInverseGamma</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.to_normal_inverse_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma" title="Link to this definition"></a></dt>
+<dd><p>Convert to the closest <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code> distribution by
+matching expectation parameters.</p>
+<p>Projects the GH expectation-parameter vector onto the Normal-Inverse
+Gamma submanifold (<span class="math notranslate nohighlight">\(a \to 0\)</span>, Inverse Gamma subordinator) by
+fitting a <code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code> to the current expectation
+parameters and wrapping it in a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code> marginal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ning</strong> – Fitted Normal-Inverse Gamma distribution.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.mixtures.normal_inverse_gamma.NormalInverseGamma">NormalInverseGamma</a></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">
+<span class="sig-name descname"><span class="pre">to_normal_inverse_gaussian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian"><span class="pre">NormalInverseGaussian</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.to_normal_inverse_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian" title="Link to this definition"></a></dt>
+<dd><p>Convert to the closest <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code> distribution by
+matching expectation parameters.</p>
+<p>Projects the GH expectation-parameter vector onto the Normal-Inverse
+Gaussian submanifold (<span class="math notranslate nohighlight">\(p = -1/2\)</span>, Inverse Gaussian subordinator)
+by fitting a <code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code> to the current
+expectation parameters and wrapping it in a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code> marginal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nig</strong> – Fitted Normal-Inverse Gaussian distribution.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.mixtures.normal_inverse_gaussian.NormalInverseGaussian">NormalInverseGaussian</a></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">
+<span class="sig-name descname"><span class="pre">to_variance_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#normix.distributions.mixtures.variance_gamma.VarianceGamma" title="normix.distributions.mixtures.variance_gamma.VarianceGamma"><span class="pre">VarianceGamma</span></a></span></span><a class="reference internal" href="../_modules/normix/distributions/mixtures/generalized_hyperbolic.html#GeneralizedHyperbolic.to_variance_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.mixtures.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma" title="Link to this definition"></a></dt>
+<dd><p>Convert to the closest <code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code> distribution by matching
+expectation parameters.</p>
+<p>Projects the GH expectation-parameter vector onto the Variance Gamma
+submanifold (<span class="math notranslate nohighlight">\(b \to 0\)</span>, Gamma subordinator) by fitting a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code> to the current expectation parameters and
+wrapping it in a <code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code> marginal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vg</strong> – Fitted Variance Gamma distribution.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.mixtures.variance_gamma.VarianceGamma" title="normix.distributions.mixtures.variance_gamma.VarianceGamma">VarianceGamma</a></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_variance_gamma</span></code></p>
+</div>
 </dd></dl>
 
 <dl class="py method">
