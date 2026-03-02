@@ -35,12 +35,29 @@ Special cases:
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
+
+if TYPE_CHECKING:
+    from .joint_variance_gamma import JointVarianceGamma
+    from .joint_normal_inverse_gaussian import JointNormalInverseGaussian
+    from .joint_normal_inverse_gamma import JointNormalInverseGamma
 
 from normix.base import JointNormalMixture, ExponentialFamily
 from normix.distributions.univariate import GeneralizedInverseGaussian
 from normix.params import GHParams
-from normix.utils import log_kv, robust_cholesky
+from normix.utils import robust_cholesky
+
+# Module-level GIG helper used to compute the GIG part of the log partition
+# and the GIG expectations (E[log Y], E[1/Y], E[Y]).  Initialised lazily to
+# avoid circular imports.
+_gig_helper = None
+
+
+def _get_gig():
+    global _gig_helper
+    if _gig_helper is None:
+        _gig_helper = GeneralizedInverseGaussian()
+    return _gig_helper
 
 
 class JointGeneralizedHyperbolic(JointNormalMixture):
@@ -290,17 +307,15 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
 
-        # Log partition for GIG
-        sqrt_ab = np.sqrt(a * b)
-        log_K_p = log_kv(p, sqrt_ab)
-
         # Compute μ^T Λ γ = μ^T θ₄ (since Λγ = θ₄)
         mu_Lambda_gamma = mu @ theta_4
 
-        # Log partition
-        psi = (0.5 * log_det_Sigma + np.log(2) + log_K_p +
-               0.5 * p * np.log(b / a) + mu_Lambda_gamma)
-
+        # The GH log partition factorises exactly as:
+        #   ψ_JointGH = ψ_GIG(p, a, b) + ½ log|Σ| + μᵀΛγ
+        # Delegating to GIG._log_partition handles both the general Bessel case
+        # and the degenerate Gamma / InvGamma limits transparently.
+        gig_theta = np.array([p - 1, -b / 2, -a / 2])
+        psi = _get_gig()._log_partition(gig_theta) + 0.5 * log_det_Sigma + mu_Lambda_gamma
         return float(psi)
 
     # ========================================================================
@@ -321,19 +336,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         a = self._a
         b = self._b
 
-        sqrt_ab = np.sqrt(a * b)
-        sqrt_b_over_a = np.sqrt(b / a)
-
-        log_kv_p_val = log_kv(p, sqrt_ab)
-        log_kv_pm1 = log_kv(p - 1, sqrt_ab)
-        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
-
-        E_Y = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p_val)
-        E_inv_Y = np.exp(log_kv_pm1 - log_kv_p_val) / sqrt_b_over_a
-
-        eps = 1e-6
-        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b / a)
+        # The first three expectation parameters are exactly the GIG expectations:
+        #   η_GIG = [E[log Y], E[1/Y], E[Y]] from GIG(p, a, b).
+        # Delegating to GIG._natural_to_expectation handles both the general Bessel
+        # case and the degenerate Gamma / InvGamma limits transparently.
+        gig_theta = np.array([p - 1, -b / 2, -a / 2])
+        E_log_Y, E_inv_Y, E_Y = _get_gig()._natural_to_expectation(gig_theta)
 
         E_X = mu + gamma * E_Y
         E_X_inv_Y = mu * E_inv_Y + gamma
@@ -385,24 +393,11 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
 
-        # GIG expectations using Bessel function ratios
-        sqrt_ab = np.sqrt(a * b)
-        sqrt_b_over_a = np.sqrt(b / a)
-
-        log_kv_p = log_kv(p, sqrt_ab)
-        log_kv_pm1 = log_kv(p - 1, sqrt_ab)
-        log_kv_pp1 = log_kv(p + 1, sqrt_ab)
-
-        # E[Y] = √(b/a) · K_{p+1}(√(ab)) / K_p(√(ab))
-        E_Y = sqrt_b_over_a * np.exp(log_kv_pp1 - log_kv_p)
-
-        # E[1/Y] = √(a/b) · K_{p-1}(√(ab)) / K_p(√(ab))
-        E_inv_Y = np.exp(log_kv_pm1 - log_kv_p) / sqrt_b_over_a
-
-        # E[log Y] = ∂/∂p log(K_p(√(ab))) + (1/2) log(b/a)
-        eps = 1e-6
-        d_log_kv_dp = (log_kv(p + eps, sqrt_ab) - log_kv(p - eps, sqrt_ab)) / (2 * eps)
-        E_log_Y = d_log_kv_dp + 0.5 * np.log(b / a)
+        # The first three expectations are exactly the GIG expectations from
+        # GIG(p, a, b).  Delegating to GIG._natural_to_expectation handles both
+        # the general Bessel case and the degenerate Gamma / InvGamma limits.
+        gig_theta = np.array([p - 1, -b / 2, -a / 2])
+        E_log_Y, E_inv_Y, E_Y = _get_gig()._natural_to_expectation(gig_theta)
 
         # E[X] = μ + γ E[Y]
         E_X = mu + gamma * E_Y
@@ -617,6 +612,79 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         self.set_expectation_params(eta_hat)
 
         return self
+
+    # ========================================================================
+    # Conversion to special cases
+    # ========================================================================
+
+    def to_joint_variance_gamma(self) -> 'JointVarianceGamma':
+        """
+        Convert to the closest :class:`JointVarianceGamma` by matching
+        expectation parameters.
+
+        The conversion projects the GH expectation-parameter vector onto the
+        Variance Gamma submanifold (GIG :math:`b \\to 0`, Gamma subordinator)
+        by calling :meth:`JointVarianceGamma.set_expectation_params` with
+        the current expectation parameters.
+
+        Returns
+        -------
+        jvg : JointVarianceGamma
+            Fitted Variance Gamma joint distribution.
+        """
+        from .joint_variance_gamma import JointVarianceGamma
+
+        self._check_fitted()
+        eta = self._compute_expectation_params()
+        jvg = JointVarianceGamma(d=self.d)
+        jvg.set_expectation_params(eta)
+        return jvg
+
+    def to_joint_normal_inverse_gaussian(self) -> 'JointNormalInverseGaussian':
+        """
+        Convert to the closest :class:`JointNormalInverseGaussian` by matching
+        expectation parameters.
+
+        The conversion projects the GH expectation-parameter vector onto the
+        Normal-Inverse Gaussian submanifold (:math:`p = -1/2`, Inverse Gaussian
+        subordinator) by calling
+        :meth:`JointNormalInverseGaussian.set_expectation_params`.
+
+        Returns
+        -------
+        jnig : JointNormalInverseGaussian
+            Fitted Normal-Inverse Gaussian joint distribution.
+        """
+        from .joint_normal_inverse_gaussian import JointNormalInverseGaussian
+
+        self._check_fitted()
+        eta = self._compute_expectation_params()
+        jnig = JointNormalInverseGaussian(d=self.d)
+        jnig.set_expectation_params(eta)
+        return jnig
+
+    def to_joint_normal_inverse_gamma(self) -> 'JointNormalInverseGamma':
+        """
+        Convert to the closest :class:`JointNormalInverseGamma` by matching
+        expectation parameters.
+
+        The conversion projects the GH expectation-parameter vector onto the
+        Normal-Inverse Gamma submanifold (GIG :math:`a \\to 0`, Inverse Gamma
+        subordinator) by calling
+        :meth:`JointNormalInverseGamma.set_expectation_params`.
+
+        Returns
+        -------
+        jning : JointNormalInverseGamma
+            Fitted Normal-Inverse Gamma joint distribution.
+        """
+        from .joint_normal_inverse_gamma import JointNormalInverseGamma
+
+        self._check_fitted()
+        eta = self._compute_expectation_params()
+        jning = JointNormalInverseGamma(d=self.d)
+        jning.set_expectation_params(eta)
+        return jning
 
     # ========================================================================
     # String representation

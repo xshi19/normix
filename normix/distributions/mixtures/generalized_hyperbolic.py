@@ -27,7 +27,12 @@ Special cases:
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from .variance_gamma import VarianceGamma
+    from .normal_inverse_gaussian import NormalInverseGaussian
+    from .normal_inverse_gamma import NormalInverseGamma
 
 from normix.base import NormalMixture, JointNormalMixture
 from normix.utils import log_kv, robust_cholesky
@@ -484,9 +489,11 @@ class GeneralizedHyperbolic(NormalMixture):
         The recommended regularization is :math:`|\\Sigma| = 1`, which doesn't
         affect EM convergence (see em_algorithm.rst for proof).
 
-        The initial parameters are obtained by running a short NIG EM
-        (5 iterations) to get a reasonable starting point for
-        :math:`(\\mu, \\gamma, \\Sigma)` and the GIG parameters.
+        The initial parameters are obtained by running a short EM
+        (5 iterations) for each special case (NIG, VG, NInvG) and
+        selecting the candidate with the highest log-likelihood as the
+        starting point for :math:`(\\mu, \\gamma, \\Sigma)` and the GIG
+        parameters.
 
         Examples
         --------
@@ -622,11 +629,18 @@ class GeneralizedHyperbolic(NormalMixture):
         random_state: Optional[int] = None
     ) -> None:
         """
-        Initialize GH parameters using a short NIG EM warm start.
+        Initialize GH parameters by fitting special-case sub-models and
+        selecting the one with highest log-likelihood.
 
-        Runs a Normal-Inverse Gaussian EM for a few iterations to obtain
-        reasonable initial values for :math:`(\\mu, \\gamma, \\Sigma)` and
-        the GIG parameters :math:`(p, a, b)`.
+        Runs a short EM (5 iterations) for each of three special cases:
+
+        - **NIG** (Normal-Inverse Gaussian): :math:`p = -1/2`
+        - **VG** (Variance Gamma): :math:`b \\to 0`
+        - **NInvG** (Normal-Inverse Gamma): :math:`a \\to 0`
+
+        Each fitted sub-model is converted to GH parametrisation and scored
+        on mean log-likelihood.  The best candidate is used as the starting
+        point for the full GH EM.
 
         Parameters
         ----------
@@ -637,49 +651,84 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         import warnings
         from .normal_inverse_gaussian import NormalInverseGaussian
+        from .variance_gamma import VarianceGamma
+        from .normal_inverse_gamma import NormalInverseGamma
 
         n, d = X.shape
+        candidates = []  # (name, mean_llh, mu, gamma, Sigma, p, a, b)
 
+        # --- Candidate: NIG (p = -1/2) ---
         try:
-            # Use NIG with a few EM iterations to get a warm start
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 nig = NormalInverseGaussian()
                 nig.fit(X, max_iter=5, verbose=0, random_state=random_state)
 
-            nig_params = nig.classical_params
-            mu = nig_params['mu']
-            gamma = nig_params['gamma']
-            Sigma = nig_params['sigma']
-            delta = nig_params['delta']
-            eta = nig_params['eta']
-
-            # Convert NIG (IG) params to GIG params:
-            # IG(δ, η) corresponds to GIG(p=-0.5, a=η/δ², b=η)
-            p = -0.45
-            a = eta / (delta ** 2)
-            b = eta
-
-            # Clamp GIG parameters to reasonable range
-            a = np.clip(a, 1e-6, 1e6)
-            b = np.clip(b, 1e-6, 1e6)
-
+            par = nig.classical_params
+            p = -0.4999
+            a = np.clip(par['eta'] / (par['delta'] ** 2), 1e-6, 1e6)
+            b = np.clip(par['eta'], 1e-6, 1e6)
+            ll = np.mean(nig.logpdf(X))
+            if np.isfinite(ll):
+                candidates.append(
+                    ('NIG', ll, par['mu'], par['gamma'], par['sigma'], p, a, b)
+                )
         except Exception:
-            # Fallback: method of moments initialization
+            pass
+
+        # --- Candidate: VG (b → 0, Gamma subordinator) ---
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                vg = VarianceGamma()
+                vg.fit(X, max_iter=5, verbose=0, random_state=random_state)
+
+            par = vg.classical_params
+            p = par['shape']
+            a = np.clip(2.0 * par['rate'], 1e-6, 1e6)
+            b = 1e-4
+            ll = np.mean(vg.logpdf(X))
+            if np.isfinite(ll):
+                candidates.append(
+                    ('VG', ll, par['mu'], par['gamma'], par['sigma'], p, a, b)
+                )
+        except Exception:
+            pass
+
+        # --- Candidate: NInvG (a → 0, InverseGamma subordinator) ---
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                ninvg = NormalInverseGamma()
+                ninvg.fit(X, max_iter=5, verbose=0, random_state=random_state)
+
+            par = ninvg.classical_params
+            p = -par['shape']
+            a = 1e-4
+            b = np.clip(2.0 * par['rate'], 1e-6, 1e6)
+            ll = np.mean(ninvg.logpdf(X))
+            if np.isfinite(ll):
+                candidates.append(
+                    ('NInvG', ll, par['mu'], par['gamma'], par['sigma'], p, a, b)
+                )
+        except Exception:
+            pass
+
+        if candidates:
+            best = max(candidates, key=lambda c: c[1])
+            _, _, mu, gamma, Sigma, p, a, b = best
+        else:
             mu = np.mean(X, axis=0)
             Sigma = np.cov(X, rowvar=False)
             if d == 1:
                 Sigma = np.array([[Sigma]])
-
             L = robust_cholesky(Sigma)
             Sigma = L @ L.T
-
             gamma = np.zeros(d)
             p = 1.0
             a = 1.0
             b = 1.0
 
-        # Set initial parameters
         self._joint.set_classical_params(
             mu=mu, gamma=gamma, sigma=Sigma, p=p, a=a, b=b
         )
@@ -1019,6 +1068,98 @@ class GeneralizedHyperbolic(NormalMixture):
             mu=mu, gamma=gamma_arr, sigma=sigma,
             p=-shape, a=a_small, b=2 * rate
         )
+
+    # ========================================================================
+    # Conversion to special cases (instance methods, using expectation params)
+    # ========================================================================
+
+    def to_variance_gamma(self) -> 'VarianceGamma':
+        """
+        Convert to the closest :class:`VarianceGamma` distribution by matching
+        expectation parameters.
+
+        Projects the GH expectation-parameter vector onto the Variance Gamma
+        submanifold (:math:`b \\to 0`, Gamma subordinator) by fitting a
+        :class:`JointVarianceGamma` to the current expectation parameters and
+        wrapping it in a :class:`VarianceGamma` marginal.
+
+        Returns
+        -------
+        vg : VarianceGamma
+            Fitted Variance Gamma distribution.
+
+        See Also
+        --------
+        JointGeneralizedHyperbolic.to_joint_variance_gamma
+        """
+        from .variance_gamma import VarianceGamma
+
+        self._check_fitted()
+        jvg = self._joint.to_joint_variance_gamma()
+        vg = VarianceGamma()
+        vg._joint = jvg
+        vg._fitted = True
+        vg._invalidate_cache()
+        return vg
+
+    def to_normal_inverse_gaussian(self) -> 'NormalInverseGaussian':
+        """
+        Convert to the closest :class:`NormalInverseGaussian` distribution by
+        matching expectation parameters.
+
+        Projects the GH expectation-parameter vector onto the Normal-Inverse
+        Gaussian submanifold (:math:`p = -1/2`, Inverse Gaussian subordinator)
+        by fitting a :class:`JointNormalInverseGaussian` to the current
+        expectation parameters and wrapping it in a
+        :class:`NormalInverseGaussian` marginal.
+
+        Returns
+        -------
+        nig : NormalInverseGaussian
+            Fitted Normal-Inverse Gaussian distribution.
+
+        See Also
+        --------
+        JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian
+        """
+        from .normal_inverse_gaussian import NormalInverseGaussian
+
+        self._check_fitted()
+        jnig = self._joint.to_joint_normal_inverse_gaussian()
+        nig = NormalInverseGaussian()
+        nig._joint = jnig
+        nig._fitted = True
+        nig._invalidate_cache()
+        return nig
+
+    def to_normal_inverse_gamma(self) -> 'NormalInverseGamma':
+        """
+        Convert to the closest :class:`NormalInverseGamma` distribution by
+        matching expectation parameters.
+
+        Projects the GH expectation-parameter vector onto the Normal-Inverse
+        Gamma submanifold (:math:`a \\to 0`, Inverse Gamma subordinator) by
+        fitting a :class:`JointNormalInverseGamma` to the current expectation
+        parameters and wrapping it in a :class:`NormalInverseGamma` marginal.
+
+        Returns
+        -------
+        ning : NormalInverseGamma
+            Fitted Normal-Inverse Gamma distribution.
+
+        See Also
+        --------
+        JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma
+        """
+        from .normal_inverse_gamma import NormalInverseGamma
+
+        self._check_fitted()
+        jning = self._joint.to_joint_normal_inverse_gamma()
+        ning = NormalInverseGamma()
+        ning._joint = jning
+        ning._fitted = True
+        ning._invalidate_cache()
+        return ning
 
     # ========================================================================
     # Moments
