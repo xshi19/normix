@@ -974,3 +974,419 @@ The JAX version is **dramatically simpler** — the entire 264-line `bessel.py` 
 | Sampling (GIG) | TFP JAX substrate or custom | No `scipy.stats.geninvgauss` in JAX |
 | Multi-start init | `jax.vmap` over starting points | Natural parallelism |
 | Package structure | Separate `normix_jax` package | Keep NumPy version as reference |
+
+---
+
+## Appendix D: Porting `normix/utils/bessel.py` to JAX — Detailed Analysis
+
+> **Context:** The `logbesselk` package has known issues
+> ([tk2lab/logbesselk#33](https://github.com/tk2lab/logbesselk/issues/33)),
+> so this appendix analyses how to port the *existing* normix Bessel
+> infrastructure to JAX instead, preserving its battle-tested numerical
+> behaviour.
+
+### D.1 What Needs Porting
+
+The current `normix/utils/bessel.py` provides five functions:
+
+| Function | Role | How it works |
+|---|---|---|
+| `log_kv(v, z)` | $\log K_\nu(z)$ | `scipy.special.kve` + log + asymptotic fallbacks |
+| `log_kv_vectorized(v, z)` | Same, both args vectorized | Same core, broadcast handling |
+| `log_kv_derivative_v(v, z)` | $\partial_\nu \log K_\nu(z)$ | Central differences on `log_kv` |
+| `log_kv_derivative_z(v, z)` | $\partial_z \log K_\nu(z)$ | Recurrence: $K'_\nu = -(K_{\nu-1}+K_{\nu+1})/2$ |
+| `kv_ratio(v1, v2, z)` | $K_{v_1}(z)/K_{v_2}(z)$ | Log-space subtraction |
+
+These are used in:
+
+1. **GIG** `_log_partition` and `_natural_to_expectation` — core exponential-family operations
+2. **All mixture E-steps** — `_conditional_expectation_y_given_x` in GH, VG, NIG, NInvG computes $E[Y|X]$, $E[1/Y|X]$, $E[\log Y|X]$ using Bessel ratios and `log_kv_derivative_v`
+3. **Marginal logpdf** — `_marginal_logpdf` in all mixture distributions
+
+### D.2 The Core Challenge: No `kve` in JAX
+
+JAX's `jax.scipy.special` provides `i0`, `i1`, `i0e`, `i1e` (first kind only).
+**There is no `kv` or `kve`** (second kind). Three options exist for evaluation:
+
+#### Option A: `jax.pure_callback` wrapping `scipy.special.kve`
+
+```python
+import jax
+import jax.numpy as jnp
+from scipy.special import kve as scipy_kve
+
+def _kve_host(v, z):
+    """Evaluate kve on the host CPU via scipy."""
+    import numpy as np
+    return np.asarray(scipy_kve(np.asarray(v), np.asarray(z)))
+
+def kve_callback(v, z):
+    """Call scipy.special.kve from JAX via pure_callback."""
+    return jax.pure_callback(
+        _kve_host,
+        jax.ShapeDtypeStruct(z.shape, z.dtype),
+        v, z,
+        vectorized=True,
+    )
+```
+
+| Pros | Cons |
+|---|---|
+| Reuses scipy's highly tested AMOS Fortran code | **CPU-only** — callback transfers data to host |
+| Zero implementation risk | Overhead per call (~10-100μs) |
+| Matches current normix numerics exactly | Not differentiable by default (need `custom_jvp`) |
+| | Does not work inside `jax.lax.while_loop` / `scan` |
+
+#### Option B: TFP's `tfp.substrates.jax.math.bessel_kve`
+
+```python
+import tensorflow_probability.substrates.jax as tfp
+
+def kve_tfp(v, z):
+    return tfp.math.bessel_kve(v, z)
+```
+
+| Pros | Cons |
+|---|---|
+| Pure JAX/XLA — works on GPU/TPU | Gradient w.r.t. $\nu$ **not defined** |
+| JIT, vmap compatible | Large dependency (`tensorflow-probability`) |
+| Has its own gradient for $z$ | Accuracy may differ from scipy for edge cases |
+| Works inside `lax.while_loop` / `scan` | |
+
+#### Option C: Implement `kve` from scratch in JAX
+
+This would involve porting the uniform asymptotic expansion or the
+Miller algorithm. TFP's implementation is ~500 lines.
+
+| Pros | Cons |
+|---|---|
+| Full control, no external dependency | Significant effort (~2-4 weeks) |
+| Can tailor to normix's parameter ranges | Risk of subtle numerical bugs |
+| Works everywhere (GPU, scan, etc.) | Must be extensively validated |
+
+#### Recommendation
+
+**Option B (TFP) for pure-JAX deployments, Option A (callback) for CPU-only
+workflows where matching scipy exactly matters.** Both require `custom_jvp`
+for gradients (see D.3). Option A is the path of least resistance for an
+initial port; Option B is the right choice for production/GPU workloads.
+
+In practice, you can support both behind an abstraction:
+
+```python
+def _log_kve_impl(v, z):
+    """Dispatches to TFP or scipy callback based on config."""
+    if USE_TFP:
+        return jnp.log(tfp.math.bessel_kve(v, z))
+    else:
+        return jnp.log(kve_callback(v, z))
+```
+
+### D.3 Registering Gradients via `custom_jvp`
+
+Regardless of which evaluation backend is used, **JAX cannot differentiate
+through `kve` automatically** — neither the scipy callback nor TFP's
+implementation supports $\partial/\partial\nu$. The solution is
+`jax.custom_jvp`, which lets you define the derivative rules explicitly.
+
+The existing normix code already contains the derivative formulas:
+
+- **$\partial_z \log K_\nu(z)$**: exact via the recurrence
+  $K'_\nu(z) = -(K_{\nu-1}(z) + K_{\nu+1}(z))/2$
+- **$\partial_\nu \log K_\nu(z)$**: central finite differences
+  $\approx (\log K_{\nu+\varepsilon}(z) - \log K_{\nu-\varepsilon}(z))/(2\varepsilon)$
+
+These translate directly to a `custom_jvp`:
+
+```python
+@jax.custom_jvp
+def log_kv(v, z):
+    """log K_v(z), with custom derivative rules."""
+    z = jnp.maximum(z, jnp.finfo(z.dtype).tiny)
+    kve_val = _kve_impl(v, z)  # scipy callback or TFP
+    raw = jnp.log(jnp.maximum(kve_val, jnp.finfo(z.dtype).tiny)) - z
+
+    # Asymptotic fallback for small z (same logic as current normix)
+    v_abs = jnp.abs(v)
+    large_v_approx = (jax.scipy.special.gammaln(v_abs) - jnp.log(2.0)
+                      + v_abs * (jnp.log(2.0) - jnp.log(z)))
+    small_v_approx = jnp.log(jnp.maximum(-jnp.log(z / 2.0) - 0.5772156649, jnp.finfo(z.dtype).tiny))
+    approx = jnp.where(v_abs > 1e-10, large_v_approx, small_v_approx)
+
+    return jnp.where(jnp.isinf(raw), approx, raw)
+
+
+@log_kv.defjvp
+def log_kv_jvp(primals, tangents):
+    v, z = primals
+    v_dot, z_dot = tangents
+    primal_out = log_kv(v, z)
+
+    # --- ∂/∂z: exact via recurrence relation ---
+    # d/dz log K_v(z) = -1/2 (K_{v-1}(z)/K_v(z) + K_{v+1}(z)/K_v(z))
+    log_kv_m1 = log_kv(v - 1.0, z)
+    log_kv_p1 = log_kv(v + 1.0, z)
+    dfdz = -0.5 * (jnp.exp(log_kv_m1 - primal_out)
+                   + jnp.exp(log_kv_p1 - primal_out))
+
+    # --- ∂/∂v: central finite differences ---
+    eps = 1e-5
+    log_kv_vpe = log_kv(v + eps, z)
+    log_kv_vme = log_kv(v - eps, z)
+    dfdv = (log_kv_vpe - log_kv_vme) / (2.0 * eps)
+
+    tangent_out = dfdv * v_dot + dfdz * z_dot
+    return primal_out, tangent_out
+```
+
+**Key observations about this pattern:**
+
+1. **The JVP rule calls `log_kv` recursively** for $K_{\nu\pm 1}(z)$ and
+   $K_{\nu\pm\varepsilon}(z)$. This is safe — JAX's `custom_jvp` is designed
+   for this. The recursive calls evaluate `log_kv` at new `(v, z)` points but
+   do not trigger the JVP rule again (the JVP rule is only invoked when
+   differentiating *through* `log_kv`).
+
+2. **For first derivatives** (which is what `jax.grad(log_partition)(theta)`
+   computes), this gives the same results as the current normix code.
+
+3. **For second derivatives** (Hessian / Fisher information), JAX
+   differentiates *through the JVP rule itself*. This means:
+
+   | Second derivative | What JAX computes | Accuracy |
+   |---|---|---|
+   | $\partial^2/\partial z^2$ | Differentiates the recurrence formula — triggers JVP of the $K_{\nu\pm 1}$ calls, which themselves use the recurrence | **Exact** (recurrence of recurrence) |
+   | $\partial^2/\partial\nu\partial z$ | Differentiates the finite-difference formula w.r.t. $z$ — the $K_{\nu\pm\varepsilon}$ calls get the recurrence JVP | **Exact in $z$**, $O(\varepsilon^2)$ in $\nu$ |
+   | $\partial^2/\partial\nu^2$ | Differentiates the finite-difference formula w.r.t. $\nu$ — the $K_{\nu\pm\varepsilon}$ calls get the finite-difference JVP | $O(\varepsilon^2)$ — **same as current normix** which uses `scipy.differentiate.hessian` numerically |
+
+   In practice the Hessian accuracy is sufficient. The current normix already
+   uses a fully numerical Hessian for Fisher information.
+
+### D.4 Handling Degenerate Cases in JIT
+
+The current normix uses Python `if` statements for degenerate cases
+($\sqrt{ab} < 10^{-10}$). In JAX under `jit`, this must use `jnp.where`:
+
+```python
+def log_partition_gig(theta):
+    p = theta[0] + 1
+    b = jnp.maximum(-2 * theta[1], 1e-30)  # soft clamp to avoid log(0)
+    a = jnp.maximum(-2 * theta[2], 1e-30)
+    sqrt_ab = jnp.sqrt(a * b)
+
+    # General Bessel case
+    bessel_result = jnp.log(2.0) + log_kv(p, sqrt_ab) + (p / 2) * (jnp.log(b) - jnp.log(a))
+
+    # Gamma limit (b ≈ 0): Γ(α=p, β=a/2)
+    gamma_result = jax.scipy.special.gammaln(p) - p * jnp.log(a / 2)
+
+    # InvGamma limit (a ≈ 0): InvΓ(α=-p, β=b/2)
+    invgamma_result = jax.scipy.special.gammaln(-p) + p * jnp.log(b / 2)
+
+    threshold = 1e-10
+    return jnp.where(
+        sqrt_ab < threshold,
+        jnp.where(a <= b, invgamma_result, gamma_result),
+        bessel_result
+    )
+```
+
+**Important:** `jnp.where` evaluates *all three* branches. If `log_kv`
+produces `nan` or `inf` for tiny `sqrt_ab`, the `jnp.where` still returns
+the correct (degenerate) result because it only *selects* the appropriate
+value. However, `nan` propagates through gradients — if JAX traces through
+the Bessel branch and it produces `nan`, the gradient can be `nan` even
+though the forward pass selects the degenerate branch.
+
+**Mitigation:** Clamp `sqrt_ab` to a minimum of `1e-30` before passing to
+`log_kv`. This ensures the Bessel evaluation never sees truly degenerate
+inputs. The `jnp.where` still selects the correct closed-form result when
+$\sqrt{ab}$ is small, but the unused Bessel branch no longer produces `nan`.
+An alternative is `jax.lax.cond`, which only evaluates the taken branch, but
+this is not vectorizable with `vmap`.
+
+### D.5 Full JAX Port of `bessel.py`
+
+Here is the complete ported module:
+
+```python
+"""JAX port of normix Bessel function utilities."""
+
+import jax
+import jax.numpy as jnp
+
+# Choose evaluation backend
+try:
+    import tensorflow_probability.substrates.jax as tfp
+    def _kve_impl(v, z):
+        return tfp.math.bessel_kve(v, z)
+    _BACKEND = "tfp"
+except ImportError:
+    from scipy.special import kve as _scipy_kve
+    import numpy as np
+
+    def _kve_host(v, z):
+        return np.asarray(_scipy_kve(np.asarray(v), np.asarray(z)), dtype=np.float64)
+
+    def _kve_impl(v, z):
+        return jax.pure_callback(
+            _kve_host,
+            jax.ShapeDtypeStruct(jnp.broadcast_shapes(jnp.shape(v), jnp.shape(z)),
+                                 jnp.float64),
+            v, z,
+            vectorized=True,
+        )
+    _BACKEND = "scipy_callback"
+
+
+@jax.custom_jvp
+def log_kv(v, z):
+    """log K_v(z) with asymptotic fallbacks for small z."""
+    v = jnp.asarray(v, dtype=jnp.float64)
+    z = jnp.asarray(z, dtype=jnp.float64)
+    z = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
+
+    kve_val = _kve_impl(v, z)
+    raw = jnp.log(jnp.maximum(kve_val, jnp.finfo(jnp.float64).tiny)) - z
+
+    v_abs = jnp.abs(v)
+    large_v_approx = (jax.scipy.special.gammaln(v_abs) - jnp.log(2.0)
+                      + v_abs * (jnp.log(2.0) - jnp.log(z)))
+    euler_gamma = 0.5772156649015329
+    small_v_approx = jnp.log(
+        jnp.maximum(-jnp.log(z / 2.0) - euler_gamma, jnp.finfo(jnp.float64).tiny)
+    )
+    approx = jnp.where(v_abs > 1e-10, large_v_approx, small_v_approx)
+    return jnp.where(jnp.isinf(raw) | jnp.isnan(raw), approx, raw)
+
+
+@log_kv.defjvp
+def _log_kv_jvp(primals, tangents):
+    v, z = primals
+    v_dot, z_dot = tangents
+    primal_out = log_kv(v, z)
+
+    # ∂/∂z: exact recurrence  K'_v(z) = -(K_{v-1} + K_{v+1}) / 2
+    log_kv_m1 = log_kv(v - 1.0, z)
+    log_kv_p1 = log_kv(v + 1.0, z)
+    dfdz = -0.5 * (jnp.exp(log_kv_m1 - primal_out)
+                   + jnp.exp(log_kv_p1 - primal_out))
+
+    # ∂/∂v: central finite differences
+    eps = 1e-5
+    dfdv = (log_kv(v + eps, z) - log_kv(v - eps, z)) / (2.0 * eps)
+
+    tangent_out = dfdv * v_dot + dfdz * z_dot
+    return primal_out, tangent_out
+
+
+def kv_ratio(v1, v2, z):
+    """K_{v1}(z) / K_{v2}(z) in log space."""
+    return jnp.exp(log_kv(v1, z) - log_kv(v2, z))
+```
+
+**What changed vs. the original:**
+
+| Aspect | Original (NumPy/SciPy) | JAX port |
+|---|---|---|
+| Evaluation | `scipy.special.kve` direct | `pure_callback` or TFP |
+| Scalar/array dispatch | `np.isscalar` + `np.atleast_1d` | Not needed — JAX traces all paths |
+| Inf mask + mutation | `result[inf_mask] = approx` | `jnp.where(jnp.isinf(...), ...)` |
+| Python `if np.any(...)` | Eager branching | `jnp.where` (both branches evaluated) |
+| `log_kv_derivative_v` | Separate function, central differences | **Absorbed into `custom_jvp`** |
+| `log_kv_derivative_z` | Separate function, recurrence | **Absorbed into `custom_jvp`** |
+| `log_kv_vectorized` | Separate function | **Not needed** — `vmap(log_kv)` |
+
+The derivative functions disappear as standalone utilities — they become part
+of the `custom_jvp` rule, so `jax.grad` just works.
+
+### D.6 Difficulty Assessment
+
+| Task | Difficulty | Effort |
+|---|---|---|
+| Port `log_kv` evaluation (with `jnp.where` for asymptotics) | **Easy** | 1-2 days |
+| Write `custom_jvp` with recurrence + finite differences | **Easy** | 1 day |
+| Validate against scipy across parameter ranges | **Medium** | 2-3 days |
+| Handle degenerate cases ($\sqrt{ab} \to 0$) without NaN gradients | **Medium** | 1-2 days |
+| Validate Hessian (2nd derivatives) accuracy | **Medium** | 1-2 days |
+| Port all call sites (GIG, mixtures) to use JAX `log_kv` | **Easy** | 2-3 days |
+| **Total** | | **~2 weeks** |
+
+The port is **straightforward** because:
+
+1. The derivative formulas already exist in normix — they just move into `custom_jvp`
+2. The asymptotic fallback logic is simple to express with `jnp.where`
+3. No new mathematical derivations are needed
+4. The `pure_callback` approach for scipy can serve as a first step, with TFP as an upgrade path
+
+### D.7 Impact on the Log Partition Gradient
+
+Once `log_kv` has a `custom_jvp`, the GIG log partition function becomes
+automatically differentiable:
+
+```python
+def log_partition_gig(theta):
+    p = theta[0] + 1
+    b = jnp.maximum(-2 * theta[1], 1e-30)
+    a = jnp.maximum(-2 * theta[2], 1e-30)
+    sqrt_ab = jnp.sqrt(a * b)
+    return jnp.log(2.0) + log_kv(p, sqrt_ab) + (p / 2) * (jnp.log(b) - jnp.log(a))
+
+# This now works — JAX uses the custom_jvp to differentiate through log_kv:
+eta = jax.grad(log_partition_gig)(theta)   # expectation parameters
+fisher = jax.hessian(log_partition_gig)(theta)  # Fisher information
+```
+
+Compare with the current normix, where `_natural_to_expectation` is a 50-line
+hand-coded method calling `log_kv`, `log_kv_derivative_v`, and computing
+Bessel ratios manually. In the JAX version, `jax.grad` does this
+automatically, producing the same numerical result (since the custom_jvp
+encodes the same derivative formulas).
+
+The hand-coded `_natural_to_expectation` in the GIG class would become
+**optional** — you could keep it as an optimized override (avoiding redundant
+`log_kv` evaluations), or remove it entirely and rely on `jax.grad`.
+
+### D.8 Impact on Mixture E-Steps
+
+The E-step computes $E[Y|X]$, $E[1/Y|X]$, $E[\log Y|X]$ where $Y|X \sim \text{GIG}(p', a', b'(x))$.
+
+Currently these use `kv_ratio` and `log_kv_derivative_v` directly. In JAX:
+
+```python
+def conditional_expectations(p_cond, a_cond, b_cond):
+    """Compute E[Y], E[1/Y], E[log Y] for Y ~ GIG(p_cond, a_cond, b_cond)."""
+    delta = jnp.sqrt(b_cond / a_cond)
+    eta = jnp.sqrt(a_cond * b_cond)
+
+    # These call log_kv, which has custom_jvp — all differentiable
+    E_Y = delta * kv_ratio(p_cond + 1, p_cond, eta)
+    E_inv_Y = kv_ratio(p_cond - 1, p_cond, eta) / delta
+
+    # E[log Y] = ∂/∂p log K_p(eta) + log(delta)
+    # With custom_jvp, this is just jax.grad:
+    E_log_Y = jax.grad(log_kv, argnums=0)(p_cond, eta) + jnp.log(delta)
+
+    return E_Y, E_inv_Y, E_log_Y
+```
+
+The key simplification: `log_kv_derivative_v(p, z)` becomes
+`jax.grad(log_kv, argnums=0)(p, z)`. Same numerical result (both use
+central differences), but expressed through JAX's standard autodiff API.
+
+For the EM algorithm, these E-step quantities are **not differentiated through**
+(the EM algorithm does not need gradients of the E-step). So the `custom_jvp`
+is not invoked during EM — `log_kv` is just called as a regular function.
+The `custom_jvp` becomes relevant only when computing $\eta = \nabla\psi(\theta)$
+or the Fisher information.
+
+### D.9 Summary
+
+Porting the normix Bessel infrastructure to JAX is a **moderate effort (~2 weeks)**
+with **low risk**, because:
+
+- The derivative formulas (recurrence for $z$, finite differences for $\nu$) already exist and simply move into a `custom_jvp` rule
+- The evaluation can use `scipy.special.kve` via `pure_callback` initially, with TFP's `bessel_kve` as a pure-JAX upgrade path
+- No new mathematics is needed — the port is mechanical
+- The `custom_jvp` approach gives the same numerical accuracy as the current normix for first derivatives, and comparable accuracy for second derivatives
+- `jax.grad(log_partition)` replaces the hand-coded `_natural_to_expectation` in the GIG class
