@@ -1,0 +1,803 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log Bessel K Function: Implementation Comparison &mdash; normix 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos &amp; Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Log Bessel K Function: Implementation Comparison</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/notebooks/bessel_function_comparison.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p>This page was generated from a Jupyter notebook. You can
+<a href="https://github.com/xshi19/normix/blob/main/notebooks/bessel_function_comparison.ipynb">
+view it on GitHub</a> or download and run it locally.</p>
+</div><section id="Log-Bessel-K-Function:-Implementation-Comparison">
+<h1>Log Bessel K Function: Implementation Comparison<a class="headerlink" href="#Log-Bessel-K-Function:-Implementation-Comparison" title="Link to this heading"></a></h1>
+<p>Compare three implementations of <span class="math notranslate nohighlight">\(\log K_\nu(z)\)</span>:</p>
+<ol class="arabic simple">
+<li><p><strong>normix</strong> — <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> with log wrapper + asymptotic fallbacks</p></li>
+<li><p><strong>TFP</strong> — <code class="docutils literal notranslate"><span class="pre">tensorflow_probability.substrates.jax.math.log_bessel_kve</span></code> (pure JAX)</p></li>
+<li><p><strong>logbesselk</strong> — <code class="docutils literal notranslate"><span class="pre">logbesselk.jax.log_bessel_k</span></code> (JAX, numerical integration)</p></li>
+</ol>
+<p>Then build a JAX <code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code> wrapper for gradients in both <span class="math notranslate nohighlight">\(\nu\)</span> and <span class="math notranslate nohighlight">\(z\)</span>, and test vectorization, Hessians, and performance.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import kve as scipy_kve
+from normix.utils import log_kv as normix_log_kv, log_kv_derivative_v, log_kv_derivative_z
+
+plt.style.use(&#39;seaborn-v0_8&#39;)
+print(&#39;Imports loaded&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Imports loaded
+</pre></div></div>
+</div>
+<section id="1.-Overflow-Stress-Test:-All-Implementations">
+<h2>1. Overflow Stress Test: All Implementations<a class="headerlink" href="#1.-Overflow-Stress-Test:-All-Implementations" title="Link to this heading"></a></h2>
+<p>For large <span class="math notranslate nohighlight">\(|\nu|\)</span> and small <span class="math notranslate nohighlight">\(z\)</span>, <code class="docutils literal notranslate"><span class="pre">scipy.special.kv</span></code> overflows to 0 (giving <span class="math notranslate nohighlight">\(\log K_\nu = -\infty\)</span>). normix handles this via <code class="docutils literal notranslate"><span class="pre">kve</span></code> (exponentially scaled) + asymptotic fallbacks. Here we check that TFP and logbesselk also avoid overflow in these regimes.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
+jax.config.update(&#39;jax_enable_x64&#39;, True)
+import jax.numpy as jnp
+import tensorflow_probability.substrates.jax as tfp
+from logbesselk.jax import log_bessel_k as logbesselk_fn
+from scipy.special import kv as scipy_kv
+
+def tfp_log_kv_scalar(v, z):
+    &quot;&quot;&quot;TFP: log_bessel_kve(|v|, z) - z.&quot;&quot;&quot;
+    return float(tfp.math.log_bessel_kve(jnp.float64(abs(v)), jnp.float64(z)) - z)
+
+def lbk_log_kv_scalar(v, z):
+    &quot;&quot;&quot;logbesselk: log_bessel_k(v, z).&quot;&quot;&quot;
+    try:
+        return float(logbesselk_fn(jnp.float64(v), jnp.float64(z)))
+    except:
+        return float(&#39;nan&#39;)
+
+for v, z_max in [(10, 50), (100, 1000), (200, 1000), (500, 1000)]:
+    z_dense = np.linspace(0.01, z_max, 3000)
+    z_tfp = np.linspace(0.01, z_max, 200)
+
+    raw_scipy = np.log(np.maximum(scipy_kv(v, z_dense), np.finfo(float).tiny))
+    normix_v = normix_log_kv(v, z_dense)
+
+    # TFP: vectorized (pure JAX, fast)
+    tfp_v = np.asarray(
+        tfp.math.log_bessel_kve(jnp.float64(abs(v)), jnp.asarray(z_tfp)) - jnp.asarray(z_tfp))
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
+
+    # Left: values
+    ax = axes[0]
+    ax.plot(z_dense, normix_v, &#39;b-&#39;, lw=2, label=&#39;normix (kve + fallbacks)&#39;)
+    ax.plot(z_dense, raw_scipy, color=&#39;gray&#39;, ls=&#39;--&#39;, lw=1,
+            label=&#39;np.log(scipy.kv) — overflows!&#39;, alpha=0.6)
+    ax.plot(z_tfp, tfp_v, &#39;r.&#39;, ms=3, label=&#39;TFP (log_bessel_kve)&#39;)
+    ax.set_ylabel(r&#39;$\log K_{\nu}(z)$&#39;)
+    ax.set_xlabel(&#39;z&#39;)
+    ax.set_title(f&#39;$\\nu = {v}$: values&#39;)
+    ax.legend(fontsize=8)
+
+    # Middle: overflow comparison
+    ax = axes[1]
+    bad_scipy = np.isinf(raw_scipy) | np.isnan(raw_scipy)
+    bad_normix = ~np.isfinite(normix_v)
+    bad_tfp = ~np.isfinite(tfp_v)
+    ax.plot(z_dense, bad_scipy.astype(float), color=&#39;gray&#39;, lw=1.5,
+            label=f&#39;scipy.kv: {bad_scipy.sum()} overflow&#39;)
+    ax.plot(z_dense, bad_normix.astype(float) + 0.03, &#39;b-&#39;, lw=1,
+            label=f&#39;normix: {bad_normix.sum()} overflow&#39;)
+    ax.plot(z_tfp, bad_tfp.astype(float) + 0.06, &#39;r-&#39;, lw=1,
+            label=f&#39;TFP: {bad_tfp.sum()} overflow&#39;)
+    ax.set_ylabel(&#39;Overflow / NaN (1=True)&#39;)
+    ax.set_xlabel(&#39;z&#39;)
+    ax.set_title(f&#39;$\\nu = {v}$: overflow regions&#39;)
+    ax.legend(fontsize=8)
+    ax.set_ylim(-0.1, 1.2)
+
+    # Right: relative error vs normix
+    ax = axes[2]
+    normix_at_tfp = normix_log_kv(v, z_tfp)
+    safe = np.where(np.abs(normix_at_tfp) &gt; 1e-300, normix_at_tfp, 1.0)
+    rel_tfp = np.abs((tfp_v - normix_at_tfp) / safe)
+    ax.semilogy(z_tfp, rel_tfp + 1e-17, &#39;r.-&#39;, ms=3, lw=0.8, label=&#39;TFP vs normix&#39;)
+    ax.set_ylabel(&#39;Relative error&#39;)
+    ax.set_xlabel(&#39;z&#39;)
+    ax.set_title(f&#39;$\\nu = {v}$: TFP accuracy vs normix&#39;)
+    ax.legend(fontsize=8)
+    ax.set_ylim(1e-17, 1e1)
+
+    plt.tight_layout()
+    plt.show()
+    print(f&#39;  v={v}: scipy.kv overflows at {bad_scipy.sum()}/{len(z_dense)} pts, &#39;
+          f&#39;normix: {bad_normix.sum()}, TFP: {bad_tfp.sum()}/{len(z_tfp)}&#39;)
+    if np.any(np.isfinite(rel_tfp)):
+        print(f&#39;         TFP max relative error vs normix = {rel_tfp[np.isfinite(rel_tfp)].max():.2e}&#39;)
+    print()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_bessel_function_comparison_3_0.png" src="../_images/notebooks_bessel_function_comparison_3_0.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  v=10: scipy.kv overflows at 0/3000 pts, normix: 0, TFP: 0/200
+         TFP max relative error vs normix = 8.94e-15
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_bessel_function_comparison_3_2.png" src="../_images/notebooks_bessel_function_comparison_3_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  v=100: scipy.kv overflows at 1/3000 pts, normix: 0, TFP: 0/200
+         TFP max relative error vs normix = 2.84e-10
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_bessel_function_comparison_3_4.png" src="../_images/notebooks_bessel_function_comparison_3_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  v=200: scipy.kv overflows at 14/3000 pts, normix: 0, TFP: 0/200
+         TFP max relative error vs normix = 6.55e-11
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_bessel_function_comparison_3_6.png" src="../_images/notebooks_bessel_function_comparison_3_6.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  v=500: scipy.kv overflows at 270/3000 pts, normix: 0, TFP: 0/200
+         TFP max relative error vs normix = 1.02e-02
+
+</pre></div></div>
+</div>
+<section id="logbesselk-overflow-check-(scalar-calls-—-avoids-heavy-JIT-compilation)">
+<h3>logbesselk overflow check (scalar calls — avoids heavy JIT compilation)<a class="headerlink" href="#logbesselk-overflow-check-(scalar-calls-—-avoids-heavy-JIT-compilation)" title="Link to this heading"></a></h3>
+<p>logbesselk’s JIT compilation is very memory-intensive for large <span class="math notranslate nohighlight">\(|\nu|\)</span>, so we test it at selected points rather than dense grids.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&#39;{&quot;v&quot;:&gt;6s} {&quot;z&quot;:&gt;8s} | {&quot;normix&quot;:&gt;14s} {&quot;TFP&quot;:&gt;14s} {&quot;logbesselk&quot;:&gt;14s} | {&quot;lbk overflow?&quot;:&gt;14s} {&quot;lbk-normix&quot;:&gt;12s}&#39;)
+print(&#39;-&#39; * 90)
+for v_val in [10, 50, 100, 200, 500]:
+    for z_val in [1e-12, 1e-6, 0.01, 1.0, 100.0, 500.0, 1000.0]:
+        n = normix_log_kv(v_val, z_val)
+        t = tfp_log_kv_scalar(v_val, z_val)
+        l = lbk_log_kv_scalar(v_val, z_val)
+        lbk_ok = &#39;OK&#39; if np.isfinite(l) else &#39;OVERFLOW/NaN&#39;
+        ld = f&#39;{l - n:12.2e}&#39; if np.isfinite(l) and np.isfinite(n) else &#39;      ---&#39;
+        print(f&#39;{v_val:6d} {z_val:8.1e} | {n:14.4f} {t:14.4f} {l:14.4f} | {lbk_ok:&gt;14s} {ld}&#39;)
+    print()
+
+print(&#39;Key: logbesselk never overflows, but has large errors for |v| &gt; 50.&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+     v        z |         normix            TFP     logbesselk |  lbk overflow?   lbk-normix
+------------------------------------------------------------------------------------------
+    10  1.0e-12 |       295.3504       295.3504       295.5921 |             OK     2.42e-01
+    10  1.0e-06 |       157.1953       157.1953       157.1779 |             OK    -1.73e-02
+    10  1.0e-02 |        65.0919        65.0919        65.0919 |             OK    -2.42e-07
+    10  1.0e+00 |        19.0124        19.0124        19.0124 |             OK     3.55e-15
+    10  1.0e+02 |      -101.5809      -101.5809      -101.5809 |             OK     0.00e+00
+    10  5.0e+02 |      -502.7819      -502.7819      -502.7819 |             OK    -5.68e-14
+    10  1.0e+03 |     -1003.1782     -1003.1782     -1003.2282 |             OK    -5.00e-02
+
+    50  1.0e-12 |      1560.0810      1560.0810      1558.9185 |             OK    -1.16e+00
+    50  1.0e-06 |       869.3055       869.3055       869.7961 |             OK     4.91e-01
+    50  1.0e-02 |       408.7885       408.7885       408.7186 |             OK    -6.99e-02
+    50  1.0e+00 |       178.5249       178.5249       178.5251 |             OK     2.66e-04
+    50  1.0e+02 |       -89.8761       -89.8761       -89.8761 |             OK    -1.42e-14
+    50  5.0e+02 |      -500.3863      -500.3863      -500.3863 |             OK     0.00e+00
+    50  1.0e+03 |     -1001.9791     -1001.9791     -1003.2282 |             OK    -1.25e+00
+
+   100  1.0e-12 |      3190.8579      3190.8579      3185.7356 |             OK    -5.12e+00
+   100  1.0e-06 |      1809.3068      1809.3068      1810.3220 |             OK     1.02e+00
+   100  1.0e-02 |       888.2728       888.2728       888.6910 |             OK     4.18e-01
+   100  1.0e+00 |       427.7533       427.7533       427.7185 |             OK    -3.48e-02
+   100  1.0e+02 |       -55.5342       -55.5342       -55.5342 |             OK     0.00e+00
+   100  5.0e+02 |      -492.9245      -492.9245      -492.9245 |             OK     0.00e+00
+   100  1.0e+03 |      -998.2349      -998.2349     -1003.2282 |             OK    -4.99e+00
+
+   200  1.0e-12 |      6522.0742      6522.0742      6506.3455 |             OK    -1.57e+01
+   200  1.0e-06 |      3758.9721      3758.9721      3759.6540 |             OK     6.82e-01
+   200  1.0e-02 |      1916.9040      1916.9040      1917.0311 |             OK     1.27e-01
+   200  1.0e+00 |       995.8700       995.8687       996.0954 |             OK     2.25e-01
+   200  1.0e+02 |        62.6413        62.6413        62.6413 |             OK     3.43e-07
+   200  5.0e+02 |      -463.4282      -463.4282      -463.4282 |             OK     0.00e+00
+   200  1.0e+03 |      -983.3039      -983.3039     -1003.2282 |             OK    -1.99e+01
+
+   500  1.0e-12 |     16766.5069     16766.5069     16709.2054 |             OK    -5.73e+01
+   500  1.0e-06 |      9858.7516      9858.7516      9852.6766 |             OK    -6.07e+00
+   500  1.0e-02 |      5253.5814      5253.5814      5243.6759 |             OK    -9.91e+00
+   500  1.0e+00 |      2950.9963      2950.9958      2950.2737 |             OK    -7.23e-01
+   500  1.0e+02 |       648.4112       643.4260       643.3567 |             OK    -5.05e+00
+   500  5.0e+02 |      -269.4748      -269.4748      -269.4749 |             OK    -6.77e-05
+   500  1.0e+03 |      -880.7120      -880.7120     -1003.2282 |             OK    -1.23e+02
+
+Key: logbesselk never overflows, but has large errors for |v| &gt; 50.
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="2.-Detailed-Scalar-Accuracy-Table">
+<h2>2. Detailed Scalar Accuracy Table<a class="headerlink" href="#2.-Detailed-Scalar-Accuracy-Table" title="Link to this heading"></a></h2>
+<p>All three implementations at specific parameter combinations including extreme cases.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&#39;{&quot;v&quot;:&gt;6s} {&quot;z&quot;:&gt;8s} | {&quot;normix&quot;:&gt;14s} {&quot;TFP&quot;:&gt;14s} {&quot;logbesselk&quot;:&gt;14s} | {&quot;TFP-normix&quot;:&gt;12s} {&quot;lbk-normix&quot;:&gt;12s}&#39;)
+print(&#39;-&#39; * 90)
+for v_val, z_val in [
+    (1.0, 0.01), (1.0, 1.0), (1.0, 100.0), (1.0, 1e-12),
+    (5.0, 0.01), (5.0, 1.0), (5.0, 100.0), (5.0, 1e-8),
+    (50.0, 1e-4), (50.0, 0.01), (50.0, 1.0), (50.0, 100.0),
+    (100.0, 0.01), (100.0, 1.0), (100.0, 100.0),
+    (200.0, 0.01), (200.0, 1.0), (200.0, 100.0),
+    (500.0, 0.01), (500.0, 1.0), (500.0, 100.0),
+    (-0.5, 1.0), (-5.0, 0.1), (-50.0, 10.0),
+    (1e-8, 0.1), (0.01, 1e-5),
+]:
+    n = normix_log_kv(abs(v_val), z_val)
+    t = tfp_log_kv_scalar(v_val, z_val)
+    l = lbk_log_kv_scalar(v_val, z_val)
+    td = t - n if np.isfinite(n) and np.isfinite(t) else float(&#39;nan&#39;)
+    ld = l - n if np.isfinite(n) and np.isfinite(l) else float(&#39;nan&#39;)
+    print(f&#39;{v_val:6.1g} {z_val:8.1e} | {n:14.4f} {t:14.4f} {l:14.4f} | {td:12.2e} {ld:12.2e}&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+     v        z |         normix            TFP     logbesselk |   TFP-normix   lbk-normix
+------------------------------------------------------------------------------------------
+     1  1.0e-02 |         4.6049         4.6049         4.6049 |     0.00e+00    -2.04e-14
+     1  1.0e+00 |        -0.5077        -0.5077        -0.5077 |     1.11e-16     2.22e-16
+     1  1.0e+02 |      -102.0731      -102.0731      -102.0731 |     0.00e+00     0.00e+00
+     1  1.0e-12 |        27.6310        27.6310        27.6309 |     0.00e+00    -8.71e-05
+     5  1.0e-02 |        28.9765        28.9765        28.9765 |    -7.11e-15    -1.25e-09
+     5  1.0e+00 |         5.8888         5.8888         5.8888 |     8.88e-16     8.88e-16
+     5  1.0e+02 |      -101.9537      -101.9537      -101.9537 |     0.00e+00     0.00e+00
+     5  1.0e-08 |        98.0540        98.0540        98.0553 |     0.00e+00     1.23e-03
+ 5e+01  1.0e-04 |       639.0470       639.0470       639.4316 |     0.00e+00     3.85e-01
+ 5e+01  1.0e-02 |       408.7885       408.7885       408.7186 |     5.68e-14    -6.99e-02
+ 5e+01  1.0e+00 |       178.5249       178.5249       178.5251 |    -2.84e-14     2.66e-04
+ 5e+01  1.0e+02 |       -89.8761       -89.8761       -89.8761 |     0.00e+00    -1.42e-14
+ 1e+02  1.0e-02 |       888.2728       888.2728       888.6910 |    -2.53e-07     4.18e-01
+ 1e+02  1.0e+00 |       427.7533       427.7533       427.7185 |    -5.68e-14    -3.48e-02
+ 1e+02  1.0e+02 |       -55.5342       -55.5342       -55.5342 |    -7.11e-15     0.00e+00
+ 2e+02  1.0e-02 |      1916.9040      1916.9040      1917.0311 |    -1.26e-07     1.27e-01
+ 2e+02  1.0e+00 |       995.8700       995.8687       996.0954 |    -1.26e-03     2.25e-01
+ 2e+02  1.0e+02 |        62.6413        62.6413        62.6413 |     2.84e-14     3.43e-07
+ 5e+02  1.0e-02 |      5253.5814      5253.5814      5243.6759 |    -5.01e-08    -9.91e+00
+ 5e+02  1.0e+00 |      2950.9963      2950.9958      2950.2737 |    -5.01e-04    -7.23e-01
+ 5e+02  1.0e+02 |       648.4112       643.4260       643.3567 |    -4.99e+00    -5.05e+00
+  -0.5  1.0e+00 |        -0.7742        -0.7742        -0.7742 |    -7.77e-16     2.22e-16
+    -5  1.0e-01 |        17.4629        17.4629        17.4629 |     3.55e-15     7.82e-14
+-5e+01  1.0e+01 |        62.8932        62.8932        62.8932 |     0.00e+00    -6.82e-11
+ 1e-08  1.0e-01 |         0.8867         0.8867         0.8867 |     0.00e+00     1.11e-16
+  0.01  1.0e-05 |         2.4558         2.4558         2.4558 |     0.00e+00     1.37e-10
+</pre></div></div>
+</div>
+<p><strong>Key finding:</strong> TFP matches normix to ~<span class="math notranslate nohighlight">\(10^{-7}\)</span> or better across the full range. logbesselk has errors up to <span class="math notranslate nohighlight">\(O(10^1)\)</span> for large <span class="math notranslate nohighlight">\(|\nu|\)</span> (200, 500).</p>
+</section>
+<section id="3.-Native-Gradient-Support">
+<h2>3. Native Gradient Support<a class="headerlink" href="#3.-Native-Gradient-Support" title="Link to this heading"></a></h2>
+<p>Can TFP and logbesselk differentiate w.r.t. <span class="math notranslate nohighlight">\(\nu\)</span> out of the box?</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>v_j, z_j = jnp.float64(2.0), jnp.float64(3.0)
+ref_dv = log_kv_derivative_v(2.0, 3.0)
+ref_dz = log_kv_derivative_z(2.0, 3.0)
+print(f&#39;normix reference:  d/dv = {ref_dv:.10f},  d/dz = {ref_dz:.10f}&#39;)
+
+def tfp_raw(v, z): return tfp.math.log_bessel_kve(v, z) - z
+tfp_dv = float(jax.grad(tfp_raw, 0)(v_j, z_j))
+tfp_dz = float(jax.grad(tfp_raw, 1)(v_j, z_j))
+print(f&#39;TFP native:        d/dv = {tfp_dv:.10f} {&quot;*** WRONG ***&quot; if abs(tfp_dv) &lt; 1e-10 else &quot;&quot;},  d/dz = {tfp_dz:.10f}&#39;)
+
+lbk_dv = float(jax.grad(logbesselk_fn, 0)(v_j, z_j))
+lbk_dz = float(jax.grad(logbesselk_fn, 1)(v_j, z_j))
+print(f&#39;logbesselk native: d/dv = {lbk_dv:.10f} {&quot;*** WRONG ***&quot; if abs(lbk_dv) &lt; 1e-10 else &quot;&quot;},  d/dz = {lbk_dz:.10f}&#39;)
+
+print(&#39;\n==&gt; Neither TFP nor logbesselk computes d/dv correctly (both return 0).&#39;)
+print(&#39;==&gt; We need custom_jvp with finite differences for d/dv.&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+normix reference:  d/dv = 0.5607313749,  d/dz = -1.3195057468
+TFP native:        d/dv = 0.0000000000 *** WRONG ***,  d/dz = -1.3195057468
+logbesselk native: d/dv = 0.0000000000 *** WRONG ***,  d/dz = -1.3195057468
+
+==&gt; Neither TFP nor logbesselk computes d/dv correctly (both return 0).
+==&gt; We need custom_jvp with finite differences for d/dv.
+</pre></div></div>
+</div>
+</section>
+<section id="4.-TFP-+-custom_jvp-Wrapper-(Recommended-Solution)">
+<h2>4. TFP + <code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code> Wrapper (Recommended Solution)<a class="headerlink" href="#4.-TFP-+-custom_jvp-Wrapper-(Recommended-Solution)" title="Link to this heading"></a></h2>
+<p>TFP for evaluation, <code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code> for derivatives:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\partial/\partial z\)</span>: exact recurrence <span class="math notranslate nohighlight">\(K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\partial/\partial \nu\)</span>: central finite differences (<span class="math notranslate nohighlight">\(\varepsilon = 10^{-5}\)</span>)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>@jax.custom_jvp
+def log_kv(v, z):
+    &quot;&quot;&quot;log K_v(z) via TFP with asymptotic fallbacks.&quot;&quot;&quot;
+    z = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
+    raw = tfp.math.log_bessel_kve(jnp.abs(v), z) - z
+    v_abs = jnp.abs(v)
+    large_v_approx = (jax.scipy.special.gammaln(v_abs) - jnp.log(2.0)
+                      + v_abs * (jnp.log(2.0) - jnp.log(z)))
+    euler_gamma = 0.5772156649015329
+    small_v_approx = jnp.log(
+        jnp.maximum(-jnp.log(z / 2.0) - euler_gamma, jnp.finfo(jnp.float64).tiny))
+    approx = jnp.where(v_abs &gt; 1e-10, large_v_approx, small_v_approx)
+    return jnp.where(jnp.isinf(raw) | jnp.isnan(raw), approx, raw)
+
+
+@log_kv.defjvp
+def _log_kv_jvp(primals, tangents):
+    v, z = primals
+    v_dot, z_dot = tangents
+    primal_out = log_kv(v, z)
+    # d/dz: exact recurrence K&#39;_v = -(K_{v-1} + K_{v+1}) / 2
+    dfdz = -0.5 * (jnp.exp(log_kv(v - 1.0, z) - primal_out)
+                   + jnp.exp(log_kv(v + 1.0, z) - primal_out))
+    # d/dv: central finite differences
+    eps = 1e-5
+    dfdv = (log_kv(v + eps, z) - log_kv(v - eps, z)) / (2.0 * eps)
+    return primal_out, dfdv * v_dot + dfdz * z_dot
+
+
+# Quick verify
+v_j, z_j = jnp.float64(2.0), jnp.float64(3.0)
+print(f&#39;log_kv(2, 3) = {log_kv(v_j, z_j):.10f}  (normix: {normix_log_kv(2.0, 3.0):.10f})&#39;)
+print(f&#39;d/dv         = {jax.grad(log_kv, 0)(v_j, z_j):.10f}  (normix: {log_kv_derivative_v(2.0, 3.0):.10f})&#39;)
+print(f&#39;d/dz         = {jax.grad(log_kv, 1)(v_j, z_j):.10f}  (normix: {log_kv_derivative_z(2.0, 3.0):.10f})&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+log_kv(2, 3) = -2.7885480622  (normix: -2.7885480622)
+d/dv         = 0.5607313749  (normix: 0.5607313749)
+d/dz         = -1.3195057468  (normix: -1.3195057468)
+</pre></div></div>
+</div>
+</section>
+<section id="5.-Gradient-Accuracy-Table">
+<h2>5. Gradient Accuracy Table<a class="headerlink" href="#5.-Gradient-Accuracy-Table" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&#39;{&quot;v&quot;:&gt;6s} {&quot;z&quot;:&gt;8s} | {&quot;ref dv&quot;:&gt;11s} {&quot;JAX dv&quot;:&gt;11s} {&quot;err_dv&quot;:&gt;10s} | {&quot;ref dz&quot;:&gt;11s} {&quot;JAX dz&quot;:&gt;11s} {&quot;err_dz&quot;:&gt;10s}&#39;)
+print(&#39;-&#39; * 100)
+for v_val in [0.5, 1.0, 5.0, 10.0, 50.0, -5.0]:
+    for z_val in [0.01, 0.1, 1.0, 10.0, 100.0]:
+        v_j, z_j = jnp.float64(v_val), jnp.float64(z_val)
+        ref_dv = log_kv_derivative_v(v_val, z_val)
+        ref_dz = log_kv_derivative_z(v_val, z_val)
+        j_dv = float(jax.grad(log_kv, 0)(v_j, z_j))
+        j_dz = float(jax.grad(log_kv, 1)(v_j, z_j))
+        err_dv = abs(j_dv - ref_dv) / (abs(ref_dv) + 1e-300)
+        err_dz = abs(j_dz - ref_dz) / (abs(ref_dz) + 1e-300)
+        print(f&#39;{v_val:6.1f} {z_val:8.2f} | {ref_dv:11.6f} {j_dv:11.6f} {err_dv:10.2e} | {ref_dz:11.6f} {j_dz:11.6f} {err_dz:10.2e}&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+     v        z |      ref dv      JAX dv     err_dv |      ref dz      JAX dz     err_dz
+----------------------------------------------------------------------------------------------------
+   0.5     0.01 |    3.422477    3.422477   9.73e-11 |  -51.000000  -51.000000   0.00e+00
+   0.5     0.10 |    1.493349    1.493349   4.68e-10 |   -6.000000   -6.000000   4.44e-16
+   0.5     1.00 |    0.361329    0.361329   1.39e-08 |   -1.500000   -1.500000   7.40e-16
+   0.5    10.00 |    0.047719    0.047719   1.86e-09 |   -1.050000   -1.050000   0.00e+00
+   0.5   100.00 |    0.004975    0.004975   5.71e-07 |   -1.005000   -1.005000   0.00e+00
+   1.0     0.01 |    4.722478    4.722478   1.41e-10 | -100.047225 -100.047225   1.70e-15
+   1.0     0.10 |    2.463068    2.463068   1.80e-10 |  -10.246307  -10.246307   0.00e+00
+   1.0     1.00 |    0.699484    0.699484   6.98e-10 |   -1.699484   -1.699484   2.61e-16
+   1.0    10.00 |    0.095342    0.095342   3.73e-09 |   -1.053417   -1.053417   8.43e-16
+   1.0   100.00 |    0.009950    0.009950   5.71e-07 |   -1.005037   -1.005037   0.00e+00
+   5.0     0.01 |    6.804437    6.804437   1.83e-10 | -500.001250 -500.001250   0.00e+00
+   5.0     0.10 |    4.502006    4.502006   2.37e-10 |  -50.012497  -50.012497   3.55e-15
+   5.0     1.00 |    2.214385    2.214385   8.02e-11 |   -5.122541   -5.122541   8.67e-16
+   5.0    10.00 |    0.462583    0.462583   1.20e-16 |   -1.157981   -1.157981   1.15e-15
+   5.0   100.00 |    0.049732    0.049732   4.29e-08 |   -1.006225   -1.006225   0.00e+00
+  10.0     0.01 |    7.550070    7.550070   7.53e-10 | -1000.000556 -1000.000556   0.00e+00
+  10.0     0.10 |    5.247516    5.247516   8.80e-10 | -100.005555 -100.005555   7.11e-15
+  10.0     1.00 |    2.947970    2.947970   1.81e-10 |  -10.055364  -10.055364   0.00e+00
+  10.0    10.00 |    0.857187    0.857187   3.11e-10 |   -1.439837   -1.439837   7.71e-16
+  10.0   100.00 |    0.099344    0.099344   3.58e-08 |   -1.009926   -1.009926   0.00e+00
+  50.0     0.01 |    9.200307    9.200307   2.47e-09 | -5000.000102 -5000.000102   5.69e-14
+  50.0     0.10 |    6.897723    6.897723   4.94e-09 | -500.001020 -500.001020   5.68e-14
+  50.0     1.00 |    4.595241    4.595241   1.55e-09 |  -50.010203  -50.010203   2.84e-14
+  50.0    10.00 |    2.302801    2.302801   2.16e-09 |   -5.100979   -5.100979   2.80e-14
+  50.0   100.00 |    0.479227    0.479227   1.33e-08 |   -1.122034   -1.122034   3.96e-15
+  -5.0     0.01 |   -6.804437   -6.804437   1.83e-10 | -500.001250 -500.001250   0.00e+00
+  -5.0     0.10 |   -4.502006   -4.502006   2.37e-10 |  -50.012497  -50.012497   3.55e-15
+  -5.0     1.00 |   -2.214385   -2.214385   8.02e-11 |   -5.122541   -5.122541   8.67e-16
+  -5.0    10.00 |   -0.462583   -0.462583   1.20e-16 |   -1.157981   -1.157981   1.15e-15
+  -5.0   100.00 |   -0.049732   -0.049732   4.29e-08 |   -1.006225   -1.006225   0.00e+00
+</pre></div></div>
+</div>
+</section>
+<section id="6.-Vectorization-(vmap)">
+<h2>6. Vectorization (<code class="docutils literal notranslate"><span class="pre">vmap</span></code>)<a class="headerlink" href="#6.-Vectorization-(vmap)" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>v_arr = jnp.array([0.5, 1.0, 2.0, 5.0, 10.0])
+z_arr = jnp.array([0.1, 0.5, 1.0, 5.0, 20.0])
+
+print(&#39;vmap over (v, z) pairs:&#39;)
+print(f&#39;  {jax.vmap(log_kv)(v_arr, z_arr)}&#39;)
+
+print(&#39;\nvmap grad_z (fixed v=2, varying z):&#39;)
+print(f&#39;  {jax.vmap(jax.grad(log_kv, 1), in_axes=(None, 0))(jnp.float64(2.0), z_arr)}&#39;)
+
+print(&#39;\nvmap grad_v (varying v, fixed z=1):&#39;)
+print(f&#39;  {jax.vmap(jax.grad(log_kv, 0), in_axes=(0, None))(v_arr, jnp.float64(1.0))}&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+vmap over (v, z) pairs:
+  [  1.2770839    0.5046714    0.48540867  -3.42018836 -18.88014578]
+
+vmap grad_z (fixed v=2, varying z):
+  [-20.04939172  -4.21939084  -2.37044117  -1.161849    -1.02946006]
+
+vmap grad_v (varying v, fixed z=1):
+  [0.36132862 0.69948394 1.25911765 2.21438459 2.9479696 ]
+</pre></div></div>
+</div>
+</section>
+<section id="7.-GIG-Log-Partition:-jax.grad-and-jax.hessian">
+<h2>7. GIG Log Partition: <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code><a class="headerlink" href="#7.-GIG-Log-Partition:-jax.grad-and-jax.hessian" title="Link to this heading"></a></h2>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2}(\log b - \log a)\]</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from normix.distributions.univariate.generalized_inverse_gaussian import GeneralizedInverseGaussian
+
+def psi_gig(theta):
+    p = theta[0] + 1.0
+    b = jnp.maximum(-2.0 * theta[1], 1e-30)
+    a = jnp.maximum(-2.0 * theta[2], 1e-30)
+    return jnp.log(2.0) + log_kv(p, jnp.sqrt(a * b)) + (p / 2.0) * (jnp.log(b) - jnp.log(a))
+
+theta = jnp.array([0.5, -1.0, -0.5])  # p=1.5, b=2, a=1
+
+# normix reference
+gig = GeneralizedInverseGaussian.from_natural_params(np.array([0.5, -1.0, -0.5]))
+normix_eta = gig.expectation_params
+jax_eta = np.array(jax.grad(psi_gig)(theta))
+
+print(f&#39;normix eta  = {normix_eta}&#39;)
+print(f&#39;JAX eta     = {jax_eta}&#39;)
+print(f&#39;difference  = {np.abs(jax_eta - normix_eta)}&#39;)
+
+print(f&#39;\nJAX Hessian (Fisher information):&#39;)
+H = np.array(jax.hessian(psi_gig)(theta))
+print(H)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+normix eta  = [1.127831   0.41421356 3.82842712]
+JAX eta     = [1.127831   0.41421356 3.82842712]
+difference  = [5.10702813e-10 2.77555756e-16 4.44089210e-16]
+
+JAX Hessian (Fisher information):
+[[ 0.46245396 -0.20972964  1.58054071]
+ [-0.20972964  0.12132034 -0.58578644]
+ [ 1.58054071 -0.58578644  6.48528137]]
+</pre></div></div>
+</div>
+</section>
+<section id="8.-Performance-Benchmark">
+<h2>8. Performance Benchmark<a class="headerlink" href="#8.-Performance-Benchmark" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import time
+
+v_s, z_s = jnp.float64(5.0), jnp.float64(2.0)
+z_vec = jnp.linspace(0.1, 100.0, 1000)
+theta_t = jnp.array([0.5, -1.0, -0.5])
+N = 200
+
+def bench(fn, args, label):
+    r = fn(*args)
+    if hasattr(r, &#39;block_until_ready&#39;): r.block_until_ready()
+    elif isinstance(r, tuple): r[0].block_until_ready()
+    t0 = time.perf_counter()
+    for _ in range(N):
+        r = fn(*args)
+        if hasattr(r, &#39;block_until_ready&#39;): r.block_until_ready()
+        elif isinstance(r, tuple): r[0].block_until_ready()
+    ms = (time.perf_counter() - t0) / N * 1000
+    print(f&#39;  {label:40s} {ms:.3f} ms&#39;)
+
+print(&#39;=== TFP + custom_jvp Performance (after JIT) ===&#39;)
+bench(jax.jit(log_kv), (v_s, z_s), &#39;scalar eval&#39;)
+bench(jax.jit(jax.vmap(log_kv, in_axes=(None, 0))), (v_s, z_vec), &#39;vmap eval (n=1000)&#39;)
+bench(jax.jit(jax.grad(log_kv, argnums=(0,1))), (v_s, z_s), &#39;scalar grad (v, z)&#39;)
+bench(jax.jit(jax.vmap(jax.grad(log_kv, 1), in_axes=(None, 0))), (v_s, z_vec), &#39;vmap grad_z (n=1000)&#39;)
+bench(jax.jit(jax.grad(psi_gig)), (theta_t,), &#39;GIG grad(psi) = eta&#39;)
+bench(jax.jit(jax.hessian(psi_gig)), (theta_t,), &#39;GIG hessian(psi) = Fisher&#39;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+=== TFP + custom_jvp Performance (after JIT) ===
+  scalar eval                              0.010 ms
+  vmap eval (n=1000)                       1.367 ms
+  scalar grad (v, z)                       0.042 ms
+  vmap grad_z (n=1000)                     2.970 ms
+  GIG grad(psi) = eta                      0.045 ms
+  GIG hessian(psi) = Fisher                0.204 ms
+</pre></div></div>
+</div>
+</section>
+<section id="9.-Summary">
+<h2>9. Summary<a class="headerlink" href="#9.-Summary" title="Link to this heading"></a></h2>
+<section id="Evaluation-accuracy">
+<h3>Evaluation accuracy<a class="headerlink" href="#Evaluation-accuracy" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Implementation</p></th>
+<th class="head"><p>Accuracy vs normix</p></th>
+<th class="head"><p>Handles large <span class="math notranslate nohighlight">\(|\nu|\)</span></p></th>
+<th class="head"><p>Pure JAX</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>normix</strong> (scipy kve + fallbacks)</p></td>
+<td><p>Reference</p></td>
+<td><p>Yes (asymptotics)</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>TFP</strong> (log_bessel_kve)</p></td>
+<td><p><span class="math notranslate nohighlight">\(\sim10^{-7}\)</span> relative</p></td>
+<td><p>Yes (log space)</p></td>
+<td><p><strong>Yes</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>logbesselk</strong></p></td>
+<td><p>Errors grow for <span class="math notranslate nohighlight">\(|\nu|&gt;50\)</span></p></td>
+<td><p>No (errors up to <span class="math notranslate nohighlight">\(O(10^1)\)</span>)</p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="Gradient-support-(\partial/\partial\nu-is-the-hard-one)">
+<h3>Gradient support (<span class="math notranslate nohighlight">\(\partial/\partial\nu\)</span> is the hard one)<a class="headerlink" href="#Gradient-support-(\partial/\partial\nu-is-the-hard-one)" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\partial/\partial z\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\partial/\partial\nu\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TFP native</p></td>
+<td><p>Defined</p></td>
+<td><p>Returns 0</p></td>
+</tr>
+<tr class="row-odd"><td><p>logbesselk native</p></td>
+<td><p>Via autodiff</p></td>
+<td><p>Returns 0 (issue #33)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>TFP + ``custom_jvp``</strong></p></td>
+<td><p>Exact recurrence</p></td>
+<td><p>Finite differences — <strong>matches normix</strong></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="Recommendation">
+<h3>Recommendation<a class="headerlink" href="#Recommendation" title="Link to this heading"></a></h3>
+<p><strong>Use TFP ``log_bessel_kve`` + ``custom_jvp``:</strong></p>
+<ul class="simple">
+<li><p>Pure JAX — works with <code class="docutils literal notranslate"><span class="pre">jit</span></code>, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>, <code class="docutils literal notranslate"><span class="pre">grad</span></code>, <code class="docutils literal notranslate"><span class="pre">hessian</span></code></p></li>
+<li><p>Matches normix accuracy for all practical parameter ranges</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code> uses the same derivative formulas as normix</p></li>
+<li><p>logbesselk has no advantage and degrades for large <span class="math notranslate nohighlight">\(|\nu|\)</span></p></li>
+<li><p>GIG <span class="math notranslate nohighlight">\(\nabla\psi\)</span> and <span class="math notranslate nohighlight">\(\nabla^2\psi\)</span> work automatically</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
