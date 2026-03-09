@@ -474,6 +474,83 @@
 
         <span class="k">return</span> <span class="n">starting_points</span>
     
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_to_natural</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert expectation parameters to natural parameters with η-rescaling.</span>
+
+<span class="sd">        Before solving the convex dual problem, applies the change of variable</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            Z = s Y, \quad s = \sqrt{\eta_2 / \eta_3}</span>
+
+<span class="sd">        which maps :math:`\text{GIG}(p, a, b) \to \text{GIG}(p, a/s, bs)` and</span>
+<span class="sd">        transforms the expectation parameters as</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \tilde\eta_1 &amp;= \eta_1 + \tfrac{1}{2}\log(\eta_2/\eta_3) \\</span>
+<span class="sd">            \tilde\eta_2 &amp;= \tilde\eta_3 = \sqrt{\eta_2 \eta_3}</span>
+
+<span class="sd">        The scaled problem has :math:`\tilde\eta_2 = \tilde\eta_3`, which forces</span>
+<span class="sd">        :math:`a&#39; = b&#39;` and produces a symmetric Fisher information matrix that</span>
+<span class="sd">        is much better conditioned than the original when :math:`a/b` is large.</span>
+
+<span class="sd">        After solving for :math:`\tilde\theta`, the original natural parameters</span>
+<span class="sd">        are recovered analytically:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \theta_1 = \tilde\theta_1,\quad</span>
+<span class="sd">            \theta_2 = \tilde\theta_2 / s,\quad</span>
+<span class="sd">            \theta_3 = s\,\tilde\theta_3</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : ndarray, shape (3,)</span>
+<span class="sd">            Expectation parameters :math:`(\eta_1, \eta_2, \eta_3) =</span>
+<span class="sd">            (E[\log X],\; E[X^{-1}],\; E[X])`.</span>
+<span class="sd">        theta0 : ndarray or list of ndarray, optional</span>
+<span class="sd">            Warm-start natural parameter(s). Scaled automatically.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : ndarray, shape (3,)</span>
+<span class="sd">            Natural parameter vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span>
+
+        <span class="c1"># Degenerate or non-positive expectations: delegate to base solver</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">eta2</span> <span class="o">&lt;=</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">eta3</span> <span class="o">&lt;=</span> <span class="mf">0.0</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">eta2</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">eta3</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">)</span>
+
+        <span class="c1"># s = √(η₂/η₃) estimates 1/δ = √(a/b)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">)</span>
+
+        <span class="c1"># Scaled expectation params: η̃₂ = η̃₃ = √(η₂η₃)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">*</span> <span class="n">eta3</span><span class="p">)</span>
+        <span class="n">eta_scaled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">),</span> <span class="n">geom</span><span class="p">,</span> <span class="n">geom</span><span class="p">])</span>
+
+        <span class="c1"># Scale warm-start θ₀ to scaled space: θ̃₂ = s·θ₂, θ̃₃ = θ₃/s</span>
+        <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">_scale</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">*</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="p">[</span><span class="n">_scale</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">theta0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">_scale</span><span class="p">(</span><span class="n">theta0</span><span class="p">)</span>
+
+        <span class="c1"># Solve in the well-conditioned scaled space</span>
+        <span class="n">theta_scaled</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_expectation_to_natural</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">)</span>
+
+        <span class="c1"># Unscale: θ₂ = θ̃₂/s, θ₃ = s·θ̃₃</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span> <span class="n">s</span> <span class="o">*</span> <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+
 <div class="viewcode-block" id="GeneralizedInverseGaussian.fisher_information">
 <a class="viewcode-back" href="../../../../api/index.html#normix.distributions.univariate.generalized_inverse_gaussian.GeneralizedInverseGaussian.fisher_information">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fisher_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
