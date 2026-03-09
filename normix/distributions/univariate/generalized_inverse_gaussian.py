@@ -397,6 +397,83 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         return starting_points
     
+    def _expectation_to_natural(
+        self,
+        eta: NDArray,
+        theta0=None,
+    ) -> NDArray:
+        r"""
+        Convert expectation parameters to natural parameters with η-rescaling.
+
+        Before solving the convex dual problem, applies the change of variable
+
+        .. math::
+            Z = s Y, \quad s = \sqrt{\eta_2 / \eta_3}
+
+        which maps :math:`\text{GIG}(p, a, b) \to \text{GIG}(p, a/s, bs)` and
+        transforms the expectation parameters as
+
+        .. math::
+            \tilde\eta_1 &= \eta_1 + \tfrac{1}{2}\log(\eta_2/\eta_3) \\
+            \tilde\eta_2 &= \tilde\eta_3 = \sqrt{\eta_2 \eta_3}
+
+        The scaled problem has :math:`\tilde\eta_2 = \tilde\eta_3`, which forces
+        :math:`a' = b'` and produces a symmetric Fisher information matrix that
+        is much better conditioned than the original when :math:`a/b` is large.
+
+        After solving for :math:`\tilde\theta`, the original natural parameters
+        are recovered analytically:
+
+        .. math::
+            \theta_1 = \tilde\theta_1,\quad
+            \theta_2 = \tilde\theta_2 / s,\quad
+            \theta_3 = s\,\tilde\theta_3
+
+        Parameters
+        ----------
+        eta : ndarray, shape (3,)
+            Expectation parameters :math:`(\eta_1, \eta_2, \eta_3) =
+            (E[\log X],\; E[X^{-1}],\; E[X])`.
+        theta0 : ndarray or list of ndarray, optional
+            Warm-start natural parameter(s). Scaled automatically.
+
+        Returns
+        -------
+        theta : ndarray, shape (3,)
+            Natural parameter vector.
+        """
+        eta = np.asarray(eta, dtype=float)
+        eta1, eta2, eta3 = eta
+
+        # Degenerate or non-positive expectations: delegate to base solver
+        if (eta2 <= 0.0 or eta3 <= 0.0
+                or not np.isfinite(eta2) or not np.isfinite(eta3)):
+            return super()._expectation_to_natural(eta, theta0)
+
+        # s = √(η₂/η₃) estimates 1/δ = √(a/b)
+        s = np.sqrt(eta2 / eta3)
+
+        # Scaled expectation params: η̃₂ = η̃₃ = √(η₂η₃)
+        geom = np.sqrt(eta2 * eta3)
+        eta_scaled = np.array([eta1 + 0.5 * np.log(eta2 / eta3), geom, geom])
+
+        # Scale warm-start θ₀ to scaled space: θ̃₂ = s·θ₂, θ̃₃ = θ₃/s
+        theta0_scaled = None
+        if theta0 is not None:
+            def _scale(t):
+                t = np.asarray(t, dtype=float)
+                return np.array([t[0], s * t[1], t[2] / s])
+            if isinstance(theta0, list):
+                theta0_scaled = [_scale(t) for t in theta0]
+            else:
+                theta0_scaled = _scale(theta0)
+
+        # Solve in the well-conditioned scaled space
+        theta_scaled = super()._expectation_to_natural(eta_scaled, theta0_scaled)
+
+        # Unscale: θ₂ = θ̃₂/s, θ₃ = s·θ̃₃
+        return np.array([theta_scaled[0], theta_scaled[1] / s, s * theta_scaled[2]])
+
     def fisher_information(self, theta: Optional[NDArray] = None) -> NDArray:
         """
         Fisher information matrix I(θ) = ∇²A(θ).

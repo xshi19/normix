@@ -164,23 +164,36 @@ def log_kv_vectorized(v: Union[float, NDArray], z: Union[float, NDArray]) -> Uni
 
 
 def log_kv_derivative_v(v: float, z: Union[float, NDArray], *, eps: float = 1e-6) -> Union[float, NDArray]:
-    """
+    r"""
     Derivative of log(K_v(z)) with respect to the order v.
 
-    Computed via central differences:
+    Uses the asymptotic expansion (DLMF 10.40.2) when :math:`z` is large
+    relative to :math:`\nu^2`, giving an analytical formula without finite
+    differences.  Falls back to central differences otherwise.
+
+    **Asymptotic formula** (for large :math:`z`):
 
     .. math::
 
-        \\frac{\\partial}{\\partial\\nu} \\log K_\\nu(z)
-        \\approx \\frac{\\log K_{\\nu+\\varepsilon}(z) - \\log K_{\\nu-\\varepsilon}(z)}{2\\varepsilon}
+        \frac{\partial}{\partial\nu}\log K_\nu(z)
+        \approx \frac{S'(\nu,z)}{S(\nu,z)},
+        \quad S(\nu,z) = \sum_{k=0}^{K} \frac{a_k(\nu)}{z^k}
 
-    There is no closed-form recurrence for the order derivative (unlike the
-    argument derivative), so numerical differentiation is the standard approach.
+    where :math:`a_k(\nu) = \frac{\prod_{j=1}^k[4\nu^2-(2j-1)^2]}{k!\,8^k}`
+    and :math:`a_k'(\nu) = a_k(\nu)\sum_{i=1}^k \frac{8\nu}{4\nu^2-(2i-1)^2}`.
+
+    **Central-difference formula** (for moderate :math:`z`):
+
+    .. math::
+
+        \frac{\partial}{\partial\nu}\log K_\nu(z)
+        \approx \frac{\log K_{\nu+\varepsilon}(z)
+                      - \log K_{\nu-\varepsilon}(z)}{2\varepsilon}
 
     Parameters
     ----------
     v : float
-        Order of Bessel function :math:`\\nu` (scalar).
+        Order of Bessel function :math:`\nu` (scalar).
     z : float or ndarray
         Argument (must be > 0), can be vectorized.
     eps : float, optional
@@ -189,14 +202,106 @@ def log_kv_derivative_v(v: float, z: Union[float, NDArray], *, eps: float = 1e-6
     Returns
     -------
     deriv : float or ndarray
-        Derivative of :math:`\\log K_\\nu(z)` with respect to :math:`\\nu`.
+        Derivative of :math:`\log K_\nu(z)` with respect to :math:`\nu`.
 
     Examples
     --------
     >>> log_kv_derivative_v(1.0, 2.0)
     -0.4250407...
     """
-    return (log_kv(v + eps, z) - log_kv(v - eps, z)) / (2 * eps)
+    z_scalar = np.isscalar(z)
+    z_arr = np.atleast_1d(np.asarray(z, dtype=float))
+
+    K = 9  # number of asymptotic terms
+    v_abs = abs(v)
+    # Asymptotic threshold: accurate when z > v²/(K-1) and z > 20
+    asym_thresh = max(20.0, v_abs**2 / (K - 1))
+
+    result = np.empty_like(z_arr)
+
+    asym_mask = z_arr >= asym_thresh
+    fd_mask = ~asym_mask
+
+    if np.any(asym_mask):
+        result[asym_mask] = _log_kv_deriv_v_asymptotic(v, z_arr[asym_mask], K=K)
+
+    if np.any(fd_mask):
+        z_fd = z_arr[fd_mask]
+        result[fd_mask] = (log_kv(v + eps, z_fd) - log_kv(v - eps, z_fd)) / (2 * eps)
+
+    if z_scalar:
+        return float(result[0])
+    return result
+
+
+def _log_kv_deriv_v_asymptotic(
+    v: float,
+    z: Union[float, np.ndarray],
+    K: int = 9,
+) -> Union[float, np.ndarray]:
+    r"""
+    Analytical :math:`\partial_\nu\log K_\nu(z)` via DLMF 10.40.2 (large-z).
+
+    Uses :math:`K` terms of the asymptotic expansion.  Accurate when
+    :math:`z \gg \nu^2 / K`.  Falls back to central differences for any
+    element where a denominator factor :math:`4\nu^2-(2i-1)^2` is near zero
+    (i.e. half-integer or integer orders that coincide with a pole).
+
+    Parameters
+    ----------
+    v : float
+        Order :math:`\nu` (scalar).
+    z : float or ndarray
+        Argument(s), must be positive.
+    K : int
+        Number of asymptotic terms. Default 9 (matches legacy code).
+
+    Returns
+    -------
+    deriv : float or ndarray
+    """
+    from scipy.special import factorial as sp_factorial
+
+    z_scalar = np.isscalar(z)
+    z_arr = np.atleast_1d(np.asarray(z, dtype=float))
+    k_arr = np.arange(1, K + 1, dtype=float)
+
+    # a_k(v) = cumprod_{j=1}^k [4v²-(2j-1)²] / (k! * 8^k)
+    factors = 4.0 * v**2 - (2 * k_arr - 1)**2          # shape (K,)
+    a_k = np.cumprod(factors) / sp_factorial(k_arr, exact=False) / 8.0**k_arr
+
+    # a_k'(v) = a_k(v) * Σ_{i=1}^k  8v / (4v²-(2i-1)²)
+    # built up cumulatively so each a_k' reuses the previous running sum.
+    da_k = np.zeros(K)
+    fallback_needed = False
+    running_sum = 0.0
+    for idx in range(K):
+        f = factors[idx]
+        if abs(f) < 1e-8:
+            # v is at or near a pole of the log-derivative: use FD fallback
+            fallback_needed = True
+            break
+        running_sum += 8.0 * v / f
+        da_k[idx] = a_k[idx] * running_sum
+
+    # S(v,z) = 1 + Σ_k a_k/z^k,  S'(v,z) = Σ_k da_k/z^k
+    # z_powers shape: (n_z, K)
+    inv_z = (1.0 / z_arr)[:, np.newaxis]          # (n_z, 1)
+    z_pows = inv_z ** k_arr                        # (n_z, K)
+
+    S  = 1.0 + z_pows @ a_k                       # (n_z,)
+    dS = z_pows @ da_k                             # (n_z,)
+
+    result = dS / S                                # (n_z,)
+
+    if fallback_needed:
+        # Any element that hit a pole: replace with central differences
+        eps = 1e-6
+        result[:] = (log_kv(v + eps, z_arr) - log_kv(v - eps, z_arr)) / (2 * eps)
+
+    if z_scalar:
+        return float(result[0])
+    return result
 
 
 def log_kv_derivative_z(v: float, z: Union[float, NDArray]) -> Union[float, NDArray]:

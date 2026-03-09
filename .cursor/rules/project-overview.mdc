@@ -1,5 +1,5 @@
 ---
-description: Project overview, structure, and next steps for normix - Generalized Hyperbolic distributions
+description: normix project overview and architecture
 alwaysApply: true
 ---
 
@@ -7,120 +7,52 @@ alwaysApply: true
 
 ## Purpose
 
-`normix` is a Python package implementing Generalized Hyperbolic distributions and related distributions as exponential families with sklearn-style API.
+`normix` is a JAX package implementing Generalized Hyperbolic distributions and related distributions as exponential families. Built on Equinox for immutable pytree modules.
 
-## Repository Structure
+## Design Philosophy
 
-```
-normix/
-├── normix/
-│   ├── __init__.py              # Package exports (including params)
-│   ├── params.py                # Frozen dataclass parameter containers
-│   │
-│   ├── base/
-│   │   ├── distribution.py      # Abstract Distribution base class (cache infra)
-│   │   ├── exponential_family.py # ExponentialFamily with cached_property
-│   │   └── mixture.py           # JointNormalMixture + NormalMixture bases
-│   │
-│   ├── distributions/
-│   │   ├── univariate/
-│   │   │   ├── exponential.py                   # ✓ Complete (internal attrs)
-│   │   │   ├── gamma.py                         # ✓ Complete (internal attrs)
-│   │   │   ├── inverse_gamma.py                 # ✓ Complete (internal attrs)
-│   │   │   ├── inverse_gaussian.py              # ✓ Complete (internal attrs)
-│   │   │   └── generalized_inverse_gaussian.py  # ✓ Complete (internal attrs)
-│   │   │
-│   │   ├── multivariate/
-│   │   │   └── normal.py        # ✓ Complete (Cholesky-first storage)
-│   │   │
-│   │   └── mixtures/
-│   │       ├── variance_gamma.py              # ✓ Complete (direct attr access)
-│   │       ├── joint_variance_gamma.py        # ✓ Complete (cached Cholesky)
-│   │       ├── normal_inverse_gamma.py        # ✓ Complete (direct attr access)
-│   │       ├── joint_normal_inverse_gamma.py  # ✓ Complete (cached Cholesky)
-│   │       ├── normal_inverse_gaussian.py     # ✓ Complete (direct attr access)
-│   │       ├── joint_normal_inverse_gaussian.py # ✓ Complete (cached Cholesky)
-│   │       ├── generalized_hyperbolic.py      # ✓ Complete (regularization + direct access)
-│   │       └── joint_generalized_hyperbolic.py # ✓ Complete (cached Cholesky)
-│   │
-│   ├── utils/
-│   │   └── bessel.py            # Bessel function utilities (log_kv, etc.)
-│   │
-│   └── legacy/                  # Original code for reference only
-│
-├── tests/
-│   ├── test_exponential_family.py
-│   ├── test_distributions_vs_scipy.py
-│   ├── test_variance_gamma.py
-│   ├── test_normal_inverse_gamma.py
-│   ├── test_normal_inverse_gaussian.py
-│   ├── test_generalized_hyperbolic.py
-│   ├── test_params.py                       # Frozen dataclass tests
-│   ├── test_cached_property_invalidation.py # Cache infrastructure tests
-│   └── test_em_regression.py                # EM regression tests
-│
-├── notebooks/                   # Jupyter notebooks with visualizations
-│
-├── docs/
-│   └── refactoring_plan.md      # Detailed refactoring plan (Phases 0-8)
-│
-└── ROADMAP.md                   # Implementation roadmap
-```
+- **Minimalist:** no redundant methods, wrappers, or variables. One canonical representation per concept.
+- **Immutable:** all distributions are `eqx.Module` pytrees. No mutation, no caching, no `_fitted` flags. M-step returns a new model.
+- **Autodiff-first:** `expectation_params`, `fisher_information`, and gradients derived from `jax.grad`/`jax.hessian` on `_log_partition_from_theta`. No separate analytical overrides unless registered via `custom_jvp`.
+- **Unbatched core:** `_log_prob` and `_sample` operate on single observations. Batching via `jax.vmap` or `jnp.vectorize`.
+- **Separation of concerns:** model knows math (E-step, M-step); fitter knows iteration (convergence, scheduling).
 
-## Current Status (Updated: 2026-02-18)
+## Dependencies
 
-**Completed:**
-- Step 1: Base classes (ExponentialFamily with 3 parametrizations, NormalMixture base)
-- Step 2: Simple univariate distributions (Exponential, Gamma, InverseGamma)
-- Step 3: GIG and Inverse Gaussian
-- Step 4: Simple mixture distributions (Variance Gamma, Normal-Inverse Gamma)
-- Step 5: Normal-Inverse Gaussian (NIG)
-- Step 6: Generalized Hyperbolic (GH) with EM algorithm and parameter regularization
-- Refactoring: `cached_property` + frozen dataclass parameters (Phases 0-8)
-  - Internal attribute storage per subclass
-  - `functools.cached_property` for lazy parametrization caching
-  - `_invalidate_cache()` for cache invalidation
-  - Cholesky-first storage for multivariate distributions
-  - Direct attribute access in marginal mixture distributions
-  - Frozen dataclass parameter containers (`normix.params`)
-- Refactoring: Greek-letter naming, Cholesky logpdf, expectation params optimization
-  - Internal attributes use Greek letters matching docstrings (e.g., `_alpha`, `_beta`)
-  - `_L_Sigma` for Cholesky factor of covariance everywhere
-  - `_compute_expectation_params()` overridden in all distributions
-  - Cholesky-based `logpdf` in `JointNormalMixture`
-  - EM convergence uses Cholesky factor norm directly
-- Refactoring: Parameter storage redesign (`docs/redesign_parameter_storage.md`)
-  - Named attributes as single source of truth (no `_natural_params` tuple)
-  - Abstract `_set_from_classical` / `_set_from_natural` in ExponentialFamily
-  - Cholesky everywhere in MultivariateNormal
-  - `_set_internal()` zero-overhead EM fast path
-  - `_create_mixing_distribution()` replaces theta-based construction
-  - Removed deprecated methods
+`jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `optax` (optional).
 
-**Next Steps:**
-- Step 7: Package integration (clean public API, documentation, examples)
+## Key Architecture
 
-## Key Architectural Decisions
+- `ExponentialFamily(eqx.Module)` — base class; subclass implements `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`
+- `JointNormalMixture(ExponentialFamily)` — joint $f(x,y)$ for normal-subordinator mixtures
+- `NormalMixture(eqx.Module)` — marginal $f(x) = \int f(x,y) dy$; owns a `JointNormalMixture`
+- `BatchEMFitter` / `OnlineEMFitter` / `MiniBatchEMFitter` — fitter classes separate from model
 
-1. **Exponential Family Form**: All distributions use the canonical form:
+## Distributions
 
-$$ p(x|\theta) = h(x) \exp (\theta^T t(x) - \psi(\theta)) $$
+| Distribution | Subordinator | Stored Attributes |
+|---|---|---|
+| Gamma | — | `alpha`, `beta` |
+| InverseGamma | — | `alpha`, `beta` |
+| InverseGaussian | — | `mu`, `lam` |
+| GIG | — | `p`, `a`, `b` |
+| MultivariateNormal | — | `mu`, `L` (Cholesky) |
+| VarianceGamma | Gamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
+| NormalInverseGamma | InverseGamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
+| NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `delta`, `eta` |
+| GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
 
-2. **Three Parametrizations**: Every distribution supports:
-   - Classical parameters (domain-specific, e.g., $\mu$, $\sigma$)
-   - Natural parameters ($\theta$ in exponential family form)
-   - Expectation parameters ($\eta = \bigtriangledown \psi(\theta) = E[t(X)]$)
+## Bessel Functions (`_bessel.py`)
 
-3. **sklearn-style API**: `fit()` returns self for method chaining
+`log_kv(v, z)` with `@jax.custom_jvp`: TFP evaluation, exact ∂/∂z via recurrence, analytical ∂/∂ν via DLMF 10.40.2 for large z, finite differences otherwise.
 
-4. **Mixture Distributions**: Represented as X|Y ~ Normal, Y ~ mixing distribution
+## GIG η→θ
 
-5. **Caching Strategy**: `functools.cached_property` with `_invalidate_cache()` via `__dict__.pop()`
+η-rescaling ($s = \sqrt{\eta_2/\eta_3}$) before `jaxopt.LBFGSB` solve. See `docs/jax_design.md`.
 
-6. **Internal Storage**: Named attributes (Greek-letter names matching docstrings) are the single source of truth (no `_natural_params` tuple). Each subclass stores its own optimal representation (e.g., `_lambda` for Exponential, `_mu` + `_L_Sigma` for MultivariateNormal, `_mu` + `_gamma` + `_L_Sigma` + mixing attrs for JointNormalMixture subclasses)
+## References
 
-7. **Parameter Containers**: `@dataclass(frozen=True, slots=True)` for classical parameter output
-
-8. **Setter Paths Are Independent**: `_set_from_classical` and `_set_from_natural` each write directly to named attributes; they never call each other. `_set_internal()` provides a zero-overhead fast path for EM.
-
-9. **Cholesky Everywhere**: All linear algebra on covariance/precision uses Cholesky factors (`cho_solve`, `solve_triangular`) instead of `np.linalg.inv` / `np.linalg.slogdet`
+- Design: `docs/jax_design.md`
+- Migration plan: `docs/jax_migration_plan.md`
+- Bessel investigation: `notebooks/bessel_function_comparison.ipynb`
+- GIG optimization tests: `notebooks/gig_optimization_test.ipynb`
