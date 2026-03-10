@@ -3,9 +3,6 @@
 JAX package for Generalized Hyperbolic distributions and related distributions,
 implemented as exponential families. Built on Equinox for immutable pytree modules.
 
-Minimalist (like nanoGPT), elegant (inspired by FlowJAX), mathematically robust,
-and numerically efficient (Cholesky, log-space, float64).
-
 ## Commands
 
 - Install: `uv sync`
@@ -55,3 +52,12 @@ When editing specific areas, read the relevant rule:
 | Bessel functions | `docs/ARCHITECTURE.md` § Bessel Functions |
 | GIG η→θ optimization | `docs/ARCHITECTURE.md` § GIG η→θ |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
+
+## Design Philosophy
+- **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. 
+Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. 
+When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude.
+- **Numerical efficiency**: Use your knowledge in numerical linear algebra, optimization and statistics to improve the efficiency without adding code complexity. 
+For example, use assume_a in scipy.linalg.inv for triangular and positive definite matrices. 
+- **Numerical Robustness**: Code need to be robust under extreme scenarios. Handle the edge cases carefully.
+For example, you can introduce additional code and logic to prevent the overflow of large z when computing logkv(v,z).
