@@ -134,5 +134,4 @@ Solver: `jaxopt.LBFGSB` with bounds $\theta_2 \leq 0$, $\theta_3 \leq 0$. Multi-
 | `docs/design/parameter_storage.md` | Named attribute storage, Cholesky-everywhere design |
 | `docs/plans/migration_plan.md` | Phased migration: foundation → distributions → mixtures → EM |
 | `docs/plans/migration_report.md` | Feasibility analysis, risk assessment |
-| `docs/plans/refactoring_plan.md` | cached_property + frozen dataclass refactoring |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
