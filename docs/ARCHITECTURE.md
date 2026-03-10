@@ -5,15 +5,15 @@
 ## Module Hierarchy
 
 ```
-normix/
-├── _bessel.py              # log_kv with custom_jvp (TFP + asymptotic)
+normix/                     # JAX implementation (current)
+├── _bessel.py              # log_kv with custom_jvp (scipy callback + FD for ∂/∂v)
 ├── _types.py               # type aliases
 ├── exponential_family.py   # ExponentialFamily(eqx.Module)
 ├── distributions/
 │   ├── gamma.py
 │   ├── inverse_gamma.py
 │   ├── inverse_gaussian.py
-│   ├── gig.py              # GeneralizedInverseGaussian
+│   ├── gig.py              # GIG / GeneralizedInverseGaussian
 │   ├── normal.py           # MultivariateNormal
 │   ├── variance_gamma.py
 │   ├── normal_inverse_gamma.py
@@ -24,7 +24,9 @@ normix/
 │   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
 └── fitting/
     ├── em.py               # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
-    └── mle.py              # fit_mle convenience
+    └── __init__.py
+
+normix_numpy/               # NumPy/SciPy reference implementation (preserved)
 ```
 
 ## Exponential Family Core

@@ -36,8 +36,11 @@ classifiers = [
 dependencies = [
     "lxml>=6.0.2",
     "numpy>=2.0.0",
-    "scipy>=1.14.0",  # Required for scipy.differentiate (available since 1.14.0)
+    "scipy>=1.14.0",
     "yfinance>=1.1.0",
+    "jax[cpu]>=0.4.38",
+    "equinox>=0.13",
+    "jaxopt>=0.8",
 ]
 
 [project.optional-dependencies]
@@ -60,11 +63,11 @@ Documentation = "https://github.com/xshi19/normix"
 "Bug Tracker" = "https://github.com/xshi19/normix/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["normix"]
+packages = ["normix", "normix_numpy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
+python_files = ["test_jax_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [

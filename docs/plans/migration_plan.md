@@ -1,5 +1,14 @@
 # normix JAX Migration Plan
 
+## Status (2026-03-10)
+
+Phases 0–5 complete. The JAX package (`normix/`) replaces the NumPy
+implementation. The NumPy reference is preserved in `normix_numpy/`.
+
+Tests: `python3 -m pytest tests/test_jax_*.py` (51 tests, all passing).
+
+
+
 Reference: `docs/design/jax_design.md` for architecture decisions.
 
 ## Phase 0: Foundation
