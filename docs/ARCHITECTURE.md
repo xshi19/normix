@@ -131,7 +131,5 @@ Solver: `jaxopt.LBFGSB` with bounds $\theta_2 \leq 0$, $\theta_3 \leq 0$. Multi-
 |---|---|
 | `docs/design/jax_design.md` | Full architecture rationale with code examples |
 | `docs/design/detailed_design.md` | Equinox fundamentals, FlowJAX patterns, GMMX patterns |
-| `docs/design/parameter_storage.md` | Named attribute storage, Cholesky-everywhere design |
 | `docs/plans/migration_plan.md` | Phased migration: foundation → distributions → mixtures → EM |
-| `docs/plans/migration_report.md` | Feasibility analysis, risk assessment |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
