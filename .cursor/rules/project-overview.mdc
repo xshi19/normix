@@ -1,34 +1,12 @@
 ---
-description: normix project overview and architecture
+description: normix project identity and distribution catalog
 alwaysApply: true
 ---
 
-# normix Project Overview
+# normix
 
-## Purpose
-
-`normix` is a JAX package implementing Generalized Hyperbolic distributions and related distributions as exponential families. Built on Equinox for immutable pytree modules.
-
-## Design Philosophy
-
-- **Minimalist:** no redundant methods, wrappers, or variables. One canonical representation per concept.
-- **Immutable:** all distributions are `eqx.Module` pytrees. No mutation, no caching, no `_fitted` flags. M-step returns a new model.
-- **Autodiff-first:** `expectation_params`, `fisher_information`, and gradients derived from `jax.grad`/`jax.hessian` on `_log_partition_from_theta`. No separate analytical overrides unless registered via `custom_jvp`.
-- **Unbatched core:** `_log_prob` and `_sample` operate on single observations. Batching via `jax.vmap` or `jnp.vectorize`.
-- **Separation of concerns:** model knows math (E-step, M-step); fitter knows iteration (convergence, scheduling).
-
-## Dependencies
-
-`jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `optax` (optional).
-
-## Key Architecture
-
-- `ExponentialFamily(eqx.Module)` — base class; subclass implements `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`
-- `JointNormalMixture(ExponentialFamily)` — joint $f(x,y)$ for normal-subordinator mixtures
-- `NormalMixture(eqx.Module)` — marginal $f(x) = \int f(x,y) dy$; owns a `JointNormalMixture`
-- `BatchEMFitter` / `OnlineEMFitter` / `MiniBatchEMFitter` — fitter classes separate from model
-
-## Distributions
+JAX package for Generalized Hyperbolic distributions as exponential families.
+Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
 
 | Distribution | Subordinator | Stored Attributes |
 |---|---|---|
@@ -42,17 +20,5 @@ alwaysApply: true
 | NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `delta`, `eta` |
 | GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
 
-## Bessel Functions (`_bessel.py`)
-
-`log_kv(v, z)` with `@jax.custom_jvp`: TFP evaluation, exact ∂/∂z via recurrence, analytical ∂/∂ν via DLMF 10.40.2 for large z, finite differences otherwise.
-
-## GIG η→θ
-
-η-rescaling ($s = \sqrt{\eta_2/\eta_3}$) before `jaxopt.LBFGSB` solve. See `docs/jax_design.md`.
-
-## References
-
-- Design: `docs/jax_design.md`
-- Migration plan: `docs/jax_migration_plan.md`
-- Bessel investigation: `notebooks/bessel_function_comparison.ipynb`
-- GIG optimization tests: `notebooks/gig_optimization_test.ipynb`
+Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `_bessel.py`.
+Architecture: `docs/ARCHITECTURE.md`. Design: `docs/design/jax_design.md`.

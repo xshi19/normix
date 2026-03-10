@@ -1,0 +1,92 @@
+---
+description: Coding conventions for normix Python code
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Coding Conventions
+
+## Imports
+
+- `import jax`, `import jax.numpy as jnp`, `import equinox as eqx`
+- `from jax import Array` for type hints
+- `from jax.scipy.special import gammaln, digamma`
+- No `import scipy as sp` aliases
+
+## Type Hints
+
+- `jax.Array` for all array arguments and returns
+- `Optional`, `Union` from `typing` when needed
+- Return type on all public methods
+
+## LaTeX
+
+| Context | Syntax |
+|---|---|
+| Docstring inline | `:math:\`\\theta\`` |
+| Docstring block | `.. math::` directive |
+| Markdown inline | `$\theta$` |
+| Markdown block | `$$\psi(\theta)$$` |
+
+## Docstrings
+
+- NumPy style: `Parameters`, `Returns`, `Notes` (with `.. math::` for formulas)
+- One-line summary first, then blank line, then details
+- No template boilerplate — keep it concise
+- Reference formulas only when non-obvious from the code
+
+## Module Structure
+
+- One distribution per file
+- Private helpers prefixed with `_`
+- No `__all__` — export via `__init__.py`
+
+## Code Organization Within a Distribution Class
+
+1. Stored attributes (as `eqx.Module` fields)
+2. `_log_partition_from_theta` (single source of truth)
+3. `natural_params`, `sufficient_statistics`, `log_base_measure`
+4. Constructors: `from_classical`, `from_natural`, `from_expectation`, `fit_mle`
+5. Distribution methods: `log_prob`, `sample`, `mean`, `var`
+6. Conversion helpers (e.g. `to_scipy_params`) — only if needed
+
+## Design Principles
+
+- If a computation appears in two places, factor it into one shared function
+- No redundant methods, wrappers, or variables
+- Prefer `jax.grad`/`jax.hessian` over separate analytical overrides
+- Analytical overrides only when both (a) faster and (b) registered via `custom_jvp`
+- Immutable `eqx.Module` — no mutation, no `_fitted` flags, no `_invalidate_cache()`
+- Parameter updates return a new instance via `eqx.tree_at`
+- Fitter config (`max_iter`, `tol`) is `eqx.field(static=True)`
+
+## JAX Patterns
+
+- **Pure functions:** no side effects, no global state, no print inside JIT
+- **Unbatched core:** `_log_prob(x)` and `_sample(key)` for single observations; batch via `jax.vmap`
+- **JIT boundaries:** JIT the outermost function (e.g. entire EM loop), not individual methods
+- **Static vs traced:** loop bounds, config, string args are static; arrays are traced
+- **`jax.lax.while_loop`** for EM convergence loops (JIT-compatible early stopping)
+- **`jax.lax.scan`** for online EM per-epoch iteration
+- **`jax.lax.cond`** / `jnp.where` instead of Python `if` on traced values
+
+## Numerical Stability
+
+- Work in log-space: `log_prob`, `log_kv`, `gammaln`, `logsumexp`
+- `jnp.maximum(x, eps)` clamping for positivity constraints (not `paramax.Parameterize`)
+- Float64 everywhere — `jax.config.update("jax_enable_x64", True)` at init
+- Cholesky-based linear algebra: `solve_triangular` and `cho_solve`, never `jnp.linalg.inv`
+- Bessel functions: use `log_kv` with `custom_jvp` from `_bessel.py`, never raw `kv`
+
+## Naming
+
+- Internal attributes: Greek letters matching math ($\alpha$ → `alpha`, $L_\Sigma$ → `L`)
+- Public constructors: readable English (`from_classical_params(shape=..., rate=...)`)
+- Follow JAX/Equinox conventions: `key` for PRNG, `params`/`static` for `eqx.partition`
+
+## Things to Avoid
+
+- Redundant computation across methods — share via a single function
+- `@property` for expensive operations — compute explicitly
+- Deep class hierarchies — prefer composition (e.g. `NormalMixture` owns `JointNormalMixture`)
+- Global mutable state, `__dict__` manipulation, metaclasses

@@ -1,6 +1,6 @@
 # normix JAX Migration Plan
 
-Reference: `docs/jax_design.md` for architecture decisions.
+Reference: `docs/design/jax_design.md` for architecture decisions.
 
 ## Phase 0: Foundation
 
