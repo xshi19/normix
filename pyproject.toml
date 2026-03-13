@@ -38,9 +38,10 @@ dependencies = [
     "numpy>=2.0.0",
     "scipy>=1.14.0",
     "yfinance>=1.1.0",
-    "jax[cpu]>=0.4.38",
+    "jax[cuda12]>=0.4.38",
     "equinox>=0.13",
     "jaxopt>=0.8",
+    "matplotlib>=3.10.8",
 ]
 
 [project.optional-dependencies]
@@ -109,6 +110,7 @@ exclude_lines = [
 dev = [
     "nbconvert>=7.17.0",
     "nbsphinx>=0.9.8",
+    "pytest>=9.0.2",
     "sphinx>=9.1.0",
     "sphinx-rtd-theme>=3.1.0",
 ]

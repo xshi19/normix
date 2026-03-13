@@ -30,11 +30,12 @@ Before committing:
 - **Autodiff-first**: `expectation_params` and `fisher_information` derived from `jax.grad`/`jax.hessian` on `_log_partition_from_theta`
 - **EM algorithm**: E-step computes conditional expectations $E[t(Y)|X]$, M-step converts $\eta \to \theta$ via `from_expectation`
 - **Immutable**: all distributions are `eqx.Module` pytrees; M-step returns a new model
-- **Unbatched core**: `_log_prob` and `_sample` operate on single observations; batch via `jax.vmap`
+- **Unbatched core**: `log_prob`, `pdf`, `cdf` operate on single observations; batch via `jax.vmap`
+- **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`
 
 ### Dependencies
 
-`jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `optax` (optional).
+`jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `matplotlib` (notebooks), `optax` (optional).
 
 ## Context Map
 
@@ -52,6 +53,7 @@ When editing specific areas, read the relevant rule:
 | Bessel functions | `docs/ARCHITECTURE.md` § Bessel Functions |
 | GIG η→θ optimization | `docs/ARCHITECTURE.md` § GIG η→θ |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
+| Technical notes | `docs/tech_notes/` |
 
 ## Design Philosophy
 - **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. 
