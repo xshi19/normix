@@ -258,7 +258,8 @@ For the current checked-in code:
 Run the new script twice on the same dataset:
 
 1. with plain NumPy input
-2. with a JAX GPU array as input to the same `fit(...)` call
+2. with `--input-backend jax` so the synthetic dataset is first placed on a JAX
+   device before entering the current GH path
 
 Things to compare:
 
@@ -271,6 +272,7 @@ Suggested commands:
 
 ```bash
 python scripts/profile_gh_em_breakdown.py --n-samples 20000 --dim 12 --iters 5
+python scripts/profile_gh_em_breakdown.py --n-samples 20000 --dim 12 --iters 5 --input-backend jax
 python scripts/profile_gh_em_breakdown.py --n-samples 100000 --dim 6 --iters 3
 ```
 

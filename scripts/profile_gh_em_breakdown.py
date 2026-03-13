@@ -20,6 +20,7 @@ It also prints compact cProfile summaries for:
 Usage
 -----
     python scripts/profile_gh_em_breakdown.py --n-samples 5000 --dim 8
+    python scripts/profile_gh_em_breakdown.py --n-samples 5000 --dim 8 --input-backend jax
 """
 
 from __future__ import annotations
@@ -375,16 +376,23 @@ def main() -> None:
     parser.add_argument("--iters", type=int, default=5)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--regularization", type=str, default="det_sigma_one")
+    parser.add_argument(
+        "--input-backend",
+        type=str,
+        choices=("numpy", "jax"),
+        default="numpy",
+        help="Create the synthetic dataset as a NumPy array or a JAX device array.",
+    )
     parser.add_argument("--json-out", type=str, default="")
     args = parser.parse_args()
 
-    X = make_correlated_data(args.n_samples, args.dim, args.seed)
+    X_numpy = make_correlated_data(args.n_samples, args.dim, args.seed)
     print(
         f"Dataset: n_samples={args.n_samples}, dim={args.dim}, seed={args.seed}, "
-        f"regularization={args.regularization}"
+        f"regularization={args.regularization}, input_backend={args.input_backend}"
     )
 
-    jax_info = maybe_measure_jax_array_to_numpy(X)
+    jax_info = maybe_measure_jax_array_to_numpy(X_numpy)
     if jax_info["available"]:
         print(
             "JAX available: "
@@ -393,6 +401,19 @@ def main() -> None:
         )
     else:
         print(f"JAX check skipped: {jax_info['reason']}")
+
+    X = X_numpy
+    if args.input_backend == "jax":
+        try:
+            import jax
+            import jax.numpy as jnp
+        except Exception as exc:
+            raise RuntimeError(
+                "--input-backend jax requested, but JAX is unavailable"
+            ) from exc
+        X = jax.device_put(jnp.asarray(X_numpy))
+        if hasattr(X, "block_until_ready"):
+            X.block_until_ready()
 
     full_init_s, full_timings, e_profile, gig_profile = run_benchmark(
         X,
