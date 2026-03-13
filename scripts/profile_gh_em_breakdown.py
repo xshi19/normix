@@ -29,13 +29,17 @@ import cProfile
 import copy
 import io
 import json
+import os
 import pstats
+import sys
 import time
 from dataclasses import asdict, dataclass
 from statistics import mean
 from typing import Any
 
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from normix.distributions.mixtures import GeneralizedHyperbolic
 from normix.distributions.mixtures.generalized_hyperbolic import (
