@@ -22,9 +22,13 @@ normix/                     # JAX implementation (current)
 ├── mixtures/
 │   ├── joint.py            # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
-└── fitting/
-    ├── em.py               # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
-    └── __init__.py
+├── fitting/
+│   ├── em.py               # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   └── __init__.py
+└── utils/
+    ├── __init__.py          # re-exports from plotting and validation
+    ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
+    └── validation.py        # moment validation, EM runner, parameter printing
 
 normix_numpy/               # NumPy/SciPy reference implementation (preserved)
 ```
@@ -46,8 +50,23 @@ Everything else is derived automatically via JAX autodiff:
 - `expectation_params()` = `jax.grad(_log_partition_from_theta)(θ)` → $\eta = \nabla\psi(\theta)$
 - `fisher_information()` = `jax.hessian(_log_partition_from_theta)(θ)` → $I(\theta) = \nabla^2\psi(\theta)$
 - `log_prob(x)` = `log_base_measure(x) + t(x)·θ − ψ(θ)`
+- `pdf(x)` = `exp(log_prob(x))`
+- `cdf(x)` — analytical where available (Gamma, InverseGamma, InverseGaussian); otherwise `NotImplementedError`
+- `mean()`, `var()`, `std()` — analytical formulas per distribution
+- `rvs(n, seed)` — numpy/scipy-based sampling (not JIT-able)
 
 No separate analytical overrides unless both (a) faster and (b) registered via `custom_jvp` so higher-order autodiff remains correct.
+
+### Marginal Distribution Methods
+
+`NormalMixture` provides:
+- `mean()` = $\mu + \gamma E[Y]$
+- `cov()` = $E[Y]\Sigma + \text{Var}[Y]\gamma\gamma^\top$
+- `rvs(n, seed)` — samples X from the marginal
+- `pdf(x)` = `exp(log_prob(x))`
+
+`JointNormalMixture` provides:
+- `rvs(n, seed)` → `(X, Y)` — samples both X and Y jointly
 
 ### Three Parametrizations
 

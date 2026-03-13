@@ -90,3 +90,18 @@ alwaysApply: false
 - `@property` for expensive operations — compute explicitly
 - Deep class hierarchies — prefer composition (e.g. `NormalMixture` owns `JointNormalMixture`)
 - Global mutable state, `__dict__` manipulation, metaclasses
+- Long inline comments explaining design decisions — move to `docs/tech_notes/`
+- Wrapper functions in utils that duplicate distribution API — methods belong on the class
+- isinstance-based dispatch over distribution types — add methods to the base/subclass instead
+- Putting all code in `__init__.py` — split into logical modules
+
+## Method Placement
+
+Methods that intrinsically belong to a distribution (pdf, cdf, mean, var, rvs) must be
+on the distribution class, not in utility modules. Utils only contain notebook-specific
+helpers (plotting, validation printing, EM convergence tracking).
+
+## Figure Conventions
+
+Use golden ratio for figure dimensions: `FIG_W=12, FIG_H=FIG_W/φ ≈ 7.42`.
+Use `dpi=110` for notebooks. Import from `normix.utils.plotting`.

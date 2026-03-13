@@ -115,14 +115,11 @@ def test_log_kv_hessian_wrt_z():
     z_arr = jnp.array(2.0)
     d2_dz2 = jax.grad(jax.grad(lambda z: log_kv(v_arr, z)))(z_arr)
     assert jnp.isfinite(d2_dz2), f"d²/dz² not finite: {d2_dz2}"
-    # Numerical reference
+    # Numerical reference via finite differences on scipy
     eps = 1e-4
-    from normix._bessel import _log_kv_numpy_vec
-    import numpy as np
-    v_np = np.array([float(v_arr)])
-    z_np = np.array([float(z_arr)])
-    lkv_z = lambda z: float(_log_kv_numpy_vec(v_np, np.array([z]))[0])
-    fd2 = (lkv_z(float(z_arr) + eps) - 2*lkv_z(float(z_arr)) + lkv_z(float(z_arr) - eps)) / eps**2
+    v = float(v_arr)
+    z = float(z_arr)
+    fd2 = (_scipy_log_kv(v, z + eps) - 2 * _scipy_log_kv(v, z) + _scipy_log_kv(v, z - eps)) / eps**2
     assert abs(float(d2_dz2) - fd2) / (abs(fd2) + 1e-10) < 0.01
 
 

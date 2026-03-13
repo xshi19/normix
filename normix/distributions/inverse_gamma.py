@@ -61,6 +61,22 @@ class InverseGamma(ExponentialFamily):
             jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha),
         ])
 
+    def mean(self) -> jax.Array:
+        return self.beta / (self.alpha - 1.0)
+
+    def var(self) -> jax.Array:
+        return self.beta**2 / ((self.alpha - 1.0)**2 * (self.alpha - 2.0))
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        x = jnp.asarray(x, dtype=jnp.float64)
+        return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
+
+    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+        import numpy as np
+        from scipy import stats
+        return stats.invgamma.rvs(a=float(self.alpha), scale=float(self.beta),
+                                  size=n, random_state=seed)
+
     # ------------------------------------------------------------------
     # Constructors
     # ------------------------------------------------------------------

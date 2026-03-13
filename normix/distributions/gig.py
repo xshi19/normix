@@ -111,6 +111,22 @@ class GIG(ExponentialFamily):
     def log_base_measure(self, x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
+    def mean(self) -> jax.Array:
+        """E[X] = η₃ from expectation parameters."""
+        return self.expectation_params()[2]
+
+    def var(self) -> jax.Array:
+        """Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2]."""
+        return self.fisher_information()[2, 2]
+
+    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+        import numpy as np
+        from scipy import stats
+        b_sp = float(np.sqrt(float(self.a) * float(self.b)))
+        scale = float(np.sqrt(float(self.b) / float(self.a)))
+        return stats.geninvgauss.rvs(p=float(self.p), b=b_sp, scale=scale,
+                                     size=n, random_state=seed)
+
     # ------------------------------------------------------------------
     # Constructors
     # ------------------------------------------------------------------

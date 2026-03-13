@@ -99,6 +99,27 @@ class InverseGaussian(ExponentialFamily):
         """
         return jnp.array([self.mu, 1.0 / self.mu + 1.0 / self.lam])
 
+    def mean(self) -> jax.Array:
+        return self.mu
+
+    def var(self) -> jax.Array:
+        return self.mu**3 / self.lam
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        x = jnp.asarray(x, dtype=jnp.float64)
+        sqrt_lam_over_x = jnp.sqrt(self.lam / x)
+        t1 = sqrt_lam_over_x * (x / self.mu - 1.0)
+        t2 = sqrt_lam_over_x * (x / self.mu + 1.0)
+        return (jax.scipy.stats.norm.cdf(t1)
+                + jnp.exp(2.0 * self.lam / self.mu)
+                * jax.scipy.stats.norm.cdf(-t2))
+
+    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+        from scipy import stats
+        return stats.invgauss.rvs(mu=float(self.mu) / float(self.lam),
+                                  scale=float(self.lam),
+                                  size=n, random_state=seed)
+
     # ------------------------------------------------------------------
     # Constructors
     # ------------------------------------------------------------------

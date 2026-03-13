@@ -5,7 +5,6 @@ log_kv(v, z) = log K_v(z), with @jax.custom_jvp for exact gradients:
   - Primal: scipy kve via jax.pure_callback + asymptotic fallback
   - ∂/∂z  : exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
   - ∂/∂v  : central FD on log_kv itself (eps=1e-5)
-             — blended with DLMF 10.40.2 asymptotic for large z
 
 Using log_kv itself for ∂/∂v FD means all JAX transforms (jit, vmap,
 grad, hessian) are supported, including higher-order derivatives.
@@ -20,19 +19,16 @@ import numpy as np
 
 jax.config.update("jax_enable_x64", True)
 
-# ---------------------------------------------------------------------------
-# Scalar numpy Bessel evaluation for primal callbacks
-# ---------------------------------------------------------------------------
 
 def _log_kv_numpy_vec(v_arr: np.ndarray, z_arr: np.ndarray) -> np.ndarray:
     """Vectorized log K_v(z) via scipy, with small-z asymptotic fallback."""
     from scipy.special import kve as _kve, gammaln as _gammaln
+
     v_arr = np.asarray(v_arr, dtype=np.float64)
     z_arr = np.asarray(z_arr, dtype=np.float64)
     shape = np.broadcast_shapes(v_arr.shape, z_arr.shape)
     flat_v = np.broadcast_to(v_arr, shape).ravel()
-    flat_z = np.maximum(np.broadcast_to(z_arr, shape).ravel(),
-                        np.finfo(np.float64).tiny)
+    flat_z = np.maximum(np.broadcast_to(z_arr, shape).ravel(), np.finfo(np.float64).tiny)
     v_abs = np.abs(flat_v)
     vals = np.log(_kve(v_abs, flat_z)) - flat_z
 
@@ -43,19 +39,19 @@ def _log_kv_numpy_vec(v_arr: np.ndarray, z_arr: np.ndarray) -> np.ndarray:
         large = vv > 1e-10
         out = np.empty_like(vv)
         if large.any():
-            out[large] = (_gammaln(vv[large]) - np.log(2.0)
-                          + vv[large] * (np.log(2.0) - np.log(zz[large])))
+            out[large] = (
+                _gammaln(vv[large])
+                - np.log(2.0)
+                + vv[large] * (np.log(2.0) - np.log(zz[large]))
+            )
         if (~large).any():
-            inner = np.maximum(-np.log(zz[~large] / 2.0) - np.euler_gamma,
-                               np.finfo(np.float64).tiny)
+            inner = np.maximum(
+                -np.log(zz[~large] / 2.0) - np.euler_gamma, np.finfo(np.float64).tiny
+            )
             out[~large] = np.log(inner)
         vals[inf_mask] = out
     return vals.reshape(shape)
 
-
-# ---------------------------------------------------------------------------
-# log_kv as a JAX function via pure_callback (primal only)
-# ---------------------------------------------------------------------------
 
 @functools.partial(jax.custom_jvp, nondiff_argnums=())
 def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
@@ -82,8 +78,9 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     return jax.pure_callback(
         _log_kv_numpy_vec,
         result_shape,
-        v, z,
-        vmap_method='sequential',
+        v,
+        z,
+        vmap_method="broadcast_all",
     )
 
 
@@ -93,22 +90,15 @@ def _log_kv_jvp(primals, tangents):
     dv, dz = tangents
     primal_out = log_kv(v, z)
 
-    # -----------------------------------------------------------------------
     # ∂/∂z: exact recurrence K'_v(z) = -(K_{v-1}+K_{v+1})/2
     # d/dz log K_v(z) = -½(K_{v-1}/K_v + K_{v+1}/K_v)
-    # -----------------------------------------------------------------------
     log_kvm1 = log_kv(v - 1.0, z)
     log_kvp1 = log_kv(v + 1.0, z)
-    dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out)
-                        + jnp.exp(log_kvp1 - primal_out))
+    dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out))
 
-    # -----------------------------------------------------------------------
     # ∂/∂v: central finite differences on log_kv itself.
     # Using log_kv (which has its own JVP) makes this fully differentiable.
     # eps=1e-5 gives relative error < 1e-9 for moderate z.
-    # For very large z, the asymptotic S'/S formula is more accurate,
-    # but the FD accuracy is sufficient for the EM applications here.
-    # -----------------------------------------------------------------------
     _EPS_V = jnp.asarray(1e-5, dtype=jnp.float64)
     log_kv_vp = log_kv(v + _EPS_V, z)
     log_kv_vm = log_kv(v - _EPS_V, z)

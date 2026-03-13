@@ -20,5 +20,9 @@ Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
 | NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `delta`, `eta` |
 | GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
 
+All distributions provide: `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`.
+Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`.
+
 Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `_bessel.py`.
 Architecture: `docs/ARCHITECTURE.md`. Design: `docs/design/jax_design.md`.
+Tech notes: `docs/tech_notes/`.
