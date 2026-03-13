@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Dict
 
+import numpy as np
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -43,6 +44,28 @@ class NormalMixture(eqx.Module):
         raise NotImplementedError(
             f"{type(self).__name__}.log_prob: implement closed-form or numerical integration"
         )
+
+    def pdf(self, x: jax.Array) -> jax.Array:
+        """Marginal f(x), single observation."""
+        return jnp.exp(self.log_prob(x))
+
+    def mean(self) -> jax.Array:
+        """E[X] = μ + γ E[Y]."""
+        j = self._joint
+        E_Y = j.subordinator().mean()
+        return j.mu + j.gamma * E_Y
+
+    def cov(self) -> jax.Array:
+        """Cov[X] = E[Y] Σ + Var[Y] γγᵀ."""
+        j = self._joint
+        E_Y = j.subordinator().mean()
+        Var_Y = j.subordinator().var()
+        return E_Y * j.sigma() + Var_Y * jnp.outer(j.gamma, j.gamma)
+
+    def rvs(self, n: int, seed: int = 42) -> np.ndarray:
+        """Sample X from the marginal distribution."""
+        X, _ = self._joint.rvs(n, seed)
+        return X
 
     def e_step(self, X: jax.Array) -> Dict[str, jax.Array]:
         """

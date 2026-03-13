@@ -23,6 +23,8 @@ from __future__ import annotations
 import abc
 from typing import Optional
 
+import numpy as np
+
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -82,6 +84,30 @@ class ExponentialFamily(eqx.Module):
         return (self.log_base_measure(x)
                 + jnp.dot(self.sufficient_statistics(x), theta)
                 - self._log_partition_from_theta(theta))
+
+    def pdf(self, x: jax.Array) -> jax.Array:
+        """p(x|θ), single observation. Batch via jax.vmap."""
+        return jnp.exp(self.log_prob(x))
+
+    def mean(self) -> jax.Array:
+        """E[X]. Subclasses should override with analytical formulas."""
+        raise NotImplementedError(f"{type(self).__name__}.mean not implemented")
+
+    def var(self) -> jax.Array:
+        """Var[X]. Subclasses should override with analytical formulas."""
+        raise NotImplementedError(f"{type(self).__name__}.var not implemented")
+
+    def std(self) -> jax.Array:
+        """Std[X] = √Var[X]."""
+        return jnp.sqrt(self.var())
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        """CDF F(x). Subclasses should override with analytical formulas."""
+        raise NotImplementedError(f"{type(self).__name__}.cdf not implemented")
+
+    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+        """Sample n observations. Uses numpy/scipy (not JIT-able)."""
+        raise NotImplementedError(f"{type(self).__name__}.rvs not implemented")
 
     # ------------------------------------------------------------------
     # Constructors — classmethod stubs; subclasses override as needed

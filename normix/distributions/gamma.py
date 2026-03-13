@@ -59,6 +59,24 @@ class Gamma(ExponentialFamily):
             self.alpha / self.beta,
         ])
 
+    def mean(self) -> jax.Array:
+        return self.alpha / self.beta
+
+    def var(self) -> jax.Array:
+        return self.alpha / self.beta**2
+
+    def std(self) -> jax.Array:
+        return jnp.sqrt(self.alpha) / self.beta
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        x = jnp.asarray(x, dtype=jnp.float64)
+        return jax.scipy.special.gammainc(self.alpha, self.beta * x)
+
+    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+        import numpy as np
+        return np.random.default_rng(seed).gamma(
+            float(self.alpha), 1.0 / float(self.beta), size=n)
+
     # ------------------------------------------------------------------
     # Constructors
     # ------------------------------------------------------------------

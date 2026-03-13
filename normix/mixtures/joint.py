@@ -36,8 +36,9 @@ EM M-step closed-form (from η):
 from __future__ import annotations
 
 import abc
-from typing import Dict
+from typing import Dict, Tuple
 
+import numpy as np
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -90,6 +91,29 @@ class JointNormalMixture(ExponentialFamily):
     def sigma(self) -> jax.Array:
         """Covariance matrix Σ = LLᵀ."""
         return self.L @ self.L.T
+
+    # ------------------------------------------------------------------
+    # Sampling
+    # ------------------------------------------------------------------
+
+    def rvs(self, n: int, seed: int = 42) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Sample (X, Y) from the joint distribution.
+
+        Returns
+        -------
+        X : (n, d) array
+        Y : (n,) array
+        """
+        Y = self.subordinator().rvs(n, seed)
+        rng = np.random.default_rng(seed + 1)
+        mu = np.asarray(self.mu)
+        gamma = np.asarray(self.gamma)
+        L_np = np.asarray(self.L)
+        d = mu.shape[0]
+        Z = rng.standard_normal((n, d))
+        X = mu[None, :] + gamma[None, :] * Y[:, None] + np.sqrt(Y[:, None]) * (Z @ L_np.T)
+        return X, Y
 
     # ------------------------------------------------------------------
     # Log-prob for joint (x, y)
