@@ -50,20 +50,17 @@ alwaysApply: false
 5. Distribution methods: `log_prob`, `sample`, `mean`, `var`
 6. Conversion helpers (e.g. `to_scipy_params`) — only if needed
 
-## Design Principles
+## Do / Don't
 
-- If a computation appears in two places, factor it into one shared function
+- Factor shared computation into one function — no duplication across methods
 - No redundant methods, wrappers, or variables
-- Prefer `jax.grad`/`jax.hessian` over separate analytical overrides
 - Analytical overrides only when both (a) faster and (b) registered via `custom_jvp`
-- Immutable `eqx.Module` — no mutation, no `_fitted` flags, no `_invalidate_cache()`
-- Parameter updates return a new instance via `eqx.tree_at`
+- No mutation, `_fitted` flags, or `_invalidate_cache()` — use `eqx.tree_at` for updates
 - Fitter config (`max_iter`, `tol`) is `eqx.field(static=True)`
 
 ## JAX Patterns
 
 - **Pure functions:** no side effects, no global state, no print inside JIT
-- **Unbatched core:** `_log_prob(x)` and `_sample(key)` for single observations; batch via `jax.vmap`
 - **JIT boundaries:** JIT the outermost function (e.g. entire EM loop), not individual methods
 - **Static vs traced:** loop bounds, config, string args are static; arrays are traced
 - **`jax.lax.while_loop`** for EM convergence loops (JIT-compatible early stopping)

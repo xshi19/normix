@@ -1,0 +1,32 @@
+---
+description: Guidelines for writing AGENTS.md and .cursor/rules
+alwaysApply: true
+---
+
+# Rule Authoring
+
+## AGENTS.md
+
+- **Navigator**: link to rules, docs, and design docs — not a rule itself
+- **High-level design principles**: one-line bullets, no code examples or formulas
+- **Commands and commit conventions**: quick reference only
+- **<= 100 lines**; if longer, move content to `docs/` or split into rules
+
+## .cursor/rules
+
+- **Boundaries**: what the agent should and should not do in a specific area
+- **Scoped**: use `globs` so rules apply only to relevant files
+- **No duplication**: never repeat AGENTS.md principles or content already in docs
+- **<= 100 lines per rule**; if longer, split or move details to `docs/`
+- **Concrete**: prefer "do X / don't do Y" over explanations of how things work
+
+## Where content belongs
+
+| Content type | Location |
+|---|---|
+| Commands, commits, design principles (1-line) | `AGENTS.md` |
+| Navigation to rules and docs | `AGENTS.md` |
+| Coding do's and don'ts for specific files | `.cursor/rules/*.mdc` |
+| Architecture, module hierarchy, algorithms | `docs/ARCHITECTURE.md` |
+| Design rationale, code examples | `docs/design/` |
+| Plans and migration status | `docs/plans/` |
