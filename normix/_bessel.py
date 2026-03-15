@@ -26,7 +26,7 @@ jax.config.update("jax_enable_x64", True)
 # Phase 1: Hankel asymptotic for large z (DLMF 10.40.2)
 # ──────────────────────────────────────────────────────────────────────
 
-_HANKEL_K = 9
+_HANKEL_K = 20
 
 def _hankel_large_z(v: jax.Array, z: jax.Array) -> jax.Array:
     """Pure JAX Hankel asymptotic: log K_v(z) for large z.
@@ -108,7 +108,7 @@ def _quadrature_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
 # K_v(vw) ~ sqrt(π/(2v)) · e^{-vη(w)} / (1+w²)^{1/4} · Σ u_k(p)/v^k
 # ──────────────────────────────────────────────────────────────────────
 
-_OLVER_V_THRESH = 50.0
+_OLVER_V_THRESH = 45.0
 
 def _olver_large_v(v: jax.Array, z: jax.Array) -> jax.Array:
     """Pure JAX Olver uniform asymptotic: log K_v(z) for large |v|.
