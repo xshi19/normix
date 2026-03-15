@@ -80,3 +80,13 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
+
+docs/phd_thesis/
+
+# Legacy numpy reference implementation (not tracked)
+normix_numpy/
+notebooks_numpy/
+
+# Scratch outputs
+*.png
+gig_roundtrip_errors.png

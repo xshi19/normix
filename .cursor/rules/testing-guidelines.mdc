@@ -6,168 +6,32 @@ alwaysApply: false
 
 # Testing Guidelines
 
-## Test Framework
+## Framework
 
-Use `pytest` with the generic test framework in `test_distributions_vs_scipy.py`.
+`pytest` with `@pytest.mark.parametrize` for multiple test cases.
 
-## Test Configuration Pattern
+## Required Tests per Distribution
 
-Every distribution should have a test configuration:
+1. **PDF/CDF vs scipy** — `rtol=1e-6, atol=1e-8`
+2. **Parameter roundtrip** — `from_classical → natural → from_natural → classical`, `rtol=0.02`
+3. **Sample sufficient statistics** — `E[t(X)]` from samples matches `expectation_params()`, `rtol=0.05`
+4. **Histogram vs PDF** — chi-square or visual validation
+5. **Gradient consistency** — `jax.grad(log_partition)` matches `expectation_params()`, `rtol=1e-4`
+6. **Fitting** — `fit_mle(samples)` recovers parameters within `rtol=0.05`
 
-```python
-def get_distribution_config() -> DistributionTestConfig:
-    """Get test configuration for Distribution."""
-    return DistributionTestConfig(
-        normix_class=Distribution,
-        scipy_dist=stats.scipy_dist,
-        param_converter=lambda p: {'scipy_param': p['our_param']},
-        test_params=[
-            {'param1': 2.0, 'param2': 1.0},  # Standard case
-            {'param1': 5.0, 'param2': 2.0},  # Different values
-            # Avoid boundary cases (shape=1, etc.)
-        ],
-        test_points=np.linspace(0.01, 10, 100),  # Avoid x=0 for log
-        name='Distribution'
-    )
-```
+## Tolerance Table
 
-## Required Tests for Each Distribution
+| Test | rtol | atol |
+|---|---|---|
+| PDF/CDF vs scipy | 1e-6 | 1e-8 |
+| Parameter roundtrip | 0.02 | 1e-4 |
+| Sample statistics | 0.05 | — |
+| Gradient/Hessian | 1e-4 / 1e-3 | — |
+| Fitting | 0.05 | — |
 
-### 1. PDF/CDF Comparison with Scipy
+## Cross-Validation
 
-```python
-def test_pdf_comparison(self, config):
-    """Test PDF matches scipy."""
-    compare_pdf_vs_scipy(config)
-
-def test_cdf_comparison(self, config):
-    """Test CDF matches scipy."""
-    compare_cdf_vs_scipy(config)
-```
-
-### 2. Parameter Conversion Roundtrips
-
-```python
-def test_parameter_roundtrip(self, config):
-    """Test Natural→Expectation→Natural conversion."""
-    check_natural_expectation_roundtrip(config, rtol=0.02, atol=1e-4)
-```
-
-### 3. Sufficient Statistics Match Expectations
-
-```python
-def test_sample_statistics(self, config):
-    """Test E[t(X)] matches expectation parameters."""
-    check_sample_sufficient_statistics(config, n_samples=50000, rtol=0.05)
-```
-
-### 4. Sampling Validation
-
-```python
-def test_histogram_pdf(self, config):
-    """Test histogram matches PDF (chi-square test)."""
-    check_histogram_vs_pdf(config, n_samples=10000, n_bins=50)
-```
-
-### 5. Gradient/Hessian Consistency
-
-```python
-def test_gradient_consistency(self, config):
-    """Test analytical gradient matches numerical gradient."""
-    check_gradient_consistency(config, epsilon=1e-6, rtol=1e-4)
-
-def test_hessian_consistency(self, config):
-    """Test analytical Hessian matches numerical Hessian."""
-    check_hessian_consistency(config, epsilon=1e-6, rtol=1e-3)
-```
-
-### 6. Additional Distribution-Specific Tests
-
-```python
-def test_scipy_param_conversion(self):
-    """Test scipy parameter conversion roundtrip."""
-    for p, a, b in test_cases:
-        dist = Distribution.from_classical_params(p=p, a=a, b=b)
-        scipy_params = dist.to_scipy_params()
-        dist2 = Distribution.from_scipy_params(**scipy_params)
-        # Verify roundtrip
-        assert np.isclose(dist2.mean(), dist.mean())
-
-def test_moments(self):
-    """Test moments against scipy."""
-    dist = Distribution.from_classical_params(...)
-    scipy_mean, scipy_var = scipy_dist.stats(moments='mv')
-    assert np.isclose(dist.mean(), scipy_mean, rtol=1e-6)
-    assert np.isclose(dist.var(), scipy_var, rtol=1e-6)
-
-def test_fitting(self):
-    """Test MLE fitting recovers parameters."""
-    true_dist = Distribution.from_classical_params(...)
-    data = true_dist.rvs(size=5000, random_state=42)
-    fitted = Distribution().fit(data)
-    # Check mean recovery (more robust than parameter recovery)
-    assert np.isclose(fitted.mean(), true_dist.mean(), rtol=0.05)
-```
-
-## Test Class Structure
-
-```python
-class TestDistributionVsScipy:
-    """Test Distribution against scipy."""
-    
-    @pytest.fixture
-    def config(self):
-        return get_distribution_config()
-    
-    def test_pdf_comparison(self, config):
-        compare_pdf_vs_scipy(config)
-    
-    # ... other tests ...
-    
-    @pytest.mark.skip(reason="Document why if skipping")
-    def test_skipped_test(self, config):
-        """Document the reason for skipping."""
-        pass
-```
-
-## Tolerance Guidelines
-
-| Test Type | rtol | atol | Notes |
-|-----------|------|------|-------|
-| PDF/CDF vs scipy | 1e-6 | 1e-8 | Exact match expected |
-| Parameter roundtrip | 0.02 | 1e-4 | Optimization tolerance |
-| Sample statistics | 0.05 | - | Statistical tolerance |
-| Gradient check | 1e-4 | - | Numerical differentiation |
-| Hessian check | 1e-3 | - | Second-order derivatives |
-| Fitting | 0.05 | - | Statistical + optimization |
-
-## Edge Cases to Test
-
-```python
-# ✅ Test parameter boundaries carefully
-test_params = [
-    {'shape': 2.0, 'rate': 1.0},   # Standard
-    {'shape': 5.0, 'rate': 0.5},   # Large shape
-    {'shape': 0.5, 'rate': 2.0},   # Small shape (if valid)
-]
-
-# ❌ Avoid exact boundaries that cause numerical issues
-# shape=1 for Gamma (boundary)
-# x=0 for log-based distributions
-```
-
-## Running Tests
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run specific distribution tests
-pytest tests/test_distributions_vs_scipy.py::TestGammaVsScipy -v
-
-# Run with coverage
-pytest tests/ --cov=normix --cov-report=html
-
-# Run and generate plots (for debugging)
-pytest tests/ -v -s  # -s shows print output
-```
+- JAX results must match NumPy normix reference at corresponding parameters
+- Use `np.testing.assert_allclose` with explicit tolerances
+- Edge cases: near-degenerate limits, large parameters, boundary of support
+- Avoid exact boundaries (shape=1, x=0) that cause numerical issues

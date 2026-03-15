@@ -1,28 +1,39 @@
-"""Utility functions for normix package."""
+"""
+Notebook utilities for normix.
 
-from .bessel import log_kv, log_kv_vectorized, log_kv_derivative_v, log_kv_derivative_z, kv_ratio
-from .linalg import robust_cholesky
-from .scaling import column_median_mad
-from .mixture_viz import (
-    plot_joint_distribution_1d,
-    plot_marginal_distribution_2d,
+Plotting helpers live in ``plotting``, validation/EM helpers in ``validation``.
+"""
+from normix.utils.plotting import (
+    plot_pdf_cdf_comparison,
+    plot_sample_histograms,
+    plot_mle_fit,
+    plot_joint_1d,
+    plot_marginal_2d,
+    plot_em_convergence,
+    PHI,
+    FIG_W,
+    FIG_H,
+)
+
+from normix.utils.validation import (
     validate_moments,
     print_moment_validation,
-    fit_and_track_convergence,
-    plot_em_convergence,
-    test_joint_fitting,
-    print_fitting_results,
-    comprehensive_distribution_test,
-    EMConvergenceResult
+    print_exp_family_params,
+    run_em,
 )
 
 __all__ = [
-    'log_kv', 'log_kv_vectorized', 'log_kv_derivative_v', 'log_kv_derivative_z', 'kv_ratio',
-    'robust_cholesky',
-    'column_median_mad',
-    'plot_joint_distribution_1d', 'plot_marginal_distribution_2d',
-    'validate_moments', 'print_moment_validation',
-    'fit_and_track_convergence', 'plot_em_convergence',
-    'test_joint_fitting', 'print_fitting_results',
-    'comprehensive_distribution_test', 'EMConvergenceResult'
+    "plot_pdf_cdf_comparison",
+    "plot_sample_histograms",
+    "plot_mle_fit",
+    "plot_joint_1d",
+    "plot_marginal_2d",
+    "plot_em_convergence",
+    "PHI",
+    "FIG_W",
+    "FIG_H",
+    "validate_moments",
+    "print_moment_validation",
+    "print_exp_family_params",
+    "run_em",
 ]
