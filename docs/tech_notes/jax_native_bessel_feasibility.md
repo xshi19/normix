@@ -1,8 +1,8 @@
 # Feasibility: JAX-Native Modified Bessel Function $K_v(z)$
 
 **Date**: March 2026  
-**Status**: Investigation complete, implementation pending  
-**Related files**: `normix/_bessel.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
+**Status**: Implementation complete — zero scipy callbacks, all phases done  
+**Related files**: `normix/_bessel.py`, `scripts/compare_bessel_implementations.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
 
 ## Motivation
 
