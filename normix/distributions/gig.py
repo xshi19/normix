@@ -144,18 +144,23 @@ class GIG(ExponentialFamily):
         eta: jax.Array,
         *,
         theta0: Optional[jax.Array] = None,
+        solver: str = "newton",
         maxiter: int = 500,
         tol: float = 1e-10,
     ) -> "GIG":
         """
-        η → θ via η-rescaling + L-BFGS-B optimization.
+        η → θ via η-rescaling + optimization.
 
         Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing
         condition number by up to 10^30 for extreme a/b ratios.
 
-        When theta0 is provided (warm-start from EM), uses a pure-JAX
-        Newton solver (stays on-device). Otherwise falls back to scipy
-        multi-start L-BFGS-B for cold-start robustness.
+        Parameters
+        ----------
+        theta0 : warm-start point (required for JAX solvers)
+        solver : warm-start solver when theta0 is provided:
+            'newton'            — JAX Newton, autodiff Hessian via jax.hessian
+            'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
+            'lbfgs'             — JAXopt L-BFGS (gradient-only, ~5 log_kv/step)
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
@@ -166,7 +171,6 @@ class GIG(ExponentialFamily):
         eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
 
         if theta0 is not None:
-            # Warm-start: pure-JAX Newton (stays on-device)
             theta0 = jnp.asarray(theta0, dtype=jnp.float64)
             theta0_scaled = jnp.array([theta0[0],
                                        theta0[1] * s,
@@ -176,7 +180,16 @@ class GIG(ExponentialFamily):
             theta0_scaled = theta0_scaled.at[2].set(
                 jnp.minimum(theta0_scaled[2], -1e-8))
 
-            theta_scaled = _solve_jaxopt(eta_scaled, theta0_scaled, maxiter, tol)
+            if solver == "newton":
+                theta_scaled = _solve_jaxopt(eta_scaled, theta0_scaled, maxiter, tol)
+            elif solver == "newton_analytical":
+                theta_scaled = _solve_newton_analytical(
+                    eta_scaled, theta0_scaled, maxiter, tol)
+            elif solver == "lbfgs":
+                theta_scaled = _solve_lbfgs(eta_scaled, theta0_scaled, maxiter, tol)
+            else:
+                raise ValueError(f"Unknown solver: {solver!r}. "
+                                 "Choose 'newton', 'newton_analytical', or 'lbfgs'.")
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
@@ -256,6 +269,117 @@ def _objective(theta: jax.Array, eta: jax.Array) -> jax.Array:
     return _log_partition_gig_static(theta) - jnp.dot(theta, eta)
 
 
+# ---------------------------------------------------------------------------
+# Analytical gradient and Hessian of the GIG log-partition
+# ---------------------------------------------------------------------------
+
+_EPS_V_HESS = 1e-5
+
+
+def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
+    """Compute log K_v and its first/second derivatives at order p, argument z.
+
+    Uses 7 batched log_kv evaluations:
+        [p, p-1, p+1, p-2, p+2, p-ε, p+ε]
+
+    Returns (L, L_z, L_zz, L_v, L_vv, L_vz) where:
+      L    = log K_p(z)
+      L_z  = ∂L/∂z  = -(K_{p-1}+K_{p+1})/(2K_p)            (exact recurrence)
+      L_zz = ∂²L/∂z² = ¼(r_{p-2}+2+r_{p+2}) − ¼(r_{p-1}+r_{p+1})²  (exact)
+      L_v  = ∂L/∂v  ≈ (L(p+ε) − L(p−ε)) / (2ε)              (FD)
+      L_vv = ∂²L/∂v² ≈ (L(p+ε) − 2L + L(p−ε)) / ε²          (FD)
+      L_vz = ∂²L/∂v∂z ≈ (L_z(p+1) − L_z(p−1)) / 2           (integer shift FD)
+    """
+    z_safe = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
+    orders = jnp.array([p, p - 1.0, p + 1.0, p - 2.0, p + 2.0,
+                        p - _EPS_V_HESS, p + _EPS_V_HESS])
+    evals = jax.vmap(log_kv)(orders, jnp.full(7, z_safe))
+    L, L_m1, L_p1, L_m2, L_p2, L_vm, L_vp = evals
+
+    # Ratios K_{p±k} / K_p in log-space
+    r_m1 = jnp.exp(L_m1 - L)
+    r_p1 = jnp.exp(L_p1 - L)
+    r_m2 = jnp.exp(L_m2 - L)
+    r_p2 = jnp.exp(L_p2 - L)
+
+    L_z  = -0.5 * (r_m1 + r_p1)
+    L_zz = 0.25 * (r_m2 + 2.0 + r_p2) - 0.25 * (r_m1 + r_p1) ** 2
+
+    L_v  = (L_vp - L_vm) / (2.0 * _EPS_V_HESS)
+    L_vv = (L_vp - 2.0 * L + L_vm) / (_EPS_V_HESS ** 2)
+
+    # L_vz using integer-shift FD in v: needs L_z at p±1
+    # L_z(p+1) = -(K_p + K_{p+2}) / (2 K_{p+1})
+    # L_z(p-1) = -(K_{p-2} + K_p) / (2 K_{p-1})
+    L_z_p1 = -0.5 * (jnp.exp(L - L_p1) + jnp.exp(L_p2 - L_p1))
+    L_z_m1 = -0.5 * (jnp.exp(L_m2 - L_m1) + jnp.exp(L - L_m1))
+    L_vz = (L_z_p1 - L_z_m1) / 2.0
+
+    return L, L_z, L_zz, L_v, L_vv, L_vz
+
+
+def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
+    """Gradient and Hessian of f(φ) = ψ(θ(φ)) − θ·η in the reparametrised space.
+
+    Reparametrisation: θ₁ = φ₁, θ₂ = −exp(φ₂), θ₃ = −exp(φ₃)
+
+    The Hessian uses the analytical Fisher information ∇²_θ ψ for θ-derivatives
+    w.r.t. z (exact Bessel recurrences) and FD w.r.t. p (order of K_v).
+
+    Only 7 log_kv evaluations per call, vs ~25 for jax.hessian.
+    """
+    theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
+    p = theta[0] + 1.0
+    b = -2.0 * theta[1]   # = 2 exp(φ₂) > 0
+    a = -2.0 * theta[2]   # = 2 exp(φ₃) > 0
+    z = jnp.sqrt(jnp.maximum(a * b, jnp.finfo(jnp.float64).tiny))
+
+    _, L_z, L_zz, L_v, L_vv, L_vz = _gig_bessel_quantities(p, z)
+
+    # --- Gradient of ψ in θ-space (= expectation params η̃) ---
+    a_over_z = a / z
+    b_over_z = b / z
+
+    eta_tilde_1 = L_v + 0.5 * (jnp.log(b) - jnp.log(a))
+    eta_tilde_2 = -L_z * a_over_z - p / b
+    eta_tilde_3 = -L_z * b_over_z + p / a
+
+    g_theta = jnp.array([eta_tilde_1 - eta[0],
+                          eta_tilde_2 - eta[1],
+                          eta_tilde_3 - eta[2]])
+
+    # Gradient in φ-space: g_φᵢ = g_θᵢ · ∂θᵢ/∂φᵢ   (diagonal Jacobian)
+    j = jnp.array([1.0, theta[1], theta[2]])   # ∂θ/∂φ diagonal
+    g_phi = g_theta * j
+
+    # --- Hessian of ψ in θ-space (Fisher information matrix) ---
+    # H_θ[1,1]
+    H11 = L_vv
+    # H_θ[1,2] = H_θ[2,1]
+    H12 = -L_vz * a_over_z - 1.0 / b
+    # H_θ[1,3] = H_θ[3,1]
+    H13 = -L_vz * b_over_z + 1.0 / a
+    # H_θ[2,2]
+    H22 = a_over_z ** 2 * L_zz - a_over_z ** 2 / z * L_z - 2.0 * p / b ** 2
+    # H_θ[2,3] = H_θ[3,2]
+    H23 = L_zz + L_z / z
+    # H_θ[3,3]
+    H33 = b_over_z ** 2 * L_zz - b_over_z ** 2 / z * L_z + 2.0 * p / a ** 2
+
+    H_theta = jnp.array([[H11, H12, H13],
+                          [H12, H22, H23],
+                          [H13, H23, H33]])
+
+    # Transform to φ-space: H_φ = J^T H_θ J + diag(0, g_θ₂·θ₂, g_θ₃·θ₃)
+    # J = diag(∂θ/∂φ) = diag(1, θ₂, θ₃)
+    H_phi = H_theta * jnp.outer(j, j)
+    # Reparametrisation correction (from ∂²θᵢ/∂φᵢ² = θᵢ for i=2,3)
+    H_phi = H_phi.at[1, 1].add(g_theta[1] * theta[1])
+    H_phi = H_phi.at[2, 2].add(g_theta[2] * theta[2])
+
+    return g_phi, H_phi
+
+
 def _solve_jaxopt(
     eta: jax.Array,
     theta0: jax.Array,
@@ -310,6 +434,76 @@ def _solve_jaxopt(
     (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
                                     None, length=20)
 
+    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
+
+
+def _solve_newton_analytical(
+    eta: jax.Array,
+    theta0: jax.Array,
+    maxiter: int,
+    tol: float,
+) -> jax.Array:
+    """Newton solver using the analytical gradient and Hessian of the GIG log-partition.
+
+    Per Newton step: 7 log_kv evaluations (batched vmap) vs ~25 for jax.hessian.
+    Uses scan(length=20) with early-stopping mask, same as _solve_jaxopt.
+    """
+    phi0 = jnp.array([theta0[0],
+                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
+                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
+
+    def obj(phi):
+        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
+        return _objective(theta, eta)
+
+    def newton_body(carry, _):
+        phi, converged = carry
+        g, H = _analytical_grad_hess_phi(phi, eta)
+        H_damped = H + 1e-6 * jnp.eye(3)
+        delta = jnp.linalg.solve(H_damped, g)
+
+        f0 = obj(phi)
+        slope = jnp.dot(g, delta)
+        alpha = _backtrack(obj, phi, delta, f0, slope)
+        phi_new = phi - alpha * delta
+
+        grad_norm = jnp.max(jnp.abs(g))
+        converged = converged | (grad_norm < tol)
+        phi_out = jnp.where(converged, phi, phi_new)
+        return (phi_out, converged), None
+
+    (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
+                                    None, length=20)
+
+    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
+
+
+def _solve_lbfgs(
+    eta: jax.Array,
+    theta0: jax.Array,
+    maxiter: int,
+    tol: float,
+) -> jax.Array:
+    """JAXopt L-BFGS solver for warm-start.
+
+    Pure JAX, gradient-only (~5 log_kv calls/step vs ~25 for Newton Hessian).
+    implicit_diff=True uses the implicit function theorem for differentiation
+    through the solver, avoiding unrolling all iterations.
+    """
+    import jaxopt
+
+    phi0 = jnp.array([theta0[0],
+                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
+                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
+
+    def obj_fn(phi):
+        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
+        return _objective(theta, eta)
+
+    solver = jaxopt.LBFGS(fun=obj_fn, maxiter=maxiter, tol=tol,
+                           implicit_diff=True, jit=True)
+    result = solver.run(phi0)
+    phi_opt = result.params
     return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
 
 
