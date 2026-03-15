@@ -52,6 +52,40 @@ def test_hankel_regime(v, z):
 
 
 # ---------------------------------------------------------------------------
+# Phase 2: Quadrature regime (moderate z, moderate/large v)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("v,z", [
+    (0.5, 1.0),
+    (1.0, 2.0),
+    (1.5, 0.5),
+    (2.0, 5.0),
+    (5.0, 3.0),
+    (10.0, 10.0),
+    (10.0, 20.0),
+    (20.0, 50.0),
+    (0.0, 1.0),
+    (0.1, 0.1),
+    (1.0, 0.001),
+    (5.0, 0.01),
+    (0.5, 1e-6),
+    (50.0, 100.0),
+    (100.0, 150.0),
+    (1.0, 1e-10),
+])
+def test_quadrature_regime(v, z):
+    """Points in the quadrature regime (not handled by Hankel)."""
+    result = float(log_kv(jnp.array(v), jnp.array(z)))
+    expected = _scipy_log_kv(v, z)
+    abs_err = abs(result - expected)
+    rel_err = abs_err / (abs(expected) + 1e-15)
+    assert rel_err < 1e-9 or abs_err < 1e-9, (
+        f"Quad log_kv({v}, {z}): got {result}, expected {expected}, "
+        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Primal evaluation (mixed regimes)
 # ---------------------------------------------------------------------------
 

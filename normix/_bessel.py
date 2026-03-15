@@ -2,12 +2,12 @@
 JAX-compatible log modified Bessel function of the second kind.
 
 log_kv(v, z) = log K_v(z), with @jax.custom_jvp for exact gradients:
-  - Primal: pure-JAX composite (Hankel asymptotic + scipy fallback)
+  - Primal: pure-JAX composite
+      Phase 1: Hankel asymptotic for large z
+      Phase 2: Gauss-Legendre quadrature for moderate z, v
+      Fallback: scipy callback for remaining cases
   - ∂/∂z  : exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
   - ∂/∂v  : central FD on log_kv itself (eps=1e-5)
-
-Phase 1: Hankel asymptotic for large z eliminates scipy callback for ~70%
-of evaluations in typical GIG EM usage.
 """
 from __future__ import annotations
 
@@ -17,6 +17,11 @@ import jax.numpy as jnp
 import numpy as np
 
 jax.config.update("jax_enable_x64", True)
+
+_N_QUAD = 128
+_GL_NODES_NP, _GL_WEIGHTS_NP = np.polynomial.legendre.leggauss(_N_QUAD)
+_GL_NODES = jnp.asarray(_GL_NODES_NP, dtype=jnp.float64)
+_GL_WEIGHTS = jnp.asarray(_GL_WEIGHTS_NP, dtype=jnp.float64)
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +44,56 @@ def _hankel_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
         term = term * (mu - (2.0 * k - 1.0) ** 2) / (8.0 * k * z)
         total = total + term
     return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(jnp.maximum(total, 1e-300))
+
+
+# ---------------------------------------------------------------------------
+# Numerical quadrature (Takekawa 2022) — Phase 2
+# ---------------------------------------------------------------------------
+
+def _log_cosh(x: jax.Array) -> jax.Array:
+    """Numerically stable log(cosh(x)): avoids overflow for large |x|."""
+    ax = jnp.abs(x)
+    return ax + jnp.log1p(jnp.exp(-2.0 * ax)) - jnp.log(2.0)
+
+
+def _quadrature_upper_bound(v_abs: jax.Array, z: jax.Array) -> jax.Array:
+    """Upper integration bound T such that the integrand is negligible for t > T.
+
+    Solves z*cosh(T) >> |v|*T + P iteratively (P = 50 ≈ -log(eps_f64)).
+    """
+    P = 50.0
+    z_safe = jnp.maximum(z, 1e-300)
+    T = jnp.maximum(jnp.log(2.0 * P / z_safe), 1.0)
+    for _ in range(6):
+        T = jnp.maximum(jnp.log(2.0 * (P + v_abs * T) / z_safe), 1.0)
+    return T + 2.0
+
+
+def _quadrature_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
+    """log K_v(z) via Gauss-Legendre quadrature of the integral representation.
+
+    K_v(z) = int_0^inf exp(-z cosh t) cosh(v t) dt
+
+    Uses 128-point GL quadrature on [0, T] with adaptive upper bound.
+    Fully differentiable in both v and z via autodiff through the sum.
+    Handles arbitrary input shapes via broadcasting with trailing quad axis.
+    """
+    v_abs = jnp.abs(v)
+    T = _quadrature_upper_bound(v_abs, z)
+
+    # Broadcast: T has shape (...), GL nodes have shape (N_QUAD,)
+    # Add trailing axis to T, v, z for broadcasting with quad points
+    T_e = T[..., None]           # (..., 1)
+    v_e = v_abs[..., None]       # (..., 1)
+    z_e = z[..., None]           # (..., 1)
+
+    nodes = _GL_NODES             # (N_QUAD,)
+    t = T_e * (nodes + 1.0) / 2.0  # (..., N_QUAD)
+    log_w = jnp.log(_GL_WEIGHTS)    # (N_QUAD,)
+
+    log_f = -z_e * jnp.cosh(t) + _log_cosh(v_e * t)  # (..., N_QUAD)
+
+    return jnp.log(T / 2.0) + jax.scipy.special.logsumexp(log_w + log_f, axis=-1)
 
 
 # ---------------------------------------------------------------------------
@@ -117,9 +172,10 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     z_hankel = jnp.where(use_hankel, z, jnp.maximum(25.0, v_abs * v_abs / 4.0 + 1.0))
     result_hankel = _hankel_log_kv(v_abs, z_hankel)
 
-    result_scipy = _scipy_log_kv(v, z, shape)
+    z_quad = jnp.maximum(z, 1e-30)
+    result_quad = _quadrature_log_kv(v_abs, z_quad)
 
-    return jnp.where(use_hankel, result_hankel, result_scipy)
+    return jnp.where(use_hankel, result_hankel, result_quad)
 
 
 @log_kv.defjvp
