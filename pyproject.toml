@@ -108,6 +108,7 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "mpmath>=1.4.1",
     "nbconvert>=7.17.0",
     "nbsphinx>=0.9.8",
     "pytest>=9.0.2",

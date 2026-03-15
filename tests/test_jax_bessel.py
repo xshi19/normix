@@ -10,7 +10,10 @@ import pytest
 
 jax.config.update("jax_enable_x64", True)
 
-from normix._bessel import log_kv, _hankel_large_z, _hankel_threshold, _quadrature_log_kv
+from normix._bessel import (
+    log_kv, _hankel_large_z, _hankel_threshold,
+    _quadrature_log_kv, _olver_large_v,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -18,9 +21,14 @@ from normix._bessel import log_kv, _hankel_large_z, _hankel_threshold, _quadratu
 # ---------------------------------------------------------------------------
 
 def _scipy_log_kv(v, z):
-    """scipy reference for log K_v(z)."""
+    """scipy reference for log K_v(z), with mpmath fallback for overflow."""
     from scipy.special import kve
-    return float(np.log(kve(abs(float(v)), float(z))) - float(z))
+    val = float(np.log(kve(abs(float(v)), float(z))) - float(z))
+    if np.isfinite(val):
+        return val
+    import mpmath
+    mpmath.mp.dps = 50
+    return float(mpmath.log(mpmath.besselk(abs(float(v)), float(z))))
 
 
 # ===========================================================================
@@ -239,6 +247,86 @@ def test_composite_grad_moderate_z():
         rel_err_v = abs(grad_v - fd_v) / (abs(fd_v) + 1e-10)
         assert rel_err_v < 1e-4, (
             f"∂/∂v log_kv({v},{z}): rel_err={rel_err_v:.2e}"
+        )
+
+
+# ===========================================================================
+# Phase 3: Olver uniform expansion tests
+# ===========================================================================
+
+@pytest.mark.parametrize("v,z", [
+    (100.0, 1.0),
+    (100.0, 50.0),
+    (100.0, 150.0),
+    (200.0, 1.0),
+    (200.0, 100.0),
+    (500.0, 10.0),
+    (500.0, 100.0),
+    (1000.0, 30.0),
+    (1000.0, 100.0),
+    (50.0, 5.0),
+])
+def test_olver_accuracy(v, z):
+    """Olver expansion should match mpmath to machine precision for large v."""
+    import mpmath
+    mpmath.mp.dps = 50
+    expected = float(mpmath.log(mpmath.besselk(v, z)))
+    result = float(_olver_large_v(jnp.array(v), jnp.array(z)))
+    rel_err = abs(result - expected) / (abs(expected) + 1e-300)
+    assert rel_err < 1e-9, (
+        f"Olver({v}, {z}): got {result}, expected {expected}, rel_err={rel_err:.2e}"
+    )
+
+
+def test_olver_grad_large_v():
+    """Gradients ∂/∂z and ∂/∂v in Olver regime (large v, moderate z)."""
+    import mpmath
+    mpmath.mp.dps = 50
+
+    def mpmath_ref(v, z):
+        return float(mpmath.log(mpmath.besselk(abs(v), z)))
+
+    for v, z in [(100.0, 50.0), (200.0, 10.0), (500.0, 1.0)]:
+        v_arr, z_arr = jnp.array(v), jnp.array(z)
+
+        grad_z = float(jax.grad(lambda zz: log_kv(v_arr, zz))(z_arr))
+        eps = 1e-6
+        fd_z = (mpmath_ref(v, z + eps) - mpmath_ref(v, z - eps)) / (2 * eps)
+        rel_err_z = abs(grad_z - fd_z) / (abs(fd_z) + 1e-10)
+        assert rel_err_z < 1e-3, (
+            f"∂/∂z log_kv({v},{z}): rel_err={rel_err_z:.2e}"
+        )
+
+        grad_v = float(jax.grad(lambda vv: log_kv(vv, z_arr))(v_arr))
+        eps = 1e-5
+        fd_v = (mpmath_ref(v + eps, z) - mpmath_ref(v - eps, z)) / (2 * eps)
+        rel_err_v = abs(grad_v - fd_v) / (abs(fd_v) + 1e-10)
+        assert rel_err_v < 1e-3, (
+            f"∂/∂v log_kv({v},{z}): rel_err={rel_err_v:.2e}"
+        )
+
+
+def test_full_coverage_all_regimes():
+    """Comprehensive test covering all three regimes with mpmath reference."""
+    import mpmath
+    mpmath.mp.dps = 50
+
+    test_cases = [
+        # Quadrature regime (small/moderate v, small/moderate z)
+        (0.5, 0.01), (1.0, 0.5), (5.0, 3.0), (10.0, 8.0),
+        # Hankel regime (large z)
+        (1.0, 50.0), (5.0, 100.0), (10.0, 200.0),
+        # Olver regime (large v)
+        (100.0, 1.0), (200.0, 50.0), (500.0, 10.0),
+        # Edge cases
+        (0.0, 1.0), (0.5, 1e-6), (50.1, 5.0),
+    ]
+    for v, z in test_cases:
+        expected = float(mpmath.log(mpmath.besselk(abs(v), z)))
+        result = float(log_kv(jnp.array(v), jnp.array(z)))
+        rel_err = abs(result - expected) / (abs(expected) + 1e-300)
+        assert rel_err < 1e-9, (
+            f"log_kv({v}, {z}): got {result}, expected {expected}, rel_err={rel_err:.2e}"
         )
 
 
