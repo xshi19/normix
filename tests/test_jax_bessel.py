@@ -14,7 +14,7 @@ from normix._bessel import log_kv
 
 
 # ---------------------------------------------------------------------------
-# Primal evaluation
+# Scipy reference
 # ---------------------------------------------------------------------------
 
 def _scipy_log_kv(v, z):
@@ -22,6 +22,38 @@ def _scipy_log_kv(v, z):
     from scipy.special import kve
     return float(np.log(kve(abs(float(v)), float(z))) - float(z))
 
+
+# ---------------------------------------------------------------------------
+# Phase 1: Hankel asymptotic regime (large z)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("v,z", [
+    (0.5, 30.0),
+    (1.0, 50.0),
+    (2.0, 100.0),
+    (5.0, 40.0),
+    (10.0, 30.0),
+    (0.0, 25.0),
+    (0.5, 1000.0),
+    (20.0, 150.0),   # v²/4 = 100
+    (50.0, 700.0),   # v²/4 = 625
+    (100.0, 2600.0),  # v²/4 = 2500
+])
+def test_hankel_regime(v, z):
+    """Points that should use the Hankel expansion (z > max(25, v^2/4))."""
+    result = float(log_kv(jnp.array(v), jnp.array(z)))
+    expected = _scipy_log_kv(v, z)
+    abs_err = abs(result - expected)
+    rel_err = abs_err / (abs(expected) + 1e-15)
+    assert rel_err < 1e-10 or abs_err < 1e-10, (
+        f"Hankel log_kv({v}, {z}): got {result}, expected {expected}, "
+        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Primal evaluation (mixed regimes)
+# ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("v,z", [
     (0.5, 1.0),
@@ -58,6 +90,17 @@ def test_log_kv_vectorized():
         assert abs(float(results[i]) - expected) < 1e-8
 
 
+def test_log_kv_vectorized_mixed_regimes():
+    """Vectorized call with points in both Hankel and fallback regimes."""
+    vs = jnp.array([0.5,  1.0, 10.0, 0.5])
+    zs = jnp.array([1.0, 50.0, 30.0, 100.0])
+    results = log_kv(vs, zs)
+    assert results.shape == (4,)
+    for i, (v, z) in enumerate(zip(vs, zs)):
+        expected = _scipy_log_kv(float(v), float(z))
+        assert abs(float(results[i]) - expected) < 1e-8
+
+
 # ---------------------------------------------------------------------------
 # Gradients ∂/∂z
 # ---------------------------------------------------------------------------
@@ -66,6 +109,8 @@ def test_log_kv_vectorized():
     (0.5, 1.0),
     (1.0, 2.0),
     (2.0, 5.0),
+    (1.0, 50.0),   # Hankel regime
+    (5.0, 40.0),   # Hankel regime
 ])
 def test_log_kv_grad_z(v, z):
     """∂/∂z log K_v(z): compare with numerical finite differences."""
@@ -73,7 +118,6 @@ def test_log_kv_grad_z(v, z):
     v_arr = jnp.array(v)
     grad_z = float(jax.grad(lambda z: log_kv(v_arr, z))(z_arr))
 
-    # Numerical FD reference
     eps = 1e-6
     fd = (_scipy_log_kv(v, z + eps) - _scipy_log_kv(v, z - eps)) / (2 * eps)
     assert abs(grad_z - fd) / (abs(fd) + 1e-10) < 1e-4, (
@@ -89,7 +133,8 @@ def test_log_kv_grad_z(v, z):
     (0.5, 1.0),
     (1.0, 2.0),
     (2.0, 5.0),
-    (1.0, 30.0),   # large z: asymptotic regime
+    (1.0, 30.0),   # Hankel regime
+    (5.0, 50.0),   # Hankel regime
 ])
 def test_log_kv_grad_v(v, z):
     """∂/∂v log K_v(z): compare with numerical finite differences."""
@@ -115,7 +160,6 @@ def test_log_kv_hessian_wrt_z():
     z_arr = jnp.array(2.0)
     d2_dz2 = jax.grad(jax.grad(lambda z: log_kv(v_arr, z)))(z_arr)
     assert jnp.isfinite(d2_dz2), f"d²/dz² not finite: {d2_dz2}"
-    # Numerical reference via finite differences on scipy
     eps = 1e-4
     v = float(v_arr)
     z = float(z_arr)
