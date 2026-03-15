@@ -1,14 +1,15 @@
 """
 JAX-compatible log modified Bessel function of the second kind.
 
-log_kv(v, z) = log K_v(z), with @jax.custom_jvp for exact gradients:
-  - Primal: scipy kve via jax.pure_callback + asymptotic fallback
-  - ∂/∂z  : exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
-  - ∂/∂v  : central FD on log_kv itself (eps=1e-5)
+Composite pure-JAX implementation of log_kv(v, z) = log K_v(z):
+  Phase 1: Hankel asymptotic (DLMF 10.40.2) for large z
+  Phase 2: Numerical quadrature (Takekawa 2022) for moderate z, v
+  Phase 3: Olver uniform expansion for large v; small-z series
+  Fallback: scipy kve via jax.pure_callback (removed after Phase 3)
 
-Using log_kv itself for ∂/∂v FD means all JAX transforms (jit, vmap,
-grad, hessian) are supported, including higher-order derivatives.
-Accuracy for ∂/∂v: relative error < 1e-9 for z ∈ [1e-6, 1e3].
+Custom JVP for exact gradients:
+  ∂/∂z: exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
+  ∂/∂v: central FD on log_kv itself (eps=1e-5)
 """
 from __future__ import annotations
 
@@ -19,6 +20,48 @@ import numpy as np
 
 jax.config.update("jax_enable_x64", True)
 
+
+# ──────────────────────────────────────────────────────────────────────
+# Phase 1: Hankel asymptotic for large z (DLMF 10.40.2)
+# ──────────────────────────────────────────────────────────────────────
+
+_HANKEL_K = 9
+
+def _hankel_large_z(v: jax.Array, z: jax.Array) -> jax.Array:
+    """Pure JAX Hankel asymptotic: log K_v(z) for large z.
+
+    K_v(z) ~ sqrt(π/(2z)) e^{-z} Σ_{k=0}^K a_k(v)/z^k
+    where a_0 = 1 and a_k = a_{k-1} · (4v²-(2k-1)²) / (8k).
+
+    In log space:
+        log K_v(z) = ½ log(π/(2z)) - z + log(Σ_{k=0}^K a_k/z^k)
+
+    Accurate when z > max(20, v²/8).
+    """
+    v_sq = v * v
+    inv_z = 1.0 / z
+
+    a_k = jnp.ones_like(v)
+    inv_z_pow = jnp.ones_like(z)
+    S = jnp.ones_like(z)
+
+    for k in range(1, _HANKEL_K + 1):
+        a_k = a_k * (4.0 * v_sq - (2.0 * k - 1.0) ** 2) / (8.0 * k)
+        inv_z_pow = inv_z_pow * inv_z
+        S = S + a_k * inv_z_pow
+
+    return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(S)
+
+
+def _hankel_threshold(v: jax.Array) -> jax.Array:
+    """Threshold z above which Hankel expansion is accurate."""
+    v_abs = jnp.abs(v)
+    return jnp.maximum(20.0, v_abs * v_abs / (_HANKEL_K - 1))
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Scipy callback fallback (to be removed after Phase 3)
+# ──────────────────────────────────────────────────────────────────────
 
 def _log_kv_numpy_vec(v_arr: np.ndarray, z_arr: np.ndarray) -> np.ndarray:
     """Vectorized log K_v(z) via scipy, with small-z asymptotic fallback."""
@@ -53,14 +96,22 @@ def _log_kv_numpy_vec(v_arr: np.ndarray, z_arr: np.ndarray) -> np.ndarray:
     return vals.reshape(shape)
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Public API: log_kv with custom JVP
+# ──────────────────────────────────────────────────────────────────────
+
 @functools.partial(jax.custom_jvp, nondiff_argnums=())
 def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     """
     log K_v(z), JAX-compatible with custom JVP for full autodiff.
 
+    Uses a composite strategy:
+      - Hankel asymptotic (pure JAX) when z > max(20, v²/8)
+      - scipy callback fallback otherwise
+
     Parameters
     ----------
-    v : scalar or array — order of the Bessel function (any real number)
+    v : scalar or array — order (any real number)
     z : scalar or array — argument (must be > 0), same shape as v
 
     Returns
@@ -74,14 +125,21 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     z = jnp.broadcast_to(z, shape)
     z = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
 
+    use_hankel = z > _hankel_threshold(v)
+
+    z_safe_hankel = jnp.maximum(z, 20.0)
+    result_hankel = _hankel_large_z(v, z_safe_hankel)
+
     result_shape = jax.ShapeDtypeStruct(shape, jnp.float64)
-    return jax.pure_callback(
+    result_callback = jax.pure_callback(
         _log_kv_numpy_vec,
         result_shape,
         v,
         z,
         vmap_method="broadcast_all",
     )
+
+    return jnp.where(use_hankel, result_hankel, result_callback)
 
 
 @log_kv.defjvp
@@ -90,15 +148,10 @@ def _log_kv_jvp(primals, tangents):
     dv, dz = tangents
     primal_out = log_kv(v, z)
 
-    # ∂/∂z: exact recurrence K'_v(z) = -(K_{v-1}+K_{v+1})/2
-    # d/dz log K_v(z) = -½(K_{v-1}/K_v + K_{v+1}/K_v)
     log_kvm1 = log_kv(v - 1.0, z)
     log_kvp1 = log_kv(v + 1.0, z)
     dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out))
 
-    # ∂/∂v: central finite differences on log_kv itself.
-    # Using log_kv (which has its own JVP) makes this fully differentiable.
-    # eps=1e-5 gives relative error < 1e-9 for moderate z.
     _EPS_V = jnp.asarray(1e-5, dtype=jnp.float64)
     log_kv_vp = log_kv(v + _EPS_V, z)
     log_kv_vm = log_kv(v - _EPS_V, z)
