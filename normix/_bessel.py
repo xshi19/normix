@@ -5,7 +5,7 @@ Composite pure-JAX implementation of log_kv(v, z) = log K_v(z):
   Phase 1: Hankel asymptotic (DLMF 10.40.2) for large z
   Phase 2: Numerical quadrature (Takekawa 2022) for moderate z, v
   Phase 3: Olver uniform expansion for large v; small-z series
-  Fallback: scipy kve via jax.pure_callback (removed after Phase 3)
+  Fallback: scipy kve via jax.pure_callback (to be removed after Phase 3)
 
 Custom JVP for exact gradients:
   ∂/∂z: exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
@@ -60,6 +60,53 @@ def _hankel_threshold(v: jax.Array) -> jax.Array:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Phase 2: Numerical quadrature (Takekawa 2022)
+# K_v(z) = ∫₀^∞ e^{-z cosh t} cosh(vt) dt
+# ──────────────────────────────────────────────────────────────────────
+
+_QUAD_N = 128
+_gl_nodes_np, _gl_weights_np = np.polynomial.legendre.leggauss(_QUAD_N)
+_GL_NODES = jnp.asarray(_gl_nodes_np, dtype=jnp.float64)
+_GL_WEIGHTS = jnp.asarray(_gl_weights_np, dtype=jnp.float64)
+
+
+def _log_cosh(x: jax.Array) -> jax.Array:
+    """Numerically stable log(cosh(x))."""
+    ax = jnp.abs(x)
+    return jnp.where(ax > 20.0, ax - jnp.log(2.0), jnp.log(jnp.cosh(x)))
+
+
+def _quadrature_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
+    """Pure JAX quadrature: log K_v(z) via integral representation.
+
+    K_v(z) = ∫₀^∞ e^{-z cosh t} cosh(vt) dt
+
+    Uses Gauss-Legendre quadrature on [0, b] with log-sum-exp for stability.
+    Fully differentiable in both v and z.
+    """
+    v_abs = jnp.abs(v)
+
+    b = jnp.acosh(jnp.maximum(700.0 / jnp.maximum(z, 1e-300), 1.0 + 1e-10))
+    b = jnp.clip(b, 1.0, 200.0)
+
+    b_e = b[..., jnp.newaxis]
+    z_e = z[..., jnp.newaxis]
+    v_e = v_abs[..., jnp.newaxis]
+
+    t = 0.5 * b_e * (_GL_NODES + 1.0)
+    w = 0.5 * b_e * _GL_WEIGHTS
+
+    g = -z_e * jnp.cosh(t) + _log_cosh(v_e * t)
+
+    g_max = jnp.max(g, axis=-1, keepdims=True)
+    log_integral = g_max[..., 0] + jnp.log(
+        jnp.sum(w * jnp.exp(g - g_max), axis=-1)
+    )
+
+    return log_integral
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Scipy callback fallback (to be removed after Phase 3)
 # ──────────────────────────────────────────────────────────────────────
 
@@ -107,7 +154,7 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
 
     Uses a composite strategy:
       - Hankel asymptotic (pure JAX) when z > max(20, v²/8)
-      - scipy callback fallback otherwise
+      - Numerical quadrature (pure JAX) otherwise
 
     Parameters
     ----------
@@ -130,16 +177,10 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     z_safe_hankel = jnp.maximum(z, 20.0)
     result_hankel = _hankel_large_z(v, z_safe_hankel)
 
-    result_shape = jax.ShapeDtypeStruct(shape, jnp.float64)
-    result_callback = jax.pure_callback(
-        _log_kv_numpy_vec,
-        result_shape,
-        v,
-        z,
-        vmap_method="broadcast_all",
-    )
+    z_safe_quad = jnp.clip(z, 1e-300, 1e4)
+    result_quad = _quadrature_log_kv(v, z_safe_quad)
 
-    return jnp.where(use_hankel, result_hankel, result_callback)
+    return jnp.where(use_hankel, result_hankel, result_quad)
 
 
 @log_kv.defjvp

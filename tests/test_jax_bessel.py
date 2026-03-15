@@ -10,7 +10,7 @@ import pytest
 
 jax.config.update("jax_enable_x64", True)
 
-from normix._bessel import log_kv, _hankel_large_z, _hankel_threshold
+from normix._bessel import log_kv, _hankel_large_z, _hankel_threshold, _quadrature_log_kv
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +142,103 @@ def test_hankel_grad_v_large_z():
         rel_err = abs(grad_v - fd) / (abs(fd) + 1e-10)
         assert rel_err < 1e-4, (
             f"∂/∂v log_kv({v},{z}): got {grad_v}, fd={fd}, rel_err={rel_err:.2e}"
+        )
+
+
+# ===========================================================================
+# Phase 2: Numerical quadrature tests
+# ===========================================================================
+
+@pytest.mark.parametrize("v,z", [
+    (0.5, 1.0),
+    (1.0, 2.0),
+    (1.5, 0.5),
+    (2.0, 5.0),
+    (0.0, 1.0),
+    (5.0, 3.0),
+    (10.0, 8.0),
+    (0.5, 0.1),
+    (1.0, 0.01),
+    (3.0, 15.0),
+    (0.0, 10.0),
+    (2.5, 7.0),
+])
+def test_quadrature_accuracy(v, z):
+    """Quadrature should match scipy for moderate z and v."""
+    result = float(_quadrature_log_kv(jnp.array(v), jnp.array(z)))
+    expected = _scipy_log_kv(v, z)
+    rel_err = abs(result - expected) / (abs(expected) + 1e-300)
+    assert rel_err < 1e-9, (
+        f"Quadrature({v}, {z}): got {result}, expected {expected}, rel_err={rel_err:.2e}"
+    )
+
+
+def test_quadrature_small_z():
+    """Quadrature for small z values."""
+    test_cases = [
+        (1.0, 0.1),
+        (0.5, 0.01),
+        (2.0, 0.001),
+    ]
+    for v, z in test_cases:
+        result = float(_quadrature_log_kv(jnp.array(v), jnp.array(z)))
+        expected = _scipy_log_kv(v, z)
+        rel_err = abs(result - expected) / (abs(expected) + 1e-300)
+        assert rel_err < 1e-9, (
+            f"Quadrature({v}, {z}): got {result}, expected {expected}, rel_err={rel_err:.2e}"
+        )
+
+
+def test_quadrature_vectorized():
+    """Quadrature with array inputs."""
+    vs = jnp.array([0.5, 1.0, 2.0, 5.0])
+    zs = jnp.array([1.0, 3.0, 5.0, 10.0])
+    results = _quadrature_log_kv(vs, zs)
+    assert results.shape == (4,)
+    for i, (v, z) in enumerate(zip(vs, zs)):
+        expected = _scipy_log_kv(float(v), float(z))
+        rel_err = abs(float(results[i]) - expected) / (abs(expected) + 1e-300)
+        assert rel_err < 1e-9, (
+            f"Quadrature({float(v)}, {float(z)}): rel_err={rel_err:.2e}"
+        )
+
+
+def test_composite_no_callback():
+    """After Phase 2, log_kv uses pure JAX (Hankel + quadrature) for all inputs."""
+    test_cases = [
+        (0.5, 0.1),   # small z: quadrature
+        (1.0, 2.0),   # moderate z: quadrature
+        (2.0, 10.0),  # moderate z: quadrature
+        (1.0, 50.0),  # large z: Hankel
+        (5.0, 200.0), # large z: Hankel
+    ]
+    for v, z in test_cases:
+        result = float(log_kv(jnp.array(v), jnp.array(z)))
+        expected = _scipy_log_kv(v, z)
+        assert abs(result - expected) < 1e-8, (
+            f"log_kv({v}, {z}): got {result}, expected {expected}"
+        )
+
+
+def test_composite_grad_moderate_z():
+    """Gradients in quadrature regime (moderate z)."""
+    for v, z in [(1.0, 5.0), (2.0, 10.0), (0.5, 3.0)]:
+        v_arr, z_arr = jnp.array(v), jnp.array(z)
+
+        grad_z = float(jax.grad(lambda zz: log_kv(v_arr, zz))(z_arr))
+        eps = 1e-6
+        fd_z = (_scipy_log_kv(v, z + eps) - _scipy_log_kv(v, z - eps)) / (2 * eps)
+        rel_err_z = abs(grad_z - fd_z) / (abs(fd_z) + 1e-10)
+        assert rel_err_z < 1e-4, (
+            f"∂/∂z log_kv({v},{z}): rel_err={rel_err_z:.2e}"
+        )
+
+        grad_v = float(jax.grad(lambda vv: log_kv(vv, z_arr))(v_arr))
+        eps = 1e-5
+        fd_v = (_scipy_log_kv(v + eps, z) - _scipy_log_kv(v - eps, z)) / (2 * eps)
+        rel_err_v = abs(grad_v - fd_v) / (abs(fd_v) + 1e-10)
+        assert rel_err_v < 1e-4, (
+            f"∂/∂v log_kv({v},{z}): rel_err={rel_err_v:.2e}"
         )
 
 
