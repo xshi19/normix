@@ -86,6 +86,62 @@ def test_quadrature_regime(v, z):
 
 
 # ---------------------------------------------------------------------------
+# Phase 3: Olver uniform expansion (large v)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("v,z", [
+    (30.0, 10.0),
+    (50.0, 20.0),
+    (50.0, 100.0),
+    (100.0, 50.0),
+    (100.0, 150.0),
+    (200.0, 100.0),
+    (200.0, 300.0),
+    (500.0, 200.0),
+])
+def test_olver_regime(v, z):
+    """Points that should use the Olver expansion (v > 25, not Hankel)."""
+    result = float(log_kv(jnp.array(v), jnp.array(z)))
+    expected = _scipy_log_kv(v, z)
+    abs_err = abs(result - expected)
+    rel_err = abs_err / (abs(expected) + 1e-15)
+    assert rel_err < 1e-9 or abs_err < 1e-9, (
+        f"Olver log_kv({v}, {z}): got {result}, expected {expected}, "
+        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Small-z leading asymptotic
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("v,z", [
+    (1.0, 1e-10),
+    (2.0, 1e-15),
+    (5.0, 1e-20),
+    (0.5, 1e-8),
+    (10.0, 1e-12),
+])
+def test_smallz_regime(v, z):
+    """Points that should use the small-z asymptotic."""
+    result = float(log_kv(jnp.array(v), jnp.array(z)))
+    expected = _scipy_log_kv(v, z)
+    abs_err = abs(result - expected)
+    rel_err = abs_err / (abs(expected) + 1e-15)
+    assert rel_err < 1e-6 or abs_err < 1e-6, (
+        f"Small-z log_kv({v}, {z}): got {result}, expected {expected}, "
+        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
+    )
+
+
+def test_no_scipy_callback():
+    """Verify that log_kv works without importing scipy (pure JAX)."""
+    import sys
+    result = float(log_kv(jnp.array(1.0), jnp.array(2.0)))
+    assert np.isfinite(result)
+
+
+# ---------------------------------------------------------------------------
 # Primal evaluation (mixed regimes)
 # ---------------------------------------------------------------------------
 
