@@ -336,12 +336,15 @@ class GeneralizedHyperbolic(NormalMixture):
         )
 
         # GIG update: fit GIG to mean sufficient stats of Y
+        # Warm-start from current GIG natural parameters
         gig_eta = jnp.array([
             jnp.mean(E_log_Y),
             mean_E_inv_Y,
             mean_E_Y,
         ])
-        gig_new = GIG.from_expectation(gig_eta)
+        current_gig = GIG(p=j.p, a=j.a, b=j.b)
+        gig_new = GIG.from_expectation(gig_eta,
+                                        theta0=current_gig.natural_params())
 
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L=L_new,

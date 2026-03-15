@@ -26,7 +26,6 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
-import jaxopt
 
 from normix._bessel import log_kv
 from normix.exponential_family import ExponentialFamily
@@ -149,10 +148,14 @@ class GIG(ExponentialFamily):
         tol: float = 1e-10,
     ) -> "GIG":
         """
-        η → θ via η-rescaling + jaxopt.LBFGSB.
+        η → θ via η-rescaling + L-BFGS-B optimization.
 
         Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing
         condition number by up to 10^30 for extreme a/b ratios.
+
+        When theta0 is provided (warm-start from EM), uses a pure-JAX
+        Newton solver (stays on-device). Otherwise falls back to scipy
+        multi-start L-BFGS-B for cold-start robustness.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
@@ -162,11 +165,22 @@ class GIG(ExponentialFamily):
         geom = jnp.sqrt(eta2 * eta3)
         eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
 
-        # Multi-start: initial guesses from special cases
-        theta0_list = _initial_guesses(eta_scaled)
+        if theta0 is not None:
+            # Warm-start: pure-JAX Newton (stays on-device)
+            theta0 = jnp.asarray(theta0, dtype=jnp.float64)
+            theta0_scaled = jnp.array([theta0[0],
+                                       theta0[1] * s,
+                                       theta0[2] / s])
+            theta0_scaled = theta0_scaled.at[1].set(
+                jnp.minimum(theta0_scaled[1], -1e-8))
+            theta0_scaled = theta0_scaled.at[2].set(
+                jnp.minimum(theta0_scaled[2], -1e-8))
 
-        # Solve the scaled (symmetric) problem
-        theta_scaled = _solve_eta_to_theta(eta_scaled, theta0_list, maxiter, tol)
+            theta_scaled = _solve_jaxopt(eta_scaled, theta0_scaled, maxiter, tol)
+        else:
+            # Cold-start: scipy multi-start for robustness
+            theta0_list = _initial_guesses(eta_scaled)
+            theta_scaled = _solve_scipy(eta_scaled, theta0_list, maxiter, tol)
 
         # Unscale: θ₂ = θ̃₂/s,  θ₃ = s·θ̃₃
         theta = jnp.array([theta_scaled[0],
@@ -242,23 +256,93 @@ def _objective(theta: jax.Array, eta: jax.Array) -> jax.Array:
     return _log_partition_gig_static(theta) - jnp.dot(theta, eta)
 
 
-def _solve_eta_to_theta(
+def _solve_jaxopt(
+    eta: jax.Array,
+    theta0: jax.Array,
+    maxiter: int,
+    tol: float,
+) -> jax.Array:
+    """
+    Pure-JAX Newton solver for warm-start.
+
+    The objective ψ(θ) − θ·η is convex. With a good warm-start from the
+    previous EM iteration, a few Newton steps converge rapidly.
+
+    Uses exp-reparametrisation θ₂ = −exp(φ₂), θ₃ = −exp(φ₃) so the
+    problem is unconstrained.
+    """
+    phi0 = jnp.array([theta0[0],
+                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
+                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
+
+    def obj(phi):
+        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
+        return _objective(theta, eta)
+
+    grad_fn = jax.grad(obj)
+    hess_fn = jax.hessian(obj)
+
+    def newton_body(carry, _):
+        phi, converged = carry
+        g = grad_fn(phi)
+        H = hess_fn(phi)
+        H_damped = H + 1e-6 * jnp.eye(3)
+        delta = jnp.linalg.solve(H_damped, g)
+
+        # Backtracking line search
+        f0 = obj(phi)
+        slope = jnp.dot(g, delta)
+        alpha = _backtrack(obj, phi, delta, f0, slope)
+        phi_new = phi - alpha * delta
+
+        grad_norm = jnp.max(jnp.abs(g))
+        converged = converged | (grad_norm < tol)
+        phi_out = jnp.where(converged, phi, phi_new)
+        return (phi_out, converged), None
+
+    (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
+                                    None, length=50)
+
+    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
+
+
+def _backtrack(obj, phi, delta, f0, slope, beta=0.5, c=1e-4):
+    """Armijo backtracking via lax.while_loop."""
+    def cond(state):
+        alpha, _ = state
+        return (obj(phi - alpha * delta) > f0 - c * alpha * slope) & (alpha > 1e-10)
+
+    def body(state):
+        alpha, i = state
+        return (alpha * beta, i + 1)
+
+    alpha, _ = jax.lax.while_loop(cond, body, (1.0, 0))
+    return alpha
+
+
+_grad_objective = jax.grad(_objective)
+
+
+def _solve_scipy(
     eta: jax.Array,
     theta0_list: list,
     maxiter: int,
     tol: float,
 ) -> jax.Array:
     """
-    Multi-start LBFGSB: try each theta0, return best solution.
-    Runs in pure Python (not JIT'd) since multi-start is control-flow heavy.
+    Multi-start scipy L-BFGS-B for cold-start robustness.
+    Uses explicit JAX gradients. Runs in Python (not JIT'd).
     """
     import numpy as np
-    eta_np = np.array(eta)
+    eta_jnp = jnp.asarray(np.array(eta), dtype=jnp.float64)
 
     def objective_np(theta_np):
         theta = jnp.asarray(theta_np, dtype=jnp.float64)
-        val = _objective(theta, jnp.asarray(eta_np, dtype=jnp.float64))
-        return float(val)
+        return float(_objective(theta, eta_jnp))
+
+    def gradient_np(theta_np):
+        theta = jnp.asarray(theta_np, dtype=jnp.float64)
+        return np.array(_grad_objective(theta, eta_jnp))
 
     from scipy.optimize import minimize
 
@@ -277,6 +361,7 @@ def _solve_eta_to_theta(
             res = minimize(
                 fun=objective_np,
                 x0=t0_np,
+                jac=gradient_np,
                 method='L-BFGS-B',
                 bounds=bounds,
                 options={'maxiter': maxiter, 'ftol': tol**2, 'gtol': tol},
