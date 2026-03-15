@@ -263,13 +263,21 @@ def _solve_jaxopt(
     tol: float,
 ) -> jax.Array:
     """
-    Pure-JAX Newton solver for warm-start.
+    Pure-JAX Newton solver for warm-start via lax.scan.
 
-    The objective ψ(θ) − θ·η is convex. With a good warm-start from the
-    previous EM iteration, a few Newton steps converge rapidly.
+    lax.scan unrolls a fixed number of iterations. Early stopping is
+    simulated by freezing phi once converged (jnp.where mask). With a
+    warm start from the previous EM iteration, convergence typically
+    occurs within the first few steps, and subsequent steps are cheap
+    (just computing a no-op update on frozen phi).
 
-    Uses exp-reparametrisation θ₂ = −exp(φ₂), θ₃ = −exp(φ₃) so the
-    problem is unconstrained.
+    Uses exp-reparametrisation θ₂ = −exp(φ₂), θ₃ = −exp(φ₃) for
+    unconstrained optimization.
+
+    Note: lax.while_loop would give true early-stopping but requires
+    differentiating through the loop body. Since the body contains
+    jax.hessian (second-order), this is extremely expensive. scan with
+    a short fixed length is preferable here.
     """
     phi0 = jnp.array([theta0[0],
                        jnp.log(jnp.maximum(-theta0[1], 1e-30)),
@@ -289,7 +297,6 @@ def _solve_jaxopt(
         H_damped = H + 1e-6 * jnp.eye(3)
         delta = jnp.linalg.solve(H_damped, g)
 
-        # Backtracking line search
         f0 = obj(phi)
         slope = jnp.dot(g, delta)
         alpha = _backtrack(obj, phi, delta, f0, slope)
@@ -301,7 +308,7 @@ def _solve_jaxopt(
         return (phi_out, converged), None
 
     (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
-                                    None, length=50)
+                                    None, length=20)
 
     return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
 
@@ -320,7 +327,8 @@ def _backtrack(obj, phi, delta, f0, slope, beta=0.5, c=1e-4):
     return alpha
 
 
-_grad_objective = jax.grad(_objective)
+_objective_jit = jax.jit(_objective)
+_grad_objective = jax.jit(jax.grad(_objective))
 
 
 def _solve_scipy(
@@ -338,7 +346,7 @@ def _solve_scipy(
 
     def objective_np(theta_np):
         theta = jnp.asarray(theta_np, dtype=jnp.float64)
-        return float(_objective(theta, eta_jnp))
+        return float(_objective_jit(theta, eta_jnp))
 
     def gradient_np(theta_np):
         theta = jnp.asarray(theta_np, dtype=jnp.float64)
