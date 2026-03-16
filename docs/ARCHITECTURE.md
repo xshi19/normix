@@ -6,7 +6,7 @@
 
 ```
 normix/                     # JAX implementation (current)
-├── _bessel.py              # log_kv with custom_jvp (scipy callback + FD for ∂/∂v)
+├── _bessel.py              # log_kv(v, z, backend='jax'|'cpu') — pure-JAX + scipy paths
 ├── _types.py               # type aliases
 ├── exponential_family.py   # ExponentialFamily(eqx.Module)
 ├── distributions/
@@ -119,20 +119,32 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
 
 The model knows math; the fitter knows iteration (following GMMX).
 
-- **E-step**: `model.e_step(X)` → `jax.vmap(joint.conditional_expectations)(X)` computes $E[Y|X]$, $E[1/Y|X]$, $E[\log Y|X]$
-- **M-step**: `model.m_step(X, expectations)` → converts expectation parameters to classical, returns new immutable model via `eqx.tree_at`
-- **Fitter**: `BatchEMFitter.fit(model, X)` → `jax.lax.while_loop` until convergence; `OnlineEMFitter` uses `jax.lax.scan` with Robbins-Monro step sizes
+- **E-step**: `model.e_step(X, backend='jax'|'cpu')` computes $E[Y|X]$, $E[1/Y|X]$, $E[\log Y|X]$
+  - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
+  - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel goes to CPU via `scipy.kve` — ~15× faster for EM
+  - Requires `joint._posterior_gig_params(z2, w2)` (implemented by all four joint subclasses)
+- **M-step**: `model.m_step(X, expectations)` → converts expectation parameters to classical, returns new immutable model
+- **Fitter**: `BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')` — controls execution strategy for the EM hot path
+  - `e_step_backend` forwarded to `model.e_step`; `m_step_solver` forwarded to `model.m_step` (for GH/GIG)
 
 ## Bessel Functions (`_bessel.py`)
 
-`log_kv(v, z)` with `@jax.custom_jvp`:
+`log_kv(v, z, backend='jax')` — unified entry point with backend selection:
 
-- **Evaluation**: TFP `log_bessel_kve(|v|, z) - z` + asymptotic fallbacks for overflow/NaN
-- **∂/∂z (exact)**: recurrence $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$
-- **∂/∂ν (large z)**: analytical DLMF 10.40.2: $S'(\nu,z)/S(\nu,z)$
-- **∂/∂ν (small z)**: central finite differences, ε = 10⁻⁵
+- **`backend='jax'` (default)**: pure-JAX, `@jax.custom_jvp`, JIT-able, differentiable.
+  - **Evaluation**: 4-regime `lax.cond` dispatch (Hankel/Olver/small-z/quadrature)
+  - **∂/∂z (exact)**: recurrence $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$
+  - **∂/∂ν**: central finite differences, ε = 10⁻⁵
+  - Internal name: `_log_kv_jax` (private, carries the `@custom_jvp`)
+
+- **`backend='cpu'`**: `scipy.special.kve`, fully vectorized numpy. Not JIT-able.
+  Fast for EM hot path (6 C-level array calls). Handles overflow/NaN via
+  `inf_mask` fix using asymptotic Γ-function formula.
+  Internal name: `_log_kv_cpu` (private).
 
 Verified across $(v, z)$ grid, $v \in [-100, 500]$, $z \in [10^{-6}, 10^3]$: relative errors < 10⁻⁶. See `notebooks/bessel_function_comparison.ipynb`.
+
+**Why `backend` does not break JIT**: the parameter is a Python-level string resolved before JAX tracing. When `backend='jax'` (the default), JAX traces `_log_kv_jax` — identical to the previous behaviour. See `docs/design/cpu_bessel_design.md` §4.
 
 ## GIG η→θ Optimization
 

@@ -170,3 +170,31 @@ Keep the current NumPy normix as a subpackage or separate reference for cross-va
 
 ### Immutability
 All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate_cache`. Parameters are set at construction. M-step returns a new model via `eqx.tree_at`.
+
+
+## Phase 7: CPU Bessel Backend (Performance)
+
+**Goal:** 15× EM speedup via hybrid JAX/CPU execution for Bessel-heavy hot paths.
+**Branch:** `feat/jax-native-bessel-v2` → `cursor/cpu-bessel-design-9a75`
+**Status:** Implemented (see `docs/design/cpu_bessel_design.md`)
+
+### 7.1 `log_kv(v, z, backend='jax'|'cpu')` — Phase 1 ✓
+- `backend='jax'` (default): unchanged pure-JAX path with `@custom_jvp`, JIT-able
+- `backend='cpu'`: `scipy.special.kve`, vectorized numpy, fast for EM hot path
+- Internal: `_log_kv_jax` (carries `@custom_jvp`) and `_log_kv_cpu` (scipy)
+
+### 7.2 GIG CPU methods — Phase 2 ✓
+- `GIG.expectation_params(backend='cpu')`: analytical Bessel ratios via scipy
+- `GIG.expectation_params_batch(p, a, b, backend='cpu')`: vectorized (N,3) output
+- `GIG.from_expectation(..., solver='cpu')`: self-contained scipy L-BFGS-B solver
+  (replaces `cpu_legacy` which depended on normix_numpy)
+
+### 7.3 E-step CPU path — Phase 3 ✓
+- `NormalMixture.e_step(X, backend='cpu')`: hybrid path
+  - Quad forms (`L⁻¹(x-μ)`, `‖z‖²`, `‖w‖²`) stay in JAX vmap (GPU-friendly)
+  - Bessel calls go to CPU via `GIG.expectation_params_batch(backend='cpu')`
+- `_posterior_gig_params(z2, w2)` added to all four `JointNormalMixture` subclasses
+
+### 7.4 BatchEMFitter integration — Phase 4 ✓
+- `BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')` for full CPU hot path
+- Default values `'jax'`/`'newton'` preserve backward compatibility
