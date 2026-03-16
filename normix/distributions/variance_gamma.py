@@ -75,6 +75,14 @@ class JointVarianceGamma(JointNormalMixture):
             'E_Y': eta[2],
         }
 
+    def _posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array
+    ):
+        """Posterior GIG (p, a, b) given quad-form scalars."""
+        return (self.alpha - self.d / 2.0,
+                2.0 * self.beta + w2,
+                z2)
+
     def natural_params(self) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         j = JointGeneralizedHyperbolic(

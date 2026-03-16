@@ -23,11 +23,22 @@ class BatchEMFitter(eqx.Module):
     Runs E-step (all data) → M-step → regularize until convergence.
     Uses a Python loop (not jax.lax.while_loop) because the GIG η→θ
     optimization uses scipy under the hood and isn't fully JIT-able.
+
+    Parameters
+    ----------
+    e_step_backend : 'jax' or 'cpu'
+        'jax' (default): jax.vmap over conditional_expectations.
+        'cpu': quad forms in JAX + Bessel on CPU (faster for large N).
+    m_step_solver : solver for GIG η→θ (used by GH and similar models).
+        'newton' (default), 'newton_analytical', 'lbfgs', 'cpu', 'cpu_legacy'.
+        'cpu' is the recommended fast solver for the EM hot path.
     """
 
     max_iter: int = eqx.field(static=True, default=200)
     tol: float = eqx.field(static=True, default=1e-6)
     regularization: str = eqx.field(static=True, default='det_sigma_one')
+    e_step_backend: str = eqx.field(static=True, default='jax')
+    m_step_solver: str = eqx.field(static=True, default='newton')
 
     def fit(self, model, X: jax.Array):
         """
@@ -47,10 +58,10 @@ class BatchEMFitter(eqx.Module):
 
         for i in range(self.max_iter):
             # E-step
-            expectations = model.e_step(X)
+            expectations = model.e_step(X, backend=self.e_step_backend)
 
-            # M-step
-            model = model.m_step(X, expectations)
+            # M-step — pass solver if model supports it
+            model = self._m_step(model, X, expectations)
 
             # Regularization
             model = self._regularize(model)
@@ -64,6 +75,14 @@ class BatchEMFitter(eqx.Module):
                 break
 
         return model
+
+    def _m_step(self, model, X, expectations):
+        """Call m_step, forwarding solver if the model accepts it."""
+        import inspect
+        sig = inspect.signature(model.m_step)
+        if 'solver' in sig.parameters:
+            return model.m_step(X, expectations, solver=self.m_step_solver)
+        return model.m_step(X, expectations)
 
     def _regularize(self, model):
         if self.regularization == 'det_sigma_one':

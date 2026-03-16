@@ -101,6 +101,14 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
             'E_Y': eta[2],
         }
 
+    def _posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array
+    ):
+        """Posterior GIG (p, a, b) given quad-form scalars z2=‖L⁻¹(x-μ)‖², w2=‖L⁻¹γ‖²."""
+        return (self.p - self.d / 2.0,
+                self.a + w2,
+                self.b + z2)
+
     # ------------------------------------------------------------------
     # ExponentialFamily: natural params / log partition
     # ------------------------------------------------------------------
