@@ -26,6 +26,7 @@ from typing import Optional
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from normix._bessel import log_kv
 from normix.exponential_family import ExponentialFamily
@@ -109,6 +110,98 @@ class GIG(ExponentialFamily):
 
     def log_base_measure(self, x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
+
+    # ------------------------------------------------------------------
+    # expectation_params with backend selection
+    # ------------------------------------------------------------------
+
+    def expectation_params(self, backend: str = 'jax') -> jax.Array:
+        """
+        η = [E[log X], E[1/X], E[X]].
+
+        backend='jax' : jax.grad of log partition (JIT-able, default)
+        backend='cpu' : analytical Bessel ratios via scipy.kve (fast)
+        """
+        if backend == 'cpu':
+            return self._expectation_params_cpu()
+        return jax.grad(self._log_partition_from_theta)(self.natural_params())
+
+    def _expectation_params_cpu(self) -> jax.Array:
+        """Analytical GIG expectations using scipy Bessel (scalar inputs)."""
+        p = float(self.p)
+        a = float(self.a)
+        b = float(self.b)
+
+        a_safe = max(a, 1e-300)
+        b_safe = max(b, 1e-300)
+        sqrt_ab = np.sqrt(a_safe * b_safe)
+        log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
+
+        log_kp    = float(log_kv(p,         sqrt_ab, backend='cpu'))
+        log_kp_m1 = float(log_kv(p - 1.0,  sqrt_ab, backend='cpu'))
+        log_kp_p1 = float(log_kv(p + 1.0,  sqrt_ab, backend='cpu'))
+
+        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
+        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
+
+        eps = 1e-5
+        log_kp_pe = float(log_kv(p + eps, sqrt_ab, backend='cpu'))
+        log_kp_me = float(log_kv(p - eps, sqrt_ab, backend='cpu'))
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+
+        return jnp.array([E_log_X, E_inv_X, E_X])
+
+    @staticmethod
+    def expectation_params_batch(
+        p, a, b, backend: str = 'jax'
+    ) -> jax.Array:
+        """
+        Vectorized η for arrays of (p, a, b), each shape (N,).
+        Returns (N, 3) array where columns are [E_log_X, E_inv_X, E_X].
+
+        backend='jax' : vmap over scalar JAX grad
+        backend='cpu' : vectorized scipy.kve (6 C-level array calls)
+        """
+        if backend == 'cpu':
+            return GIG._expectation_params_batch_cpu(p, a, b)
+        p = jnp.asarray(p, dtype=jnp.float64)
+        a = jnp.asarray(a, dtype=jnp.float64)
+        b = jnp.asarray(b, dtype=jnp.float64)
+
+        def _single(pi, ai, bi):
+            return GIG(p=pi, a=ai, b=bi).expectation_params()
+
+        return jax.vmap(_single)(p, a, b)
+
+    @staticmethod
+    def _expectation_params_batch_cpu(p, a, b) -> jax.Array:
+        """Vectorized CPU path — 6 scipy.kve calls on (N,) arrays."""
+        p = np.asarray(p, dtype=np.float64)
+        a = np.asarray(a, dtype=np.float64)
+        b = np.asarray(b, dtype=np.float64)
+
+        a_safe = np.maximum(a, 1e-300)
+        b_safe = np.maximum(b, 1e-300)
+        sqrt_ab = np.sqrt(a_safe * b_safe)
+        log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
+
+        log_kp    = log_kv(p,         sqrt_ab, backend='cpu')
+        log_kp_m1 = log_kv(p - 1.0,  sqrt_ab, backend='cpu')
+        log_kp_p1 = log_kv(p + 1.0,  sqrt_ab, backend='cpu')
+
+        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
+        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
+
+        eps = 1e-5
+        log_kp_pe = log_kv(p + eps, sqrt_ab, backend='cpu')
+        log_kp_me = log_kv(p - eps, sqrt_ab, backend='cpu')
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+
+        return jnp.column_stack([
+            jnp.asarray(E_log_X),
+            jnp.asarray(E_inv_X),
+            jnp.asarray(E_X),
+        ])
 
     def mean(self) -> jax.Array:
         """E[X] = η₃ from expectation parameters."""
@@ -194,12 +287,14 @@ class GIG(ExponentialFamily):
                     eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length)
             elif solver == "lbfgs":
                 theta_scaled = _solve_lbfgs(eta_scaled, theta0_scaled, maxiter, tol)
+            elif solver == "cpu":
+                theta_scaled = _solve_cpu(eta_scaled, theta0_scaled, tol)
             elif solver == "cpu_legacy":
                 theta_scaled = _solve_cpu_legacy(eta_scaled, theta0_scaled, tol)
             else:
                 raise ValueError(f"Unknown solver: {solver!r}. "
                                  "Choose 'newton', 'newton_analytical', 'lbfgs', "
-                                 "or 'cpu_legacy'.")
+                                 "'cpu', or 'cpu_legacy'.")
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
@@ -388,6 +483,54 @@ def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
     H_phi = H_phi.at[2, 2].add(g_theta[2] * theta[2])
 
     return g_phi, H_phi
+
+
+def _solve_cpu(
+    eta: jax.Array,
+    theta0: jax.Array,
+    tol: float,
+) -> jax.Array:
+    """
+    Self-contained scipy L-BFGS-B with analytical gradient via log_kv(backend='cpu').
+
+    Minimises ψ(θ) − θ·η with gradient η̂(θ) − η (Bessel ratios via scipy.kve).
+    No normix_numpy dependency.
+    """
+    from scipy.optimize import minimize
+
+    _EPS_NP = 1e-300
+
+    eta_np = np.asarray(eta, dtype=np.float64)
+    theta0_np = np.asarray(theta0, dtype=np.float64)
+
+    def objective_and_grad(theta_np):
+        p = theta_np[0] + 1.0
+        # Use consistent a_safe, b_safe for both Bessel and log to avoid
+        # cancellation issues near the boundary (see design doc §5).
+        b_safe = max(-2.0 * theta_np[1], _EPS_NP)
+        a_safe = max(-2.0 * theta_np[2], _EPS_NP)
+        sqrt_ab = np.sqrt(a_safe * b_safe)
+
+        lkv = float(log_kv(p, sqrt_ab, backend='cpu'))
+        psi = (np.log(2.0) + lkv
+               + 0.5 * p * (np.log(b_safe) - np.log(a_safe)))
+        obj = float(psi - np.dot(theta_np, eta_np))
+
+        # Gradient = η̂(θ) − η  (analytical via Bessel ratios)
+        gig_tmp = GIG(p=p, a=a_safe, b=b_safe)
+        eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
+        grad = eta_hat - eta_np
+        return obj, grad
+
+    result = minimize(
+        objective_and_grad,
+        theta0_np,
+        jac=True,
+        method='L-BFGS-B',
+        bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
+        options={'maxiter': 500, 'ftol': tol ** 2, 'gtol': tol},
+    )
+    return jnp.asarray(result.x, dtype=jnp.float64)
 
 
 def _solve_cpu_legacy(
