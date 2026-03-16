@@ -16,6 +16,10 @@ function _log_kv_scalar is vmapped over array inputs.
 Custom JVP for full autodiff:
   - ∂/∂z : exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
   - ∂/∂v : central FD on log_kv itself (eps=1e-5)
+
+backend='jax'  (default): pure-JAX, JIT-able, differentiable.
+backend='cpu'           : scipy.special.kve, fully vectorized numpy.
+                          Not JIT-able. Fast for EM hot path.
 """
 from __future__ import annotations
 
@@ -152,11 +156,11 @@ def _log_kv_scalar(v: jax.Array, z: jax.Array) -> jax.Array:
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Pure-JAX implementation (private) — custom JVP, JIT-able, differentiable
 # ---------------------------------------------------------------------------
 
 @functools.partial(jax.custom_jvp, nondiff_argnums=())
-def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
+def _log_kv_jax(v: jax.Array, z: jax.Array) -> jax.Array:
     """
     log K_v(z), pure-JAX with zero scipy callbacks.
 
@@ -183,17 +187,77 @@ def log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     return jax.vmap(_log_kv_scalar)(v.ravel(), z.ravel()).reshape(shape)
 
 
-@log_kv.defjvp
-def _log_kv_jvp(primals, tangents):
+@_log_kv_jax.defjvp
+def _log_kv_jax_jvp(primals, tangents):
     v, z = primals
     dv, dz = tangents
-    primal_out = log_kv(v, z)
+    primal_out = _log_kv_jax(v, z)
 
-    log_kvm1 = log_kv(v - 1.0, z)
-    log_kvp1 = log_kv(v + 1.0, z)
+    log_kvm1 = _log_kv_jax(v - 1.0, z)
+    log_kvp1 = _log_kv_jax(v + 1.0, z)
     dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out))
 
     _EPS_V = jnp.asarray(1e-5, dtype=jnp.float64)
-    dlogkv_dv = (log_kv(v + _EPS_V, z) - log_kv(v - _EPS_V, z)) / (2.0 * _EPS_V)
+    dlogkv_dv = (_log_kv_jax(v + _EPS_V, z) - _log_kv_jax(v - _EPS_V, z)) / (2.0 * _EPS_V)
 
     return primal_out, dlogkv_dz * dz + dlogkv_dv * dv
+
+
+# ---------------------------------------------------------------------------
+# CPU implementation (private) — scipy.special.kve, vectorized numpy
+# ---------------------------------------------------------------------------
+
+def _log_kv_cpu(v, z):
+    """
+    log K_v(z) via scipy.special.kve. Fully vectorized numpy.
+
+    Not JIT-able. Fast for the EM hot path (6 C-level array calls).
+    Handles arrays of any shape via broadcasting.
+    """
+    from scipy.special import kve, gammaln
+
+    v = np.asarray(v, dtype=np.float64)
+    z = np.asarray(z, dtype=np.float64)
+    v, z = np.broadcast_arrays(v, z)
+    z = np.maximum(z, np.finfo(np.float64).tiny)
+
+    result = np.log(kve(v, z)) - z
+
+    inf_mask = np.isinf(result)
+    if np.any(inf_mask):
+        v_abs = np.abs(v[inf_mask])
+        z_inf = z[inf_mask]
+        large_v = v_abs > 0.5
+        result[inf_mask] = np.where(
+            large_v,
+            gammaln(v_abs) - np.log(2.0) + v_abs * (np.log(2.0) - np.log(z_inf)),
+            np.log(np.maximum(-np.log(z_inf / 2.0) - np.euler_gamma, 1e-300)),
+        )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Public API — unified dispatcher with backend selection
+# ---------------------------------------------------------------------------
+
+def log_kv(v, z, backend: str = 'jax'):
+    """
+    log K_v(z) — log modified Bessel function of the second kind.
+
+    Parameters
+    ----------
+    v : scalar or array — order (any real; K_v = K_{-v})
+    z : scalar or array — argument (must be > 0)
+    backend : 'jax' (default) or 'cpu'
+        'jax' : pure-JAX, lax.cond regime selection, custom JVP.
+                JIT-able, differentiable. Default for log_prob, pdf, etc.
+        'cpu' : scipy.special.kve, fully vectorized numpy.
+                Not JIT-able. Fast for EM hot path.
+
+    Returns
+    -------
+    scalar or array of same broadcast shape as (v, z).
+    """
+    if backend == 'cpu':
+        return _log_kv_cpu(v, z)
+    return _log_kv_jax(v, z)
