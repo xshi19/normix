@@ -87,6 +87,15 @@ class JointNormalInverseGaussian(JointNormalMixture):
             'E_Y': eta[2],
         }
 
+    def _posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array
+    ):
+        """Posterior GIG (p, a, b) given quad-form scalars."""
+        a_ig = self.lam / (self.mu_ig ** 2)
+        return (-0.5 - self.d / 2.0,
+                a_ig + w2,
+                self.lam + z2)
+
     def natural_params(self) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         a_ig = self.lam / (self.mu_ig**2)
