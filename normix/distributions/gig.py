@@ -157,11 +157,14 @@ class GIG(ExponentialFamily):
 
         Parameters
         ----------
-        theta0 : warm-start point (required for JAX solvers)
+        theta0 : warm-start point (required for JAX solvers and 'cpu_legacy')
         solver : warm-start solver when theta0 is provided:
             'newton'            — JAX Newton, autodiff Hessian via jax.hessian
             'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
             'lbfgs'             — JAXopt L-BFGS (gradient-only, ~5 log_kv/step)
+            'cpu_legacy'        — legacy NumPy/SciPy solver (scipy.kve, warm-start),
+                                  runs on CPU. Fast for the 3D GIG problem; avoids
+                                  GPU dispatch overhead for this scalar computation.
         scan_length : fixed Newton iteration count for the two Newton solvers
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
@@ -191,9 +194,12 @@ class GIG(ExponentialFamily):
                     eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length)
             elif solver == "lbfgs":
                 theta_scaled = _solve_lbfgs(eta_scaled, theta0_scaled, maxiter, tol)
+            elif solver == "cpu_legacy":
+                theta_scaled = _solve_cpu_legacy(eta_scaled, theta0_scaled, tol)
             else:
                 raise ValueError(f"Unknown solver: {solver!r}. "
-                                 "Choose 'newton', 'newton_analytical', or 'lbfgs'.")
+                                 "Choose 'newton', 'newton_analytical', 'lbfgs', "
+                                 "or 'cpu_legacy'.")
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
@@ -382,6 +388,33 @@ def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
     H_phi = H_phi.at[2, 2].add(g_theta[2] * theta[2])
 
     return g_phi, H_phi
+
+
+def _solve_cpu_legacy(
+    eta: jax.Array,
+    theta0: jax.Array,
+    tol: float,
+) -> jax.Array:
+    """Hybrid CPU solver: legacy NumPy/SciPy Bessel + scipy L-BFGS-B, warm-start.
+
+    Runs entirely on CPU using scipy.special.kve (not the pure-JAX Bessel),
+    which avoids GPU kernel launch overhead for this 3-dimensional problem.
+    The result is transferred back to the original JAX device.
+
+    Expected time: ~0.5–1 ms per call (similar to pure NumPy reference).
+    """
+    import numpy as np
+    from normix_numpy.distributions.univariate.generalized_inverse_gaussian import (
+        GeneralizedInverseGaussian as LegacyGIG,
+    )
+
+    eta_np = np.asarray(eta, dtype=np.float64)
+    theta0_np = np.asarray(theta0, dtype=np.float64)
+
+    legacy = LegacyGIG()
+    theta_np = legacy._expectation_to_natural(eta_np, theta0=theta0_np)
+
+    return jnp.asarray(theta_np, dtype=jnp.float64)
 
 
 def _solve_jaxopt(
