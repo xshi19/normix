@@ -306,6 +306,7 @@ class GeneralizedHyperbolic(NormalMixture):
         X: jax.Array,
         expectations: Dict[str, jax.Array],
         solver: str = "newton",
+        scan_length: int = 20,
     ) -> "GeneralizedHyperbolic":
         """
         M-step: update all parameters from E-step expectations.
@@ -313,6 +314,7 @@ class GeneralizedHyperbolic(NormalMixture):
         expectations: dict with keys E_log_Y (n,), E_inv_Y (n,), E_Y (n,)
         X: (n, d)
         solver: GIG η→θ solver ('newton', 'newton_analytical', 'lbfgs')
+        scan_length: fixed Newton iteration count for Newton-based solvers
         """
         from normix.distributions.gig import GIG
 
@@ -347,7 +349,8 @@ class GeneralizedHyperbolic(NormalMixture):
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
         gig_new = GIG.from_expectation(gig_eta,
                                         theta0=current_gig.natural_params(),
-                                        solver=solver)
+                                        solver=solver,
+                                        scan_length=scan_length)
 
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L=L_new,

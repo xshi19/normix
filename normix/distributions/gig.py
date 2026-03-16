@@ -147,6 +147,7 @@ class GIG(ExponentialFamily):
         solver: str = "newton",
         maxiter: int = 500,
         tol: float = 1e-10,
+        scan_length: int = 20,
     ) -> "GIG":
         """
         η → θ via η-rescaling + optimization.
@@ -161,6 +162,7 @@ class GIG(ExponentialFamily):
             'newton'            — JAX Newton, autodiff Hessian via jax.hessian
             'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
             'lbfgs'             — JAXopt L-BFGS (gradient-only, ~5 log_kv/step)
+        scan_length : fixed Newton iteration count for the two Newton solvers
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
@@ -181,10 +183,12 @@ class GIG(ExponentialFamily):
                 jnp.minimum(theta0_scaled[2], -1e-8))
 
             if solver == "newton":
-                theta_scaled = _solve_jaxopt(eta_scaled, theta0_scaled, maxiter, tol)
+                theta_scaled = _solve_jaxopt(
+                    eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length
+                )
             elif solver == "newton_analytical":
                 theta_scaled = _solve_newton_analytical(
-                    eta_scaled, theta0_scaled, maxiter, tol)
+                    eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length)
             elif solver == "lbfgs":
                 theta_scaled = _solve_lbfgs(eta_scaled, theta0_scaled, maxiter, tol)
             else:
@@ -385,6 +389,7 @@ def _solve_jaxopt(
     theta0: jax.Array,
     maxiter: int,
     tol: float,
+    scan_length: int = 20,
 ) -> jax.Array:
     """
     Pure-JAX Newton solver for warm-start via lax.scan.
@@ -432,7 +437,7 @@ def _solve_jaxopt(
         return (phi_out, converged), None
 
     (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
-                                    None, length=20)
+                                    None, length=scan_length)
 
     return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
 
@@ -442,11 +447,12 @@ def _solve_newton_analytical(
     theta0: jax.Array,
     maxiter: int,
     tol: float,
+    scan_length: int = 20,
 ) -> jax.Array:
     """Newton solver using the analytical gradient and Hessian of the GIG log-partition.
 
     Per Newton step: 7 log_kv evaluations (batched vmap) vs ~25 for jax.hessian.
-    Uses scan(length=20) with early-stopping mask, same as _solve_jaxopt.
+    Uses scan(length=scan_length) with early-stopping mask, same as _solve_jaxopt.
     """
     phi0 = jnp.array([theta0[0],
                        jnp.log(jnp.maximum(-theta0[1], 1e-30)),
@@ -473,7 +479,7 @@ def _solve_newton_analytical(
         return (phi_out, converged), None
 
     (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
-                                    None, length=20)
+                                    None, length=scan_length)
 
     return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
 

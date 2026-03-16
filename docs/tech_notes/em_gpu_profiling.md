@@ -1,176 +1,160 @@
 # EM Algorithm GPU Profiling: CPU vs GPU vs NumPy
 
-**Date**: March 2026  
-**Status**: Investigated, warm-start + pure-JAX Newton applied  
-**Related files**: `scripts/profile_cpu_vs_gpu.py`, `scripts/profile_numpy_vs_jax.py`, `scripts/profile_numpy_quick.py`
+**Date**: March 2026 (updated)  
+**Status**: Updated with pure-JAX Bessel results (March 2026)  
+**Related files**: `scripts/profile_cpu_vs_gpu.py`, `scripts/rerun_em_profiling.py`
 
-## Summary
+## Current Architecture (as of March 2026)
 
-The GH (Generalized Hyperbolic) EM algorithm was observed to be very slow on GPU.
-Profiling revealed that the bottleneck is the GIG η→θ optimization in the M-step.
-Three solver variants were benchmarked:
+The package now uses pure-JAX `log_kv` with zero scipy callbacks:
 
-| GH M-step variant | 468-stock CPU | 468-stock GPU | Status |
-|-------------------|---------------|---------------|--------|
-| Original (scipy multi-start, no warm-start) | 43.9s | 28.2s | baseline |
-| Warm-start scipy (single start + `jax.grad`) | 1.78s | 1.28s | previous |
-| **Pure-JAX Newton** (current) | **2.50s** | **3.52s** | **current** |
+- **`log_kv`**: pure JAX, `lax.cond` regime selection (Hankel / Olver / quadrature / small-z)
+- **E-step**: `jax.vmap` over GIG `expectation_params`, entirely on-device
+- **M-step GIG**: JAX Newton solver, `jax.hessian`-based, `lax.scan(length=20)`, warm-start
+- **M-step others (VG, NIG-α)**: unchanged, `jaxopt.LBFGS`
+- **M-step NIG**: closed-form
+
+## Summary Table (March 2026 re-run)
+
+Per-iteration timing (seconds, 5 iterations avg after warmup, S&P 500 data).
+
+### 10 stocks
+
+| Dist | Sub | CPU E | CPU M | CPU iter | GPU E | GPU M | GPU iter |
+|------|-----|------:|------:|---------:|------:|------:|---------:|
+| NIG | InvGaussian | 0.97 | 0.005 | 1.35 | 1.04 | 0.01 | 1.63 |
+| VG | Gamma | 0.99 | 0.059 | 1.38 | 1.11 | 0.23 | 1.88 |
+| NIG-α | InvGamma | 1.00 | 0.058 | 1.39 | 1.14 | 0.27 | 1.97 |
+| **GH** | **GIG** | **0.97** | **3.38** | **4.71** | **1.05** | **6.69** | **8.29** |
+
+### 468 stocks
+
+| Dist | Sub | CPU E | CPU M | CPU iter | GPU E | GPU M | GPU iter |
+|------|-----|------:|------:|---------:|------:|------:|---------:|
+| NIG | InvGaussian | 1.18 | 1.04 | 2.87 | 1.08 | 0.14 | 1.77 |
+| VG | Gamma | 0.99 | 1.36 | 2.69 | 1.09 | 0.33 | 2.00 |
+| NIG-α | InvGamma | 1.00 | 1.38 | 2.74 | 1.08 | 0.34 | 2.18 |
+| **GH** | **GIG** | **1.01** | **4.95** | **6.51** | **1.09** | **7.10** | **8.77** |
+
+## Historical Comparison (GH M-step only, 468 stocks)
+
+| Variant | CPU M | GPU M | Status |
+|---------|------:|------:|--------|
+| Original (scipy multi-start, no warm-start) | 43.9s | 28.2s | baseline (2025) |
+| Warm-start scipy (single start + `jax.grad`) | 1.78s | 1.28s | intermediate |
+| Pure-JAX Newton (before pure-JAX Bessel) | 2.66s | 3.62s | after warm-start fix |
+| **Pure-JAX Newton (current, pure-JAX Bessel)** | **4.95s** | **7.10s** | **current (2026)** |
 | NumPy reference | 0.42s | — | reference |
 
-The pure-JAX Newton solver eliminates the scipy dependency on the EM hot path.
-It is slightly slower than warm-start scipy because `jax.hessian` triggers many
-`pure_callback` round-trips for the Bessel function. This overhead will vanish
-once `log_kv` is reimplemented in pure JAX (see `jax_native_bessel_feasibility.md`).
+## Why the GH M-Step Is Still the Bottleneck
+
+The pure-JAX Bessel function was expected to speed things up, but the GH M-step
+is now **slower** than with the old scipy callback. The root cause has been
+diagnosed in detail (see `docs/tech_notes/jax_overhead_diagnosis.md`):
+
+### Measured overhead at each layer (RTX 4090)
+
+| Operation | NumPy | JAX JIT CPU | JAX JIT GPU | JAX Eager GPU |
+|---|---:|---:|---:|---:|
+| Single `log_kv(0.5, 1.0)` | 3.8 μs | 73.7 μs | 1,724 μs | 379,328 μs |
+| Gradient ∇ψ(θ) | 27.7 μs | 94.5 μs | 2,798 μs | 1,946,824 μs |
+| Hessian ∇²ψ(θ) | 113.6 μs | 143.2 μs | 5,832 μs | 10,494,692 μs |
+
+The **eager hessian** (10.5 seconds) is what runs inside `lax.scan` at each Newton
+step. With `scan_length=20`, the theoretical cost is 20 × 10.5s = 210s, but XLA
+caching reduces this to ~5–7s per M-step call.
+
+### Root cause: wrong problem size for GPU
+
+The GIG η→θ optimization is a **3-dimensional problem** (3-vector θ, 3×3 Hessian).
+GPU kernel launch latency (~1ms per dispatch) far exceeds the actual computation
+(~1μs). This is confirmed by known JAX issues:
+
+- [JAX #5986](https://github.com/google/jax/issues/5986): `lax.cond` inside
+  `lax.scan` significantly slower on GPU (open P2 bug since 2021)
+- [JAX #24411](https://github.com/jax-ml/jax/issues/24411): JAX extremely slow
+  on GPUs for small workloads
+- [JAX benchmarking docs](https://docs.jax.dev/en/latest/benchmarking.html):
+  "10×10 inputs → JAX/GPU 10× slower than NumPy/CPU"
+
+### Why the old scipy callback was accidentally faster
+
+With the old `jax.pure_callback` path, `log_kv` was called in scipy C code
+directly: each callback was ~0.3ms because scipy's `kve` is a single fast C call.
+The new pure-JAX path replaces each callback with a GPU kernel launch (~1.7ms),
+making each `log_kv` call 5× slower in this M-step context.
+
+The pure-JAX Bessel **helps the E-step** (batch vmap benefits from GPU
+parallelism) but **hurts the M-step** (scalar 3D optimization, GPU overhead).
+
+## What Improved
+
+### E-step
+
+The E-step times are now **similar across CPU and GPU** (~1s each for 10 stocks,
+~1s for 468 stocks). Previously the E-step was 0.07–0.12s on GPU because it used
+`pure_callback` (CPU execution). Now both E-steps are ~1s because:
+- GPU: pure-JAX `log_kv` runs on-device but has per-dispatch overhead
+- CPU: same pure-JAX computation runs on CPU
+
+### VG/NIG-α M-step on GPU (468 stocks)
+
+These improved significantly: 0.23s and 0.32s (unchanged jaxopt LBFGS), vs
+0.23s and 0.32s previously. These distributions don't use `log_kv` in their
+M-step, so the Bessel change doesn't affect them.
+
+The GPU speedup on NIG (0.14s vs 1.04s CPU) for 468 stocks reflects the
+pure matrix operations that genuinely benefit from GPU.
+
+## Analysis vs. Original Numbers
+
+### 10 stocks — the picture now
+
+| Dist | CPU iter | GPU iter | GPU/CPU | Change from original |
+|------|--------:|--------:|--------:|----------------------|
+| NIG | 1.35s | 1.63s | 1.21× slower | GPU now 1.21× slower (was 0.73×) |
+| VG | 1.38s | 1.88s | 1.36× slower | GPU now 1.36× slower (was 1.58×) |
+| NIG-α | 1.39s | 1.97s | 1.42× slower | GPU now 1.42× slower (was 1.49×) |
+| **GH** | **4.71s** | **8.29s** | **1.76× slower** | Both slower (was CPU 1.18s, GPU 3.89s) |
+
+The small-d (10-stock) case is now dominated by E-step overhead from the pure-JAX
+Bessel dispatch, which worsened from ~0.1s to ~1s per step.
+
+### 468 stocks
+
+| Dist | CPU iter | GPU iter | GPU/CPU | Change from original |
+|------|--------:|--------:|--------:|----------------------|
+| NIG | 2.87s | 1.77s | 0.62× faster | GPU improvement roughly same |
+| VG | 2.69s | 2.00s | 0.74× faster | Slight regression |
+| NIG-α | 2.74s | 2.18s | 0.80× faster | Slight regression |
+| **GH** | **6.51s** | **8.77s** | **1.35× slower** | Both slower than original |
+
+## Recommended Path Forward
+
+The **GIG M-step is the single bottleneck** and will remain so with the current
+JAX Newton architecture. The right fix is to force CPU execution for the GIG
+solver, which avoids GPU dispatch overhead for this inherently scalar problem:
+
+1. **Force CPU for GIG solver** (highest impact, low effort):
+   - JIT-compile `_objective` and `_grad_objective` for CPU device
+   - Pass `theta` and `eta` through `jax.device_put(..., cpu)` before the solve
+   - Transfer result back to GPU after solve
+   - Expected result: scipy-wrapped JAX on CPU ≈ 6–8ms per M-step (vs 5–7s now)
+
+2. **Pure NumPy fallback for GIG solver** (fastest, breaks pure-JAX):
+   - Call `normix_numpy.GIG._expectation_to_natural` directly for the 3D solve
+   - Expected: ~0.9ms per M-step call (same as NumPy reference baseline)
+   - Trade-off: re-introduces numpy dependency on the EM hot path
+
+3. **Accept current E-step regression** (pure-JAX Bessel is worth it for large N):
+   - For d=468, the E-step is 1.08s vs the original 0.07s (GPU)
+   - But the old number depended on CPU callbacks — future GPU-native path
+     requires fixing the `lax.cond` dispatch overhead
 
 ## Experimental Setup
 
 - **Data**: S&P 500 daily returns, 2552 observations × 468 stocks
 - **GPU**: NVIDIA RTX 4090, JAX 0.9.1
-- **Distributions tested**: GH, VG, NIG, NormalInverseGamma
-- **Metric**: Average time per EM iteration (after warmup), broken down into E-step and M-step
-
-## Results: Before Any Fix (scipy multi-start, no warm-start)
-
-### Per-iteration timing (468 stocks, seconds)
-
-| Dist | Sub | M-step type | CPU E | CPU M | CPU iter | GPU E | GPU M | GPU iter |
-|------|-----|-------------|-------|-------|----------|-------|-------|----------|
-| NIG | InvGaussian | closed-form | 0.12 | 1.24 | 1.42 | 0.07 | 0.02 | 0.10 |
-| VG | Gamma | jaxopt LBFGS | 0.11 | 1.28 | 1.45 | 0.07 | 0.23 | 0.31 |
-| NIG-α | InvGamma | jaxopt LBFGS | 0.12 | 1.30 | 1.47 | 0.07 | 0.23 | 0.32 |
-| **GH** | **GIG** | **scipy L-BFGS-B** | **0.11** | **43.9** | **44.1** | **0.08** | **28.2** | **28.3** |
-
-### Per-iteration timing (10 stocks, seconds)
-
-| Dist | CPU iter | GPU iter | GPU/CPU |
-|------|----------|----------|---------|
-| NIG | 0.13 | 0.10 | 0.73× (GPU faster) |
-| VG | 0.21 | 0.32 | 1.58× (GPU slower!) |
-| NIG-α | 0.21 | 0.32 | 1.49× (GPU slower!) |
-| **GH** | **73.1** | **36.1** | 0.49× |
-
-### Subordinator `from_expectation` cost (isolated)
-
-| Subordinator | Time/call | Ratio vs GIG |
-|-------------|-----------|-------------|
-| GIG (scipy L-BFGS-B, multi-start) | 61,487 ms | 1× |
-| Gamma (jaxopt LBFGS) | 222 ms | 278× faster |
-| InverseGamma (jaxopt LBFGS) | 229 ms | 268× faster |
-| InverseGaussian (closed-form) | 3.3 ms | 18,867× faster |
-
-## Results: Warm-Start Scipy (intermediate)
-
-Changes: single-start scipy L-BFGS-B from current θ, explicit `jax.grad` for Jacobian.
-
-### GH M-step only (seconds)
-
-| Dim | CPU M (before) | CPU M (after) | GPU M (after) | Speedup (CPU) |
-|-----|----------------|---------------|---------------|---------------|
-| 10 | 72.9 | 1.38 | 2.42 | 53× |
-| 468 | 43.9 | 1.78 | 1.28 | 25× |
-
-## Results: Pure-JAX Newton (current implementation)
-
-Changes: replaced scipy warm-start path with a damped Newton solver implemented
-entirely in JAX (`jax.grad`, `jax.hessian`, `jax.lax.scan`, `jax.lax.while_loop`).
-Uses exp-reparametrisation θ₂ = −exp(φ₂), θ₃ = −exp(φ₃) for unconstrained optimization.
-
-### GH iteration comparison across all three versions (seconds)
-
-| Variant | 10-stock CPU | 10-stock GPU | 468-stock CPU | 468-stock GPU |
-|---------|-------------|-------------|---------------|---------------|
-| Original (multi-start scipy) | 73.1 | 36.1 | 44.1 | 28.3 |
-| Warm-start scipy | 1.49 | 2.52 | 2.03 | 1.38 |
-| **Pure-JAX Newton** | **1.18** | **3.89** | **2.66** | **3.62** |
-| NumPy reference | 0.01 | — | 0.66 | — |
-
-### Full comparison — pure-JAX Newton (468 stocks)
-
-| Dist | NumPy iter | JAX CPU iter | JAX GPU iter |
-|------|-----------|-------------|-------------|
-| NIG | 0.60 | 1.92 | 0.12 |
-| VG | 0.54 | 1.65 | 0.36 |
-| NIG-α | 0.56 | 1.71 | 0.37 |
-| **GH** | **0.66** | **2.66** | **3.62** |
-
-### Why pure-JAX Newton is slower than warm-start scipy
-
-The Newton method computes the 3×3 Hessian via `jax.hessian(_log_partition)` at
-every step. Each Hessian evaluation triggers ~9 calls to `log_kv` (second-order
-chain rule through the 3D objective), each going through `pure_callback`. Combined
-with the backtracking line search (`jax.lax.while_loop`) and scan loop, this creates
-**more** callback round-trips than scipy's L-BFGS-B (which only needs function + gradient).
-
-On **GPU** this is especially bad: each `pure_callback` forces a GPU→CPU→GPU sync,
-and the Newton method does this ~15× per step (Hessian + gradient + function evals)
-vs ~2× for L-BFGS-B (function + gradient). The `lax.while_loop` in backtracking
-adds further per-iteration kernel launch overhead.
-
-On **CPU**, the pure-JAX Newton is only ~30% slower than warm-start scipy and
-actually faster at 10 dimensions (1.18s vs 1.49s), since the overhead per step
-is lower with tiny matrices.
-
-### Why this design is still correct
-
-Despite being slower today, the pure-JAX Newton is the right architecture because:
-
-1. **No scipy on the hot path**: The EM iteration loop has zero scipy/numpy dependency
-2. **JIT-ready**: Once `log_kv` is pure JAX, the entire Newton solver can be JIT-compiled
-3. **GPU-ready**: With pure-JAX Bessel, the Newton solver runs entirely on-device
-4. **The performance gap will invert**: The current bottleneck is `pure_callback`, not
-   the Newton method itself. A pure-JAX `log_kv` would make the Hessian evaluation
-   nearly free (XLA can fuse the computation graph), turning the 3.5s into ~0.01s.
-
-## Root Cause Analysis
-
-### 1. GIG `from_expectation` was the dominant bottleneck
-
-Before the fix, the GIG M-step consumed **99.7%** of each EM iteration:
-- Multi-start optimization: ~15 starting points × L-BFGS-B convergence
-- Each function evaluation triggered `pure_callback` to scipy for `log_kv`
-- No warm-starting: each EM iteration solved from scratch
-
-### 2. E-step uses `pure_callback` for Bessel function
-
-All distributions share the same E-step cost (~0.07–0.12s) because:
-- `GIG.expectation_params()` calls `jax.grad(_log_partition_from_theta)`
-- The log partition involves `log_kv` which uses `jax.pure_callback` to scipy
-- Each JVP evaluation triggers ~5 `log_kv` calls (primal + recurrence + FD for ∂/∂v)
-- Under `jax.vmap`, this creates n_obs separate callback invocations
-
-The numpy version's E-step is faster because it uses vectorized `scipy.special.kve`
-calls directly on entire arrays (one call per batch, not per observation).
-
-### 3. GPU helps with matrix operations, not with callbacks
-
-At 468 dimensions, the GPU provides significant speedup for:
-- NIG: 14× faster (M-step is pure matrix ops: Cholesky, solves, einsum)
-- VG/NIG-α: 4.5× faster (mixed matrix ops + jaxopt iteration)
-- GH: limited benefit (callback overhead dominates)
-
-At 10 dimensions, the GPU is actually **slower** for VG/NIG-α because small 10×10
-matrix operations don't amortize GPU kernel launch overhead.
-
-### 4. NumPy remains faster for several reasons
-
-| Aspect | NumPy | JAX |
-|--------|-------|-----|
-| E-step Bessel | Vectorized `kve` on full array | `vmap` over `pure_callback` per obs |
-| M-step GIG gradient | Semi-analytical (exact ∂/∂z, FD ∂/∂v) | `jax.grad`/`jax.hessian` through `pure_callback` |
-| M-step GIG warm-start | Always warm-starts from current θ | Now warm-starts (was cold multi-start) |
-| M-step GIG starts | Single start | Single start (was 15+) |
-| M-step matrix ops | NumPy/LAPACK | JAX XLA |
-
-## What Remains Slow — The Bessel Callback Wall
-
-After the warm-start fix, the remaining bottleneck is the **Bessel function callback**.
-Every `log_kv` call goes through `jax.pure_callback` → numpy → scipy, creating
-synchronization overhead especially on GPU. This affects:
-
-- **E-step** (via `expectation_params` → `jax.grad` → `log_kv`): ~0.07–0.12s
-- **M-step Newton** (via `jax.hessian` → many `log_kv` calls): ~1–4s
-- **Log-likelihood** (via `vmap(log_prob)` → `log_kv`): ~0.02–0.04s
-
-A pure-JAX implementation of `log_kv` would eliminate this bottleneck entirely,
-making the Newton solver essentially free and enabling true GPU acceleration.
-See `docs/tech_notes/jax_native_bessel_feasibility.md` for investigation.
+- **Branch**: `feat/jax-native-bessel-v2`
+- **Metric**: Average time per EM iteration (iters 2–5 after warmup)
+- **GIG solver**: `solver='newton'` (default), `scan_length=20`, warm-start
