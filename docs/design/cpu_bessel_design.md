@@ -1,6 +1,6 @@
 # Design Report: CPU-Based Bessel Functions for the EM Hot Path
 
-**Date**: March 2026  
+**Date**: March 2026 (v2 — revised after review)  
 **Branch**: `feat/jax-native-bessel-v2`  
 **Status**: Design proposal  
 
@@ -23,36 +23,53 @@ The normix_numpy reference implementation completes the E-step in **0.07s** (vec
 
 2. **M-step**: The GIG η→θ problem is 3-dimensional. GPU kernel launch overhead (~1ms) dwarfs the actual computation (~1μs). This is a fundamental mismatch: JAX/GPU is designed for large parallel workloads, not tiny scalar optimizations.
 
-## 2. Proposed Architecture: Dual `log_kv` Implementations
+## 2. Proposed Architecture
 
-### 2.1 Two versions of `log_kv`
+### 2.1 Design principles
 
-| Version | Location | Backend | Vectorization | Use case |
-|---------|----------|---------|---------------|----------|
-| `log_kv` (JAX) | `normix/_bessel.py` | Pure JAX, `lax.cond` + custom JVP | `jax.vmap` | `log_prob`, `pdf`, `cdf`, anything needing JAX autodiff/JIT |
-| `log_kv_cpu` | `normix/_bessel_cpu.py` | NumPy + `scipy.special.kve` | NumPy broadcasting | EM E-step, GIG M-step, anything on the EM hot path |
+Three principles guide this revision:
 
-#### `log_kv_cpu` specification
+1. **`backend` parameter, not separate functions.** All functionality lives on existing classes/functions. A `backend='cpu'|'jax'` parameter selects the implementation. No standalone CPU functions in the public API.
+
+2. **Only Bessel-related computation goes to CPU.** The quad-form calculations (`L⁻¹(x-μ)`, `‖z‖²`, etc.) remain in JAX — they are d-dimensional matrix operations that benefit from GPU when d is large. Only the `log_kv` calls (and the gradient/Hessian that depend on them) switch to CPU.
+
+3. **Adding `backend` does not break JIT-ability.** The `backend` parameter is a Python-level string resolved before JAX tracing. When `backend='jax'` (default), all code paths remain fully traceable. When `backend='cpu'`, the code runs eagerly with scipy — appropriate since the EM loop is already a Python `for` loop.
+
+### 2.2 `log_kv(v, z, backend='jax')` — unified entry point
+
+The `log_kv` function gets a `backend` parameter. The internal pure-JAX implementation (with `@jax.custom_jvp`) is renamed to a private function:
 
 ```python
-# normix/_bessel_cpu.py
+# normix/_bessel.py
 
-import numpy as np
-from scipy.special import kve, gammaln
-
-def log_kv_cpu(v, z):
+def log_kv(v, z, backend='jax'):
     """
-    log K_v(z) via scipy.special.kve. Fully vectorized over both v and z.
+    log K_v(z) with backend selection.
 
-    Parameters
-    ----------
-    v : float or ndarray — order (any real)
-    z : float or ndarray — argument (must be > 0)
-
-    Returns
-    -------
-    result : float or ndarray
+    backend='jax' : pure-JAX, lax.cond regime selection, custom JVP.
+                    JIT-able, differentiable. Default for log_prob, pdf, etc.
+    backend='cpu' : scipy.special.kve, fully vectorized numpy.
+                    Not JIT-able. Fast for EM hot path.
     """
+    if backend == 'cpu':
+        return _log_kv_cpu(v, z)
+    return _log_kv_jax(v, z)
+
+
+@functools.partial(jax.custom_jvp, nondiff_argnums=())
+def _log_kv_jax(v, z):
+    # ... existing pure-JAX implementation (unchanged) ...
+
+@_log_kv_jax.defjvp
+def _log_kv_jax_jvp(primals, tangents):
+    # ... existing JVP (unchanged, but calls _log_kv_jax internally) ...
+
+
+def _log_kv_cpu(v, z):
+    """log K_v(z) via scipy.special.kve. Fully vectorized numpy."""
+    import numpy as np
+    from scipy.special import kve, gammaln
+
     v = np.asarray(v, dtype=np.float64)
     z = np.asarray(z, dtype=np.float64)
     v, z = np.broadcast_arrays(v, z)
@@ -60,7 +77,6 @@ def log_kv_cpu(v, z):
 
     result = np.log(kve(v, z)) - z
 
-    # Handle underflow for small z
     inf_mask = np.isinf(result)
     if np.any(inf_mask):
         v_abs = np.abs(v[inf_mask])
@@ -74,360 +90,497 @@ def log_kv_cpu(v, z):
     return result
 ```
 
-This is essentially `normix_numpy.utils.bessel.log_kv_vectorized` — the implementation already exists, just needs to be lifted into the `normix` package.
+**Why this doesn't break JIT:** `log_kv(v, z)` (no `backend` argument) calls `_log_kv_jax`, which is unchanged — same `@jax.custom_jvp`, same JIT-ability. The `backend` keyword is resolved at Python time. Any existing code that calls `log_kv(v, z)` without `backend` is unaffected.
 
-### 2.2 CPU-based GIG expectation parameters
+**Why not `nondiff_argnums` for `backend`:** The `@jax.custom_jvp` decorator requires fixed function signatures. Rather than fight with JAX's tracing for a keyword parameter, we keep the `@custom_jvp` on the private `_log_kv_jax` and use the public `log_kv` as a thin dispatcher.
 
-The E-step requires `η = ∇ψ(θ)` for N posterior GIG distributions. Currently this is done via `jax.grad(_log_partition_from_theta)` + `jax.vmap`. The CPU alternative computes the gradient analytically using Bessel ratios:
+### 2.3 `GIG.expectation_params(backend='jax')` — class method with backend
 
-```python
-# normix/_gig_cpu.py
-
-import numpy as np
-from normix._bessel_cpu import log_kv_cpu
-
-def gig_expectation_params_cpu(p, a, b):
-    """
-    Vectorized GIG expectation parameters η = [E[log X], E[1/X], E[X]].
-
-    All inputs are arrays of shape (N,). Returns (N, 3) array.
-    Uses Bessel ratios and the derivative formula from normix_numpy.
-    """
-    sqrt_ab = np.sqrt(a * b)
-    log_sqrt_ba = 0.5 * (np.log(b) - np.log(a))
-
-    log_kp = log_kv_cpu(p, sqrt_ab)
-    log_kp_m1 = log_kv_cpu(p - 1.0, sqrt_ab)
-    log_kp_p1 = log_kv_cpu(p + 1.0, sqrt_ab)
-
-    E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
-    E_X = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
-
-    # E[log X] = ∂/∂p log K_p(√(ab)) + ½ log(b/a)
-    eps = 1e-5
-    log_kp_pe = log_kv_cpu(p + eps, sqrt_ab)
-    log_kp_me = log_kv_cpu(p - eps, sqrt_ab)
-    dlog_kv_dp = (log_kp_pe - log_kp_me) / (2.0 * eps)
-    E_log_X = dlog_kv_dp + log_sqrt_ba
-
-    return np.column_stack([E_log_X, E_inv_X, E_X])
-```
-
-Key point: **6 calls to `scipy.kve`** over arrays of shape (N,) — each call is a single C-level loop over the array. No Python per-element overhead. No JVP tracing. Expected time: ~0.05–0.1s for N=2552 (matching normix_numpy's 0.07s).
-
-### 2.3 CPU-based GIG log-partition gradient and Hessian
-
-For the M-step (GH distribution only), we need the gradient and Hessian of the GIG log-partition in the η→θ solver. The CPU version uses the same analytical formulas that `_gig_bessel_quantities` already implements, but with numpy/scipy:
+The `GIG` class overrides `expectation_params` from `ExponentialFamily` to accept a `backend` parameter:
 
 ```python
-def gig_log_partition_grad_hess_cpu(theta):
-    """
-    Gradient and Hessian of ψ_GIG(θ) using scipy Bessel, for scalar θ.
-    Returns (grad, hess) where grad is (3,) and hess is (3,3).
-    """
-    # Same logic as _gig_bessel_quantities + _analytical_grad_hess_phi,
-    # but using log_kv_cpu instead of JAX log_kv.
-    ...
+class GIG(ExponentialFamily):
+
+    def expectation_params(self, backend='jax'):
+        """
+        η = [E[log X], E[1/X], E[X]].
+
+        backend='jax' : jax.grad of log partition (JIT-able, default)
+        backend='cpu' : analytical Bessel ratios via scipy.kve (fast)
+        """
+        if backend == 'cpu':
+            return self._expectation_params_cpu()
+        return jax.grad(self._log_partition_from_theta)(self.natural_params())
+
+    def _expectation_params_cpu(self):
+        """Analytical GIG expectations using scipy Bessel."""
+        p = float(self.p)
+        a = float(self.a)
+        b = float(self.b)
+        sqrt_ab = np.sqrt(a * b)
+        log_sqrt_ba = 0.5 * (np.log(b) - np.log(a))
+
+        log_kp     = log_kv(p, sqrt_ab, backend='cpu')
+        log_kp_m1  = log_kv(p - 1.0, sqrt_ab, backend='cpu')
+        log_kp_p1  = log_kv(p + 1.0, sqrt_ab, backend='cpu')
+
+        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
+        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
+
+        eps = 1e-5
+        log_kp_pe = log_kv(p + eps, sqrt_ab, backend='cpu')
+        log_kp_me = log_kv(p - eps, sqrt_ab, backend='cpu')
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+
+        return jnp.array([E_log_X, E_inv_X, E_X])
 ```
 
-This replaces the `_solve_cpu_legacy` approach (which delegates to `normix_numpy`) with a self-contained CPU solver inside `normix`. The benefit: no cross-package dependency on `normix_numpy` for the hot path.
+**Why this doesn't break JIT:**
+- `expectation_params()` (no `backend` argument) → `backend='jax'` → `jax.grad(...)` → fully JIT-able, same as before.
+- `expectation_params(backend='cpu')` → runs scipy eagerly → not JIT-able, but the caller (EM E-step) is a Python loop.
+- The `backend` parameter is a Python string, not a traced value. It's resolved before JAX sees the function. From JAX's perspective, calling `gig.expectation_params()` traces exactly the same code as before.
+- The `GIG` class attributes (`p`, `a`, `b`) are unchanged — still scalar `jax.Array` fields, still a valid pytree.
 
-## 3. Integration Points: Where CPU Versions Are Used
+**Batch version for the E-step** (classmethod on GIG):
 
-### 3.1 E-step: `conditional_expectations` → `GIG.expectation_params()`
+```python
+class GIG(ExponentialFamily):
 
-The call chain is:
+    @staticmethod
+    def expectation_params_batch(p, a, b, backend='jax'):
+        """
+        Vectorized η for arrays of (p, a, b), each shape (N,).
+        Returns (N, 3) array.
+
+        backend='jax' : vmap over scalar JAX grad
+        backend='cpu' : vectorized scipy.kve (6 C-level array calls)
+        """
+        if backend == 'cpu':
+            return GIG._expectation_params_batch_cpu(p, a, b)
+        def _single(pi, ai, bi):
+            return GIG(p=pi, a=ai, b=bi).expectation_params()
+        return jax.vmap(_single)(p, a, b)
+
+    @staticmethod
+    def _expectation_params_batch_cpu(p, a, b):
+        """Vectorized CPU path — 6 scipy.kve calls on (N,) arrays."""
+        p = np.asarray(p, dtype=np.float64)
+        a = np.asarray(a, dtype=np.float64)
+        b = np.asarray(b, dtype=np.float64)
+
+        sqrt_ab = np.sqrt(a * b)
+        log_sqrt_ba = 0.5 * (np.log(b) - np.log(a))
+
+        log_kp    = log_kv(p, sqrt_ab, backend='cpu')
+        log_kp_m1 = log_kv(p - 1.0, sqrt_ab, backend='cpu')
+        log_kp_p1 = log_kv(p + 1.0, sqrt_ab, backend='cpu')
+
+        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
+        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
+
+        eps = 1e-5
+        log_kp_pe = log_kv(p + eps, sqrt_ab, backend='cpu')
+        log_kp_me = log_kv(p - eps, sqrt_ab, backend='cpu')
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+
+        return jnp.column_stack([
+            jnp.asarray(E_log_X),
+            jnp.asarray(E_inv_X),
+            jnp.asarray(E_X),
+        ])
+```
+
+### 2.4 `GIG.from_expectation(..., solver='cpu')` — M-step with backend
+
+The existing `from_expectation` already has a `solver` parameter. We replace `'cpu_legacy'` (which depends on normix_numpy) with a self-contained `'cpu'` solver that uses `log_kv(..., backend='cpu')`:
+
+```python
+class GIG(ExponentialFamily):
+
+    @classmethod
+    def from_expectation(cls, eta, *, theta0=None, solver='newton', ...):
+        ...
+        if solver == 'cpu':
+            theta_scaled = cls._solve_cpu(eta_scaled, theta0_scaled, tol)
+        ...
+
+    @classmethod
+    def _solve_cpu(cls, eta, theta0, tol):
+        """scipy L-BFGS-B with log_kv(backend='cpu') for gradient."""
+        # Uses log_kv(..., backend='cpu') for objective and gradient.
+        # Same analytical gradient as _analytical_grad_hess_phi,
+        # but with scipy Bessel instead of JAX Bessel.
+        ...
+```
+
+## 3. E-step Integration: Only Bessel Goes to CPU
+
+### 3.1 The key insight
+
+The E-step has two phases with different computational profiles:
+
+| Phase | Operation | Dimension | GPU benefit? |
+|-------|-----------|-----------|-------------|
+| **Quad forms** | `z = L⁻¹(x-μ)`, `‖z‖²`, `‖w‖²` | d-dimensional matrix ops | Yes (large d) |
+| **Bessel** | `GIG.expectation_params()` → `log_kv(p, √ab)` | Scalar per observation | No |
+
+Only the Bessel phase should go to CPU. The quad forms stay in JAX.
+
+### 3.2 E-step call flow with `backend`
 
 ```
-NormalMixture.e_step(X)
-  → jax.vmap(joint.conditional_expectations)(X)    # vmapped over N obs
-    → GIG(p_post, a_post, b_post).expectation_params()
-      → jax.grad(_log_partition_from_theta)(theta)
-        → log_kv(p, sqrt_ab)  [inside grad, triggers JVP]
-```
-
-The CPU version would replace the entire chain from `GIG.expectation_params()` down:
-
-```
-NormalMixture.e_step(X)
-  → joint._conditional_expectations_batch_cpu(X)    # NEW: batch CPU path
-    → compute p_post, a_post, b_post for all N obs  (vectorized numpy)
-    → gig_expectation_params_cpu(p_post, a_post, b_post)
-      → log_kv_cpu(...)  [6 scipy.kve calls on arrays of shape (N,)]
-```
-
-### 3.2 M-step: `GIG.from_expectation()` → η→θ solver
-
-Already handled by `solver='cpu_legacy'`, but we would make a self-contained version:
-
-```
-GIG.from_expectation(eta, theta0=..., solver='cpu')    # NEW solver name
-  → _solve_cpu(eta, theta0, tol)
-    → scipy.optimize.minimize with gig_log_partition_grad_hess_cpu
-```
-
-### 3.3 Distributions affected
-
-| Distribution | E-step uses `log_kv` via | M-step uses `log_kv` via |
-|---|---|---|
-| **GeneralizedHyperbolic** | `GIG.expectation_params()` | `GIG.from_expectation()` |
-| **NormalInverseGaussian** | `GIG.expectation_params()` | No (closed-form IG) |
-| **VarianceGamma** | `GIG.expectation_params()` | No (closed-form Gamma) |
-| **NormalInverseGamma** | `GIG.expectation_params()` | No (closed-form InvGamma) |
-
-All four distributions call `GIG.expectation_params()` in the E-step. Only GH calls `GIG.from_expectation()` in the M-step.
-
-## 4. Impact on Distribution Classes
-
-### 4.1 The core question: JIT-ability and JAX gradients
-
-The distribution classes (`GIG`, `GeneralizedHyperbolic`, etc.) are `eqx.Module` pytrees. Their core exponential-family methods (`_log_partition_from_theta`, `natural_params`, `log_prob`) are designed to be JIT-compatible and support `jax.grad`.
-
-**The CPU versions do NOT touch any of these methods.** The architecture is:
-
-```
-Distribution class (eqx.Module)
-├── _log_partition_from_theta(theta)   ← pure JAX, JIT-able, autodiff-able
-├── natural_params()                    ← pure JAX
-├── log_prob(x)                         ← pure JAX, uses log_kv (JAX)
-├── expectation_params()                ← jax.grad(_log_partition_from_theta)
-│                                         [JAX path: still available, still JIT-able]
-├── pdf(x), cdf(x)                     ← pure JAX
+NormalMixture.e_step(X, backend='cpu')
 │
-│   EM-specific methods (NOT JIT-able, Python-level):
-├── e_step(X)                           ← currently uses vmap; NEW: batch CPU path
-├── m_step(X, expectations)             ← currently Python loop; NEW: CPU solver
-└── fit(X, ...)                         ← Python loop, calls e_step/m_step
+├── Phase 1: Quad forms in JAX (vmapped, GPU-accelerated)
+│   jax.vmap(joint._quad_forms)(X)
+│   → z2 (N,), w2 scalar   [JAX arrays, possibly on GPU]
+│
+├── Posterior GIG params (simple JAX arithmetic, stays on device)
+│   p_post = p - d/2          (N,)
+│   a_post = a + w2           (N,)
+│   b_post = b + z2           (N,)
+│
+└── Phase 2: GIG expectations via CPU Bessel
+    GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
+    → transfers (N,) arrays to numpy
+    → 6 × scipy.kve on (N,) arrays  [C-level vectorized]
+    → transfers (N, 3) result back to JAX
 ```
 
-**Recommendation**: The CPU path is an **alternative execution strategy** for the EM algorithm, not a replacement for the core distribution API. The classes remain fully JIT-able and autodiff-able for all other uses.
+Compare with the current `backend='jax'` flow:
+```
+NormalMixture.e_step(X, backend='jax')
+│
+└── jax.vmap(joint.conditional_expectations)(X)
+    → Per observation (vmapped):
+      ├── _quad_forms(x)           [JAX, single obs]
+      ├── GIG(p_post, a_post, b_post)
+      └── gig.expectation_params() [jax.grad → 5 log_kv calls]
+```
 
-### 4.2 Design options for integrating the CPU E-step
-
-#### Option A: CPU path inside `conditional_expectations` (recommended)
-
-Add a `_conditional_expectations_batch_cpu` method to `JointNormalMixture` that accepts the full data matrix X (shape `(N, d)`) and returns expectations as numpy arrays, then converts to JAX:
+### 3.3 Implementation in `NormalMixture.e_step`
 
 ```python
-class JointNormalMixture(ExponentialFamily):
+class NormalMixture(eqx.Module):
 
-    def conditional_expectations_batch_cpu(self, X):
+    def e_step(self, X, backend='jax'):
+        if backend == 'cpu':
+            return self._e_step_cpu(X)
+        return jax.vmap(self._joint.conditional_expectations)(X)
+
+    def _e_step_cpu(self, X):
         """
-        Batch CPU path for E-step. Vectorized numpy/scipy, no vmap.
-
-        Returns dict of jax.Arrays (transferred from CPU numpy arrays).
+        E-step with Bessel computation on CPU, quad forms in JAX.
         """
-        X_np = np.asarray(X)
-        # Vectorized quad forms
-        r = X_np - np.asarray(self.mu)[None, :]
-        L_np = np.asarray(self.L)
-        z = scipy.linalg.solve_triangular(L_np, r.T, lower=True).T  # (N, d)
-        w = scipy.linalg.solve_triangular(L_np, np.asarray(self.gamma), lower=True)
-        z2 = np.sum(z**2, axis=1)  # (N,)
-        w2 = np.dot(w, w)          # scalar
+        from normix.distributions.gig import GIG
 
-        p_post, a_post, b_post = self._posterior_gig_params_cpu(z2, w2)
-        eta = gig_expectation_params_cpu(p_post, a_post, b_post)  # (N, 3)
+        X = jnp.asarray(X, dtype=jnp.float64)
+        j = self._joint
+
+        # Phase 1: Quad forms in JAX (vmapped — benefits from GPU for large d)
+        def _quad_scalars(x):
+            z, w, z2, w2, zw = j._quad_forms(x)
+            return z2, w2
+        z2_all, w2_all = jax.vmap(_quad_scalars)(X)  # (N,), (N,)
+
+        # Posterior GIG params (JAX arithmetic, stays on device)
+        p_post, a_post, b_post = j._posterior_gig_params(z2_all, w2_all)
+
+        # Phase 2: GIG expectations via CPU Bessel
+        eta = GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
 
         return {
-            'E_log_Y': jnp.asarray(eta[:, 0]),
-            'E_inv_Y': jnp.asarray(eta[:, 1]),
-            'E_Y': jnp.asarray(eta[:, 2]),
+            'E_log_Y': eta[:, 0],
+            'E_inv_Y': eta[:, 1],
+            'E_Y': eta[:, 2],
         }
 ```
 
-Then in `NormalMixture.e_step`:
+Each `JointNormalMixture` subclass implements `_posterior_gig_params`:
 
 ```python
-def e_step(self, X, *, backend='cpu'):
-    if backend == 'cpu':
-        return self._joint.conditional_expectations_batch_cpu(X)
-    else:
-        return jax.vmap(self._joint.conditional_expectations)(X)
+# In JointGeneralizedHyperbolic:
+def _posterior_gig_params(self, z2, w2):
+    return (self.p - self.d / 2.0,
+            self.a + w2,
+            self.b + z2)
+
+# In JointVarianceGamma:
+def _posterior_gig_params(self, z2, w2):
+    return (self.alpha - self.d / 2.0,
+            2.0 * self.beta + w2,
+            z2)
+
+# In JointNormalInverseGamma:
+def _posterior_gig_params(self, z2, w2):
+    return (-self.alpha - self.d / 2.0,
+            w2,
+            2.0 * self.beta + z2)
+
+# In JointNormalInverseGaussian:
+def _posterior_gig_params(self, z2, w2):
+    a_ig = self.lam / (self.mu_ig ** 2)
+    return (-0.5 - self.d / 2.0,
+            a_ig + w2,
+            self.lam + z2)
 ```
 
-**Advantages**:
-- Clean separation: the `backend` parameter controls execution strategy
-- Distribution classes remain untouched for non-EM use
-- The `conditional_expectations` (single-obs, JAX) method still exists for JIT/grad use
-- The batch CPU path is self-contained, easy to test
+Note: `w2` is the same for all observations (it's `‖L⁻¹γ‖²`, which doesn't depend on x). It comes out as shape `(N,)` from vmap but with identical values. We could optimize this by computing it once, but vmap handles it transparently.
 
-**Disadvantages**:
-- Some code duplication (quad forms computed in both numpy and JAX)
-- The CPU path returns `jnp.Array` from numpy data (one device transfer per E-step)
+### 3.4 What stays in JAX vs what goes to CPU
 
-#### Option B: `jax.pure_callback` wrapper
+| Operation | Backend | Reason |
+|-----------|---------|--------|
+| `L⁻¹(x-μ)`, `‖z‖²`, `‖w‖²` | JAX (vmap) | d-dimensional matrix ops, GPU-friendly |
+| `p_post`, `a_post`, `b_post` | JAX | Simple arithmetic on JAX arrays |
+| `log_kv(p, √ab)` (6 calls) | CPU (scipy) | C-level vectorized, no per-element dispatch overhead |
+| `log_prob(x)` | JAX | Uses `log_kv` with default `backend='jax'` |
+| `_log_partition_from_theta` | JAX | Single source of truth, `jax.grad` target |
 
-Wrap the CPU `log_kv` as a `jax.pure_callback` inside `GIG.expectation_params()`, so the vmap path transparently dispatches to scipy:
+## 4. Impact on JIT-ability
+
+### 4.1 Why `backend` does not break JIT
+
+The `backend` parameter is a **Python-level string**, not a JAX-traced value. It controls which Python code path executes, identical to how `dtype` parameters or `if isinstance(...)` checks work in JAX code:
 
 ```python
-@jax.custom_jvp
-def log_kv_callback(v, z):
-    return jax.pure_callback(
-        lambda v, z: log_kv_cpu(np.asarray(v), np.asarray(z)),
-        jax.ShapeDtypeStruct(v.shape, v.dtype),
-        v, z,
-    )
+# This is fine — Python-level dispatch before tracing:
+def log_kv(v, z, backend='jax'):
+    if backend == 'cpu':    # Python bool, resolved before trace
+        return _log_kv_cpu(v, z)
+    return _log_kv_jax(v, z)
 ```
 
-**Advantages**:
-- No change to the class hierarchy; `expectation_params()` just works
-- The vmap still works (JAX handles batching of callbacks)
+When `backend='jax'` (the default), JAX traces `_log_kv_jax` — the exact same function it traces today. The `if backend == 'cpu'` branch is never entered, never traced, never compiled. It's dead code from JAX's perspective.
 
-**Disadvantages**:
-- `pure_callback` is NOT differentiable by default — would need a custom JVP that also uses callbacks. This is the old architecture we moved away from.
-- Per-element callback overhead: ~0.3ms per call (measured in the old architecture). For N=2552, that's 0.3ms × 2552 × 5 ≈ 3.8s — worse than the current pure-JAX path.
-- Fundamentally incompatible with the design philosophy of being "pure JAX, zero scipy callbacks."
+When `backend='cpu'`, the scipy code runs eagerly in Python. JAX never sees it. This is only used inside the EM loop, which is already a Python `for` loop.
 
-**Verdict**: Option B is rejected. The callback overhead per element is too high, and it reintroduces the exact dependency we eliminated.
+### 4.2 What remains JIT-able
 
-#### Option C: Hybrid — CPU for E-step, JAX for everything else
-
-Same as Option A, but formalized as a pattern: the EM fitter chooses the backend, not the distribution:
+All existing methods work exactly as before when called without `backend` or with `backend='jax'`:
 
 ```python
-class BatchEMFitter(eqx.Module):
-    e_step_backend: str = 'cpu'  # 'cpu' or 'jax'
-    m_step_solver: str = 'cpu'   # 'cpu', 'newton', 'newton_analytical'
+gig = GIG(p=1.0, a=2.0, b=3.0)
 
-    def fit(self, model, X):
-        for i in range(self.max_iter):
-            expectations = model.e_step(X, backend=self.e_step_backend)
-            model = model.m_step(X, expectations, solver=self.m_step_solver)
-            ...
+# All JIT-able (same as before):
+jax.jit(gig.log_partition)()
+jax.jit(gig.expectation_params)()              # default backend='jax'
+jax.grad(gig._log_partition_from_theta)(theta)
+jax.hessian(gig._log_partition_from_theta)(theta)
+jax.vmap(gh.log_prob)(X)
+
+# NOT JIT-able (EM hot path — never was JIT-able):
+gig.expectation_params(backend='cpu')
+GIG.expectation_params_batch(p_arr, a_arr, b_arr, backend='cpu')
 ```
 
-**Recommendation: Option C** (which subsumes Option A). The fitter owns the execution strategy. The distribution classes expose both paths but default to the one that makes sense.
+### 4.3 Pytree structure unchanged
 
-### 4.3 What stays JAX-only
+The `GIG` class stores `(p, a, b)` — all `jax.Array` scalars. Adding a `backend` parameter to *methods* does not change the pytree structure. The class is still a valid `eqx.Module`:
 
-These methods remain pure JAX, fully JIT-able, and autodiff-compatible:
+```python
+# This still works:
+jax.tree.leaves(gig)     # [p, a, b]
+jax.tree.map(f, gig)     # applies f to each leaf
+eqx.tree_serialise_leaves("model.eqx", gig)
+```
 
-- `_log_partition_from_theta(theta)` — the single source of truth
-- `natural_params()` — parameter conversion
-- `log_prob(x)` / `pdf(x)` — density evaluation (uses JAX `log_kv`)
-- `expectation_params()` — `jax.grad` of log partition (available but not used in EM hot path)
-- `fisher_information()` — `jax.hessian` of log partition
-- `log_prob_joint(x, y)` — joint density
+If we ever wanted the GIG instance to *remember* its preferred backend, we could add a static field:
 
-These are the methods users might want to JIT or differentiate through for applications beyond EM (e.g., variational inference, score matching, custom losses).
+```python
+class GIG(ExponentialFamily):
+    p: jax.Array
+    a: jax.Array
+    b: jax.Array
+    backend: str = eqx.field(static=True, default='jax')
+```
 
-### 4.4 What gets a CPU alternative
+`eqx.field(static=True)` means `backend` is not a pytree leaf — it's metadata. JIT recompiles when `backend` changes (like `dtype` or `shape`), which is the correct behavior. But this is optional; passing `backend` as a method argument is simpler and more explicit.
 
-Only the EM-specific methods get CPU alternatives:
+## 5. M-step: GIG.from_expectation with `solver='cpu'`
 
-- `e_step(X, backend=...)` — CPU path via `gig_expectation_params_cpu`
-- `m_step(X, expectations, solver=...)` — CPU path via `gig_log_partition_grad_hess_cpu` (GH only)
+For the GH M-step, `GIG.from_expectation` needs a CPU solver. The existing `solver='cpu_legacy'` delegates to normix_numpy. The new `solver='cpu'` is self-contained, using `log_kv(..., backend='cpu')` for the gradient and Hessian:
 
-## 5. Expected Performance
+```python
+class GIG(ExponentialFamily):
 
-### E-step
+    @classmethod
+    def _solve_cpu(cls, eta, theta0, tol):
+        """
+        scipy L-BFGS-B with analytical gradient via log_kv(backend='cpu').
+        """
+        import numpy as np
+        from scipy.optimize import minimize
 
-| Implementation | Mechanism | Expected time (N=2552, d=468) |
-|---|---|---|
-| **normix_numpy** (reference) | 6 × `scipy.kve` on (N,) arrays | **0.07s** |
-| **Proposed CPU path** | Same as above | **~0.07–0.10s** |
-| Current JAX (vmap, GPU) | `vmap(_log_kv_scalar)` × 5 per obs | ~1.1s |
-| Current JAX (vmap, CPU) | Same, CPU device | ~1.0s |
+        eta_np = np.asarray(eta)
+        theta0_np = np.asarray(theta0)
 
-The CPU path should achieve near-parity with normix_numpy because it uses the same scipy.kve calls. The small overhead comes from the `jnp.asarray` conversion back to JAX arrays.
+        def objective_and_grad(theta_np):
+            # Compute ψ(θ) and ∇ψ(θ) using log_kv(backend='cpu')
+            p = theta_np[0] + 1.0
+            b = max(-2.0 * theta_np[1], 0.0)
+            a = max(-2.0 * theta_np[2], 0.0)
+            sqrt_ab = np.sqrt(a * b)
 
-### M-step (GH only)
+            psi = np.log(2) + float(log_kv(p, sqrt_ab, backend='cpu')) \
+                  + 0.5 * p * (np.log(b) - np.log(a))
+            obj = psi - np.dot(theta_np, eta_np)
 
-| Implementation | Mechanism | Expected time (468 stocks) |
-|---|---|---|
-| **normix_numpy** (reference) | scipy L-BFGS-B + scipy.kve | **0.42s** |
-| **Proposed CPU solver** (warm-start) | scipy L-BFGS-B + log_kv_cpu, 0–2 iters | **~0.5–1.0ms** |
-| `cpu_legacy` (current) | delegates to normix_numpy | ~0.12s |
-| JAX Newton (GPU) | `lax.scan` + `jax.hessian` | ~7.1s |
+            # Analytical gradient via Bessel ratios
+            gig_tmp = cls(p=p, a=a, b=b)
+            eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
+            grad = eta_hat - eta_np
+            return obj, grad
 
-With warm-start from the previous EM iteration, the optimizer typically converges in 0–1 iterations, making each M-step call ~1ms.
+        result = minimize(
+            lambda t: objective_and_grad(t),
+            theta0_np,
+            jac=True,
+            method='L-BFGS-B',
+            bounds=[(-np.inf, np.inf), (-np.inf, 0), (-np.inf, 0)],
+            options={'maxiter': 500, 'ftol': tol**2, 'gtol': tol},
+        )
+        return jnp.asarray(result.x, dtype=jnp.float64)
+```
+
+This replaces `cpu_legacy` (which imports normix_numpy) with a self-contained solver.
+
+## 6. Summary of API Changes
+
+### `log_kv`
+
+```python
+# Before:
+log_kv(v, z)            # pure JAX, custom_jvp
+
+# After:
+log_kv(v, z)            # same as before (backend='jax' default)
+log_kv(v, z, backend='cpu')  # scipy.kve, fast, not JIT-able
+```
+
+### `GIG`
+
+```python
+# Before:
+gig.expectation_params()                          # jax.grad
+GIG.from_expectation(eta, solver='cpu_legacy')     # normix_numpy dependency
+
+# After:
+gig.expectation_params()                           # same (backend='jax' default)
+gig.expectation_params(backend='cpu')              # analytical scipy Bessel
+GIG.expectation_params_batch(p, a, b)              # vmap (backend='jax' default)
+GIG.expectation_params_batch(p, a, b, backend='cpu')  # vectorized scipy
+GIG.from_expectation(eta, solver='cpu')            # self-contained scipy solver
+```
+
+### `NormalMixture.e_step`
+
+```python
+# Before:
+model.e_step(X)                # jax.vmap over conditional_expectations
+
+# After:
+model.e_step(X)                # same (backend='jax' default)
+model.e_step(X, backend='cpu') # quad forms in JAX + Bessel on CPU
+```
+
+### `BatchEMFitter`
+
+```python
+# Fitter controls execution strategy:
+fitter = BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')
+```
+
+## 7. Expected Performance
+
+### E-step (backend='cpu' — only Bessel on CPU)
+
+| Phase | Operation | Backend | Expected time |
+|-------|-----------|---------|---------------|
+| Quad forms | `vmap(_quad_forms)` over N=2552 obs | JAX (GPU) | ~0.02s |
+| Posterior params | arithmetic on (N,) arrays | JAX | ~0.001s |
+| **Bessel** | 6 × `scipy.kve` on (N,) arrays | **CPU** | **~0.05s** |
+| Transfer | (N,) to numpy + (N,3) back to JAX | PCIe | ~0.001s |
+| **Total E-step** | | | **~0.07s** |
+
+vs current: ~1.1s (GPU), ~1.0s (CPU).
+
+The matrix operations (quad forms) benefit from GPU parallelism for large d, while the Bessel calls benefit from scipy's C-level vectorization. The hybrid approach gets the best of both worlds.
+
+### M-step (GH, solver='cpu')
+
+| Implementation | Expected time (warm-start) |
+|---|---|
+| **Proposed CPU solver** | ~0.5–1.0ms per call |
+| `cpu_legacy` (current) | ~0.12s per call |
+| JAX Newton (GPU) | ~7.1s per call |
 
 ### Per-iteration total (GH, 468 stocks)
 
-| Component | Current (GPU) | Proposed (CPU E + CPU M) | normix_numpy |
+| Component | Current (GPU) | Proposed (hybrid) | normix_numpy |
 |---|---|---|---|
-| E-step | 1.09s | ~0.10s | 0.07s |
+| E-step | 1.09s | ~0.07s | 0.07s |
 | M-step | 7.10s | ~0.01s | 0.42s |
-| Other (regularize, LL check) | ~0.58s | ~0.30s | 0.07s |
-| **Total per iteration** | **8.77s** | **~0.41s** | **0.56s** |
+| Other | ~0.58s | ~0.30s | 0.07s |
+| **Total** | **8.77s** | **~0.38s** | **0.56s** |
 
-The proposed architecture would bring JAX normix to near-parity with the numpy reference for the EM algorithm, while retaining full JAX capabilities for all other uses.
+## 8. Implementation Plan
 
-## 6. Implementation Plan
+### Phase 1: `log_kv` with `backend` parameter
 
-### Phase 1: CPU Bessel module (`normix/_bessel_cpu.py`)
+- Rename existing pure-JAX implementation to `_log_kv_jax` (private)
+- Add `_log_kv_cpu` (lifted from `normix_numpy.utils.bessel.log_kv_vectorized`)
+- Public `log_kv(v, z, backend='jax')` dispatches between them
+- Unit tests: CPU vs JAX accuracy comparison
 
-- Lift `log_kv_vectorized` from `normix_numpy.utils.bessel` into `normix/_bessel_cpu.py`
-- Add `log_kv_derivative_v_cpu` and `log_kv_derivative_z_cpu` (from normix_numpy)
-- Unit tests comparing CPU vs JAX versions
+### Phase 2: `GIG` methods with `backend`
 
-### Phase 2: CPU GIG expectations (`normix/_gig_cpu.py`)
+- `GIG.expectation_params(backend='jax')` — override base class
+- `GIG._expectation_params_cpu()` — analytical Bessel ratios via `log_kv(backend='cpu')`
+- `GIG.expectation_params_batch(p, a, b, backend='jax')` — batch version
+- `GIG._solve_cpu(eta, theta0, tol)` — self-contained scipy L-BFGS-B
+- Add `solver='cpu'` to `GIG.from_expectation`
+- Unit tests: roundtrip η → θ → η, CPU vs JAX agreement
 
-- Implement `gig_expectation_params_cpu(p, a, b)` — vectorized over arrays
-- Implement `gig_log_partition_grad_hess_cpu(theta)` — scalar, for M-step solver
-- Implement `_solve_cpu(eta, theta0, tol)` — self-contained scipy L-BFGS-B solver
-- Unit tests: roundtrip η → θ → η
+### Phase 3: E-step with `backend`
 
-### Phase 3: Batch CPU E-step
-
-- Add `conditional_expectations_batch_cpu(X)` to `JointNormalMixture` (base)
-- Implement `_posterior_gig_params_cpu(z2, w2)` in each joint subclass
-- Add `backend` parameter to `NormalMixture.e_step`
+- Add `_posterior_gig_params(z2, w2)` to each `JointNormalMixture` subclass
+- Add `NormalMixture.e_step(X, backend='jax')` with CPU path
+- `_e_step_cpu`: quad forms in JAX vmap + `GIG.expectation_params_batch(backend='cpu')`
 - Profile and validate against normix_numpy
 
-### Phase 4: Integration
+### Phase 4: Fitter integration
 
 - Add `e_step_backend` and `m_step_solver` to `BatchEMFitter`
 - Default to `backend='cpu'` for EM, `solver='cpu'` for GH M-step
-- Update `fit()` classmethods to pass through the backend parameter
 - Full regression tests: EM convergence, log-likelihood matches
 
-## 7. Risks and Mitigations
+## 9. Risks and Mitigations
 
 ### Risk 1: Device transfer overhead
 
-Converting between JAX arrays (possibly on GPU) and numpy arrays incurs a transfer cost. For the E-step, we transfer X (shape N×d) to CPU and results (shape N×3) back.
+The CPU E-step transfers `p_post, a_post, b_post` (3 arrays of shape (N,)) to numpy and the result (N, 3) back. For N=2552, this is ~80KB — negligible at PCIe 4.0 bandwidth (~25 GB/s): ~0.003ms.
 
-**Mitigation**: The transfer is O(Nd) floats, which is ~10MB for N=2552, d=468. At PCIe 4.0 bandwidth (~25 GB/s), this is ~0.4ms — negligible compared to the 1s+ savings.
+The quad forms stay on GPU. Only the Bessel-related data crosses the device boundary.
 
-### Risk 2: Breaking JIT-ability of the EM loop
+### Risk 2: Breaking JIT-ability
 
-The CPU path uses numpy/scipy, which cannot be JIT-compiled. The EM loop is already a Python `for` loop (not `jax.lax.while_loop`) precisely because the GIG solver uses scipy.
+`backend` is a Python-level string, not a traced value. When omitted (defaulting to `'jax'`), all code paths are identical to today. No regression.
 
-**Mitigation**: No regression. The EM loop was never JIT-able. The CPU path simply makes the non-JIT part faster.
+### Risk 3: Accuracy differences
 
-### Risk 3: Accuracy differences between scipy.kve and pure-JAX log_kv
+scipy.kve and pure-JAX `log_kv` use different algorithms. Both are accurate to ~12 digits for EM parameter ranges. Regression tests will verify.
 
-The two implementations use different algorithms. Small numerical differences could cause EM convergence differences.
+### Risk 4: Maintenance of two paths
 
-**Mitigation**: Both implementations are accurate to ~12 digits for the parameter ranges encountered in EM. The EM algorithm is robust to such differences. We should add regression tests comparing the two paths.
+The CPU path is ~50 lines (6 scipy.kve calls + numpy arithmetic). The JAX path is ~200 lines (4 regimes, custom JVP). The CPU path is simple and stable.
 
-### Risk 4: Maintenance burden of two code paths
+## 10. Recommendations
 
-Having both JAX and CPU versions of the Bessel function and GIG expectations means maintaining two implementations.
+1. **Use `backend` parameter everywhere.** `log_kv(v, z, backend=...)`, `GIG.expectation_params(backend=...)`, `e_step(X, backend=...)`. No standalone CPU functions in the public API.
 
-**Mitigation**: The CPU version is simple (6 calls to `scipy.kve` + basic numpy arithmetic). It's 50 lines of code, stable, and unlikely to need changes. The JAX version is the complex one (4 regimes, custom JVP, etc.).
+2. **Only Bessel on CPU.** Quad forms (`L⁻¹(x-μ)`, norms) stay in JAX — they benefit from GPU. Only `log_kv` calls and the gradient/Hessian that depend on them switch to CPU.
 
-## 8. Recommendations
+3. **Default to `backend='jax'` for all methods.** The CPU path is opt-in, controlled by the caller. For EM, the `BatchEMFitter` opts in via `e_step_backend='cpu'`.
 
-1. **Adopt Option C**: The EM fitter controls the execution strategy via `e_step_backend` and `m_step_solver` parameters. Distribution classes expose both paths.
-
-2. **Default to CPU for EM**: The `BatchEMFitter` should default to `e_step_backend='cpu'` and `m_step_solver='cpu'`. Users who want pure-JAX EM (e.g., for GPU-heavy workloads with very large N) can set `backend='jax'`.
-
-3. **Keep the pure-JAX `log_kv`**: It remains the default for all non-EM uses (`log_prob`, `pdf`, gradient-based inference). The pure-JAX path is the right choice for density evaluation over large batches (where GPU parallelism helps) and for any use case requiring `jax.grad` or `jax.jit`.
-
-4. **Self-contained CPU module**: Put the CPU implementations in `normix/_bessel_cpu.py` and `normix/_gig_cpu.py`, not in normix_numpy. This removes the cross-package dependency for the hot path.
-
-5. **Phase the implementation**: Start with the E-step CPU path (Phase 1–3), which gives the biggest speedup for all four distributions. The M-step CPU solver (Phase 2) is only needed for GH and is less urgent since `cpu_legacy` already works.
-
-## 9. Summary
-
-The proposed dual-implementation architecture cleanly separates concerns:
-
-- **Pure JAX path**: for `log_prob`, `pdf`, JIT-able operations, gradient-based inference — everything that benefits from JAX's tracing and GPU acceleration.
-- **CPU path**: for EM-specific bulk computations (`expectation_params` over N observations, GIG η→θ solver) where scipy's C-level Bessel is 10–100× faster than JAX dispatch.
-
-The distribution classes remain `eqx.Module` pytrees, fully JIT-able and autodiff-compatible. The CPU path is an optimization for the EM algorithm, controlled by the fitter, not baked into the distribution API.
-
-Expected outcome: **~20× speedup** for GH EM iterations (8.77s → ~0.41s), bringing JAX normix to near-parity with the numpy reference.
+4. **Phase 1 first.** Adding `backend` to `log_kv` is the foundation. Everything else builds on it.
