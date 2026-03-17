@@ -91,7 +91,7 @@ class NormalMixture(eqx.Module):
 
         Requires self._joint to implement _posterior_gig_params(z2, w2).
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
 
         j = self._joint
         if not hasattr(j, '_posterior_gig_params'):

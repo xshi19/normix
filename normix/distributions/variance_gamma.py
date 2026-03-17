@@ -4,7 +4,7 @@ Variance Gamma (VG) distribution.
 Special case of GH with GIG → Gamma subordinator (b → 0, p > 0).
 Y ~ Gamma(α, β), i.e. GIG(p=α, a=2β, b→0).
 
-Stored: mu, gamma, L (Cholesky of Σ), alpha (shape), beta (rate) of Gamma.
+Stored: mu, gamma, L_Sigma (Cholesky of Σ), alpha (shape), beta (rate) of Gamma.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-_EPS = 1e-30
+from normix.utils.constants import LOG_EPS
 
 
 class JointVarianceGamma(JointNormalMixture):
@@ -32,10 +32,10 @@ class JointVarianceGamma(JointNormalMixture):
     alpha: jax.Array   # Gamma shape
     beta: jax.Array    # Gamma rate
 
-    def __init__(self, mu, gamma, L, alpha, beta):
+    def __init__(self, mu, gamma, L_Sigma, alpha, beta):
         object.__setattr__(self, 'mu', jnp.asarray(mu, dtype=jnp.float64))
         object.__setattr__(self, 'gamma', jnp.asarray(gamma, dtype=jnp.float64))
-        object.__setattr__(self, 'L', jnp.asarray(L, dtype=jnp.float64))
+        object.__setattr__(self, 'L_Sigma', jnp.asarray(L_Sigma, dtype=jnp.float64))
         object.__setattr__(self, 'alpha', jnp.asarray(alpha, dtype=jnp.float64))
         object.__setattr__(self, 'beta', jnp.asarray(beta, dtype=jnp.float64))
 
@@ -49,7 +49,7 @@ class JointVarianceGamma(JointNormalMixture):
         theta = jnp.array([p_eff - 1.0, -a_eff / 2.0])
         return dummy._log_partition_from_theta(theta)
 
-    def _conditional_expectations_impl(
+    def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
         """
@@ -59,7 +59,7 @@ class JointVarianceGamma(JointNormalMixture):
         Actually for Gamma subordinator (b→0), the posterior is GIG:
           p_post = alpha - d/2,  a_post = 2β + γᵀΣ⁻¹γ,  b_post = (x-μ)ᵀΣ⁻¹(x-μ)
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
         d = self.d
         z, w, z2, w2, zw = self._quad_forms(x)
 
@@ -86,16 +86,16 @@ class JointVarianceGamma(JointNormalMixture):
     def natural_params(self) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         j = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L=self.L,
-            p=self.alpha, a=2.0 * self.beta, b=jnp.array(_EPS),
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            p=self.alpha, a=2.0 * self.beta, b=jnp.array(LOG_EPS),
         )
         return j.natural_params()
 
     def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         dummy = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L=self.L,
-            p=self.alpha, a=2.0 * self.beta, b=jnp.array(_EPS),
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            p=self.alpha, a=2.0 * self.beta, b=jnp.array(LOG_EPS),
         )
         return dummy._log_partition_from_theta(theta)
 
@@ -105,7 +105,7 @@ class JointVarianceGamma(JointNormalMixture):
         gamma = jnp.asarray(gamma, dtype=jnp.float64)
         sigma = jnp.asarray(sigma, dtype=jnp.float64)
         L = jnp.linalg.cholesky(sigma)
-        return cls(mu=mu, gamma=gamma, L=L, alpha=alpha, beta=beta)
+        return cls(mu=mu, gamma=gamma, L_Sigma=L, alpha=alpha, beta=beta)
 
     @classmethod
     def from_natural(cls, theta: jax.Array) -> "JointVarianceGamma":
@@ -114,7 +114,7 @@ class JointVarianceGamma(JointNormalMixture):
     @classmethod
     def _dummy_instance(cls):
         d = 1
-        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L=jnp.eye(d),
+        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L_Sigma=jnp.eye(d),
                    alpha=jnp.ones(()), beta=jnp.ones(()))
 
 
@@ -140,7 +140,7 @@ class VarianceGamma(NormalMixture):
         j = self._joint
         gh = GeneralizedHyperbolic.from_classical(
             mu=j.mu, gamma=j.gamma, sigma=j.sigma(),
-            p=j.alpha, a=2.0 * j.beta, b=jnp.array(_EPS),
+            p=j.alpha, a=2.0 * j.beta, b=jnp.array(LOG_EPS),
         )
         return gh.log_prob(x)
 
@@ -168,7 +168,7 @@ class VarianceGamma(NormalMixture):
         gamma_dist = Gamma.from_expectation(jnp.array([gig_eta[0], gig_eta[2]]))
 
         joint_new = JointVarianceGamma(
-            mu=mu_new, gamma=gamma_new, L=L_new,
+            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             alpha=gamma_dist.alpha, beta=gamma_dist.beta,
         )
         return VarianceGamma(joint_new)
@@ -176,14 +176,14 @@ class VarianceGamma(NormalMixture):
     def regularize_det_sigma_one(self) -> "VarianceGamma":
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L)))
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
-        L_new = j.L / jnp.sqrt(scale)
+        L_new = j.L_Sigma / jnp.sqrt(scale)
         gamma_new = j.gamma / scale
         beta_new = j.beta / scale
         joint_new = JointVarianceGamma(
-            mu=j.mu, gamma=gamma_new, L=L_new,
+            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
             alpha=j.alpha, beta=beta_new,
         )
         return VarianceGamma(joint_new)

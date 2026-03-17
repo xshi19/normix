@@ -22,12 +22,12 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 from normix.exponential_family import ExponentialFamily
-from normix._bessel import log_kv
+from normix.utils.bessel import log_kv
 
 from normix.distributions.gamma import Gamma
 from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
-from normix.distributions.gig import GIG, GeneralizedInverseGaussian
+from normix.distributions.generalized_inverse_gaussian import GIG, GeneralizedInverseGaussian
 from normix.distributions.normal import MultivariateNormal
 from normix.distributions.variance_gamma import VarianceGamma, JointVarianceGamma
 from normix.distributions.normal_inverse_gamma import (

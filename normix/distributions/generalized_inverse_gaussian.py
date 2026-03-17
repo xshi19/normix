@@ -28,14 +28,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from normix._bessel import log_kv
+from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
+from normix.utils.constants import LOG_EPS, GIG_EPS_V_HESS, GIG_EPS_NP
 
 jax.config.update("jax_enable_x64", True)
 
 # When √(ab) < threshold, delegate to Gamma or InverseGamma limits
 _DEGEN_THRESHOLD = 1e-10
-_EPS = 1e-30
 
 
 class GIG(ExponentialFamily):
@@ -72,23 +72,23 @@ class GIG(ExponentialFamily):
         sqrt_ab = jnp.sqrt(a * b)
 
         # Safe sqrt_ab to prevent log_kv(p, 0) blow-up
-        sqrt_ab_safe = jnp.maximum(sqrt_ab, _EPS)
+        sqrt_ab_safe = jnp.maximum(sqrt_ab, LOG_EPS)
 
         # General Bessel case
         psi_bessel = (jnp.log(2.0) + log_kv(p, sqrt_ab_safe)
-                      + 0.5 * p * (jnp.log(b + _EPS) - jnp.log(a + _EPS)))
+                      + 0.5 * p * (jnp.log(b + LOG_EPS) - jnp.log(a + LOG_EPS)))
 
         # Gamma limit (b→0, p>0): Gamma(p, a/2)
         # Safe clamp: alpha must be > 0 for gammaln
-        alpha_g = jnp.maximum(p, _EPS)
-        beta_g = jnp.maximum(a / 2.0, _EPS)
+        alpha_g = jnp.maximum(p, LOG_EPS)
+        beta_g = jnp.maximum(a / 2.0, LOG_EPS)
         psi_gamma = (jax.scipy.special.gammaln(alpha_g)
                      - alpha_g * jnp.log(beta_g))
 
         # InverseGamma limit (a→0, p<0): InvGamma(-p, b/2)
         # Safe clamp: alpha must be > 0 for gammaln
-        alpha_ig = jnp.maximum(-p, _EPS)
-        beta_ig = jnp.maximum(b / 2.0, _EPS)
+        alpha_ig = jnp.maximum(-p, LOG_EPS)
+        beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
         psi_invgamma = (jax.scipy.special.gammaln(alpha_ig)
                         - alpha_ig * jnp.log(beta_ig))
 
@@ -307,12 +307,19 @@ class GIG(ExponentialFamily):
         return cls.from_natural(theta)
 
     @classmethod
-    def fit_mle(cls, X: jax.Array) -> "GIG":
+    def fit_mle(
+        cls,
+        X: jax.Array,
+        *,
+        theta0=None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+    ) -> "GIG":
         X = jnp.asarray(X, dtype=jnp.float64)
         eta_hat = jnp.array([jnp.mean(jnp.log(X)),
                               jnp.mean(1.0 / X),
                               jnp.mean(X)])
-        return cls.from_expectation(eta_hat)
+        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     @classmethod
     def _dummy_instance(cls) -> "GIG":
@@ -378,7 +385,7 @@ def _objective(theta: jax.Array, eta: jax.Array) -> jax.Array:
 # Analytical gradient and Hessian of the GIG log-partition
 # ---------------------------------------------------------------------------
 
-_EPS_V_HESS = 1e-5
+GIG_EPS_V_HESS = 1e-5
 
 
 def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
@@ -397,7 +404,7 @@ def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
     """
     z_safe = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
     orders = jnp.array([p, p - 1.0, p + 1.0, p - 2.0, p + 2.0,
-                        p - _EPS_V_HESS, p + _EPS_V_HESS])
+                        p - GIG_EPS_V_HESS, p + GIG_EPS_V_HESS])
     evals = jax.vmap(log_kv)(orders, jnp.full(7, z_safe))
     L, L_m1, L_p1, L_m2, L_p2, L_vm, L_vp = evals
 
@@ -410,8 +417,8 @@ def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
     L_z  = -0.5 * (r_m1 + r_p1)
     L_zz = 0.25 * (r_m2 + 2.0 + r_p2) - 0.25 * (r_m1 + r_p1) ** 2
 
-    L_v  = (L_vp - L_vm) / (2.0 * _EPS_V_HESS)
-    L_vv = (L_vp - 2.0 * L + L_vm) / (_EPS_V_HESS ** 2)
+    L_v  = (L_vp - L_vm) / (2.0 * GIG_EPS_V_HESS)
+    L_vv = (L_vp - 2.0 * L + L_vm) / (GIG_EPS_V_HESS ** 2)
 
     # L_vz using integer-shift FD in v: needs L_z at p±1
     # L_z(p+1) = -(K_p + K_{p+2}) / (2 K_{p+1})
@@ -498,8 +505,6 @@ def _solve_cpu(
     """
     from scipy.optimize import minimize
 
-    _EPS_NP = 1e-300
-
     eta_np = np.asarray(eta, dtype=np.float64)
     theta0_np = np.asarray(theta0, dtype=np.float64)
 
@@ -507,8 +512,8 @@ def _solve_cpu(
         p = theta_np[0] + 1.0
         # Use consistent a_safe, b_safe for both Bessel and log to avoid
         # cancellation issues near the boundary (see design doc §5).
-        b_safe = max(-2.0 * theta_np[1], _EPS_NP)
-        a_safe = max(-2.0 * theta_np[2], _EPS_NP)
+        b_safe = max(-2.0 * theta_np[1], GIG_EPS_NP)
+        a_safe = max(-2.0 * theta_np[2], GIG_EPS_NP)
         sqrt_ab = np.sqrt(a_safe * b_safe)
 
         lkv = float(log_kv(p, sqrt_ab, backend='cpu'))

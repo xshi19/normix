@@ -10,7 +10,7 @@ import pytest
 
 jax.config.update("jax_enable_x64", True)
 
-from normix._bessel import log_kv
+from normix.utils.bessel import log_kv
 
 
 # ---------------------------------------------------------------------------

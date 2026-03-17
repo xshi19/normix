@@ -212,28 +212,31 @@ def _log_kv_cpu(v, z):
     log K_v(z) via scipy.special.kve. Fully vectorized numpy.
 
     Not JIT-able. Fast for the EM hot path (6 C-level array calls).
-    Handles arrays of any shape via broadcasting.
+    Handles scalars and arrays of any shape via broadcasting.
     """
     from scipy.special import kve, gammaln
 
     v = np.asarray(v, dtype=np.float64)
     z = np.asarray(z, dtype=np.float64)
-    v, z = np.broadcast_arrays(v, z)
-    z = np.maximum(z, np.finfo(np.float64).tiny)
+    out_shape = np.broadcast_shapes(v.shape, z.shape)
+    # Ravel to 1-d so item assignment always works (0-d arrays don't support it)
+    v_flat = np.broadcast_to(v, out_shape).ravel().copy()
+    z_flat = np.broadcast_to(z, out_shape).ravel().copy()
+    z_flat = np.maximum(z_flat, np.finfo(np.float64).tiny)
 
-    result = np.log(kve(v, z)) - z
+    result = np.log(kve(v_flat, z_flat)) - z_flat
 
     inf_mask = np.isinf(result)
     if np.any(inf_mask):
-        v_abs = np.abs(v[inf_mask])
-        z_inf = z[inf_mask]
+        v_abs = np.abs(v_flat[inf_mask])
+        z_inf = z_flat[inf_mask]
         large_v = v_abs > 0.5
         result[inf_mask] = np.where(
             large_v,
             gammaln(v_abs) - np.log(2.0) + v_abs * (np.log(2.0) - np.log(z_inf)),
             np.log(np.maximum(-np.log(z_inf / 2.0) - np.euler_gamma, 1e-300)),
         )
-    return result
+    return result.reshape(out_shape) if out_shape else result[0]
 
 
 # ---------------------------------------------------------------------------

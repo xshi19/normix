@@ -15,8 +15,8 @@ import pytest
 
 jax.config.update("jax_enable_x64", True)
 
-from normix._bessel import log_kv
-from normix.distributions.gig import GIG
+from normix.utils.bessel import log_kv
+from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.distributions.generalized_hyperbolic import (
     JointGeneralizedHyperbolic, GeneralizedHyperbolic,
 )
@@ -380,7 +380,7 @@ def test_posterior_gig_params_gh():
     d = 2
     j = JointGeneralizedHyperbolic(
         mu=jnp.zeros(d), gamma=jnp.zeros(d),
-        L=jnp.eye(d), p=jnp.array(1.0),
+        L_Sigma=jnp.eye(d), p=jnp.array(1.0),
         a=jnp.array(2.0), b=jnp.array(3.0),
     )
     x = jnp.array([1.0, 0.5])
@@ -396,7 +396,7 @@ def test_posterior_gig_params_vg():
     d = 2
     j = JointVarianceGamma(
         mu=jnp.zeros(d), gamma=jnp.zeros(d),
-        L=jnp.eye(d),
+        L_Sigma=jnp.eye(d),
         alpha=jnp.array(2.0), beta=jnp.array(1.0),
     )
     x = jnp.array([1.0, 0.5])
@@ -411,7 +411,7 @@ def test_posterior_gig_params_nig():
     d = 2
     j = JointNormalInverseGamma(
         mu=jnp.zeros(d), gamma=jnp.zeros(d),
-        L=jnp.eye(d),
+        L_Sigma=jnp.eye(d),
         alpha=jnp.array(2.0), beta=jnp.array(1.0),
     )
     x = jnp.array([1.0, 0.5])
@@ -426,7 +426,7 @@ def test_posterior_gig_params_niig():
     d = 2
     j = JointNormalInverseGaussian(
         mu=jnp.zeros(d), gamma=jnp.zeros(d),
-        L=jnp.eye(d),
+        L_Sigma=jnp.eye(d),
         mu_ig=jnp.array(1.0), lam=jnp.array(2.0),
     )
     x = jnp.array([1.0, 0.5])

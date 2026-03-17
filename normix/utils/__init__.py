@@ -1,8 +1,11 @@
 """
-Notebook utilities for normix.
+Utilities for normix.
 
-Plotting helpers live in ``plotting``, validation/EM helpers in ``validation``.
+Bessel functions in ``bessel``, shared constants in ``constants``,
+plotting helpers in ``plotting``, validation/EM helpers in ``validation``.
 """
+from normix.utils.bessel import log_kv
+from normix.utils.constants import LOG_EPS, GIG_EPS_V_HESS, GIG_EPS_NP
 from normix.utils.plotting import (
     plot_pdf_cdf_comparison,
     plot_sample_histograms,
@@ -23,6 +26,10 @@ from normix.utils.validation import (
 )
 
 __all__ = [
+    "log_kv",
+    "LOG_EPS",
+    "GIG_EPS_V_HESS",
+    "GIG_EPS_NP",
     "plot_pdf_cdf_comparison",
     "plot_sample_histograms",
     "plot_mle_fit",

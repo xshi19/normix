@@ -4,7 +4,7 @@ Normal-Inverse Gaussian (NIG) distribution.
 Special case of GH with GIG → InverseGaussian subordinator (p = -1/2).
 Y ~ InverseGaussian(mu_ig, lam), i.e. GIG(p=-1/2, a=lam/mu_ig², b=lam).
 
-Stored: mu, gamma, L (Cholesky of Σ), delta (= √(b) scale), eta_ig (= √(a) drift).
+Stored: mu, gamma, L_Sigma (Cholesky of Σ), delta (= √(b) scale), eta_ig (= √(a) drift).
 Following ARCHITECTURE.md: stored attrs are delta, eta (for InverseGaussian subordinator).
 
 Actually let's store mu_ig (IG mean) and lam (IG shape) for clarity.
@@ -24,7 +24,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-_EPS = 1e-30
+from normix.utils.constants import LOG_EPS
 
 
 class JointNormalInverseGaussian(JointNormalMixture):
@@ -41,10 +41,10 @@ class JointNormalInverseGaussian(JointNormalMixture):
     mu_ig: jax.Array   # IG mean parameter
     lam: jax.Array     # IG shape parameter
 
-    def __init__(self, mu, gamma, L, mu_ig, lam):
+    def __init__(self, mu, gamma, L_Sigma, mu_ig, lam):
         object.__setattr__(self, 'mu', jnp.asarray(mu, dtype=jnp.float64))
         object.__setattr__(self, 'gamma', jnp.asarray(gamma, dtype=jnp.float64))
-        object.__setattr__(self, 'L', jnp.asarray(L, dtype=jnp.float64))
+        object.__setattr__(self, 'L_Sigma', jnp.asarray(L_Sigma, dtype=jnp.float64))
         object.__setattr__(self, 'mu_ig', jnp.asarray(mu_ig, dtype=jnp.float64))
         object.__setattr__(self, 'lam', jnp.asarray(lam, dtype=jnp.float64))
 
@@ -60,14 +60,14 @@ class JointNormalInverseGaussian(JointNormalMixture):
         theta = jnp.array([-lam_p / (2.0 * mu_p**2), -lam_p / 2.0])
         return dummy._log_partition_from_theta(theta)
 
-    def _conditional_expectations_impl(
+    def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
         """
         Posterior Y|X=x ~ GIG(-1/2-d/2, a_post, b_post)
         where a_post = lam/mu_ig² + γᵀΣ⁻¹γ,  b_post = lam + (x-μ)ᵀΣ⁻¹(x-μ).
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
         d = self.d
         z, w, z2, w2, zw = self._quad_forms(x)
 
@@ -100,7 +100,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         a_ig = self.lam / (self.mu_ig**2)
         j = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L=self.L,
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
             p=jnp.array(-0.5), a=a_ig, b=self.lam,
         )
         return j.natural_params()
@@ -109,7 +109,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
         a_ig = self.lam / (self.mu_ig**2)
         dummy = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L=self.L,
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
             p=jnp.array(-0.5), a=a_ig, b=self.lam,
         )
         return dummy._log_partition_from_theta(theta)
@@ -120,7 +120,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         gamma = jnp.asarray(gamma, dtype=jnp.float64)
         sigma = jnp.asarray(sigma, dtype=jnp.float64)
         L = jnp.linalg.cholesky(sigma)
-        return cls(mu=mu, gamma=gamma, L=L, mu_ig=mu_ig, lam=lam)
+        return cls(mu=mu, gamma=gamma, L_Sigma=L, mu_ig=mu_ig, lam=lam)
 
     @classmethod
     def from_natural(cls, theta):
@@ -129,7 +129,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
     @classmethod
     def _dummy_instance(cls):
         d = 1
-        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L=jnp.eye(d),
+        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L_Sigma=jnp.eye(d),
                    mu_ig=jnp.ones(()), lam=jnp.ones(()))
 
 
@@ -179,7 +179,7 @@ class NormalInverseGaussian(NormalMixture):
             jnp.array([mean_E_Y, mean_E_inv_Y]))
 
         joint_new = JointNormalInverseGaussian(
-            mu=mu_new, gamma=gamma_new, L=L_new,
+            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             mu_ig=ig_new.mu, lam=ig_new.lam,
         )
         return NormalInverseGaussian(joint_new)
@@ -187,16 +187,16 @@ class NormalInverseGaussian(NormalMixture):
     def regularize_det_sigma_one(self) -> "NormalInverseGaussian":
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L)))
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
-        L_new = j.L / jnp.sqrt(scale)
+        L_new = j.L_Sigma / jnp.sqrt(scale)
         gamma_new = j.gamma / scale
         # Y → Y/scale: mu_ig → mu_ig/scale, lam → lam/scale²
         mu_ig_new = j.mu_ig / scale
         lam_new = j.lam / scale
         joint_new = JointNormalInverseGaussian(
-            mu=j.mu, gamma=gamma_new, L=L_new,
+            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
             mu_ig=mu_ig_new, lam=lam_new,
         )
         return NormalInverseGaussian(joint_new)

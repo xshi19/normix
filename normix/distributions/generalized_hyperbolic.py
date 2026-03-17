@@ -31,14 +31,14 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix._bessel import log_kv
+from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-_EPS = 1e-30
+from normix.utils.constants import LOG_EPS
 
 
 # ============================================================================
@@ -56,11 +56,11 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     a: jax.Array
     b: jax.Array
 
-    def __init__(self, mu, gamma, L, p, a, b):
+    def __init__(self, mu, gamma, L_Sigma, p, a, b):
         # eqx.Module fields must be set via object.__setattr__ before freeze
         object.__setattr__(self, 'mu', jnp.asarray(mu, dtype=jnp.float64))
         object.__setattr__(self, 'gamma', jnp.asarray(gamma, dtype=jnp.float64))
-        object.__setattr__(self, 'L', jnp.asarray(L, dtype=jnp.float64))
+        object.__setattr__(self, 'L_Sigma', jnp.asarray(L_Sigma, dtype=jnp.float64))
         object.__setattr__(self, 'p', jnp.asarray(p, dtype=jnp.float64))
         object.__setattr__(self, 'a', jnp.asarray(a, dtype=jnp.float64))
         object.__setattr__(self, 'b', jnp.asarray(b, dtype=jnp.float64))
@@ -70,22 +70,22 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # ------------------------------------------------------------------
 
     def subordinator(self) -> ExponentialFamily:
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(p=self.p, a=self.a, b=self.b)
 
     def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
         dummy = GIG(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
         theta = jnp.array([p_eff - 1.0, -b_eff / 2.0, -a_eff / 2.0])
         return dummy._log_partition_from_theta(theta)
 
-    def _conditional_expectations_impl(
+    def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
         """
         Posterior Y|X=x ~ GIG(p-d/2, a+γᵀΣ⁻¹γ, b+(x-μ)ᵀΣ⁻¹(x-μ)).
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
 
         d = self.d
         z, w, z2, w2, zw = self._quad_forms(x)
@@ -120,12 +120,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         d = self.d
         # Σ⁻¹ = (LLᵀ)⁻¹ = L⁻ᵀ L⁻¹
         # L⁻¹ μ = z_mu, L⁻¹ γ = z_gamma
-        z_mu = jax.scipy.linalg.solve_triangular(self.L, self.mu, lower=True)
-        z_gamma = jax.scipy.linalg.solve_triangular(self.L, self.gamma, lower=True)
+        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
+        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
 
         # Σ⁻¹μ = Lᵀ⁻¹ L⁻¹ μ
-        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L.T, z_mu, lower=False)
-        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L.T, z_gamma, lower=False)
+        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
+        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
 
         mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
         gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
@@ -136,7 +136,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
         # Σ⁻¹: LLᵀ → Σ⁻¹ = L⁻ᵀ L⁻¹
         L_inv = jax.scipy.linalg.solve_triangular(
-            self.L, jnp.eye(d, dtype=jnp.float64), lower=True)
+            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
         Lambda = L_inv.T @ L_inv   # Σ⁻¹
 
         return jnp.concatenate([
@@ -152,7 +152,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
         Recover p,a,b,μ,γ,Σ from theta.
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
 
         d = self.d
         theta_1 = theta[0]
@@ -201,7 +201,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         gamma = jnp.asarray(gamma, dtype=jnp.float64)
         sigma = jnp.asarray(sigma, dtype=jnp.float64)
         L = jnp.linalg.cholesky(sigma)
-        return cls(mu=mu, gamma=gamma, L=L, p=p, a=a, b=b)
+        return cls(mu=mu, gamma=gamma, L_Sigma=L, p=p, a=a, b=b)
 
     @classmethod
     def from_natural(cls, theta: jax.Array) -> "JointGeneralizedHyperbolic":
@@ -215,7 +215,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         d = 1
         return cls(
             mu=jnp.zeros(d), gamma=jnp.zeros(d),
-            L=jnp.eye(d), p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(())
+            L_Sigma=jnp.eye(d), p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(())
         )
 
 
@@ -290,16 +290,16 @@ class GeneralizedHyperbolic(NormalMixture):
         #            + log K_{p-d/2}(√(A(Q+b)))
         #            + γᵀΣ⁻¹(x-μ)                ← = wᵀz (inner product)
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L)))
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
         sqrt_ab = jnp.sqrt(j.a * j.b)
         sqrt_A_Qb = jnp.sqrt(A * (Q + j.b))
 
         log_f = (
             -0.5 * d * jnp.log(2.0 * jnp.pi)
             - 0.5 * log_det_sigma
-            + 0.5 * j.p * (jnp.log(j.a + _EPS) - jnp.log(j.b + _EPS))
+            + 0.5 * j.p * (jnp.log(j.a + LOG_EPS) - jnp.log(j.b + LOG_EPS))
             - log_kv(j.p, sqrt_ab)
-            + 0.5 * (d / 2.0 - j.p) * jnp.log(A / (Q + j.b + _EPS))
+            + 0.5 * (d / 2.0 - j.p) * jnp.log(A / (Q + j.b + LOG_EPS))
             + log_kv(p_post, sqrt_A_Qb)
             + zw                # γᵀΣ⁻¹(x-μ) = wᵀz
         )
@@ -324,7 +324,7 @@ class GeneralizedHyperbolic(NormalMixture):
         solver: GIG η→θ solver ('newton', 'newton_analytical', 'lbfgs')
         scan_length: fixed Newton iteration count for Newton-based solvers
         """
-        from normix.distributions.gig import GIG
+        from normix.distributions.generalized_inverse_gaussian import GIG
 
         X = jnp.asarray(X, dtype=jnp.float64)
         n = X.shape[0]
@@ -361,7 +361,7 @@ class GeneralizedHyperbolic(NormalMixture):
                                         scan_length=scan_length)
 
         joint_new = JointGeneralizedHyperbolic(
-            mu=mu_new, gamma=gamma_new, L=L_new,
+            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             p=gig_new.p, a=gig_new.a, b=gig_new.b,
         )
         return GeneralizedHyperbolic(joint_new)
@@ -377,17 +377,17 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L)))
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
 
-        L_new = j.L / jnp.sqrt(scale)
+        L_new = j.L_Sigma / jnp.sqrt(scale)
         gamma_new = j.gamma / scale
         a_new = j.a / scale
         b_new = j.b * scale
 
         joint_new = JointGeneralizedHyperbolic(
-            mu=j.mu, gamma=gamma_new, L=L_new,
+            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
             p=j.p, a=a_new, b=b_new,
         )
         return GeneralizedHyperbolic(joint_new)
