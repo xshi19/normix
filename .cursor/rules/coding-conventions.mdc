@@ -12,6 +12,8 @@ alwaysApply: false
 - `from jax import Array` for type hints
 - `from jax.scipy.special import gammaln, digamma`
 - No `import scipy as sp` aliases
+- Bessel: `from normix.utils.bessel import log_kv`
+- Shared constants: `from normix.utils.constants import LOG_EPS` (never define `_EPS = 1e-30` locally)
 
 ## Type Hints
 
@@ -19,14 +21,38 @@ alwaysApply: false
 - `Optional`, `Union` from `typing` when needed
 - Return type on all public methods
 
-## LaTeX
+## LaTeX for Mathematical Formulas
 
-| Context | Syntax |
-|---|---|
-| Docstring inline | `:math:\`\\theta\`` |
-| Docstring block | `.. math::` directive |
-| Markdown inline | `$\theta$` |
-| Markdown block | `$$\psi(\theta)$$` |
+**ALWAYS use LaTeX** for mathematical formulas throughout the project:
+
+| Location | Format | Example |
+|----------|--------|---------|
+| Docstrings (inline) | `:math:\`...\`` | `:math:\`\\alpha > 0\`` |
+| Docstrings (block) | `.. math::` directive | `.. math::\n\n    p(x) = ...` |
+| README.md / Jupyter markdown / `.mdc` rules | `$...$` inline, `$$...$$` block | `$\\alpha > 0$` |
+
+This is critical because normix is math-heavy. Plain-text like "alpha > 0" in docstrings is not acceptable.
+
+## Attribute Naming Convention
+
+Internal parameter attributes **MUST** use Greek letter names matching the mathematical notation in docstrings. This ensures the code reads naturally alongside the formulas.
+
+| Distribution | Attributes | Math Symbols |
+|---|---|---|
+| Gamma | `alpha`, `beta` | $\alpha$, $\beta$ |
+| InverseGamma | `alpha`, `beta` | $\alpha$, $\beta$ |
+| InverseGaussian | `mu`, `lam` | $\mu$, $\lambda$ |
+| GIG / GeneralizedInverseGaussian | `p`, `a`, `b` | $p$, $a$, $b$ |
+| MultivariateNormal | `mu`, `L_Sigma` | $\mu$, $L_\Sigma$ |
+| JointNormalMixture (base) | `mu`, `gamma`, `L_Sigma` | $\mu$, $\gamma$, $L_\Sigma$ |
+| JointVarianceGamma | `alpha`, `beta` | $\alpha$, $\beta$ (Gamma) |
+| JointNormalInverseGamma | `alpha`, `beta` | $\alpha$, $\beta$ (InvGamma) |
+| JointNormalInverseGaussian | `mu_ig`, `lam` | $\mu_{IG}$, $\lambda$ (IG) |
+| JointGeneralizedHyperbolic | `p`, `a`, `b` | $p$, $a$, $b$ (GIG) |
+
+**Key rules:**
+- **Cholesky factors** of covariance matrices are always `L_Sigma` (never just `L`).
+- **Public API** constructors (e.g. `from_classical(alpha=..., beta=...)`) keep readable English names matching the math; internal equinox fields use the same names.
 
 ## Docstrings
 
@@ -34,12 +60,15 @@ alwaysApply: false
 - One-line summary first, then blank line, then details
 - No template boilerplate — keep it concise
 - Reference formulas only when non-obvious from the code
+- No long derivation comments inline — move math to `docs/theory/` or `docs/tech_notes/`
 
 ## Module Structure
 
 - One distribution per file
 - Private helpers prefixed with `_`
 - No `__all__` — export via `__init__.py`
+- Bessel functions in `normix/utils/bessel.py`
+- Shared numerical constants in `normix/utils/constants.py`
 
 ## Code Organization Within a Distribution Class
 
@@ -49,6 +78,11 @@ alwaysApply: false
 4. Constructors: `from_classical`, `from_natural`, `from_expectation`, `fit_mle`
 5. Distribution methods: `log_prob`, `sample`, `mean`, `var`
 6. Conversion helpers (e.g. `to_scipy_params`) — only if needed
+
+## Method Naming
+
+- No `_impl` suffix — use descriptive names (e.g. `_compute_posterior_expectations`, not `_conditional_expectations_impl`)
+- `fit_mle` MUST accept and forward `theta0`, `maxiter`, `tol` kwargs to `from_expectation`
 
 ## Design Principles
 
@@ -63,7 +97,7 @@ alwaysApply: false
 ## JAX Patterns
 
 - **Pure functions:** no side effects, no global state, no print inside JIT
-- **Unbatched core:** `_log_prob(x)` and `_sample(key)` for single observations; batch via `jax.vmap`
+- **Unbatched core:** `log_prob(x)` for single observations; batch via `jax.vmap`
 - **JIT boundaries:** JIT the outermost function (e.g. entire EM loop), not individual methods
 - **Static vs traced:** loop bounds, config, string args are static; arrays are traced
 - **`jax.lax.while_loop`** for EM convergence loops (JIT-compatible early stopping)
@@ -73,16 +107,10 @@ alwaysApply: false
 ## Numerical Stability
 
 - Work in log-space: `log_prob`, `log_kv`, `gammaln`, `logsumexp`
-- `jnp.maximum(x, eps)` clamping for positivity constraints (not `paramax.Parameterize`)
+- `jnp.maximum(x, LOG_EPS)` clamping for positivity constraints (import `LOG_EPS` from `normix.utils.constants`)
 - Float64 everywhere — `jax.config.update("jax_enable_x64", True)` at init
 - Cholesky-based linear algebra: `solve_triangular` and `cho_solve`, never `jnp.linalg.inv`
-- Bessel functions: use `log_kv` with `custom_jvp` from `_bessel.py`, never raw `kv`
-
-## Naming
-
-- Internal attributes: Greek letters matching math ($\alpha$ → `alpha`, $L_\Sigma$ → `L`)
-- Public constructors: readable English (`from_classical_params(shape=..., rate=...)`)
-- Follow JAX/Equinox conventions: `key` for PRNG, `params`/`static` for `eqx.partition`
+- Bessel functions: use `log_kv` from `normix.utils.bessel`, never raw `kv`
 
 ## Things to Avoid
 
@@ -90,10 +118,11 @@ alwaysApply: false
 - `@property` for expensive operations — compute explicitly
 - Deep class hierarchies — prefer composition (e.g. `NormalMixture` owns `JointNormalMixture`)
 - Global mutable state, `__dict__` manipulation, metaclasses
-- Long inline comments explaining design decisions — move to `docs/tech_notes/`
+- Long inline comments explaining derivations — move to `docs/tech_notes/` or `docs/theory/`
 - Wrapper functions in utils that duplicate distribution API — methods belong on the class
 - isinstance-based dispatch over distribution types — add methods to the base/subclass instead
 - Putting all code in `__init__.py` — split into logical modules
+- Defining `_EPS = 1e-30` locally in distribution files — import from `normix.utils.constants`
 
 ## Method Placement
 

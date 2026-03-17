@@ -1,206 +1,157 @@
 # normix
 
-Python package for Generalized Hyperbolic distributions and related distributions.
+JAX package for Generalized Hyperbolic distributions as exponential families.
 
-## Overview
-
-`normix` provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH) distribution family, including:
-
-- **Univariate distributions**: Exponential, Gamma, Inverse Gamma, Generalized Inverse Gaussian (GIG), Inverse Gaussian
-- **Multivariate distributions**: Multivariate Normal
-- **Mixture distributions**: Generalized Hyperbolic (GH), Normal Inverse Gaussian (NIG), Variance Gamma (VG), Normal Inverse Gamma (NInvG)
-
-All distributions are implemented as **exponential families** with support for:
-- Three parametrizations: **classical**, **natural**, and **expectation** parameters
-- **sklearn-style API**: `fit()` returns self, method chaining supported
-- Efficient **EM algorithms** for parameter estimation
-- Joint distributions $f(x,y)$ and marginal distributions $f(x)$
-
-## Documentation
-
-- Build locally: `make -C docs html`
-- Published docs (GitHub Pages): https://xshi19.github.io/normix/
+Built on [Equinox](https://docs.kidger.site/equinox/) with Float64 precision throughout.
 
 ## Installation
 
 ```bash
-pip install -e .
+uv sync            # recommended (uv)
+pip install -e .   # or pip
 ```
 
-For development:
-```bash
-pip install -e ".[dev]"
+## Quick Start
+
+```python
+import jax
+import jax.numpy as jnp
+from normix import GeneralizedHyperbolic, GIG, Gamma, log_kv
+
+# Fit GH distribution to data via EM
+key = jax.random.PRNGKey(0)
+X = jax.random.normal(key, (1000, 3))
+
+dist = GeneralizedHyperbolic.from_classical(
+    mu=jnp.zeros(3), gamma=jnp.zeros(3),
+    sigma=jnp.eye(3), p=-0.5, a=2.0, b=1.0,
+)
+fitter = normix.fitting.em.BatchEMFitter(max_iter=100)
+fitted = fitter.fit(dist, X)
+
+# Evaluate log-density (batched via vmap)
+log_p = jax.vmap(fitted.log_prob)(X)   # shape (1000,)
 ```
 
-## Architecture
+## Distributions
 
-See [Architecture Overview](#architecture-overview) below for the complete package structure.
+### Univariate (exponential family)
 
-## Legacy Code
+| Class | Parameters | Description |
+|---|---|---|
+| `Gamma` | `alpha`, `beta` | Shape α > 0, rate β > 0 |
+| `InverseGamma` | `alpha`, `beta` | Shape α > 0, rate β > 0 |
+| `InverseGaussian` | `mu`, `lam` | Mean μ > 0, shape λ > 0 |
+| `GIG` / `GeneralizedInverseGaussian` | `p`, `a`, `b` | Generalized Inverse Gaussian |
 
-The original implementation has been moved to `normix/legacy/` for reference:
-- `normix/legacy/gig.py` - Original GIG implementation
-- `normix/legacy/gh.py` - Original GH implementation
-- `normix/legacy/func.py` - Original utility functions
+### Multivariate
 
-**Note:** The legacy code is kept for reference only during the refactoring process. Do not import from `normix.legacy` in new code. The new implementation provides better API design, numerical stability, and testing.
+| Class | Parameters | Description |
+|---|---|---|
+| `MultivariateNormal` | `mu`, `L_Sigma` | Mean μ, Cholesky L_Sigma of Σ |
 
-## Roadmap
+### Normal Variance-Mean Mixtures (marginal)
 
-See [ROADMAP.md](ROADMAP.md) for the detailed implementation plan.
+| Class | Subordinator | Parameters |
+|---|---|---|
+| `VarianceGamma` | Gamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` |
+| `NormalInverseGamma` | InverseGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` |
+| `NormalInverseGaussian` | InverseGaussian | `mu`, `gamma`, `L_Sigma`, `mu_ig`, `lam` |
+| `GeneralizedHyperbolic` | GIG | `mu`, `gamma`, `L_Sigma`, `p`, `a`, `b` |
 
-**Current status:** Base classes and simple distributions implemented.
+### Joint distributions
 
-**Completed:**
-1. ✓ Base exponential family class with three parametrizations
-2. ✓ Exponential and Gamma distributions
-3. ✓ Generic testing framework for scipy comparison
-4. ✓ Jupyter notebooks with visualizations
+The `Joint*` classes (e.g. `JointGeneralizedHyperbolic`) model the full joint $f(x,y)$ where Y is the mixing variable. They are exponential families and are used internally for the EM E-step.
 
-**In Progress:**
-- GIG and Inverse Gaussian distributions
-- Mixture distributions (VG, NInvG, NIG, GH)
+## Exponential Family API
 
-## Architecture Overview
+All univariate and joint distributions subclass `ExponentialFamily(eqx.Module)`:
+
+```python
+dist = Gamma(alpha=jnp.array(2.0), beta=jnp.array(1.0))
+
+# Log-density (single observation)
+dist.log_prob(jnp.array(1.5))
+
+# Three parametrizations
+theta = dist.natural_params()       # natural parameters θ
+eta   = dist.expectation_params()   # expectation parameters η = E[t(X)]
+I     = dist.fisher_information()   # Fisher information I(θ) = ∇²ψ(θ)
+
+# Constructors
+dist2 = Gamma.from_natural(theta)
+dist3 = Gamma.from_expectation(eta)
+dist4 = Gamma.fit_mle(X)           # η̂ = mean t(xᵢ)
+```
+
+## EM Algorithm
+
+```python
+from normix import GeneralizedHyperbolic
+from normix.fitting.em import BatchEMFitter
+
+# Initialise from classical parameters
+joint = JointGeneralizedHyperbolic.from_classical(
+    mu=jnp.zeros(d), gamma=jnp.zeros(d), sigma=jnp.eye(d),
+    p=-0.5, a=2.0, b=1.0,
+)
+model = GeneralizedHyperbolic(joint)
+
+# Fit with hybrid CPU/JAX backend for maximum speed
+fitter = BatchEMFitter(max_iter=200, tol=1e-6,
+                       e_step_backend='cpu', m_step_solver='cpu')
+fitted = fitter.fit(model, X)
+```
+
+## Bessel Functions
+
+```python
+from normix import log_kv        # or: from normix.utils.bessel import log_kv
+
+# JIT-able, differentiable (backend='jax', default)
+log_kv(v=0.5, z=2.0)
+
+# Fast CPU path for EM hot path (not JIT-able)
+log_kv(v=0.5, z=2.0, backend='cpu')
+```
+
+## Package Layout
 
 ```
 normix/
-├── normix/
-│   ├── __init__.py
-│   │
-│   ├── base/
-│   │   ├── __init__.py
-│   │   ├── exponential_family.py    # Base exponential family class
-│   │   └── mixture.py               # Base mixture/joint distribution
-│   │
-│   ├── distributions/
-│   │   ├── __init__.py
-│   │   ├── univariate/
-│   │   │   ├── __init__.py
-│   │   │   ├── exponential.py                   # Exponential (✓ implemented)
-│   │   │   ├── gamma.py                         # Gamma (✓ implemented)
-│   │   │   ├── inverse_gamma.py                 # InvGamma
-│   │   │   ├── inverse_gaussian.py              # IG
-│   │   │   └── generalized_inverse_gaussian.py  # GIG
-│   │   │
-│   │   ├── multivariate/
-│   │   │   ├── __init__.py
-│   │   │   └── normal.py            # Multivariate normal (exponential family)
-│   │   │
-│   │   └── mixtures/
-│   │       ├── __init__.py
-│   │       ├── joint_generalized_hyperbolic.py       # Joint f(x,y): normal + GIG
-│   │       ├── joint_normal_inverse_gaussian.py      # Joint f(x,y): normal + IG
-│   │       ├── joint_normal_inverse_gamma.py         # Joint f(x,y): normal + InvGamma
-│   │       ├── joint_variance_gamma.py               # Joint f(x,y): normal + Gamma
-│   │       ├── generalized_hyperbolic.py             # Marginal f(x)
-│   │       ├── normal_inverse_gaussian.py            # Marginal f(x)
-│   │       ├── normal_inverse_gamma.py               # Marginal f(x)
-│   │       └── variance_gamma.py                     # Marginal f(x)
-│   │
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── validation.py            # Input validation
-│   │   ├── bessel.py                # Bessel function utilities
-│   │   └── numerical.py             # Numerical stability helpers
-│   │
-│   └── legacy/                      # Original implementation (reference only)
-│       ├── __init__.py
-│       ├── gig.py
-│       ├── gh.py
-│       └── func.py
-│
-├── tests/                           # Comprehensive test suite
-│   ├── __init__.py
-│   ├── test_exponential_family.py       # Base class tests
-│   ├── test_distributions_vs_scipy.py   # Generic scipy comparison framework
-│   ├── test_gig.py
-│   ├── test_gh.py
-│   └── ...
-│
-├── docs/                            # Documentation
-│   ├── conf.py
-│   ├── index.rst
-│   ├── api/
-│   ├── tutorials/
-│   └── pdfs/                        # Papers and references
-│
-├── examples/                        # Example scripts
-│   └── (to be added)
-│
-├── notebooks/                       # Jupyter notebooks with visualizations
-│   ├── exponential_distribution.ipynb   # Exponential demo
-│   ├── gamma_distribution.ipynb         # Gamma demo
-│   └── ...
-│
-├── setup.py
-├── README.md
-└── ROADMAP.md
+├── exponential_family.py         # ExponentialFamily base class
+├── distributions/                # All distribution implementations
+│   ├── gamma.py
+│   ├── inverse_gamma.py
+│   ├── inverse_gaussian.py
+│   ├── generalized_inverse_gaussian.py
+│   ├── normal.py
+│   ├── variance_gamma.py
+│   ├── normal_inverse_gamma.py
+│   ├── normal_inverse_gaussian.py
+│   └── generalized_hyperbolic.py
+├── mixtures/                     # Joint and marginal base classes
+├── fitting/em.py                 # Batch / Online / MiniBatch EM fitters
+└── utils/
+    ├── bessel.py                 # log_kv with custom JVP
+    ├── constants.py              # Shared numerical constants
+    ├── plotting.py               # Notebook helpers
+    └── validation.py             # EM validation helpers
 ```
 
-## Mathematical Background
+## Development
 
-### Exponential Families
-
-Distributions in exponential family form have the probability density:
-
-$$p(x|\theta) = h(x) \exp(\theta^T t(x) - \psi(\theta))$$
-
-where:
-- $\theta$: natural parameters (vector)
-- $t(x)$: sufficient statistics (vector)
-- $\psi(\theta)$: log partition function (cumulant generating function)
-- $h(x)$: base measure
-
-**Key properties:**
-- Expectation parameters: $\eta = \nabla\psi(\theta) = E[t(X)]$
-- Fisher information: $I(\theta) = \nabla^2\psi(\theta) = \text{Cov}[t(X)]$
-- MLE in closed form: $\hat{\eta} = \frac{1}{n}\sum_{i=1}^n t(x_i)$
-
-### Generalized Hyperbolic as Normal Mixture
-
-The GH distribution can be represented as:
-
-$$X|Y \sim N(\mu + \Gamma Y, \Sigma Y)$$
-$$Y \sim \text{GIG}(\lambda, \chi, \psi)$$
-
-The marginal distribution $f(x)$ has a closed form involving modified Bessel functions of the second kind $K_\lambda(z)$.
-
-## Contributing
-
-Contributions are welcome! Please see the [ROADMAP.md](ROADMAP.md) for current implementation priorities.
-
-## Testing
-
-Run tests with:
 ```bash
-pytest tests/
+uv run pytest tests/              # run tests
+uv run jupyter lab                # notebooks
+make -C docs html                 # build docs
 ```
-
-With coverage:
-```bash
-pytest tests/ --cov=normix --cov-report=html
-```
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
 
 ## References
 
 - Barndorff-Nielsen, O. E. (1977). Exponentially decreasing distributions for the logarithm of particle size.
-- Barndorff-Nielsen, O. E., & Halgreen, C. (1977). Infinite divisibility of the hyperbolic and generalized inverse Gaussian distributions.
 - Eberlein, E., & Keller, U. (1995). Hyperbolic distributions in finance.
 
-## Citation
+## License
 
-If you use this package in academic work, please cite:
-
-```bibtex
-@software{normix,
-  title = {normix: Generalized Hyperbolic Distributions for Python},
-  author = {normix developers},
-  year = {2024},
-  url = {https://github.com/xshi19/normix}
-}
-```
+MIT — see [LICENSE](LICENSE).
