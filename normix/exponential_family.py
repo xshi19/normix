@@ -154,19 +154,32 @@ class ExponentialFamily(eqx.Module):
         return cls.from_natural(result.params)
 
     @classmethod
-    def fit_mle(cls, X: jax.Array) -> "ExponentialFamily":
+    def fit_mle(
+        cls,
+        X: jax.Array,
+        *,
+        theta0: Optional[jax.Array] = None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+    ) -> "ExponentialFamily":
         """
         MLE via exponential family identity: η̂ = mean_i t(xᵢ).
 
         Batches over X using jax.vmap, then calls from_expectation(η̂).
+
+        Parameters
+        ----------
+        X : (n, ...) array of observations
+        theta0 : optional initial natural parameters θ₀ for the η→θ solver
+        maxiter : maximum iterations for the η→θ solver
+        tol : convergence tolerance for the η→θ solver
         """
         X = jnp.asarray(X, dtype=jnp.float64)
-        # vmap sufficient_statistics over the batch dimension
         dummy = cls._dummy_instance()
         t_fn = lambda x: dummy.sufficient_statistics(x)
         stats = jax.vmap(t_fn)(X)   # (n, dim_t)
         eta_hat = jnp.mean(stats, axis=0)
-        return cls.from_expectation(eta_hat)
+        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     # ------------------------------------------------------------------
     # Helpers for subclasses
