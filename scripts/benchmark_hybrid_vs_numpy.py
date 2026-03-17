@@ -101,12 +101,17 @@ def profile_numpy_em(dist_cls, X, n_iter, label="", fix_tail=False):
         print(f"  [{label}] iter {i}: E={t_e:.3f}s  M={t_m:.3f}s  ll={ll:.2f}", flush=True)
     return {'e': e_times, 'm': m_times, 'total': iter_times}
 
-def profile_jax_em(model, X, n_iter, label="", solver='newton'):
+def profile_jax_em(model, X, n_iter, label="", solver='newton', e_backend='jax'):
     X = jnp.asarray(X, dtype=jnp.float64)
     e_times, m_times, iter_times = [], [], []
     for i in range(n_iter):
         t_start=time.perf_counter()
-        t0=time.perf_counter(); exp=model.e_step(X); _=float(exp['E_Y'][0])
+        t0=time.perf_counter()
+        try:
+            exp=model.e_step(X, backend=e_backend)
+        except TypeError:
+            exp=model.e_step(X)
+        _=float(exp['E_Y'][0])
         t_e=time.perf_counter()-t0; e_times.append(t_e)
         t0=time.perf_counter()
         try:
@@ -152,29 +157,29 @@ for config_label, X_data in configs:
         print(f"  => E={np_res[short]['e']:.3f}s  M={np_res[short]['m']:.3f}s  iter={np_res[short]['total']:.3f}s", flush=True)
     results[config_label]['numpy'] = np_res
 
-    # ── JAX hybrid (cpu_legacy GIG) ───────────────────────────────────
+    # ── JAX new hybrid: e_step backend='cpu' + GIG solver='cpu' ──────
     jax_hybrid_res = {}
     for short, init_fn, _ in DISTS_JAX:
-        gig_solver = 'cpu_legacy' if short == 'GH' else 'newton'
-        print(f"\n  JAX-hybrid / {short} (GIG solver={gig_solver}):", flush=True)
+        gig_solver = 'cpu' if short == 'GH' else 'newton'
+        print(f"\n  JAX-hybrid-new / {short} (e_backend=cpu, GIG solver={gig_solver}):", flush=True)
         model = init_fn(X_dev, key)
         print("  Warmup...", flush=True)
-        profile_jax_em(model, X_dev, 1, label="warm", solver=gig_solver)
+        profile_jax_em(model, X_dev, 1, label="warm", solver=gig_solver, e_backend='cpu')
         model = init_fn(X_dev, key)
-        r = profile_jax_em(model, X_dev, N_ITER, label=f"jh-{short}", solver=gig_solver)
+        r = profile_jax_em(model, X_dev, N_ITER, label=f"jh-{short}", solver=gig_solver, e_backend='cpu')
         jax_hybrid_res[short] = {'e': np.mean(r['e'][SKIP:]), 'm': np.mean(r['m'][SKIP:]), 'total': np.mean(r['total'][SKIP:])}
         print(f"  => E={jax_hybrid_res[short]['e']:.3f}s  M={jax_hybrid_res[short]['m']:.3f}s  iter={jax_hybrid_res[short]['total']:.3f}s", flush=True)
     results[config_label]['jax_hybrid'] = jax_hybrid_res
 
-    # ── JAX default (newton solver, for comparison) ───────────────────
+    # ── JAX default (all JAX, newton solver) ─────────────────────────
     jax_default_res = {}
     for short, init_fn, _ in DISTS_JAX:
-        print(f"\n  JAX-default / {short} (solver=newton):", flush=True)
+        print(f"\n  JAX-default / {short} (e_backend=jax, solver=newton):", flush=True)
         model = init_fn(X_dev, key)
         print("  Warmup...", flush=True)
-        profile_jax_em(model, X_dev, 1, label="warm", solver='newton')
+        profile_jax_em(model, X_dev, 1, label="warm", solver='newton', e_backend='jax')
         model = init_fn(X_dev, key)
-        r = profile_jax_em(model, X_dev, N_ITER, label=f"jd-{short}", solver='newton')
+        r = profile_jax_em(model, X_dev, N_ITER, label=f"jd-{short}", solver='newton', e_backend='jax')
         jax_default_res[short] = {'e': np.mean(r['e'][SKIP:]), 'm': np.mean(r['m'][SKIP:]), 'total': np.mean(r['total'][SKIP:])}
         print(f"  => E={jax_default_res[short]['e']:.3f}s  M={jax_default_res[short]['m']:.3f}s  iter={jax_default_res[short]['total']:.3f}s", flush=True)
     results[config_label]['jax_default'] = jax_default_res
@@ -196,8 +201,8 @@ for config_label, _ in configs:
     for short in ["NIG", "VG", "NIG-α", "GH"]:
         for bk, label, note in [
             ('numpy',       'normix_numpy  ', ''),
-            ('jax_hybrid',  'JAX+cpu_legacy', 'GIG→cpu' if short=='GH' else ''),
-            ('jax_default', 'JAX-default   ', 'GIG→JAX Newton'),
+            ('jax_hybrid',  'JAX+cpu_e+m   ', 'E+M cpu' if short=='GH' else 'E cpu'),
+            ('jax_default', 'JAX-default   ', 'E+M JAX'),
         ]:
             r = results[config_label][bk].get(short, {})
             if not r: continue
@@ -207,7 +212,12 @@ for config_label, _ in configs:
 
 print("""
 Key questions answered:
-  1. E-step: JAX vmap vs numpy E-step at 468 stocks
-  2. GIG M-step: cpu_legacy (normix_numpy scipy.kve) vs JAX Newton vs numpy
-  3. Other M-steps (VG, NIG-α): jaxopt LBFGS vs numpy
+  1. E-step:    JAX+cpu_e (hybrid) vs normix_numpy at 468 stocks
+  2. GIG M-step: JAX+cpu_m (GIG.from_expectation solver='cpu') vs numpy
+  3. Other M-step (VG, NIG-α): JAX+cpu_e (quad JAX + Bessel CPU) vs numpy
+
+Architecture (JAX+cpu_e+m hybrid):
+  E-step: quad forms via jax.vmap (GPU) + GIG Bessel via scipy.kve (CPU)
+  M-step GIG: scipy L-BFGS-B with analytical gradient via scipy.kve (CPU)
+  M-step other: jaxopt LBFGS (JAX, unchanged)
 """, flush=True)
