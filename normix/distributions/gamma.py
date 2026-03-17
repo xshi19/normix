@@ -17,10 +17,9 @@ import jax.numpy as jnp
 import jaxopt
 
 from normix.exponential_family import ExponentialFamily
+from normix.utils.constants import LOG_EPS
 
 jax.config.update("jax_enable_x64", True)
-
-_EPS = 1e-30
 
 
 class Gamma(ExponentialFamily):
@@ -72,7 +71,7 @@ class Gamma(ExponentialFamily):
         x = jnp.asarray(x, dtype=jnp.float64)
         return jax.scipy.special.gammainc(self.alpha, self.beta * x)
 
-    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+    def rvs(self, n: int, seed: int = 42):
         import numpy as np
         return np.random.default_rng(seed).gamma(
             float(self.alpha), 1.0 / float(self.beta), size=n)
@@ -107,15 +106,22 @@ class Gamma(ExponentialFamily):
         target = eta1 - jnp.log(eta2)
         alpha = _newton_digamma(target)
         beta = alpha / eta2
-        alpha = jnp.maximum(alpha, _EPS)
-        beta = jnp.maximum(beta, _EPS)
+        alpha = jnp.maximum(alpha, LOG_EPS)
+        beta = jnp.maximum(beta, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
 
     @classmethod
-    def fit_mle(cls, X: jax.Array) -> "Gamma":
+    def fit_mle(
+        cls,
+        X: jax.Array,
+        *,
+        theta0=None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+    ) -> "Gamma":
         X = jnp.asarray(X, dtype=jnp.float64)
         eta_hat = jnp.array([jnp.mean(jnp.log(X)), jnp.mean(X)])
-        return cls.from_expectation(eta_hat)
+        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     @classmethod
     def _dummy_instance(cls) -> "Gamma":
@@ -144,6 +150,6 @@ def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
         f = psi - jnp.log(alpha) - target
         fp = psi_prime - 1.0 / alpha
         alpha_new = alpha - f / fp
-        return jnp.maximum(alpha_new, _EPS)
+        return jnp.maximum(alpha_new, LOG_EPS)
 
     return jax.lax.fori_loop(0, n_iter, body, alpha0)

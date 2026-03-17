@@ -7,33 +7,8 @@ Exponential family:
   h(x)  = (2π)^{-1/2} · x^{-3/2}
   t(x)  = [x, 1/x]
   θ     = [-λ/(2μ²), -λ/2]   (θ₁ < 0, θ₂ < 0)
-  ψ(θ)  = -√(4 θ₁ θ₂) + ½ log(-θ₂) + ½ log(2π)  ... simplified below
+  ψ(θ)  = ½log(2π) - ½log(-2θ₂) + √((-2θ₁)(-2θ₂))
   η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]
-
-Note: standard form often written with θ₁ = -1/(2μ²) · λ.
-Here we follow the sign convention t=[x, 1/x], θ=[-λ/(2μ²), -λ/2].
-
-ψ(θ) = √(-4θ₁θ₂)^{-1/2}... let's derive carefully:
-  Let a = -2θ₁ = λ/μ² > 0,  b = -2θ₂ = λ > 0
-  ψ(θ) = log Z = ½log(2π) - ½log(b) + √(ab)
-       = ½log(2π) - ½log(-2θ₂) + √((-2θ₁)(-2θ₂))
-       = ½log(2π) + ½log(2) - ½log(-θ₂)· ... wait let's just use:
-
-Standard derivation: the normalizing constant is:
-  Z(a,b) = sqrt(2π/b) · exp(√(ab))
-  → ψ(a,b) = ½log(2π) - ½log b + √(ab)
-
-With θ = [-a/2, -b/2] (i.e. a=-2θ₁, b=-2θ₂):
-  ψ(θ) = ½log(2π) - ½log(-2θ₂) + √((-2θ₁)(-2θ₂))
-        = ½log(2π) - ½log(2) - ½log(-θ₂) + 2√(θ₁θ₂)
-
-  [but θ₁,θ₂ < 0, so θ₁θ₂ > 0]
-  ψ(θ) = ½log(2π) - ½log(2) - ½log(-θ₂) + 2√(θ₁θ₂)
-
-Expectation params η = ∇ψ(θ):
-  η₁ = ∂ψ/∂θ₁ = 2 · ½√(θ₂/θ₁)·½ = ... let's just let jax.grad handle it.
-  Analytical: η₁ = E[X] = μ = √(θ₂/θ₁) (from θ₁θ₂ = λ²/(4μ²))
-             η₂ = E[1/X] = 1/μ + 1/λ
 """
 from __future__ import annotations
 
@@ -41,10 +16,9 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
+from normix.utils.constants import LOG_EPS
 
 jax.config.update("jax_enable_x64", True)
-
-_EPS = 1e-30
 
 
 class InverseGaussian(ExponentialFamily):
@@ -69,7 +43,7 @@ class InverseGaussian(ExponentialFamily):
         # ψ(θ) = log Z = -½ log b - √(ab)
         a = -2.0 * theta[0]   # λ/μ²
         b = -2.0 * theta[1]   # λ
-        b = jnp.maximum(b, _EPS)
+        b = jnp.maximum(b, LOG_EPS)
         sqrt_ab = jnp.sqrt(jnp.maximum(a * b, 0.0))
         return -0.5 * jnp.log(b) - sqrt_ab
 
@@ -148,15 +122,22 @@ class InverseGaussian(ExponentialFamily):
         eta = jnp.asarray(eta, dtype=jnp.float64)
         mu = eta[0]
         lam = 1.0 / (eta[1] - 1.0 / eta[0])
-        mu = jnp.maximum(mu, _EPS)
-        lam = jnp.maximum(lam, _EPS)
+        mu = jnp.maximum(mu, LOG_EPS)
+        lam = jnp.maximum(lam, LOG_EPS)
         return cls(mu=mu, lam=lam)
 
     @classmethod
-    def fit_mle(cls, X: jax.Array) -> "InverseGaussian":
+    def fit_mle(
+        cls,
+        X: jax.Array,
+        *,
+        theta0=None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+    ) -> "InverseGaussian":
         X = jnp.asarray(X, dtype=jnp.float64)
         eta_hat = jnp.array([jnp.mean(X), jnp.mean(1.0 / X)])
-        return cls.from_expectation(eta_hat)
+        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     @classmethod
     def _dummy_instance(cls) -> "InverseGaussian":

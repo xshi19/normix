@@ -47,20 +47,20 @@ from normix.exponential_family import ExponentialFamily
 
 jax.config.update("jax_enable_x64", True)
 
-_EPS = 1e-30
+from normix.utils.constants import LOG_EPS
 
 
 class JointNormalMixture(ExponentialFamily):
     """
     Abstract joint distribution f(x, y) for normal variance-mean mixtures.
 
-    Stored: mu (d,), gamma (d,), L (d,d lower Cholesky of Σ)
+    Stored: mu (d,), gamma (d,), L_Sigma (d,d lower Cholesky of Σ)
     Subordinator parameters defined by concrete subclasses.
     """
 
-    mu: jax.Array      # (d,) location
-    gamma: jax.Array   # (d,) skewness
-    L: jax.Array       # (d,d) lower Cholesky of Σ
+    mu: jax.Array         # (d,) location
+    gamma: jax.Array      # (d,) skewness
+    L_Sigma: jax.Array    # (d,d) lower Cholesky of Σ
 
     # ------------------------------------------------------------------
     # Abstract: subordinator
@@ -89,8 +89,8 @@ class JointNormalMixture(ExponentialFamily):
         return int(self.mu.shape[0])
 
     def sigma(self) -> jax.Array:
-        """Covariance matrix Σ = LLᵀ."""
-        return self.L @ self.L.T
+        """Covariance matrix Σ = L_Sigma L_Sigmaᵀ."""
+        return self.L_Sigma @ self.L_Sigma.T
 
     # ------------------------------------------------------------------
     # Sampling
@@ -109,7 +109,7 @@ class JointNormalMixture(ExponentialFamily):
         rng = np.random.default_rng(seed + 1)
         mu = np.asarray(self.mu)
         gamma = np.asarray(self.gamma)
-        L_np = np.asarray(self.L)
+        L_np = np.asarray(self.L_Sigma)
         d = mu.shape[0]
         Z = rng.standard_normal((n, d))
         X = mu[None, :] + gamma[None, :] * Y[:, None] + np.sqrt(Y[:, None]) * (Z @ L_np.T)
@@ -133,13 +133,13 @@ class JointNormalMixture(ExponentialFamily):
         y = jnp.asarray(y, dtype=jnp.float64)
         d = self.d
 
-        # Residual r = x - μ, solve L z = r
+        # Residual r = x - μ, solve L_Sigma z = r
         r = x - self.mu
-        z = jax.scipy.linalg.solve_triangular(self.L, r, lower=True)
-        # Solve L w = γ
-        w = jax.scipy.linalg.solve_triangular(self.L, self.gamma, lower=True)
+        z = jax.scipy.linalg.solve_triangular(self.L_Sigma, r, lower=True)
+        # Solve L_Sigma w = γ
+        w = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(self.L)))
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
 
         log_fx_given_y = (
             -0.5 * d * jnp.log(2.0 * jnp.pi)
@@ -170,10 +170,10 @@ class JointNormalMixture(ExponentialFamily):
         These are then used in the M-step.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
-        return self._conditional_expectations_impl(x)
+        return self._compute_posterior_expectations(x)
 
     @abc.abstractmethod
-    def _conditional_expectations_impl(
+    def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
         """Implemented by each concrete subclass."""
@@ -184,12 +184,12 @@ class JointNormalMixture(ExponentialFamily):
 
     def _quad_forms(self, x: jax.Array):
         """
-        Compute z = L⁻¹(x-μ), w = L⁻¹γ.
+        Compute z = L_Sigma⁻¹(x-μ), w = L_Sigma⁻¹γ.
         Returns z, w, ‖z‖², ‖w‖², zᵀw.
         """
         r = x - self.mu
-        z = jax.scipy.linalg.solve_triangular(self.L, r, lower=True)
-        w = jax.scipy.linalg.solve_triangular(self.L, self.gamma, lower=True)
+        z = jax.scipy.linalg.solve_triangular(self.L_Sigma, r, lower=True)
+        w = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
         return z, w, jnp.dot(z, z), jnp.dot(w, w), jnp.dot(z, w)
 
     # ------------------------------------------------------------------

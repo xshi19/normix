@@ -17,10 +17,9 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
+from normix.utils.constants import LOG_EPS
 
 jax.config.update("jax_enable_x64", True)
-
-_EPS = 1e-30
 
 
 class InverseGamma(ExponentialFamily):
@@ -71,7 +70,7 @@ class InverseGamma(ExponentialFamily):
         x = jnp.asarray(x, dtype=jnp.float64)
         return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
 
-    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
+    def rvs(self, n: int, seed: int = 42):
         import numpy as np
         from scipy import stats
         return stats.invgamma.rvs(a=float(self.alpha), scale=float(self.beta),
@@ -104,25 +103,26 @@ class InverseGamma(ExponentialFamily):
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
-        # α/β = -η₁ → β = α/(-η₁)
-        # log β = η₂ + ψ(α) → log(α/(-η₁)) = η₂ + ψ(α) - log α + log α
-        # → ψ(α) - log α = log(-η₁) + η₂ - log α ... wait
-        # β = α/(-η₁), so log β = log α - log(-η₁)
-        # Substituting in η₂ = log β - ψ(α):
-        # η₂ = log α - log(-η₁) - ψ(α)
-        # → ψ(α) - log α = -η₂ - log(-η₁)
+        # From η = [-α/β, log β − ψ(α)]: β = α/(-η₁), so ψ(α) − log α = −η₂ − log(−η₁).
         target = -eta2 - jnp.log(-eta1)
         alpha = _newton_digamma_ig(target)
         beta = alpha / (-eta1)
-        alpha = jnp.maximum(alpha, _EPS)
-        beta = jnp.maximum(beta, _EPS)
+        alpha = jnp.maximum(alpha, LOG_EPS)
+        beta = jnp.maximum(beta, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
 
     @classmethod
-    def fit_mle(cls, X: jax.Array) -> "InverseGamma":
+    def fit_mle(
+        cls,
+        X: jax.Array,
+        *,
+        theta0=None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+    ) -> "InverseGamma":
         X = jnp.asarray(X, dtype=jnp.float64)
         eta_hat = jnp.array([jnp.mean(-1.0 / X), jnp.mean(jnp.log(X))])
-        return cls.from_expectation(eta_hat)
+        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     @classmethod
     def _dummy_instance(cls) -> "InverseGamma":
