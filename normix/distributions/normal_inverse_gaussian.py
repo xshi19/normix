@@ -1,15 +1,10 @@
 """
 Normal-Inverse Gaussian (NIG) distribution.
 
-Special case of GH with GIG → InverseGaussian subordinator (p = -1/2).
-Y ~ InverseGaussian(mu_ig, lam), i.e. GIG(p=-1/2, a=lam/mu_ig², b=lam).
+Special case of GH with GIG → InverseGaussian subordinator (p = −½).
+Y ~ InverseGaussian(μ_IG, λ), i.e. GIG(p = −½, a = λ/μ_IG², b = λ).
 
-Stored: mu, gamma, L_Sigma (Cholesky of Σ), delta (= √(b) scale), eta_ig (= √(a) drift).
-Following ARCHITECTURE.md: stored attrs are delta, eta (for InverseGaussian subordinator).
-
-Actually let's store mu_ig (IG mean) and lam (IG shape) for clarity.
-NIG parametrization: Y ~ InverseGaussian(mu_ig, lam).
-  GIG params: p=-1/2, a=lam/mu_ig², b=lam.
+Stored: μ, γ, L_Σ (Cholesky of Σ), μ_IG (IG mean), λ (IG shape).
 """
 from __future__ import annotations
 
@@ -29,13 +24,10 @@ from normix.utils.constants import LOG_EPS
 
 class JointNormalInverseGaussian(JointNormalMixture):
     """
-    Joint f(x,y): X|Y~N(μ+γy, Σy), Y~InverseGaussian(mu_ig, lam).
+    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGaussian(μ_IG, λ).
 
-    Following ARCHITECTURE.md stored as delta, eta_ig (NIG convention):
-      delta = √(lam) / mu_ig  [or simply store mu_ig, lam]
-    For simplicity, store delta (location scale) and eta_p (drift parameter).
-
-    Actually for simplicity store mu_ig and lam directly.
+    Stored: μ_IG (IG mean) and λ (IG shape) directly.
+    GIG params: p = −½, a = λ/μ_IG², b = λ.
     """
 
     mu_ig: jax.Array   # IG mean parameter

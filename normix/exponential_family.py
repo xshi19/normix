@@ -119,6 +119,20 @@ class ExponentialFamily(eqx.Module):
         raise NotImplementedError(f"{cls.__name__}.from_natural not implemented")
 
     @classmethod
+    def bregman_divergence(
+        cls,
+        theta: jax.Array,
+        eta: jax.Array,
+    ) -> jax.Array:
+        """Bregman divergence ψ(θ) − θ·η (conjugate dual).
+
+        Minimising over θ yields ∇ψ(θ*) = η, i.e. the natural parameters
+        corresponding to expectation parameters η.
+        """
+        dummy = cls._dummy_instance()
+        return dummy._log_partition_from_theta(theta) - jnp.dot(theta, eta)
+
+    @classmethod
     def from_expectation(
         cls,
         eta: jax.Array,
@@ -130,14 +144,13 @@ class ExponentialFamily(eqx.Module):
         """
         Construct from expectation parameters η by solving ∇ψ(θ) = η.
 
-        Uses jaxopt.LBFGSB to minimise ψ(θ) − θ·η (the conjugate dual).
+        Minimises the Bregman divergence ψ(θ) − θ·η via jaxopt.LBFGS(B).
         Subclasses can override for closed-form inverses.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         bounds = cls._theta_bounds()
 
         def objective(theta: jax.Array) -> jax.Array:
-            # minimise ψ(θ) − θ·η  (convex, minimum at ∇ψ=η)
             dummy = cls.from_natural(theta)
             return dummy._log_partition_from_theta(theta) - jnp.dot(theta, eta)
 

@@ -1,13 +1,13 @@
 """
 Inverse Gaussian (Wald) distribution as an exponential family.
 
-PDF: p(x|μ,λ) = sqrt(λ/(2π)) · x^{-3/2} · exp(-λ(x-μ)²/(2μ²x)),  x > 0
+PDF: f(x|μ,λ) = √(λ/(2π)) · x^{-3/2} · exp(−λ(x−μ)²/(2μ²x)),  x > 0
 
 Exponential family:
   h(x)  = (2π)^{-1/2} · x^{-3/2}
   t(x)  = [x, 1/x]
-  θ     = [-λ/(2μ²), -λ/2]   (θ₁ < 0, θ₂ < 0)
-  ψ(θ)  = ½log(2π) - ½log(-2θ₂) + √((-2θ₁)(-2θ₂))
+  θ     = [−λ/(2μ²), −λ/2]   (θ₁ < 0, θ₂ < 0)
+  ψ(θ)  = ½log(2π) − ½log(−2θ₂) + √((−2θ₁)(−2θ₂))
   η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]
 """
 from __future__ import annotations

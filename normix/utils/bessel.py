@@ -14,8 +14,8 @@ at runtime. lax.cond requires scalar conditions, so the core scalar
 function _log_kv_scalar is vmapped over array inputs.
 
 Custom JVP for full autodiff:
-  - ∂/∂z : exact recurrence K'_v = -(K_{v-1}+K_{v+1})/2
-  - ∂/∂v : central FD on log_kv itself (eps=1e-5)
+  - ∂/∂z : exact recurrence K'_v = −(K_{v−1}+K_{v+1})/2
+  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)
 
 backend='jax'  (default): pure-JAX, JIT-able, differentiable.
 backend='cpu'           : scipy.special.kve, fully vectorized numpy.
@@ -45,7 +45,7 @@ _OLVER_V_THRESHOLD = 25.0
 # ---------------------------------------------------------------------------
 
 def _hankel_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
-    """K_v(z) ~ sqrt(pi/2z) e^{-z} sum_k a_k(v)/z^k, accurate for z > max(25, v²/4)."""
+    """K_v(z) ~ √(π/(2z)) e^{−z} Σ_k a_k(v)/z^k, accurate for z > max(25, v²/4)."""
     mu = 4.0 * v * v
     total = jnp.ones_like(z)
     term = jnp.ones_like(z)
@@ -197,7 +197,8 @@ def _log_kv_jax_jvp(primals, tangents):
     log_kvp1 = _log_kv_jax(v + 1.0, z)
     dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out))
 
-    _EPS_V = jnp.asarray(1e-5, dtype=jnp.float64)
+    from normix.utils.constants import BESSEL_EPS_V
+    _EPS_V = jnp.asarray(BESSEL_EPS_V, dtype=jnp.float64)
     dlogkv_dv = (_log_kv_jax(v + _EPS_V, z) - _log_kv_jax(v - _EPS_V, z)) / (2.0 * _EPS_V)
 
     return primal_out, dlogkv_dz * dz + dlogkv_dv * dv

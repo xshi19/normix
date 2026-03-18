@@ -2,9 +2,9 @@
 Normal-Inverse Gamma (NInvG) distribution.
 
 Special case of GH with GIG → InverseGamma subordinator (a → 0, p < 0).
-Y ~ InverseGamma(alpha, beta), i.e. GIG(p=-alpha, a→0, b=2*beta).
+Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).
 
-Stored: mu, gamma, L_Sigma (Cholesky of Σ), alpha (shape), beta (rate) of InverseGamma.
+Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of InverseGamma.
 """
 from __future__ import annotations
 
@@ -24,9 +24,9 @@ from normix.utils.constants import LOG_EPS
 
 class JointNormalInverseGamma(JointNormalMixture):
     """
-    Joint f(x,y): X|Y~N(μ+γy, Σy), Y~InverseGamma(alpha, beta).
+    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGamma(α, β).
 
-    GIG limit: p=-alpha, a→0, b=2*beta.
+    GIG limit: p = −α, a → 0, b = 2β.
     """
 
     alpha: jax.Array

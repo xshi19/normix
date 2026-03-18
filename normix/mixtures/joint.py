@@ -47,7 +47,7 @@ from normix.exponential_family import ExponentialFamily
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
 
 
 class JointNormalMixture(ExponentialFamily):
@@ -242,7 +242,7 @@ class JointNormalMixture(ExponentialFamily):
         D = 1.0 - E_inv_Y * E_Y
 
         # Handle near-singular denominator
-        safe_D = jnp.where(jnp.abs(D) > 1e-10, D, 1e-10)
+        safe_D = jnp.where(jnp.abs(D) > SAFE_DENOMINATOR, D, SAFE_DENOMINATOR)
 
         mu_new = (E_X - E_Y * E_X_inv_Y) / safe_D
         gamma_new = (E_X_inv_Y - E_inv_Y * E_X) / safe_D
@@ -258,7 +258,7 @@ class JointNormalMixture(ExponentialFamily):
         Sigma = 0.5 * (Sigma + Sigma.T)
         d = Sigma.shape[0]
         # Add small regularization for numerical stability
-        Sigma = Sigma + 1e-8 * jnp.eye(d)
+        Sigma = Sigma + SIGMA_REG * jnp.eye(d)
         L_new = jnp.linalg.cholesky(Sigma)
 
         return mu_new, gamma_new, L_new

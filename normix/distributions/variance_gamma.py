@@ -2,9 +2,9 @@
 Variance Gamma (VG) distribution.
 
 Special case of GH with GIG → Gamma subordinator (b → 0, p > 0).
-Y ~ Gamma(α, β), i.e. GIG(p=α, a=2β, b→0).
+Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).
 
-Stored: mu, gamma, L_Sigma (Cholesky of Σ), alpha (shape), beta (rate) of Gamma.
+Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of Gamma.
 """
 from __future__ import annotations
 
@@ -24,9 +24,9 @@ from normix.utils.constants import LOG_EPS
 
 class JointVarianceGamma(JointNormalMixture):
     """
-    Joint f(x,y): X|Y~N(μ+γy, Σy), Y~Gamma(alpha, beta).
+    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ Gamma(α, β).
 
-    GIG limit: p=alpha, a=2*beta, b→0.
+    GIG limit: p = α, a = 2β, b → 0.
     """
 
     alpha: jax.Array   # Gamma shape

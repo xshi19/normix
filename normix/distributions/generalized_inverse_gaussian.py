@@ -30,15 +30,19 @@ import numpy as np
 
 from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
-from normix.utils.constants import LOG_EPS, GIG_EPS_V_HESS, GIG_EPS_NP
+from normix.utils.constants import (
+    LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD,
+    HESSIAN_DAMPING, THETA_FLOOR, FD_EPS_FISHER,
+)
+from normix.fitting.solvers import (
+    bregman_objective, solve_newton_scan, solve_lbfgs,
+    solve_scipy_multistart, solve_cpu_lbfgs,
+)
 
 jax.config.update("jax_enable_x64", True)
 
-# When √(ab) < threshold, delegate to Gamma or InverseGamma limits
-_DEGEN_THRESHOLD = 1e-10
 
-
-class GIG(ExponentialFamily):
+class GeneralizedInverseGaussian(ExponentialFamily):
     """
     Generalized Inverse Gaussian distribution.
 
@@ -93,7 +97,7 @@ class GIG(ExponentialFamily):
                         - alpha_ig * jnp.log(beta_ig))
 
         # Switch based on which limit applies
-        use_degen = sqrt_ab < _DEGEN_THRESHOLD
+        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
         use_gamma = use_degen & (b <= a)   # b≈0: Gamma limit
         use_invg = use_degen & (a < b)     # a≈0: InvGamma limit
 
@@ -132,8 +136,8 @@ class GIG(ExponentialFamily):
         a = float(self.a)
         b = float(self.b)
 
-        a_safe = max(a, 1e-300)
-        b_safe = max(b, 1e-300)
+        a_safe = max(a, TINY)
+        b_safe = max(b, TINY)
         sqrt_ab = np.sqrt(a_safe * b_safe)
         log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
 
@@ -144,10 +148,9 @@ class GIG(ExponentialFamily):
         E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
         E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
 
-        eps = 1e-5
-        log_kp_pe = float(log_kv(p + eps, sqrt_ab, backend='cpu'))
-        log_kp_me = float(log_kv(p - eps, sqrt_ab, backend='cpu'))
-        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+        log_kp_pe = float(log_kv(p + BESSEL_EPS_V, sqrt_ab, backend='cpu'))
+        log_kp_me = float(log_kv(p - BESSEL_EPS_V, sqrt_ab, backend='cpu'))
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
 
         return jnp.array([E_log_X, E_inv_X, E_X])
 
@@ -163,13 +166,13 @@ class GIG(ExponentialFamily):
         backend='cpu' : vectorized scipy.kve (6 C-level array calls)
         """
         if backend == 'cpu':
-            return GIG._expectation_params_batch_cpu(p, a, b)
+            return GeneralizedInverseGaussian._expectation_params_batch_cpu(p, a, b)
         p = jnp.asarray(p, dtype=jnp.float64)
         a = jnp.asarray(a, dtype=jnp.float64)
         b = jnp.asarray(b, dtype=jnp.float64)
 
         def _single(pi, ai, bi):
-            return GIG(p=pi, a=ai, b=bi).expectation_params()
+            return GeneralizedInverseGaussian(p=pi, a=ai, b=bi).expectation_params()
 
         return jax.vmap(_single)(p, a, b)
 
@@ -180,8 +183,8 @@ class GIG(ExponentialFamily):
         a = np.asarray(a, dtype=np.float64)
         b = np.asarray(b, dtype=np.float64)
 
-        a_safe = np.maximum(a, 1e-300)
-        b_safe = np.maximum(b, 1e-300)
+        a_safe = np.maximum(a, TINY)
+        b_safe = np.maximum(b, TINY)
         sqrt_ab = np.sqrt(a_safe * b_safe)
         log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
 
@@ -192,10 +195,9 @@ class GIG(ExponentialFamily):
         E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
         E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
 
-        eps = 1e-5
-        log_kp_pe = log_kv(p + eps, sqrt_ab, backend='cpu')
-        log_kp_me = log_kv(p - eps, sqrt_ab, backend='cpu')
-        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * eps) + log_sqrt_ba
+        log_kp_pe = log_kv(p + BESSEL_EPS_V, sqrt_ab, backend='cpu')
+        log_kp_me = log_kv(p - BESSEL_EPS_V, sqrt_ab, backend='cpu')
+        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
 
         return jnp.column_stack([
             jnp.asarray(E_log_X),
@@ -224,7 +226,7 @@ class GIG(ExponentialFamily):
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_natural(cls, theta: jax.Array) -> "GIG":
+    def from_natural(cls, theta: jax.Array) -> "GeneralizedInverseGaussian":
         theta = jnp.asarray(theta, dtype=jnp.float64)
         p = theta[0] + 1.0
         b = jnp.maximum(-2.0 * theta[1], 0.0)
@@ -241,7 +243,7 @@ class GIG(ExponentialFamily):
         maxiter: int = 500,
         tol: float = 1e-10,
         scan_length: int = 20,
-    ) -> "GIG":
+    ) -> "GeneralizedInverseGaussian":
         """
         η → θ via η-rescaling + optimization.
 
@@ -274,21 +276,32 @@ class GIG(ExponentialFamily):
                                        theta0[1] * s,
                                        theta0[2] / s])
             theta0_scaled = theta0_scaled.at[1].set(
-                jnp.minimum(theta0_scaled[1], -1e-8))
+                jnp.minimum(theta0_scaled[1], THETA_FLOOR))
             theta0_scaled = theta0_scaled.at[2].set(
-                jnp.minimum(theta0_scaled[2], -1e-8))
+                jnp.minimum(theta0_scaled[2], THETA_FLOOR))
 
             if solver == "newton":
-                theta_scaled = _solve_jaxopt(
-                    eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length
+                theta_scaled = solve_newton_scan(
+                    eta_scaled, theta0_scaled, _log_partition_gig_static,
+                    constrained_indices=(1, 2), tol=tol, scan_length=scan_length,
                 )
             elif solver == "newton_analytical":
-                theta_scaled = _solve_newton_analytical(
-                    eta_scaled, theta0_scaled, maxiter, tol, scan_length=scan_length)
+                theta_scaled = solve_newton_scan(
+                    eta_scaled, theta0_scaled, _log_partition_gig_static,
+                    constrained_indices=(1, 2), tol=tol, scan_length=scan_length,
+                    grad_hess_fn=_analytical_grad_hess_phi,
+                )
             elif solver == "lbfgs":
-                theta_scaled = _solve_lbfgs(eta_scaled, theta0_scaled, maxiter, tol)
+                theta_scaled = solve_lbfgs(
+                    eta_scaled, theta0_scaled, _log_partition_gig_static,
+                    constrained_indices=(1, 2), maxiter=maxiter, tol=tol,
+                )
             elif solver == "cpu":
-                theta_scaled = _solve_cpu(eta_scaled, theta0_scaled, tol)
+                theta_scaled = solve_cpu_lbfgs(
+                    eta_scaled, theta0_scaled, _cpu_objective_and_grad,
+                    bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
+                    maxiter=500, tol=tol,
+                )
             elif solver == "cpu_legacy":
                 theta_scaled = _solve_cpu_legacy(eta_scaled, theta0_scaled, tol)
             else:
@@ -298,7 +311,12 @@ class GIG(ExponentialFamily):
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
-            theta_scaled = _solve_scipy(eta_scaled, theta0_list, maxiter, tol)
+            theta_scaled = solve_scipy_multistart(
+                eta_scaled, theta0_list, _log_partition_gig_static,
+                bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
+                theta_floor={1: THETA_FLOOR, 2: THETA_FLOOR},
+                maxiter=maxiter, tol=tol,
+            )
 
         # Unscale: θ₂ = θ̃₂/s,  θ₃ = s·θ̃₃
         theta = jnp.array([theta_scaled[0],
@@ -314,7 +332,7 @@ class GIG(ExponentialFamily):
         theta0=None,
         maxiter: int = 500,
         tol: float = 1e-10,
-    ) -> "GIG":
+    ) -> "GeneralizedInverseGaussian":
         X = jnp.asarray(X, dtype=jnp.float64)
         eta_hat = jnp.array([jnp.mean(jnp.log(X)),
                               jnp.mean(1.0 / X),
@@ -322,7 +340,7 @@ class GIG(ExponentialFamily):
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
     @classmethod
-    def _dummy_instance(cls) -> "GIG":
+    def _dummy_instance(cls) -> "GeneralizedInverseGaussian":
         return cls(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
 
     def fisher_information(self) -> jax.Array:
@@ -337,7 +355,7 @@ class GIG(ExponentialFamily):
         theta = np.array(self.natural_params())
         n = len(theta)
         H = np.zeros((n, n))
-        eps = 1e-4
+        eps = FD_EPS_FISHER
         for i in range(n):
             for j in range(n):
                 if i == j:
@@ -368,47 +386,40 @@ class GIG(ExponentialFamily):
 
 
 # ---------------------------------------------------------------------------
-# Optimization helpers
+# GIG-specific optimization helpers
 # ---------------------------------------------------------------------------
 
 def _log_partition_gig_static(theta: jax.Array) -> jax.Array:
-    """Stateless ψ_GIG(θ) — used directly in the objective."""
-    dummy = GIG(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
+    """Stateless ψ_GIG(θ) — used as the log-partition function in solvers."""
+    dummy = GeneralizedInverseGaussian(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
     return dummy._log_partition_from_theta(theta)
 
 
-def _objective(theta: jax.Array, eta: jax.Array) -> jax.Array:
-    return _log_partition_gig_static(theta) - jnp.dot(theta, eta)
-
-
 # ---------------------------------------------------------------------------
-# Analytical gradient and Hessian of the GIG log-partition
+# GIG analytical gradient and Hessian (7 log_kv calls per step)
 # ---------------------------------------------------------------------------
-
-GIG_EPS_V_HESS = 1e-5
 
 
 def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
     """Compute log K_v and its first/second derivatives at order p, argument z.
 
     Uses 7 batched log_kv evaluations:
-        [p, p-1, p+1, p-2, p+2, p-ε, p+ε]
+        [p, p−1, p+1, p−2, p+2, p−ε, p+ε]
 
     Returns (L, L_z, L_zz, L_v, L_vv, L_vz) where:
       L    = log K_p(z)
-      L_z  = ∂L/∂z  = -(K_{p-1}+K_{p+1})/(2K_p)            (exact recurrence)
-      L_zz = ∂²L/∂z² = ¼(r_{p-2}+2+r_{p+2}) − ¼(r_{p-1}+r_{p+1})²  (exact)
+      L_z  = ∂L/∂z  = −(K_{p−1}+K_{p+1})/(2K_p)            (exact recurrence)
+      L_zz = ∂²L/∂z² = ¼(r_{p−2}+2+r_{p+2}) − ¼(r_{p−1}+r_{p+1})²  (exact)
       L_v  = ∂L/∂v  ≈ (L(p+ε) − L(p−ε)) / (2ε)              (FD)
       L_vv = ∂²L/∂v² ≈ (L(p+ε) − 2L + L(p−ε)) / ε²          (FD)
       L_vz = ∂²L/∂v∂z ≈ (L_z(p+1) − L_z(p−1)) / 2           (integer shift FD)
     """
     z_safe = jnp.maximum(z, jnp.finfo(jnp.float64).tiny)
     orders = jnp.array([p, p - 1.0, p + 1.0, p - 2.0, p + 2.0,
-                        p - GIG_EPS_V_HESS, p + GIG_EPS_V_HESS])
+                        p - BESSEL_EPS_V, p + BESSEL_EPS_V])
     evals = jax.vmap(log_kv)(orders, jnp.full(7, z_safe))
     L, L_m1, L_p1, L_m2, L_p2, L_vm, L_vp = evals
 
-    # Ratios K_{p±k} / K_p in log-space
     r_m1 = jnp.exp(L_m1 - L)
     r_p1 = jnp.exp(L_p1 - L)
     r_m2 = jnp.exp(L_m2 - L)
@@ -417,12 +428,9 @@ def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
     L_z  = -0.5 * (r_m1 + r_p1)
     L_zz = 0.25 * (r_m2 + 2.0 + r_p2) - 0.25 * (r_m1 + r_p1) ** 2
 
-    L_v  = (L_vp - L_vm) / (2.0 * GIG_EPS_V_HESS)
-    L_vv = (L_vp - 2.0 * L + L_vm) / (GIG_EPS_V_HESS ** 2)
+    L_v  = (L_vp - L_vm) / (2.0 * BESSEL_EPS_V)
+    L_vv = (L_vp - 2.0 * L + L_vm) / (BESSEL_EPS_V ** 2)
 
-    # L_vz using integer-shift FD in v: needs L_z at p±1
-    # L_z(p+1) = -(K_p + K_{p+2}) / (2 K_{p+1})
-    # L_z(p-1) = -(K_{p-2} + K_p) / (2 K_{p-1})
     L_z_p1 = -0.5 * (jnp.exp(L - L_p1) + jnp.exp(L_p2 - L_p1))
     L_z_m1 = -0.5 * (jnp.exp(L_m2 - L_m1) + jnp.exp(L - L_m1))
     L_vz = (L_z_p1 - L_z_m1) / 2.0
@@ -435,20 +443,19 @@ def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
 
     Reparametrisation: θ₁ = φ₁, θ₂ = −exp(φ₂), θ₃ = −exp(φ₃)
 
-    The Hessian uses the analytical Fisher information ∇²_θ ψ for θ-derivatives
-    w.r.t. z (exact Bessel recurrences) and FD w.r.t. p (order of K_v).
+    Uses analytical Fisher information ∇²_θ ψ via exact Bessel recurrences
+    for z-derivatives and FD for p (order of K_v).
 
     Only 7 log_kv evaluations per call, vs ~25 for jax.hessian.
     """
     theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
     p = theta[0] + 1.0
-    b = -2.0 * theta[1]   # = 2 exp(φ₂) > 0
-    a = -2.0 * theta[2]   # = 2 exp(φ₃) > 0
+    b = -2.0 * theta[1]
+    a = -2.0 * theta[2]
     z = jnp.sqrt(jnp.maximum(a * b, jnp.finfo(jnp.float64).tiny))
 
     _, L_z, L_zz, L_v, L_vv, L_vz = _gig_bessel_quantities(p, z)
 
-    # --- Gradient of ψ in θ-space (= expectation params η̃) ---
     a_over_z = a / z
     b_over_z = b / z
 
@@ -460,82 +467,50 @@ def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
                           eta_tilde_2 - eta[1],
                           eta_tilde_3 - eta[2]])
 
-    # Gradient in φ-space: g_φᵢ = g_θᵢ · ∂θᵢ/∂φᵢ   (diagonal Jacobian)
-    j = jnp.array([1.0, theta[1], theta[2]])   # ∂θ/∂φ diagonal
+    j = jnp.array([1.0, theta[1], theta[2]])
     g_phi = g_theta * j
 
-    # --- Hessian of ψ in θ-space (Fisher information matrix) ---
-    # H_θ[1,1]
     H11 = L_vv
-    # H_θ[1,2] = H_θ[2,1]
     H12 = -L_vz * a_over_z - 1.0 / b
-    # H_θ[1,3] = H_θ[3,1]
     H13 = -L_vz * b_over_z + 1.0 / a
-    # H_θ[2,2]
     H22 = a_over_z ** 2 * L_zz - a_over_z ** 2 / z * L_z - 2.0 * p / b ** 2
-    # H_θ[2,3] = H_θ[3,2]
     H23 = L_zz + L_z / z
-    # H_θ[3,3]
     H33 = b_over_z ** 2 * L_zz - b_over_z ** 2 / z * L_z + 2.0 * p / a ** 2
 
     H_theta = jnp.array([[H11, H12, H13],
                           [H12, H22, H23],
                           [H13, H23, H33]])
 
-    # Transform to φ-space: H_φ = J^T H_θ J + diag(0, g_θ₂·θ₂, g_θ₃·θ₃)
-    # J = diag(∂θ/∂φ) = diag(1, θ₂, θ₃)
     H_phi = H_theta * jnp.outer(j, j)
-    # Reparametrisation correction (from ∂²θᵢ/∂φᵢ² = θᵢ for i=2,3)
     H_phi = H_phi.at[1, 1].add(g_theta[1] * theta[1])
     H_phi = H_phi.at[2, 2].add(g_theta[2] * theta[2])
 
     return g_phi, H_phi
 
 
-def _solve_cpu(
-    eta: jax.Array,
-    theta0: jax.Array,
-    tol: float,
-) -> jax.Array:
+# ---------------------------------------------------------------------------
+# CPU-side objective+gradient for GIG (scipy Bessel, no JAX dispatch)
+# ---------------------------------------------------------------------------
+
+def _cpu_objective_and_grad(theta_np, eta_np):
+    """Objective and gradient via CPU Bessel ratios (scipy.kve).
+
+    Used by ``solve_cpu_lbfgs`` in the general solver module.
     """
-    Self-contained scipy L-BFGS-B with analytical gradient via log_kv(backend='cpu').
+    p = theta_np[0] + 1.0
+    b_safe = max(-2.0 * theta_np[1], TINY)
+    a_safe = max(-2.0 * theta_np[2], TINY)
+    sqrt_ab = np.sqrt(a_safe * b_safe)
 
-    Minimises ψ(θ) − θ·η with gradient η̂(θ) − η (Bessel ratios via scipy.kve).
-    No normix_numpy dependency.
-    """
-    from scipy.optimize import minimize
+    lkv = float(log_kv(p, sqrt_ab, backend='cpu'))
+    psi = (np.log(2.0) + lkv
+           + 0.5 * p * (np.log(b_safe) - np.log(a_safe)))
+    obj = float(psi - np.dot(theta_np, eta_np))
 
-    eta_np = np.asarray(eta, dtype=np.float64)
-    theta0_np = np.asarray(theta0, dtype=np.float64)
-
-    def objective_and_grad(theta_np):
-        p = theta_np[0] + 1.0
-        # Use consistent a_safe, b_safe for both Bessel and log to avoid
-        # cancellation issues near the boundary (see design doc §5).
-        b_safe = max(-2.0 * theta_np[1], GIG_EPS_NP)
-        a_safe = max(-2.0 * theta_np[2], GIG_EPS_NP)
-        sqrt_ab = np.sqrt(a_safe * b_safe)
-
-        lkv = float(log_kv(p, sqrt_ab, backend='cpu'))
-        psi = (np.log(2.0) + lkv
-               + 0.5 * p * (np.log(b_safe) - np.log(a_safe)))
-        obj = float(psi - np.dot(theta_np, eta_np))
-
-        # Gradient = η̂(θ) − η  (analytical via Bessel ratios)
-        gig_tmp = GIG(p=p, a=a_safe, b=b_safe)
-        eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
-        grad = eta_hat - eta_np
-        return obj, grad
-
-    result = minimize(
-        objective_and_grad,
-        theta0_np,
-        jac=True,
-        method='L-BFGS-B',
-        bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
-        options={'maxiter': 500, 'ftol': tol ** 2, 'gtol': tol},
-    )
-    return jnp.asarray(result.x, dtype=jnp.float64)
+    gig_tmp = GeneralizedInverseGaussian(p=p, a=a_safe, b=b_safe)
+    eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
+    grad = eta_hat - eta_np
+    return obj, grad
 
 
 def _solve_cpu_legacy(
@@ -543,14 +518,7 @@ def _solve_cpu_legacy(
     theta0: jax.Array,
     tol: float,
 ) -> jax.Array:
-    """Hybrid CPU solver: legacy NumPy/SciPy Bessel + scipy L-BFGS-B, warm-start.
-
-    Runs entirely on CPU using scipy.special.kve (not the pure-JAX Bessel),
-    which avoids GPU kernel launch overhead for this 3-dimensional problem.
-    The result is transferred back to the original JAX device.
-
-    Expected time: ~0.5–1 ms per call (similar to pure NumPy reference).
-    """
+    """Legacy CPU solver via normix_numpy (scipy.special.kve)."""
     import numpy as np
     from normix_numpy.distributions.univariate.generalized_inverse_gaussian import (
         GeneralizedInverseGaussian as LegacyGIG,
@@ -563,211 +531,6 @@ def _solve_cpu_legacy(
     theta_np = legacy._expectation_to_natural(eta_np, theta0=theta0_np)
 
     return jnp.asarray(theta_np, dtype=jnp.float64)
-
-
-def _solve_jaxopt(
-    eta: jax.Array,
-    theta0: jax.Array,
-    maxiter: int,
-    tol: float,
-    scan_length: int = 20,
-) -> jax.Array:
-    """
-    Pure-JAX Newton solver for warm-start via lax.scan.
-
-    lax.scan unrolls a fixed number of iterations. Early stopping is
-    simulated by freezing phi once converged (jnp.where mask). With a
-    warm start from the previous EM iteration, convergence typically
-    occurs within the first few steps, and subsequent steps are cheap
-    (just computing a no-op update on frozen phi).
-
-    Uses exp-reparametrisation θ₂ = −exp(φ₂), θ₃ = −exp(φ₃) for
-    unconstrained optimization.
-
-    Note: lax.while_loop would give true early-stopping but requires
-    differentiating through the loop body. Since the body contains
-    jax.hessian (second-order), this is extremely expensive. scan with
-    a short fixed length is preferable here.
-    """
-    phi0 = jnp.array([theta0[0],
-                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
-                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
-
-    def obj(phi):
-        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
-        return _objective(theta, eta)
-
-    grad_fn = jax.grad(obj)
-    hess_fn = jax.hessian(obj)
-
-    def newton_body(carry, _):
-        phi, converged = carry
-        g = grad_fn(phi)
-        H = hess_fn(phi)
-        H_damped = H + 1e-6 * jnp.eye(3)
-        delta = jnp.linalg.solve(H_damped, g)
-
-        f0 = obj(phi)
-        slope = jnp.dot(g, delta)
-        alpha = _backtrack(obj, phi, delta, f0, slope)
-        phi_new = phi - alpha * delta
-
-        grad_norm = jnp.max(jnp.abs(g))
-        converged = converged | (grad_norm < tol)
-        phi_out = jnp.where(converged, phi, phi_new)
-        return (phi_out, converged), None
-
-    (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
-                                    None, length=scan_length)
-
-    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
-
-
-def _solve_newton_analytical(
-    eta: jax.Array,
-    theta0: jax.Array,
-    maxiter: int,
-    tol: float,
-    scan_length: int = 20,
-) -> jax.Array:
-    """Newton solver using the analytical gradient and Hessian of the GIG log-partition.
-
-    Per Newton step: 7 log_kv evaluations (batched vmap) vs ~25 for jax.hessian.
-    Uses scan(length=scan_length) with early-stopping mask, same as _solve_jaxopt.
-    """
-    phi0 = jnp.array([theta0[0],
-                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
-                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
-
-    def obj(phi):
-        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
-        return _objective(theta, eta)
-
-    def newton_body(carry, _):
-        phi, converged = carry
-        g, H = _analytical_grad_hess_phi(phi, eta)
-        H_damped = H + 1e-6 * jnp.eye(3)
-        delta = jnp.linalg.solve(H_damped, g)
-
-        f0 = obj(phi)
-        slope = jnp.dot(g, delta)
-        alpha = _backtrack(obj, phi, delta, f0, slope)
-        phi_new = phi - alpha * delta
-
-        grad_norm = jnp.max(jnp.abs(g))
-        converged = converged | (grad_norm < tol)
-        phi_out = jnp.where(converged, phi, phi_new)
-        return (phi_out, converged), None
-
-    (phi_opt, _), _ = jax.lax.scan(newton_body, (phi0, jnp.bool_(False)),
-                                    None, length=scan_length)
-
-    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
-
-
-def _solve_lbfgs(
-    eta: jax.Array,
-    theta0: jax.Array,
-    maxiter: int,
-    tol: float,
-) -> jax.Array:
-    """JAXopt L-BFGS solver for warm-start.
-
-    Pure JAX, gradient-only (~5 log_kv calls/step vs ~25 for Newton Hessian).
-    implicit_diff=True uses the implicit function theorem for differentiation
-    through the solver, avoiding unrolling all iterations.
-    """
-    import jaxopt
-
-    phi0 = jnp.array([theta0[0],
-                       jnp.log(jnp.maximum(-theta0[1], 1e-30)),
-                       jnp.log(jnp.maximum(-theta0[2], 1e-30))])
-
-    def obj_fn(phi):
-        theta = jnp.array([phi[0], -jnp.exp(phi[1]), -jnp.exp(phi[2])])
-        return _objective(theta, eta)
-
-    solver = jaxopt.LBFGS(fun=obj_fn, maxiter=maxiter, tol=tol,
-                           implicit_diff=True, jit=True)
-    result = solver.run(phi0)
-    phi_opt = result.params
-    return jnp.array([phi_opt[0], -jnp.exp(phi_opt[1]), -jnp.exp(phi_opt[2])])
-
-
-def _backtrack(obj, phi, delta, f0, slope, beta=0.5, c=1e-4):
-    """Armijo backtracking via lax.while_loop."""
-    def cond(state):
-        alpha, _ = state
-        return (obj(phi - alpha * delta) > f0 - c * alpha * slope) & (alpha > 1e-10)
-
-    def body(state):
-        alpha, i = state
-        return (alpha * beta, i + 1)
-
-    alpha, _ = jax.lax.while_loop(cond, body, (1.0, 0))
-    return alpha
-
-
-_objective_jit = jax.jit(_objective)
-_grad_objective = jax.jit(jax.grad(_objective))
-
-
-def _solve_scipy(
-    eta: jax.Array,
-    theta0_list: list,
-    maxiter: int,
-    tol: float,
-) -> jax.Array:
-    """
-    Multi-start scipy L-BFGS-B for cold-start robustness.
-    Uses explicit JAX gradients. Runs in Python (not JIT'd).
-    """
-    import numpy as np
-    eta_jnp = jnp.asarray(np.array(eta), dtype=jnp.float64)
-
-    def objective_np(theta_np):
-        theta = jnp.asarray(theta_np, dtype=jnp.float64)
-        return float(_objective_jit(theta, eta_jnp))
-
-    def gradient_np(theta_np):
-        theta = jnp.asarray(theta_np, dtype=jnp.float64)
-        return np.array(_grad_objective(theta, eta_jnp))
-
-    from scipy.optimize import minimize
-
-    lower = np.array([-np.inf, -np.inf, -np.inf])
-    upper = np.array([np.inf, 0.0, 0.0])
-    bounds = list(zip(lower, upper))
-
-    best_theta = None
-    best_val = np.inf
-
-    for t0 in theta0_list:
-        t0_np = np.array(t0)
-        t0_np[1] = min(t0_np[1], -1e-8)
-        t0_np[2] = min(t0_np[2], -1e-8)
-        try:
-            res = minimize(
-                fun=objective_np,
-                x0=t0_np,
-                jac=gradient_np,
-                method='L-BFGS-B',
-                bounds=bounds,
-                options={'maxiter': maxiter, 'ftol': tol**2, 'gtol': tol},
-            )
-            if res.success or res.fun < best_val:
-                if res.fun < best_val:
-                    best_val = res.fun
-                    best_theta = res.x
-        except Exception:
-            pass
-
-    if best_theta is None:
-        best_theta = np.array(theta0_list[0])
-        best_theta[1] = min(best_theta[1], -1e-8)
-        best_theta[2] = min(best_theta[2], -1e-8)
-
-    return jnp.asarray(best_theta, dtype=jnp.float64)
 
 
 def _initial_guesses(eta_scaled: jax.Array) -> list:
@@ -831,4 +594,4 @@ def _initial_guesses(eta_scaled: jax.Array) -> list:
 
 
 # Convenience alias
-GeneralizedInverseGaussian = GIG
+GIG = GeneralizedInverseGaussian
