@@ -79,7 +79,7 @@ Each distribution stores canonical parameters as named `eqx.Module` fields. Chol
 | InverseGamma | `alpha`, `beta` | shape, rate |
 | InverseGaussian | `mu`, `lam` | mean, shape |
 | GeneralizedInverseGaussian (GIG) | `p`, `a`, `b` | shape, rate, rate |
-| MultivariateNormal | `mu`, `L_Sigma` | mean, Cholesky of Σ |
+| MultivariateNormal | `mu`, `L_Sigma` | mean, Cholesky of covariance |
 | VarianceGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` | Gamma subordinator |
 | NormalInverseGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` | InverseGamma subordinator |
 | NormalInverseGaussian | `mu`, `gamma`, `L_Sigma`, `mu_ig`, `lam` | InverseGaussian subordinator |
@@ -92,7 +92,7 @@ JointNormalMixture(ExponentialFamily)     f(x,y) — X|Y ~ N(μ + γy, Σy)
     ├── JointVarianceGamma                Y ~ Gamma
     ├── JointNormalInverseGamma           Y ~ InverseGamma
     ├── JointNormalInverseGaussian        Y ~ InverseGaussian
-    └── JointGeneralizedHyperbolic        Y ~ GIG
+    └── JointGeneralizedHyperbolic        Y ~ GeneralizedInverseGaussian
 
 NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
     ├── VarianceGamma
