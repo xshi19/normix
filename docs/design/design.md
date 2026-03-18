@@ -28,7 +28,7 @@ normix/
 │   ├── gamma.py                  # Gamma(α, β)
 │   ├── inverse_gamma.py          # InverseGamma(α, β)
 │   ├── inverse_gaussian.py       # InverseGaussian(μ, λ)
-│   ├── generalized_inverse_gaussian.py  # GIG(p, a, b)
+│   ├── generalized_inverse_gaussian.py  # GeneralizedInverseGaussian / GIG(p, a, b)
 │   ├── normal.py                 # MultivariateNormal(μ, L_Sigma)
 │   ├── variance_gamma.py         # VarianceGamma / JointVarianceGamma
 │   ├── normal_inverse_gamma.py   # NormalInverseGamma / JointNormalInverseGamma
@@ -38,10 +38,11 @@ normix/
 │   ├── joint.py                  # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py               # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   └── em.py                     # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   ├── em.py                     # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   └── solvers.py                # General η→θ solvers (Bregman divergence minimisation)
 └── utils/
     ├── bessel.py                 # log_kv with custom_jvp
-    ├── constants.py              # LOG_EPS, GIG_EPS_V_HESS, GIG_EPS_NP
+    ├── constants.py              # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
     ├── plotting.py               # Notebook helpers
     └── validation.py             # EM validation helpers
 ```
@@ -96,8 +97,10 @@ Every derived quantity comes from differentiating `_log_partition_from_theta`. N
 **Three constructors:**
 - `from_classical(...)` — from shape/rate/mean/etc. (readable English names)
 - `from_natural(theta)` — from natural parameters θ
-- `from_expectation(eta, *, theta0, maxiter, tol)` — solves ∇ψ(θ)=η via jaxopt.LBFGS-B
+- `from_expectation(eta, *, theta0, maxiter, tol)` — solves ∇ψ(θ)=η via Bregman divergence minimisation
 - `fit_mle(X, *, theta0, maxiter, tol)` — MLE via exponential family identity: η̂ = mean_i t(xᵢ)
+
+**Bregman divergence:**  `bregman_divergence(theta, eta)` = ψ(θ) − θ·η. Minimising over θ gives ∇ψ(θ*) = η. Available as a class method on all `ExponentialFamily` subclasses and as the universal `fitting.solvers.bregman_objective` for use with any log-partition function.
 
 ---
 
@@ -195,11 +198,15 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 The scaled GIG has $a' = b' = \sqrt{ab}$, symmetric Fisher matrix. After solving $\tilde\theta$:
 $$\theta = (\tilde\theta_1,\; \tilde\theta_2/s,\; s\tilde\theta_3)$$
 
-### Solver
+### Solvers (general + GIG-specific)
 
-`jaxopt.LBFGSB` minimizes $\psi(\theta) - \theta\cdot\eta$ with bounds $\theta_2 \leq 0$, $\theta_3 \leq 0$.
+`fitting/solvers.py` provides universal solvers that work with any exponential family:
+- `solve_newton_scan(eta, theta0, log_partition_fn, ...)` — Newton with `lax.scan`, exp-reparametrisation
+- `solve_lbfgs(...)` — JAXopt L-BFGS
+- `solve_scipy_multistart(...)` — multi-start scipy L-BFGS-B (cold-start)
+- `solve_cpu_lbfgs(...)` — scipy L-BFGS-B with user-supplied CPU gradient
 
-CPU fallback uses `scipy.optimize.minimize` with scipy.kve (much faster per call).
+For GIG the preferred warm-start solver is `solver='cpu'` (scipy L-BFGS-B + `scipy.kve`), which avoids JAX GPU kernel dispatch overhead on the 3-dimensional scalar problem.
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmark comparisons.
 
@@ -234,6 +241,10 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Mixture design | Joint + Marginal classes | Joint IS an exponential family; marginal is not |
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
 | Bessel | Pure-JAX + CPU backend | JAX for JIT/autodiff; CPU for EM performance |
-| η→θ solver | η-rescaled LBFGS-B | Ill-conditioning requires rescaling for convergence |
+| η→θ solver | η-rescaled + CPU L-BFGS-B | Ill-conditioning requires rescaling; CPU avoids GPU overhead |
 | Constraints | `jnp.maximum(x, LOG_EPS)` | Simpler than paramax; EM doesn't need grad through constraints |
 | Precision | Float64 throughout | Bessel functions and EM convergence require double precision |
+| Bregman divergence | `fitting/solvers.py` universal solvers | Decouple optimization from distribution math |
+| `jnp.where` in log-partition | Not `lax.cond` | `jnp.where` is vmap-compatible; clamping prevents NaN gradients |
+| Numerical constants | Centralized in `utils/constants.py` | Single source of truth; no scattered magic numbers |
+| Class naming | `GeneralizedInverseGaussian` primary, `GIG` alias | Full name is canonical; short alias for backward compatibility |

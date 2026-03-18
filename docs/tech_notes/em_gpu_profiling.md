@@ -2,7 +2,7 @@
 
 **Date**: March 2026 (updated — CPU Bessel backend results)  
 **Status**: Updated with CPU-Bessel backend results (March 2026)  
-**Related files**: `scripts/profile_cpu_vs_gpu.py`, `scripts/rerun_em_profiling.py`
+**Related files**: `scripts/benchmark_comprehensive.py` (consolidated benchmark — run with `--sections 3,4,5,6`)
 
 ## Current Architecture (as of March 2026)
 

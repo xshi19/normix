@@ -13,7 +13,7 @@ alwaysApply: false
 - `from jax.scipy.special import gammaln, digamma`
 - No `import scipy as sp` aliases
 - Bessel: `from normix.utils.bessel import log_kv`
-- Shared constants: `from normix.utils.constants import LOG_EPS` (never define `_EPS = 1e-30` locally)
+- Shared constants: `from normix.utils.constants import LOG_EPS, TINY, ...` (see table below)
 
 ## Type Hints
 
@@ -104,6 +104,24 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 - **`jax.lax.scan`** for online EM per-epoch iteration
 - **`jax.lax.cond`** / `jnp.where` instead of Python `if` on traced values
 
+## Numerical Constants (`normix.utils.constants`)
+
+**NEVER hardcode numerical constants** (`1e-30`, `1e-300`, `1e-5`, etc.) in distribution or utility files. Import from `normix.utils.constants`.
+
+| Constant | Value | Purpose |
+|---|---|---|
+| `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping (`jnp.maximum(x, LOG_EPS)`) |
+| `TINY` | `1e-300` | Smallest positive floor for numpy-side log (prevents exact zero) |
+| `BESSEL_EPS_V` | `1e-5` | FD step for Bessel order derivative ∂log K_v/∂v |
+| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for Gamma/InverseGamma limit in GIG |
+| `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping for Newton Hessian |
+| `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ during warm-start initialisation |
+| `SIGMA_REG` | `1e-8` | Regularisation for covariance matrix in M-step |
+| `SAFE_DENOMINATOR` | `1e-10` | Floor for denominator D = 1 − E[1/Y]·E[Y] in M-step |
+| `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information (second-order) |
+
+Backward-compatibility aliases: `GIG_EPS_V_HESS = BESSEL_EPS_V`, `GIG_EPS_NP = TINY`.
+
 ## Numerical Stability
 
 - Work in log-space: `log_prob`, `log_kv`, `gammaln`, `logsumexp`
@@ -122,7 +140,7 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 - Wrapper functions in utils that duplicate distribution API — methods belong on the class
 - isinstance-based dispatch over distribution types — add methods to the base/subclass instead
 - Putting all code in `__init__.py` — split into logical modules
-- Defining `_EPS = 1e-30` locally in distribution files — import from `normix.utils.constants`
+- Defining numerical constants locally (e.g. `_EPS = 1e-30`, `eps = 1e-5`) — import from `normix.utils.constants`
 
 ## Method Placement
 

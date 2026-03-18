@@ -3,18 +3,26 @@ Comprehensive normix benchmark.
 
 Measures compute time for:
   1. Bessel function: log_kv (JAX vs CPU, scalar vs batch)
-  2. GIG optimization (eta->theta): JAX LBFGS-B, scipy LBFGS-B, JAX Newton variants
-  3. GIG E-step: expectation_params (JAX vs CPU backend)
-  4. Full EM E-step (quad forms + Bessel): JAX vs CPU backend
-  5. Full EM M-step: JAX solver vs CPU solver
-  6. Full EM iteration (E+M): CPU vs JAX, across distributions
-  7. GPU vs CPU device for JAX backend
+  2. GIG η→θ solvers (warm-start and cold-start)
+  3. GIG expectation_params batch (E-step Bessel core)
+  4-5. Full EM E-step and M-step: JAX vs CPU backend
+  6. Full EM iterations: JAX vs CPU across distributions
+  7. Device information
+
+Subsumes the ad-hoc scripts `profile_cpu_vs_gpu.py` and `rerun_em_profiling.py`
+that were referenced in `docs/tech_notes/em_gpu_profiling.md`.
 
 Usage:
     PYTHONUNBUFFERED=1 uv run python scripts/benchmark_comprehensive.py [--n-stocks N]
 
 Results are printed as formatted tables. For profiling GPU vs CPU, make sure the
 JAX CUDA runtime is available.
+
+Performance notes:
+- JAX Newton solver (solver='newton') is slow on GPU for the scalar 3D GIG problem
+  because lax.cond/lax.while_loop dispatch many small GPU kernels (~1ms each).
+  The cpu solver (solver='cpu') avoids this by using scipy L-BFGS-B + scipy.kve.
+- See docs/tech_notes/em_gpu_profiling.md for reference numbers.
 """
 
 import os
@@ -121,45 +129,69 @@ def bench_bessel() -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def bench_gig_solvers() -> None:
-    hdr("SECTION 2 — GIG eta→theta solvers")
+    hdr("SECTION 2 — GIG η→θ solvers")
 
-    from normix.distributions.generalized_inverse_gaussian import GIG
+    from normix.distributions.generalized_inverse_gaussian import GeneralizedInverseGaussian as GIG
 
     test_cases = [
-        ("symmetric GIG",        GIG(p=jnp.array(0.5),  a=jnp.array(1.0), b=jnp.array(1.0))),
-        ("asymmetric (a>>b)",    GIG(p=jnp.array(0.5),  a=jnp.array(10.0), b=jnp.array(0.1))),
-        ("asymmetric (a<<b)",    GIG(p=jnp.array(-1.0), a=jnp.array(0.1),  b=jnp.array(10.0))),
-        ("GIG ~ InvGauss (p=-½)",GIG(p=jnp.array(-0.5), a=jnp.array(2.0),  b=jnp.array(1.0))),
+        ("symmetric  (p=0.5, a=b=1)",     GIG(p=jnp.array(0.5),  a=jnp.array(1.0),  b=jnp.array(1.0))),
+        ("asymmetric (a>>b, p=0.5)",       GIG(p=jnp.array(0.5),  a=jnp.array(10.0), b=jnp.array(0.1))),
+        ("asymmetric (a<<b, p=-1.0)",      GIG(p=jnp.array(-1.0), a=jnp.array(0.1),  b=jnp.array(10.0))),
+        ("InvGaussian limit (p=-½)",       GIG(p=jnp.array(-0.5), a=jnp.array(2.0),  b=jnp.array(1.0))),
     ]
 
-    row("Case / solver", " η→θ JAX ms", " η→θ CPU ms", "     ratio")
+    print(f"  Warm-start paths (theta0 provided) — these are the EM hot-path solvers.", flush=True)
+    row("Case / solver", "newton ms", "  cpu ms", "  ratio")
     sep()
 
     for label, gig in test_cases:
-        eta = jig_eta = gig.expectation_params()
+        eta = gig.expectation_params()
+        theta0 = gig.natural_params()
 
-        # JAX solver (jaxopt LBFGS-B)
-        try:
-            t_jax = jax_timeit(lambda: GIG.from_expectation(eta), n_runs=50, warmup=5)
-            t_jax_ms = f"{t_jax*1e3:.1f}"
-        except Exception as e:
-            t_jax_ms = "ERR"
-            t_jax = float('nan')
-
-        # CPU solver (scipy)
-        try:
-            t_cpu = timeit(lambda: GIG.from_expectation(eta, solver='cpu'), n_runs=50, warmup=5)
-            t_cpu_ms = f"{t_cpu*1e3:.1f}"
-        except Exception:
+        # Warm up both solvers to trigger JIT compilation
+        for _ in range(2):
             try:
-                t_cpu = timeit(lambda: GIG.from_expectation(eta), n_runs=50, warmup=5)
-                t_cpu_ms = f"{t_cpu*1e3:.1f} (fallback)"
+                GIG.from_expectation(eta, theta0=theta0, solver='newton_analytical')
             except Exception:
-                t_cpu_ms = "N/A"
-                t_cpu = float('nan')
+                pass
+            try:
+                GIG.from_expectation(eta, theta0=theta0, solver='cpu')
+            except Exception:
+                pass
 
-        ratio = f"{t_jax/t_cpu:.1f}×" if not (np.isnan(t_jax) or np.isnan(t_cpu)) else "N/A"
-        row(label, t_jax_ms, t_cpu_ms, ratio)
+        # JAX Newton (analytical Hessian, warm-start) — EM hot path
+        try:
+            t_newton = timeit(lambda: GIG.from_expectation(eta, theta0=theta0,
+                                                            solver='newton_analytical'),
+                              n_runs=5, warmup=1)
+            t_newton_ms = f"{t_newton*1e3:.0f}"
+        except Exception as e:
+            t_newton_ms = "ERR"; t_newton = float('nan')
+
+        # CPU solver (scipy L-BFGS-B + scipy.kve, warm-start) — recommended EM solver
+        try:
+            t_cpu = timeit(lambda: GIG.from_expectation(eta, theta0=theta0, solver='cpu'),
+                           n_runs=20, warmup=5)
+            t_cpu_ms = f"{t_cpu*1e3:.1f}"
+        except Exception as e:
+            t_cpu_ms = "ERR"; t_cpu = float('nan')
+
+        ratio = (f"{t_newton/t_cpu:.1f}×" if not (np.isnan(t_newton) or np.isnan(t_cpu))
+                 else "N/A")
+        row(label, t_newton_ms, t_cpu_ms, ratio)
+
+    sep()
+    print(f"\n  Cold-start (no theta0) — used for initial fitting only.", flush=True)
+    row("Case", "cold-start ms", "", "")
+    sep()
+    for label, gig in test_cases[:1]:   # just one case to keep timing reasonable
+        eta = gig.expectation_params()
+        try:
+            GIG.from_expectation(eta)   # compile/warmup
+            t_cold = timeit(lambda: GIG.from_expectation(eta), n_runs=3, warmup=1)
+            row(label, f"{t_cold*1e3:.0f}", "(multi-start scipy)", "")
+        except Exception as e:
+            row(label, "ERR", str(e)[:30], "")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -247,7 +279,7 @@ def bench_em(n_stocks: int = 20) -> None:
         ("GH",      GeneralizedHyperbolic,{"p": -0.5, "a": 2.0, "b": 1.0}),
     ]
 
-    row("Distribution", "E-step JAX", "E-step CPU", " speedup", "M-step JAX", " speedup")
+    row("Distribution", "E jax ms", "E cpu ms", "E speedup", "M jax ms", "M cpu ms", "M speedup")
     sep()
 
     for name, cls, extra in dists:
@@ -264,19 +296,31 @@ def bench_em(n_stocks: int = 20) -> None:
             except Exception:
                 t_e_cpu = float('nan'); e_ratio = "N/A"
 
-            # M-step
+            # M-step JAX (default solver)
             expectations = model.e_step(X, backend='jax')
-            t_m = jax_timeit(lambda: model.m_step(X, expectations), n_runs=10, warmup=2)
+            t_m_jax = timeit(lambda: model.m_step(X, expectations), n_runs=5, warmup=2)
+
+            # M-step CPU (solver='cpu' for GH, default for others)
+            try:
+                if name == "GH":
+                    t_m_cpu = timeit(lambda: model.m_step(X, expectations, solver='cpu'),
+                                     n_runs=10, warmup=3)
+                else:
+                    t_m_cpu = t_m_jax
+                m_ratio = f"{t_m_jax/t_m_cpu:.1f}×" if t_m_cpu > 0 else "N/A"
+            except Exception:
+                t_m_cpu = float('nan'); m_ratio = "N/A"
 
             row(name,
                 f"{t_e_jax*1e3:.0f}ms",
                 f"{t_e_cpu*1e3:.0f}ms" if not np.isnan(t_e_cpu) else "N/A",
                 e_ratio,
-                f"{t_m*1e3:.0f}ms",
-                "",
+                f"{t_m_jax*1e3:.0f}ms",
+                f"{t_m_cpu*1e3:.0f}ms" if not np.isnan(t_m_cpu) else "N/A",
+                m_ratio,
             )
         except Exception as ex:
-            row(name, "ERR", "", "", "", f"({ex})")
+            row(name, "ERR", "", "", "", "", f"({ex})")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -310,21 +354,28 @@ def bench_em_full(n_stocks: int = 20, n_iter: int = 5) -> None:
         ("GH",    GeneralizedHyperbolic,{"p": -0.5, "a": 2.0, "b": 1.0}),
     ]
 
-    def run_em(model, X, n_iter, e_backend, m_solver=None):
-        """Run n_iter EM steps, return total wall-clock time (excluding first warmup)."""
-        # warmup iteration
+    def run_em(model, X, n_iter, e_backend, m_solver='newton'):
+        """Run n_iter EM steps, return (e_time, m_time) after one warmup."""
+        # warmup
         exp = model.e_step(X, backend=e_backend)
-        model2 = model.m_step(X, exp)
-        # timed iterations
-        t0 = time.perf_counter()
+        model.m_step(X, exp, **({'solver': m_solver} if hasattr(model, '_mstep_has_solver') else {}))
+        # timed
+        e_total = 0.0; m_total = 0.0
         for _ in range(n_iter):
+            t0 = time.perf_counter()
             exp = model.e_step(X, backend=e_backend)
-            if hasattr(exp['E_Y'], 'block_until_ready'):
+            if hasattr(exp.get('E_Y', None), 'block_until_ready'):
                 exp['E_Y'].block_until_ready()
-            model = model.m_step(X, exp)
-        return time.perf_counter() - t0
+            e_total += time.perf_counter() - t0
+            t0 = time.perf_counter()
+            try:
+                model = model.m_step(X, exp, solver=m_solver)
+            except TypeError:
+                model = model.m_step(X, exp)
+            m_total += time.perf_counter() - t0
+        return e_total, m_total
 
-    row("Distribution", "  JAX total", "  CPU total", "  speedup", "  JAX/iter", "  CPU/iter")
+    row("Dist", "E jax", "M jax", "tot jax", "E cpu", "M cpu", "tot cpu", "speedup")
     sep()
 
     for name, cls, extra in dists:
@@ -332,19 +383,21 @@ def bench_em_full(n_stocks: int = 20, n_iter: int = 5) -> None:
             model = cls.from_classical(
                 mu=jnp.zeros(d), gamma=jnp.zeros(d), sigma=sigma_emp, **extra
             )
-
-            t_jax = run_em(model, X, n_iter, e_backend='jax')
-            t_cpu = run_em(model, X, n_iter, e_backend='cpu')
+            e_jax, m_jax = run_em(model, X, n_iter, e_backend='jax', m_solver='newton')
+            e_cpu, m_cpu = run_em(model, X, n_iter, e_backend='cpu', m_solver='cpu')
+            t_jax = e_jax + m_jax; t_cpu = e_cpu + m_cpu
 
             row(name,
-                f"{t_jax:.2f}s",
-                f"{t_cpu:.2f}s",
+                f"{e_jax/n_iter:.2f}s",
+                f"{m_jax/n_iter:.2f}s",
+                f"{t_jax/n_iter:.2f}s",
+                f"{e_cpu/n_iter:.2f}s",
+                f"{m_cpu/n_iter:.2f}s",
+                f"{t_cpu/n_iter:.2f}s",
                 f"{t_jax/t_cpu:.1f}×",
-                f"{t_jax/n_iter*1e3:.0f}ms",
-                f"{t_cpu/n_iter*1e3:.0f}ms",
             )
         except Exception as ex:
-            row(name, "ERR", "", "", "", f"({ex})")
+            row(name, "ERR", "", "", "", "", "", f"({ex})")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
