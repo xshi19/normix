@@ -28,7 +28,6 @@ import numpy as np
 import equinox as eqx
 import jax
 import jax.numpy as jnp
-import jaxopt
 
 jax.config.update("jax_enable_x64", True)
 
@@ -140,31 +139,43 @@ class ExponentialFamily(eqx.Module):
         theta0: Optional[jax.Array] = None,
         maxiter: int = 500,
         tol: float = 1e-10,
+        backend: str = "jax",
+        method: str = "lbfgs",
     ) -> "ExponentialFamily":
         """
         Construct from expectation parameters η by solving ∇ψ(θ) = η.
 
-        Minimises the Bregman divergence ψ(θ) − θ·η via jaxopt.LBFGS(B).
+        Minimises the Bregman divergence ψ(θ) − θ·η via solve_bregman.
         Subclasses can override for closed-form inverses.
+
+        Parameters
+        ----------
+        backend : 'jax' (default, JIT-able) or 'cpu' (scipy, more robust)
+        method  : 'lbfgs' (default), 'bfgs', or 'newton'
         """
+        from normix.fitting.solvers import solve_bregman
+
         eta = jnp.asarray(eta, dtype=jnp.float64)
-        bounds = cls._theta_bounds()
-
-        def objective(theta: jax.Array) -> jax.Array:
-            dummy = cls.from_natural(theta)
-            return dummy._log_partition_from_theta(theta) - jnp.dot(theta, eta)
-
         if theta0 is None:
             theta0 = cls._init_theta_from_eta(eta)
 
-        if bounds is not None:
-            solver = jaxopt.LBFGSB(fun=objective, maxiter=maxiter, tol=tol)
-            result = solver.run(theta0, bounds=bounds)
-        else:
-            solver = jaxopt.LBFGS(fun=objective, maxiter=maxiter, tol=tol)
-            result = solver.run(theta0)
+        dummy = cls._dummy_instance()
+        f = dummy._log_partition_from_theta
 
-        return cls.from_natural(result.params)
+        # Convert _theta_bounds() tuple-of-arrays to list of (lo, hi) tuples
+        jax_bounds = cls._theta_bounds()
+        if jax_bounds is not None:
+            lower, upper = jax_bounds
+            bounds = [(float(lo), float(hi)) for lo, hi in zip(lower, upper)]
+        else:
+            bounds = None
+
+        result = solve_bregman(
+            f, eta, theta0,
+            backend=backend, method=method,
+            bounds=bounds, max_steps=maxiter, tol=tol,
+        )
+        return cls.from_natural(result.theta)
 
     @classmethod
     def fit_mle(

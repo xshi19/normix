@@ -35,8 +35,9 @@ from normix.utils.constants import (
     HESSIAN_DAMPING, THETA_FLOOR, FD_EPS_FISHER,
 )
 from normix.fitting.solvers import (
-    bregman_objective, solve_newton_scan, solve_lbfgs,
-    solve_scipy_multistart, solve_cpu_lbfgs,
+    bregman_objective, solve_bregman, solve_bregman_multistart,
+    # backward-compat aliases kept for any external callers
+    solve_newton_scan, solve_lbfgs, solve_scipy_multistart, solve_cpu_lbfgs,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -256,8 +257,10 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         solver : warm-start solver when theta0 is provided:
             'newton'            — JAX Newton, autodiff Hessian via jax.hessian
             'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
-            'lbfgs'             — JAXopt L-BFGS (gradient-only, ~5 log_kv/step)
+            'lbfgs'             — JAXopt L-BFGS-B (gradient-only, ~5 log_kv/step)
+            'bfgs'              — JAXopt BFGS (gradient-only, dense Hessian approx)
             'cpu'               — scipy L-BFGS with CPU Bessel ratios (no JAX dispatch)
+            'cpu_newton'        — scipy trust-exact with CPU analytical Hessian
         scan_length : fixed Newton iteration count for the two Newton solvers
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
@@ -267,6 +270,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         s = jnp.sqrt(eta2 / eta3)
         geom = jnp.sqrt(eta2 * eta3)
         eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
+
+        _GIG_BOUNDS = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
 
         if theta0 is not None:
             theta0 = jnp.asarray(theta0, dtype=jnp.float64)
@@ -279,39 +284,67 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 jnp.minimum(theta0_scaled[2], THETA_FLOOR))
 
             if solver == "newton":
-                theta_scaled = solve_newton_scan(
-                    eta_scaled, theta0_scaled, _log_partition_gig_static,
-                    constrained_indices=(1, 2), tol=tol, scan_length=scan_length,
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="jax", method="newton",
+                    bounds=_GIG_BOUNDS, max_steps=scan_length, tol=tol,
                 )
             elif solver == "newton_analytical":
-                theta_scaled = solve_newton_scan(
-                    eta_scaled, theta0_scaled, _log_partition_gig_static,
-                    constrained_indices=(1, 2), tol=tol, scan_length=scan_length,
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="jax", method="newton",
+                    bounds=_GIG_BOUNDS, max_steps=scan_length, tol=tol,
                     grad_hess_fn=_analytical_grad_hess_phi,
                 )
             elif solver == "lbfgs":
-                theta_scaled = solve_lbfgs(
-                    eta_scaled, theta0_scaled, _log_partition_gig_static,
-                    constrained_indices=(1, 2), maxiter=maxiter, tol=tol,
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="jax", method="lbfgs",
+                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
+                )
+            elif solver == "bfgs":
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="jax", method="bfgs",
+                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
                 )
             elif solver == "cpu":
-                theta_scaled = solve_cpu_lbfgs(
-                    eta_scaled, theta0_scaled, _cpu_objective_and_grad,
-                    bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
-                    maxiter=500, tol=tol,
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="cpu", method="lbfgs",
+                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
+                    grad_fn=_gig_cpu_grad,
+                )
+            elif solver == "cpu_newton":
+                result = solve_bregman(
+                    _log_partition_gig_static, eta_scaled, theta0_scaled,
+                    backend="cpu", method="newton",
+                    bounds=None,  # trust-exact uses reparam-free theta space
+                    max_steps=maxiter, tol=tol,
+                    grad_hess_fn=_cpu_grad_hess_theta,
                 )
             else:
-                raise ValueError(f"Unknown solver: {solver!r}. "
-                                 "Choose 'newton', 'newton_analytical', 'lbfgs', or 'cpu'.")
+                raise ValueError(
+                    f"Unknown solver: {solver!r}. "
+                    "Choose 'newton', 'newton_analytical', 'lbfgs', 'bfgs', "
+                    "'cpu', or 'cpu_newton'."
+                )
+            theta_scaled = result.theta
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
-            theta_scaled = solve_scipy_multistart(
-                eta_scaled, theta0_list, _log_partition_gig_static,
-                bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
-                theta_floor={1: THETA_FLOOR, 2: THETA_FLOOR},
-                maxiter=maxiter, tol=tol,
+            processed = []
+            for t0 in theta0_list:
+                t0_np = np.array(t0)
+                t0_np[1] = min(t0_np[1], THETA_FLOOR)
+                t0_np[2] = min(t0_np[2], THETA_FLOOR)
+                processed.append(jnp.asarray(t0_np, dtype=jnp.float64))
+            result = solve_bregman_multistart(
+                _log_partition_gig_static, eta_scaled, processed,
+                backend="cpu", method="lbfgs",
+                bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
             )
+            theta_scaled = result.theta
 
         # Unscale: θ₂ = θ̃₂/s,  θ₃ = s·θ̃₃
         theta = jnp.array([theta_scaled[0],
@@ -505,6 +538,41 @@ def _cpu_objective_and_grad(theta_np, eta_np):
     eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
     grad = eta_hat - eta_np
     return obj, grad
+
+
+def _gig_cpu_grad(theta_np: np.ndarray) -> np.ndarray:
+    """∇ψ_GIG(θ) = [E[log X], E[1/X], E[X]] via CPU Bessel (scipy.kve).
+
+    Returns expectation parameters (= gradient of ψ w.r.t. θ) as a numpy array.
+    Used as grad_fn in solve_bregman(backend='cpu').
+    """
+    p = theta_np[0] + 1.0
+    b_safe = max(-2.0 * theta_np[1], TINY)
+    a_safe = max(-2.0 * theta_np[2], TINY)
+    gig_tmp = GeneralizedInverseGaussian(p=p, a=a_safe, b=b_safe)
+    return np.asarray(gig_tmp._expectation_params_cpu())
+
+
+def _cpu_grad_hess_theta(theta_np: np.ndarray, eta_np: np.ndarray):
+    """Gradient and Hessian of the Bregman objective in θ-space (CPU).
+
+    Used for backend='cpu', method='newton' (scipy trust-exact).
+    The Hessian of ψ(θ) is the Fisher information I(θ).
+
+    Returns (g, H) where g = ∇ψ(θ) − η and H = ∇²ψ(θ).
+    Note: this converts the analytical φ-space Hessian back to θ-space
+    for the unscaled parameterisation (no reparameterization needed for
+    trust-exact which handles bounds via a penalty).
+    """
+    g = _gig_cpu_grad(theta_np) - eta_np
+    # Fisher information via finite differences (reuse existing FD implementation)
+    gig_tmp = GeneralizedInverseGaussian(
+        p=theta_np[0] + 1.0,
+        a=max(-2.0 * theta_np[2], TINY),
+        b=max(-2.0 * theta_np[1], TINY),
+    )
+    H = np.asarray(gig_tmp.fisher_information())
+    return g, H
 
 
 def _initial_guesses(eta_scaled: jax.Array) -> list:
