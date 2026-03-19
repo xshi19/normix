@@ -35,12 +35,8 @@ class InverseGaussian(ExponentialFamily):
     # Exponential family interface
     # ------------------------------------------------------------------
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
-        # θ = [-λ/(2μ²), -λ/2];  a = -2θ₁ = λ/μ², b = -2θ₂ = λ
-        # h(x) = (2π)^{-1/2} x^{-3/2}
-        # Z = ∫ h(x) exp(θᵀt(x)) dx = (2π)^{-1/2} ∫ x^{-3/2} exp(θ₁x+θ₂/x) dx
-        #   = (2π)^{-1/2} · √(π/(-θ₂)) · exp(-2√(-θ₁(-θ₂)))
-        # ψ(θ) = log Z = -½ log b - √(ab)
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         a = -2.0 * theta[0]   # λ/μ²
         b = -2.0 * theta[1]   # λ
         b = jnp.maximum(b, LOG_EPS)
@@ -51,13 +47,13 @@ class InverseGaussian(ExponentialFamily):
         # θ₁ = -λ/(2μ²), θ₂ = -λ/2
         return jnp.array([-self.lam / (2.0 * self.mu**2), -self.lam / 2.0])
 
-    def sufficient_statistics(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def sufficient_statistics(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jnp.array([x, 1.0 / x])
 
-    def log_base_measure(self, x: jax.Array) -> jax.Array:
-        # h(x) = (2π)^{-1/2} x^{-3/2}
-        # log h(x) = -½ log(2π) - (3/2) log x
+    @staticmethod
+    def log_base_measure(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jnp.where(
             x > 0,
@@ -139,6 +135,3 @@ class InverseGaussian(ExponentialFamily):
         eta_hat = jnp.array([jnp.mean(X), jnp.mean(1.0 / X)])
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
-    @classmethod
-    def _dummy_instance(cls) -> "InverseGaussian":
-        return cls(mu=jnp.ones(()), lam=jnp.ones(()))

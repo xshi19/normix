@@ -354,24 +354,6 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
 # CPU backend  (scipy.optimize.minimize)
 # ---------------------------------------------------------------------------
 
-# Cache keyed by id(f): avoids recompilation across repeated calls with the
-# same log-partition function.  id() is safe here because these are module-level
-# functions (e.g. _log_partition_gig_static) whose lifetimes span the session.
-# Equinox bound methods are NOT hashable (they contain JAX arrays), so lru_cache
-# cannot be used; a plain dict keyed by id() works fine.
-_jit_cache: dict = {}
-
-
-def _compile_jax_obj_and_grad(f: Callable):
-    """JIT-compile Bregman objective and gradient once per unique f."""
-    fn_id = id(f)
-    if fn_id not in _jit_cache:
-        def _obj(theta, eta):
-            return f(theta) - jnp.dot(theta, eta)
-        _jit_cache[fn_id] = (jax.jit(_obj), jax.jit(jax.grad(_obj, argnums=0)))
-    return _jit_cache[fn_id]
-
-
 def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hess_fn) -> BregmanResult:
     """scipy.optimize.minimize for the Bregman divergence."""
     from scipy.optimize import minimize
@@ -380,20 +362,18 @@ def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hes
     theta0_np = np.asarray(theta0, dtype=np.float64)
     eta_jnp = jnp.asarray(eta, dtype=jnp.float64)
 
-    # Objective: always computed via JAX (JIT-compiled, fast for scalar problems)
-    obj_jit, grad_jit = _compile_jax_obj_and_grad(f)
-
     def fun_np(theta_np):
-        return float(obj_jit(jnp.asarray(theta_np, dtype=jnp.float64), eta_jnp))
+        t = jnp.asarray(theta_np, dtype=jnp.float64)
+        return float(f(t) - jnp.dot(t, eta_jnp))
 
     if grad_fn is not None:
-        # Pure CPU gradient: user-supplied ∇f(θ) → numpy array
         def jac_np(theta_np):
             return np.asarray(grad_fn(theta_np), dtype=np.float64) - eta_np
     else:
-        # Hybrid: JIT-compiled JAX gradient
+        _grad_f = jax.grad(f)
         def jac_np(theta_np):
-            return np.array(grad_jit(jnp.asarray(theta_np, dtype=jnp.float64), eta_jnp))
+            t = jnp.asarray(theta_np, dtype=jnp.float64)
+            return np.asarray(_grad_f(t), dtype=np.float64) - eta_np
 
     scipy_method = {"lbfgs": "L-BFGS-B", "bfgs": "BFGS", "newton": "trust-exact"}[method]
 
@@ -474,113 +454,3 @@ def _backtrack(obj, phi, delta, f0, slope, beta: float = 0.5, c: float = 1e-4):
     return alpha
 
 
-# ---------------------------------------------------------------------------
-# Backward-compatible wrappers  (deprecated — use solve_bregman instead)
-# ---------------------------------------------------------------------------
-
-def solve_newton_scan(
-    eta: jax.Array,
-    theta0: jax.Array,
-    log_partition_fn: Callable[[jax.Array], jax.Array],
-    *,
-    constrained_indices: Tuple[int, ...] = (),
-    tol: float = 1e-10,
-    scan_length: int = 20,
-    grad_hess_fn=None,
-) -> jax.Array:
-    """Deprecated: use solve_bregman(backend='jax', method='newton')."""
-    bounds = _constrained_indices_to_bounds(len(theta0), constrained_indices)
-    result = solve_bregman(
-        log_partition_fn, eta, theta0,
-        backend="jax", method="newton",
-        bounds=bounds, max_steps=scan_length, tol=tol,
-        grad_hess_fn=grad_hess_fn,
-    )
-    return result.theta
-
-
-def solve_lbfgs(
-    eta: jax.Array,
-    theta0: jax.Array,
-    log_partition_fn: Callable[[jax.Array], jax.Array],
-    *,
-    constrained_indices: Tuple[int, ...] = (),
-    maxiter: int = 500,
-    tol: float = 1e-10,
-) -> jax.Array:
-    """Deprecated: use solve_bregman(backend='jax', method='lbfgs')."""
-    bounds = _constrained_indices_to_bounds(len(theta0), constrained_indices)
-    result = solve_bregman(
-        log_partition_fn, eta, theta0,
-        backend="jax", method="lbfgs",
-        bounds=bounds, max_steps=maxiter, tol=tol,
-    )
-    return result.theta
-
-
-def solve_scipy_multistart(
-    eta: jax.Array,
-    theta0_list: list,
-    log_partition_fn: Callable[[jax.Array], jax.Array],
-    *,
-    bounds=None,
-    theta_floor=None,
-    maxiter: int = 500,
-    tol: float = 1e-10,
-) -> jax.Array:
-    """Deprecated: use solve_bregman_multistart(backend='cpu', method='lbfgs')."""
-    processed = []
-    for t0 in theta0_list:
-        t0_np = np.array(t0)
-        if theta_floor:
-            for idx, floor in theta_floor.items():
-                t0_np[idx] = min(t0_np[idx], floor)
-        processed.append(jnp.asarray(t0_np, dtype=jnp.float64))
-
-    result = solve_bregman_multistart(
-        log_partition_fn, eta, processed,
-        backend="cpu", method="lbfgs",
-        bounds=bounds, max_steps=maxiter, tol=tol,
-    )
-    return result.theta
-
-
-def solve_cpu_lbfgs(
-    eta: jax.Array,
-    theta0: jax.Array,
-    objective_and_grad_fn: Callable,
-    *,
-    bounds=None,
-    maxiter: int = 500,
-    tol: float = 1e-10,
-) -> jax.Array:
-    """Deprecated: use solve_bregman(backend='cpu', method='lbfgs', grad_fn=...)."""
-    from scipy.optimize import minimize
-
-    eta_np = np.asarray(eta, dtype=np.float64)
-    theta0_np = np.asarray(theta0, dtype=np.float64)
-    scipy_bounds = bounds or [(-np.inf, np.inf)] * len(theta0_np)
-
-    result = minimize(
-        lambda t: objective_and_grad_fn(t, eta_np),
-        theta0_np,
-        jac=True,
-        method="L-BFGS-B",
-        bounds=scipy_bounds,
-        options={"maxiter": maxiter, "ftol": tol ** 2, "gtol": tol},
-    )
-    return jnp.asarray(result.x, dtype=jnp.float64)
-
-
-# ---------------------------------------------------------------------------
-# Helper
-# ---------------------------------------------------------------------------
-
-def _constrained_indices_to_bounds(n_dims: int, constrained_indices: Tuple[int, ...]):
-    """Convert legacy constrained_indices to bounds list."""
-    if not constrained_indices:
-        return None
-    bounds = [(-np.inf, np.inf)] * n_dims
-    for i in constrained_indices:
-        bounds[i] = (-np.inf, 0.0)
-    return bounds

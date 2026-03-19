@@ -75,9 +75,8 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
     def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
         from normix.distributions.generalized_inverse_gaussian import GIG
-        dummy = GIG(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
         theta = jnp.array([p_eff - 1.0, -b_eff / 2.0, -a_eff / 2.0])
-        return dummy._log_partition_from_theta(theta)
+        return GIG._log_partition_from_theta(theta)
 
     def _compute_posterior_expectations(
         self, x: jax.Array
@@ -146,15 +145,19 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
             (-0.5 * Lambda).ravel(), # θ₆ = -½vec(Σ⁻¹)
         ])
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         """
         ψ = ψ_GIG(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ
 
         Recover p,a,b,μ,γ,Σ from theta.
+        Dimension d is inferred from len(θ) = 3 + 2d + d².
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
 
-        d = self.d
+        n = theta.shape[0]
+        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+
         theta_1 = theta[0]
         theta_2 = theta[1]
         theta_3 = theta[2]
@@ -162,35 +165,25 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         theta_5 = theta[3 + d:3 + 2 * d]   # Σ⁻¹μ
         theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -½Σ⁻¹
 
-        # Σ⁻¹ = -2 θ₆
         Lambda = -2.0 * theta_6
-        # Symmetrize for numerical stability
         Lambda = 0.5 * (Lambda + Lambda.T)
 
-        # μ = Σ θ₅ = Λ⁻¹ θ₅ ... but we need det(Σ) = det(Λ⁻¹)
-        # log|Σ| = -log|Λ|
         sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
         log_det_Sigma = -log_det_Lambda
 
-        # μ and γ from Λμ = θ₅, Λγ = θ₄
-        # For log partition we only need μᵀΛγ = μᵀ θ₄
-        # Recover μ from Λμ = θ₅: μ = Λ⁻¹ θ₅
         mu = jnp.linalg.solve(Lambda, theta_5)
         gamma = jnp.linalg.solve(Lambda, theta_4)
 
-        # p, a, b
         mu_quad = 0.5 * jnp.dot(mu, theta_5)
         gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
         p = theta_1 + 1.0 + d / 2.0
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
 
-        # μᵀΛγ = μᵀ θ₄
         mu_Lambda_gamma = jnp.dot(mu, theta_4)
 
         gig_theta = jnp.array([p - 1.0, -b / 2.0, -a / 2.0])
-        dummy = GIG(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
-        psi_gig = dummy._log_partition_from_theta(gig_theta)
+        psi_gig = GIG._log_partition_from_theta(gig_theta)
 
         return psi_gig + 0.5 * log_det_Sigma + mu_Lambda_gamma
 
@@ -210,13 +203,6 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
             "use from_classical or m_step."
         )
 
-    @classmethod
-    def _dummy_instance(cls) -> "JointGeneralizedHyperbolic":
-        d = 1
-        return cls(
-            mu=jnp.zeros(d), gamma=jnp.zeros(d),
-            L_Sigma=jnp.eye(d), p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(())
-        )
 
 
 # ============================================================================

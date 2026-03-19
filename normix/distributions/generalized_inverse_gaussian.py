@@ -36,8 +36,6 @@ from normix.utils.constants import (
 )
 from normix.fitting.solvers import (
     bregman_objective, solve_bregman, solve_bregman_multistart,
-    # backward-compat aliases kept for any external callers
-    solve_newton_scan, solve_lbfgs, solve_scipy_multistart, solve_cpu_lbfgs,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -63,7 +61,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     # Exponential family interface
     # ------------------------------------------------------------------
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         """
         ψ(θ) = log 2 + log K_p(√(ab)) + (p/2)(log b − log a)
 
@@ -109,11 +108,13 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     def natural_params(self) -> jax.Array:
         return jnp.array([self.p - 1.0, -self.b / 2.0, -self.a / 2.0])
 
-    def sufficient_statistics(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def sufficient_statistics(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jnp.array([jnp.log(x), 1.0 / x, x])
 
-    def log_base_measure(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def log_base_measure(x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
     # ------------------------------------------------------------------
@@ -367,10 +368,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                               jnp.mean(X)])
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
-    @classmethod
-    def _dummy_instance(cls) -> "GeneralizedInverseGaussian":
-        return cls(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
-
     def fisher_information(self) -> jax.Array:
         """
         Numerical Fisher information matrix I(θ) = ∇²ψ(θ) via finite differences.
@@ -417,10 +414,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 # GIG-specific optimization helpers
 # ---------------------------------------------------------------------------
 
-def _log_partition_gig_static(theta: jax.Array) -> jax.Array:
-    """Stateless ψ_GIG(θ) — used as the log-partition function in solvers."""
-    dummy = GeneralizedInverseGaussian(p=jnp.ones(()), a=jnp.ones(()), b=jnp.ones(()))
-    return dummy._log_partition_from_theta(theta)
+_log_partition_gig_static = GeneralizedInverseGaussian._log_partition_from_theta
 
 
 # ---------------------------------------------------------------------------
@@ -518,27 +512,6 @@ def _analytical_grad_hess_phi(phi: jax.Array, eta: jax.Array):
 # ---------------------------------------------------------------------------
 # CPU-side objective+gradient for GIG (scipy Bessel, no JAX dispatch)
 # ---------------------------------------------------------------------------
-
-def _cpu_objective_and_grad(theta_np, eta_np):
-    """Objective and gradient via CPU Bessel ratios (scipy.kve).
-
-    Used by ``solve_cpu_lbfgs`` in the general solver module.
-    """
-    p = theta_np[0] + 1.0
-    b_safe = max(-2.0 * theta_np[1], TINY)
-    a_safe = max(-2.0 * theta_np[2], TINY)
-    sqrt_ab = np.sqrt(a_safe * b_safe)
-
-    lkv = float(log_kv(p, sqrt_ab, backend='cpu'))
-    psi = (np.log(2.0) + lkv
-           + 0.5 * p * (np.log(b_safe) - np.log(a_safe)))
-    obj = float(psi - np.dot(theta_np, eta_np))
-
-    gig_tmp = GeneralizedInverseGaussian(p=p, a=a_safe, b=b_safe)
-    eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
-    grad = eta_hat - eta_np
-    return obj, grad
-
 
 def _gig_cpu_grad(theta_np: np.ndarray) -> np.ndarray:
     """∇ψ_GIG(θ) = [E[log X], E[1/X], E[X]] via CPU Bessel (scipy.kve).

@@ -389,60 +389,6 @@ class TestSolveBregmanMultistart:
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
 
-# ---------------------------------------------------------------------------
-# Backward-compatible wrappers
-# ---------------------------------------------------------------------------
-
-class TestBackwardCompatWrappers:
-    """Old solve_* functions should still work via thin wrappers."""
-
-    def setup_method(self):
-        from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_static,
-        )
-        from normix import GIG
-        gig = GIG(p=0.5, a=1.0, b=1.0)
-        self.eta = gig.expectation_params()
-        self.theta_true = gig.natural_params()
-        self.f = _log_partition_gig_static
-
-    def test_solve_newton_scan(self):
-        from normix.fitting.solvers import solve_newton_scan
-        theta = solve_newton_scan(
-            self.eta, self.theta_true, self.f,
-            constrained_indices=(1, 2), scan_length=30, tol=1e-8,
-        )
-        np.testing.assert_allclose(theta, self.theta_true, rtol=1e-4)
-
-    def test_solve_lbfgs(self):
-        from normix.fitting.solvers import solve_lbfgs
-        theta = solve_lbfgs(
-            self.eta, self.theta_true, self.f,
-            constrained_indices=(1, 2), maxiter=200, tol=1e-8,
-        )
-        np.testing.assert_allclose(theta, self.theta_true, rtol=1e-4)
-
-    def test_solve_scipy_multistart(self):
-        from normix.fitting.solvers import solve_scipy_multistart
-        theta = solve_scipy_multistart(
-            self.eta,
-            [self.theta_true, self.theta_true + jnp.array([0.1, 0.0, 0.0])],
-            self.f,
-            bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
-            maxiter=200, tol=1e-8,
-        )
-        np.testing.assert_allclose(theta, self.theta_true, rtol=1e-4)
-
-    def test_solve_cpu_lbfgs(self):
-        from normix.fitting.solvers import solve_cpu_lbfgs
-        from normix.distributions.generalized_inverse_gaussian import _cpu_objective_and_grad
-        theta = solve_cpu_lbfgs(
-            self.eta, self.theta_true, _cpu_objective_and_grad,
-            bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
-            maxiter=200, tol=1e-8,
-        )
-        np.testing.assert_allclose(theta, self.theta_true, rtol=1e-4)
-
 
 # ---------------------------------------------------------------------------
 # ExponentialFamily.from_expectation uses solve_bregman

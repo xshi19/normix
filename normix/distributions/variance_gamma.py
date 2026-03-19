@@ -45,9 +45,8 @@ class JointVarianceGamma(JointNormalMixture):
 
     def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
         from normix.distributions.gamma import Gamma
-        dummy = Gamma(alpha=jnp.ones(()), beta=jnp.ones(()))
         theta = jnp.array([p_eff - 1.0, -a_eff / 2.0])
-        return dummy._log_partition_from_theta(theta)
+        return Gamma._log_partition_from_theta(theta)
 
     def _compute_posterior_expectations(
         self, x: jax.Array
@@ -91,13 +90,10 @@ class JointVarianceGamma(JointNormalMixture):
         )
         return j.natural_params()
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        dummy = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=self.alpha, a=2.0 * self.beta, b=jnp.array(LOG_EPS),
-        )
-        return dummy._log_partition_from_theta(theta)
+        return JointGeneralizedHyperbolic._log_partition_from_theta(theta)
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
@@ -111,11 +107,6 @@ class JointVarianceGamma(JointNormalMixture):
     def from_natural(cls, theta: jax.Array) -> "JointVarianceGamma":
         raise NotImplementedError("Use from_classical or m_step.")
 
-    @classmethod
-    def _dummy_instance(cls):
-        d = 1
-        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L_Sigma=jnp.eye(d),
-                   alpha=jnp.ones(()), beta=jnp.ones(()))
 
 
 class VarianceGamma(NormalMixture):
