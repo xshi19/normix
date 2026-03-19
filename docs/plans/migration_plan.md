@@ -187,7 +187,7 @@ All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate
 - `GIG.expectation_params(backend='cpu')`: analytical Bessel ratios via scipy
 - `GIG.expectation_params_batch(p, a, b, backend='cpu')`: vectorized (N,3) output
 - `GIG.from_expectation(..., solver='cpu')`: self-contained scipy L-BFGS-B solver
-  (replaces `cpu_legacy` which depended on normix_numpy)
+  self-contained; no external legacy dependencies
 
 ### 7.3 E-step CPU path — Phase 3 ✓
 - `NormalMixture.e_step(X, backend='cpu')`: hybrid path

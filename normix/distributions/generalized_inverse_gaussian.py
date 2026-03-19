@@ -252,14 +252,12 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Parameters
         ----------
-        theta0 : warm-start point (required for JAX solvers and 'cpu_legacy')
+        theta0 : warm-start point (required for JAX solvers)
         solver : warm-start solver when theta0 is provided:
             'newton'            — JAX Newton, autodiff Hessian via jax.hessian
             'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
             'lbfgs'             — JAXopt L-BFGS (gradient-only, ~5 log_kv/step)
-            'cpu_legacy'        — legacy NumPy/SciPy solver (scipy.kve, warm-start),
-                                  runs on CPU. Fast for the 3D GIG problem; avoids
-                                  GPU dispatch overhead for this scalar computation.
+            'cpu'               — scipy L-BFGS with CPU Bessel ratios (no JAX dispatch)
         scan_length : fixed Newton iteration count for the two Newton solvers
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
@@ -302,12 +300,9 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                     bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
                     maxiter=500, tol=tol,
                 )
-            elif solver == "cpu_legacy":
-                theta_scaled = _solve_cpu_legacy(eta_scaled, theta0_scaled, tol)
             else:
                 raise ValueError(f"Unknown solver: {solver!r}. "
-                                 "Choose 'newton', 'newton_analytical', 'lbfgs', "
-                                 "'cpu', or 'cpu_legacy'.")
+                                 "Choose 'newton', 'newton_analytical', 'lbfgs', or 'cpu'.")
         else:
             # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
@@ -398,7 +393,6 @@ def _log_partition_gig_static(theta: jax.Array) -> jax.Array:
 # ---------------------------------------------------------------------------
 # GIG analytical gradient and Hessian (7 log_kv calls per step)
 # ---------------------------------------------------------------------------
-
 
 def _gig_bessel_quantities(p: jax.Array, z: jax.Array):
     """Compute log K_v and its first/second derivatives at order p, argument z.
@@ -511,26 +505,6 @@ def _cpu_objective_and_grad(theta_np, eta_np):
     eta_hat = np.asarray(gig_tmp._expectation_params_cpu())
     grad = eta_hat - eta_np
     return obj, grad
-
-
-def _solve_cpu_legacy(
-    eta: jax.Array,
-    theta0: jax.Array,
-    tol: float,
-) -> jax.Array:
-    """Legacy CPU solver via normix_numpy (scipy.special.kve)."""
-    import numpy as np
-    from normix_numpy.distributions.univariate.generalized_inverse_gaussian import (
-        GeneralizedInverseGaussian as LegacyGIG,
-    )
-
-    eta_np = np.asarray(eta, dtype=np.float64)
-    theta0_np = np.asarray(theta0, dtype=np.float64)
-
-    legacy = LegacyGIG()
-    theta_np = legacy._expectation_to_natural(eta_np, theta0=theta0_np)
-
-    return jnp.asarray(theta_np, dtype=jnp.float64)
 
 
 def _initial_guesses(eta_scaled: jax.Array) -> list:

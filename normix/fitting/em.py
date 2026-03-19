@@ -30,7 +30,7 @@ class BatchEMFitter(eqx.Module):
         'jax' (default): jax.vmap over conditional_expectations.
         'cpu': quad forms in JAX + Bessel on CPU (faster for large N).
     m_step_solver : solver for GIG η→θ (used by GH and similar models).
-        'newton' (default), 'newton_analytical', 'lbfgs', 'cpu', 'cpu_legacy'.
+        'newton' (default), 'newton_analytical', 'lbfgs', 'cpu'.
         'cpu' is the recommended fast solver for the EM hot path.
     """
 
