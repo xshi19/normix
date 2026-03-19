@@ -36,7 +36,8 @@ class Gamma(ExponentialFamily):
     # Exponential family interface
     # ------------------------------------------------------------------
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         alpha = theta[0] + 1.0        # α = θ₁ + 1
         beta = -theta[1]              # β = −θ₂
         return jax.scipy.special.gammaln(alpha) - alpha * jnp.log(beta)
@@ -44,11 +45,13 @@ class Gamma(ExponentialFamily):
     def natural_params(self) -> jax.Array:
         return jnp.array([self.alpha - 1.0, -self.beta])
 
-    def sufficient_statistics(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def sufficient_statistics(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jnp.array([jnp.log(x), x])
 
-    def log_base_measure(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def log_base_measure(x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
     def expectation_params(self) -> jax.Array:
@@ -123,9 +126,6 @@ class Gamma(ExponentialFamily):
         eta_hat = jnp.array([jnp.mean(jnp.log(X)), jnp.mean(X)])
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
-    @classmethod
-    def _dummy_instance(cls) -> "Gamma":
-        return cls(alpha=jnp.ones(()), beta=jnp.ones(()))
 
 
 def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:

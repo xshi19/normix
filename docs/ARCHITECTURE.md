@@ -163,7 +163,7 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 - `solver='lbfgs'`: JAXopt L-BFGS. Requires `theta0`.
 - No `theta0`: multi-start `scipy.optimize.minimize` with `jax.grad`-computed gradient.
 
-The general solver infrastructure lives in `fitting/solvers.py` (`solve_newton_scan`, `solve_lbfgs`, `solve_scipy_multistart`, `solve_cpu_lbfgs`), reusable for any `ExponentialFamily` subclass.
+The general solver infrastructure lives in `fitting/solvers.py` (`solve_bregman`, `solve_bregman_multistart`), reusable for any `ExponentialFamily` subclass.
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 

@@ -45,20 +45,23 @@ class ExponentialFamily(eqx.Module):
     # Abstract interface — subclasses implement these
     # ------------------------------------------------------------------
 
+    @staticmethod
     @abc.abstractmethod
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         """ψ(θ) — single source of truth for the log-partition function."""
 
     @abc.abstractmethod
     def natural_params(self) -> jax.Array:
         """θ from stored classical parameters."""
 
+    @staticmethod
     @abc.abstractmethod
-    def sufficient_statistics(self, x: jax.Array) -> jax.Array:
+    def sufficient_statistics(x: jax.Array) -> jax.Array:
         """t(x) for a *single* unbatched observation."""
 
+    @staticmethod
     @abc.abstractmethod
-    def log_base_measure(self, x: jax.Array) -> jax.Array:
+    def log_base_measure(x: jax.Array) -> jax.Array:
         """log h(x) for a *single* unbatched observation."""
 
     # ------------------------------------------------------------------
@@ -67,22 +70,26 @@ class ExponentialFamily(eqx.Module):
 
     def log_partition(self) -> jax.Array:
         """ψ(θ) at current parameters."""
-        return self._log_partition_from_theta(self.natural_params())
+        f = type(self)._log_partition_from_theta
+        return f(self.natural_params())
 
     def expectation_params(self) -> jax.Array:
         """η = ∇ψ(θ) via jax.grad."""
-        return jax.grad(self._log_partition_from_theta)(self.natural_params())
+        f = type(self)._log_partition_from_theta
+        return jax.grad(f)(self.natural_params())
 
     def fisher_information(self) -> jax.Array:
         """I(θ) = ∇²ψ(θ) via jax.hessian."""
-        return jax.hessian(self._log_partition_from_theta)(self.natural_params())
+        f = type(self)._log_partition_from_theta
+        return jax.hessian(f)(self.natural_params())
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         """log p(x|θ) = log h(x) + θᵀt(x) − ψ(θ), single observation."""
+        cls = type(self)
         theta = self.natural_params()
-        return (self.log_base_measure(x)
-                + jnp.dot(self.sufficient_statistics(x), theta)
-                - self._log_partition_from_theta(theta))
+        return (cls.log_base_measure(x)
+                + jnp.dot(cls.sufficient_statistics(x), theta)
+                - cls._log_partition_from_theta(theta))
 
     def pdf(self, x: jax.Array) -> jax.Array:
         """p(x|θ), single observation. Batch via jax.vmap."""
@@ -128,8 +135,7 @@ class ExponentialFamily(eqx.Module):
         Minimising over θ yields ∇ψ(θ*) = η, i.e. the natural parameters
         corresponding to expectation parameters η.
         """
-        dummy = cls._dummy_instance()
-        return dummy._log_partition_from_theta(theta) - jnp.dot(theta, eta)
+        return cls._log_partition_from_theta(theta) - jnp.dot(theta, eta)
 
     @classmethod
     def from_expectation(
@@ -159,8 +165,7 @@ class ExponentialFamily(eqx.Module):
         if theta0 is None:
             theta0 = cls._init_theta_from_eta(eta)
 
-        dummy = cls._dummy_instance()
-        f = dummy._log_partition_from_theta
+        f = cls._log_partition_from_theta
 
         # Convert _theta_bounds() tuple-of-arrays to list of (lo, hi) tuples
         jax_bounds = cls._theta_bounds()
@@ -199,9 +204,7 @@ class ExponentialFamily(eqx.Module):
         tol : convergence tolerance for the η→θ solver
         """
         X = jnp.asarray(X, dtype=jnp.float64)
-        dummy = cls._dummy_instance()
-        t_fn = lambda x: dummy.sufficient_statistics(x)
-        stats = jax.vmap(t_fn)(X)   # (n, dim_t)
+        stats = jax.vmap(cls.sufficient_statistics)(X)   # (n, dim_t)
         eta_hat = jnp.mean(stats, axis=0)
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
@@ -221,13 +224,3 @@ class ExponentialFamily(eqx.Module):
     def _init_theta_from_eta(cls, eta: jax.Array) -> jax.Array:
         """Initial θ guess from η.  Default: zero vector. Override in subclasses."""
         return jnp.zeros_like(eta)
-
-    @classmethod
-    def _dummy_instance(cls) -> "ExponentialFamily":
-        """
-        Return a dummy instance for calling instance methods (e.g. sufficient_statistics)
-        without concrete parameters.  Subclasses may override if needed.
-        """
-        raise NotImplementedError(
-            f"{cls.__name__}._dummy_instance — override or use fit_mle with a real instance"
-        )

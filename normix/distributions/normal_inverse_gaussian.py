@@ -46,11 +46,10 @@ class JointNormalInverseGaussian(JointNormalMixture):
 
     def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
         from normix.distributions.inverse_gaussian import InverseGaussian
-        dummy = InverseGaussian(mu=jnp.ones(()), lam=jnp.ones(()))
         lam_p = b_eff     # b = lam
         mu_p = jnp.sqrt(b_eff / a_eff)
         theta = jnp.array([-lam_p / (2.0 * mu_p**2), -lam_p / 2.0])
-        return dummy._log_partition_from_theta(theta)
+        return InverseGaussian._log_partition_from_theta(theta)
 
     def _compute_posterior_expectations(
         self, x: jax.Array
@@ -97,14 +96,10 @@ class JointNormalInverseGaussian(JointNormalMixture):
         )
         return j.natural_params()
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        a_ig = self.lam / (self.mu_ig**2)
-        dummy = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=jnp.array(-0.5), a=a_ig, b=self.lam,
-        )
-        return dummy._log_partition_from_theta(theta)
+        return JointGeneralizedHyperbolic._log_partition_from_theta(theta)
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, mu_ig, lam):
@@ -118,11 +113,6 @@ class JointNormalInverseGaussian(JointNormalMixture):
     def from_natural(cls, theta):
         raise NotImplementedError("Use from_classical or m_step.")
 
-    @classmethod
-    def _dummy_instance(cls):
-        d = 1
-        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L_Sigma=jnp.eye(d),
-                   mu_ig=jnp.ones(()), lam=jnp.ones(()))
 
 
 class NormalInverseGaussian(NormalMixture):

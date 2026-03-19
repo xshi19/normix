@@ -196,13 +196,13 @@ class JointNormalMixture(ExponentialFamily):
     # ExponentialFamily abstract methods
     # ------------------------------------------------------------------
 
-    def sufficient_statistics(self, xy: jax.Array) -> jax.Array:
+    @staticmethod
+    def sufficient_statistics(xy: jax.Array) -> jax.Array:
         """
         t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]
-        Input: concatenated [x (d,), y (1,)] or we expect separate convention.
-        Actually for JointNormalMixture, we use a flat vector [x..., y].
+        Input: flat vector [x..., y] where x is d-dimensional.
         """
-        d = self.d
+        d = xy.shape[0] - 1
         x = xy[:d]
         y = xy[d]
         return jnp.concatenate([
@@ -212,9 +212,9 @@ class JointNormalMixture(ExponentialFamily):
             jnp.outer(x, x).ravel() / y,
         ])
 
-    def log_base_measure(self, xy: jax.Array) -> jax.Array:
-        d = self.d
-        x = xy[:d]
+    @staticmethod
+    def log_base_measure(xy: jax.Array) -> jax.Array:
+        d = xy.shape[0] - 1
         y = xy[d]
         return jnp.where(
             y > 0,

@@ -45,11 +45,10 @@ class JointNormalInverseGamma(JointNormalMixture):
 
     def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
         from normix.distributions.inverse_gamma import InverseGamma
-        dummy = InverseGamma(alpha=jnp.ones(()), beta=jnp.ones(()))
         alpha_ig = -p_eff
         beta_ig = b_eff / 2.0
         theta = jnp.array([-beta_ig, -(alpha_ig + 1.0)])
-        return dummy._log_partition_from_theta(theta)
+        return InverseGamma._log_partition_from_theta(theta)
 
     def _compute_posterior_expectations(
         self, x: jax.Array
@@ -90,13 +89,10 @@ class JointNormalInverseGamma(JointNormalMixture):
         )
         return j.natural_params()
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        dummy = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=-self.alpha, a=jnp.array(LOG_EPS), b=2.0 * self.beta,
-        )
-        return dummy._log_partition_from_theta(theta)
+        return JointGeneralizedHyperbolic._log_partition_from_theta(theta)
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
@@ -110,11 +106,6 @@ class JointNormalInverseGamma(JointNormalMixture):
     def from_natural(cls, theta):
         raise NotImplementedError("Use from_classical or m_step.")
 
-    @classmethod
-    def _dummy_instance(cls):
-        d = 1
-        return cls(mu=jnp.zeros(d), gamma=jnp.zeros(d), L_Sigma=jnp.eye(d),
-                   alpha=jnp.ones(()), beta=jnp.ones(()))
 
 
 class NormalInverseGamma(NormalMixture):

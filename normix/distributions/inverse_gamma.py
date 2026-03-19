@@ -36,7 +36,8 @@ class InverseGamma(ExponentialFamily):
     # Exponential family interface
     # ------------------------------------------------------------------
 
-    def _log_partition_from_theta(self, theta: jax.Array) -> jax.Array:
+    @staticmethod
+    def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
         # α = -θ₂-1,  β = θ₁
         alpha = -theta[1] - 1.0
         beta = theta[0]
@@ -46,11 +47,13 @@ class InverseGamma(ExponentialFamily):
         # θ = [β, -(α+1)]
         return jnp.array([self.beta, -(self.alpha + 1.0)])
 
-    def sufficient_statistics(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def sufficient_statistics(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jnp.array([-1.0 / x, jnp.log(x)])
 
-    def log_base_measure(self, x: jax.Array) -> jax.Array:
+    @staticmethod
+    def log_base_measure(x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
     def expectation_params(self) -> jax.Array:
@@ -124,9 +127,6 @@ class InverseGamma(ExponentialFamily):
         eta_hat = jnp.array([jnp.mean(-1.0 / X), jnp.mean(jnp.log(X))])
         return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
 
-    @classmethod
-    def _dummy_instance(cls) -> "InverseGamma":
-        return cls(alpha=jnp.ones(()), beta=jnp.ones(()))
 
 
 def _newton_digamma_ig(target: jax.Array, n_iter: int = 50) -> jax.Array:
