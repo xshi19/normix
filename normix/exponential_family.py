@@ -7,15 +7,31 @@ Subclasses implement four abstract methods:
   sufficient_statistics(x)         → 1-D array t(x)
   log_base_measure(x)              → scalar
 
+The Log-Partition Triad
+-----------------------
+Each subclass gets six derived classmethods, grouped as three pairs:
+
+    JAX (JIT-able)                   CPU (numpy/scipy)
+    ──────────────                   ─────────────────
+    _log_partition_from_theta        _log_partition_cpu
+    _grad_log_partition              _grad_log_partition_cpu
+    _hessian_log_partition           _hessian_log_partition_cpu
+
+Tier 1 (_log_partition_from_theta) is abstract; all others have defaults.
+Tier 2 (JAX grad/hessian) defaults to jax.grad / jax.hessian; subclasses
+  override with analytical formulas when available.
+Tier 3 (CPU) defaults to wrapping the JAX versions; Bessel-dependent
+  distributions (GIG) override with native numpy/scipy implementations.
+
 Everything else is derived automatically:
   log_partition()       = ψ(θ)
-  expectation_params()  = ∇ψ(θ)   via jax.grad
-  fisher_information()  = ∇²ψ(θ)  via jax.hessian
+  expectation_params()  = ∇ψ(θ)   via _grad_log_partition
+  fisher_information()  = ∇²ψ(θ)  via _hessian_log_partition
   log_prob(x)           = log h(x) + t(x)·θ − ψ(θ)
 
 Constructors:
   from_natural(theta)     → subclass instance
-  from_expectation(eta)   → solved via jaxopt.LBFGSB
+  from_expectation(eta)   → solved via solve_bregman
   fit_mle(X)              → from_expectation(mean t(X))
 """
 from __future__ import annotations
@@ -42,7 +58,7 @@ class ExponentialFamily(eqx.Module):
     """
 
     # ------------------------------------------------------------------
-    # Abstract interface — subclasses implement these
+    # Tier 1: Abstract (subclass MUST implement)
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -65,23 +81,74 @@ class ExponentialFamily(eqx.Module):
         """log h(x) for a *single* unbatched observation."""
 
     # ------------------------------------------------------------------
-    # Derived quantities — automatic via JAX autodiff
+    # Tier 2: JAX grad & Hessian (override with analytical formulas)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇ψ(θ). Default: jax.grad."""
+        return jax.grad(cls._log_partition_from_theta)(theta)
+
+    @classmethod
+    def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇²ψ(θ) = I(θ). Default: jax.hessian."""
+        return jax.hessian(cls._log_partition_from_theta)(theta)
+
+    # ------------------------------------------------------------------
+    # Tier 3: CPU versions (override with native numpy/scipy for Bessel)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _log_partition_cpu(cls, theta) -> float:
+        """ψ(θ) on CPU. Default: wraps JAX version."""
+        return float(cls._log_partition_from_theta(
+            jnp.asarray(theta, dtype=jnp.float64)))
+
+    @classmethod
+    def _grad_log_partition_cpu(cls, theta) -> np.ndarray:
+        """∇ψ(θ) on CPU. Default: wraps JAX grad."""
+        return np.asarray(cls._grad_log_partition(
+            jnp.asarray(theta, dtype=jnp.float64)))
+
+    @classmethod
+    def _hessian_log_partition_cpu(cls, theta) -> np.ndarray:
+        """∇²ψ(θ) on CPU. Default: wraps JAX hessian."""
+        return np.asarray(cls._hessian_log_partition(
+            jnp.asarray(theta, dtype=jnp.float64)))
+
+    # ------------------------------------------------------------------
+    # Derived quantities — via triad
     # ------------------------------------------------------------------
 
     def log_partition(self) -> jax.Array:
         """ψ(θ) at current parameters."""
-        f = type(self)._log_partition_from_theta
-        return f(self.natural_params())
+        return type(self)._log_partition_from_theta(self.natural_params())
 
-    def expectation_params(self) -> jax.Array:
-        """η = ∇ψ(θ) via jax.grad."""
-        f = type(self)._log_partition_from_theta
-        return jax.grad(f)(self.natural_params())
+    def expectation_params(self, backend: str = 'jax') -> jax.Array:
+        """η = ∇ψ(θ).
 
-    def fisher_information(self) -> jax.Array:
-        """I(θ) = ∇²ψ(θ) via jax.hessian."""
-        f = type(self)._log_partition_from_theta
-        return jax.hessian(f)(self.natural_params())
+        Parameters
+        ----------
+        backend : 'jax' (default, JIT-able) or 'cpu' (numpy/scipy)
+        """
+        theta = self.natural_params()
+        if backend == 'cpu':
+            return jnp.asarray(
+                type(self)._grad_log_partition_cpu(np.asarray(theta)))
+        return type(self)._grad_log_partition(theta)
+
+    def fisher_information(self, backend: str = 'jax') -> jax.Array:
+        """I(θ) = ∇²ψ(θ).
+
+        Parameters
+        ----------
+        backend : 'jax' (default, JIT-able) or 'cpu' (numpy/scipy)
+        """
+        theta = self.natural_params()
+        if backend == 'cpu':
+            return jnp.asarray(
+                type(self)._hessian_log_partition_cpu(np.asarray(theta)))
+        return type(self)._hessian_log_partition(theta)
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         """log p(x|θ) = log h(x) + θᵀt(x) − ψ(θ), single observation."""
@@ -165,9 +232,6 @@ class ExponentialFamily(eqx.Module):
         if theta0 is None:
             theta0 = cls._init_theta_from_eta(eta)
 
-        f = cls._log_partition_from_theta
-
-        # Convert _theta_bounds() tuple-of-arrays to list of (lo, hi) tuples
         jax_bounds = cls._theta_bounds()
         if jax_bounds is not None:
             lower, upper = jax_bounds
@@ -175,10 +239,20 @@ class ExponentialFamily(eqx.Module):
         else:
             bounds = None
 
+        if backend == 'cpu':
+            f = cls._log_partition_cpu
+            grad_fn = cls._grad_log_partition_cpu
+            hess_fn = cls._hessian_log_partition_cpu
+        else:
+            f = cls._log_partition_from_theta
+            grad_fn = cls._grad_log_partition
+            hess_fn = cls._hessian_log_partition
+
         result = solve_bregman(
             f, eta, theta0,
             backend=backend, method=method,
             bounds=bounds, max_steps=maxiter, tol=tol,
+            grad_fn=grad_fn, hess_fn=hess_fn,
         )
         return cls.from_natural(result.theta)
 

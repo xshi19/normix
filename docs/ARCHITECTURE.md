@@ -44,11 +44,38 @@ Every distribution subclasses `ExponentialFamily(eqx.Module)` and implements fou
 | `sufficient_statistics(x)` | Compute $t(x)$ for a single observation |
 | `log_base_measure(x)` | Compute $\log h(x)$ |
 
-Everything else is derived automatically via JAX autodiff:
+### The Log-Partition Triad
+
+Every distribution gets six derived classmethods, organised as three pairs:
+
+```
+                     JAX (JIT-able)                  CPU (numpy/scipy)
+                     ─────────────                   ─────────────────
+log-partition        _log_partition_from_theta        _log_partition_cpu
+gradient             _grad_log_partition              _grad_log_partition_cpu
+Hessian              _hessian_log_partition           _hessian_log_partition_cpu
+```
+
+**Tier 1** (`_log_partition_from_theta`) is abstract — subclasses must implement it.
+
+**Tier 2** (JAX grad/Hessian) defaults to `jax.grad` / `jax.hessian`; subclasses override with analytical formulas when available.
+
+**Tier 3** (CPU) defaults to wrapping the JAX versions; Bessel-dependent distributions (GIG) override with native numpy/scipy implementations.
+
+| Method | Gamma | InverseGamma | InverseGaussian | GIG |
+|---|---|---|---|---|
+| `_log_partition_from_theta` | ✓ | ✓ | ✓ | ✓ |
+| `_grad_log_partition` | analytical | analytical | analytical | inherits (`jax.grad`) |
+| `_hessian_log_partition` | analytical | analytical | analytical | analytical (7-Bessel) |
+| `_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
+| `_grad_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
+| `_hessian_log_partition_cpu` | inherits | inherits | inherits | central FD on CPU ψ |
+
+Everything else is derived automatically:
 
 - `log_partition()` = `_log_partition_from_theta(natural_params())`
-- `expectation_params()` = `jax.grad(_log_partition_from_theta)(θ)` → $\eta = \nabla\psi(\theta)$
-- `fisher_information()` = `jax.hessian(_log_partition_from_theta)(θ)` → $I(\theta) = \nabla^2\psi(\theta)$
+- `expectation_params(backend='jax'|'cpu')` = `_grad_log_partition(θ)` → $\eta = \nabla\psi(\theta)$
+- `fisher_information(backend='jax'|'cpu')` = `_hessian_log_partition(θ)` → $I(\theta) = \nabla^2\psi(\theta)$
 - `log_prob(x)` = `log_base_measure(x) + t(x)·θ − ψ(θ)`
 - `pdf(x)` = `exp(log_prob(x))`
 - `cdf(x)` — analytical where available (Gamma, InverseGamma, InverseGaussian)
@@ -61,9 +88,9 @@ Everything else is derived automatically via JAX autodiff:
 classical (α, β, μ, L_Sigma, ...)
     ↕  from_classical / natural_params
 natural θ
-    ↕  from_natural / expectation_params (jax.grad)
+    ↕  from_natural / expectation_params (via _grad_log_partition)
 expectation η = E[t(X)]
-    ↕  from_expectation(eta, *, theta0, maxiter, tol)
+    ↕  from_expectation(eta, *, backend, method, theta0, maxiter, tol)
          fit_mle(X, *, theta0, maxiter, tol)
 ```
 
@@ -132,17 +159,18 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 ### CPU Versions for Bessel-Dependent Functions
 
-**Any function that calls `log_kv` must provide a CPU variant** (or accept a `backend` parameter) so that the CPU solver path (`solve_bregman(backend='cpu')`) can avoid JAX dispatch entirely.
+**Any function that calls `log_kv` must provide a CPU variant** via the triad so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely.
 
-The pattern:
+The triad classmethods provide this automatically:
 
-| JAX version (JIT-able) | CPU version (numpy + scipy) | Used by |
+| JAX (JIT-able) | CPU (numpy + scipy) | Used by |
 |---|---|---|
-| `GIG._log_partition_from_theta(theta)` | `_log_partition_gig_cpu(theta)` | `solve_bregman(backend='cpu')` |
-| `GIG.expectation_params(backend='jax')` | `GIG._expectation_params_cpu()` | EM E-step, `_gig_cpu_grad` |
+| `GIG._log_partition_from_theta(theta)` | `GIG._log_partition_cpu(theta)` | `solve_bregman(backend='cpu')` |
+| `GIG._grad_log_partition(theta)` | `GIG._grad_log_partition_cpu(theta)` | EM E-step, CPU L-BFGS-B |
+| `GIG._hessian_log_partition(theta)` | `GIG._hessian_log_partition_cpu(theta)` | CPU Newton solver |
 | `log_kv(v, z, backend='jax')` | `log_kv(v, z, backend='cpu')` | All of the above |
 
-When adding new functions that call `log_kv`, always provide a CPU-side version that uses `log_kv(backend='cpu')` and numpy operations. This ensures the function can be passed as `f` or `grad_fn` to `solve_bregman(backend='cpu')` without unnecessary JAX-numpy conversions.
+When adding new distributions that call `log_kv`, override the Tier 3 CPU classmethods with implementations that use `log_kv(backend='cpu')` and numpy operations. Distributions that do not call `log_kv` inherit the default CPU wrappers (which call the JAX versions) at no additional cost.
 
 ## Numerical Constants (`utils/constants.py`)
 
@@ -172,10 +200,11 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 
 **Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
 - `backend='cpu', method='lbfgs'` (default for EM): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem. Requires `theta0`.
-- `backend='jax', method='newton'`: JAX Newton via `lax.scan`, autodiff Hessian. Requires `theta0`.
-- `backend='jax', method='newton', analytical_hessian=True`: JAX Newton with 7-Bessel analytical Hessian.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian). Requires `theta0`.
 - `backend='jax', method='lbfgs'`: JAXopt L-BFGS. Requires `theta0`.
-- No `theta0`: multi-start CPU solver with CPU gradient and CPU log-partition.
+- No `theta0`: multi-start CPU solver using `GIG._log_partition_cpu` and `GIG._grad_log_partition_cpu`.
+
+The solver passes `grad_fn` and `hess_fn` (both in θ-space) from the triad. The solver applies the φ↔θ chain rule internally via `jax.jacobian(to_theta)`, so distributions never need to know about reparametrization.
 
 The general solver infrastructure lives in `fitting/solvers.py` (`solve_bregman`, `solve_bregman_multistart`), reusable for any `ExponentialFamily` subclass.
 

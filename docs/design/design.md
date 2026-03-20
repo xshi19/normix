@@ -70,34 +70,44 @@ Three parametrizations, all derived from one function:
 
 ```python
 class ExponentialFamily(eqx.Module):
-    # Subclass implements (all pure, unbatched):
+    # Tier 1 — Subclass implements (pure, unbatched):
     @abstractmethod
-    def _log_partition_from_theta(self, theta: Array) -> Array: ...
+    def _log_partition_from_theta(theta: Array) -> Array: ...
     @abstractmethod
     def natural_params(self) -> Array: ...
     @abstractmethod
-    def sufficient_statistics(self, x: Array) -> Array: ...
+    def sufficient_statistics(x: Array) -> Array: ...
     @abstractmethod
-    def log_base_measure(self, x: Array) -> Array: ...
+    def log_base_measure(x: Array) -> Array: ...
 
-    # Derived automatically via JAX autodiff:
-    def expectation_params(self) -> Array:
-        return jax.grad(self._log_partition_from_theta)(self.natural_params())
-    def fisher_information(self) -> Array:
-        return jax.hessian(self._log_partition_from_theta)(self.natural_params())
-    def log_prob(self, x: Array) -> Array:
-        theta = self.natural_params()
-        return (self.log_base_measure(x)
-                + jnp.dot(self.sufficient_statistics(x), theta)
-                - self._log_partition_from_theta(theta))
+    # Tier 2 — JAX grad/Hessian (override for analytical formulas):
+    @classmethod
+    def _grad_log_partition(cls, theta: Array) -> Array:
+        return jax.grad(cls._log_partition_from_theta)(theta)
+    @classmethod
+    def _hessian_log_partition(cls, theta: Array) -> Array:
+        return jax.hessian(cls._log_partition_from_theta)(theta)
+
+    # Tier 3 — CPU versions (override for scipy/Bessel-heavy distributions):
+    @classmethod
+    def _log_partition_cpu(cls, theta) -> float: ...       # wraps JAX
+    @classmethod
+    def _grad_log_partition_cpu(cls, theta) -> ndarray: ...  # wraps JAX
+    @classmethod
+    def _hessian_log_partition_cpu(cls, theta) -> ndarray: ...  # wraps JAX
+
+    # Derived automatically via triad:
+    def expectation_params(self, backend='jax') -> Array: ...
+    def fisher_information(self, backend='jax') -> Array: ...
+    def log_prob(self, x: Array) -> Array: ...
 ```
 
-Every derived quantity comes from differentiating `_log_partition_from_theta`. No separate `_natural_to_expectation` unless the analytical form is both faster **and** registered via `custom_jvp`.
+Every derived quantity comes from differentiating `_log_partition_from_theta`. The triad (`_grad_log_partition`, `_hessian_log_partition` plus CPU variants) separates the mathematical formula from the evaluation backend, enabling the solver to work in both JAX and CPU modes without distribution-specific knowledge.
 
 **Three constructors:**
 - `from_classical(...)` — from shape/rate/mean/etc. (readable English names)
 - `from_natural(theta)` — from natural parameters θ
-- `from_expectation(eta, *, theta0, maxiter, tol)` — solves ∇ψ(θ)=η via Bregman divergence minimisation
+- `from_expectation(eta, *, backend, method, theta0, maxiter, tol)` — solves ∇ψ(θ)=η via Bregman divergence minimisation; passes `grad_fn`/`hess_fn` from triad to solver
 - `fit_mle(X, *, theta0, maxiter, tol)` — MLE via exponential family identity: η̂ = mean_i t(xᵢ)
 
 **Bregman divergence:**  `bregman_divergence(theta, eta)` = ψ(θ) − θ·η. Minimising over θ gives ∇ψ(θ*) = η. Available as a class method on all `ExponentialFamily` subclasses and as the universal `fitting.solvers.bregman_objective` for use with any log-partition function.
@@ -180,7 +190,9 @@ Custom JVP via `@jax.custom_jvp`:
 
 ### CPU versions for Bessel-dependent functions
 
-**Design rule:** any function that calls `log_kv` must provide a CPU variant so that the full CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. For example, the GIG log-partition function has a JAX version (`_log_partition_from_theta`, using `log_kv(backend='jax')`) and a CPU version (`_log_partition_gig_cpu`, using `log_kv(backend='cpu')` and numpy). When the CPU solver path uses `grad_fn` (pure CPU gradient), the objective function `f` must also accept numpy arrays — otherwise the solver would need unnecessary JAX-numpy conversions.
+**Design rule:** any distribution that calls `log_kv` must override the Tier 3 CPU triad classmethods so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. The three classmethods to override are `_log_partition_cpu`, `_grad_log_partition_cpu`, and `_hessian_log_partition_cpu` — all accepting and returning numpy arrays.
+
+Distributions that do not call `log_kv` (Gamma, InverseGamma, InverseGaussian) inherit default Tier 3 implementations that simply wrap the JAX versions. This is sufficient since these distributions do not involve expensive JAX-to-numpy conversions in the solver hot path.
 
 See `docs/tech_notes/bessel_implementations_survey.md` and `docs/tech_notes/em_gpu_profiling.md` for benchmarks.
 
@@ -240,7 +252,7 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Base module | `eqx.Module` (not Flax NNX) | Immutable matches math semantics; no mutable state needed |
 | Parametrizations | One class, three constructors | Avoids class explosion; common operations share code |
 | Autodiff | `jax.grad` on `_log_partition_from_theta` | Single source of truth; no sync bugs |
-| Analytical overrides | Only with `custom_jvp` | Keeps autodiff correct at all orders |
+| Analytical overrides | Classmethods `_grad_log_partition`, `_hessian_log_partition` | Separates formula from evaluation; override without affecting autodiff |
 | Unbatched core | `log_prob(x)` for single obs | Clean; batch via `jax.vmap` at call site |
 | Mixture design | Joint + Marginal classes | Joint IS an exponential family; marginal is not |
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
@@ -249,6 +261,8 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Constraints | `jnp.maximum(x, LOG_EPS)` | Simpler than paramax; EM doesn't need grad through constraints |
 | Precision | Float64 throughout | Bessel functions and EM convergence require double precision |
 | Bregman divergence | `fitting/solvers.py` universal solvers | Decouple optimization from distribution math |
+| Solver interface | `grad_fn` + `hess_fn` (θ-space) not phi-space | Distributions provide math primitives; solver handles reparametrization |
 | `jnp.where` in log-partition | Not `lax.cond` | `jnp.where` is vmap-compatible; clamping prevents NaN gradients |
 | Numerical constants | Centralized in `utils/constants.py` | Single source of truth; no scattered magic numbers |
 | Class naming | `GeneralizedInverseGaussian` primary, `GIG` alias | Full name is canonical; short alias for backward compatibility |
+| Module-level functions | Never; use classmethods or staticmethods | Keeps the interface on the class; avoids scattered module globals |

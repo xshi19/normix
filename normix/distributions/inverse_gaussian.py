@@ -8,6 +8,7 @@ Exponential family:
   t(x)  = [x, 1/x]
   θ     = [−λ/(2μ²), −λ/2]   (θ₁ < 0, θ₂ < 0)
   ψ(θ)  = ½log(2π) − ½log(−2θ₂) + √((−2θ₁)(−2θ₂))
+         (the ½log(2π) is absorbed into log h(x) = −½log(2π) − 3/2 log x)
   η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]
 """
 from __future__ import annotations
@@ -32,7 +33,7 @@ class InverseGaussian(ExponentialFamily):
         self.lam = jnp.asarray(lam, dtype=jnp.float64)
 
     # ------------------------------------------------------------------
-    # Exponential family interface
+    # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -61,13 +62,41 @@ class InverseGaussian(ExponentialFamily):
             -jnp.inf,
         )
 
-    def expectation_params(self) -> jax.Array:
+    # ------------------------------------------------------------------
+    # Tier 2: Analytical gradient and Hessian of log-partition
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇ψ(θ) = [E[X], E[1/X]] = [√(b/a), 1/b + √(a/b)].  Analytical."""
+        a = -2.0 * theta[0]   # λ/μ²
+        b = jnp.maximum(-2.0 * theta[1], LOG_EPS)   # λ
+        sqrt_ab = jnp.sqrt(jnp.maximum(a * b, 0.0))
+        return jnp.array([
+            sqrt_ab / jnp.maximum(a, LOG_EPS),       # E[X] = μ = √(b/a)
+            1.0 / b + jnp.sqrt(jnp.maximum(a / b, 0.0)),  # E[1/X] = 1/λ + 1/μ
+        ])
+
+    @classmethod
+    def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇²ψ(θ).  Analytical.
+
+        H = [[(b/a)^{1/2}/a,    -1/√(ab)         ],
+             [-1/√(ab),          2/b² + √a/b^{3/2}]]
+
+        In terms of μ, λ:  H = [[μ³/λ, -μ/λ], [-μ/λ, 2/λ² + 1/(μλ)]]
         """
-        η = ∇ψ(θ) = [E[X], E[1/X]] = [μ, 1/μ + 1/λ].
-        
-        Derived analytically: ∂ψ/∂θ₁ = μ, ∂ψ/∂θ₂ = 1/μ + 1/λ.
-        """
-        return jnp.array([self.mu, 1.0 / self.mu + 1.0 / self.lam])
+        a = jnp.maximum(-2.0 * theta[0], LOG_EPS)   # λ/μ²
+        b = jnp.maximum(-2.0 * theta[1], LOG_EPS)   # λ
+        sqrt_ab = jnp.sqrt(a * b)
+        H00 = jnp.sqrt(b / a) / a                             # μ³/λ
+        H01 = -1.0 / jnp.maximum(sqrt_ab, LOG_EPS)           # -μ/λ
+        H11 = 2.0 / b**2 + jnp.sqrt(a) / b**1.5             # 2/λ² + 1/(μλ)
+        return jnp.array([[H00, H01], [H01, H11]])
+
+    # ------------------------------------------------------------------
+    # Moments and sampling
+    # ------------------------------------------------------------------
 
     def mean(self) -> jax.Array:
         return self.mu
@@ -121,17 +150,3 @@ class InverseGaussian(ExponentialFamily):
         mu = jnp.maximum(mu, LOG_EPS)
         lam = jnp.maximum(lam, LOG_EPS)
         return cls(mu=mu, lam=lam)
-
-    @classmethod
-    def fit_mle(
-        cls,
-        X: jax.Array,
-        *,
-        theta0=None,
-        maxiter: int = 500,
-        tol: float = 1e-10,
-    ) -> "InverseGaussian":
-        X = jnp.asarray(X, dtype=jnp.float64)
-        eta_hat = jnp.array([jnp.mean(X), jnp.mean(1.0 / X)])
-        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
-

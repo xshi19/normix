@@ -70,14 +70,39 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 - Bessel functions in `normix/utils/bessel.py`
 - Shared numerical constants in `normix/utils/constants.py`
 
+## Log-Partition Triad
+
+Every `ExponentialFamily` subclass has a **triad** of three classmethods, each with a JAX and a CPU variant:
+
+```
+                     JAX (JIT-able)                  CPU (numpy/scipy)
+                     ─────────────                   ─────────────────
+log-partition        _log_partition_from_theta        _log_partition_cpu
+gradient             _grad_log_partition              _grad_log_partition_cpu
+Hessian              _hessian_log_partition           _hessian_log_partition_cpu
+```
+
+**Tier 1** (`_log_partition_from_theta`) is abstract — every subclass must implement it.
+
+**Tier 2** (JAX grad/Hessian) defaults to `jax.grad`/`jax.hessian`; override with analytical formulas when available (e.g. Gamma uses digamma/trigamma).
+
+**Tier 3** (CPU) defaults to wrapping Tier 2; override with native numpy/scipy only when the JAX version calls `log_kv` (i.e. GIG). Distributions without Bessel functions never need to override Tier 3.
+
+**Rules:**
+- The triad methods are `@classmethod` (not `@staticmethod`) because the default Tier 2 and Tier 3 implementations reference `cls` to resolve the subclass's `_log_partition_from_theta`.
+- Both `grad_fn` and `hess_fn` passed to the solver operate in **θ-space** only. The solver applies the φ↔θ chain rule internally. Never pass phi-space gradient or Hessian functions from distributions.
+- `expectation_params(backend='jax'|'cpu')` and `fisher_information(backend='jax'|'cpu')` are derived in the parent class from the triad. Do not override these in subclasses.
+- `fit_mle` is a generic parent method (`vmap(sufficient_statistics)` + `from_expectation`). Do not override it in subclasses — any specialisation belongs in `from_expectation`.
+
 ## Code Organization Within a Distribution Class
 
 1. Stored attributes (as `eqx.Module` fields)
-2. `_log_partition_from_theta` (single source of truth)
-3. `natural_params`, `sufficient_statistics`, `log_base_measure`
-4. Constructors: `from_classical`, `from_natural`, `from_expectation`, `fit_mle`
-5. Distribution methods: `log_prob`, `sample`, `mean`, `var`
-6. Conversion helpers (e.g. `to_scipy_params`) — only if needed
+2. Tier 1: `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`
+3. Tier 2: `_grad_log_partition`, `_hessian_log_partition` (if analytical override needed)
+4. Tier 3: `_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu` (if Bessel-dependent)
+5. Moments and sampling: `mean`, `var`, `std`, `cdf`, `rvs`
+6. Constructors: `from_natural`, `from_expectation` (if closed-form or special override needed)
+7. Private staticmethods (e.g. `_initial_guesses`) — GIG-specific multi-start helpers
 
 ## Method Naming
 
@@ -88,8 +113,9 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 
 - If a computation appears in two places, factor it into one shared function
 - No redundant methods, wrappers, or variables
-- Prefer `jax.grad`/`jax.hessian` over separate analytical overrides
-- Analytical overrides only when both (a) faster and (b) registered via `custom_jvp`
+- Prefer the triad defaults (`jax.grad`/`jax.hessian`) over separate analytical overrides unless the gain is meaningful
+- Analytical Tier 2 overrides are worthwhile for closed-form formulas (e.g. digamma for Gamma)
+- Analytical Tier 2 overrides for complex Bessel formulas should be justified by Newton solver use
 - Immutable `eqx.Module` — no mutation, no `_fitted` flags, no `_invalidate_cache()`
 - Parameter updates return a new instance via `eqx.tree_at`
 - Fitter config (`max_iter`, `tol`) is `eqx.field(static=True)`

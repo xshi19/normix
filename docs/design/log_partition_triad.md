@@ -1,7 +1,7 @@
 # Log-Partition Triad: Redesigning the ExponentialFamily–GIG Interface
 
 **Date:** 2026-03-20
-**Status:** Proposal
+**Status:** Implemented (branch: `cursor/log-partition-triad-architecture-a531`)
 **Scope:** `normix/exponential_family.py`, `normix/distributions/generalized_inverse_gaussian.py`,
 `normix/fitting/solvers.py`, and all `ExponentialFamily` subclasses
 

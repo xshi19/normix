@@ -23,10 +23,16 @@ backend='cpu', method='newton'  scipy trust-exact with Hessian
 
 Gradient / Hessian sources
 --------------------------
-If grad_fn=None and backend='cpu':  hybrid — jax.grad compiled → NumPy callbacks
-If grad_fn provided  and backend='cpu':  pure CPU ∇f (e.g. scipy Bessel for GIG)
-If grad_hess_fn provided and backend='jax', method='newton':
-    user-supplied (grad, Hessian) in reparametrised φ-space (skips autodiff)
+grad_fn  : θ → ∇f(θ).  For backend='cpu': pure CPU (numpy) gradient.
+           For backend='jax', method='newton': JAX-traceable ∇ψ(θ).
+           If None with backend='cpu': hybrid — jax.grad compiled → NumPy callbacks.
+hess_fn  : θ → ∇²f(θ).  Required for method='newton'.
+           For backend='cpu': pure CPU (numpy) Hessian.
+           For backend='jax', method='newton': JAX-traceable ∇²ψ(θ).
+           If None with method='newton': jax.hessian of the full objective.
+
+Both grad_fn and hess_fn operate in theta-space only.
+The solver handles all reparameterization internally via the chain rule.
 """
 from __future__ import annotations
 
@@ -82,7 +88,7 @@ def solve_bregman(
     max_steps: int = 500,
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
-    grad_hess_fn: Optional[Callable] = None,
+    hess_fn: Optional[Callable] = None,
 ) -> BregmanResult:
     """Minimise f(θ) − θ·η over θ.
 
@@ -99,12 +105,15 @@ def solve_bregman(
         For backend='cpu': passed directly as scipy bounds.
     max_steps : iteration budget
     tol : convergence tolerance on ‖∇f(θ) − η‖∞
-    grad_fn : θ_np → ∇f(θ) as ndarray, for backend='cpu' only.
-        If None with backend='cpu', falls back to jax.grad compiled
-        gradient (hybrid mode).
-    grad_hess_fn : (phi, eta) → (g_phi, H_phi) in reparametrised φ-space,
-        for backend='jax', method='newton' only.
-        If None, jax.grad and jax.hessian are used.
+    grad_fn : θ → ∇f(θ).
+        For backend='cpu': must accept and return numpy arrays.
+        For backend='jax', method='newton': must be JAX-traceable.
+        If None with backend='cpu': falls back to jax.grad (hybrid mode).
+    hess_fn : θ → ∇²f(θ).
+        Required for method='newton'.
+        For backend='cpu': must accept numpy arrays and return numpy array.
+        For backend='jax', method='newton': must be JAX-traceable.
+        If None with method='newton': jax.hessian of the full objective is used.
 
     Returns
     -------
@@ -116,7 +125,7 @@ def solve_bregman(
     if backend == "jax":
         if method == "newton":
             theta, fun, gn, conv = _jax_newton_raw(
-                f, eta, theta0, bounds, max_steps, tol, grad_hess_fn,
+                f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
             )
             return BregmanResult(
                 theta=theta,
@@ -130,7 +139,7 @@ def solve_bregman(
         else:
             raise ValueError(f"Unknown method {method!r}. Choose 'newton', 'lbfgs', 'bfgs'.")
     elif backend == "cpu":
-        return _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hess_fn)
+        return _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, hess_fn)
     else:
         raise ValueError(f"Unknown backend {backend!r}. Choose 'jax' or 'cpu'.")
 
@@ -146,7 +155,7 @@ def solve_bregman_multistart(
     max_steps: int = 500,
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
-    grad_hess_fn: Optional[Callable] = None,
+    hess_fn: Optional[Callable] = None,
 ) -> BregmanResult:
     """Run solve_bregman from multiple starting points; return the best result.
 
@@ -159,14 +168,14 @@ def solve_bregman_multistart(
     if backend == "jax" and method == "newton":
         return _multistart_jax_newton(
             f, eta, jnp.asarray(theta0_batch, dtype=jnp.float64),
-            bounds, max_steps, tol, grad_hess_fn,
+            bounds, max_steps, tol, grad_fn, hess_fn,
         )
     # For quasi-Newton (jaxopt vmappability uncertain) and CPU: for-loop
     theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
     return _multistart_loop(
         f, eta, theta0_list,
         backend=backend, method=method, bounds=bounds,
-        max_steps=max_steps, tol=tol, grad_fn=grad_fn, grad_hess_fn=grad_hess_fn,
+        max_steps=max_steps, tol=tol, grad_fn=grad_fn, hess_fn=hess_fn,
     )
 
 
@@ -241,9 +250,15 @@ def _jax_newton_raw(
     bounds,
     max_steps: int,
     tol: float,
-    grad_hess_fn,
+    grad_fn,   # theta → ∇ψ(θ), or None
+    hess_fn,   # theta → ∇²ψ(θ), or None
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """Newton in reparametrised φ-space via lax.scan.
+
+    When grad_fn and hess_fn are both provided, the chain rule is applied
+    generically via jax.jacobian(to_theta):
+        g_phi = J^T @ (grad_fn(theta) − eta)
+        H_phi = J^T @ hess_fn(theta) @ J + ∇²[to_theta(phi)·g_theta]
 
     Returns (theta_opt, fun, grad_norm, converged) as JAX arrays —
     all are vmappable.
@@ -255,9 +270,18 @@ def _jax_newton_raw(
         theta = to_theta(phi)
         return f(theta) - jnp.dot(theta, eta)
 
-    if grad_hess_fn is not None:
+    if grad_fn is not None and hess_fn is not None:
         def get_g_H(phi):
-            return grad_hess_fn(phi, eta)
+            theta = to_theta(phi)
+            g_theta = grad_fn(theta) - eta
+            H_theta = hess_fn(theta)
+            J = jax.jacobian(to_theta)(phi)
+            g_phi = J.T @ g_theta
+            # Second-order correction: ∇²[to_theta(phi)·g_theta]
+            def theta_dot_g(p):
+                return jnp.dot(to_theta(p), g_theta)
+            H_phi = J.T @ H_theta @ J + jax.hessian(theta_dot_g)(phi)
+            return g_phi, H_phi
     else:
         _grad = jax.grad(obj)
         _hess = jax.hessian(obj)
@@ -286,11 +310,12 @@ def _jax_newton_raw(
     return theta_opt, final_obj, grad_norms[-1], converged
 
 
-
-def _multistart_jax_newton(f, eta, theta0_batch, bounds, max_steps, tol, grad_hess_fn) -> BregmanResult:
+def _multistart_jax_newton(
+    f, eta, theta0_batch, bounds, max_steps, tol, grad_fn, hess_fn,
+) -> BregmanResult:
     """Parallel multi-start Newton via vmap over (K, dim) starting points."""
     def solve_one(t0):
-        return _jax_newton_raw(f, eta, t0, bounds, max_steps, tol, grad_hess_fn)
+        return _jax_newton_raw(f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn)
 
     all_theta, all_fun, all_gn, all_conv = jax.vmap(solve_one)(theta0_batch)
     best = jnp.argmin(all_fun)
@@ -353,7 +378,9 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
 # CPU backend  (scipy.optimize.minimize)
 # ---------------------------------------------------------------------------
 
-def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hess_fn) -> BregmanResult:
+def _cpu_solve(
+    f, eta, theta0, bounds, max_steps, tol, method, grad_fn, hess_fn,
+) -> BregmanResult:
     """scipy.optimize.minimize for the Bregman divergence.
 
     Two modes depending on whether grad_fn is provided:
@@ -396,11 +423,14 @@ def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hes
         kwargs["bounds"] = bounds
         kwargs["options"]["ftol"] = tol ** 2
     if method == "newton":
-        if grad_hess_fn is None:
-            raise ValueError("method='newton' with backend='cpu' requires grad_hess_fn.")
+        if hess_fn is None:
+            raise ValueError(
+                "method='newton' with backend='cpu' requires hess_fn. "
+                "Provide _hessian_log_partition_cpu or equivalent."
+            )
         def hess_np(theta_np):
-            _, H = grad_hess_fn(np.asarray(theta_np), eta_np)
-            return np.asarray(H, dtype=np.float64)
+            return np.asarray(
+                hess_fn(np.asarray(theta_np, dtype=np.float64)), dtype=np.float64)
         kwargs["hess"] = hess_np
 
     result = minimize(fun_np, theta0_np, method=scipy_method, **kwargs)
@@ -420,7 +450,7 @@ def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hes
 # ---------------------------------------------------------------------------
 
 def _multistart_loop(
-    f, eta, theta0_list, *, backend, method, bounds, max_steps, tol, grad_fn, grad_hess_fn,
+    f, eta, theta0_list, *, backend, method, bounds, max_steps, tol, grad_fn, hess_fn,
 ) -> BregmanResult:
     """Sequential multi-start: try each θ₀ and return the best result."""
     best: Optional[BregmanResult] = None
@@ -430,7 +460,7 @@ def _multistart_loop(
                 f, eta, t0,
                 backend=backend, method=method, bounds=bounds,
                 max_steps=max_steps, tol=tol,
-                grad_fn=grad_fn, grad_hess_fn=grad_hess_fn,
+                grad_fn=grad_fn, hess_fn=hess_fn,
             )
             if best is None or res.fun < best.fun:
                 best = res
@@ -463,5 +493,3 @@ def _backtrack(obj, phi, delta, f0, slope, beta: float = 0.5, c: float = 1e-4):
 
     alpha, _ = jax.lax.while_loop(cond, body, (1.0, 0))
     return alpha
-
-

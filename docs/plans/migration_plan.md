@@ -172,6 +172,19 @@ Keep the current NumPy normix as a subpackage or separate reference for cross-va
 All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate_cache`. Parameters are set at construction. M-step returns a new model via `eqx.tree_at`.
 
 
+## Phase 8: Log-Partition Triad Architecture
+
+**Goal:** Clean up the ExponentialFamily–GIG interface via the "log-partition triad" design.
+**Branch:** `feat/jax-native-bessel-v2` → `cursor/log-partition-triad-architecture-a531`
+**Status:** Implemented (see `docs/design/log_partition_triad.md`)
+
+### 8.1 What was implemented
+- Added triad classmethods to `ExponentialFamily`: `_grad_log_partition`, `_hessian_log_partition` (JAX), `_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu` (CPU)
+- `expectation_params(backend=)` and `fisher_information(backend=)` now use the triad
+- Solver refactored: `grad_hess_fn` (phi-space, combined) replaced by `grad_fn` + `hess_fn` (both θ-space); solver applies chain rule generically
+- Gamma, InverseGamma, InverseGaussian: added analytical `_grad_log_partition` and `_hessian_log_partition`; removed redundant `expectation_params` and `fit_mle` overrides
+- GIG: `_hessian_log_partition` (7-Bessel analytical); moved 6 module-level functions to classmethods/staticmethods; removed `_analytical_grad_hess_phi`, `_cpu_grad_hess_theta`, `_gig_bessel_quantities`, `fisher_information`, `expectation_params`, `fit_mle` overrides
+
 ## Phase 7: CPU Bessel Backend (Performance)
 
 **Goal:** 15× EM speedup via hybrid JAX/CPU execution for Bessel-heavy hot paths.
