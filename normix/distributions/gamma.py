@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import jax
 import jax.numpy as jnp
-import jaxopt
 
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
@@ -33,7 +32,7 @@ class Gamma(ExponentialFamily):
         self.beta = jnp.asarray(beta, dtype=jnp.float64)
 
     # ------------------------------------------------------------------
-    # Exponential family interface
+    # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -54,12 +53,33 @@ class Gamma(ExponentialFamily):
     def log_base_measure(x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
-    def expectation_params(self) -> jax.Array:
-        """Analytical η = [ψ(α)−log β,  α/β]."""
+    # ------------------------------------------------------------------
+    # Tier 2: Analytical gradient and Hessian of log-partition
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇ψ(θ) = [digamma(α) − log β,  α/β].  Analytical."""
+        alpha = theta[0] + 1.0
+        beta = -theta[1]
         return jnp.array([
-            jax.scipy.special.digamma(self.alpha) - jnp.log(self.beta),
-            self.alpha / self.beta,
+            jax.scipy.special.digamma(alpha) - jnp.log(beta),
+            alpha / beta,
         ])
+
+    @classmethod
+    def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇²ψ(θ) = [[trigamma(α), 1/β], [1/β, α/β²]].  Analytical."""
+        alpha = theta[0] + 1.0
+        beta = -theta[1]
+        H00 = jax.scipy.special.polygamma(1, alpha)   # trigamma
+        H01 = 1.0 / beta
+        H11 = alpha / beta ** 2
+        return jnp.array([[H00, H01], [H01, H11]])
+
+    # ------------------------------------------------------------------
+    # Moments and sampling
+    # ------------------------------------------------------------------
 
     def mean(self) -> jax.Array:
         return self.alpha / self.beta
@@ -112,20 +132,6 @@ class Gamma(ExponentialFamily):
         alpha = jnp.maximum(alpha, LOG_EPS)
         beta = jnp.maximum(beta, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
-
-    @classmethod
-    def fit_mle(
-        cls,
-        X: jax.Array,
-        *,
-        theta0=None,
-        maxiter: int = 500,
-        tol: float = 1e-10,
-    ) -> "Gamma":
-        X = jnp.asarray(X, dtype=jnp.float64)
-        eta_hat = jnp.array([jnp.mean(jnp.log(X)), jnp.mean(X)])
-        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
-
 
 
 def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:

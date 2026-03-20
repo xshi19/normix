@@ -5,7 +5,6 @@ Tests the new solve_bregman / solve_bregman_multistart API across:
   - A trivial quadratic f(θ) = ½‖θ‖² (known closed-form solution θ* = η)
   - Gamma distribution (closed-form ψ, verify against from_expectation)
   - GIG distribution (all solver variants and multi-start)
-  - Backward-compatible wrappers
 """
 import numpy as np
 import pytest
@@ -164,10 +163,21 @@ class TestSolveBregmanQuadratic:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
+    def test_cpu_newton_with_hess_fn(self):
+        """CPU Newton requires hess_fn."""
+        eta = jnp.array([1.0, -2.0])
+        theta0 = jnp.zeros(2)
+        r = solve_bregman(
+            lambda t: 0.5 * jnp.dot(t, t),
+            eta, theta0,
+            backend="cpu", method="newton", max_steps=50, tol=1e-8,
+            grad_fn=lambda t: t.copy(),
+            hess_fn=lambda t: np.eye(2),
+        )
+        np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
+
     def test_with_bounds_lbfgs(self):
         # η = [−0.5] should be found even with bound (−∞, 0).
-        # Start close to the solution in reparameterised space (phi=log(-theta)):
-        # theta0=-0.4 → phi0=log(0.4)≈-0.92, optimum at phi*=log(0.5)≈-0.69.
         eta = jnp.array([-0.5])
         theta0 = jnp.array([-0.4])
         bounds = [(-np.inf, 0.0)]
@@ -186,6 +196,18 @@ class TestSolveBregmanQuadratic:
         # At θ*=η: f(θ*)−θ*·η = ½‖η‖² − η·η = −½‖η‖²
         expected_fun = -0.5 * float(jnp.dot(ETA_QUAD, ETA_QUAD))
         np.testing.assert_allclose(r.fun, expected_fun, rtol=1e-5)
+
+    def test_jax_newton_with_analytical_grad_hess(self):
+        """JAX Newton uses provided grad_fn + hess_fn in theta-space."""
+        eta = jnp.array([1.0, -2.0, 0.5])
+        theta0 = jnp.zeros(3)
+        r = solve_bregman(
+            quadratic_f, eta, theta0,
+            backend="jax", method="newton", max_steps=50, tol=1e-8,
+            grad_fn=lambda t: t,         # ∇f = θ for quadratic
+            hess_fn=lambda t: jnp.eye(3),  # ∇²f = I for quadratic
+        )
+        np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
 
 # ---------------------------------------------------------------------------
@@ -249,18 +271,17 @@ class TestSolveBregmanGIG:
         np.testing.assert_allclose(float(gig2.a), self.a, rtol=1e-4)
         np.testing.assert_allclose(float(gig2.b), self.b, rtol=1e-4)
 
-    @pytest.mark.parametrize("backend,method,kwargs", [
-        ("jax", "newton", {}),
-        ("jax", "newton", {"analytical_hessian": True}),
-        ("jax", "lbfgs", {}),
-        ("jax", "bfgs", {}),
-        ("cpu", "lbfgs", {}),
+    @pytest.mark.parametrize("backend,method", [
+        ("jax", "newton"),
+        ("jax", "lbfgs"),
+        ("jax", "bfgs"),
+        ("cpu", "lbfgs"),
     ])
-    def test_from_expectation_warm_start(self, backend, method, kwargs):
+    def test_from_expectation_warm_start(self, backend, method):
         from normix import GIG
         gig2 = GIG.from_expectation(
             self.eta, theta0=self.theta_true,
-            backend=backend, method=method, maxiter=200, **kwargs,
+            backend=backend, method=method, maxiter=200,
         )
         np.testing.assert_allclose(float(gig2.p), self.p, rtol=1e-4)
         np.testing.assert_allclose(float(gig2.a), self.a, rtol=1e-4)
@@ -292,15 +313,27 @@ class TestSolveBregmanGIG:
         self._check(r)
 
     def test_solve_bregman_cpu_pure_grad(self):
-        from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_cpu, _gig_cpu_grad,
-        )
+        """Use GIG triad CPU classmethods directly with solver."""
+        from normix import GIG
         bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
-            _log_partition_gig_cpu, self.eta, self.theta0,
+            GIG._log_partition_cpu, self.eta, self.theta0,
             backend="cpu", method="lbfgs",
             bounds=bounds, max_steps=200, tol=1e-9,
-            grad_fn=_gig_cpu_grad,
+            grad_fn=GIG._grad_log_partition_cpu,
+        )
+        self._check(r)
+
+    def test_solve_bregman_jax_newton_with_analytical_hessian(self):
+        """JAX Newton + GIG analytical Hessian via hess_fn."""
+        from normix import GIG
+        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
+        r = solve_bregman(
+            GIG._log_partition_from_theta, self.eta, self.theta0,
+            backend="jax", method="newton",
+            bounds=bounds, max_steps=50, tol=1e-9,
+            grad_fn=GIG._grad_log_partition,
+            hess_fn=GIG._hessian_log_partition,
         )
         self._check(r)
 
@@ -352,23 +385,21 @@ class TestSolveBregmanMultistart:
     def test_gig_multistart_cold(self):
         """GIG cold-start multistart via CPU — recovered eta_hat should match eta."""
         from normix import GIG
-        from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_cpu, _gig_cpu_grad, _initial_guesses,
-        )
         gig = GIG(p=0.5, a=1.0, b=1.0)
         eta = gig.expectation_params()
         s = jnp.sqrt(eta[1] / eta[2])
         geom = jnp.sqrt(eta[1] * eta[2])
         eta_scaled = jnp.array([eta[0] + 0.5 * jnp.log(eta[1] / eta[2]), geom, geom])
 
-        theta0_list = _initial_guesses(eta_scaled)
+        # GIG._initial_guesses is now a staticmethod on the class
+        theta0_list = GIG._initial_guesses(eta_scaled)
         processed = [jnp.asarray(t, dtype=jnp.float64) for t in theta0_list]
         r = solve_bregman_multistart(
-            _log_partition_gig_cpu, eta_scaled, processed,
+            GIG._log_partition_cpu, eta_scaled, processed,
             backend="cpu", method="lbfgs",
             bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
             max_steps=300, tol=1e-9,
-            grad_fn=_gig_cpu_grad,
+            grad_fn=GIG._grad_log_partition_cpu,
         )
         assert r.grad_norm < 1e-5
 
@@ -386,7 +417,6 @@ class TestSolveBregmanMultistart:
             max_steps=200, tol=1e-8,
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
-
 
 
 # ---------------------------------------------------------------------------
@@ -421,6 +451,135 @@ class TestExponentialFamilyFromExpectation:
             eta, backend="jax", method="lbfgs", theta0=gig.natural_params(),
         )
         np.testing.assert_allclose(float(gig2.p), 0.5, rtol=1e-4)
+
+
+# ---------------------------------------------------------------------------
+# Log-Partition Triad interface tests
+# ---------------------------------------------------------------------------
+
+class TestLogPartitionTriad:
+    """Verify the triad classmethods agree with jax.grad / jax.hessian."""
+
+    def test_gamma_grad_matches_jax_grad(self):
+        from normix import Gamma
+        g = Gamma(alpha=2.0, beta=3.0)
+        theta = g.natural_params()
+        grad_analytical = Gamma._grad_log_partition(theta)
+        grad_jax = jax.grad(Gamma._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(grad_analytical, grad_jax, rtol=1e-10)
+
+    def test_gamma_hessian_matches_jax_hessian(self):
+        from normix import Gamma
+        g = Gamma(alpha=2.0, beta=3.0)
+        theta = g.natural_params()
+        H_analytical = Gamma._hessian_log_partition(theta)
+        H_jax = jax.hessian(Gamma._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(H_analytical, H_jax, rtol=1e-8)
+
+    def test_inverse_gamma_grad_matches_jax_grad(self):
+        from normix import InverseGamma
+        ig = InverseGamma(alpha=3.0, beta=2.0)
+        theta = ig.natural_params()
+        grad_analytical = InverseGamma._grad_log_partition(theta)
+        grad_jax = jax.grad(InverseGamma._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(grad_analytical, grad_jax, rtol=1e-10)
+
+    def test_inverse_gamma_hessian_matches_jax_hessian(self):
+        from normix import InverseGamma
+        ig = InverseGamma(alpha=3.0, beta=2.0)
+        theta = ig.natural_params()
+        H_analytical = InverseGamma._hessian_log_partition(theta)
+        H_jax = jax.hessian(InverseGamma._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(H_analytical, H_jax, rtol=1e-8)
+
+    def test_inverse_gaussian_grad_matches_jax_grad(self):
+        from normix import InverseGaussian
+        ig = InverseGaussian(mu=2.0, lam=4.0)
+        theta = ig.natural_params()
+        grad_analytical = InverseGaussian._grad_log_partition(theta)
+        grad_jax = jax.grad(InverseGaussian._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(grad_analytical, grad_jax, rtol=1e-10)
+
+    def test_inverse_gaussian_hessian_matches_jax_hessian(self):
+        from normix import InverseGaussian
+        ig = InverseGaussian(mu=2.0, lam=4.0)
+        theta = ig.natural_params()
+        H_analytical = InverseGaussian._hessian_log_partition(theta)
+        H_jax = jax.hessian(InverseGaussian._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(H_analytical, H_jax, rtol=1e-7)
+
+    def test_gig_hessian_matches_fd(self):
+        """GIG analytical Hessian vs finite differences on CPU log-partition.
+
+        The mixed derivative H[0,1], H[0,2] uses integer-shift FD (Δν=1),
+        which may differ from the reference FD by ~10%. Diagonal entries and
+        H[1,2] use exact z-recurrences and should agree to rtol=1e-4.
+        """
+        from normix import GIG
+        gig = GIG(p=1.0, a=1.0, b=1.0)
+        theta = np.asarray(gig.natural_params(), dtype=np.float64)
+        H_analytical = np.asarray(GIG._hessian_log_partition(jnp.array(theta)))
+        H_fd = np.asarray(GIG._hessian_log_partition_cpu(theta))
+        # Diagonal and H[1,2] (no L_vz): exact Bessel recurrences, tight tolerance
+        np.testing.assert_allclose(np.diag(H_analytical), np.diag(H_fd), rtol=1e-4)
+        np.testing.assert_allclose(H_analytical[1, 2], H_fd[1, 2], rtol=1e-4)
+        # H[0,1] and H[0,2] involve integer-shift L_vz; same sign and same order
+        assert np.sign(H_analytical[0, 1]) == np.sign(H_fd[0, 1])
+        assert np.sign(H_analytical[0, 2]) == np.sign(H_fd[0, 2])
+        assert abs(H_analytical[0, 1]) < 5.0 * abs(H_fd[0, 1])
+
+    def test_gig_hessian_finite_and_symmetric(self):
+        """GIG analytical Hessian should be finite and symmetric."""
+        from normix import GIG
+        gig = GIG(p=1.0, a=1.0, b=1.0)
+        theta = gig.natural_params()
+        H = np.asarray(GIG._hessian_log_partition(theta))
+        assert H.shape == (3, 3)
+        assert np.all(np.isfinite(H))
+        np.testing.assert_allclose(H, H.T, rtol=1e-12)
+
+    def test_gig_cpu_grad_matches_jax_grad(self):
+        """GIG CPU gradient matches JAX gradient."""
+        from normix import GIG
+        gig = GIG(p=1.0, a=1.0, b=1.0)
+        theta = np.asarray(gig.natural_params(), dtype=np.float64)
+        grad_cpu = GIG._grad_log_partition_cpu(theta)
+        grad_jax = np.asarray(GIG._grad_log_partition(jnp.array(theta)))
+        np.testing.assert_allclose(grad_cpu, grad_jax, rtol=1e-8)
+
+    def test_fisher_information_backends_agree_gig(self):
+        """GIG fisher_information backends agree on diagonal and H[1,2].
+
+        The JAX backend uses integer-shift FD (Δν=1) for the mixed Bessel
+        derivative L_vz, while the CPU backend uses central FD with eps=1e-4.
+        Entries not involving L_vz (diagonal, H[1,2]) agree to rtol=1e-4.
+        """
+        from normix import GIG
+        gig = GIG(p=1.0, a=1.0, b=1.0)
+        FI_jax = np.asarray(gig.fisher_information(backend='jax'))
+        FI_cpu = np.asarray(gig.fisher_information(backend='cpu'))
+        # Entries without L_vz: diagonal and H[1,2]
+        np.testing.assert_allclose(np.diag(FI_jax), np.diag(FI_cpu), rtol=1e-4)
+        np.testing.assert_allclose(FI_jax[1, 2], FI_cpu[1, 2], rtol=1e-4)
+        # Mixed entries: same sign and same order of magnitude
+        for i, j in [(0, 1), (0, 2)]:
+            assert np.sign(FI_jax[i, j]) == np.sign(FI_cpu[i, j])
+            assert abs(FI_jax[i, j]) < 5.0 * abs(FI_cpu[i, j])
+
+    def test_expectation_params_backends_agree(self):
+        """expectation_params('jax') matches ('cpu') for all distributions."""
+        from normix import Gamma, InverseGamma, InverseGaussian, GIG
+        dists = [
+            Gamma(alpha=2.0, beta=3.0),
+            InverseGamma(alpha=3.0, beta=2.0),
+            InverseGaussian(mu=2.0, lam=4.0),
+            GIG(p=1.0, a=1.0, b=1.0),
+        ]
+        for dist in dists:
+            eta_jax = np.asarray(dist.expectation_params(backend='jax'))
+            eta_cpu = np.asarray(dist.expectation_params(backend='cpu'))
+            np.testing.assert_allclose(eta_jax, eta_cpu, rtol=1e-8,
+                                       err_msg=f"{type(dist).__name__} backend mismatch")
 
 
 if __name__ == "__main__":

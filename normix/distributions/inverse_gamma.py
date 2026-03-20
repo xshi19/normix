@@ -33,7 +33,7 @@ class InverseGamma(ExponentialFamily):
         self.beta = jnp.asarray(beta, dtype=jnp.float64)
 
     # ------------------------------------------------------------------
-    # Exponential family interface
+    # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -56,12 +56,38 @@ class InverseGamma(ExponentialFamily):
     def log_base_measure(x: jax.Array) -> jax.Array:
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
-    def expectation_params(self) -> jax.Array:
-        """Analytical η = [-α/β,  log β − ψ(α)]."""
+    # ------------------------------------------------------------------
+    # Tier 2: Analytical gradient and Hessian of log-partition
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇ψ(θ) = [-α/β,  log β − digamma(α)].  Analytical."""
+        alpha = -theta[1] - 1.0
+        beta = theta[0]
         return jnp.array([
-            -self.alpha / self.beta,
-            jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha),
+            -alpha / beta,
+            jnp.log(beta) - jax.scipy.special.digamma(alpha),
         ])
+
+    @classmethod
+    def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇²ψ(θ) = [[α/β², 1/β], [1/β, trigamma(α)]].  Analytical.
+
+        H[0,0] = ∂²ψ/∂θ₁²  = α/β²
+        H[0,1] = ∂²ψ/∂θ₁∂θ₂ = ∂/∂θ₂[-α/β] = 1/β  (∂α/∂θ₂ = −1)
+        H[1,1] = ∂²ψ/∂θ₂²  = trigamma(α)
+        """
+        alpha = -theta[1] - 1.0
+        beta = theta[0]
+        H00 = alpha / beta ** 2
+        H01 = 1.0 / beta
+        H11 = jax.scipy.special.polygamma(1, alpha)   # trigamma
+        return jnp.array([[H00, H01], [H01, H11]])
+
+    # ------------------------------------------------------------------
+    # Moments and sampling
+    # ------------------------------------------------------------------
 
     def mean(self) -> jax.Array:
         return self.beta / (self.alpha - 1.0)
@@ -113,20 +139,6 @@ class InverseGamma(ExponentialFamily):
         alpha = jnp.maximum(alpha, LOG_EPS)
         beta = jnp.maximum(beta, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
-
-    @classmethod
-    def fit_mle(
-        cls,
-        X: jax.Array,
-        *,
-        theta0=None,
-        maxiter: int = 500,
-        tol: float = 1e-10,
-    ) -> "InverseGamma":
-        X = jnp.asarray(X, dtype=jnp.float64)
-        eta_hat = jnp.array([jnp.mean(-1.0 / X), jnp.mean(jnp.log(X))])
-        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
-
 
 
 def _newton_digamma_ig(target: jax.Array, n_iter: int = 50) -> jax.Array:
