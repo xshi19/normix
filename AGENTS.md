@@ -27,7 +27,8 @@ Before committing:
 
 - **Exponential family structure**: log base measure $h(x)$, sufficient statistics $t(x)$, log partition $\psi(\theta)$
 - **Three parametrizations**: classical $\leftrightarrow$ natural $\theta$ $\leftrightarrow$ expectation $\eta = \nabla\psi(\theta)$, all JIT-compatible
-- **Autodiff-first**: `expectation_params` and `fisher_information` derived from `jax.grad`/`jax.hessian` on `_log_partition_from_theta`
+- **Log-partition triad**: every distribution provides three pairs of classmethods — (log-partition, gradient, Hessian) × (JAX JIT-able, CPU numpy/scipy). Defaults use `jax.grad`/`jax.hessian`; subclasses override for analytical or Bessel-heavy implementations.
+- **Solver separation**: `grad_fn` and `hess_fn` operate in θ-space only; the solver applies the φ↔θ chain rule internally. Distributions never need to know about the solver's reparametrization.
 - **EM algorithm**: E-step computes conditional expectations $E[t(Y)|X]$, M-step converts $\eta \to \theta$ via `from_expectation`
 - **Immutable**: all distributions are `eqx.Module` pytrees; M-step returns a new model
 - **Unbatched core**: `log_prob`, `pdf`, `cdf` operate on single observations; batch via `jax.vmap`
