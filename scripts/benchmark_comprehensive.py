@@ -148,8 +148,8 @@ def bench_gig_solvers() -> None:
     print(f"\n  Warm-start solvers (theta0 provided) — EM hot path", flush=True)
     print(f"  (newton/lbfgs/bfgs with jax backend omitted: long XLA compile via log_kv)", flush=True)
     solvers_warm = [
-        ("newton_analytical", dict(solver="newton_analytical", scan_length=20)),
-        ("cpu   (scipy+kve)", dict(solver="cpu")),
+        ("newton_analytical", dict(backend="jax", method="newton", analytical_hessian=True, maxiter=20)),
+        ("cpu   (scipy+kve)", dict(backend="cpu", method="lbfgs")),
     ]
     row("Case / solver", *[s[0] for s in solvers_warm], "ratio")
     sep()
@@ -193,7 +193,7 @@ def bench_gig_solvers() -> None:
     # very large XLA graphs — tested in tests/test_solvers.py, not benchmarked here.
     from normix.fitting.solvers import solve_bregman_multistart
     from normix.distributions.generalized_inverse_gaussian import (
-        _log_partition_gig_static, _initial_guesses,
+        _log_partition_gig_cpu, _gig_cpu_grad, _initial_guesses,
     )
 
     gig0 = test_cases[0][1]
@@ -209,13 +209,15 @@ def bench_gig_solvers() -> None:
     # warm-up
     for _ in range(2):
         solve_bregman_multistart(
-            _log_partition_gig_static, eta_scaled, processed,
+            _log_partition_gig_cpu, eta_scaled, processed,
             backend="cpu", method="lbfgs", bounds=GIG_BOUNDS, max_steps=300, tol=1e-9,
+            grad_fn=_gig_cpu_grad,
         )
 
     t_loop = timeit(lambda: solve_bregman_multistart(
-        _log_partition_gig_static, eta_scaled, processed,
+        _log_partition_gig_cpu, eta_scaled, processed,
         backend="cpu", method="lbfgs", bounds=GIG_BOUNDS, max_steps=300, tol=1e-9,
+        grad_fn=_gig_cpu_grad,
     ), n_runs=5, warmup=1)
 
     sep()
@@ -544,8 +546,8 @@ def bench_em_solver_comparison(n_stocks: int = 20, n_iter: int = 10) -> None:
     # newton/lbfgs/bfgs (JAX) excluded: long XLA compile through log_kv lax.cond.
     # All are functionally tested in tests/test_solvers.py.
     mstep_solvers = [
-        ("newton_analytical (JAX 7-K)", dict(solver="newton_analytical", scan_length=20)),
-        ("cpu    (scipy+scipy.kve)",     dict(solver="cpu")),
+        ("newton_analytical (JAX 7-K)", dict(backend="jax", method="newton", analytical_hessian=True, maxiter=20)),
+        ("cpu    (scipy+scipy.kve)",     dict(backend="cpu", method="lbfgs")),
     ]
     # warm-up
     for _, kw in mstep_solvers:

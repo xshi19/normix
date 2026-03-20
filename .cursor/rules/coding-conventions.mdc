@@ -141,6 +141,7 @@ Backward-compatibility aliases: `GIG_EPS_V_HESS = BESSEL_EPS_V`, `GIG_EPS_NP = T
 - isinstance-based dispatch over distribution types — add methods to the base/subclass instead
 - Putting all code in `__init__.py` — split into logical modules
 - Defining numerical constants locally (e.g. `_EPS = 1e-30`, `eps = 1e-5`) — import from `normix.utils.constants`
+- **Unnecessary aliases or wrapper functions.** Do not create module-level aliases like `_foo = SomeClass.method` just to shorten a reference. Call the method directly (e.g. `cls._log_partition_from_theta`). Wrappers that only convert types or forward arguments without adding logic should be inlined at the call site.
 
 ## Method Placement
 

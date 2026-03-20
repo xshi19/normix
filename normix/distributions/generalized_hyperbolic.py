@@ -299,33 +299,34 @@ class GeneralizedHyperbolic(NormalMixture):
         self,
         X: jax.Array,
         expectations: Dict[str, jax.Array],
-        solver: str = "newton",
-        scan_length: int = 20,
+        backend: str = "jax",
+        method: str = "newton",
+        maxiter: int = 20,
     ) -> "GeneralizedHyperbolic":
         """
         M-step: update all parameters from E-step expectations.
 
-        expectations: dict with keys E_log_Y (n,), E_inv_Y (n,), E_Y (n,)
-        X: (n, d)
-        solver: GIG η→θ solver ('newton', 'newton_analytical', 'lbfgs')
-        scan_length: fixed Newton iteration count for Newton-based solvers
+        Parameters
+        ----------
+        expectations : dict with keys E_log_Y (n,), E_inv_Y (n,), E_Y (n,)
+        X : (n, d)
+        backend : 'jax' (default) or 'cpu' — passed to :meth:`GIG.from_expectation`
+        method : 'newton', 'lbfgs', 'bfgs' — passed to :meth:`GIG.from_expectation`
+        maxiter : iteration budget for the GIG η→θ solver
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
 
         X = jnp.asarray(X, dtype=jnp.float64)
-        n = X.shape[0]
         j = self._joint
 
         E_log_Y = expectations['E_log_Y']   # (n,)
         E_inv_Y = expectations['E_inv_Y']   # (n,)
         E_Y = expectations['E_Y']           # (n,)
 
-        # Mean sufficient statistics for the normal parameters
         mean_E_inv_Y = jnp.mean(E_inv_Y)
         mean_E_Y = jnp.mean(E_Y)
         E_X = jnp.mean(X, axis=0)                          # (d,)
         E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0) # (d,)
-        # E[XXᵀ/Y] = mean_i( xᵢxᵢᵀ · E[1/Yᵢ|Xᵢ] )
         E_XXT_inv_Y = jnp.mean(
             jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)  # (d,d)
 
@@ -333,18 +334,17 @@ class GeneralizedHyperbolic(NormalMixture):
             E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y
         )
 
-        # GIG update: fit GIG to mean sufficient stats of Y
-        # Warm-start from current GIG natural parameters
         gig_eta = jnp.array([
             jnp.mean(E_log_Y),
             mean_E_inv_Y,
             mean_E_Y,
         ])
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
-        gig_new = GIG.from_expectation(gig_eta,
-                                        theta0=current_gig.natural_params(),
-                                        solver=solver,
-                                        scan_length=scan_length)
+        gig_new = GIG.from_expectation(
+            gig_eta,
+            theta0=current_gig.natural_params(),
+            backend=backend, method=method, maxiter=maxiter,
+        )
 
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,

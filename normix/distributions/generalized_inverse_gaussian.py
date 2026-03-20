@@ -241,33 +241,29 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         eta: jax.Array,
         *,
         theta0: Optional[jax.Array] = None,
-        solver: str = "newton",
         maxiter: int = 500,
         tol: float = 1e-10,
-        scan_length: int = 20,
+        backend: str = "jax",
+        method: str = "newton",
+        analytical_hessian: bool = False,
     ) -> "GeneralizedInverseGaussian":
         """
         η → θ via η-rescaling + optimization.
 
         Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing
-        condition number by up to 10^30 for extreme a/b ratios.
+        condition number by up to :math:`10^{30}` for extreme a/b ratios.
 
         Parameters
         ----------
         theta0 : warm-start point (required for JAX solvers)
-        solver : warm-start solver when theta0 is provided:
-            'newton'            — JAX Newton, autodiff Hessian via jax.hessian
-            'newton_analytical' — JAX Newton, analytical Hessian (7 log_kv calls)
-            'lbfgs'             — JAXopt L-BFGS-B (gradient-only, ~5 log_kv/step)
-            'bfgs'              — JAXopt BFGS (gradient-only, dense Hessian approx)
-            'cpu'               — scipy L-BFGS with CPU Bessel ratios (no JAX dispatch)
-            'cpu_newton'        — scipy trust-exact with CPU analytical Hessian
-        scan_length : fixed Newton iteration count for the two Newton solvers
+        backend : 'jax' (default, JIT-able) or 'cpu' (scipy, no JAX dispatch)
+        method : 'newton', 'lbfgs', 'bfgs'
+        analytical_hessian : if True and backend='jax', method='newton',
+            use analytical 7-Bessel Hessian instead of jax.hessian
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
 
-        # η-rescaling: s = √(η₂/η₃)
         s = jnp.sqrt(eta2 / eta3)
         geom = jnp.sqrt(eta2 * eta3)
         eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
@@ -284,55 +280,31 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             theta0_scaled = theta0_scaled.at[2].set(
                 jnp.minimum(theta0_scaled[2], THETA_FLOOR))
 
-            if solver == "newton":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="jax", method="newton",
-                    bounds=_GIG_BOUNDS, max_steps=scan_length, tol=tol,
-                )
-            elif solver == "newton_analytical":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="jax", method="newton",
-                    bounds=_GIG_BOUNDS, max_steps=scan_length, tol=tol,
-                    grad_hess_fn=_analytical_grad_hess_phi,
-                )
-            elif solver == "lbfgs":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="jax", method="lbfgs",
-                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
-                )
-            elif solver == "bfgs":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="jax", method="bfgs",
-                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
-                )
-            elif solver == "cpu":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="cpu", method="lbfgs",
-                    bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
-                    grad_fn=_gig_cpu_grad,
-                )
-            elif solver == "cpu_newton":
-                result = solve_bregman(
-                    _log_partition_gig_static, eta_scaled, theta0_scaled,
-                    backend="cpu", method="newton",
-                    bounds=None,  # trust-exact uses reparam-free theta space
-                    max_steps=maxiter, tol=tol,
-                    grad_hess_fn=_cpu_grad_hess_theta,
-                )
+            solver_kwargs: dict = {
+                "bounds": _GIG_BOUNDS,
+                "max_steps": maxiter,
+                "tol": tol,
+            }
+
+            if backend == "jax":
+                f = cls._log_partition_from_theta
+                if method == "newton" and analytical_hessian:
+                    solver_kwargs["grad_hess_fn"] = _analytical_grad_hess_phi
+            elif backend == "cpu":
+                f = _log_partition_gig_cpu
+                solver_kwargs["grad_fn"] = _gig_cpu_grad
+                if method == "newton":
+                    solver_kwargs["bounds"] = None
+                    solver_kwargs["grad_hess_fn"] = _cpu_grad_hess_theta
             else:
-                raise ValueError(
-                    f"Unknown solver: {solver!r}. "
-                    "Choose 'newton', 'newton_analytical', 'lbfgs', 'bfgs', "
-                    "'cpu', or 'cpu_newton'."
-                )
+                raise ValueError(f"Unknown backend: {backend!r}")
+
+            result = solve_bregman(
+                f, eta_scaled, theta0_scaled,
+                backend=backend, method=method, **solver_kwargs,
+            )
             theta_scaled = result.theta
         else:
-            # Cold-start: scipy multi-start for robustness
             theta0_list = _initial_guesses(eta_scaled)
             processed = []
             for t0 in theta0_list:
@@ -341,13 +313,13 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 t0_np[2] = min(t0_np[2], THETA_FLOOR)
                 processed.append(jnp.asarray(t0_np, dtype=jnp.float64))
             result = solve_bregman_multistart(
-                _log_partition_gig_static, eta_scaled, processed,
+                _log_partition_gig_cpu, eta_scaled, processed,
                 backend="cpu", method="lbfgs",
                 bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
+                grad_fn=_gig_cpu_grad,
             )
             theta_scaled = result.theta
 
-        # Unscale: θ₂ = θ̃₂/s,  θ₃ = s·θ̃₃
         theta = jnp.array([theta_scaled[0],
                            theta_scaled[1] / s,
                            s * theta_scaled[2]])
@@ -411,10 +383,33 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
 
 # ---------------------------------------------------------------------------
-# GIG-specific optimization helpers
+# CPU log-partition (numpy + scipy Bessel, no JAX dispatch)
 # ---------------------------------------------------------------------------
 
-_log_partition_gig_static = GeneralizedInverseGaussian._log_partition_from_theta
+def _log_partition_gig_cpu(theta) -> float:
+    """ψ(θ) via numpy + log_kv(backend='cpu'). Accepts numpy or jax arrays."""
+    theta = np.asarray(theta, dtype=np.float64)
+    p = theta[0] + 1.0
+    b = max(-2.0 * theta[1], 0.0)
+    a = max(-2.0 * theta[2], 0.0)
+    sqrt_ab = np.sqrt(a * b)
+
+    if sqrt_ab < GIG_DEGEN_THRESHOLD:
+        from scipy.special import gammaln
+        if b <= a:
+            alpha = max(p, TINY)
+            beta = max(a / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
+        else:
+            alpha = max(-p, TINY)
+            beta = max(b / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
+
+    sqrt_ab_safe = max(sqrt_ab, TINY)
+    return float(
+        np.log(2.0) + log_kv(p, sqrt_ab_safe, backend='cpu')
+        + 0.5 * p * (np.log(max(b, TINY)) - np.log(max(a, TINY)))
+    )
 
 
 # ---------------------------------------------------------------------------

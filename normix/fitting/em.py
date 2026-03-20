@@ -29,16 +29,17 @@ class BatchEMFitter(eqx.Module):
     e_step_backend : 'jax' or 'cpu'
         'jax' (default): jax.vmap over conditional_expectations.
         'cpu': quad forms in JAX + Bessel on CPU (faster for large N).
-    m_step_solver : solver for GIG η→θ (used by GH and similar models).
-        'newton' (default), 'newton_analytical', 'lbfgs', 'cpu'.
-        'cpu' is the recommended fast solver for the EM hot path.
+    m_step_backend : backend for GIG η→θ solver in M-step ('jax' or 'cpu').
+        'cpu' is the recommended fast backend for the EM hot path.
+    m_step_method : method for GIG η→θ solver in M-step ('newton', 'lbfgs', 'bfgs').
     """
 
     max_iter: int = eqx.field(static=True, default=200)
     tol: float = eqx.field(static=True, default=1e-6)
     regularization: str = eqx.field(static=True, default='det_sigma_one')
     e_step_backend: str = eqx.field(static=True, default='jax')
-    m_step_solver: str = eqx.field(static=True, default='newton')
+    m_step_backend: str = eqx.field(static=True, default='jax')
+    m_step_method: str = eqx.field(static=True, default='newton')
 
     def fit(self, model, X: jax.Array):
         """
@@ -77,11 +78,14 @@ class BatchEMFitter(eqx.Module):
         return model
 
     def _m_step(self, model, X, expectations):
-        """Call m_step, forwarding solver if the model accepts it."""
+        """Call m_step, forwarding backend/method if the model accepts them."""
         import inspect
         sig = inspect.signature(model.m_step)
-        if 'solver' in sig.parameters:
-            return model.m_step(X, expectations, solver=self.m_step_solver)
+        if 'backend' in sig.parameters:
+            return model.m_step(
+                X, expectations,
+                backend=self.m_step_backend, method=self.m_step_method,
+            )
         return model.m_step(X, expectations)
 
     def _regularize(self, model):

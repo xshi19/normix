@@ -178,6 +178,10 @@ Custom JVP via `@jax.custom_jvp`:
 
 **Why `backend` is Python-level:** The string is resolved before JAX tracing begins. When `backend='jax'`, all code is traceable. When `backend='cpu'`, the code runs eagerly — appropriate since EM loops are already Python `for` loops.
 
+### CPU versions for Bessel-dependent functions
+
+**Design rule:** any function that calls `log_kv` must provide a CPU variant so that the full CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. For example, the GIG log-partition function has a JAX version (`_log_partition_from_theta`, using `log_kv(backend='jax')`) and a CPU version (`_log_partition_gig_cpu`, using `log_kv(backend='cpu')` and numpy). When the CPU solver path uses `grad_fn` (pure CPU gradient), the objective function `f` must also accept numpy arrays — otherwise the solver would need unnecessary JAX-numpy conversions.
+
 See `docs/tech_notes/bessel_implementations_survey.md` and `docs/tech_notes/em_gpu_profiling.md` for benchmarks.
 
 ---
@@ -200,13 +204,13 @@ $$\theta = (\tilde\theta_1,\; \tilde\theta_2/s,\; s\tilde\theta_3)$$
 
 ### Solvers (general + GIG-specific)
 
-`fitting/solvers.py` provides universal solvers that work with any exponential family:
-- `solve_newton_scan(eta, theta0, log_partition_fn, ...)` — Newton with `lax.scan`, exp-reparametrisation
-- `solve_lbfgs(...)` — JAXopt L-BFGS
-- `solve_scipy_multistart(...)` — multi-start scipy L-BFGS-B (cold-start)
-- `solve_cpu_lbfgs(...)` — scipy L-BFGS-B with user-supplied CPU gradient
+`fitting/solvers.py` provides universal Bregman divergence solvers for any exponential family:
+- `solve_bregman(f, eta, theta0, *, backend, method, ...)` — single starting point
+- `solve_bregman_multistart(f, eta, theta0_batch, *, backend, method, ...)` — best of K starts
 
-For GIG the preferred warm-start solver is `solver='cpu'` (scipy L-BFGS-B + `scipy.kve`), which avoids JAX GPU kernel dispatch overhead on the 3-dimensional scalar problem.
+Solver axes: `backend='jax'|'cpu'` × `method='newton'|'lbfgs'|'bfgs'`.
+
+For GIG the preferred warm-start solver is `backend='cpu', method='lbfgs'` (scipy L-BFGS-B + `scipy.kve`), which avoids JAX GPU kernel dispatch overhead on the 3-dimensional scalar problem.
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmark comparisons.
 

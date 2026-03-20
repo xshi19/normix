@@ -117,7 +117,7 @@ The model knows math; the fitter knows iteration (following GMMX).
   - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
   - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
 - **M-step**: `model.m_step(X, expectations)` → new immutable model
-- **Fitter**: `BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')`
+- **Fitter**: `BatchEMFitter(e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')`
 
 ## Bessel Functions (`utils/bessel.py`)
 
@@ -129,6 +129,20 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 - **`backend='cpu'`**: `scipy.special.kve`, fully vectorized NumPy. Not JIT-able.
   Fast for EM hot path. Overflow handled via asymptotic Γ-function formula.
+
+### CPU Versions for Bessel-Dependent Functions
+
+**Any function that calls `log_kv` must provide a CPU variant** (or accept a `backend` parameter) so that the CPU solver path (`solve_bregman(backend='cpu')`) can avoid JAX dispatch entirely.
+
+The pattern:
+
+| JAX version (JIT-able) | CPU version (numpy + scipy) | Used by |
+|---|---|---|
+| `GIG._log_partition_from_theta(theta)` | `_log_partition_gig_cpu(theta)` | `solve_bregman(backend='cpu')` |
+| `GIG.expectation_params(backend='jax')` | `GIG._expectation_params_cpu()` | EM E-step, `_gig_cpu_grad` |
+| `log_kv(v, z, backend='jax')` | `log_kv(v, z, backend='cpu')` | All of the above |
+
+When adding new functions that call `log_kv`, always provide a CPU-side version that uses `log_kv(backend='cpu')` and numpy operations. This ensures the function can be passed as `f` or `grad_fn` to `solve_bregman(backend='cpu')` without unnecessary JAX-numpy conversions.
 
 ## Numerical Constants (`utils/constants.py`)
 
@@ -156,12 +170,12 @@ This is equivalent to minimising the **Bregman divergence** $\psi(\theta) - \the
 **η-rescaling** reduces Fisher condition number by up to $10^{30}$:
 $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s^2,\; \sqrt{\eta_2\eta_3},\; \sqrt{\eta_2\eta_3}\bigr)$$
 
-**Solvers** (via `GeneralizedInverseGaussian.from_expectation`):
-- `solver='cpu'` (default for EM): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem. Requires `theta0`.
-- `solver='newton'`: JAX Newton via `lax.scan`, autodiff Hessian. Requires `theta0`.
-- `solver='newton_analytical'`: JAX Newton with 7-Bessel analytical Hessian. Requires `theta0`.
-- `solver='lbfgs'`: JAXopt L-BFGS. Requires `theta0`.
-- No `theta0`: multi-start `scipy.optimize.minimize` with `jax.grad`-computed gradient.
+**Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
+- `backend='cpu', method='lbfgs'` (default for EM): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem. Requires `theta0`.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`, autodiff Hessian. Requires `theta0`.
+- `backend='jax', method='newton', analytical_hessian=True`: JAX Newton with 7-Bessel analytical Hessian.
+- `backend='jax', method='lbfgs'`: JAXopt L-BFGS. Requires `theta0`.
+- No `theta0`: multi-start CPU solver with CPU gradient and CPU log-partition.
 
 The general solver infrastructure lives in `fitting/solvers.py` (`solve_bregman`, `solve_bregman_multistart`), reusable for any `ExponentialFamily` subclass.
 

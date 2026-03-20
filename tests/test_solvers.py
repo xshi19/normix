@@ -249,13 +249,18 @@ class TestSolveBregmanGIG:
         np.testing.assert_allclose(float(gig2.a), self.a, rtol=1e-4)
         np.testing.assert_allclose(float(gig2.b), self.b, rtol=1e-4)
 
-    @pytest.mark.parametrize("solver", [
-        "newton", "newton_analytical", "lbfgs", "bfgs", "cpu",
+    @pytest.mark.parametrize("backend,method,kwargs", [
+        ("jax", "newton", {}),
+        ("jax", "newton", {"analytical_hessian": True}),
+        ("jax", "lbfgs", {}),
+        ("jax", "bfgs", {}),
+        ("cpu", "lbfgs", {}),
     ])
-    def test_from_expectation_warm_start(self, solver):
+    def test_from_expectation_warm_start(self, backend, method, kwargs):
         from normix import GIG
         gig2 = GIG.from_expectation(
-            self.eta, theta0=self.theta_true, solver=solver, scan_length=30,
+            self.eta, theta0=self.theta_true,
+            backend=backend, method=method, maxiter=200, **kwargs,
         )
         np.testing.assert_allclose(float(gig2.p), self.p, rtol=1e-4)
         np.testing.assert_allclose(float(gig2.a), self.a, rtol=1e-4)
@@ -267,24 +272,20 @@ class TestSolveBregmanGIG:
         np.testing.assert_allclose(float(gig2.p), self.p, rtol=1e-3)
 
     def test_solve_bregman_jax_newton(self):
-        from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_static,
-        )
+        from normix import GIG
         bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
-            _log_partition_gig_static, self.eta, self.theta0,
+            GIG._log_partition_from_theta, self.eta, self.theta0,
             backend="jax", method="newton",
             bounds=bounds, max_steps=30, tol=1e-9,
         )
         self._check(r)
 
     def test_solve_bregman_cpu_hybrid(self):
-        from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_static,
-        )
+        from normix import GIG
         bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
-            _log_partition_gig_static, self.eta, self.theta0,
+            GIG._log_partition_from_theta, self.eta, self.theta0,
             backend="cpu", method="lbfgs",
             bounds=bounds, max_steps=200, tol=1e-9,
         )
@@ -292,11 +293,11 @@ class TestSolveBregmanGIG:
 
     def test_solve_bregman_cpu_pure_grad(self):
         from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_static, _gig_cpu_grad,
+            _log_partition_gig_cpu, _gig_cpu_grad,
         )
         bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
-            _log_partition_gig_static, self.eta, self.theta0,
+            _log_partition_gig_cpu, self.eta, self.theta0,
             backend="cpu", method="lbfgs",
             bounds=bounds, max_steps=200, tol=1e-9,
             grad_fn=_gig_cpu_grad,
@@ -305,11 +306,9 @@ class TestSolveBregmanGIG:
 
     def test_result_converged(self):
         from normix import GIG
-        gig = GIG(p=self.p, a=self.a, b=self.b)
-        from normix.distributions.generalized_inverse_gaussian import _log_partition_gig_static
         bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
-            _log_partition_gig_static, self.eta, self.theta_true,
+            GIG._log_partition_from_theta, self.eta, self.theta_true,
             backend="jax", method="lbfgs",
             bounds=bounds, max_steps=500, tol=1e-9,
         )
@@ -354,7 +353,7 @@ class TestSolveBregmanMultistart:
         """GIG cold-start multistart via CPU — recovered eta_hat should match eta."""
         from normix import GIG
         from normix.distributions.generalized_inverse_gaussian import (
-            _log_partition_gig_static, _initial_guesses,
+            _log_partition_gig_cpu, _gig_cpu_grad, _initial_guesses,
         )
         gig = GIG(p=0.5, a=1.0, b=1.0)
         eta = gig.expectation_params()
@@ -365,12 +364,12 @@ class TestSolveBregmanMultistart:
         theta0_list = _initial_guesses(eta_scaled)
         processed = [jnp.asarray(t, dtype=jnp.float64) for t in theta0_list]
         r = solve_bregman_multistart(
-            _log_partition_gig_static, eta_scaled, processed,
+            _log_partition_gig_cpu, eta_scaled, processed,
             backend="cpu", method="lbfgs",
             bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
             max_steps=300, tol=1e-9,
+            grad_fn=_gig_cpu_grad,
         )
-        # grad_norm at minimum should be small
         assert r.grad_norm < 1e-5
 
     def test_best_selected(self):
@@ -414,12 +413,13 @@ class TestExponentialFamilyFromExpectation:
         np.testing.assert_allclose(float(ig2.lam), 4.0, rtol=1e-6)
 
     def test_gig_backend_and_method_args(self):
-        """GIG overrides from_expectation; base-class backend/method are for generic distributions."""
+        """GIG from_expectation uses same backend/method args as base class."""
         from normix import GIG
         gig = GIG(p=0.5, a=1.0, b=1.0)
         eta = gig.expectation_params()
-        # GIG.from_expectation uses its own solver kwarg, not backend/method
-        gig2 = GIG.from_expectation(eta, solver="lbfgs", theta0=gig.natural_params())
+        gig2 = GIG.from_expectation(
+            eta, backend="jax", method="lbfgs", theta0=gig.natural_params(),
+        )
         np.testing.assert_allclose(float(gig2.p), 0.5, rtol=1e-4)
 
 

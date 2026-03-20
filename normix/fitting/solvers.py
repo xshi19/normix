@@ -115,7 +115,16 @@ def solve_bregman(
 
     if backend == "jax":
         if method == "newton":
-            return _wrap_jax_newton(f, eta, theta0, bounds, max_steps, tol, grad_hess_fn)
+            theta, fun, gn, conv = _jax_newton_raw(
+                f, eta, theta0, bounds, max_steps, tol, grad_hess_fn,
+            )
+            return BregmanResult(
+                theta=theta,
+                fun=float(fun),
+                grad_norm=float(gn),
+                num_steps=max_steps,
+                converged=bool(conv),
+            )
         elif method in ("lbfgs", "bfgs"):
             return _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method)
         else:
@@ -277,16 +286,6 @@ def _jax_newton_raw(
     return theta_opt, final_obj, grad_norms[-1], converged
 
 
-def _wrap_jax_newton(f, eta, theta0, bounds, max_steps, tol, grad_hess_fn) -> BregmanResult:
-    theta, fun, gn, conv = _jax_newton_raw(f, eta, theta0, bounds, max_steps, tol, grad_hess_fn)
-    return BregmanResult(
-        theta=theta,
-        fun=float(fun),
-        grad_norm=float(gn),
-        num_steps=max_steps,
-        converged=bool(conv),
-    )
-
 
 def _multistart_jax_newton(f, eta, theta0_batch, bounds, max_steps, tol, grad_hess_fn) -> BregmanResult:
     """Parallel multi-start Newton via vmap over (K, dim) starting points."""
@@ -355,22 +354,34 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
 # ---------------------------------------------------------------------------
 
 def _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, grad_hess_fn) -> BregmanResult:
-    """scipy.optimize.minimize for the Bregman divergence."""
+    """scipy.optimize.minimize for the Bregman divergence.
+
+    Two modes depending on whether grad_fn is provided:
+
+    Pure CPU (grad_fn given): f and grad_fn accept numpy arrays.
+        No JAX dispatch — suitable when f itself uses scipy (e.g. CPU Bessel).
+    Hybrid  (grad_fn=None): f is a JAX function; gradient via jax.grad.
+        Inputs are converted to jnp arrays for tracing.
+    """
     from scipy.optimize import minimize
 
     eta_np = np.asarray(eta, dtype=np.float64)
     theta0_np = np.asarray(theta0, dtype=np.float64)
-    eta_jnp = jnp.asarray(eta, dtype=jnp.float64)
-
-    def fun_np(theta_np):
-        t = jnp.asarray(theta_np, dtype=jnp.float64)
-        return float(f(t) - jnp.dot(t, eta_jnp))
 
     if grad_fn is not None:
+        def fun_np(theta_np):
+            return float(f(theta_np)) - float(np.dot(theta_np, eta_np))
+
         def jac_np(theta_np):
             return np.asarray(grad_fn(theta_np), dtype=np.float64) - eta_np
     else:
+        eta_jnp = jnp.asarray(eta, dtype=jnp.float64)
         _grad_f = jax.grad(f)
+
+        def fun_np(theta_np):
+            t = jnp.asarray(theta_np, dtype=jnp.float64)
+            return float(f(t) - jnp.dot(t, eta_jnp))
+
         def jac_np(theta_np):
             t = jnp.asarray(theta_np, dtype=jnp.float64)
             return np.asarray(_grad_f(t), dtype=np.float64) - eta_np

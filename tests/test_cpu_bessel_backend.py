@@ -4,9 +4,9 @@ Tests for the CPU backend implementation (design doc: docs/design/cpu_bessel_des
 Covers:
   Phase 1: log_kv(v, z, backend='cpu') accuracy vs JAX path
   Phase 2: GIG.expectation_params(backend='cpu'), expectation_params_batch
-           GIG.from_expectation(solver='cpu')
+           GIG.from_expectation(backend='cpu', method='lbfgs')
   Phase 3: NormalMixture.e_step(X, backend='cpu')
-  Phase 4: BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')
+  Phase 4: BatchEMFitter(e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')
 """
 import jax
 import jax.numpy as jnp
@@ -175,14 +175,13 @@ def test_gig_expectation_params_batch_default_is_jax():
     (-1.0, 3.0, 1.0),
 ])
 def test_gig_from_expectation_solver_cpu(p, a, b):
-    """GIG.from_expectation(solver='cpu') recovers correct η."""
+    """GIG.from_expectation(backend='cpu') recovers correct η."""
     gig_true = GIG(p=p, a=a, b=b)
     eta = np.array(gig_true.expectation_params(backend='cpu'))
 
-    # Recover θ from η using CPU solver (warm start from true θ)
     theta0 = gig_true.natural_params()
     gig_recovered = GIG.from_expectation(
-        jnp.array(eta), theta0=theta0, solver='cpu', tol=1e-8
+        jnp.array(eta), theta0=theta0, backend='cpu', method='lbfgs', tol=1e-8,
     )
 
     eta_recovered = np.array(gig_recovered.expectation_params(backend='cpu'))
@@ -295,20 +294,22 @@ def test_e_step_cpu_vs_jax_all_distributions(model_fn, name):
 # ---------------------------------------------------------------------------
 
 def test_batch_em_fitter_cpu_backend_fields():
-    """BatchEMFitter accepts e_step_backend and m_step_solver fields."""
+    """BatchEMFitter accepts e_step_backend and m_step_backend/method fields."""
     fitter = BatchEMFitter(
         max_iter=5, tol=1e-4,
-        e_step_backend='cpu', m_step_solver='cpu',
+        e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs',
     )
     assert fitter.e_step_backend == 'cpu'
-    assert fitter.m_step_solver == 'cpu'
+    assert fitter.m_step_backend == 'cpu'
+    assert fitter.m_step_method == 'lbfgs'
 
 
 def test_batch_em_fitter_defaults_unchanged():
-    """BatchEMFitter default fields are backward compatible."""
+    """BatchEMFitter default fields."""
     fitter = BatchEMFitter()
     assert fitter.e_step_backend == 'jax'
-    assert fitter.m_step_solver == 'newton'
+    assert fitter.m_step_backend == 'jax'
+    assert fitter.m_step_method == 'newton'
     assert fitter.max_iter == 200
     assert fitter.tol == 1e-6
 
@@ -326,7 +327,7 @@ def test_batch_em_fitter_cpu_converges_gh():
 
     fitter = BatchEMFitter(
         max_iter=10, tol=1e-3,
-        e_step_backend='cpu', m_step_solver='cpu',
+        e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs',
     )
     init_model = GeneralizedHyperbolic.from_classical(
         mu=np.zeros(d), gamma=np.zeros(d),
@@ -354,9 +355,9 @@ def test_batch_em_fitter_cpu_same_result_as_default():
     )
 
     fitter_jax = BatchEMFitter(max_iter=5, tol=1e-4,
-                                e_step_backend='jax', m_step_solver='newton')
+                                e_step_backend='jax', m_step_backend='jax', m_step_method='newton')
     fitter_cpu = BatchEMFitter(max_iter=5, tol=1e-4,
-                                e_step_backend='cpu', m_step_solver='cpu')
+                                e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')
 
     fitted_jax = fitter_jax.fit(init_model, X)
     fitted_cpu = fitter_cpu.fit(init_model, X)
