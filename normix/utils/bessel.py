@@ -28,6 +28,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from normix.utils.constants import TINY, LOG_EPS, BESSEL_SMALLZ_THRESHOLD
+
 jax.config.update("jax_enable_x64", True)
 
 _N_QUAD = 64
@@ -52,7 +54,7 @@ def _hankel_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     for k in range(1, 21):
         term = term * (mu - (2.0 * k - 1.0) ** 2) / (8.0 * k * z)
         total = total + term
-    return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(jnp.maximum(total, 1e-300))
+    return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(jnp.maximum(total, TINY))
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +84,7 @@ def _olver_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     return (0.5 * jnp.log(jnp.pi / (2.0 * v))
             - v * eta
             - 0.25 * jnp.log(1.0 + zeta2)
-            + jnp.log(jnp.maximum(S, 1e-300)))
+            + jnp.log(jnp.maximum(S, TINY)))
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +95,7 @@ def _smallz_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     """K_v(z) ~ Gamma(|v|)/2 * (2/z)^|v| for z→0, |v|>0."""
     v_abs = jnp.abs(v)
     log_large_v = jax.lax.lgamma(v_abs) + v_abs * jnp.log(2.0 / z) - jnp.log(2.0)
-    log_small_v = jnp.log(jnp.maximum(-jnp.log(z / 2.0) - jnp.euler_gamma, 1e-300))
+    log_small_v = jnp.log(jnp.maximum(-jnp.log(z / 2.0) - jnp.euler_gamma, TINY))
     # v_abs > 0.5 is a scalar bool here (called from _log_kv_scalar)
     return jax.lax.cond(v_abs > 0.5, lambda: log_large_v, lambda: log_small_v)
 
@@ -109,7 +111,7 @@ def _log_cosh(x: jax.Array) -> jax.Array:
 
 def _quadrature_upper_bound(v_abs: jax.Array, z: jax.Array) -> jax.Array:
     P = 50.0
-    z_safe = jnp.maximum(z, 1e-300)
+    z_safe = jnp.maximum(z, TINY)
     T = jnp.maximum(jnp.log(2.0 * P / z_safe), 1.0)
     for _ in range(6):
         T = jnp.maximum(jnp.log(2.0 * (P + v_abs * T) / z_safe), 1.0)
@@ -135,17 +137,17 @@ def _log_kv_scalar(v: jax.Array, z: jax.Array) -> jax.Array:
 
     use_hankel = z > jnp.maximum(_HANKEL_THRESHOLD, v_abs * v_abs / 4.0)
     use_olver  = v_abs > _OLVER_V_THRESHOLD
-    use_smallz = (z < 1e-6) & (v_abs > 0.5)
+    use_smallz = (z < BESSEL_SMALLZ_THRESHOLD) & (v_abs > 0.5)
 
     # Innermost: Olver vs Small-z vs Quadrature
     def _not_hankel():
         def _olver():
-            return _olver_log_kv(v_abs, jnp.maximum(z, 1e-300))
+            return _olver_log_kv(v_abs, jnp.maximum(z, TINY))
         def _not_olver():
             return jax.lax.cond(
                 use_smallz,
-                lambda: _smallz_log_kv(v_abs, jnp.clip(z, 1e-300, 0.5)),
-                lambda: _quadrature_log_kv(v_abs, jnp.maximum(z, 1e-30)),
+                lambda: _smallz_log_kv(v_abs, jnp.clip(z, TINY, 0.5)),
+                lambda: _quadrature_log_kv(v_abs, jnp.maximum(z, LOG_EPS)),
             )
         return jax.lax.cond(use_olver, _olver, _not_olver)
 
@@ -235,7 +237,7 @@ def _log_kv_cpu(v, z):
         result[inf_mask] = np.where(
             large_v,
             gammaln(v_abs) - np.log(2.0) + v_abs * (np.log(2.0) - np.log(z_inf)),
-            np.log(np.maximum(-np.log(z_inf / 2.0) - np.euler_gamma, 1e-300)),
+            np.log(np.maximum(-np.log(z_inf / 2.0) - np.euler_gamma, TINY)),
         )
     return result.reshape(out_shape) if out_shape else result[0]
 

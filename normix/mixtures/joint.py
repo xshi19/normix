@@ -92,6 +92,10 @@ class JointNormalMixture(ExponentialFamily):
         """Covariance matrix Σ = L_Sigma L_Sigmaᵀ."""
         return self.L_Sigma @ self.L_Sigma.T
 
+    def log_det_sigma(self) -> jax.Array:
+        """log|Σ| = 2 Σᵢ log Lᵢᵢ, via Cholesky diagonal."""
+        return 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
+
     # ------------------------------------------------------------------
     # Sampling
     # ------------------------------------------------------------------
@@ -139,7 +143,7 @@ class JointNormalMixture(ExponentialFamily):
         # Solve L_Sigma w = γ
         w = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
+        log_det_sigma = self.log_det_sigma()
 
         log_fx_given_y = (
             -0.5 * d * jnp.log(2.0 * jnp.pi)

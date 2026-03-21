@@ -19,7 +19,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import LOG_EPS, SIGMA_INIT_REG
 
 
 class JointNormalInverseGaussian(JointNormalMixture):
@@ -204,7 +204,7 @@ class NormalInverseGaussian(NormalMixture):
         A = a + w2
         nu = p - d / 2.0
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
 
         sqrt_ab = jnp.sqrt(a * b)
         log_K_p = 0.5 * jnp.log(jnp.pi / (2.0 * sqrt_ab + LOG_EPS)) - sqrt_ab
@@ -254,7 +254,7 @@ class NormalInverseGaussian(NormalMixture):
     def regularize_det_sigma_one(self) -> "NormalInverseGaussian":
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
         L_new = j.L_Sigma / jnp.sqrt(scale)
@@ -267,10 +267,6 @@ class NormalInverseGaussian(NormalMixture):
             mu_ig=mu_ig_new, lam=lam_new,
         )
         return NormalInverseGaussian(joint_new)
-
-    def marginal_log_likelihood(self, X):
-        X = jnp.asarray(X, dtype=jnp.float64)
-        return jnp.mean(jax.vmap(self.log_prob)(X))
 
     @classmethod
     def fit(
@@ -307,7 +303,7 @@ class NormalInverseGaussian(NormalMixture):
         n, d = X.shape
         mu = jnp.mean(X, axis=0)
         X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n + 1e-4 * jnp.eye(d)
+        sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
         key1, _key2 = jax.random.split(key)
         gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
         return cls.from_classical(

@@ -38,7 +38,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import LOG_EPS, SIGMA_INIT_REG
 
 
 # ============================================================================
@@ -276,7 +276,7 @@ class GeneralizedHyperbolic(NormalMixture):
         #            + log K_{p-d/2}(√(A(Q+b)))
         #            + γᵀΣ⁻¹(x-μ)                ← = wᵀz (inner product)
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
         sqrt_ab = jnp.sqrt(j.a * j.b)
         sqrt_A_Qb = jnp.sqrt(A * (Q + j.b))
 
@@ -363,7 +363,7 @@ class GeneralizedHyperbolic(NormalMixture):
         """
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
 
@@ -421,7 +421,7 @@ class GeneralizedHyperbolic(NormalMixture):
         X_centered = X - mu
         sigma_emp = (X_centered.T @ X_centered) / n
         # Add regularization
-        sigma_emp = sigma_emp + 1e-4 * jnp.eye(d)
+        sigma_emp = sigma_emp + SIGMA_INIT_REG * jnp.eye(d)
         L = jnp.linalg.cholesky(sigma_emp)
         gamma = jnp.zeros(d)
         # Random perturbation for multi-start

@@ -19,7 +19,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import LOG_EPS, SIGMA_INIT_REG
 
 
 class JointNormalInverseGamma(JointNormalMixture):
@@ -193,7 +193,7 @@ class NormalInverseGamma(NormalMixture):
         p_gig = -(alpha + d / 2.0)
         linear = zw
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
 
         log_C = (-0.5 * d * jnp.log(2.0 * jnp.pi)
                  - 0.5 * log_det_sigma
@@ -241,7 +241,7 @@ class NormalInverseGamma(NormalMixture):
     def regularize_det_sigma_one(self) -> "NormalInverseGamma":
         j = self._joint
         d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
         log_scale = log_det_sigma / d
         scale = jnp.exp(log_scale)
         L_new = j.L_Sigma / jnp.sqrt(scale)
@@ -252,10 +252,6 @@ class NormalInverseGamma(NormalMixture):
             alpha=j.alpha, beta=beta_new,
         )
         return NormalInverseGamma(joint_new)
-
-    def marginal_log_likelihood(self, X):
-        X = jnp.asarray(X, dtype=jnp.float64)
-        return jnp.mean(jax.vmap(self.log_prob)(X))
 
     @classmethod
     def fit(
@@ -292,7 +288,7 @@ class NormalInverseGamma(NormalMixture):
         n, d = X.shape
         mu = jnp.mean(X, axis=0)
         X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n + 1e-4 * jnp.eye(d)
+        sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
         key1, _key2 = jax.random.split(key)
         gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
         return cls.from_classical(
