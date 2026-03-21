@@ -92,31 +92,13 @@ class JointNormalInverseGaussian(JointNormalMixture):
         θ = [-3/2-d/2, -(b+½μᵀΛμ), -(a+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
         where p=-½, a=λ/μ_IG², b=λ.
         """
-        d = self.d
         a_ig = self.lam / (self.mu_ig ** 2)
-
-        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
-        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
-        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
-        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
-
-        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
-        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
-
-        theta_1 = -1.5 - d / 2.0
-        theta_2 = -(self.lam + mu_quad)
-        theta_3 = -(a_ig + gamma_quad)
-
-        L_inv = jax.scipy.linalg.solve_triangular(
-            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
-        Lambda = L_inv.T @ L_inv
-
-        return jnp.concatenate([
-            jnp.array([theta_1, theta_2, theta_3]),
-            Lambda_gamma,
-            Lambda_mu,
-            (-0.5 * Lambda).ravel(),
-        ])
+        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        return self._assemble_natural_params(
+            -1.5 - self.d / 2.0,
+            -(self.lam + mu_quad),
+            -(a_ig + gamma_quad),
+        )
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
@@ -124,39 +106,20 @@ class JointNormalInverseGaussian(JointNormalMixture):
         ψ(θ) for Joint NIG.  Uses K_{-1/2}(z) = √(π/(2z)) e^{-z} —
         no Bessel function evaluation needed.
         """
-        n = theta.shape[0]
-        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+        from normix.mixtures.joint import JointNormalMixture
+        (d, _, theta_2, theta_3, *_, log_det_Sigma, _, _,
+         mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        Lambda = -2.0 * theta_6
-        Lambda = 0.5 * (Lambda + Lambda.T)
-
-        _sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
-        log_det_Sigma = -log_det_Lambda
-
-        mu = jnp.linalg.solve(Lambda, theta_5)
-        gamma = jnp.linalg.solve(Lambda, theta_4)
-
-        mu_quad = 0.5 * jnp.dot(mu, theta_5)
-        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
-
-        mu_Lambda_gamma = jnp.dot(mu, theta_4)
 
         p = -0.5
         sqrt_ab = jnp.sqrt(a * b)
         log_K = 0.5 * jnp.log(jnp.pi / (2.0 * sqrt_ab + LOG_EPS)) - sqrt_ab
 
-        psi = (0.5 * log_det_Sigma + jnp.log(2.0) + log_K
-               + 0.5 * p * jnp.log((b + LOG_EPS) / (a + LOG_EPS))
-               + mu_Lambda_gamma)
-        return psi
+        return (0.5 * log_det_Sigma + jnp.log(2.0) + log_K
+                + 0.5 * p * jnp.log((b + LOG_EPS) / (a + LOG_EPS))
+                + mu_Lambda_gamma)
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, mu_ig, lam):

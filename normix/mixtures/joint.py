@@ -197,6 +197,85 @@ class JointNormalMixture(ExponentialFamily):
         return z, w, jnp.dot(z, z), jnp.dot(w, w), jnp.dot(z, w)
 
     # ------------------------------------------------------------------
+    # Shared natural_params computation
+    # ------------------------------------------------------------------
+
+    def _precision_quantities(self):
+        """
+        Cholesky-based precision decomposition shared by all Joint subclasses.
+
+        Returns (Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda)
+        where Lambda = Σ⁻¹, Lambda_x = Σ⁻¹x, x_quad = ½ xᵀΣ⁻¹x.
+        """
+        d = self.d
+        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
+        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
+        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
+        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
+        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
+        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
+        L_inv = jax.scipy.linalg.solve_triangular(
+            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
+        Lambda = L_inv.T @ L_inv
+        return Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda
+
+    def _assemble_natural_params(
+        self, theta_1: jax.Array, theta_2: jax.Array, theta_3: jax.Array,
+    ) -> jax.Array:
+        """
+        Assemble the full θ vector from scalar θ₁, θ₂, θ₃ and shared Cholesky quantities.
+
+        θ = [θ₁, θ₂, θ₃, Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]
+        """
+        Lambda_mu, Lambda_gamma, _, _, Lambda = self._precision_quantities()
+        return jnp.concatenate([
+            jnp.array([theta_1, theta_2, theta_3]),
+            Lambda_gamma,
+            Lambda_mu,
+            (-0.5 * Lambda).ravel(),
+        ])
+
+    @staticmethod
+    def _dim_from_theta_length(n: int) -> int:
+        """Recover dimensionality d from |θ| = 3 + 2d + d²."""
+        return int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+
+    @staticmethod
+    def _parse_joint_theta(theta: jax.Array):
+        """
+        Parse a joint theta vector into its components.
+
+        Returns (d, theta_1..3, theta_4..6, Lambda, log_det_Sigma, mu, gamma,
+                 mu_quad, gamma_quad, mu_Lambda_gamma).
+        """
+        n = theta.shape[0]
+        d = JointNormalMixture._dim_from_theta_length(n)
+
+        theta_1 = theta[0]
+        theta_2 = theta[1]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        theta_6 = theta[3 + 2 * d:].reshape(d, d)
+
+        Lambda = -2.0 * theta_6
+        Lambda = 0.5 * (Lambda + Lambda.T)
+
+        _sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
+        log_det_Sigma = -log_det_Lambda
+
+        mu = jnp.linalg.solve(Lambda, theta_5)
+        gamma = jnp.linalg.solve(Lambda, theta_4)
+
+        mu_quad = 0.5 * jnp.dot(mu, theta_5)
+        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
+        mu_Lambda_gamma = jnp.dot(mu, theta_4)
+
+        return (d, theta_1, theta_2, theta_3, theta_4, theta_5,
+                Lambda, log_det_Sigma, mu, gamma,
+                mu_quad, gamma_quad, mu_Lambda_gamma)
+
+    # ------------------------------------------------------------------
     # ExponentialFamily abstract methods
     # ------------------------------------------------------------------
 

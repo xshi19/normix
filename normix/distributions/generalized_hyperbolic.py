@@ -116,34 +116,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         θ = [p-1-d/2, -(b+½μᵀΣ⁻¹μ), -(a+½γᵀΣ⁻¹γ), Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]
         """
-        d = self.d
-        # Σ⁻¹ = (LLᵀ)⁻¹ = L⁻ᵀ L⁻¹
-        # L⁻¹ μ = z_mu, L⁻¹ γ = z_gamma
-        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
-        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
-
-        # Σ⁻¹μ = Lᵀ⁻¹ L⁻¹ μ
-        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
-        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
-
-        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
-        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
-
-        theta_1 = self.p - 1.0 - d / 2.0
-        theta_2 = -(self.b + mu_quad)
-        theta_3 = -(self.a + gamma_quad)
-
-        # Σ⁻¹: LLᵀ → Σ⁻¹ = L⁻ᵀ L⁻¹
-        L_inv = jax.scipy.linalg.solve_triangular(
-            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
-        Lambda = L_inv.T @ L_inv   # Σ⁻¹
-
-        return jnp.concatenate([
-            jnp.array([theta_1, theta_2, theta_3]),
-            Lambda_gamma,           # θ₄ = Σ⁻¹γ
-            Lambda_mu,              # θ₅ = Σ⁻¹μ
-            (-0.5 * Lambda).ravel(), # θ₆ = -½vec(Σ⁻¹)
-        ])
+        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        return self._assemble_natural_params(
+            self.p - 1.0 - self.d / 2.0,
+            -(self.b + mu_quad),
+            -(self.a + gamma_quad),
+        )
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
@@ -154,33 +132,14 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         Dimension d is inferred from len(θ) = 3 + 2d + d².
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
+        from normix.mixtures.joint import JointNormalMixture
 
-        n = theta.shape[0]
-        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+        (d, theta_1, theta_2, theta_3, *_, log_det_Sigma, _, _,
+         mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]           # Σ⁻¹γ
-        theta_5 = theta[3 + d:3 + 2 * d]   # Σ⁻¹μ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -½Σ⁻¹
-
-        Lambda = -2.0 * theta_6
-        Lambda = 0.5 * (Lambda + Lambda.T)
-
-        sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
-        log_det_Sigma = -log_det_Lambda
-
-        mu = jnp.linalg.solve(Lambda, theta_5)
-        gamma = jnp.linalg.solve(Lambda, theta_4)
-
-        mu_quad = 0.5 * jnp.dot(mu, theta_5)
-        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
         p = theta_1 + 1.0 + d / 2.0
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
-
-        mu_Lambda_gamma = jnp.dot(mu, theta_4)
 
         gig_theta = jnp.array([p - 1.0, -b / 2.0, -a / 2.0])
         psi_gig = GIG._log_partition_from_theta(gig_theta)
