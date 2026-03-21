@@ -1,0 +1,49 @@
+---
+description: Rules for maintaining docs/ARCHITECTURE.md
+globs: "**/docs/ARCHITECTURE.md"
+alwaysApply: false
+---
+
+# Maintaining docs/ARCHITECTURE.md
+
+> High-level principles: `docs/design/agent_instructions_design.md`
+
+ARCHITECTURE.md is the **blueprint** — a complete but concise map of the
+codebase structure. Target: **~200–250 lines**.
+
+## Required Sections
+
+1. **Module hierarchy** — tree view of `normix/`
+2. **Exponential family core** — triad pattern, three parametrizations
+3. **Distribution storage** — table of stored attributes per distribution
+4. **Mixture structure** — Joint vs Marginal class diagram
+5. **EM algorithm** — model/fitter separation
+6. **Bessel functions** — regimes, CPU/JAX backend split
+7. **Numerical constants** — constants table (mirrors `normix/utils/constants.py`)
+8. **GIG η→θ optimization** — problem statement, solvers, rescaling
+9. **Documentation map** — what document lives where
+
+## When to Update
+
+- **Module/file added or removed** under `normix/`: update module hierarchy tree
+- **Distribution's stored attributes changed**: update distribution storage table
+- **New numerical constant** added to `normix/utils/constants.py`: update constants table
+- **New Bessel regime or solver**: update relevant section
+- **New doc created**: add to documentation map
+
+## Style
+
+- Code examples: **signature-level only**, not full implementations
+- Link to `docs/tech_notes/` for deep explanations — don't inline derivations
+- Keep the tree view and tables as the primary navigation aids
+
+## Before Editing
+
+Read existing content first. Verify that existing entries in tables and trees
+are still accurate before adding new ones. Fix stale entries while you're there.
+
+## Gotchas
+
+- **Don't exceed ~250 lines.** Move deep dives to tech notes.
+- **Constants table must match `normix/utils/constants.py`.** If they differ, the code file is canonical.
+- **Distribution storage table must match actual `eqx.Module` fields.** Check the source file if unsure.

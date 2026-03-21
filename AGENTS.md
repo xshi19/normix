@@ -49,12 +49,16 @@ When editing specific areas, read the relevant rule:
 | Distribution code (`normix/`) | `.cursor/rules/coding-conventions.mdc` |
 | Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
-| Design decisions | `docs/design/jax_design.md` |
+| Design decisions | `docs/design/design.md` |
+| Agent instructions design | `docs/design/agent_instructions_design.md` |
+| Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
 | Migration status | `docs/plans/migration_plan.md` |
 | Bessel functions | `docs/ARCHITECTURE.md` § Bessel Functions |
 | GIG η→θ optimization | `docs/ARCHITECTURE.md` § GIG η→θ |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
 | Technical notes | `docs/tech_notes/` |
+| Git conventions | `.cursor/skills/git-conventions/` |
+| Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
 
 ## Design Philosophy
 - **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. 
