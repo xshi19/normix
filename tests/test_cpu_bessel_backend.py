@@ -308,7 +308,7 @@ def test_batch_em_fitter_defaults_unchanged():
     """BatchEMFitter default fields."""
     fitter = BatchEMFitter()
     assert fitter.e_step_backend == 'jax'
-    assert fitter.m_step_backend == 'jax'
+    assert fitter.m_step_backend == 'cpu'
     assert fitter.m_step_method == 'newton'
     assert fitter.max_iter == 200
     assert fitter.tol == 1e-6

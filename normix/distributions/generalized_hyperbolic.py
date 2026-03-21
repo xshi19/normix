@@ -398,7 +398,8 @@ class GeneralizedHyperbolic(NormalMixture):
         from normix.fitting.em import BatchEMFitter
         X = jnp.asarray(X, dtype=jnp.float64)
         fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
-                               regularization=regularization)
+                               regularization=regularization,
+                               e_step_backend='cpu')
         best_model = None
         best_ll = -jnp.inf
         keys = jax.random.split(key, n_init)

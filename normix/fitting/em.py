@@ -38,7 +38,7 @@ class BatchEMFitter(eqx.Module):
     tol: float = eqx.field(static=True, default=1e-6)
     regularization: str = eqx.field(static=True, default='det_sigma_one')
     e_step_backend: str = eqx.field(static=True, default='jax')
-    m_step_backend: str = eqx.field(static=True, default='jax')
+    m_step_backend: str = eqx.field(static=True, default='cpu')
     m_step_method: str = eqx.field(static=True, default='newton')
 
     def fit(self, model, X: jax.Array):
