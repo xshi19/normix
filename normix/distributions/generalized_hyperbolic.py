@@ -38,7 +38,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS, SIGMA_INIT_REG
+from normix.utils.constants import LOG_EPS
 
 
 # ============================================================================
@@ -251,142 +251,46 @@ class GeneralizedHyperbolic(NormalMixture):
         return log_f
 
     # ------------------------------------------------------------------
-    # M-step
+    # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def m_step(
-        self,
-        X: jax.Array,
-        expectations: Dict[str, jax.Array],
-        backend: str = "jax",
-        method: str = "newton",
-        maxiter: int = 20,
-    ) -> "GeneralizedHyperbolic":
-        """
-        M-step: update all parameters from E-step expectations.
-
-        Parameters
-        ----------
-        expectations : dict with keys E_log_Y (n,), E_inv_Y (n,), E_Y (n,)
-        X : (n, d)
-        backend : 'jax' (default) or 'cpu' — passed to :meth:`GIG.from_expectation`
-        method : 'newton', 'lbfgs', 'bfgs' — passed to :meth:`GIG.from_expectation`
-        maxiter : iteration budget for the GIG η→θ solver
-        """
+    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
-
-        X = jnp.asarray(X, dtype=jnp.float64)
         j = self._joint
+        backend = kwargs.get('backend', 'jax')
+        method = kwargs.get('method', 'newton')
+        maxiter = kwargs.get('maxiter', 20)
 
-        E_log_Y = expectations['E_log_Y']   # (n,)
-        E_inv_Y = expectations['E_inv_Y']   # (n,)
-        E_Y = expectations['E_Y']           # (n,)
-
-        mean_E_inv_Y = jnp.mean(E_inv_Y)
-        mean_E_Y = jnp.mean(E_Y)
-        E_X = jnp.mean(X, axis=0)                          # (d,)
-        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0) # (d,)
-        E_XXT_inv_Y = jnp.mean(
-            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)  # (d,d)
-
-        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
-            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y
-        )
-
-        gig_eta = jnp.array([
-            jnp.mean(E_log_Y),
-            mean_E_inv_Y,
-            mean_E_Y,
-        ])
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
         gig_new = GIG.from_expectation(
             gig_eta,
             theta0=current_gig.natural_params(),
             backend=backend, method=method, maxiter=maxiter,
         )
-
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             p=gig_new.p, a=gig_new.a, b=gig_new.b,
         )
         return GeneralizedHyperbolic(joint_new)
 
-    # ------------------------------------------------------------------
-    # Regularization
-    # ------------------------------------------------------------------
-
-    def regularize_det_sigma_one(self) -> "GeneralizedHyperbolic":
-        """
-        Enforce |Σ| = 1 by rescaling (γ, Σ, a, b):
-          Σ → Σ/s,  γ → γ/s,  a → a/s,  b → b*s,  where s = det(Σ)^{1/d}
-        """
+    def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
-        d = j.d
-        log_det_sigma = j.log_det_sigma()
-        log_scale = log_det_sigma / d
-        scale = jnp.exp(log_scale)
-
-        L_new = j.L_Sigma / jnp.sqrt(scale)
-        gamma_new = j.gamma / scale
-        a_new = j.a / scale
-        b_new = j.b * scale
-
         joint_new = JointGeneralizedHyperbolic(
-            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
-            p=j.p, a=a_new, b=b_new,
+            mu=mu, gamma=gamma_new, L_Sigma=L_new,
+            p=j.p, a=j.a / scale, b=j.b * scale,
         )
         return GeneralizedHyperbolic(joint_new)
 
-    # ------------------------------------------------------------------
-    # Convenience fit classmethod
-    # ------------------------------------------------------------------
-
     @classmethod
-    def fit(
-        cls,
-        X: jax.Array,
-        *,
-        key: jax.Array,
-        max_iter: int = 200,
-        tol: float = 1e-6,
-        regularization: str = 'det_sigma_one',
-        n_init: int = 1,
-        method: str = 'batch',
-    ) -> "GeneralizedHyperbolic":
-        """Fit GH distribution to data using EM."""
-        from normix.fitting.em import BatchEMFitter
-        X = jnp.asarray(X, dtype=jnp.float64)
-        fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
-                               regularization=regularization,
-                               e_step_backend='cpu')
-        best_model = None
-        best_ll = -jnp.inf
-        keys = jax.random.split(key, n_init)
-        for k in keys:
-            model = cls._initialize(X, k)
-            fitted = fitter.fit(model, X)
-            ll = fitted.marginal_log_likelihood(X)
-            if best_model is None or float(ll) > float(best_ll):
-                best_model = fitted
-                best_ll = ll
-        return best_model
-
-    @classmethod
-    def _initialize(cls, X: jax.Array, key: jax.Array) -> "GeneralizedHyperbolic":
-        """Simple initialization from empirical moments + random perturbation."""
-        X = jnp.asarray(X, dtype=jnp.float64)
-        n, d = X.shape
-        mu = jnp.mean(X, axis=0)
-        X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n
-        # Add regularization
-        sigma_emp = sigma_emp + SIGMA_INIT_REG * jnp.eye(d)
-        L = jnp.linalg.cholesky(sigma_emp)
-        gamma = jnp.zeros(d)
-        # Random perturbation for multi-start
-        key1, key2 = jax.random.split(key)
-        gamma = gamma + 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+    def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
-            mu=mu, gamma=gamma, sigma=sigma_emp,
-            p=1.0, a=1.0, b=1.0,
-        )
+            mu=mu, gamma=gamma, sigma=sigma, p=1.0, a=1.0, b=1.0)
+
+    @classmethod
+    def fit(cls, X, *, key, max_iter=200, tol=1e-6,
+            regularization='det_sigma_one', n_init=1, **fitter_kwargs):
+        """Fit GH distribution to data using EM (defaults to CPU E-step)."""
+        fitter_kwargs.setdefault('e_step_backend', 'cpu')
+        return super().fit(
+            X, key=key, max_iter=max_iter, tol=tol,
+            regularization=regularization, n_init=n_init, **fitter_kwargs)

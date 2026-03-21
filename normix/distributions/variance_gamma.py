@@ -19,7 +19,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS, SIGMA_INIT_REG
+from normix.utils.constants import LOG_EPS
 
 
 class JointVarianceGamma(JointNormalMixture):
@@ -177,89 +177,24 @@ class VarianceGamma(NormalMixture):
                  + linear)
         return log_f
 
-    def m_step(self, X, expectations) -> "VarianceGamma":
+    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
         from normix.distributions.gamma import Gamma
-
-        X = jnp.asarray(X, dtype=jnp.float64)
-        j = self._joint
-
-        E_log_Y = expectations['E_log_Y']
-        E_inv_Y = expectations['E_inv_Y']
-        E_Y = expectations['E_Y']
-
-        mean_E_inv_Y = jnp.mean(E_inv_Y)
-        mean_E_Y = jnp.mean(E_Y)
-        E_X = jnp.mean(X, axis=0)
-        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0)
-        E_XXT_inv_Y = jnp.mean(
-            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)
-
-        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
-            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y)
-
-        gig_eta = jnp.array([jnp.mean(E_log_Y), mean_E_inv_Y, mean_E_Y])
         gamma_dist = Gamma.from_expectation(jnp.array([gig_eta[0], gig_eta[2]]))
-
         joint_new = JointVarianceGamma(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             alpha=gamma_dist.alpha, beta=gamma_dist.beta,
         )
         return VarianceGamma(joint_new)
 
-    def regularize_det_sigma_one(self) -> "VarianceGamma":
+    def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
-        d = j.d
-        log_det_sigma = j.log_det_sigma()
-        log_scale = log_det_sigma / d
-        scale = jnp.exp(log_scale)
-        L_new = j.L_Sigma / jnp.sqrt(scale)
-        gamma_new = j.gamma / scale
-        beta_new = j.beta / scale
         joint_new = JointVarianceGamma(
-            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
-            alpha=j.alpha, beta=beta_new,
+            mu=mu, gamma=gamma_new, L_Sigma=L_new,
+            alpha=j.alpha, beta=j.beta / scale,
         )
         return VarianceGamma(joint_new)
 
     @classmethod
-    def fit(
-        cls,
-        X: jax.Array,
-        *,
-        key: jax.Array,
-        max_iter: int = 200,
-        tol: float = 1e-6,
-        regularization: str = 'det_sigma_one',
-        n_init: int = 1,
-    ) -> "VarianceGamma":
-        """Fit VG distribution to data using EM."""
-        from normix.fitting.em import BatchEMFitter
-        X = jnp.asarray(X, dtype=jnp.float64)
-        fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
-                               regularization=regularization)
-        best_model = None
-        best_ll = -jnp.inf
-        keys = jax.random.split(key, n_init)
-        for k in keys:
-            model = cls._initialize(X, k)
-            fitted = fitter.fit(model, X)
-            ll = fitted.marginal_log_likelihood(X)
-            if best_model is None or float(ll) > float(best_ll):
-                best_model = fitted
-                best_ll = ll
-        return best_model
-
-    @classmethod
-    def _initialize(cls, X: jax.Array, key: jax.Array) -> "VarianceGamma":
-        """Moment-based initialization with random perturbation."""
-        X = jnp.asarray(X, dtype=jnp.float64)
-        n, d = X.shape
-        mu = jnp.mean(X, axis=0)
-        X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
-        key1, _key2 = jax.random.split(key)
-        gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+    def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
-            mu=mu, gamma=gamma, sigma=sigma_emp,
-            alpha=2.0, beta=1.0,
-        )
+            mu=mu, gamma=gamma, sigma=sigma, alpha=2.0, beta=1.0)

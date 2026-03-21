@@ -78,15 +78,11 @@ class BatchEMFitter(eqx.Module):
         return model
 
     def _m_step(self, model, X, expectations):
-        """Call m_step, forwarding backend/method if the model accepts them."""
-        import inspect
-        sig = inspect.signature(model.m_step)
-        if 'backend' in sig.parameters:
-            return model.m_step(
-                X, expectations,
-                backend=self.m_step_backend, method=self.m_step_method,
-            )
-        return model.m_step(X, expectations)
+        """Call m_step, forwarding backend/method via kwargs."""
+        return model.m_step(
+            X, expectations,
+            backend=self.m_step_backend, method=self.m_step_method,
+        )
 
     def _regularize(self, model):
         if self.regularization == 'det_sigma_one':
