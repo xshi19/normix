@@ -83,17 +83,69 @@ class JointVarianceGamma(JointNormalMixture):
                 z2)
 
     def natural_params(self) -> jax.Array:
-        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        j = JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=self.alpha, a=2.0 * self.beta, b=jnp.array(LOG_EPS),
-        )
-        return j.natural_params()
+        """
+        θ = [α-1-d/2, -½μᵀΛμ, -(β+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
+        (Gamma subordinator: p=α, a=2β, b→0).
+        """
+        d = self.d
+        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
+        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
+        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
+        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
+
+        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
+        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
+
+        theta_1 = self.alpha - 1.0 - d / 2.0
+        theta_2 = -mu_quad
+        theta_3 = -(self.beta + gamma_quad)
+
+        L_inv = jax.scipy.linalg.solve_triangular(
+            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
+        Lambda = L_inv.T @ L_inv
+
+        return jnp.concatenate([
+            jnp.array([theta_1, theta_2, theta_3]),
+            Lambda_gamma,
+            Lambda_mu,
+            (-0.5 * Lambda).ravel(),
+        ])
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        return JointGeneralizedHyperbolic._log_partition_from_theta(theta)
+        """
+        ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ
+        Analytical — no Bessel function needed (Gamma subordinator).
+        """
+        n = theta.shape[0]
+        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+
+        theta_1 = theta[0]
+        theta_3 = theta[2]
+        theta_4 = theta[3:3 + d]
+        theta_5 = theta[3 + d:3 + 2 * d]
+        theta_6 = theta[3 + 2 * d:].reshape(d, d)
+
+        Lambda = -2.0 * theta_6
+        Lambda = 0.5 * (Lambda + Lambda.T)
+
+        _sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
+        log_det_Sigma = -log_det_Lambda
+
+        mu = jnp.linalg.solve(Lambda, theta_5)
+        gamma = jnp.linalg.solve(Lambda, theta_4)
+
+        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
+        alpha = theta_1 + 1.0 + d / 2.0
+        beta = -theta_3 - gamma_quad
+
+        mu_Lambda_gamma = jnp.dot(mu, theta_4)
+
+        psi = (0.5 * log_det_Sigma
+               + jax.scipy.special.gammaln(alpha)
+               - alpha * jnp.log(beta)
+               + mu_Lambda_gamma)
+        return psi
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
@@ -123,17 +175,42 @@ class VarianceGamma(NormalMixture):
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         """
-        Marginal VG log-density via GH formula with b→0.
-        VG: p=alpha, a=2*beta, b→0.
-        Use GeneralizedHyperbolic.log_prob with GH params.
+        Marginal VG log-density (own formula, no GH delegation).
+
+        f(x) = C * (q/(2c))^{nu/2} * K_nu(sqrt(2qc)) * exp(linear)
+        where nu=alpha-d/2, c=beta+½γᵀΛγ, q=(x-μ)ᵀΛ(x-μ).
         """
-        from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
+        from normix.utils.bessel import log_kv
+
         j = self._joint
-        gh = GeneralizedHyperbolic.from_classical(
-            mu=j.mu, gamma=j.gamma, sigma=j.sigma(),
-            p=j.alpha, a=2.0 * j.beta, b=jnp.array(LOG_EPS),
-        )
-        return gh.log_prob(x)
+        d = j.d
+        alpha = j.alpha
+        beta = j.beta
+
+        z, w, z2, w2, zw = j._quad_forms(x)
+        q = z2
+        gamma_quad = w2
+        linear = zw
+
+        c = beta + 0.5 * gamma_quad
+        nu = alpha - d / 2.0
+
+        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+
+        log_C = (jnp.log(2.0)
+                 - 0.5 * d * jnp.log(2.0 * jnp.pi)
+                 - 0.5 * log_det_sigma
+                 - jax.scipy.special.gammaln(alpha)
+                 + alpha * jnp.log(beta))
+
+        z_arg = jnp.sqrt(2.0 * q * c)
+        log_K = log_kv(nu, z_arg)
+
+        log_f = (log_C
+                 + 0.5 * nu * jnp.log(q / (2.0 * c + LOG_EPS) + LOG_EPS)
+                 + log_K
+                 + linear)
+        return log_f
 
     def m_step(self, X, expectations) -> "VarianceGamma":
         from normix.distributions.gamma import Gamma
@@ -182,3 +259,46 @@ class VarianceGamma(NormalMixture):
     def marginal_log_likelihood(self, X):
         X = jnp.asarray(X, dtype=jnp.float64)
         return jnp.mean(jax.vmap(self.log_prob)(X))
+
+    @classmethod
+    def fit(
+        cls,
+        X: jax.Array,
+        *,
+        key: jax.Array,
+        max_iter: int = 200,
+        tol: float = 1e-6,
+        regularization: str = 'det_sigma_one',
+        n_init: int = 1,
+    ) -> "VarianceGamma":
+        """Fit VG distribution to data using EM."""
+        from normix.fitting.em import BatchEMFitter
+        X = jnp.asarray(X, dtype=jnp.float64)
+        fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
+                               regularization=regularization)
+        best_model = None
+        best_ll = -jnp.inf
+        keys = jax.random.split(key, n_init)
+        for k in keys:
+            model = cls._initialize(X, k)
+            fitted = fitter.fit(model, X)
+            ll = fitted.marginal_log_likelihood(X)
+            if best_model is None or float(ll) > float(best_ll):
+                best_model = fitted
+                best_ll = ll
+        return best_model
+
+    @classmethod
+    def _initialize(cls, X: jax.Array, key: jax.Array) -> "VarianceGamma":
+        """Moment-based initialization with random perturbation."""
+        X = jnp.asarray(X, dtype=jnp.float64)
+        n, d = X.shape
+        mu = jnp.mean(X, axis=0)
+        X_centered = X - mu
+        sigma_emp = (X_centered.T @ X_centered) / n + 1e-4 * jnp.eye(d)
+        key1, _key2 = jax.random.split(key)
+        gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+        return cls.from_classical(
+            mu=mu, gamma=gamma, sigma=sigma_emp,
+            alpha=2.0, beta=1.0,
+        )
