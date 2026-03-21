@@ -64,6 +64,9 @@ When editing specific areas, read the relevant rule:
 - **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. 
 Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. 
 When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude.
+However, code simplicity must not sacrifice numerical efficiency or mathematical clarity. 
+Delegating to a general-case implementation when a closed-form simplification exists is not "simpler" — it is mathematically more complex and numerically wasteful.
+Special-case distributions (NIG, VG, NInvG) must use their own analytical formulas rather than routing through GeneralizedHyperbolic.
 - **Numerical efficiency**: Use your knowledge in numerical linear algebra, optimization and statistics to improve the efficiency without adding code complexity. 
 For example, use assume_a in scipy.linalg.inv for triangular and positive definite matrices. 
 - **Numerical Robustness**: Code need to be robust under extreme scenarios. Handle the edge cases carefully.
