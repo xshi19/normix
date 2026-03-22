@@ -32,12 +32,17 @@ SIGMA_REG: float = 1e-8
 # Floor for the denominator D = 1 − E[1/Y]·E[Y] in the M-step
 SAFE_DENOMINATOR: float = 1e-10
 
+# ── Initialisation constants ──────────────────────────────────────────
+
+# Regularisation added to empirical Σ during moment-based initialisation
+SIGMA_INIT_REG: float = 1e-4
+
 # ── Finite-difference steps ───────────────────────────────────────────
 
 # Central FD step for Fisher information (second-order)
 FD_EPS_FISHER: float = 1e-4
 
-# ── Backward compatibility aliases ────────────────────────────────────
+# ── Bessel regime thresholds ─────────────────────────────────────────
 
-GIG_EPS_V_HESS = BESSEL_EPS_V
-GIG_EPS_NP = TINY
+# z threshold below which small-z asymptotic is used in log_kv
+BESSEL_SMALLZ_THRESHOLD: float = 1e-6

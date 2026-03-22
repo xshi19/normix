@@ -116,34 +116,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         θ = [p-1-d/2, -(b+½μᵀΣ⁻¹μ), -(a+½γᵀΣ⁻¹γ), Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]
         """
-        d = self.d
-        # Σ⁻¹ = (LLᵀ)⁻¹ = L⁻ᵀ L⁻¹
-        # L⁻¹ μ = z_mu, L⁻¹ γ = z_gamma
-        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
-        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
-
-        # Σ⁻¹μ = Lᵀ⁻¹ L⁻¹ μ
-        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
-        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
-
-        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
-        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
-
-        theta_1 = self.p - 1.0 - d / 2.0
-        theta_2 = -(self.b + mu_quad)
-        theta_3 = -(self.a + gamma_quad)
-
-        # Σ⁻¹: LLᵀ → Σ⁻¹ = L⁻ᵀ L⁻¹
-        L_inv = jax.scipy.linalg.solve_triangular(
-            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
-        Lambda = L_inv.T @ L_inv   # Σ⁻¹
-
-        return jnp.concatenate([
-            jnp.array([theta_1, theta_2, theta_3]),
-            Lambda_gamma,           # θ₄ = Σ⁻¹γ
-            Lambda_mu,              # θ₅ = Σ⁻¹μ
-            (-0.5 * Lambda).ravel(), # θ₆ = -½vec(Σ⁻¹)
-        ])
+        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        return self._assemble_natural_params(
+            self.p - 1.0 - self.d / 2.0,
+            -(self.b + mu_quad),
+            -(self.a + gamma_quad),
+        )
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
@@ -154,33 +132,14 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         Dimension d is inferred from len(θ) = 3 + 2d + d².
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
+        from normix.mixtures.joint import JointNormalMixture
 
-        n = theta.shape[0]
-        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+        (d, theta_1, theta_2, theta_3, *_, log_det_Sigma, _, _,
+         mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]           # Σ⁻¹γ
-        theta_5 = theta[3 + d:3 + 2 * d]   # Σ⁻¹μ
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)  # -½Σ⁻¹
-
-        Lambda = -2.0 * theta_6
-        Lambda = 0.5 * (Lambda + Lambda.T)
-
-        sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
-        log_det_Sigma = -log_det_Lambda
-
-        mu = jnp.linalg.solve(Lambda, theta_5)
-        gamma = jnp.linalg.solve(Lambda, theta_4)
-
-        mu_quad = 0.5 * jnp.dot(mu, theta_5)
-        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
         p = theta_1 + 1.0 + d / 2.0
         b = -theta_2 - mu_quad
         a = -theta_3 - gamma_quad
-
-        mu_Lambda_gamma = jnp.dot(mu, theta_4)
 
         gig_theta = jnp.array([p - 1.0, -b / 2.0, -a / 2.0])
         psi_gig = GIG._log_partition_from_theta(gig_theta)
@@ -276,7 +235,7 @@ class GeneralizedHyperbolic(NormalMixture):
         #            + log K_{p-d/2}(√(A(Q+b)))
         #            + γᵀΣ⁻¹(x-μ)                ← = wᵀz (inner product)
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
         sqrt_ab = jnp.sqrt(j.a * j.b)
         sqrt_A_Qb = jnp.sqrt(A * (Q + j.b))
 
@@ -292,142 +251,46 @@ class GeneralizedHyperbolic(NormalMixture):
         return log_f
 
     # ------------------------------------------------------------------
-    # M-step
+    # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def m_step(
-        self,
-        X: jax.Array,
-        expectations: Dict[str, jax.Array],
-        backend: str = "jax",
-        method: str = "newton",
-        maxiter: int = 20,
-    ) -> "GeneralizedHyperbolic":
-        """
-        M-step: update all parameters from E-step expectations.
-
-        Parameters
-        ----------
-        expectations : dict with keys E_log_Y (n,), E_inv_Y (n,), E_Y (n,)
-        X : (n, d)
-        backend : 'jax' (default) or 'cpu' — passed to :meth:`GIG.from_expectation`
-        method : 'newton', 'lbfgs', 'bfgs' — passed to :meth:`GIG.from_expectation`
-        maxiter : iteration budget for the GIG η→θ solver
-        """
+    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
-
-        X = jnp.asarray(X, dtype=jnp.float64)
         j = self._joint
+        backend = kwargs.get('backend', 'jax')
+        method = kwargs.get('method', 'newton')
+        maxiter = kwargs.get('maxiter', 20)
 
-        E_log_Y = expectations['E_log_Y']   # (n,)
-        E_inv_Y = expectations['E_inv_Y']   # (n,)
-        E_Y = expectations['E_Y']           # (n,)
-
-        mean_E_inv_Y = jnp.mean(E_inv_Y)
-        mean_E_Y = jnp.mean(E_Y)
-        E_X = jnp.mean(X, axis=0)                          # (d,)
-        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0) # (d,)
-        E_XXT_inv_Y = jnp.mean(
-            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)  # (d,d)
-
-        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
-            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y
-        )
-
-        gig_eta = jnp.array([
-            jnp.mean(E_log_Y),
-            mean_E_inv_Y,
-            mean_E_Y,
-        ])
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
         gig_new = GIG.from_expectation(
             gig_eta,
             theta0=current_gig.natural_params(),
             backend=backend, method=method, maxiter=maxiter,
         )
-
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             p=gig_new.p, a=gig_new.a, b=gig_new.b,
         )
         return GeneralizedHyperbolic(joint_new)
 
-    # ------------------------------------------------------------------
-    # Regularization
-    # ------------------------------------------------------------------
-
-    def regularize_det_sigma_one(self) -> "GeneralizedHyperbolic":
-        """
-        Enforce |Σ| = 1 by rescaling (γ, Σ, a, b):
-          Σ → Σ/s,  γ → γ/s,  a → a/s,  b → b*s,  where s = det(Σ)^{1/d}
-        """
+    def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
-        d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
-        log_scale = log_det_sigma / d
-        scale = jnp.exp(log_scale)
-
-        L_new = j.L_Sigma / jnp.sqrt(scale)
-        gamma_new = j.gamma / scale
-        a_new = j.a / scale
-        b_new = j.b * scale
-
         joint_new = JointGeneralizedHyperbolic(
-            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
-            p=j.p, a=a_new, b=b_new,
+            mu=mu, gamma=gamma_new, L_Sigma=L_new,
+            p=j.p, a=j.a / scale, b=j.b * scale,
         )
         return GeneralizedHyperbolic(joint_new)
 
-    # ------------------------------------------------------------------
-    # Convenience fit classmethod
-    # ------------------------------------------------------------------
-
     @classmethod
-    def fit(
-        cls,
-        X: jax.Array,
-        *,
-        key: jax.Array,
-        max_iter: int = 200,
-        tol: float = 1e-6,
-        regularization: str = 'det_sigma_one',
-        n_init: int = 1,
-        method: str = 'batch',
-    ) -> "GeneralizedHyperbolic":
-        """Fit GH distribution to data using EM."""
-        from normix.fitting.em import BatchEMFitter
-        X = jnp.asarray(X, dtype=jnp.float64)
-        fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
-                               regularization=regularization,
-                               e_step_backend='cpu')
-        best_model = None
-        best_ll = -jnp.inf
-        keys = jax.random.split(key, n_init)
-        for k in keys:
-            model = cls._initialize(X, k)
-            fitted = fitter.fit(model, X)
-            ll = fitted.marginal_log_likelihood(X)
-            if best_model is None or float(ll) > float(best_ll):
-                best_model = fitted
-                best_ll = ll
-        return best_model
-
-    @classmethod
-    def _initialize(cls, X: jax.Array, key: jax.Array) -> "GeneralizedHyperbolic":
-        """Simple initialization from empirical moments + random perturbation."""
-        X = jnp.asarray(X, dtype=jnp.float64)
-        n, d = X.shape
-        mu = jnp.mean(X, axis=0)
-        X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n
-        # Add regularization
-        sigma_emp = sigma_emp + 1e-4 * jnp.eye(d)
-        L = jnp.linalg.cholesky(sigma_emp)
-        gamma = jnp.zeros(d)
-        # Random perturbation for multi-start
-        key1, key2 = jax.random.split(key)
-        gamma = gamma + 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+    def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
-            mu=mu, gamma=gamma, sigma=sigma_emp,
-            p=1.0, a=1.0, b=1.0,
-        )
+            mu=mu, gamma=gamma, sigma=sigma, p=1.0, a=1.0, b=1.0)
+
+    @classmethod
+    def fit(cls, X, *, key, max_iter=200, tol=1e-6,
+            regularization='det_sigma_one', n_init=1, **fitter_kwargs):
+        """Fit GH distribution to data using EM (defaults to CPU E-step)."""
+        fitter_kwargs.setdefault('e_step_backend', 'cpu')
+        return super().fit(
+            X, key=key, max_iter=max_iter, tol=tol,
+            regularization=regularization, n_init=n_init, **fitter_kwargs)

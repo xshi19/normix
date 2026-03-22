@@ -5,9 +5,11 @@ Owns a JointNormalMixture. Provides:
   log_prob(x)  — closed-form marginal log-density
   e_step(X)    — jax.vmap over conditional_expectations
   m_step(X, expectations) — returns new NormalMixture
+  fit(X, ...)  — convenience EM fitting with multi-start
 """
 from __future__ import annotations
 
+import abc
 from typing import Dict
 
 import numpy as np
@@ -16,6 +18,8 @@ import jax
 import jax.numpy as jnp
 
 jax.config.update("jax_enable_x64", True)
+
+from normix.utils.constants import SIGMA_INIT_REG
 
 
 class NormalMixture(eqx.Module):
@@ -102,18 +106,14 @@ class NormalMixture(eqx.Module):
 
         X = jnp.asarray(X, dtype=jnp.float64)
 
-        # Phase 1: Quad forms in JAX (vmapped — benefits from GPU for large d)
         def _quad_scalars(x):
             z, w, z2, w2, zw = j._quad_forms(x)
             return z2, w2
 
-        z2_all, w2_all = jax.vmap(_quad_scalars)(X)  # (N,), (N,)
+        z2_all, w2_all = jax.vmap(_quad_scalars)(X)
 
-        # Posterior GIG params (JAX arithmetic, stays on device)
         p_post, a_post, b_post = j._posterior_gig_params(z2_all, w2_all)
 
-        # Phase 2: GIG expectations via CPU Bessel
-        # Transfers (N,) arrays to numpy, calls 6 × scipy.kve, returns (N,3)
         eta = GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
 
         return {
@@ -122,19 +122,142 @@ class NormalMixture(eqx.Module):
             'E_Y':     eta[:, 2],
         }
 
+    # ------------------------------------------------------------------
+    # M-step
+    # ------------------------------------------------------------------
+
     def m_step(
         self,
         X: jax.Array,
         expectations: Dict[str, jax.Array],
+        **kwargs,
     ) -> "NormalMixture":
         """
         M-step: update model parameters from sufficient statistics.
 
         Returns a NEW NormalMixture with updated parameters.
+        Subclasses must override _m_step_subordinator.
         """
-        raise NotImplementedError(f"{type(self).__name__}.m_step not implemented")
+        from normix.mixtures.joint import JointNormalMixture
+
+        X = jnp.asarray(X, dtype=jnp.float64)
+
+        E_log_Y = expectations['E_log_Y']
+        E_inv_Y = expectations['E_inv_Y']
+        E_Y = expectations['E_Y']
+
+        mean_E_inv_Y = jnp.mean(E_inv_Y)
+        mean_E_Y = jnp.mean(E_Y)
+        E_X = jnp.mean(X, axis=0)
+        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0)
+        E_XXT_inv_Y = jnp.mean(
+            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)
+
+        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
+            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y)
+
+        gig_eta = jnp.array([jnp.mean(E_log_Y), mean_E_inv_Y, mean_E_Y])
+
+        return self._m_step_subordinator(
+            mu_new, gamma_new, L_new, gig_eta, **kwargs)
+
+    @abc.abstractmethod
+    def _m_step_subordinator(
+        self,
+        mu_new: jax.Array,
+        gamma_new: jax.Array,
+        L_new: jax.Array,
+        gig_eta: jax.Array,
+        **kwargs,
+    ) -> "NormalMixture":
+        """Update subordinator parameters and construct a new marginal model."""
+
+    # ------------------------------------------------------------------
+    # Regularisation
+    # ------------------------------------------------------------------
+
+    def regularize_det_sigma_one(self) -> "NormalMixture":
+        """
+        Enforce |Σ| = 1 by rescaling.
+
+        Σ → Σ/s, γ → γ/s, subordinator params scaled via _scale_subordinator.
+        s = det(Σ)^{1/d}.
+        """
+        j = self._joint
+        d = j.d
+        log_det_sigma = j.log_det_sigma()
+        log_scale = log_det_sigma / d
+        scale = jnp.exp(log_scale)
+
+        L_new = j.L_Sigma / jnp.sqrt(scale)
+        gamma_new = j.gamma / scale
+
+        return self._build_rescaled(j.mu, gamma_new, L_new, scale)
+
+    @abc.abstractmethod
+    def _build_rescaled(
+        self,
+        mu: jax.Array,
+        gamma_new: jax.Array,
+        L_new: jax.Array,
+        scale: jax.Array,
+    ) -> "NormalMixture":
+        """Construct a new model with rescaled subordinator parameters."""
+
+    # ------------------------------------------------------------------
+    # Fitting
+    # ------------------------------------------------------------------
 
     def marginal_log_likelihood(self, X: jax.Array) -> jax.Array:
         """Mean log-likelihood over dataset."""
         X = jnp.asarray(X, dtype=jnp.float64)
         return jnp.mean(jax.vmap(self.log_prob)(X))
+
+    @classmethod
+    def fit(
+        cls,
+        X: jax.Array,
+        *,
+        key: jax.Array,
+        max_iter: int = 200,
+        tol: float = 1e-6,
+        regularization: str = 'det_sigma_one',
+        n_init: int = 1,
+        **fitter_kwargs,
+    ) -> "NormalMixture":
+        """Fit distribution to data using EM with optional multi-start."""
+        from normix.fitting.em import BatchEMFitter
+        X = jnp.asarray(X, dtype=jnp.float64)
+        fitter = BatchEMFitter(
+            max_iter=max_iter, tol=tol, regularization=regularization,
+            **fitter_kwargs)
+        best_model = None
+        best_ll = -jnp.inf
+        keys = jax.random.split(key, n_init)
+        for k in keys:
+            model = cls._initialize(X, k)
+            fitted = fitter.fit(model, X)
+            ll = fitted.marginal_log_likelihood(X)
+            if best_model is None or float(ll) > float(best_ll):
+                best_model = fitted
+                best_ll = ll
+        return best_model
+
+    @classmethod
+    def _initialize(cls, X: jax.Array, key: jax.Array) -> "NormalMixture":
+        """Moment-based initialisation with random perturbation."""
+        X = jnp.asarray(X, dtype=jnp.float64)
+        n, d = X.shape
+        mu = jnp.mean(X, axis=0)
+        X_centered = X - mu
+        sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
+        key1, _ = jax.random.split(key)
+        gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+        return cls._from_init_params(mu, gamma, sigma_emp)
+
+    @classmethod
+    @abc.abstractmethod
+    def _from_init_params(
+        cls, mu: jax.Array, gamma: jax.Array, sigma: jax.Array,
+    ) -> "NormalMixture":
+        """Construct a model with default subordinator parameters for initialisation."""

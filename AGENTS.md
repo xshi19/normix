@@ -61,13 +61,13 @@ When editing specific areas, read the relevant rule:
 | Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
 
 ## Design Philosophy
-- **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. 
-Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. 
-When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude.
-However, code simplicity must not sacrifice numerical efficiency or mathematical clarity. 
-Delegating to a general-case implementation when a closed-form simplification exists is not "simpler" — it is mathematically more complex and numerically wasteful.
-Special-case distributions (NIG, VG, NInvG) must use their own analytical formulas rather than routing through GeneralizedHyperbolic.
-- **Numerical efficiency**: Use your knowledge in numerical linear algebra, optimization and statistics to improve the efficiency without adding code complexity. 
-For example, use assume_a in scipy.linalg.inv for triangular and positive definite matrices. 
-- **Numerical Robustness**: Code need to be robust under extreme scenarios. Handle the edge cases carefully.
-For example, you can introduce additional code and logic to prevent the overflow of large z when computing logkv(v,z).
+
+Priority: Elegancy > Numerical Efficiency & Robustness > Mathematical Clarity > Simplicity.
+
+- **Elegancy**: Reading and using normix should be enjoyable. This applies to code, mathematics, documentation, and agent instructions alike. Think in high-level abstractions — modules, base classes, object hierarchies — and optimise for long-term maintainability. When a new feature feels like it needs a quick-fix function, ask the user whether the underlying design should be refactored instead of patching around it. Prefer redesign over accretion.
+
+- **Numerical Efficiency & Robustness**: normix targets the same standard as professional scientific-computing libraries. Use knowledge of numerical linear algebra, optimisation, and statistics to choose efficient algorithms (e.g. `assume_a` flags for triangular/positive-definite solves, exploiting Cholesky structure). Code must be robust under extreme parameters — handle edge cases, guard against overflow/underflow (e.g. large-$z$ asymptotics in `log_kv`), and prefer log-space arithmetic where magnitudes vary widely.
+
+- **Mathematical Clarity**: Math is the backbone of this package. We start with math theory, and end with practical engineering solutions. Mathematical notation in docstrings, `.rst` theory docs, and code comments must be clean and internally consistent. Maintain a clear correspondence between math symbols and code variable names (e.g. $\theta$ ↔ `theta`, $\eta$ ↔ `eta`, $\psi$ ↔ `log_partition`). Avoid ad-hoc or ambiguous notation.
+
+- **Simplicity**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it; removing something and getting equal or better results is a simplification win. However, simplicity must not sacrifice any of the three higher-priority concerns. Delegating to a general-case implementation when a closed-form specialisation exists is not "simpler" — it is mathematically more complex and numerically wasteful. Special-case distributions (NIG, VG, NInvG) must use their own analytical formulas rather than routing through GeneralizedHyperbolic.

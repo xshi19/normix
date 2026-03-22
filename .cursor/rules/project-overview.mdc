@@ -17,7 +17,7 @@ Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
 | MultivariateNormal | — | `mu`, `L` (Cholesky) |
 | VarianceGamma | Gamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
 | NormalInverseGamma | InverseGamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
-| NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `delta`, `eta` |
+| NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `mu_ig`, `lam` |
 | GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
 
 All distributions provide: `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`.

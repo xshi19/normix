@@ -133,15 +133,10 @@ class InverseGamma(ExponentialFamily):
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
         # From η = [-α/β, log β − ψ(α)]: β = α/(-η₁), so ψ(α) − log α = −η₂ − log(−η₁).
+        from normix.distributions.gamma import _newton_digamma
         target = -eta2 - jnp.log(-eta1)
-        alpha = _newton_digamma_ig(target)
+        alpha = _newton_digamma(target)
         beta = alpha / (-eta1)
         alpha = jnp.maximum(alpha, LOG_EPS)
         beta = jnp.maximum(beta, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
-
-
-def _newton_digamma_ig(target: jax.Array, n_iter: int = 50) -> jax.Array:
-    """Solve ψ(α) − log(α) = target for α > 0."""
-    from normix.distributions.gamma import _newton_digamma
-    return _newton_digamma(target, n_iter)

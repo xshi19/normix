@@ -86,29 +86,12 @@ class JointNormalInverseGamma(JointNormalMixture):
         θ = [-(α+1)-d/2, -(β+½μᵀΛμ), -½γᵀΛγ, Λγ, Λμ, -½vec(Λ)]
         (InverseGamma subordinator: p=-α, a→0, b=2β).
         """
-        d = self.d
-        z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
-        z_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
-        Lambda_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_mu, lower=False)
-        Lambda_gamma = jax.scipy.linalg.solve_triangular(self.L_Sigma.T, z_gamma, lower=False)
-
-        mu_quad = 0.5 * jnp.dot(self.mu, Lambda_mu)
-        gamma_quad = 0.5 * jnp.dot(self.gamma, Lambda_gamma)
-
-        theta_1 = -(self.alpha + 1.0) - d / 2.0
-        theta_2 = -(self.beta + mu_quad)
-        theta_3 = -gamma_quad
-
-        L_inv = jax.scipy.linalg.solve_triangular(
-            self.L_Sigma, jnp.eye(d, dtype=jnp.float64), lower=True)
-        Lambda = L_inv.T @ L_inv
-
-        return jnp.concatenate([
-            jnp.array([theta_1, theta_2, theta_3]),
-            Lambda_gamma,
-            Lambda_mu,
-            (-0.5 * Lambda).ravel(),
-        ])
+        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        return self._assemble_natural_params(
+            -(self.alpha + 1.0) - self.d / 2.0,
+            -(self.beta + mu_quad),
+            -gamma_quad,
+        )
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
@@ -116,34 +99,17 @@ class JointNormalInverseGamma(JointNormalMixture):
         ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ
         Analytical — no Bessel function needed (InverseGamma subordinator).
         """
-        n = theta.shape[0]
-        d = int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
+        from normix.mixtures.joint import JointNormalMixture
+        (d, theta_1, theta_2, _, *_, log_det_Sigma, _, _,
+         mu_quad, _, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        Lambda = -2.0 * theta_6
-        Lambda = 0.5 * (Lambda + Lambda.T)
-
-        _sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
-        log_det_Sigma = -log_det_Lambda
-
-        mu = jnp.linalg.solve(Lambda, theta_5)
-
-        mu_quad = 0.5 * jnp.dot(mu, theta_5)
         alpha = -(theta_1 + d / 2.0) - 1.0
         beta = -theta_2 - mu_quad
 
-        mu_Lambda_gamma = jnp.dot(mu, theta_4)
-
-        psi = (0.5 * log_det_Sigma
-               + jax.scipy.special.gammaln(alpha)
-               - alpha * jnp.log(beta)
-               + mu_Lambda_gamma)
-        return psi
+        return (0.5 * log_det_Sigma
+                + jax.scipy.special.gammaln(alpha)
+                - alpha * jnp.log(beta)
+                + mu_Lambda_gamma)
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
@@ -193,7 +159,7 @@ class NormalInverseGamma(NormalMixture):
         p_gig = -(alpha + d / 2.0)
         linear = zw
 
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
+        log_det_sigma = j.log_det_sigma()
 
         log_C = (-0.5 * d * jnp.log(2.0 * jnp.pi)
                  - 0.5 * log_det_sigma
@@ -209,93 +175,25 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
-    def m_step(self, X, expectations) -> "NormalInverseGamma":
+    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
         from normix.distributions.inverse_gamma import InverseGamma
-
-        X = jnp.asarray(X, dtype=jnp.float64)
-        j = self._joint
-
-        E_log_Y = expectations['E_log_Y']
-        E_inv_Y = expectations['E_inv_Y']
-        E_Y = expectations['E_Y']
-
-        mean_E_inv_Y = jnp.mean(E_inv_Y)
-        mean_E_Y = jnp.mean(E_Y)
-        E_X = jnp.mean(X, axis=0)
-        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0)
-        E_XXT_inv_Y = jnp.mean(
-            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)
-
-        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
-            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y)
-
-        ig_eta = jnp.array([-mean_E_inv_Y, jnp.mean(E_log_Y)])
+        ig_eta = jnp.array([-gig_eta[1], gig_eta[0]])
         ig_new = InverseGamma.from_expectation(ig_eta)
-
         joint_new = JointNormalInverseGamma(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             alpha=ig_new.alpha, beta=ig_new.beta,
         )
         return NormalInverseGamma(joint_new)
 
-    def regularize_det_sigma_one(self) -> "NormalInverseGamma":
+    def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
-        d = j.d
-        log_det_sigma = 2.0 * jnp.sum(jnp.log(jnp.diag(j.L_Sigma)))
-        log_scale = log_det_sigma / d
-        scale = jnp.exp(log_scale)
-        L_new = j.L_Sigma / jnp.sqrt(scale)
-        gamma_new = j.gamma / scale
-        beta_new = j.beta * scale
         joint_new = JointNormalInverseGamma(
-            mu=j.mu, gamma=gamma_new, L_Sigma=L_new,
-            alpha=j.alpha, beta=beta_new,
+            mu=mu, gamma=gamma_new, L_Sigma=L_new,
+            alpha=j.alpha, beta=j.beta * scale,
         )
         return NormalInverseGamma(joint_new)
 
-    def marginal_log_likelihood(self, X):
-        X = jnp.asarray(X, dtype=jnp.float64)
-        return jnp.mean(jax.vmap(self.log_prob)(X))
-
     @classmethod
-    def fit(
-        cls,
-        X: jax.Array,
-        *,
-        key: jax.Array,
-        max_iter: int = 200,
-        tol: float = 1e-6,
-        regularization: str = 'det_sigma_one',
-        n_init: int = 1,
-    ) -> "NormalInverseGamma":
-        """Fit NInvG distribution to data using EM."""
-        from normix.fitting.em import BatchEMFitter
-        X = jnp.asarray(X, dtype=jnp.float64)
-        fitter = BatchEMFitter(max_iter=max_iter, tol=tol,
-                               regularization=regularization)
-        best_model = None
-        best_ll = -jnp.inf
-        keys = jax.random.split(key, n_init)
-        for k in keys:
-            model = cls._initialize(X, k)
-            fitted = fitter.fit(model, X)
-            ll = fitted.marginal_log_likelihood(X)
-            if best_model is None or float(ll) > float(best_ll):
-                best_model = fitted
-                best_ll = ll
-        return best_model
-
-    @classmethod
-    def _initialize(cls, X: jax.Array, key: jax.Array) -> "NormalInverseGamma":
-        """Moment-based initialization with random perturbation."""
-        X = jnp.asarray(X, dtype=jnp.float64)
-        n, d = X.shape
-        mu = jnp.mean(X, axis=0)
-        X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n + 1e-4 * jnp.eye(d)
-        key1, _key2 = jax.random.split(key)
-        gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+    def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
-            mu=mu, gamma=gamma, sigma=sigma_emp,
-            alpha=3.0, beta=1.0,
-        )
+            mu=mu, gamma=gamma, sigma=sigma, alpha=3.0, beta=1.0)

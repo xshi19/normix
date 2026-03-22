@@ -87,9 +87,6 @@ class Gamma(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.alpha / self.beta**2
 
-    def std(self) -> jax.Array:
-        return jnp.sqrt(self.alpha) / self.beta
-
     def cdf(self, x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jax.scipy.special.gammainc(self.alpha, self.beta * x)
