@@ -121,9 +121,10 @@ Each follows the same pattern:
 **Goal:** Separate fitters with `jax.lax.while_loop` / `jax.lax.scan`.
 
 ### 5.1 BatchEMFitter
-- `jax.lax.while_loop(cond, body, init_state)`
-- Convergence: relative log-likelihood change < tol
-- Regularization: `det(Σ) = 1` (normalize Cholesky diagonal)
+- **Implemented:** `fit(model, X) -> EMResult` (fitted `model`, `param_changes`, optional LLs, timing). Plain Python fitter class (not `eqx.Module`).
+- **Loop:** `jax.lax.scan` when both E- and M-step backends are `'jax'` and `verbose <= 1`; else Python `for` loop (CPU backends or verbose tables).
+- **Convergence:** max relative change in normal parameters (μ, γ, `L_Sigma`) < `tol` (default `1e-3`); not log-likelihood delta.
+- **Regularization:** `regularization='none'` by default; optional `det_sigma_one` (normalize `det(Σ)`).
 
 ### 5.2 OnlineEMFitter
 - `jax.lax.scan` per epoch, Robbins-Monro step sizes τₜ = τ₀ + t
@@ -209,5 +210,5 @@ All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate
 - `_posterior_gig_params(z2, w2)` added to all four `JointNormalMixture` subclasses
 
 ### 7.4 BatchEMFitter integration — Phase 4 ✓
-- `BatchEMFitter(e_step_backend='cpu', m_step_solver='cpu')` for full CPU hot path
-- Default values `'jax'`/`'newton'` preserve backward compatibility
+- `BatchEMFitter(e_step_backend='cpu', m_step_backend='cpu', ...)` for full CPU hot path
+- Defaults: `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`, `tol=1e-3`, `regularization='none'`

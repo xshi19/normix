@@ -38,13 +38,13 @@ normix/
 │   ├── joint.py                  # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py               # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   ├── em.py                     # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
-│   └── solvers.py                # General η→θ solvers (Bregman divergence minimisation)
+│   ├── em.py                     # EMResult; Batch / Online / MiniBatch EM fitters
+│   └── solvers.py                # solve_bregman*, BregmanResult (η→θ Bregman minimisation)
 └── utils/
     ├── bessel.py                 # log_kv with custom_jvp
     ├── constants.py              # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
     ├── plotting.py               # Notebook helpers
-    └── validation.py             # EM validation helpers
+    └── validation.py             # Moment checks, pretty-print (notebooks)
 ```
 
 ---
@@ -104,11 +104,13 @@ class ExponentialFamily(eqx.Module):
 
 Every derived quantity comes from differentiating `_log_partition_from_theta`. The triad (`_grad_log_partition`, `_hessian_log_partition` plus CPU variants) separates the mathematical formula from the evaluation backend, enabling the solver to work in both JAX and CPU modes without distribution-specific knowledge.
 
-**Three constructors:**
+**Three constructors plus fitting helpers:**
 - `from_classical(...)` — from shape/rate/mean/etc. (readable English names)
 - `from_natural(theta)` — from natural parameters θ
-- `from_expectation(eta, *, backend, method, theta0, maxiter, tol)` — solves ∇ψ(θ)=η via Bregman divergence minimisation; passes `grad_fn`/`hess_fn` from triad to solver
-- `fit_mle(X, *, theta0, maxiter, tol)` — MLE via exponential family identity: η̂ = mean_i t(xᵢ)
+- `from_expectation(eta, *, backend, method, theta0, maxiter, tol, verbose)` — solves ∇ψ(θ)=η via `solve_bregman`; passes `grad_fn`/`hess_fn` from triad. If `theta0` is omitted, uses **`jnp.zeros_like(eta)`** (no separate `_init_theta_from_eta`).
+- `fit_mle(X, *, theta0, maxiter, tol, verbose)` — MLE: η̂ = mean_i t(xᵢ), then `from_expectation`
+- `default_init(X)` — same η̂ path as MLE; for closed-form `from_expectation` subclasses this is the MLE; otherwise a reasonable cold start
+- `fit(self, X, *, ...)` — instance method: η̂ from data, **`theta0=self.natural_params()`** for warm-started η→θ (same kwargs as `from_expectation` aside from `theta0`)
 
 **Bregman divergence:**  `bregman_divergence(theta, eta)` = ψ(θ) − θ·η. Minimising over θ gives ∇ψ(θ*) = η. Available as a class method on all `ExponentialFamily` subclasses and as the universal `fitting.solvers.bregman_objective` for use with any log-partition function.
 
@@ -148,21 +150,21 @@ Each concrete joint implements `_compute_posterior_expectations(x)` which comput
 
 Following GMMX: the model knows math, the fitter knows iteration.
 
-```python
-class BatchEMFitter(eqx.Module):
-    max_iter: int = eqx.field(static=True, default=200)
-    tol: float = eqx.field(static=True, default=1e-6)
+**`EMResult`** (frozen dataclass): `model`, optional `log_likelihoods`, `param_changes`, `n_iter`, `converged`, `elapsed_time`.
 
-    def fit(self, model: NormalMixture, X: Array) -> NormalMixture:
-        """Batch EM via jax.lax.while_loop. Returns new model."""
-        ...
-```
+**`BatchEMFitter`** is a plain Python class (configuration + `fit`); it is **not** an `eqx.Module`. Construct with backends, tolerances, and verbosity, then `fit(model, X) -> EMResult`.
 
-The same `NormalMixture` model works with `BatchEMFitter`, `OnlineEMFitter`, or `MiniBatchEMFitter`. The E-step and M-step are methods on the model; the fitter only controls the loop.
+- **Convergence**: max relative change in **normal** parameters (μ, γ, Cholesky `L_Sigma`) below `tol` (default **`1e-3`**). Subordinator (GIG) parameters are excluded from this criterion.
+- **Loop**: `jax.lax.scan` when **both** `e_step_backend` and `m_step_backend` are `'jax'` and `verbose <= 1`; otherwise a Python loop (needed for CPU backends or `verbose >= 2`).
+- **Regularization**: `regularization='none'` by default; `'det_sigma_one'` enforces `det(Σ)=1` via rescaling (see `NormalMixture.regularize_det_sigma_one`).
+
+The same `NormalMixture` model works with `BatchEMFitter`, `OnlineEMFitter`, or `MiniBatchEMFitter`. The E-step and M-step are methods on the model; the fitter controls the outer loop and returns **`EMResult`**.
 
 **EM steps on `NormalMixture`:**
-- `e_step(X, backend='jax'|'cpu')` — computes conditional expectations via vmap
+- `e_step(X, backend='jax'|'cpu')` — conditional expectations via vmap (or hybrid CPU Bessel path)
 - `m_step(X, expectations)` → new `NormalMixture` with updated parameters
+- `fit(X, **kwargs) -> EMResult` — convenience: `BatchEMFitter(**kwargs).fit(self, X)` using **`self` as initialization**
+- `default_init(X)` — moment-based starting model (sample mean, zero γ, regularized empirical Σ, default subordinator); pair with `model.fit(X)` for a full pipeline without hand-picking true parameters in notebooks
 
 ---
 
@@ -217,12 +219,14 @@ $$\theta = (\tilde\theta_1,\; \tilde\theta_2/s,\; s\tilde\theta_3)$$
 ### Solvers (general + GIG-specific)
 
 `fitting/solvers.py` provides universal Bregman divergence solvers for any exponential family:
-- `solve_bregman(f, eta, theta0, *, backend, method, ...)` — single starting point
-- `solve_bregman_multistart(f, eta, theta0_batch, *, backend, method, ...)` — best of K starts
+- `solve_bregman(f, eta, theta0, *, backend, method, verbose=0, ...)` — single starting point
+- `solve_bregman_multistart(f, eta, theta0_batch, *, backend, method, verbose=0, ...)` — best of K starts
+
+Both return **`BregmanResult`**: `theta`, `fun`, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`** (wall clock). Some scalar fields are typed loosely (`Any`) so a `BregmanResult` can be nested inside **`lax.scan`** (e.g. JAX Newton path) without `ConcretizationTypeError` from forcing Python `float`/`bool`.
 
 Solver axes: `backend='jax'|'cpu'` × `method='newton'|'lbfgs'|'bfgs'`.
 
-For GIG the preferred warm-start solver is `backend='cpu', method='lbfgs'` (scipy L-BFGS-B + `scipy.kve`), which avoids JAX GPU kernel dispatch overhead on the 3-dimensional scalar problem.
+For GIG the preferred warm-start solver is `backend='cpu', method='lbfgs'` (scipy L-BFGS-B + `scipy.kve`), which avoids JAX GPU kernel dispatch overhead on the 3-dimensional scalar problem. **`verbose`** is threaded from `GIG.from_expectation` / multistart into `solve_bregman` for solver-side logging.
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmark comparisons.
 
@@ -256,6 +260,11 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Unbatched core | `log_prob(x)` for single obs | Clean; batch via `jax.vmap` at call site |
 | Mixture design | Joint + Marginal classes | Joint IS an exponential family; marginal is not |
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
+| EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace; `result.model` is the fitted pytree |
+| Batch EM convergence | Relative change in μ, γ, L (not GIG) | Stable criterion; GIG η→θ has its own solver tolerance |
+| `BatchEMFitter` | Plain class, not `eqx.Module` | Fitter is configuration + loop; no pytree overhead |
+| `lax.scan` EM | When both EM backends JAX and low verbosity | JIT-friendly full batch EM; else Python loop for CPU / verbose tables |
+| Cold vs warm η→θ | `default_init` / `theta0=None` vs `fit(self,X)` | Zeros-like default in `from_expectation`; instance `fit` uses `natural_params()` |
 | Bessel | Pure-JAX + CPU backend | JAX for JIT/autodiff; CPU for EM performance |
 | η→θ solver | η-rescaled + CPU L-BFGS-B | Ill-conditioning requires rescaling; CPU avoids GPU overhead |
 | Constraints | `jnp.maximum(x, LOG_EPS)` | Simpler than paramax; EM doesn't need grad through constraints |

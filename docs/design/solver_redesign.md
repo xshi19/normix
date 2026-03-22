@@ -167,12 +167,15 @@ The key insight: `objective_and_grad_fn` is unnecessary. The objective is always
 ```python
 @dataclass(frozen=True)
 class BregmanResult:
-    theta: jax.Array       # optimal θ*
-    fun: float             # f(θ*) − θ*·η at solution
-    grad_norm: float       # ‖∇f(θ*) − η‖∞
-    num_steps: int         # iterations used
-    converged: bool        # whether tolerance was met
+    theta: jax.Array    # optimal θ*
+    fun: Any            # f(θ*) − θ*·η (JAX or Python scalar — scan-safe)
+    grad_norm: Any      # ‖∇f(θ*) − η‖∞
+    num_steps: int
+    converged: Any      # tolerance met (loose type for lax.scan carries)
+    elapsed_time: float = 0.0  # wall-clock seconds
 ```
+
+`solve_bregman` / `solve_bregman_multistart` accept **`verbose`** for printed diagnostics.
 
 ### 3.3 Multi-start wrapper
 
@@ -201,28 +204,23 @@ For `backend='jax'`: `vmap` over Optimistix/JAXopt solvers works because they us
 ### 3.4 Integration with `ExponentialFamily`
 
 ```python
-# In ExponentialFamily
+# In ExponentialFamily (base)
 @classmethod
 def from_expectation(cls, eta, *, theta0=None, backend="jax",
-                     method="lbfgs", **solver_kwargs):
+                     method="lbfgs", verbose=0, ...):
     eta = jnp.asarray(eta, dtype=jnp.float64)
     if theta0 is None:
-        theta0 = cls._init_theta_from_eta(eta)
+        theta0 = jnp.zeros_like(eta)
     result = solve_bregman(
-        f=cls._static_log_partition(),
-        eta=eta, theta0=theta0,
+        f, eta, theta0,
         backend=backend, method=method,
-        bounds=cls._theta_bounds(),
-        **solver_kwargs,
+        bounds=..., grad_fn=..., hess_fn=...,
+        verbose=verbose, ...
     )
     return cls.from_natural(result.theta)
 ```
 
-Each subclass provides:
-- `_static_log_partition()` → stateless `Callable[[Array], Array]`
-- `_theta_bounds()` → `[(lo, hi), ...]` or `None`
-- Subclasses with closed-form η→θ (Gamma, InverseGaussian, InverseGamma)
-  override `from_expectation` entirely — no solver needed.
+Each subclass provides triad callables (`_log_partition_*`, `_grad_*`, `_hess_*`) and `_theta_bounds()`. Subclasses with closed-form η→θ (Gamma, InverseGaussian, InverseGamma) override `from_expectation` entirely. **GIG** overrides: `theta0=None` uses **`solve_bregman_multistart`** instead of zeros.
 
 ---
 

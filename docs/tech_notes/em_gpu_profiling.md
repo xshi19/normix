@@ -12,12 +12,12 @@ The package now supports two backends for the EM hot path:
 - **`log_kv(..., backend='cpu')`**: `scipy.special.kve`, fully vectorized numpy. Not JIT-able. Fast for EM.
 - **E-step `backend='jax'`**: `jax.vmap` over GIG `expectation_params`, entirely on-device.
 - **E-step `backend='cpu'`**: quad forms (L⁻¹(x-μ), ‖z‖², ‖w‖²) in JAX (vmapped) + `GIG.expectation_params_batch` via scipy kve. Only Bessel goes to CPU.
-- **M-step GIG `solver='newton'`**: JAX Newton solver, `jax.hessian`-based, `lax.scan(length=20)`, warm-start.
-- **M-step GIG `solver='cpu'`**: scipy L-BFGS-B with analytical gradient via `log_kv(backend='cpu')`.
+- **M-step GIG (`backend='jax'`, `method='newton'`)**: JAX Newton solver, analytical Hessian, warm-start from current GIG natural parameters.
+- **M-step GIG (`backend='cpu'`, `method='lbfgs'`)**: scipy L-BFGS-B with analytical gradient via `log_kv(backend='cpu')`.
 - **M-step others (VG, NIG-α)**: unchanged, `jaxopt.LBFGS`.
 - **M-step NIG**: closed-form.
 
-The `BatchEMFitter` selects backends via `e_step_backend='cpu'` and `m_step_solver='cpu'`.
+The `BatchEMFitter` selects backends via `e_step_backend` and `m_step_backend` (and `m_step_method`), forwarded to `m_step(..., backend=..., method=...)`.
 
 ## Summary Table (March 2026 re-run — CPU backend)
 
@@ -116,16 +116,18 @@ For the EM hot path, use:
 from normix.fitting.em import BatchEMFitter
 
 fitter = BatchEMFitter(
-    e_step_backend='cpu',   # scipy kve (vectorized) — 20–57× faster E-step
-    m_step_solver='cpu',    # scipy L-BFGS-B — 3–23× faster GH M-step
+    e_step_backend='cpu',    # scipy kve (vectorized) — 20–57× faster E-step
+    m_step_backend='cpu',    # scipy L-BFGS-B — 3–23× faster GH M-step
+    m_step_method='lbfgs',
 )
-model = fitter.fit(gh_model, X)
+result = fitter.fit(gh_model, X)
+model = result.model
 ```
 
 Or equivalently, call directly:
 ```python
 exp = model.e_step(X, backend='cpu')
-model = model.m_step(X, exp, solver='cpu')
+model = model.m_step(X, exp, backend='cpu', method='lbfgs')
 ```
 
 The `backend='jax'` default remains correct for `log_prob`, `pdf`, `cdf`, `jax.jit`, and `jax.grad`.

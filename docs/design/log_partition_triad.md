@@ -274,12 +274,12 @@ GIG-specific code) outweighs 5 extra Bessel calls per Newton step.
 ```python
 @classmethod
 def from_expectation(cls, eta, *, backend='jax', method='lbfgs',
-                     theta0=None, maxiter=500, tol=1e-10):
+                     theta0=None, maxiter=500, tol=1e-10, verbose=0):
     if theta0 is None:
-        theta0 = cls._init_theta_from_eta(eta)
+        theta0 = jnp.zeros_like(eta)
     bounds = cls._theta_bounds()
 
-    solver_kwargs = dict(bounds=bounds, max_steps=maxiter, tol=tol)
+    solver_kwargs = dict(bounds=bounds, max_steps=maxiter, tol=tol, verbose=verbose)
 
     if backend == 'cpu':
         solver_kwargs.update(

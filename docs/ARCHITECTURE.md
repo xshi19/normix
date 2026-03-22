@@ -21,14 +21,14 @@ normix/                     # JAX implementation
 │   ├── joint.py            # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   ├── em.py               # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
-│   ├── solvers.py          # General η→θ solvers: Newton, L-BFGS, scipy multi-start, CPU
+│   ├── em.py               # EMResult; BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   ├── solvers.py          # solve_bregman*, BregmanResult; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
-    └── validation.py        # moment validation, EM runner, parameter printing
+    └── validation.py        # moment validation, parameter printing (notebooks)
 
 normix_numpy/               # NumPy/SciPy reference implementation (preserved)
 ```
@@ -90,8 +90,10 @@ classical (α, β, μ, L_Sigma, ...)
 natural θ
     ↕  from_natural / expectation_params (via _grad_log_partition)
 expectation η = E[t(X)]
-    ↕  from_expectation(eta, *, backend, method, theta0, maxiter, tol)
-         fit_mle(X, *, theta0, maxiter, tol)
+    ↕  from_expectation(eta, *, backend, method, theta0, maxiter, tol, verbose)
+         fit_mle(X, *, theta0, maxiter, tol, verbose)
+         fit(self, X, ...) — warm-start η→θ from self.natural_params()
+         default_init(X) — η̂ then from_expectation(η̂) for cold start
 ```
 
 All conversions are JIT-compatible and support `jax.grad` and `jax.vmap`.
@@ -144,7 +146,11 @@ The model knows math; the fitter knows iteration (following GMMX).
   - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
   - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
 - **M-step**: `model.m_step(X, expectations)` → new immutable model
-- **Fitter**: `BatchEMFitter(e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')`
+- **Batch fitter**: `BatchEMFitter` is a plain Python class (not an `eqx.Module`). Its `fit(model, X)` returns **`EMResult`**: fitted `model`, optional per-iteration log-likelihoods, `param_changes` (max relative change in normal parameters μ, γ, `L_Sigma` — GIG/subordinator excluded), `n_iter`, `converged`, `elapsed_time`.
+- **Defaults**: `tol=1e-3`, `regularization='none'`, `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`. Regularization `'det_sigma_one'` rescales Σ (and matched γ / subordinator) so `det(Σ)=1`.
+- **Dual loop**: when **both** E- and M-step backends are `'jax'` and `verbose <= 1`, the batch EM body runs inside **`jax.lax.scan`** (JIT-friendly). Otherwise a Python `for` loop is used (CPU backends, or `verbose >= 2` for a per-iteration table).
+- **Verbosity**: `verbose=0` silent, `1` summary, `2` per-iteration diagnostics.
+- **Convenience**: `NormalMixture.fit(X, **fitter_kwargs) → EMResult` delegates to `BatchEMFitter` using **`self` as initialization**. Cold start: `SomeMixture.default_init(X)` then `result = model.fit(X)` (or `BatchEMFitter(...).fit(model, X)`).
 
 ## Bessel Functions (`utils/bessel.py`)
 
@@ -199,14 +205,14 @@ This is equivalent to minimising the **Bregman divergence** $\psi(\theta) - \the
 $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s^2,\; \sqrt{\eta_2\eta_3},\; \sqrt{\eta_2\eta_3}\bigr)$$
 
 **Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
-- `backend='cpu', method='lbfgs'` (default for EM): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem. Requires `theta0`.
-- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian). Requires `theta0`.
-- `backend='jax', method='lbfgs'`: JAXopt L-BFGS. Requires `theta0`.
-- No `theta0`: multi-start CPU solver using `GIG._log_partition_cpu` and `GIG._grad_log_partition_cpu`.
+- `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian).
+- `backend='jax', method='lbfgs'`: JAXopt L-BFGS.
+- Omitting `theta0` in **`ExponentialFamily.from_expectation`**: defaults to **`jnp.zeros_like(eta)`**. **GIG** overrides: `theta0=None` runs **`solve_bregman_multistart`** on the η-rescaled problem (CPU L-BFGS-B, seeds from Gamma / InverseGamma / InverseGaussian special cases).
 
 The solver passes `grad_fn` and `hess_fn` (both in θ-space) from the triad. The solver applies the φ↔θ chain rule internally via `jax.jacobian(to_theta)`, so distributions never need to know about reparametrization.
 
-The general solver infrastructure lives in `fitting/solvers.py` (`solve_bregman`, `solve_bregman_multistart`), reusable for any `ExponentialFamily` subclass.
+The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values.
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 
