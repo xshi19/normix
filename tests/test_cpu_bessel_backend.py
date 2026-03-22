@@ -311,7 +311,9 @@ def test_batch_em_fitter_defaults_unchanged():
     assert fitter.m_step_backend == 'cpu'
     assert fitter.m_step_method == 'newton'
     assert fitter.max_iter == 200
-    assert fitter.tol == 1e-6
+    assert fitter.tol == 1e-3
+    assert fitter.regularization == 'none'
+    assert fitter.verbose == 0
 
 
 def test_batch_em_fitter_cpu_converges_gh():
@@ -333,7 +335,7 @@ def test_batch_em_fitter_cpu_converges_gh():
         mu=np.zeros(d), gamma=np.zeros(d),
         sigma=np.eye(d), p=1.0, a=1.0, b=1.0,
     )
-    fitted = fitter.fit(init_model, X)
+    fitted = fitter.fit(init_model, X).model
     ll = float(fitted.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"Log-likelihood not finite: {ll}"
 
@@ -359,8 +361,8 @@ def test_batch_em_fitter_cpu_same_result_as_default():
     fitter_cpu = BatchEMFitter(max_iter=5, tol=1e-4,
                                 e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')
 
-    fitted_jax = fitter_jax.fit(init_model, X)
-    fitted_cpu = fitter_cpu.fit(init_model, X)
+    fitted_jax = fitter_jax.fit(init_model, X).model
+    fitted_cpu = fitter_cpu.fit(init_model, X).model
 
     ll_jax = float(fitted_jax.marginal_log_likelihood(X))
     ll_cpu = float(fitted_cpu.marginal_log_likelihood(X))

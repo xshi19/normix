@@ -363,6 +363,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         tol: float = 1e-10,
         backend: str = "jax",
         method: str = "newton",
+        verbose: int = 0,
     ) -> "GeneralizedInverseGaussian":
         """
         η → θ via η-rescaling + optimization.
@@ -421,7 +422,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
             result = solve_bregman(
                 f, eta_scaled, theta0_scaled,
-                backend=backend, method=method, **solver_kwargs,
+                backend=backend, method=method, verbose=verbose,
+                **solver_kwargs,
             )
             theta_scaled = result.theta
         else:
@@ -437,6 +439,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 backend="cpu", method="lbfgs",
                 bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
                 grad_fn=cls._grad_log_partition_cpu,
+                verbose=verbose,
             )
             theta_scaled = result.theta
 

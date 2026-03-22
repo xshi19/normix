@@ -22,7 +22,6 @@ from normix.utils.validation import (
     validate_moments,
     print_moment_validation,
     print_exp_family_params,
-    run_em,
 )
 
 __all__ = [
@@ -40,5 +39,4 @@ __all__ = [
     "validate_moments",
     "print_moment_validation",
     "print_exp_family_params",
-    "run_em",
 ]

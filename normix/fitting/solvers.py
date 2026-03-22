@@ -36,8 +36,9 @@ The solver handles all reparameterization internally via the chain rule.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -52,12 +53,17 @@ from normix.utils.constants import LOG_EPS, HESSIAN_DAMPING
 
 @dataclass(frozen=True)
 class BregmanResult:
-    """Result of a Bregman divergence minimization."""
+    """Result of a Bregman divergence minimization.
+
+    Scalar fields accept both Python and JAX types so the result
+    can live inside a lax.scan carry without concretization errors.
+    """
     theta: jax.Array    # optimal θ*
-    fun: float          # f(θ*) − θ*·η at solution
-    grad_norm: float    # ‖∇f(θ*) − η‖∞
+    fun: Any            # f(θ*) − θ*·η at solution
+    grad_norm: Any      # ‖∇f(θ*) − η‖∞
     num_steps: int      # iterations performed
-    converged: bool     # whether tolerance was met
+    converged: Any      # whether tolerance was met
+    elapsed_time: float = 0.0  # wall-clock seconds
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +95,7 @@ def solve_bregman(
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
     hess_fn: Optional[Callable] = None,
+    verbose: int = 0,
 ) -> BregmanResult:
     """Minimise f(θ) − θ·η over θ.
 
@@ -114,6 +121,8 @@ def solve_bregman(
         For backend='cpu': must accept numpy arrays and return numpy array.
         For backend='jax', method='newton': must be JAX-traceable.
         If None with method='newton': jax.hessian of the full objective is used.
+    verbose : int
+        0 = silent, >= 1 = print summary after solve.
 
     Returns
     -------
@@ -121,27 +130,50 @@ def solve_bregman(
     """
     eta = jnp.asarray(eta, dtype=jnp.float64)
     theta0 = jnp.asarray(theta0, dtype=jnp.float64)
+    t0 = time.perf_counter()
 
     if backend == "jax":
         if method == "newton":
             theta, fun, gn, conv = _jax_newton_raw(
                 f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
             )
-            return BregmanResult(
+            # No float()/bool() here — values may be JAX tracers inside lax.scan
+            result = BregmanResult(
                 theta=theta,
-                fun=float(fun),
-                grad_norm=float(gn),
+                fun=fun,
+                grad_norm=gn,
                 num_steps=max_steps,
-                converged=bool(conv),
+                converged=conv,
+                elapsed_time=time.perf_counter() - t0,
             )
         elif method in ("lbfgs", "bfgs"):
-            return _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method)
+            result = _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method)
+            result = BregmanResult(
+                theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
+                num_steps=result.num_steps, converged=result.converged,
+                elapsed_time=time.perf_counter() - t0,
+            )
         else:
             raise ValueError(f"Unknown method {method!r}. Choose 'newton', 'lbfgs', 'bfgs'.")
     elif backend == "cpu":
-        return _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, hess_fn)
+        result = _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, hess_fn)
+        result = BregmanResult(
+            theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
+            num_steps=result.num_steps, converged=result.converged,
+            elapsed_time=time.perf_counter() - t0,
+        )
     else:
         raise ValueError(f"Unknown backend {backend!r}. Choose 'jax' or 'cpu'.")
+
+    if verbose >= 1:
+        status = "converged" if bool(result.converged) else "NOT converged"
+        print(
+            f"Bregman [{backend}/{method}]: {status} in "
+            f"{result.num_steps} iters ({result.elapsed_time:.3f}s), "
+            f"|grad|={float(result.grad_norm):.2e}"
+        )
+
+    return result
 
 
 def solve_bregman_multistart(
@@ -156,6 +188,7 @@ def solve_bregman_multistart(
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
     hess_fn: Optional[Callable] = None,
+    verbose: int = 0,
 ) -> BregmanResult:
     """Run solve_bregman from multiple starting points; return the best result.
 
@@ -164,19 +197,36 @@ def solve_bregman_multistart(
     theta0_batch : (K, dim) jax.Array for backend='jax', method='newton'
                    (parallel via vmap); list of arrays otherwise
                    (sequential for-loop).
+    verbose : int
+        0 = silent, >= 1 = print summary.
     """
+    t0 = time.perf_counter()
     if backend == "jax" and method == "newton":
-        return _multistart_jax_newton(
+        result = _multistart_jax_newton(
             f, eta, jnp.asarray(theta0_batch, dtype=jnp.float64),
             bounds, max_steps, tol, grad_fn, hess_fn,
         )
-    # For quasi-Newton (jaxopt vmappability uncertain) and CPU: for-loop
-    theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
-    return _multistart_loop(
-        f, eta, theta0_list,
-        backend=backend, method=method, bounds=bounds,
-        max_steps=max_steps, tol=tol, grad_fn=grad_fn, hess_fn=hess_fn,
+    else:
+        theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
+        result = _multistart_loop(
+            f, eta, theta0_list,
+            backend=backend, method=method, bounds=bounds,
+            max_steps=max_steps, tol=tol, grad_fn=grad_fn, hess_fn=hess_fn,
+        )
+    elapsed = time.perf_counter() - t0
+    result = BregmanResult(
+        theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
+        num_steps=result.num_steps, converged=result.converged,
+        elapsed_time=elapsed,
     )
+    if verbose >= 1:
+        k = len(theta0_batch) if hasattr(theta0_batch, '__len__') else '?'
+        status = "converged" if result.converged else "NOT converged"
+        print(
+            f"Bregman multistart [{backend}/{method}, {k} starts]: "
+            f"{status} ({elapsed:.3f}s), |grad|={result.grad_norm:.2e}"
+        )
+    return result
 
 
 # ---------------------------------------------------------------------------

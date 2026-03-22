@@ -139,6 +139,7 @@ class InverseGaussian(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        **kwargs,
     ) -> "InverseGaussian":
         """
         Closed-form from η = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]:

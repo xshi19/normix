@@ -214,6 +214,7 @@ class ExponentialFamily(eqx.Module):
         tol: float = 1e-10,
         backend: str = "jax",
         method: str = "lbfgs",
+        verbose: int = 0,
     ) -> "ExponentialFamily":
         """
         Construct from expectation parameters η by solving ∇ψ(θ) = η.
@@ -225,12 +226,13 @@ class ExponentialFamily(eqx.Module):
         ----------
         backend : 'jax' (default, JIT-able) or 'cpu' (scipy, more robust)
         method  : 'lbfgs' (default), 'bfgs', or 'newton'
+        verbose : 0 = silent, >= 1 = print solver summary
         """
         from normix.fitting.solvers import solve_bregman
 
         eta = jnp.asarray(eta, dtype=jnp.float64)
         if theta0 is None:
-            theta0 = cls._init_theta_from_eta(eta)
+            theta0 = jnp.zeros_like(eta)
 
         jax_bounds = cls._theta_bounds()
         if jax_bounds is not None:
@@ -253,6 +255,7 @@ class ExponentialFamily(eqx.Module):
             backend=backend, method=method,
             bounds=bounds, max_steps=maxiter, tol=tol,
             grad_fn=grad_fn, hess_fn=hess_fn,
+            verbose=verbose,
         )
         return cls.from_natural(result.theta)
 
@@ -264,6 +267,7 @@ class ExponentialFamily(eqx.Module):
         theta0: Optional[jax.Array] = None,
         maxiter: int = 500,
         tol: float = 1e-10,
+        verbose: int = 0,
     ) -> "ExponentialFamily":
         """
         MLE via exponential family identity: η̂ = mean_i t(xᵢ).
@@ -276,15 +280,59 @@ class ExponentialFamily(eqx.Module):
         theta0 : optional initial natural parameters θ₀ for the η→θ solver
         maxiter : maximum iterations for the η→θ solver
         tol : convergence tolerance for the η→θ solver
+        verbose : 0 = silent, >= 1 = print solver summary
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         stats = jax.vmap(cls.sufficient_statistics)(X)   # (n, dim_t)
         eta_hat = jnp.mean(stats, axis=0)
-        return cls.from_expectation(eta_hat, theta0=theta0, maxiter=maxiter, tol=tol)
+        return cls.from_expectation(
+            eta_hat, theta0=theta0, maxiter=maxiter, tol=tol, verbose=verbose)
+
+    def fit(
+        self,
+        X: jax.Array,
+        *,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+        verbose: int = 0,
+        **kwargs,
+    ) -> "ExponentialFamily":
+        """Fit using self as initialization (warm start).
+
+        Computes η̂ = mean_i t(xᵢ) and solves from_expectation(η̂)
+        using ``self.natural_params()`` as the initial theta0.
+
+        Parameters
+        ----------
+        X : (n, ...) array of observations
+        maxiter : maximum iterations for the η→θ solver
+        tol : convergence tolerance for the η→θ solver
+        verbose : 0 = silent, >= 1 = print solver summary
+        """
+        cls = type(self)
+        X = jnp.asarray(X, dtype=jnp.float64)
+        stats = jax.vmap(cls.sufficient_statistics)(X)
+        eta_hat = jnp.mean(stats, axis=0)
+        return cls.from_expectation(
+            eta_hat, theta0=self.natural_params(),
+            maxiter=maxiter, tol=tol, verbose=verbose, **kwargs)
 
     # ------------------------------------------------------------------
     # Helpers for subclasses
     # ------------------------------------------------------------------
+
+    @classmethod
+    def default_init(cls, X: jax.Array) -> "ExponentialFamily":
+        """Moment-based initialisation from data.
+
+        Computes η̂ = mean_i t(xᵢ) and inverts to get an initial model.
+        For distributions with closed-form ``from_expectation`` (Gamma,
+        InverseGamma, InverseGaussian), this gives the MLE directly.
+        """
+        X = jnp.asarray(X, dtype=jnp.float64)
+        stats = jax.vmap(cls.sufficient_statistics)(X)
+        eta_hat = jnp.mean(stats, axis=0)
+        return cls.from_expectation(eta_hat)
 
     @classmethod
     def _theta_bounds(cls):
@@ -293,8 +341,3 @@ class ExponentialFamily(eqx.Module):
         Subclasses override to provide (lower, upper) tuple of arrays.
         """
         return None
-
-    @classmethod
-    def _init_theta_from_eta(cls, eta: jax.Array) -> jax.Array:
-        """Initial θ guess from η.  Default: zero vector. Override in subclasses."""
-        return jnp.zeros_like(eta)

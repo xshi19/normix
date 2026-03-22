@@ -593,7 +593,7 @@ class TestVarianceGammaEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means
         true_mean = true_dist.mean()
@@ -631,7 +631,7 @@ class TestVarianceGammaEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means (should be close)
         true_mean = true_dist.mean()
@@ -660,7 +660,7 @@ class TestVarianceGammaEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means
         true_mean = true_dist.mean()
@@ -686,7 +686,7 @@ class TestVarianceGammaEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit with verbose to track progress
-        fitted = VarianceGamma().fit(X, max_iter=30, tol=1e-8, verbose=0)
+        fitted = VarianceGamma().fit(X, max_iter=30, tol=1e-8, verbose=0).model
 
         # Final log-likelihood should be reasonable
         final_ll = np.mean(fitted.logpdf(X))
@@ -716,7 +716,7 @@ class TestVarianceGammaEMFitting:
         fitted_complete = VarianceGamma().fit_complete(X, Y)
 
         # Fit with EM (marginal data only)
-        fitted_em = VarianceGamma().fit(X, max_iter=50, tol=1e-6, verbose=0)
+        fitted_em = VarianceGamma().fit(X, max_iter=50, tol=1e-6, verbose=0).model
 
         # Complete data fit should be closer to true parameters
         true_mean = true_dist.mean()

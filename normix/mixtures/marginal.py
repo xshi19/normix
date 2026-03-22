@@ -213,46 +213,60 @@ class NormalMixture(eqx.Module):
         X = jnp.asarray(X, dtype=jnp.float64)
         return jnp.mean(jax.vmap(self.log_prob)(X))
 
-    @classmethod
     def fit(
-        cls,
+        self,
         X: jax.Array,
         *,
-        key: jax.Array,
+        verbose: int = 0,
         max_iter: int = 200,
-        tol: float = 1e-6,
-        regularization: str = 'det_sigma_one',
-        n_init: int = 1,
-        **fitter_kwargs,
-    ) -> "NormalMixture":
-        """Fit distribution to data using EM with optional multi-start."""
+        tol: float = 1e-3,
+        regularization: str = 'none',
+        e_step_backend: str = 'jax',
+        m_step_backend: str = 'cpu',
+        m_step_method: str = 'newton',
+    ) -> "EMResult":
+        """Fit using self as initialization. Returns EMResult.
+
+        Parameters
+        ----------
+        X : (n, d) data array
+        verbose : 0 = silent, 1 = summary, 2 = per-iteration table
+        max_iter, tol : EM convergence parameters
+        regularization : 'det_sigma_one' or 'none'
+        e_step_backend, m_step_backend : 'jax' or 'cpu'
+        m_step_method : 'newton', 'lbfgs', or 'bfgs'
+
+        Returns
+        -------
+        EMResult with .model, .log_likelihoods, .param_changes, etc.
+        """
         from normix.fitting.em import BatchEMFitter
-        X = jnp.asarray(X, dtype=jnp.float64)
         fitter = BatchEMFitter(
-            max_iter=max_iter, tol=tol, regularization=regularization,
-            **fitter_kwargs)
-        best_model = None
-        best_ll = -jnp.inf
-        keys = jax.random.split(key, n_init)
-        for k in keys:
-            model = cls._initialize(X, k)
-            fitted = fitter.fit(model, X)
-            ll = fitted.marginal_log_likelihood(X)
-            if best_model is None or float(ll) > float(best_ll):
-                best_model = fitted
-                best_ll = ll
-        return best_model
+            verbose=verbose, max_iter=max_iter, tol=tol,
+            regularization=regularization,
+            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
+            m_step_method=m_step_method,
+        )
+        return fitter.fit(self, X)
 
     @classmethod
-    def _initialize(cls, X: jax.Array, key: jax.Array) -> "NormalMixture":
-        """Moment-based initialisation with random perturbation."""
+    def default_init(cls, X: jax.Array) -> "NormalMixture":
+        """Moment-based initialisation from data.
+
+        Returns a model with:
+          mu    = sample mean
+          gamma = zeros
+          Sigma = empirical covariance (regularized)
+          subordinator = distribution-specific defaults
+
+        Useful as a starting point for ``model.fit(X)``.
+        """
         X = jnp.asarray(X, dtype=jnp.float64)
         n, d = X.shape
         mu = jnp.mean(X, axis=0)
         X_centered = X - mu
         sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
-        key1, _ = jax.random.split(key)
-        gamma = 0.01 * jax.random.normal(key1, (d,), dtype=jnp.float64)
+        gamma = jnp.zeros(d, dtype=jnp.float64)
         return cls._from_init_params(mu, gamma, sigma_emp)
 
     @classmethod

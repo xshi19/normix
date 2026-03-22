@@ -124,6 +124,7 @@ class InverseGamma(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        **kwargs,
     ) -> "InverseGamma":
         """
         η = [-α/β, log β − ψ(α)].

@@ -113,6 +113,7 @@ class Gamma(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        **kwargs,
     ) -> "Gamma":
         """
         Closed-form η → θ via Newton's method on ψ(α) − log(α) = η₁ − log(η₂).

@@ -1,7 +1,7 @@
 """Moment validation and parameter printing utilities for normix notebooks."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 import numpy as np
 
@@ -85,31 +85,3 @@ def print_exp_family_params(dist, label: str = "") -> None:
     print(f"Expectation params η: {eta}")
 
 
-def run_em(
-    marginal_dist,
-    X: np.ndarray,
-    max_iter: int = 100,
-    regularize: bool = True,
-) -> Tuple[Any, list]:
-    """
-    Run EM algorithm on a marginal distribution, tracking log-likelihood.
-
-    Returns (fitted_model, log_likelihoods).
-    """
-    X_jnp = jnp.asarray(X, dtype=jnp.float64)
-    model = marginal_dist
-    log_likelihoods: list = []
-
-    prev_ll = -np.inf
-    for _ in range(max_iter):
-        expectations = model.e_step(X_jnp)
-        model = model.m_step(X_jnp, expectations)
-        if regularize and hasattr(model, "regularize_det_sigma_one"):
-            model = model.regularize_det_sigma_one()
-        ll = float(model.marginal_log_likelihood(X_jnp))
-        log_likelihoods.append(ll)
-        if abs(ll - prev_ll) < 1e-6 and len(log_likelihoods) > 1:
-            break
-        prev_ll = ll
-
-    return model, log_likelihoods

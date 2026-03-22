@@ -462,7 +462,7 @@ class TestNormalInverseGaussianEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means
         true_mean = true_dist.mean()
@@ -491,7 +491,7 @@ class TestNormalInverseGaussianEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means (should be close)
         true_mean = true_dist.mean()
@@ -520,7 +520,7 @@ class TestNormalInverseGaussianEMFitting:
         X = true_dist.rvs(size=n_samples, random_state=42)
 
         # Fit using EM
-        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0)
+        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-5, verbose=0).model
 
         # Compare means
         true_mean = true_dist.mean()
@@ -549,7 +549,7 @@ class TestNormalInverseGaussianEMFitting:
         fitted_complete = NormalInverseGaussian().fit_complete(X, Y)
 
         # Fit with EM (marginal data only)
-        fitted_em = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-6, verbose=0)
+        fitted_em = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-6, verbose=0).model
 
         # Compare errors
         true_mean = true_dist.mean()
