@@ -124,10 +124,39 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
     # ------------------------------------------------------------------
-    # Tier 2: JAX grad (inherited default) + analytical Hessian
+    # Tier 2: Analytical gradient + Hessian (Bessel ratios in θ-space)
     # ------------------------------------------------------------------
-    # _grad_log_partition: inherits default jax.grad — works because
-    # log_kv has @jax.custom_jvp, so autodiff gives the correct gradient.
+
+    @classmethod
+    def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
+        """∇ψ(θ) = [E[log X], E[1/X], E[X]] via analytical Bessel ratios.
+
+        Uses 5 log_kv evaluations (at orders p, p±1, p±ε) and the identities:
+          E[1/X] = √(a/b) · K_{p−1}(√ab) / K_p(√ab)
+          E[X]   = √(b/a) · K_{p+1}(√ab) / K_p(√ab)
+          E[log X] = ∂/∂p log K_p(√ab) + ½ log(b/a)
+
+        Clamping a, b to TINY (not 0) ensures the Bessel small-z asymptotics
+        handle the degenerate Gamma/InverseGamma limits via cancellation.
+        The default jax.grad path fails here because jnp.where evaluates
+        all branches, and d(sqrt(ab))/da → ∞ as a → 0.
+        """
+        p = theta[0] + 1.0
+        b_safe = jnp.maximum(-2.0 * theta[1], TINY)
+        a_safe = jnp.maximum(-2.0 * theta[2], TINY)
+        sqrt_ab = jnp.sqrt(a_safe * b_safe)
+        log_sqrt_ba = 0.5 * (jnp.log(b_safe) - jnp.log(a_safe))
+
+        orders = jnp.array([p, p - 1.0, p + 1.0,
+                            p - BESSEL_EPS_V, p + BESSEL_EPS_V])
+        evals = jax.vmap(log_kv)(orders, jnp.full(5, sqrt_ab))
+        L, L_m1, L_p1, L_vm, L_vp = evals
+
+        E_inv_X = jnp.exp(L_m1 - L - log_sqrt_ba)
+        E_X     = jnp.exp(L_p1 - L + log_sqrt_ba)
+        E_log_X = (L_vp - L_vm) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
+
+        return jnp.array([E_log_X, E_inv_X, E_X])
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
