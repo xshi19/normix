@@ -262,11 +262,19 @@ class GeneralizedHyperbolic(NormalMixture):
         maxiter = kwargs.get('maxiter', 20)
 
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
-        gig_new = GIG.from_expectation(
-            gig_eta,
-            theta0=current_gig.natural_params(),
-            backend=backend, method=method, maxiter=maxiter,
-        )
+        try:
+            gig_new = GIG.from_expectation(
+                gig_eta,
+                theta0=current_gig.natural_params(),
+                backend=backend, method=method, maxiter=maxiter,
+            )
+            p_new, a_new, b_new = float(gig_new.p), float(gig_new.a), float(gig_new.b)
+            if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10
+                    or a_new < 1e-10 or b_new < 1e-10):
+                gig_new = current_gig
+        except Exception:
+            gig_new = current_gig
+
         joint_new = JointGeneralizedHyperbolic(
             mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
             p=gig_new.p, a=gig_new.a, b=gig_new.b,
@@ -275,9 +283,13 @@ class GeneralizedHyperbolic(NormalMixture):
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
+        _GIG_CLAMP_LO = 1e-6
+        _GIG_CLAMP_HI = 1e6
+        a_new = jnp.clip(j.a / scale, _GIG_CLAMP_LO, _GIG_CLAMP_HI)
+        b_new = jnp.clip(j.b * scale, _GIG_CLAMP_LO, _GIG_CLAMP_HI)
         joint_new = JointGeneralizedHyperbolic(
             mu=mu, gamma=gamma_new, L_Sigma=L_new,
-            p=j.p, a=j.a / scale, b=j.b * scale,
+            p=j.p, a=a_new, b=b_new,
         )
         return GeneralizedHyperbolic(joint_new)
 
@@ -285,6 +297,69 @@ class GeneralizedHyperbolic(NormalMixture):
     def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
             mu=mu, gamma=gamma, sigma=sigma, p=1.0, a=1.0, b=1.0)
+
+    @classmethod
+    def default_init(cls, X: jax.Array) -> "GeneralizedHyperbolic":
+        """Warm-start from the best of NIG / VG / NInvG sub-model fits.
+
+        Runs 5 EM iterations for each special case, converts the winner
+        to GH parametrisation, and uses it as the starting point.
+        Falls back to moment-based default if all sub-models fail.
+        """
+        import warnings
+        import numpy as np
+        from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
+        from normix.distributions.variance_gamma import VarianceGamma
+        from normix.distributions.normal_inverse_gamma import NormalInverseGamma
+
+        X = jnp.asarray(X, dtype=jnp.float64)
+        candidates = []
+
+        for SubModel, name in [
+            (NormalInverseGaussian, 'NIG'),
+            (VarianceGamma, 'VG'),
+            (NormalInverseGamma, 'NInvG'),
+        ]:
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    init_m = SubModel.default_init(X)
+                    result = init_m.fit(X, max_iter=5, tol=1e-6, verbose=0)
+                    model = result.model
+                    ll = float(model.marginal_log_likelihood(X))
+                    if np.isfinite(ll):
+                        candidates.append((name, ll, model))
+            except Exception:
+                pass
+
+        if not candidates:
+            return super().default_init(X)
+
+        best_name, _, best_model = max(candidates, key=lambda c: c[1])
+        j = best_model._joint
+
+        mu = j.mu
+        gamma_v = j.gamma
+        L = j.L_Sigma
+        sigma = L @ L.T
+
+        if best_name == 'NIG':
+            p = jnp.float64(-0.4999)
+            a = jnp.clip(j.lam / (j.mu_ig ** 2), 1e-6, 1e6)
+            b = jnp.clip(j.lam, 1e-6, 1e6)
+        elif best_name == 'VG':
+            p = j.alpha
+            a = jnp.clip(2.0 * j.beta, 1e-6, 1e6)
+            b = jnp.float64(1e-4)
+        elif best_name == 'NInvG':
+            p = -j.alpha
+            a = jnp.float64(1e-4)
+            b = jnp.clip(2.0 * j.beta, 1e-6, 1e6)
+        else:
+            return super().default_init(X)
+
+        return cls.from_classical(
+            mu=mu, gamma=gamma_v, sigma=sigma, p=p, a=a, b=b)
 
     def fit(self, X, *, verbose=0, max_iter=200, tol=1e-3,
             regularization='det_sigma_one',

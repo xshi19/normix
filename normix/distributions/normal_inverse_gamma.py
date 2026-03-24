@@ -193,6 +193,19 @@ class NormalInverseGamma(NormalMixture):
         )
         return NormalInverseGamma(joint_new)
 
+    def fit(self, X, *, verbose=0, max_iter=200, tol=1e-3,
+            regularization='none',
+            e_step_backend='cpu', m_step_backend='cpu',
+            m_step_method='newton'):
+        """Fit NInvG using EM.  Defaults to CPU E-step (faster than JAX vmap
+        for the degenerate-GIG posterior arising from the InverseGamma
+        subordinator)."""
+        return super().fit(
+            X, verbose=verbose, max_iter=max_iter, tol=tol,
+            regularization=regularization,
+            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
+            m_step_method=m_step_method)
+
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
