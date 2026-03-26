@@ -29,8 +29,6 @@ normix/                     # JAX implementation
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
     └── validation.py        # moment validation, parameter printing (notebooks)
-
-normix_numpy/               # NumPy/SciPy reference implementation (preserved)
 ```
 
 ## Exponential Family Core

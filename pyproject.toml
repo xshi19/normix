@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "normix"
-version = "0.1.0"
-description = "Python package for Generalized Hyperbolic distributions"
+version = "0.2.0"
+description = "JAX package for Generalized Hyperbolic distributions as exponential families"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
@@ -34,14 +34,12 @@ classifiers = [
 ]
 
 dependencies = [
-    "lxml>=6.0.2",
     "numpy>=2.0.0",
     "scipy>=1.14.0",
-    "yfinance>=1.1.0",
     "jax[cuda12]>=0.4.38",
     "equinox>=0.13",
     "jaxopt>=0.8",
-    "matplotlib>=3.10.8",
+    "matplotlib>=3.10.0",
 ]
 
 [project.optional-dependencies]
@@ -49,6 +47,10 @@ dev = [
     "pytest>=8.0",
     "matplotlib>=3.9",
     "ipykernel>=6.29",
+]
+scripts = [
+    "lxml>=6.0.2",
+    "yfinance>=1.1.0",
 ]
 docs = [
     "sphinx>=9.0",
@@ -60,11 +62,11 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/xshi19/normix"
 Repository = "https://github.com/xshi19/normix"
-Documentation = "https://github.com/xshi19/normix"
+Documentation = "https://xshi19.github.io/normix/"
 "Bug Tracker" = "https://github.com/xshi19/normix/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["normix", "normix_numpy"]
+packages = ["normix"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -84,15 +86,10 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = "normix.legacy.*"
-ignore_errors = true
-
 [tool.coverage.run]
 source = ["normix"]
 omit = [
     "*/tests/*",
-    "*/legacy/*",
 ]
 
 [tool.coverage.report]

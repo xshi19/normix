@@ -2,7 +2,7 @@
 
 **Date**: March 2026  
 **Status**: Research  
-**Related files**: `normix/_bessel.py`, `normix_numpy/utils/bessel.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
+**Related files**: `normix/utils/bessel.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
 
 ## Motivation
 
@@ -170,7 +170,7 @@ $$K_\nu^e(z) = K_\nu(z) e^z \sim \sqrt{\frac{\pi}{2z}} \sum_{k=0}^{\infty} \frac
 - Excellent accuracy with just a few terms when z ≫ v²
 - Each $a_k$ is a polynomial in v² of degree k, so **differentiable in v**
 - Pure arithmetic — trivially implementable in JAX
-- Already used in `normix_numpy/utils/bessel.py:_log_kv_deriv_v_asymptotic`
+- Previously used in the legacy NumPy implementation for `_log_kv_deriv_v_asymptotic`
 
 ### Large-order uniform asymptotic (Olver, DLMF 10.41.4)
 
@@ -242,7 +242,7 @@ However, it requires careful tuning of quadrature parameters and may not achieve
 ### Derivative Strategy for ∂/∂v
 
 Three options, in order of preference:
-1. **Analytical via asymptotic expansion** (large z): Already implemented in `normix_numpy/utils/bessel.py:_log_kv_deriv_v_asymptotic`. Extends naturally to log space.
+1. **Analytical via asymptotic expansion** (large z): Previously implemented in the legacy NumPy Bessel module. Extends naturally to log space.
 2. **Central finite differences** on log_kv (moderate z): Current approach in `normix/_bessel.py`. Simple and works with `@jax.custom_jvp`.
 3. **Autodiff through integration** (if using logbesselk approach): Free from the integral representation.
 
