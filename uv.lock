@@ -1168,17 +1168,15 @@ wheels = [
 
 [[package]]
 name = "normix"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "equinox" },
     { name = "jax", extra = ["cuda12"] },
     { name = "jaxopt" },
-    { name = "lxml" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "scipy" },
-    { name = "yfinance" },
 ]
 
 [package.optional-dependencies]
@@ -1193,11 +1191,16 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
 ]
+scripts = [
+    { name = "lxml" },
+    { name = "yfinance" },
+]
 
 [package.dev-dependencies]
 dev = [
     { name = "nbconvert" },
     { name = "nbsphinx" },
+    { name = "pandas" },
     { name = "pytest" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
@@ -1209,8 +1212,8 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29" },
     { name = "jax", extras = ["cuda12"], specifier = ">=0.4.38" },
     { name = "jaxopt", specifier = ">=0.8" },
-    { name = "lxml", specifier = ">=6.0.2" },
-    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "lxml", marker = "extra == 'scripts'", specifier = ">=6.0.2" },
+    { name = "matplotlib", specifier = ">=3.10.0" },
     { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.9" },
     { name = "nbsphinx", marker = "extra == 'docs'", specifier = ">=0.9" },
     { name = "numpy", specifier = ">=2.0.0" },
@@ -1219,14 +1222,15 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.14.0" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.0" },
-    { name = "yfinance", specifier = ">=1.1.0" },
+    { name = "yfinance", marker = "extra == 'scripts'", specifier = ">=1.1.0" },
 ]
-provides-extras = ["dev", "docs"]
+provides-extras = ["dev", "scripts", "docs"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "nbconvert", specifier = ">=7.17.0" },
     { name = "nbsphinx", specifier = ">=0.9.8" },
+    { name = "pandas", specifier = ">=3.0.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "sphinx", specifier = ">=9.1.0" },
     { name = "sphinx-rtd-theme", specifier = ">=3.1.0" },

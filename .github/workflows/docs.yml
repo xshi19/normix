@@ -2,7 +2,7 @@ name: Docs
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,6 @@ jobs:
         run: |
           uv venv
           . .venv/bin/activate
-          # matplotlib is needed because some modules import plotting helpers at import time
           uv pip install -e ".[docs]" nbconvert matplotlib
 
       - name: Build Sphinx HTML
