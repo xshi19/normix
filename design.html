@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Decisions &mdash; normix 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Architecture" href="architecture.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Design Decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#why-jax-equinox">Why JAX + Equinox?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exponential-family-architecture">Exponential Family Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#three-parametrizations">Three Parametrizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-jax-hybrid-backend">CPU/JAX Hybrid Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mixture-architecture-joint-marginal">Mixture Architecture: Joint + Marginal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#em-algorithm-model-fitter-separation">EM Algorithm: Model/Fitter Separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bessel-functions">Bessel Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Design Decisions</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xshi19/normix/blob/main/docs/design.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="design-decisions">
+<h1>Design Decisions<a class="headerlink" href="#design-decisions" title="Link to this heading"></a></h1>
+<p>This page explains the key design decisions in normix and the reasoning behind
+them. These choices shape the API, performance characteristics, and extensibility
+of the package.</p>
+<section id="why-jax-equinox">
+<h2>Why JAX + Equinox?<a class="headerlink" href="#why-jax-equinox" title="Link to this heading"></a></h2>
+<p>normix is built on <a class="reference external" href="https://jax.readthedocs.io/">JAX</a> for computation and
+<a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> for module structure. This
+combination was chosen after surveying the JAX ecosystem (TFP, Distrax, FlowJAX,
+NumPyro, efax).</p>
+<p><strong>Why JAX?</strong>
+The exponential family framework revolves around differentiating the log-partition
+function <span class="math notranslate nohighlight">\(\psi(\theta)\)</span>. In normix, a subclass only implements
+<span class="math notranslate nohighlight">\(\psi(\theta)\)</span> as a pure function, and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code>
+automatically provide:</p>
+<ul class="simple">
+<li><p>Expectation parameters: <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span></p></li>
+<li><p>Fisher information: <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span></p></li>
+</ul>
+<p>This “single source of truth” design eliminates synchronisation bugs between
+manually implemented gradients and the log-partition function.</p>
+<p><strong>Why Equinox?</strong>
+<code class="docutils literal notranslate"><span class="pre">eqx.Module</span></code> is a frozen dataclass that is automatically a JAX pytree.
+Distributions are mathematical objects — once constructed, their parameters should
+not change. Immutability matches this semantics perfectly. The EM M-step returns a
+<em>new</em> model instance rather than mutating state:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">expectations</span><span class="p">)</span>  <span class="c1"># returns new instance</span>
+</pre></div>
+</div>
+<p>This is cleaner than mutable alternatives (Flax NNX, sklearn-style <code class="docutils literal notranslate"><span class="pre">fit</span></code>
+returning <code class="docutils literal notranslate"><span class="pre">self</span></code>), and is the same design choice made by FlowJAX.</p>
+<p><strong>Why not build on an existing distribution library?</strong></p>
+<ul class="simple">
+<li><p><strong>TFP</strong>: No exponential family abstraction, very heavy dependency (~50 MB),
+TensorFlow-flavoured API</p></li>
+<li><p><strong>Distrax</strong>: <code class="docutils literal notranslate"><span class="pre">vmap</span></code> support is officially “experimental and incomplete”,
+hard TFP dependency, maintenance mode</p></li>
+<li><p><strong>FlowJAX</strong>: Clean Equinox-based design, but focused on normalizing flows;
+inheriting would bring flow-oriented assumptions and dependencies</p></li>
+<li><p><strong>efax</strong>: The only library with explicit exponential family form, but uses a
+separate class per parametrization (triples the class count), and is missing
+GIG, GH, mixtures, and EM</p></li>
+<li><p><strong>NumPyro</strong>: Heavy PPL stack, Bayesian-focused (MCMC/SVI), not MLE/EM</p></li>
+</ul>
+<p>No package covers normix’s unique needs: GH distribution family + exponential
+family structure + EM fitting. Building on Equinox directly gives full control
+with minimal dependencies.</p>
+</section>
+<section id="exponential-family-architecture">
+<h2>Exponential Family Architecture<a class="headerlink" href="#exponential-family-architecture" title="Link to this heading"></a></h2>
+<p>The core abstraction is the <strong>log-partition triad</strong>: three functions × two backends.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                     JAX (JIT-able)                  CPU (numpy/scipy)
+                     ──────────────                  ─────────────────
+log-partition        _log_partition_from_theta        _log_partition_cpu
+gradient             _grad_log_partition              _grad_log_partition_cpu
+Hessian              _hessian_log_partition           _hessian_log_partition_cpu
+</pre></div>
+</div>
+<p>A subclass only needs to implement <code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> (Tier 1). The
+gradient and Hessian default to <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code> (Tier 2), and
+CPU versions default to wrapping the JAX implementations (Tier 3).</p>
+<p><strong>Why this layered design?</strong></p>
+<p>For simple distributions (Gamma, Inverse Gamma, Inverse Gaussian), <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>
+works perfectly. But the GIG distribution’s log-partition involves Bessel
+functions, where:</p>
+<ol class="arabic simple">
+<li><p>The JAX Hessian through <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is expensive (~25 Bessel calls per step
+via autodiff). An analytical 7-Bessel Hessian is much cheaper.</p></li>
+<li><p>For the EM hot path, <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> (a single C call) is ~15× faster
+than vmapping JAX’s <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> dispatch.</p></li>
+</ol>
+<p>The triad lets each distribution override exactly the methods that benefit from
+specialisation, while inheriting sensible defaults for everything else.</p>
+<p><strong>Why not efax’s approach?</strong>
+efax uses a separate class per parametrization (<code class="docutils literal notranslate"><span class="pre">GammaNP</span></code>, <code class="docutils literal notranslate"><span class="pre">GammaEP</span></code>). This
+triples the number of classes and makes EM awkward — the E-step produces
+expectation parameters, the M-step needs to convert them, and the fitted model
+uses classical parameters. In normix, a single class handles all three
+parametrizations via constructors (<code class="docutils literal notranslate"><span class="pre">from_classical</span></code>, <code class="docutils literal notranslate"><span class="pre">from_natural</span></code>,
+<code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>).</p>
+</section>
+<section id="three-parametrizations">
+<h2>Three Parametrizations<a class="headerlink" href="#three-parametrizations" title="Link to this heading"></a></h2>
+<p>Every exponential family distribution supports three parametrizations:</p>
+<div class="math notranslate nohighlight">
+\[\text{classical} \;(\alpha, \beta, \mu, \ldots)
+\;\longleftrightarrow\;
+\text{natural}\; \theta
+\;\longleftrightarrow\;
+\text{expectation}\; \eta = \nabla\psi(\theta)\]</div>
+<p>The classical parameters are human-readable (shape, rate, mean). The natural
+parameters are what the exponential family density uses. The expectation
+parameters are the expected sufficient statistics — and critically, the MLE is
+simply <span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i t(x_i)\)</span>.</p>
+<p><strong>Why store classical parameters internally?</strong>
+Classical parameters are the most interpretable and numerically stable
+representation. Natural-to-classical conversion is always analytic. The reverse
+(expectation-to-natural) may require optimisation (e.g., for GIG), so storing
+expectation parameters would make construction expensive.</p>
+</section>
+<section id="cpu-jax-hybrid-backend">
+<h2>CPU/JAX Hybrid Backend<a class="headerlink" href="#cpu-jax-hybrid-backend" title="Link to this heading"></a></h2>
+<p>The EM algorithm for GH distributions has a performance bottleneck: Bessel
+function evaluations in the E-step and GIG η→θ optimisation in the M-step.</p>
+<p>Benchmarks on 468 stocks, 2552 observations show:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Phase</p></th>
+<th class="head"><p>JAX (GPU)</p></th>
+<th class="head"><p>CPU hybrid</p></th>
+<th class="head"><p>Speedup</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>E-step</p></td>
+<td><p>~1.1 s</p></td>
+<td><p>~0.07 s</p></td>
+<td><p>~15×</p></td>
+</tr>
+<tr class="row-odd"><td><p>M-step (GIG solve)</p></td>
+<td><p>~5–7 s</p></td>
+<td><p>~0.01 s</p></td>
+<td><p>~500×</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why is JAX slower here?</strong>
+Each <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> branch in the pure-JAX Bessel triggers a separate GPU kernel
+launch. For the EM hot path — which calls <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> thousands of times per
+iteration — the kernel launch overhead dominates. A single <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>
+C call per element avoids this entirely.</p>
+<p><strong>Why not use JAX-based Newton for GIG?</strong>
+The GIG η→θ problem is a 3-dimensional scalar optimisation. GPU kernel dispatch
+overhead for such a small problem far exceeds the compute time. <code class="docutils literal notranslate"><span class="pre">scipy</span></code>’s
+L-BFGS-B, running entirely on CPU with <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>, is faster.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">backend</span></code> parameter is resolved at Python level before JAX tracing begins.
+When <code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code>, all code is traceable and JIT-able. When
+<code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code>, the code runs eagerly — appropriate since the EM outer loop
+is already a Python <code class="docutils literal notranslate"><span class="pre">for</span></code> loop in CPU mode.</p>
+</section>
+<section id="mixture-architecture-joint-marginal">
+<h2>Mixture Architecture: Joint + Marginal<a class="headerlink" href="#mixture-architecture-joint-marginal" title="Link to this heading"></a></h2>
+<p>The GH family is a normal variance-mean mixture:</p>
+<div class="math notranslate nohighlight">
+\[X \mid Y \sim \mathcal{N}(\mu + \gamma Y, \Sigma Y), \quad Y \sim \text{subordinator}\]</div>
+<p>normix separates this into two class hierarchies:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>JointNormalMixture(ExponentialFamily)     f(x, y) — IS an exponential family
+    ├── JointVarianceGamma
+    ├── JointNormalInverseGamma
+    ├── JointNormalInverseGaussian
+    └── JointGeneralizedHyperbolic
+
+NormalMixture(eqx.Module)                f(x) = ∫f(x,y)dy — NOT an exp. family
+    ├── VarianceGamma
+    ├── NormalInverseGamma
+    ├── NormalInverseGaussian
+    └── GeneralizedHyperbolic
+</pre></div>
+</div>
+<p><strong>Why two classes instead of one?</strong>
+The joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> is an exponential family — its natural
+parameters, sufficient statistics, and log-partition all have closed-form
+expressions. The EM E-step works directly with the joint.</p>
+<p>The marginal distribution <span class="math notranslate nohighlight">\(f(x) = \int f(x,y)\,dy\)</span> is <em>not</em> an
+exponential family. Its density involves Bessel functions and does not decompose
+into the standard <span class="math notranslate nohighlight">\(h(x)\exp(\theta^T t(x) - \psi(\theta))\)</span> form.</p>
+<p>Separating them keeps each class focused: the joint knows exponential family math,
+the marginal knows Bessel-based density evaluation. The marginal owns a joint
+instance (accessible via <code class="docutils literal notranslate"><span class="pre">.joint</span></code>) and delegates EM operations to it.</p>
+</section>
+<section id="em-algorithm-model-fitter-separation">
+<h2>EM Algorithm: Model/Fitter Separation<a class="headerlink" href="#em-algorithm-model-fitter-separation" title="Link to this heading"></a></h2>
+<p>Following the GMMX design: <strong>the model knows math, the fitter knows iteration.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedHyperbolic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">GeneralizedHyperbolic</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The E-step and M-step are methods on the model. The fitter controls the outer
+loop, convergence checking, and timing. This separation means the same model
+works with <code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code>, <code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code>, or <code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code>.</p>
+<p><strong>``EMResult`` instead of a bare model:</strong>
+<code class="docutils literal notranslate"><span class="pre">fitter.fit()</span></code> returns an <code class="docutils literal notranslate"><span class="pre">EMResult</span></code> containing the fitted model, diagnostics
+(convergence flag, iteration count, wall-clock time), and optionally per-iteration
+log-likelihoods and parameter changes.</p>
+<p><strong>Convergence criterion:</strong>
+EM convergence is measured by the maximum relative change in the normal parameters
+(μ, γ, L_Σ). The subordinator (GIG) parameters are excluded — they have their own
+solver tolerance in the η→θ optimisation.</p>
+<p><strong>Dual loop:</strong>
+When both E-step and M-step backends are <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> and verbosity is low,
+the batch EM body runs inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> (fully JIT-compiled). Otherwise a
+Python <code class="docutils literal notranslate"><span class="pre">for</span></code> loop is used, which supports CPU backends and verbose diagnostics.</p>
+</section>
+<section id="bessel-functions">
+<h2>Bessel Functions<a class="headerlink" href="#bessel-functions" title="Link to this heading"></a></h2>
+<p>Modified Bessel functions of the second kind <span class="math notranslate nohighlight">\(K_\nu(z)\)</span> appear throughout
+the GH family. normix provides <code class="docutils literal notranslate"><span class="pre">log_kv(v,</span> <span class="pre">z)</span></code> with two backends:</p>
+<p><strong>JAX backend</strong> (<code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code>, default):
+Pure-JAX, JIT-able, differentiable via <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code>. Uses 4-regime dispatch:</p>
+<ol class="arabic simple">
+<li><p>Hankel asymptotic (large z)</p></li>
+<li><p>Olver uniform expansion (large ν)</p></li>
+<li><p>Small-z leading term</p></li>
+<li><p>64-point Gauss-Legendre quadrature (general case)</p></li>
+</ol>
+<p>Derivatives: exact recurrence for ∂/∂z, central finite differences for ∂/∂ν.</p>
+<p><strong>CPU backend</strong> (<code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code>):
+<code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>, fully vectorized NumPy. Not JIT-able, but ~15× faster for
+the EM hot path. Overflow handled via asymptotic Γ-function formula.</p>
+<p><strong>Why not just use TFP’s Bessel?</strong>
+TFP’s <code class="docutils literal notranslate"><span class="pre">bessel_kve</span></code> does not support gradients with respect to the order ν,
+which normix needs for the GIG Hessian. normix’s custom JVP provides both
+∂/∂z and ∂/∂ν.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024–2026, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

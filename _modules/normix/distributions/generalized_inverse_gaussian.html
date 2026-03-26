@@ -1,0 +1,685 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>normix.distributions.generalized_inverse_gaussian &mdash; normix 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            normix
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design Decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">normix</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">normix.distributions.generalized_inverse_gaussian</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for normix.distributions.generalized_inverse_gaussian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Generalized Inverse Gaussian (GIG) distribution as an exponential family.</span>
+
+<span class="sd">PDF: f(x|p,a,b) = (a/b)^{p/2} / (2 K_p(√(ab))) · x^{p-1} · exp(-(ax+b/x)/2)</span>
+
+<span class="sd">Exponential family:</span>
+<span class="sd">  h(x)  = 1</span>
+<span class="sd">  t(x)  = [log x, 1/x, x]</span>
+<span class="sd">  θ     = [p-1, -b/2, -a/2]     (θ₂ ≤ 0, θ₃ ≤ 0)</span>
+<span class="sd">  ψ(θ)  = log 2 + log K_p(√(ab)) + (p/2) log(b/a)</span>
+<span class="sd">         where p = θ₁+1, a = -2θ₃, b = -2θ₂</span>
+<span class="sd">  η     = [E[log X], E[1/X], E[X]]</span>
+
+<span class="sd">Special cases:</span>
+<span class="sd">  b→0, p&gt;0:  GIG → Gamma(p, a/2)</span>
+<span class="sd">  a→0, p&lt;0:  GIG → InverseGamma(-p, b/2)</span>
+<span class="sd">  p=-1/2:    GIG → InverseGaussian</span>
+
+<span class="sd">η→θ optimization uses η-rescaling to reduce Fisher condition number:</span>
+<span class="sd">  s = √(η₂/η₃),  η̃ = (η₁+½log(η₂/η₃), √(η₂η₃), √(η₂η₃))</span>
+<span class="sd">  Solve η̃→θ̃ with symmetric GIG (ã=b̃), then unscale.</span>
+
+<span class="sd">Log-Partition Triad Overrides</span>
+<span class="sd">------------------------------</span>
+<span class="sd">  _log_partition_from_theta  : JAX, uses log_kv(backend=&#39;jax&#39;)</span>
+<span class="sd">  _grad_log_partition        : inherits default jax.grad (custom JVP on log_kv)</span>
+<span class="sd">  _hessian_log_partition     : analytical 7-Bessel Hessian in θ-space</span>
+<span class="sd">  _log_partition_cpu         : numpy + log_kv(backend=&#39;cpu&#39;)</span>
+<span class="sd">  _grad_log_partition_cpu    : analytical Bessel ratios via scipy.kve</span>
+<span class="sd">  _hessian_log_partition_cpu : central FD on _log_partition_cpu</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">TINY</span><span class="p">,</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">GIG_DEGEN_THRESHOLD</span><span class="p">,</span>
+    <span class="n">THETA_FLOOR</span><span class="p">,</span> <span class="n">FD_EPS_FISHER</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">bregman_objective</span><span class="p">,</span> <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">solve_bregman_multistart</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedInverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generalized Inverse Gaussian distribution.</span>
+
+<span class="sd">    Stored: p (shape, any real), a &gt; 0, b &gt; 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Tier 1: Exponential family interface</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        ψ(θ) = log 2 + log K_p(√(ab)) + (p/2)(log b − log a)</span>
+
+<span class="sd">        Degenerate limit (√(ab) &lt; threshold): delegate to Gamma/InverseGamma.</span>
+<span class="sd">        All branches use safe clamped values so no NaN gradients from</span>
+<span class="sd">        non-selected jnp.where branches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="c1"># Safe sqrt_ab to prevent log_kv(p, 0) blow-up</span>
+        <span class="n">sqrt_ab_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+
+        <span class="c1"># General Bessel case</span>
+        <span class="n">psi_bessel</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab_safe</span><span class="p">)</span>
+                      <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)))</span>
+
+        <span class="c1"># Gamma limit (b→0, p&gt;0): Gamma(p, a/2)</span>
+        <span class="n">alpha_g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">beta_g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">psi_gamma</span> <span class="o">=</span> <span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha_g</span><span class="p">)</span>
+                     <span class="o">-</span> <span class="n">alpha_g</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta_g</span><span class="p">))</span>
+
+        <span class="c1"># InverseGamma limit (a→0, p&lt;0): InvGamma(-p, b/2)</span>
+        <span class="n">alpha_ig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">beta_ig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">psi_invgamma</span> <span class="o">=</span> <span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha_ig</span><span class="p">)</span>
+                        <span class="o">-</span> <span class="n">alpha_ig</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta_ig</span><span class="p">))</span>
+
+        <span class="n">use_degen</span> <span class="o">=</span> <span class="n">sqrt_ab</span> <span class="o">&lt;</span> <span class="n">GIG_DEGEN_THRESHOLD</span>
+        <span class="n">use_gamma</span> <span class="o">=</span> <span class="n">use_degen</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="p">)</span>   <span class="c1"># b≈0: Gamma limit</span>
+        <span class="n">use_invg</span> <span class="o">=</span> <span class="n">use_degen</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span>     <span class="c1"># a≈0: InvGamma limit</span>
+
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_gamma</span><span class="p">,</span> <span class="n">psi_gamma</span><span class="p">,</span>
+               <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_invg</span><span class="p">,</span> <span class="n">psi_invgamma</span><span class="p">,</span>
+                         <span class="n">psi_bessel</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.sufficient_statistics">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.log_base_measure">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Tier 2: Analytical gradient + Hessian (Bessel ratios in θ-space)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [E[log X], E[1/X], E[X]] via analytical Bessel ratios.</span>
+
+<span class="sd">        Uses 5 log_kv evaluations (at orders p, p±1, p±ε) and the identities:</span>
+<span class="sd">          E[1/X] = √(a/b) · K_{p−1}(√ab) / K_p(√ab)</span>
+<span class="sd">          E[X]   = √(b/a) · K_{p+1}(√ab) / K_p(√ab)</span>
+<span class="sd">          E[log X] = ∂/∂p log K_p(√ab) + ½ log(b/a)</span>
+
+<span class="sd">        Clamping a, b to TINY (not 0) ensures the Bessel small-z asymptotics</span>
+<span class="sd">        handle the degenerate Gamma/InverseGamma limits via cancellation.</span>
+<span class="sd">        The default jax.grad path fails here because jnp.where evaluates</span>
+<span class="sd">        all branches, and d(sqrt(ab))/da → ∞ as a → 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">a_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_safe</span> <span class="o">*</span> <span class="n">b_safe</span><span class="p">)</span>
+        <span class="n">log_sqrt_ba</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_safe</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a_safe</span><span class="p">))</span>
+
+        <span class="n">orders</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span>
+                            <span class="n">p</span> <span class="o">-</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="n">BESSEL_EPS_V</span><span class="p">])</span>
+        <span class="n">evals</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_kv</span><span class="p">)(</span><span class="n">orders</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">))</span>
+        <span class="n">L</span><span class="p">,</span> <span class="n">L_m1</span><span class="p">,</span> <span class="n">L_p1</span><span class="p">,</span> <span class="n">L_vm</span><span class="p">,</span> <span class="n">L_vp</span> <span class="o">=</span> <span class="n">evals</span>
+
+        <span class="n">E_inv_X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_m1</span> <span class="o">-</span> <span class="n">L</span> <span class="o">-</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+        <span class="n">E_X</span>     <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p1</span> <span class="o">-</span> <span class="n">L</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+        <span class="n">E_log_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">L_vp</span> <span class="o">-</span> <span class="n">L_vm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">BESSEL_EPS_V</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
+
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_X</span><span class="p">,</span> <span class="n">E_inv_X</span><span class="p">,</span> <span class="n">E_X</span><span class="p">])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) — analytical 7-Bessel Hessian in θ-space.</span>
+
+<span class="sd">        Uses exact Bessel recurrences for z-derivatives and FD for all</span>
+<span class="sd">        ν-derivatives. 7 log_kv evaluations total.</span>
+
+<span class="sd">        The mixed derivative L_vz = ∂²log K_ν/∂ν∂z is approximated via</span>
+<span class="sd">        integer-shift FD: L_vz ≈ (L_z(ν+1,z) − L_z(ν−1,z))/2.</span>
+<span class="sd">        L_z at integer-shifted orders reuses evaluations at p±1, p±2.</span>
+
+<span class="sd">        Note: H_theta may have small negative eigenvalues from this</span>
+<span class="sd">        approximation; the Newton solver applies HESSIAN_DAMPING before</span>
+<span class="sd">        solving so convergence is not affected.</span>
+
+<span class="sd">        Valid in the non-degenerate regime (√(ab) &gt;&gt; GIG_DEGEN_THRESHOLD).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">))</span>
+
+        <span class="c1"># 7 Bessel evaluations for all needed derivatives</span>
+        <span class="n">orders</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">p</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mf">2.0</span><span class="p">,</span>
+                            <span class="n">p</span> <span class="o">-</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="n">BESSEL_EPS_V</span><span class="p">])</span>
+        <span class="n">evals</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_kv</span><span class="p">)(</span><span class="n">orders</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+        <span class="n">L</span><span class="p">,</span> <span class="n">L_m1</span><span class="p">,</span> <span class="n">L_p1</span><span class="p">,</span> <span class="n">L_m2</span><span class="p">,</span> <span class="n">L_p2</span><span class="p">,</span> <span class="n">L_vm</span><span class="p">,</span> <span class="n">L_vp</span> <span class="o">=</span> <span class="n">evals</span>
+
+        <span class="n">r_m1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_m1</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">r_p1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p1</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">r_m2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_m2</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">r_p2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p2</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+
+        <span class="n">L_z</span>  <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">r_m1</span> <span class="o">+</span> <span class="n">r_p1</span><span class="p">)</span>
+        <span class="n">L_zz</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">r_m2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">r_p2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">r_m1</span> <span class="o">+</span> <span class="n">r_p1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">L_vv</span> <span class="o">=</span> <span class="p">(</span><span class="n">L_vp</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">L</span> <span class="o">+</span> <span class="n">L_vm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">BESSEL_EPS_V</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Integer-shift FD for L_vz (reuses p±1, p±2 evaluations)</span>
+        <span class="n">L_z_p1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L</span> <span class="o">-</span> <span class="n">L_p1</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p2</span> <span class="o">-</span> <span class="n">L_p1</span><span class="p">))</span>
+        <span class="n">L_z_m1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_m2</span> <span class="o">-</span> <span class="n">L_m1</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L</span> <span class="o">-</span> <span class="n">L_m1</span><span class="p">))</span>
+        <span class="n">L_vz</span> <span class="o">=</span> <span class="p">(</span><span class="n">L_z_p1</span> <span class="o">-</span> <span class="n">L_z_m1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+        <span class="n">a_over_z</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">z</span>
+        <span class="n">b_over_z</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">z</span>
+
+        <span class="n">H11</span> <span class="o">=</span> <span class="n">L_vv</span>
+        <span class="n">H12</span> <span class="o">=</span> <span class="o">-</span><span class="n">L_vz</span> <span class="o">*</span> <span class="n">a_over_z</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">b</span>
+        <span class="n">H13</span> <span class="o">=</span> <span class="o">-</span><span class="n">L_vz</span> <span class="o">*</span> <span class="n">b_over_z</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">a</span>
+        <span class="n">H22</span> <span class="o">=</span> <span class="n">a_over_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">L_zz</span> <span class="o">-</span> <span class="n">a_over_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">z</span> <span class="o">*</span> <span class="n">L_z</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">b</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">H23</span> <span class="o">=</span> <span class="n">L_zz</span> <span class="o">+</span> <span class="n">L_z</span> <span class="o">/</span> <span class="n">z</span>
+        <span class="n">H33</span> <span class="o">=</span> <span class="n">b_over_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">L_zz</span> <span class="o">-</span> <span class="n">b_over_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">z</span> <span class="o">*</span> <span class="n">L_z</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">a</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">H11</span><span class="p">,</span> <span class="n">H12</span><span class="p">,</span> <span class="n">H13</span><span class="p">],</span>
+                           <span class="p">[</span><span class="n">H12</span><span class="p">,</span> <span class="n">H22</span><span class="p">,</span> <span class="n">H23</span><span class="p">],</span>
+                           <span class="p">[</span><span class="n">H13</span><span class="p">,</span> <span class="n">H23</span><span class="p">,</span> <span class="n">H33</span><span class="p">]])</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Tier 3: CPU overrides (numpy + scipy Bessel, no JAX dispatch)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;ψ(θ) via numpy + log_kv(backend=&#39;cpu&#39;). Accepts numpy or jax arrays.&quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sqrt_ab</span> <span class="o">&lt;</span> <span class="n">GIG_DEGEN_THRESHOLD</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gammaln</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="p">:</span>
+                <span class="n">alpha</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+                <span class="n">beta</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">alpha</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+                <span class="n">beta</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+
+        <span class="n">sqrt_ab_safe</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sqrt_ab_safe</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">TINY</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)))</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [E[log X], E[1/X], E[X]] via scipy.kve.  Pure CPU.&quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b_safe</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">a_safe</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_safe</span> <span class="o">*</span> <span class="n">b_safe</span><span class="p">)</span>
+        <span class="n">log_sqrt_ba</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_safe</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a_safe</span><span class="p">))</span>
+
+        <span class="n">log_kp</span>    <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span>         <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">log_kp_m1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">log_kp_p1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+
+        <span class="n">E_inv_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kp_m1</span> <span class="o">-</span> <span class="n">log_kp</span> <span class="o">-</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+        <span class="n">E_X</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kp_p1</span> <span class="o">-</span> <span class="n">log_kp</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+
+        <span class="n">log_kp_pe</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">log_kp_me</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">E_log_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kp_pe</span> <span class="o">-</span> <span class="n">log_kp_me</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">BESSEL_EPS_V</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log_X</span><span class="p">,</span> <span class="n">E_inv_X</span><span class="p">,</span> <span class="n">E_X</span><span class="p">])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) via central finite differences on _log_partition_cpu.&quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">FD_EPS_FISHER</span>
+        <span class="n">f0</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                    <span class="n">th_p</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span>
+                    <span class="n">th_m</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span>
+                    <span class="n">fp</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_p</span><span class="p">)</span>
+                    <span class="n">fm</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_m</span><span class="p">)</span>
+                    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fp</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="n">fm</span><span class="p">)</span> <span class="o">/</span> <span class="n">eps</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="k">elif</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">th_pp</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_pp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span><span class="p">;</span> <span class="n">th_pp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span>
+                    <span class="n">th_pm</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_pm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span><span class="p">;</span> <span class="n">th_pm</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span>
+                    <span class="n">th_mp</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_mp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span><span class="p">;</span> <span class="n">th_mp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span>
+                    <span class="n">th_mm</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">th_mm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span><span class="p">;</span> <span class="n">th_mm</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span>
+                    <span class="n">fpp</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_pp</span><span class="p">)</span>
+                    <span class="n">fpm</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_pm</span><span class="p">)</span>
+                    <span class="n">fmp</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_mp</span><span class="p">)</span>
+                    <span class="n">fmm</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">(</span><span class="n">th_mm</span><span class="p">)</span>
+                    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">H</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fpp</span> <span class="o">-</span> <span class="n">fpm</span> <span class="o">-</span> <span class="n">fmp</span> <span class="o">+</span> <span class="n">fmm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">H</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Batch CPU expectation parameters (used by JointNormalMixture E-step)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.expectation_params_batch">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_params_batch</span><span class="p">(</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Vectorized η for arrays of (p, a, b), each shape (N,).</span>
+<span class="sd">        Returns (N, 3) array where columns are [E_log_X, E_inv_X, E_X].</span>
+
+<span class="sd">        backend=&#39;jax&#39; : vmap over scalar JAX grad</span>
+<span class="sd">        backend=&#39;cpu&#39; : vectorized scipy.kve (6 C-level array calls)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_expectation_params_batch_cpu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_single</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">bi</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">GeneralizedInverseGaussian</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">ai</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_single</span><span class="p">)(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_params_batch_cpu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Vectorized CPU path — 6 scipy.kve calls on (N,) arrays.&quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="n">a_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">b_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_safe</span> <span class="o">*</span> <span class="n">b_safe</span><span class="p">)</span>
+        <span class="n">log_sqrt_ba</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_safe</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a_safe</span><span class="p">))</span>
+
+        <span class="n">log_kp</span>    <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span>         <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="n">log_kp_m1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="n">log_kp_p1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+
+        <span class="n">E_inv_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kp_m1</span> <span class="o">-</span> <span class="n">log_kp</span> <span class="o">-</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+        <span class="n">E_X</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kp_p1</span> <span class="o">-</span> <span class="n">log_kp</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span><span class="p">)</span>
+
+        <span class="n">log_kp_pe</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="n">log_kp_me</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="n">E_log_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kp_pe</span> <span class="o">-</span> <span class="n">log_kp_me</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">BESSEL_EPS_V</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_sqrt_ba</span>
+
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">E_log_X</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">E_inv_X</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">E_X</span><span class="p">),</span>
+        <span class="p">])</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Moments and sampling</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.mean">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;E[X] = η₃ from expectation parameters.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.var">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2].&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fisher_information</span><span class="p">()[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.rvs">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;np.ndarray&quot;</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+        <span class="n">b_sp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)))</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">geninvgauss</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="n">b</span><span class="o">=</span><span class="n">b_sp</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+                                     <span class="n">size</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Constructors</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.from_natural">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.from_expectation">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;newton&quot;</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        η → θ via η-rescaling + optimization.</span>
+
+<span class="sd">        Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing</span>
+<span class="sd">        condition number by up to :math:`10^{30}` for extreme a/b ratios.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        theta0 : warm-start point (required for JAX solvers; if None, uses</span>
+<span class="sd">                 multi-start CPU solver with Gamma/InvGamma/InvGauss seeds)</span>
+<span class="sd">        backend : &#39;jax&#39; (default, JIT-able) or &#39;cpu&#39; (scipy, no JAX dispatch)</span>
+<span class="sd">        method : &#39;newton&#39;, &#39;lbfgs&#39;, &#39;bfgs&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">*</span> <span class="n">eta3</span><span class="p">)</span>
+        <span class="n">eta_scaled</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">),</span> <span class="n">geom</span><span class="p">,</span> <span class="n">geom</span><span class="p">])</span>
+
+        <span class="n">_GIG_BOUNDS</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
+
+        <span class="c1"># Select triad functions for the chosen backend</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span>
+            <span class="n">grad_fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition_cpu</span>
+            <span class="n">hess_fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_hessian_log_partition_cpu</span>
+        <span class="k">elif</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span>
+            <span class="n">grad_fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition</span>
+            <span class="n">hess_fn</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_hessian_log_partition</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown backend: </span><span class="si">{</span><span class="n">backend</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                       <span class="n">theta0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span>
+                                       <span class="n">theta0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">])</span>
+            <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">theta0_scaled</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">theta0_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">))</span>
+            <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">theta0_scaled</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">theta0_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">))</span>
+
+            <span class="n">solver_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;bounds&quot;</span><span class="p">:</span> <span class="n">_GIG_BOUNDS</span><span class="p">,</span>
+                <span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="n">maxiter</span><span class="p">,</span>
+                <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="n">tol</span><span class="p">,</span>
+                <span class="s2">&quot;grad_fn&quot;</span><span class="p">:</span> <span class="n">grad_fn</span><span class="p">,</span>
+                <span class="s2">&quot;hess_fn&quot;</span><span class="p">:</span> <span class="n">hess_fn</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="c1"># trust-exact doesn&#39;t support bounds</span>
+            <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
+                <span class="n">solver_kwargs</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
+                <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">theta0_list</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">)</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t0</span> <span class="ow">in</span> <span class="n">theta0_list</span><span class="p">:</span>
+                <span class="n">t0_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span>
+                <span class="n">t0_np</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">t0_np</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">)</span>
+                <span class="n">t0_np</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">t0_np</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">)</span>
+                <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t0_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman_multistart</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">processed</span><span class="p">,</span>
+                <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">_GIG_BOUNDS</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+                <span class="n">grad_fn</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition_cpu</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
+
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                           <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span>
+                           <span class="n">s</span> <span class="o">*</span> <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_theta_bounds</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># θ₁ unbounded, θ₂ ≤ 0, θ₃ ≤ 0</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multi-start initial guesses for the scaled GIG problem.</span>
+
+<span class="sd">        Uses Gamma, InverseGamma, InverseGaussian special cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
+
+        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                            <span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                            <span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+        <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+        <span class="c1"># 1. Gamma limit (b→0): match η₁ = E[log X], η₃ = E[X]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta3</span><span class="p">]))</span>
+            <span class="n">g_theta</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">g_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">g_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])]))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># 2. InverseGamma limit (a→0): match η₁ = E[log X], η₂ = E[1/X]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ig</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta2</span><span class="p">,</span> <span class="n">eta1</span><span class="p">]))</span>
+            <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">ig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># 3. InverseGaussian limit (p=-1/2): match η₂ = E[1/X], η₃ = E[X]</span>
+        <span class="k">if</span> <span class="n">eta3</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">eta2</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">igauss</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta3</span><span class="p">,</span> <span class="n">eta2</span><span class="p">]))</span>
+                <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">igauss</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])]))</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># 4. Perturbed copies</span>
+        <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">starting_points</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]:</span>
+                <span class="n">perturbed</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perturbed</span><span class="p">)</span>
+
+        <span class="c1"># 5. Fallback</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">starting_points</span><span class="p">:</span>
+            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">starting_points</span></div>
+
+
+
+<span class="c1"># Convenience alias</span>
+<span class="n">GIG</span> <span class="o">=</span> <span class="n">GeneralizedInverseGaussian</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024–2026, normix developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

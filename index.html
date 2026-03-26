@@ -6,23 +6,21 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>normix Documentation &mdash; normix 1.0.0 documentation</title>
+  <title>normix Documentation &mdash; normix 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Architecture" href="architecture.html" /> 
+    <link rel="next" title="Quick Start" href="quickstart.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,8 +44,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design Decisions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos &amp; Notebooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="theory/index.html">Mathematical Background</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
 </ul>
@@ -78,106 +77,65 @@
              
   <section id="normix-documentation">
 <h1>normix Documentation<a class="headerlink" href="#normix-documentation" title="Link to this heading"></a></h1>
-<p><strong>normix</strong> is a Python package for Generalized Hyperbolic distributions and related distributions,
-implemented as exponential families with an sklearn-style API.</p>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">normix</span></code> provides a comprehensive, production-ready implementation of the Generalized Hyperbolic (GH)
-distribution family, including:</p>
-<ul class="simple">
-<li><p><strong>Univariate distributions</strong>: Exponential, Gamma, Inverse Gamma, Generalized Inverse Gaussian (GIG), Inverse Gaussian</p></li>
-<li><p><strong>Multivariate distributions</strong>: Multivariate Normal</p></li>
-<li><p><strong>Mixture distributions</strong>: Generalized Hyperbolic (GH), Normal Inverse Gaussian (NIG), Variance Gamma (VG), Normal Inverse Gamma (NInvG)</p></li>
-</ul>
-</section>
+<p><strong>normix</strong> is a JAX package for Generalized Hyperbolic distributions and related
+distributions, implemented as exponential families. Built on
+<a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> with Float64 precision throughout.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedHyperbolic</span><span class="p">,</span> <span class="n">BatchEMFitter</span>
+
+<span class="c1"># Fit Generalized Hyperbolic to data via EM</span>
+<span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">GeneralizedHyperbolic</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Evaluate log-density (batched via vmap)</span>
+<span class="n">log_p</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
 <section id="key-features">
 <h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h2>
-<p>All distributions are implemented as <strong>exponential families</strong> with support for:</p>
 <ul class="simple">
-<li><p>Three parametrizations: <strong>classical</strong>, <strong>natural</strong>, and <strong>expectation</strong> parameters</p></li>
-<li><p><strong>sklearn-style API</strong>: <code class="docutils literal notranslate"><span class="pre">fit()</span></code> returns self, method chaining supported</p></li>
-<li><p>Efficient <strong>EM algorithms</strong> for parameter estimation</p></li>
-<li><p>Joint distributions <span class="math notranslate nohighlight">\(f(x,y)\)</span> and marginal distributions <span class="math notranslate nohighlight">\(f(x)\)</span></p></li>
+<li><p><strong>Exponential family structure</strong> — three parametrizations (classical, natural,
+expectation) with automatic conversion via <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code></p></li>
+<li><p><strong>Full GH distribution family</strong> — Gamma, Inverse Gamma, Inverse Gaussian, GIG,
+Variance Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, Generalized Hyperbolic</p></li>
+<li><p><strong>EM algorithm</strong> — batch, online, and mini-batch EM with CPU/GPU hybrid backend</p></li>
+<li><p><strong>JAX-native</strong> — JIT-compiled, differentiable, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible</p></li>
+<li><p><strong>Immutable</strong> — all distributions are <code class="docutils literal notranslate"><span class="pre">eqx.Module</span></code> pytrees; M-step returns a new model</p></li>
+<li><p><strong>Hybrid CPU/JAX backend</strong> — up to 15× faster EM via <code class="docutils literal notranslate"><span class="pre">scipy</span></code> Bessel evaluation on CPU</p></li>
 </ul>
-</section>
-<section id="mathematical-background">
-<h2>Mathematical Background<a class="headerlink" href="#mathematical-background" title="Link to this heading"></a></h2>
-<section id="exponential-families">
-<h3>Exponential Families<a class="headerlink" href="#exponential-families" title="Link to this heading"></a></h3>
-<p>Distributions in exponential family form have the probability density:</p>
-<div class="math notranslate nohighlight">
-\[p(x|\theta) = h(x) \exp(\theta^T t(x) - \psi(\theta))\]</div>
-<p>where:</p>
-<ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(\theta\)</span>: natural parameters (vector)</p></li>
-<li><p><span class="math notranslate nohighlight">\(t(x)\)</span>: sufficient statistics (vector)</p></li>
-<li><p><span class="math notranslate nohighlight">\(\psi(\theta)\)</span>: log partition function (cumulant generating function)</p></li>
-<li><p><span class="math notranslate nohighlight">\(h(x)\)</span>: base measure</p></li>
-</ul>
-<p><strong>Key properties:</strong></p>
-<ul class="simple">
-<li><p>Expectation parameters: <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X)]\)</span></p></li>
-<li><p>Fisher information: <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta) = \text{Cov}[t(X)]\)</span></p></li>
-<li><p>MLE in closed form: <span class="math notranslate nohighlight">\(\hat{\eta} = \frac{1}{n}\sum_{i=1}^n t(x_i)\)</span></p></li>
-</ul>
-</section>
-<section id="generalized-hyperbolic-as-normal-mixture">
-<h3>Generalized Hyperbolic as Normal Mixture<a class="headerlink" href="#generalized-hyperbolic-as-normal-mixture" title="Link to this heading"></a></h3>
-<p>The GH distribution can be represented as:</p>
-<div class="math notranslate nohighlight">
-\[ \begin{align}\begin{aligned}X|Y \sim N(\mu + \Gamma Y, \Sigma Y)\\Y \sim \text{GIG}(\lambda, \chi, \psi)\end{aligned}\end{align} \]</div>
-<p>The marginal distribution <span class="math notranslate nohighlight">\(f(x)\)</span> has a closed form involving modified Bessel functions
-of the second kind <span class="math notranslate nohighlight">\(K_\lambda(z)\)</span>.</p>
-</section>
-</section>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-</pre></div>
-</div>
-<p>For development:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</pre></div>
-</div>
-</section>
-<section id="quick-example">
-<h2>Quick Example<a class="headerlink" href="#quick-example" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.univariate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># Create distribution from classical parameters</span>
-<span class="n">dist</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_classical_params</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-
-<span class="c1"># Generate samples</span>
-<span class="n">samples</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-<span class="c1"># Fit distribution to data</span>
-<span class="n">fitted_dist</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-
-<span class="c1"># Access parameters in different forms</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">fitted_dist</span><span class="o">.</span><span class="n">classical_params</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">fitted_dist</span><span class="o">.</span><span class="n">natural_params</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">fitted_dist</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">)</span>
-</pre></div>
-</div>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#class-hierarchy">Class Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#design-principles">Design Principles</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#exponentialfamily">ExponentialFamily</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#jointnormalmixture">JointNormalMixture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#normalmixture">NormalMixture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#parameter-flow">Parameter Flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#concrete-distributions">Concrete Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#core-dependencies">Core Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#multivariate-normal">Multivariate Normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#normal-variance-mean-mixtures">Normal Variance-Mean Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#fitting-with-em">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#bessel-functions">Bessel Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#batching-with-vmap">Batching with vmap</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos &amp; Notebooks</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="demos.html#univariate-distributions">Univariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos.html#multivariate-distributions">Multivariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos.html#mixture-distributions">Mixture Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos.html#comparisons-applications">Comparisons &amp; Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design Decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="design.html#why-jax-equinox">Why JAX + Equinox?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#exponential-family-architecture">Exponential Family Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#three-parametrizations">Three Parametrizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#cpu-jax-hybrid-backend">CPU/JAX Hybrid Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#mixture-architecture-joint-marginal">Mixture Architecture: Joint + Marginal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#em-algorithm-model-fitter-separation">EM Algorithm: Model/Fitter Separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html#bessel-functions">Bessel Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#package-layout">Package Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#class-hierarchy">Class Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#exponentialfamily">ExponentialFamily</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#mixture-structure">Mixture Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#em-algorithm">EM Algorithm</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="theory/index.html">Mathematical Background</a><ul>
@@ -196,11 +154,13 @@ of the second kind <span class="math notranslate nohighlight">\(K_\lambda(z)\)</
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.base.distribution">Base Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.distributions.univariate.exponential">Univariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.distributions.multivariate.normal">Multivariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.distributions.mixtures.variance_gamma">Mixture Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.utils.bessel">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.exponential_family">Base Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#univariate-distributions">Univariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.distributions.normal">Multivariate Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#mixture-base-classes">Mixture Base Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#mixture-distributions">Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#fitting">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#utilities">Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -208,7 +168,7 @@ of the second kind <span class="math notranslate nohighlight">\(K_\lambda(z)\)</
 </section>
 </section>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<h1>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
@@ -220,13 +180,13 @@ of the second kind <span class="math notranslate nohighlight">\(K_\lambda(z)\)</
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Quick Start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, normix developers.</p>
+    <p>&#169; Copyright 2024–2026, normix developers.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

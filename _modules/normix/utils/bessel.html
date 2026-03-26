@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>normix.utils.bessel &mdash; normix 1.0.0 documentation</title>
+  <title>normix.utils.bessel &mdash; normix 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -42,8 +42,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design Decisions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../demos.html">Demos &amp; Notebooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
 </ul>
@@ -74,387 +75,276 @@
              
   <h1>Source code for normix.utils.bessel</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Bessel function utilities for numerical stability.</span>
+<span class="sd">JAX-compatible log modified Bessel function of the second kind.</span>
 
-<span class="sd">This module provides numerically stable implementations of log Bessel functions</span>
-<span class="sd">that are essential for the Generalized Inverse Gaussian distribution.</span>
+<span class="sd">log_kv(v, z) = log K_v(z), fully pure-JAX with zero scipy callbacks.</span>
 
-<span class="sd">The modified Bessel function of the second kind :math:`K_\\nu(z)` appears in the</span>
-<span class="sd">normalizing constant of the GIG distribution:</span>
+<span class="sd">Regime-specific methods, selected via lax.cond (only one branch executes):</span>
+<span class="sd">  1. Hankel asymptotic (DLMF 10.40.2)   — large z</span>
+<span class="sd">  2. Olver uniform expansion (DLMF 10.41.4) — large v</span>
+<span class="sd">  3. Small-z leading asymptotic (DLMF 10.30.2) — z → 0</span>
+<span class="sd">  4. Gauss-Legendre quadrature (Takekawa 2022) — moderate z, v</span>
 
-<span class="sd">.. math::</span>
-<span class="sd">    f(x|p,a,b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})} x^{p-1} </span>
-<span class="sd">    \\exp\\left(-\\frac{ax + b/x}{2}\\right)</span>
+<span class="sd">Using lax.cond (not jnp.where) means only the selected branch executes</span>
+<span class="sd">at runtime. lax.cond requires scalar conditions, so the core scalar</span>
+<span class="sd">function _log_kv_scalar is vmapped over array inputs.</span>
 
-<span class="sd">For numerical stability, we work with :math:`\\log K_\\nu(z)` instead of </span>
-<span class="sd">:math:`K_\\nu(z)` directly.</span>
+<span class="sd">Custom JVP for full autodiff:</span>
+<span class="sd">  - ∂/∂z : exact recurrence K&#39;_v = −(K_{v−1}+K_{v+1})/2</span>
+<span class="sd">  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)</span>
+
+<span class="sd">backend=&#39;jax&#39;  (default): pure-JAX, JIT-able, differentiable.</span>
+<span class="sd">backend=&#39;cpu&#39;           : scipy.special.kve, fully vectorized numpy.</span>
+<span class="sd">                          Not JIT-able. Fast for EM hot path.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gammaln</span><span class="p">,</span> <span class="n">kve</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">TINY</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">BESSEL_SMALLZ_THRESHOLD</span>
+
+<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+<span class="n">_N_QUAD</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">_GL_NODES_NP</span><span class="p">,</span> <span class="n">_GL_WEIGHTS_NP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="n">_N_QUAD</span><span class="p">)</span>
+<span class="n">_GL_NODES</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_GL_NODES_NP</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<span class="n">_GL_WEIGHTS</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_GL_WEIGHTS_NP</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<span class="n">_LOG_GL_WEIGHTS</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">_GL_WEIGHTS</span><span class="p">)</span>
+
+<span class="n">_HANKEL_THRESHOLD</span> <span class="o">=</span> <span class="mf">25.0</span>
+<span class="n">_OLVER_V_THRESHOLD</span> <span class="o">=</span> <span class="mf">25.0</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Branch 1: Hankel asymptotic expansion (DLMF 10.40.2) — large z</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hankel_log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;K_v(z) ~ √(π/(2z)) e^{−z} Σ_k a_k(v)/z^k, accurate for z &gt; max(25, v²/4).&quot;&quot;&quot;</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">v</span> <span class="o">*</span> <span class="n">v</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">term</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">):</span>
+        <span class="n">term</span> <span class="o">=</span> <span class="n">term</span> <span class="o">*</span> <span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">k</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">total</span> <span class="o">+</span> <span class="n">term</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">z</span><span class="p">))</span> <span class="o">-</span> <span class="n">z</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="n">TINY</span><span class="p">))</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Branch 2: Olver uniform expansion (DLMF 10.41.3-4) — large v</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_olver_log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Uniform asymptotic for large v (v &gt; 25). Accurate to ~12 digits.&quot;&quot;&quot;</span>
+    <span class="n">zeta</span> <span class="o">=</span> <span class="n">z</span> <span class="o">/</span> <span class="n">v</span>
+    <span class="n">zeta2</span> <span class="o">=</span> <span class="n">zeta</span> <span class="o">*</span> <span class="n">zeta</span>
+    <span class="n">sqrt_1pz2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">zeta2</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt_1pz2</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="n">sqrt_1pz2</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">zeta</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">sqrt_1pz2</span><span class="p">))</span>
+
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">t3</span> <span class="o">=</span> <span class="n">t2</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">u0</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">u1</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.0</span> <span class="o">-</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="n">t2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">24.0</span>
+    <span class="n">u2</span> <span class="o">=</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">81.0</span> <span class="o">-</span> <span class="mf">462.0</span> <span class="o">*</span> <span class="n">t2</span> <span class="o">+</span> <span class="mf">385.0</span> <span class="o">*</span> <span class="n">t2</span> <span class="o">*</span> <span class="n">t2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1152.0</span>
+    <span class="n">u3</span> <span class="o">=</span> <span class="n">t3</span> <span class="o">*</span> <span class="p">(</span><span class="mf">30375.0</span> <span class="o">-</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">369603.0</span> <span class="o">-</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">765765.0</span> <span class="o">-</span> <span class="mf">425425.0</span> <span class="o">*</span> <span class="n">t2</span><span class="p">)))</span> <span class="o">/</span> <span class="mf">414720.0</span>
+    <span class="n">u4</span> <span class="o">=</span> <span class="p">(</span><span class="n">t2</span> <span class="o">*</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">4465125.0</span> <span class="o">-</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">94121676.0</span> <span class="o">-</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="mf">349922430.0</span> <span class="o">-</span> <span class="n">t2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">446185740.0</span> <span class="o">-</span> <span class="mf">185910725.0</span> <span class="o">*</span> <span class="n">t2</span><span class="p">))))</span> <span class="o">/</span> <span class="mf">39813120.0</span><span class="p">)</span>
+
+    <span class="n">inv_v</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">v</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">u0</span> <span class="o">-</span> <span class="n">u1</span> <span class="o">*</span> <span class="n">inv_v</span> <span class="o">+</span> <span class="n">u2</span> <span class="o">*</span> <span class="n">inv_v</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">u3</span> <span class="o">*</span> <span class="n">inv_v</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="n">u4</span> <span class="o">*</span> <span class="n">inv_v</span><span class="o">**</span><span class="mi">4</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">v</span><span class="p">))</span>
+            <span class="o">-</span> <span class="n">v</span> <span class="o">*</span> <span class="n">eta</span>
+            <span class="o">-</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">zeta2</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)))</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Branch 3: Small-z leading asymptotic (DLMF 10.30.2) — z → 0</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_smallz_log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;K_v(z) ~ Gamma(|v|)/2 * (2/z)^|v| for z→0, |v|&gt;0.&quot;&quot;&quot;</span>
+    <span class="n">v_abs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">log_large_v</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">lgamma</span><span class="p">(</span><span class="n">v_abs</span><span class="p">)</span> <span class="o">+</span> <span class="n">v_abs</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">log_small_v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">euler_gamma</span><span class="p">,</span> <span class="n">TINY</span><span class="p">))</span>
+    <span class="c1"># v_abs &gt; 0.5 is a scalar bool here (called from _log_kv_scalar)</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">v_abs</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">log_large_v</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">log_small_v</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Branch 4: Gauss-Legendre quadrature (Takekawa 2022) — moderate z, v</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_cosh</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">ax</span><span class="p">))</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_quadrature_upper_bound</span><span class="p">(</span><span class="n">v_abs</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="mf">50.0</span>
+    <span class="n">z_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">P</span> <span class="o">/</span> <span class="n">z_safe</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span> <span class="o">+</span> <span class="n">v_abs</span> <span class="o">*</span> <span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">z_safe</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">T</span> <span class="o">+</span> <span class="mf">2.0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_quadrature_log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;64-point GL quadrature of K_v(z) = int_0^inf exp(-z cosh t) cosh(vt) dt.&quot;&quot;&quot;</span>
+    <span class="n">v_abs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">_quadrature_upper_bound</span><span class="p">(</span><span class="n">v_abs</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">T</span> <span class="o">*</span> <span class="p">(</span><span class="n">_GL_NODES</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>     <span class="c1"># (N_QUAD,)</span>
+    <span class="n">log_f</span> <span class="o">=</span> <span class="o">-</span><span class="n">z</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="n">_log_cosh</span><span class="p">(</span><span class="n">v_abs</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">T</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">_LOG_GL_WEIGHTS</span> <span class="o">+</span> <span class="n">log_f</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Scalar dispatcher — uses lax.cond so only one branch executes</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_scalar</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute log K_v(z) for scalar v, z using lax.cond regime selection.&quot;&quot;&quot;</span>
+    <span class="n">v_abs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="n">use_hankel</span> <span class="o">=</span> <span class="n">z</span> <span class="o">&gt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">_HANKEL_THRESHOLD</span><span class="p">,</span> <span class="n">v_abs</span> <span class="o">*</span> <span class="n">v_abs</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">)</span>
+    <span class="n">use_olver</span>  <span class="o">=</span> <span class="n">v_abs</span> <span class="o">&gt;</span> <span class="n">_OLVER_V_THRESHOLD</span>
+    <span class="n">use_smallz</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">BESSEL_SMALLZ_THRESHOLD</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_abs</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Innermost: Olver vs Small-z vs Quadrature</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_not_hankel</span><span class="p">():</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_olver</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">_olver_log_kv</span><span class="p">(</span><span class="n">v_abs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">TINY</span><span class="p">))</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_not_olver</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                <span class="n">use_smallz</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">_smallz_log_kv</span><span class="p">(</span><span class="n">v_abs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">TINY</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)),</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">_quadrature_log_kv</span><span class="p">(</span><span class="n">v_abs</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">use_olver</span><span class="p">,</span> <span class="n">_olver</span><span class="p">,</span> <span class="n">_not_olver</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hankel</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">_hankel_log_kv</span><span class="p">(</span><span class="n">v_abs</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">use_hankel</span><span class="p">,</span> <span class="n">_hankel</span><span class="p">,</span> <span class="n">_not_hankel</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Pure-JAX implementation (private) — custom JVP, JIT-able, differentiable</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="nd">@functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">custom_jvp</span><span class="p">,</span> <span class="n">nondiff_argnums</span><span class="o">=</span><span class="p">())</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_jax</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    log K_v(z), pure-JAX with zero scipy callbacks.</span>
+
+<span class="sd">    Regime selection via lax.cond (only the selected branch executes):</span>
+<span class="sd">        1. z &gt; max(25, v²/4)         → Hankel asymptotic</span>
+<span class="sd">        2. |v| &gt; 25 (not Hankel)     → Olver uniform expansion</span>
+<span class="sd">        3. z &lt; 1e-6, |v| &gt; 0.5      → Small-z leading asymptotic</span>
+<span class="sd">        4. Otherwise                  → Gauss-Legendre quadrature</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    v : scalar or array — order (any real; K_v = K_{-v})</span>
+<span class="sd">    z : scalar or array — argument (must be &gt; 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="p">():</span>
+        <span class="k">return</span> <span class="n">_log_kv_scalar</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_log_kv_scalar</span><span class="p">)(</span><span class="n">v</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">z</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+
+<span class="nd">@_log_kv_jax</span><span class="o">.</span><span class="n">defjvp</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_jax_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+    <span class="n">v</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">primals</span>
+    <span class="n">dv</span><span class="p">,</span> <span class="n">dz</span> <span class="o">=</span> <span class="n">tangents</span>
+    <span class="n">primal_out</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="n">log_kvm1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">log_kvp1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">dlogkv_dz</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvm1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvp1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">))</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">BESSEL_EPS_V</span>
+    <span class="n">_EPS_V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">dlogkv_dv</span> <span class="o">=</span> <span class="p">(</span><span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">_EPS_V</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">primal_out</span><span class="p">,</span> <span class="n">dlogkv_dz</span> <span class="o">*</span> <span class="n">dz</span> <span class="o">+</span> <span class="n">dlogkv_dv</span> <span class="o">*</span> <span class="n">dv</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># CPU implementation (private) — scipy.special.kve, vectorized numpy</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_cpu</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    log K_v(z) via scipy.special.kve. Fully vectorized numpy.</span>
+
+<span class="sd">    Not JIT-able. Fast for the EM hot path (6 C-level array calls).</span>
+<span class="sd">    Handles scalars and arrays of any shape via broadcasting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">kve</span><span class="p">,</span> <span class="n">gammaln</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">out_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="c1"># Ravel to 1-d so item assignment always works (0-d arrays don&#39;t support it)</span>
+    <span class="n">v_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">out_shape</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">z_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">out_shape</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">z_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z_flat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">kve</span><span class="p">(</span><span class="n">v_flat</span><span class="p">,</span> <span class="n">z_flat</span><span class="p">))</span> <span class="o">-</span> <span class="n">z_flat</span>
+
+    <span class="n">inf_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">inf_mask</span><span class="p">):</span>
+        <span class="n">v_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v_flat</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">])</span>
+        <span class="n">z_inf</span> <span class="o">=</span> <span class="n">z_flat</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span>
+        <span class="n">large_v</span> <span class="o">=</span> <span class="n">v_abs</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">large_v</span><span class="p">,</span>
+            <span class="n">gammaln</span><span class="p">(</span><span class="n">v_abs</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">v_abs</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span><span class="p">)),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">euler_gamma</span><span class="p">,</span> <span class="n">TINY</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out_shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">out_shape</span> <span class="k">else</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Public API — unified dispatcher with backend selection</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="log_kv">
 <a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Log modified Bessel function of the second kind: log K_v(z).</span>
-<span class="sd">    </span>
-<span class="sd">    Computes :math:`\\log K_\\nu(z)` in a numerically stable way.</span>
-<span class="sd">    </span>
-<span class="sd">    This is an optimized version where :math:`\\nu` is a scalar and :math:`z` </span>
-<span class="sd">    can be vectorized. For the fully vectorized version (both :math:`\\nu` and </span>
-<span class="sd">    :math:`z` arrays), use :func:`log_kv_vectorized`.</span>
-<span class="sd">    </span>
-<span class="sd">    Uses the exponentially scaled function :math:`K_\\nu^e(z) = K_\\nu(z) e^z` for</span>
-<span class="sd">    numerical stability when :math:`z` is large:</span>
-<span class="sd">    </span>
-<span class="sd">    .. math::</span>
-<span class="sd">        \\log K_\\nu(z) = \\log K_\\nu^e(z) - z</span>
-<span class="sd">    </span>
-<span class="sd">    When the result is inf (underflow for small :math:`z`), uses asymptotic approximations:</span>
-<span class="sd">    </span>
-<span class="sd">    - If :math:`|\\nu| &gt; \\varepsilon`: </span>
-<span class="sd">      :math:`\\log K_\\nu(z) \\approx \\log\\Gamma(|\\nu|) - \\log 2 + |\\nu|(\\log 2 - \\log z)`</span>
-<span class="sd">    - If :math:`|\\nu| \\approx 0`: </span>
-<span class="sd">      :math:`\\log K_0(z) \\approx \\log(-\\log(z/2) - \\gamma)` where :math:`\\gamma` is Euler&#39;s constant</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    v : float</span>
-<span class="sd">        Order of Bessel function :math:`\\nu` (scalar).</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument (must be &gt; 0), can be vectorized.</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    log_kv : float or ndarray</span>
-<span class="sd">        :math:`\\log K_\\nu(z)`.</span>
-<span class="sd">    </span>
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; log_kv(1.0, 2.0)</span>
-<span class="sd">    -1.9670713500717493</span>
-<span class="sd">    &gt;&gt;&gt; log_kv(1.5, np.array([0.5, 1.0, 2.0]))</span>
-<span class="sd">    array([ 0.68024015, -0.38318674, -1.71531713])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">z_scalar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
-    
-    <span class="c1"># Ensure z is positive</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
-    
-    <span class="c1"># Use kve for numerical stability: kve(v, z) = kv(v, z) * exp(z)</span>
-    <span class="c1"># So log(kv(v, z)) = log(kve(v, z)) - z</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">kve</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span> <span class="o">-</span> <span class="n">z</span>
-    
-    <span class="c1"># Handle cases where result is inf (kv underflows to 0 when z → 0)</span>
-    <span class="c1"># The threshold depends on v, so check the result directly</span>
-    <span class="n">inf_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">inf_mask</span><span class="p">):</span>
-        <span class="n">z_inf</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span>
-        <span class="n">v_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-        
-        <span class="c1"># For |v| &gt; ε: K_v(z) ≈ Γ(|v|)/2 · (2/z)^|v|</span>
-        <span class="c1"># log(K_v(z)) ≈ gammaln(|v|) - log(2) + |v|(log(2) - log(z))</span>
-        <span class="k">if</span> <span class="n">v_abs</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
-            <span class="n">approx</span> <span class="o">=</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">v_abs</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">v_abs</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># For v ≈ 0: K_0(z) ≈ -log(z/2) - γ (Euler&#39;s constant)</span>
-            <span class="c1"># log(K_0(z)) ≈ log(-log(z/2) - γ)</span>
-            <span class="n">inner</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">euler_gamma</span>
-            <span class="n">inner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
-            <span class="n">approx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
-        
-        <span class="n">result</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">approx</span>
-    
-    <span class="k">if</span> <span class="n">z_scalar</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    
-    <span class="k">return</span> <span class="n">result</span></div>
-
-
-
-<div class="viewcode-block" id="log_kv_vectorized">
-<a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv_vectorized">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_kv_vectorized</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">],</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Log modified Bessel function of the second kind: log(K_v(z)).</span>
-<span class="sd">    </span>
-<span class="sd">    Fully vectorized version where both v and z can be arrays.</span>
-<span class="sd">    This is slower than log_kv when v is a scalar.</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    v : float or ndarray</span>
-<span class="sd">        Order of Bessel function.</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument (must be &gt; 0).</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    log_kv : float or ndarray</span>
-<span class="sd">        Log of the modified Bessel function of the second kind.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">v_scalar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="n">z_scalar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-    
-    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    
-    <span class="c1"># Broadcast v and z to same shape</span>
-    <span class="n">v</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    
-    <span class="c1"># Ensure z is positive</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
-    
-    <span class="c1"># Use kve for numerical stability</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">kve</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span> <span class="o">-</span> <span class="n">z</span>
-    
-    <span class="c1"># Handle inf cases</span>
-    <span class="n">inf_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">inf_mask</span><span class="p">):</span>
-        <span class="n">z_inf</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span>
-        <span class="n">v_inf</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span>
-        <span class="n">v_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v_inf</span><span class="p">)</span>
-        
-        <span class="n">approx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">z_inf</span><span class="p">)</span>
-        
-        <span class="n">large_v_mask</span> <span class="o">=</span> <span class="n">v_abs</span> <span class="o">&gt;</span> <span class="mf">1e-10</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">large_v_mask</span><span class="p">):</span>
-            <span class="n">approx</span><span class="p">[</span><span class="n">large_v_mask</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">gammaln</span><span class="p">(</span><span class="n">v_abs</span><span class="p">[</span><span class="n">large_v_mask</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> 
-                                    <span class="n">v_abs</span><span class="p">[</span><span class="n">large_v_mask</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span><span class="p">[</span><span class="n">large_v_mask</span><span class="p">])))</span>
-        
-        <span class="n">small_v_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">large_v_mask</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">small_v_mask</span><span class="p">):</span>
-            <span class="n">inner</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_inf</span><span class="p">[</span><span class="n">small_v_mask</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">euler_gamma</span>
-            <span class="n">inner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
-            <span class="n">approx</span><span class="p">[</span><span class="n">small_v_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
-        
-        <span class="n">result</span><span class="p">[</span><span class="n">inf_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">approx</span>
-    
-    <span class="k">if</span> <span class="n">v_scalar</span> <span class="ow">and</span> <span class="n">z_scalar</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    
-    <span class="k">return</span> <span class="n">result</span></div>
-
-
-
-<div class="viewcode-block" id="log_kv_derivative_v">
-<a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv_derivative_v">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_kv_derivative_v</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Derivative of log(K_v(z)) with respect to the order v.</span>
-
-<span class="sd">    Uses the asymptotic expansion (DLMF 10.40.2) when :math:`z` is large</span>
-<span class="sd">    relative to :math:`\nu^2`, giving an analytical formula without finite</span>
-<span class="sd">    differences.  Falls back to central differences otherwise.</span>
-
-<span class="sd">    **Asymptotic formula** (for large :math:`z`):</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">        \frac{\partial}{\partial\nu}\log K_\nu(z)</span>
-<span class="sd">        \approx \frac{S&#39;(\nu,z)}{S(\nu,z)},</span>
-<span class="sd">        \quad S(\nu,z) = \sum_{k=0}^{K} \frac{a_k(\nu)}{z^k}</span>
-
-<span class="sd">    where :math:`a_k(\nu) = \frac{\prod_{j=1}^k[4\nu^2-(2j-1)^2]}{k!\,8^k}`</span>
-<span class="sd">    and :math:`a_k&#39;(\nu) = a_k(\nu)\sum_{i=1}^k \frac{8\nu}{4\nu^2-(2i-1)^2}`.</span>
-
-<span class="sd">    **Central-difference formula** (for moderate :math:`z`):</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">        \frac{\partial}{\partial\nu}\log K_\nu(z)</span>
-<span class="sd">        \approx \frac{\log K_{\nu+\varepsilon}(z)</span>
-<span class="sd">                      - \log K_{\nu-\varepsilon}(z)}{2\varepsilon}</span>
+<span class="sd">    log K_v(z) — log modified Bessel function of the second kind.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    v : float</span>
-<span class="sd">        Order of Bessel function :math:`\nu` (scalar).</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument (must be &gt; 0), can be vectorized.</span>
-<span class="sd">    eps : float, optional</span>
-<span class="sd">        Step size for central differences. Default is 1e-6.</span>
+<span class="sd">    v : scalar or array — order (any real; K_v = K_{-v})</span>
+<span class="sd">    z : scalar or array — argument (must be &gt; 0)</span>
+<span class="sd">    backend : &#39;jax&#39; (default) or &#39;cpu&#39;</span>
+<span class="sd">        &#39;jax&#39; : pure-JAX, lax.cond regime selection, custom JVP.</span>
+<span class="sd">                JIT-able, differentiable. Default for log_prob, pdf, etc.</span>
+<span class="sd">        &#39;cpu&#39; : scipy.special.kve, fully vectorized numpy.</span>
+<span class="sd">                Not JIT-able. Fast for EM hot path.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    deriv : float or ndarray</span>
-<span class="sd">        Derivative of :math:`\log K_\nu(z)` with respect to :math:`\nu`.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; log_kv_derivative_v(1.0, 2.0)</span>
-<span class="sd">    -0.4250407...</span>
+<span class="sd">    scalar or array of same broadcast shape as (v, z).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">z_scalar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-    <span class="n">z_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
-
-    <span class="n">K</span> <span class="o">=</span> <span class="mi">9</span>  <span class="c1"># number of asymptotic terms</span>
-    <span class="n">v_abs</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="c1"># Asymptotic threshold: accurate when z &gt; v²/(K-1) and z &gt; 20</span>
-    <span class="n">asym_thresh</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">v_abs</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
-
-    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">z_arr</span><span class="p">)</span>
-
-    <span class="n">asym_mask</span> <span class="o">=</span> <span class="n">z_arr</span> <span class="o">&gt;=</span> <span class="n">asym_thresh</span>
-    <span class="n">fd_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">asym_mask</span>
-
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">asym_mask</span><span class="p">):</span>
-        <span class="n">result</span><span class="p">[</span><span class="n">asym_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">_log_kv_deriv_v_asymptotic</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z_arr</span><span class="p">[</span><span class="n">asym_mask</span><span class="p">],</span> <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">fd_mask</span><span class="p">):</span>
-        <span class="n">z_fd</span> <span class="o">=</span> <span class="n">z_arr</span><span class="p">[</span><span class="n">fd_mask</span><span class="p">]</span>
-        <span class="n">result</span><span class="p">[</span><span class="n">fd_mask</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z_fd</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z_fd</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">z_scalar</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">result</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_deriv_v_asymptotic</span><span class="p">(</span>
-    <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
-    <span class="n">K</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Analytical :math:`\partial_\nu\log K_\nu(z)` via DLMF 10.40.2 (large-z).</span>
-
-<span class="sd">    Uses :math:`K` terms of the asymptotic expansion.  Accurate when</span>
-<span class="sd">    :math:`z \gg \nu^2 / K`.  Falls back to central differences for any</span>
-<span class="sd">    element where a denominator factor :math:`4\nu^2-(2i-1)^2` is near zero</span>
-<span class="sd">    (i.e. half-integer or integer orders that coincide with a pole).</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    v : float</span>
-<span class="sd">        Order :math:`\nu` (scalar).</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument(s), must be positive.</span>
-<span class="sd">    K : int</span>
-<span class="sd">        Number of asymptotic terms. Default 9 (matches legacy code).</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    deriv : float or ndarray</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">factorial</span> <span class="k">as</span> <span class="n">sp_factorial</span>
-
-    <span class="n">z_scalar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-    <span class="n">z_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
-    <span class="n">k_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-
-    <span class="c1"># a_k(v) = cumprod_{j=1}^k [4v²-(2j-1)²] / (k! * 8^k)</span>
-    <span class="n">factors</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">v</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k_arr</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>          <span class="c1"># shape (K,)</span>
-    <span class="n">a_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="n">factors</span><span class="p">)</span> <span class="o">/</span> <span class="n">sp_factorial</span><span class="p">(</span><span class="n">k_arr</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="o">**</span><span class="n">k_arr</span>
-
-    <span class="c1"># a_k&#39;(v) = a_k(v) * Σ_{i=1}^k  8v / (4v²-(2i-1)²)</span>
-    <span class="c1"># built up cumulatively so each a_k&#39; reuses the previous running sum.</span>
-    <span class="n">da_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
-    <span class="n">fallback_needed</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">running_sum</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">factors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
-            <span class="c1"># v is at or near a pole of the log-derivative: use FD fallback</span>
-            <span class="n">fallback_needed</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">break</span>
-        <span class="n">running_sum</span> <span class="o">+=</span> <span class="mf">8.0</span> <span class="o">*</span> <span class="n">v</span> <span class="o">/</span> <span class="n">f</span>
-        <span class="n">da_k</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">a_k</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">running_sum</span>
-
-    <span class="c1"># S(v,z) = 1 + Σ_k a_k/z^k,  S&#39;(v,z) = Σ_k da_k/z^k</span>
-    <span class="c1"># z_powers shape: (n_z, K)</span>
-    <span class="n">inv_z</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">z_arr</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>          <span class="c1"># (n_z, 1)</span>
-    <span class="n">z_pows</span> <span class="o">=</span> <span class="n">inv_z</span> <span class="o">**</span> <span class="n">k_arr</span>                        <span class="c1"># (n_z, K)</span>
-
-    <span class="n">S</span>  <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">z_pows</span> <span class="o">@</span> <span class="n">a_k</span>                       <span class="c1"># (n_z,)</span>
-    <span class="n">dS</span> <span class="o">=</span> <span class="n">z_pows</span> <span class="o">@</span> <span class="n">da_k</span>                             <span class="c1"># (n_z,)</span>
-
-    <span class="n">result</span> <span class="o">=</span> <span class="n">dS</span> <span class="o">/</span> <span class="n">S</span>                                <span class="c1"># (n_z,)</span>
-
-    <span class="k">if</span> <span class="n">fallback_needed</span><span class="p">:</span>
-        <span class="c1"># Any element that hit a pole: replace with central differences</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        <span class="n">result</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z_arr</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span> <span class="n">z_arr</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">z_scalar</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">result</span>
-
-
-<div class="viewcode-block" id="log_kv_derivative_z">
-<a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.log_kv_derivative_z">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_kv_derivative_z</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Derivative of log(K_v(z)) with respect to z.</span>
-<span class="sd">    </span>
-<span class="sd">    Using the recurrence relation::</span>
-<span class="sd">    </span>
-<span class="sd">        K&#39;_v(z) = -(K_{v-1}(z) + K_{v+1}(z)) / 2</span>
-<span class="sd">    </span>
-<span class="sd">    So::</span>
-<span class="sd">    </span>
-<span class="sd">        d/dz log(K_v(z)) = K&#39;_v(z) / K_v(z)</span>
-<span class="sd">                         = -(K_{v-1}(z) + K_{v+1}(z)) / (2 K_v(z))</span>
-<span class="sd">                         = -1/2 (exp(log K_{v-1}(z) - log K_v(z)) + </span>
-<span class="sd">                                 exp(log K_{v+1}(z) - log K_v(z)))</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    v : float</span>
-<span class="sd">        Order of Bessel function (scalar).</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument (must be &gt; 0), can be vectorized.</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    deriv : float or ndarray</span>
-<span class="sd">        Derivative of log K_v(z) with respect to z.</span>
-<span class="sd">    </span>
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; log_kv_derivative_z(1.0, 2.0)</span>
-<span class="sd">    -1.3143079478654318</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">log_kv_val</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    <span class="n">log_kv_m1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    <span class="n">log_kv_p1</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_m1</span> <span class="o">-</span> <span class="n">log_kv_val</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv_p1</span> <span class="o">-</span> <span class="n">log_kv_val</span><span class="p">))</span></div>
-
-
-
-<div class="viewcode-block" id="kv_ratio">
-<a class="viewcode-back" href="../../../api/index.html#normix.utils.bessel.kv_ratio">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">kv_ratio</span><span class="p">(</span><span class="n">v1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">v2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Compute the ratio K_{v1}(z) / K_{v2}(z) in a numerically stable way.</span>
-<span class="sd">    </span>
-<span class="sd">    Uses log space to avoid overflow/underflow:</span>
-<span class="sd">        K_{v1}(z) / K_{v2}(z) = exp(log K_{v1}(z) - log K_{v2}(z))</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    v1 : float</span>
-<span class="sd">        Order of numerator Bessel function.</span>
-<span class="sd">    v2 : float</span>
-<span class="sd">        Order of denominator Bessel function.</span>
-<span class="sd">    z : float or ndarray</span>
-<span class="sd">        Argument (must be &gt; 0).</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    ratio : float or ndarray</span>
-<span class="sd">        The ratio K_{v1}(z) / K_{v2}(z).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v2</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span></div>
-
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_log_kv_cpu</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span></div>
 
 </pre></div>
 
@@ -465,7 +355,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, normix developers.</p>
+    <p>&#169; Copyright 2024–2026, normix developers.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
