@@ -83,8 +83,7 @@ Thumbs.db
 
 docs/phd_thesis/
 
-# Legacy numpy reference implementation (not tracked)
-normix_numpy/
+# Legacy notebooks
 notebooks_numpy/
 
 # Scratch outputs

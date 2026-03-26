@@ -13,15 +13,9 @@ help:
 
 .PHONY: help Makefile notebooks clean livehtml
 
-# Copy notebooks from the project root into docs for Sphinx/nbsphinx
-notebooks:
-	@echo "Copying notebooks..."
-	@mkdir -p notebooks
-	@cp -u ../notebooks/*.ipynb notebooks/ 2>/dev/null || true
-
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile notebooks
+%: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Convenience targets

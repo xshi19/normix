@@ -1,15 +1,14 @@
 # normix JAX Migration Plan
 
-## Status (2026-03-10)
+## Status (2026-03-26)
 
-Phases 0–5 complete. The JAX package (`normix/`) replaces the NumPy
-implementation. The NumPy reference is preserved in `normix_numpy/`.
+All phases complete. The JAX package (`normix/`) is now the sole implementation.
+The legacy NumPy version has been archived on the `master` branch and removed
+from the active codebase.
 
-Tests: `python3 -m pytest tests/test_jax_*.py` (51 tests, all passing).
+Tests: `uv run pytest tests/` (all passing).
 
-
-
-Reference: `docs/design/jax_design.md` for architecture decisions.
+Reference: `docs/design/design.md` for architecture decisions.
 
 ## Phase 0: Foundation
 
@@ -167,7 +166,7 @@ Each follows the same pattern:
 Set `jax.config.update("jax_enable_x64", True)` at package init. All arrays default to float64.
 
 ### NumPy Reference
-Keep the current NumPy normix as a subpackage or separate reference for cross-validation. Never delete it until JAX version passes all equivalent tests.
+The legacy NumPy implementation is archived on the `master` branch. The JAX version has been validated against it and all equivalent tests pass.
 
 ### Immutability
 All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate_cache`. Parameters are set at construction. M-step returns a new model via `eqx.tree_at`.

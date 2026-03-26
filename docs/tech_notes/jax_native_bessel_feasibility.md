@@ -86,7 +86,7 @@ $$\log K_v(z) \approx \frac{1}{2}\log\frac{\pi}{2z} - z + \log\left(\sum_{k=0}^K
 - **Trivially implementable in pure JAX**: ~20 lines of code.
 - **Differentiable**: Fully (polynomial operations, standard JAX primitives).
 - **Accuracy**: Excellent for $z > \max(20, v^2/(K-1))$ with $K=9$ terms. This is
-  already used in `normix_numpy/utils/bessel.py` for `log_kv_derivative_v`.
+  previously used in the legacy NumPy Bessel module for `log_kv_derivative_v`.
 - **Limitation**: Only valid for large z. Needs another method for small/moderate z.
 
 ### 5. Small-z Asymptotic (DLMF 10.30.2)
