@@ -99,11 +99,14 @@ class InverseGamma(ExponentialFamily):
         x = jnp.asarray(x, dtype=jnp.float64)
         return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
 
-    def rvs(self, n: int, seed: int = 42):
-        import numpy as np
-        from scipy import stats
-        return stats.invgamma.rvs(a=float(self.alpha), scale=float(self.beta),
-                                  size=n, random_state=seed)
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        """Sample n observations from InverseGamma(α, β) via JAX PRNG.
+
+        If X ~ Gamma(α, 1/β) then 1/X ~ InverseGamma(α, β).
+        """
+        key = jax.random.PRNGKey(seed)
+        g = jax.random.gamma(key, self.alpha, shape=(n,), dtype=jnp.float64)
+        return self.beta / g
 
     # ------------------------------------------------------------------
     # Constructors

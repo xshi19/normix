@@ -100,23 +100,22 @@ class JointNormalMixture(ExponentialFamily):
     # Sampling
     # ------------------------------------------------------------------
 
-    def rvs(self, n: int, seed: int = 42) -> Tuple[np.ndarray, np.ndarray]:
+    def rvs(self, n: int, seed: int = 42) -> Tuple[jax.Array, jax.Array]:
         """
-        Sample (X, Y) from the joint distribution.
+        Sample (X, Y) from the joint distribution via JAX PRNG.
 
         Returns
         -------
-        X : (n, d) array
-        Y : (n,) array
+        X : (n, d) jax.Array
+        Y : (n,)   jax.Array
         """
         Y = self.subordinator().rvs(n, seed)
-        rng = np.random.default_rng(seed + 1)
-        mu = np.asarray(self.mu)
-        gamma = np.asarray(self.gamma)
-        L_np = np.asarray(self.L_Sigma)
-        d = mu.shape[0]
-        Z = rng.standard_normal((n, d))
-        X = mu[None, :] + gamma[None, :] * Y[:, None] + np.sqrt(Y[:, None]) * (Z @ L_np.T)
+        key = jax.random.PRNGKey(seed + 1)
+        d = self.d
+        Z = jax.random.normal(key, shape=(n, d), dtype=jnp.float64)
+        X = (self.mu[None, :]
+             + self.gamma[None, :] * Y[:, None]
+             + jnp.sqrt(Y[:, None]) * (Z @ self.L_Sigma.T))
         return X, Y
 
     # ------------------------------------------------------------------

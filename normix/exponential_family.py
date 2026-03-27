@@ -178,8 +178,8 @@ class ExponentialFamily(eqx.Module):
         """CDF F(x). Subclasses should override with analytical formulas."""
         raise NotImplementedError(f"{type(self).__name__}.cdf not implemented")
 
-    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
-        """Sample n observations. Uses numpy/scipy (not JIT-able)."""
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        """Sample n observations via JAX PRNG (JIT-able)."""
         raise NotImplementedError(f"{type(self).__name__}.rvs not implemented")
 
     # ------------------------------------------------------------------

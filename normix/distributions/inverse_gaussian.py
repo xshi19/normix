@@ -113,11 +113,30 @@ class InverseGaussian(ExponentialFamily):
                 + jnp.exp(2.0 * self.lam / self.mu)
                 * jax.scipy.stats.norm.cdf(-t2))
 
-    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
-        from scipy import stats
-        return stats.invgauss.rvs(mu=float(self.mu) / float(self.lam),
-                                  scale=float(self.lam),
-                                  size=n, random_state=seed)
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        """Sample n observations from InverseGaussian(μ, λ) via JAX PRNG.
+
+        Uses the algorithm from Michael, Schucany & Haas (1976) as described
+        in https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution:
+          1. ν ~ N(0,1), y = ν²
+          2. x = μ + μ²y/(2λ) − (μ/(2λ))√(4μλy + μ²y²)
+          3. z ~ U(0,1); return x if z ≤ μ/(μ+x), else μ²/x
+
+        Uses jnp.where (not jax.lax.cond) for vectorized branching over
+        the full sample array in a single pass.
+        """
+        key = jax.random.PRNGKey(seed)
+        key1, key2 = jax.random.split(key)
+
+        nu = jax.random.normal(key1, shape=(n,), dtype=jnp.float64)
+        y = nu * nu
+
+        mu, lam = self.mu, self.lam
+        x = mu + (mu * mu * y) / (2.0 * lam) \
+            - (mu / (2.0 * lam)) * jnp.sqrt(4.0 * mu * lam * y + mu * mu * y * y)
+
+        z = jax.random.uniform(key2, shape=(n,), dtype=jnp.float64)
+        return jnp.where(z <= mu / (mu + x), x, mu * mu / x)
 
     # ------------------------------------------------------------------
     # Constructors
