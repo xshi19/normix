@@ -1,0 +1,62 @@
+---
+description: Rules for maintaining .cursor/rules/ files
+globs: "**/.cursor/rules/*.mdc"
+alwaysApply: false
+---
+
+# Maintaining .cursor/rules/
+
+> High-level principles: `docs/design/agent_instructions_design.md`
+
+Rules are auto-injected by Cursor when their glob pattern matches the files
+being edited. This is the primary mechanism for progressive disclosure.
+
+## Current Rules
+
+| Rule | Glob | Purpose |
+|---|---|---|
+| `project-overview.mdc` | `alwaysApply: true` | Project identity, distribution catalog |
+| `coding-conventions.mdc` | `**/*.py` | Python coding patterns |
+| `testing-guidelines.mdc` | `**/tests/**/*.py` | Test structure and tolerances |
+| `notebook-guidelines.mdc` | `**/notebooks/**/*.ipynb` | Notebook section structure |
+| `maintain-agents-md.mdc` | `AGENTS.md` | AGENTS.md maintenance |
+| `maintain-architecture-md.mdc` | `**/docs/ARCHITECTURE.md` | ARCHITECTURE.md maintenance |
+| `maintain-design-docs.mdc` | `**/docs/design/**/*.md,...` | Design docs, tech notes, references |
+| `maintain-theory-docs.mdc` | `**/docs/theory/**` | Mathematical derivations |
+| `maintain-cursor-rules.mdc` | `**/.cursor/rules/*.mdc` | This file — rules about rules |
+| `maintain-skills.mdc` | `**/.cursor/skills/**` | Skills maintenance |
+
+## Rule Design Principles
+
+- **Under ~150 lines.** If longer, split or move detail to `docs/`.
+- **YAML frontmatter required**: `description` and `globs` (or `alwaysApply`).
+- **`alwaysApply: true` sparingly** — only `project-overview.mdc` should be always-applied.
+  Every always-applied rule costs context in every conversation.
+- **Non-obvious content only.** Don't tell the agent things it already knows.
+  Focus on project-specific conventions that differ from defaults.
+- **Gotchas section.** The highest-signal content. Maintain and update it when
+  an agent makes a recurring mistake.
+- **Actionable.** Every statement should be something the agent can act on.
+  No historical context, rationale essays, or "nice to know" content.
+
+## Before Creating a New Rule
+
+1. **Read all existing rules** in `.cursor/rules/` — does one already cover this topic?
+2. **Check for contradictions** with existing rules.
+3. **Consider if it belongs in a rule.** Rules = preferences/constraints.
+   Multi-step workflows → skills. Rationale → design docs.
+4. **Choose the right glob.** The rule should only load when editing relevant files.
+
+## Before Editing an Existing Rule
+
+1. **Read the rule first.** Check if the change contradicts other content in the same rule.
+2. **Check related rules.** If adding something to `coding-conventions.mdc`, verify it
+   doesn't conflict with `testing-guidelines.mdc`.
+
+## Gotchas
+
+- **Don't duplicate facts across rules.** Each fact lives in one canonical location
+  (see Single Source of Truth table in `docs/design/agent_instructions_design.md`).
+- **Don't add implementation details.** Rules say *what* and *what not to do*.
+  Implementation details belong in code, docstrings, or tech notes.
+- **`project-overview.mdc` is always loaded.** Keep it very concise.

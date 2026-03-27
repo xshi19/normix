@@ -80,3 +80,12 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
+
+docs/phd_thesis/
+
+# Legacy notebooks
+notebooks_numpy/
+
+# Scratch outputs
+*.png
+gig_roundtrip_errors.png

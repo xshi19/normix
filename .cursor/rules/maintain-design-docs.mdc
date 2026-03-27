@@ -1,0 +1,65 @@
+---
+description: Rules for maintaining docs/design/, docs/tech_notes/, and docs/references/
+globs: "**/docs/design/**/*.md,**/docs/tech_notes/**/*.md,**/docs/references/**/*.md"
+alwaysApply: false
+---
+
+# Maintaining Design Docs, Tech Notes, and References
+
+> High-level principles: `docs/design/agent_instructions_design.md`
+
+## docs/design/ — Design Rationale
+
+Design docs record **why** decisions were made, not just **what** was decided.
+
+- `design.md` contains the **decision table** — the quickest way to look up
+  any architectural choice. Keep it as the single source of truth for decisions.
+- Other design docs (e.g. `solver_redesign.md`, `log_partition_triad.md`)
+  capture the rationale for specific subsystems.
+- Link to relevant tech notes for deep mathematical or algorithmic detail.
+
+**When to update:**
+- New design decision made → add row to `design.md` decision table
+- Significant subsystem redesign → create or update a dedicated design doc
+- Decision reversed or superseded → mark old decision and add new one
+
+## docs/tech_notes/ — Deep Dives
+
+Tech notes are deep-dive documents for specific numerical, algorithmic, or
+performance topics. Length is fine here — brevity is not required.
+
+**Structure for each note:**
+1. Problem statement
+2. Approach / methodology
+3. Results / benchmarks
+4. References
+
+**Rules:**
+- One note per topic — don't mix Bessel survey with EM profiling
+- Link from `docs/ARCHITECTURE.md` where relevant
+- Include benchmark data and reproduction commands where applicable
+
+**When to create a new tech note:**
+- Investigating a numerical issue or performance bottleneck
+- Evaluating alternative implementations with benchmarks
+- Documenting a non-obvious algorithmic choice
+
+## docs/references/ — External Surveys
+
+Reference docs survey external libraries, papers, or approaches.
+
+- `distribution_packages.md` surveys TFP, FlowJAX, efax, GMMX
+- Keep surveys factual and comparative, not advocacy
+
+## Before Creating a New Document
+
+1. **Check existing docs** in the same directory — does a relevant doc already exist?
+2. **Check `docs/ARCHITECTURE.md`** documentation map — is this topic already covered elsewhere?
+3. **Avoid duplicating** information from `.cursor/rules/` or `AGENTS.md`. If the content is about
+   coding conventions or project structure, it belongs in a rule, not a design doc.
+
+## Gotchas
+
+- **Design docs are not rules.** They explain *why*, not *how to write code*. Code conventions belong in `.cursor/rules/`.
+- **Tech notes can be long** but must have clear structure. An unstructured brain dump is hard for agents to navigate.
+- **Link, don't inline.** If a tech note is referenced from ARCHITECTURE.md, add a link — don't copy the content.

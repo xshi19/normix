@@ -1,0 +1,60 @@
+---
+description: Rules for maintaining .cursor/skills/
+globs: "**/.cursor/skills/**"
+alwaysApply: false
+---
+
+# Maintaining .cursor/skills/
+
+> High-level principles: `docs/design/agent_instructions_design.md`
+
+Skills are **folders** containing `SKILL.md` plus optional scripts, templates,
+and reference data. They encode multi-step workflows — recipes, not preferences.
+
+## Skill Structure
+
+```
+.cursor/skills/
+└── skill-name/
+    ├── SKILL.md              # Main instructions (required)
+    ├── references/           # Detailed docs read on demand
+    ├── templates/            # File templates
+    └── scripts/              # Utility scripts
+```
+
+## SKILL.md Requirements
+
+- **YAML frontmatter** with `name` and `description` fields
+- `name`: lowercase letters, numbers, hyphens. Max 64 chars.
+- `description`: says *when to trigger*, not just *what it does*. Max 1024 chars.
+- **Under ~500 lines.** Use progressive disclosure for detail.
+
+## Skill Design Principles
+
+- **Don't state the obvious.** The agent knows how to write Python and use git.
+  Focus on what's specific to normix.
+- **Progressive disclosure.** Put main instructions in `SKILL.md`, detailed
+  references in sub-files. Tell the agent what files exist; it reads when needed.
+- **Gotchas section.** Build from actual failure modes. Update every time
+  the agent hits a new edge case.
+- **Don't railroad.** Give information and flexibility, not rigid scripts.
+  "Ensure all tests pass" not "run `pytest tests/test_gamma.py` then...".
+- **Rules ≠ Skills.** Skills encode recipes (how). Rules encode preferences (what/what not).
+  A skill should reference a rule, not re-state it.
+
+## Before Creating a New Skill
+
+1. **Check existing skills** in `.cursor/skills/` — does one already cover this workflow?
+2. **Check existing rules** — is this really a multi-step workflow (→ skill) or
+   a preference/constraint (→ rule)?
+3. **Check existing docs** — is this really a recipe (→ skill) or rationale (→ design doc)?
+4. Create a skill only when a workflow has been **repeated >3 times** or is
+   complex enough to benefit from codification.
+
+## Gotchas
+
+- **Skills are folders, not just files.** Even if you only need `SKILL.md`,
+  create it inside a directory.
+- **Don't re-state coding conventions.** Reference `.cursor/rules/coding-conventions.mdc` instead.
+- **Keep references one level deep.** Link directly from `SKILL.md` to reference files.
+  Deeply nested references may not be followed.

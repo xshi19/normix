@@ -1,6 +1,14 @@
 # normix JAX Migration Plan
 
-Reference: `docs/design/jax_design.md` for architecture decisions.
+## Status (2026-03-26)
+
+All phases complete. The JAX package (`normix/`) is now the sole implementation.
+The legacy NumPy version has been archived on the `master` branch and removed
+from the active codebase.
+
+Tests: `uv run pytest tests/` (all passing).
+
+Reference: `docs/design/design.md` for architecture decisions.
 
 ## Phase 0: Foundation
 
@@ -112,9 +120,10 @@ Each follows the same pattern:
 **Goal:** Separate fitters with `jax.lax.while_loop` / `jax.lax.scan`.
 
 ### 5.1 BatchEMFitter
-- `jax.lax.while_loop(cond, body, init_state)`
-- Convergence: relative log-likelihood change < tol
-- Regularization: `det(Σ) = 1` (normalize Cholesky diagonal)
+- **Implemented:** `fit(model, X) -> EMResult` (fitted `model`, `param_changes`, optional LLs, timing). Plain Python fitter class (not `eqx.Module`).
+- **Loop:** `jax.lax.scan` when both E- and M-step backends are `'jax'` and `verbose <= 1`; else Python `for` loop (CPU backends or verbose tables).
+- **Convergence:** max relative change in normal parameters (μ, γ, `L_Sigma`) < `tol` (default `1e-3`); not log-likelihood delta.
+- **Regularization:** `regularization='none'` by default; optional `det_sigma_one` (normalize `det(Σ)`).
 
 ### 5.2 OnlineEMFitter
 - `jax.lax.scan` per epoch, Robbins-Monro step sizes τₜ = τ₀ + t
@@ -157,7 +166,48 @@ Each follows the same pattern:
 Set `jax.config.update("jax_enable_x64", True)` at package init. All arrays default to float64.
 
 ### NumPy Reference
-Keep the current NumPy normix as a subpackage or separate reference for cross-validation. Never delete it until JAX version passes all equivalent tests.
+The legacy NumPy implementation is archived on the `master` branch. The JAX version has been validated against it and all equivalent tests pass.
 
 ### Immutability
 All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate_cache`. Parameters are set at construction. M-step returns a new model via `eqx.tree_at`.
+
+
+## Phase 8: Log-Partition Triad Architecture
+
+**Goal:** Clean up the ExponentialFamily–GIG interface via the "log-partition triad" design.
+**Branch:** `feat/jax-native-bessel-v2` → `cursor/log-partition-triad-architecture-a531`
+**Status:** Implemented (see `docs/design/log_partition_triad.md`)
+
+### 8.1 What was implemented
+- Added triad classmethods to `ExponentialFamily`: `_grad_log_partition`, `_hessian_log_partition` (JAX), `_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu` (CPU)
+- `expectation_params(backend=)` and `fisher_information(backend=)` now use the triad
+- Solver refactored: `grad_hess_fn` (phi-space, combined) replaced by `grad_fn` + `hess_fn` (both θ-space); solver applies chain rule generically
+- Gamma, InverseGamma, InverseGaussian: added analytical `_grad_log_partition` and `_hessian_log_partition`; removed redundant `expectation_params` and `fit_mle` overrides
+- GIG: `_hessian_log_partition` (7-Bessel analytical); moved 6 module-level functions to classmethods/staticmethods; removed `_analytical_grad_hess_phi`, `_cpu_grad_hess_theta`, `_gig_bessel_quantities`, `fisher_information`, `expectation_params`, `fit_mle` overrides
+
+## Phase 7: CPU Bessel Backend (Performance)
+
+**Goal:** 15× EM speedup via hybrid JAX/CPU execution for Bessel-heavy hot paths.
+**Branch:** `feat/jax-native-bessel-v2` → `cursor/cpu-bessel-design-9a75`
+**Status:** Implemented (see `docs/design/cpu_bessel_design.md`)
+
+### 7.1 `log_kv(v, z, backend='jax'|'cpu')` — Phase 1 ✓
+- `backend='jax'` (default): unchanged pure-JAX path with `@custom_jvp`, JIT-able
+- `backend='cpu'`: `scipy.special.kve`, vectorized numpy, fast for EM hot path
+- Internal: `_log_kv_jax` (carries `@custom_jvp`) and `_log_kv_cpu` (scipy)
+
+### 7.2 GIG CPU methods — Phase 2 ✓
+- `GIG.expectation_params(backend='cpu')`: analytical Bessel ratios via scipy
+- `GIG.expectation_params_batch(p, a, b, backend='cpu')`: vectorized (N,3) output
+- `GIG.from_expectation(..., solver='cpu')`: self-contained scipy L-BFGS-B solver
+  self-contained; no external legacy dependencies
+
+### 7.3 E-step CPU path — Phase 3 ✓
+- `NormalMixture.e_step(X, backend='cpu')`: hybrid path
+  - Quad forms (`L⁻¹(x-μ)`, `‖z‖²`, `‖w‖²`) stay in JAX vmap (GPU-friendly)
+  - Bessel calls go to CPU via `GIG.expectation_params_batch(backend='cpu')`
+- `_posterior_gig_params(z2, w2)` added to all four `JointNormalMixture` subclasses
+
+### 7.4 BatchEMFitter integration — Phase 4 ✓
+- `BatchEMFitter(e_step_backend='cpu', m_step_backend='cpu', ...)` for full CPU hot path
+- Defaults: `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`, `tol=1e-3`, `regularization='none'`

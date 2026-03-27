@@ -1,30 +1,34 @@
 # Architecture
 
-> Quick reference: `AGENTS.md`. Full design rationale: `docs/design/jax_design.md`.
+> Quick reference: `AGENTS.md`. Full design rationale: `docs/design/design.md`.
 
 ## Module Hierarchy
 
 ```
-normix/
-├── _bessel.py              # log_kv with custom_jvp (TFP + asymptotic)
-├── _types.py               # type aliases
+normix/                     # JAX implementation
 ├── exponential_family.py   # ExponentialFamily(eqx.Module)
 ├── distributions/
-│   ├── gamma.py
-│   ├── inverse_gamma.py
-│   ├── inverse_gaussian.py
-│   ├── gig.py              # GeneralizedInverseGaussian
-│   ├── normal.py           # MultivariateNormal
-│   ├── variance_gamma.py
-│   ├── normal_inverse_gamma.py
-│   ├── normal_inverse_gaussian.py
-│   └── generalized_hyperbolic.py
+│   ├── gamma.py                          # Gamma(α, β)
+│   ├── inverse_gamma.py                  # InverseGamma(α, β)
+│   ├── inverse_gaussian.py               # InverseGaussian(μ, λ)
+│   ├── generalized_inverse_gaussian.py   # GeneralizedInverseGaussian (primary), GIG (alias)
+│   ├── normal.py                         # MultivariateNormal(μ, L_Sigma)
+│   ├── variance_gamma.py                 # VarianceGamma / JointVarianceGamma
+│   ├── normal_inverse_gamma.py           # NormalInverseGamma / JointNormalInverseGamma
+│   ├── normal_inverse_gaussian.py        # NormalInverseGaussian / JointNormalInverseGaussian
+│   └── generalized_hyperbolic.py         # GeneralizedHyperbolic / JointGeneralizedHyperbolic
 ├── mixtures/
 │   ├── joint.py            # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
-└── fitting/
-    ├── em.py               # BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
-    └── mle.py              # fit_mle convenience
+├── fitting/
+│   ├── em.py               # EMResult; BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   ├── solvers.py          # solve_bregman*, BregmanResult; Newton, L-BFGS, scipy multi-start
+│   └── __init__.py
+└── utils/
+    ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
+    ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
+    ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
+    └── validation.py        # moment validation, parameter printing (notebooks)
 ```
 
 ## Exponential Family Core
@@ -38,43 +42,75 @@ Every distribution subclasses `ExponentialFamily(eqx.Module)` and implements fou
 | `sufficient_statistics(x)` | Compute $t(x)$ for a single observation |
 | `log_base_measure(x)` | Compute $\log h(x)$ |
 
-Everything else is derived automatically via JAX autodiff:
+### The Log-Partition Triad
+
+Every distribution gets six derived classmethods, organised as three pairs:
+
+```
+                     JAX (JIT-able)                  CPU (numpy/scipy)
+                     ─────────────                   ─────────────────
+log-partition        _log_partition_from_theta        _log_partition_cpu
+gradient             _grad_log_partition              _grad_log_partition_cpu
+Hessian              _hessian_log_partition           _hessian_log_partition_cpu
+```
+
+**Tier 1** (`_log_partition_from_theta`) is abstract — subclasses must implement it.
+
+**Tier 2** (JAX grad/Hessian) defaults to `jax.grad` / `jax.hessian`; subclasses override with analytical formulas when available.
+
+**Tier 3** (CPU) defaults to wrapping the JAX versions; Bessel-dependent distributions (GIG) override with native numpy/scipy implementations.
+
+| Method | Gamma | InverseGamma | InverseGaussian | GIG |
+|---|---|---|---|---|
+| `_log_partition_from_theta` | ✓ | ✓ | ✓ | ✓ |
+| `_grad_log_partition` | analytical | analytical | analytical | inherits (`jax.grad`) |
+| `_hessian_log_partition` | analytical | analytical | analytical | analytical (7-Bessel) |
+| `_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
+| `_grad_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
+| `_hessian_log_partition_cpu` | inherits | inherits | inherits | central FD on CPU ψ |
+
+Everything else is derived automatically:
 
 - `log_partition()` = `_log_partition_from_theta(natural_params())`
-- `expectation_params()` = `jax.grad(_log_partition_from_theta)(θ)` → $\eta = \nabla\psi(\theta)$
-- `fisher_information()` = `jax.hessian(_log_partition_from_theta)(θ)` → $I(\theta) = \nabla^2\psi(\theta)$
+- `expectation_params(backend='jax'|'cpu')` = `_grad_log_partition(θ)` → $\eta = \nabla\psi(\theta)$
+- `fisher_information(backend='jax'|'cpu')` = `_hessian_log_partition(θ)` → $I(\theta) = \nabla^2\psi(\theta)$
 - `log_prob(x)` = `log_base_measure(x) + t(x)·θ − ψ(θ)`
-
-No separate analytical overrides unless both (a) faster and (b) registered via `custom_jvp` so higher-order autodiff remains correct.
+- `pdf(x)` = `exp(log_prob(x))`
+- `cdf(x)` — analytical where available (Gamma, InverseGamma, InverseGaussian)
+- `mean()`, `var()`, `std()` — analytical formulas per distribution
+- `rvs(n, seed)` — numpy/scipy-based sampling (not JIT-able)
 
 ### Three Parametrizations
 
 ```
-classical (α, β, μ, L, ...)
+classical (α, β, μ, L_Sigma, ...)
     ↕  from_classical / natural_params
 natural θ
-    ↕  from_natural / expectation_params (jax.grad)
+    ↕  from_natural / expectation_params (via _grad_log_partition)
 expectation η = E[t(X)]
-    ↕  from_expectation (jaxopt.LBFGSB solve)
+    ↕  from_expectation(eta, *, backend, method, theta0, maxiter, tol, verbose)
+         fit_mle(X, *, theta0, maxiter, tol, verbose)
+         fit(self, X, ...) — warm-start η→θ from self.natural_params()
+         default_init(X) — η̂ then from_expectation(η̂) for cold start
 ```
 
 All conversions are JIT-compatible and support `jax.grad` and `jax.vmap`.
 
 ### Distribution Storage
 
-Each distribution stores canonical parameters as named `eqx.Module` fields — the minimal set from which everything else is computable. No redundant storage.
+Each distribution stores canonical parameters as named `eqx.Module` fields. Cholesky factors of covariance matrices are always named `L_Sigma`.
 
 | Distribution | Stored Attributes | Notes |
 |---|---|---|
 | Gamma | `alpha`, `beta` | shape, rate |
 | InverseGamma | `alpha`, `beta` | shape, rate |
 | InverseGaussian | `mu`, `lam` | mean, shape |
-| GIG | `p`, `a`, `b` | shape, rate, rate |
-| MultivariateNormal | `mu`, `L` | mean, Cholesky of Σ |
-| VarianceGamma | `mu`, `gamma`, `L`, `alpha`, `beta` | Gamma subordinator |
-| NormalInverseGamma | `mu`, `gamma`, `L`, `alpha`, `beta` | InverseGamma subordinator |
-| NormalInverseGaussian | `mu`, `gamma`, `L`, `delta`, `eta` | InverseGaussian subordinator |
-| GeneralizedHyperbolic | `mu`, `gamma`, `L`, `p`, `a`, `b` | GIG subordinator |
+| GeneralizedInverseGaussian (GIG) | `p`, `a`, `b` | shape, rate, rate |
+| MultivariateNormal | `mu`, `L_Sigma` | mean, Cholesky of covariance |
+| VarianceGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` | Gamma subordinator |
+| NormalInverseGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` | InverseGamma subordinator |
+| NormalInverseGaussian | `mu`, `gamma`, `L_Sigma`, `mu_ig`, `lam` | InverseGaussian subordinator |
+| GeneralizedHyperbolic | `mu`, `gamma`, `L_Sigma`, `p`, `a`, `b` | GIG subordinator |
 
 ## Mixture Structure
 
@@ -83,7 +119,7 @@ JointNormalMixture(ExponentialFamily)     f(x,y) — X|Y ~ N(μ + γy, Σy)
     ├── JointVarianceGamma                Y ~ Gamma
     ├── JointNormalInverseGamma           Y ~ InverseGamma
     ├── JointNormalInverseGaussian        Y ~ InverseGaussian
-    └── JointGeneralizedHyperbolic        Y ~ GIG
+    └── JointGeneralizedHyperbolic        Y ~ GeneralizedInverseGaussian
 
 NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
     ├── VarianceGamma
@@ -94,42 +130,95 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
 
 `NormalMixture` owns a `JointNormalMixture`. The joint is an exponential family; the marginal is not.
 
+Key methods on `JointNormalMixture`:
+- `conditional_expectations(x)` → E[log Y|x], E[1/Y|x], E[Y|x] (EM E-step)
+- `_compute_posterior_expectations(x)` — implemented by each concrete joint
+- `_mstep_normal_params(...)` → μ, γ, L_Sigma (closed-form M-step for normal parameters)
+- `_quad_forms(x)` → z=L_Sigma⁻¹(x-μ), w=L_Sigma⁻¹γ (EM hot path)
+
 ## EM Algorithm
 
 The model knows math; the fitter knows iteration (following GMMX).
 
-- **E-step**: `model.e_step(X)` → `jax.vmap(joint.conditional_expectations)(X)` computes $E[Y|X]$, $E[1/Y|X]$, $E[\log Y|X]$
-- **M-step**: `model.m_step(X, expectations)` → converts expectation parameters to classical, returns new immutable model via `eqx.tree_at`
-- **Fitter**: `BatchEMFitter.fit(model, X)` → `jax.lax.while_loop` until convergence; `OnlineEMFitter` uses `jax.lax.scan` with Robbins-Monro step sizes
+- **E-step**: `model.e_step(X, backend='jax'|'cpu')`
+  - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
+  - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
+- **M-step**: `model.m_step(X, expectations)` → new immutable model
+- **Batch fitter**: `BatchEMFitter` is a plain Python class (not an `eqx.Module`). Its `fit(model, X)` returns **`EMResult`**: fitted `model`, optional per-iteration log-likelihoods, `param_changes` (max relative change in normal parameters μ, γ, `L_Sigma` — GIG/subordinator excluded), `n_iter`, `converged`, `elapsed_time`.
+- **Defaults**: `tol=1e-3`, `regularization='none'`, `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`. Regularization `'det_sigma_one'` rescales Σ (and matched γ / subordinator) so `det(Σ)=1`.
+- **Dual loop**: when **both** E- and M-step backends are `'jax'` and `verbose <= 1`, the batch EM body runs inside **`jax.lax.scan`** (JIT-friendly). Otherwise a Python `for` loop is used (CPU backends, or `verbose >= 2` for a per-iteration table).
+- **Verbosity**: `verbose=0` silent, `1` summary, `2` per-iteration diagnostics.
+- **Convenience**: `NormalMixture.fit(X, **fitter_kwargs) → EMResult` delegates to `BatchEMFitter` using **`self` as initialization**. Cold start: `SomeMixture.default_init(X)` then `result = model.fit(X)` (or `BatchEMFitter(...).fit(model, X)`).
 
-## Bessel Functions (`_bessel.py`)
+## Bessel Functions (`utils/bessel.py`)
 
-`log_kv(v, z)` with `@jax.custom_jvp`:
+`log_kv(v, z, backend='jax')` — unified entry point:
 
-- **Evaluation**: TFP `log_bessel_kve(|v|, z) - z` + asymptotic fallbacks for overflow/NaN
-- **∂/∂z (exact)**: recurrence $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$
-- **∂/∂ν (large z)**: analytical DLMF 10.40.2: $S'(\nu,z)/S(\nu,z)$
-- **∂/∂ν (small z)**: central finite differences, ε = 10⁻⁵
+- **`backend='jax'` (default)**: pure-JAX, `@jax.custom_jvp`, JIT-able, differentiable.
+  4-regime `lax.cond` dispatch: Hankel / Olver / small-z / Gauss-Legendre quadrature.
+  Derivatives: exact recurrence for ∂/∂z; central FD (ε=10⁻⁵) for ∂/∂ν.
 
-Verified across $(v, z)$ grid, $v \in [-100, 500]$, $z \in [10^{-6}, 10^3]$: relative errors < 10⁻⁶. See `notebooks/bessel_function_comparison.ipynb`.
+- **`backend='cpu'`**: `scipy.special.kve`, fully vectorized NumPy. Not JIT-able.
+  Fast for EM hot path. Overflow handled via asymptotic Γ-function formula.
+
+### CPU Versions for Bessel-Dependent Functions
+
+**Any function that calls `log_kv` must provide a CPU variant** via the triad so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely.
+
+The triad classmethods provide this automatically:
+
+| JAX (JIT-able) | CPU (numpy + scipy) | Used by |
+|---|---|---|
+| `GIG._log_partition_from_theta(theta)` | `GIG._log_partition_cpu(theta)` | `solve_bregman(backend='cpu')` |
+| `GIG._grad_log_partition(theta)` | `GIG._grad_log_partition_cpu(theta)` | EM E-step, CPU L-BFGS-B |
+| `GIG._hessian_log_partition(theta)` | `GIG._hessian_log_partition_cpu(theta)` | CPU Newton solver |
+| `log_kv(v, z, backend='jax')` | `log_kv(v, z, backend='cpu')` | All of the above |
+
+When adding new distributions that call `log_kv`, override the Tier 3 CPU classmethods with implementations that use `log_kv(backend='cpu')` and numpy operations. Distributions that do not call `log_kv` inherit the default CPU wrappers (which call the JAX versions) at no additional cost.
+
+## Numerical Constants (`utils/constants.py`)
+
+All shared numerical constants are defined in `utils/constants.py` and imported
+from there. Never define magic numbers locally in distribution files.
+
+| Constant | Value | Purpose |
+|---|---|---|
+| `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping |
+| `TINY` | `1e-300` | Floor for numpy-side log |
+| `BESSEL_EPS_V` | `1e-5` | FD step for ∂log K_v/∂v |
+| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
+| `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
+| `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
+| `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
+| `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
+| `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
 
 ## GIG η→θ Optimization
 
-Given $\eta = (\eta_1, \eta_2, \eta_3) = (E[\log Y], E[1/Y], E[Y])$, find $\theta$ such that $\nabla\psi(\theta) = \eta$.
+Given $\eta = (E[\log Y], E[1/Y], E[Y])$, find $\theta$ such that $\nabla\psi(\theta) = \eta$.
 
-**η-rescaling** before optimization:
+This is equivalent to minimising the **Bregman divergence** $\psi(\theta) - \theta\cdot\eta$.
 
+**η-rescaling** reduces Fisher condition number by up to $10^{30}$:
 $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s^2,\; \sqrt{\eta_2\eta_3},\; \sqrt{\eta_2\eta_3}\bigr)$$
 
-This reduces Fisher condition number by up to $10^{30}$ for extreme $a/b$ ratios.
+**Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
+- `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian).
+- `backend='jax', method='lbfgs'`: JAXopt L-BFGS.
+- Omitting `theta0` in **`ExponentialFamily.from_expectation`**: defaults to **`jnp.zeros_like(eta)`**. **GIG** overrides: `theta0=None` runs **`solve_bregman_multistart`** on the η-rescaled problem (CPU L-BFGS-B, seeds from Gamma / InverseGamma / InverseGaussian special cases).
 
-Solver: `jaxopt.LBFGSB` with bounds $\theta_2 \leq 0$, $\theta_3 \leq 0$. Multi-start with initial guesses from Gamma, InverseGamma, and InverseGaussian special cases. See `notebooks/gig_optimization_test.ipynb`.
+The solver passes `grad_fn` and `hess_fn` (both in θ-space) from the triad. The solver applies the φ↔θ chain rule internally via `jax.jacobian(to_theta)`, so distributions never need to know about reparametrization.
 
-## Design Docs
+The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values.
+
+See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
+
+## Documentation Map
 
 | Document | Content |
 |---|---|
-| `docs/design/jax_design.md` | Full architecture rationale with code examples |
-| `docs/design/detailed_design.md` | Equinox fundamentals, FlowJAX patterns, GMMX patterns |
-| `docs/plans/migration_plan.md` | Phased migration: foundation → distributions → mixtures → EM |
+| `docs/design/design.md` | Design rationale, architecture decisions |
+| `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization details |
+| `docs/theory/` | Mathematical derivations (rst) |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |

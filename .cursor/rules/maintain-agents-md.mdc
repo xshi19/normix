@@ -1,0 +1,50 @@
+---
+description: Rules for maintaining AGENTS.md
+globs: "AGENTS.md"
+alwaysApply: false
+---
+
+# Maintaining AGENTS.md
+
+> High-level principles: `docs/design/agent_instructions_design.md`
+
+AGENTS.md is a **map**, not an encyclopedia. It tells the agent *where to look*,
+not *everything it needs to know*. Target: **~80–120 lines**.
+
+## Required Sections
+
+1. **One-line project description** — what normix is
+2. **Commands** — install, test, notebooks (copy-paste ready)
+3. **Commits** — conventional commits format + pre-commit checklist
+4. **Core design** — 5–7 bullet points summarizing the exponential family pattern
+5. **Context map** — table mapping *areas of work* → *which doc/rule to read*
+6. **Design philosophy** — 3 bullet points (simplicity, numerical efficiency, robustness)
+
+## What Does NOT Belong Here
+
+- Full API reference → belongs in code docstrings
+- Detailed derivations → `docs/tech_notes/`
+- Implementation patterns → `.cursor/rules/`
+- Step-by-step workflows → `.cursor/skills/`
+- Mathematical theory → `docs/theory/`
+
+## When to Update
+
+- **New area of work** (new directory, new tool): add a row to the context map table
+- **New command** (new script, new test runner): add to Commands section
+- **Context map target moved/renamed**: update the pointer
+
+Do **not** update AGENTS.md for every code change. Only update when the map
+itself needs a new entry or an existing pointer is stale.
+
+## Before Editing
+
+Read existing content first. Check that new additions don't duplicate
+information already in `.cursor/rules/project-overview.mdc` (distribution
+catalog) or `docs/ARCHITECTURE.md` (module hierarchy). Add a pointer instead.
+
+## Gotchas
+
+- **Don't exceed ~120 lines.** If it's growing, move detail to a rule or doc.
+- **`project-overview.mdc` is always loaded.** Don't repeat its distribution catalog here.
+- **Keep commands copy-paste ready.** Use exact `uv run ...` commands, not descriptions.
