@@ -91,10 +91,10 @@ class Gamma(ExponentialFamily):
         x = jnp.asarray(x, dtype=jnp.float64)
         return jax.scipy.special.gammainc(self.alpha, self.beta * x)
 
-    def rvs(self, n: int, seed: int = 42):
-        import numpy as np
-        return np.random.default_rng(seed).gamma(
-            float(self.alpha), 1.0 / float(self.beta), size=n)
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        """Sample n observations from Gamma(α, β) via JAX PRNG."""
+        key = jax.random.PRNGKey(seed)
+        return jax.random.gamma(key, self.alpha, shape=(n,), dtype=jnp.float64) / self.beta
 
     # ------------------------------------------------------------------
     # Constructors

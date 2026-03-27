@@ -66,7 +66,7 @@ class NormalMixture(eqx.Module):
         Var_Y = j.subordinator().var()
         return E_Y * j.sigma() + Var_Y * jnp.outer(j.gamma, j.gamma)
 
-    def rvs(self, n: int, seed: int = 42) -> np.ndarray:
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
         """Sample X from the marginal distribution."""
         X, _ = self._joint.rvs(n, seed)
         return X
