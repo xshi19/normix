@@ -59,6 +59,7 @@ When editing specific areas, read the relevant rule:
 | Technical notes | `docs/tech_notes/` |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
+| Docs website build/publish | `.cursor/skills/docs-publish/` |
 
 ## Design Philosophy
 
