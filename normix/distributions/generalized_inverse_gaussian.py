@@ -362,13 +362,45 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         """Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2]."""
         return self.fisher_information()[2, 2]
 
-    def rvs(self, n: int, seed: int = 42) -> "np.ndarray":
-        import numpy as np
-        from scipy import stats
-        b_sp = float(np.sqrt(float(self.a) * float(self.b)))
-        scale = float(np.sqrt(float(self.b) / float(self.a)))
-        return stats.geninvgauss.rvs(p=float(self.p), b=b_sp, scale=scale,
-                                     size=n, random_state=seed)
+    def rvs(
+        self, n: int, seed: int = 42, method: str = "devroye",
+    ) -> jax.Array:
+        """Sample *n* observations from GIG(p, a, b).
+
+        Parameters
+        ----------
+        n : sample size
+        seed : integer seed for JAX PRNG (or scipy random_state for 'scipy')
+        method : 'devroye' (default), 'pinv', or 'scipy'
+            * ``devroye`` — TDR rejection on log(x), pure JAX, no Bessel.
+            * ``pinv`` — numerical inverse CDF (CPU table build + JAX sampling),
+              no Bessel.  Best for large *n* with fixed parameters.
+            * ``scipy`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).
+        """
+        from normix.distributions._gig_rvs import (
+            gig_rvs_devroye, gig_build_pinv_table, gig_rvs_pinv,
+        )
+
+        if method == "devroye":
+            key = jax.random.PRNGKey(seed)
+            return gig_rvs_devroye(key, self.p, self.a, self.b, n)
+
+        if method == "pinv":
+            key = jax.random.PRNGKey(seed)
+            u_grid, x_grid = gig_build_pinv_table(self.p, self.a, self.b)
+            return gig_rvs_pinv(key, u_grid, x_grid, n)
+
+        if method == "scipy":
+            from scipy import stats
+            b_sp = float(np.sqrt(float(self.a) * float(self.b)))
+            scale = float(np.sqrt(float(self.b) / float(self.a)))
+            samples = stats.geninvgauss.rvs(
+                p=float(self.p), b=b_sp, scale=scale,
+                size=n, random_state=seed,
+            )
+            return jnp.asarray(samples, dtype=jnp.float64)
+
+        raise ValueError(f"Unknown rvs method: {method!r}")
 
     # ------------------------------------------------------------------
     # Constructors

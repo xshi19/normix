@@ -2,10 +2,12 @@
 Utilities for normix.
 
 Bessel functions in ``bessel``, shared constants in ``constants``,
-plotting helpers in ``plotting``, validation/EM helpers in ``validation``.
+RVS generation in ``rvs``, plotting helpers in ``plotting``,
+validation/EM helpers in ``validation``.
 """
 from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
+from normix.utils.rvs import build_pinv_table, rvs_pinv
 from normix.utils.plotting import (
     plot_pdf_cdf_comparison,
     plot_sample_histograms,
@@ -27,6 +29,8 @@ from normix.utils.validation import (
 __all__ = [
     "log_kv",
     "LOG_EPS",
+    "build_pinv_table",
+    "rvs_pinv",
     "plot_pdf_cdf_comparison",
     "plot_sample_histograms",
     "plot_mle_fit",
