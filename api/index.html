@@ -300,7 +300,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations. Uses numpy/scipy (not JIT-able).</p>
+<dd><p>Sample n observations via JAX PRNG (JIT-able).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -309,7 +309,7 @@ sufficient_statistics, log_base_measure</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>ndarray</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -548,13 +548,16 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations. Uses numpy/scipy (not JIT-able).</p>
+<dd><p>Sample n observations from Gamma(α, β) via JAX PRNG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -711,13 +714,17 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations. Uses numpy/scipy (not JIT-able).</p>
+<dd><p>Sample n observations from InverseGamma(α, β) via JAX PRNG.</p>
+<p>If X ~ Gamma(α, 1/β) then 1/X ~ InverseGamma(α, β).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -874,7 +881,18 @@ t(x)  = [x, 1/x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations. Uses numpy/scipy (not JIT-able).</p>
+<dd><p>Sample n observations from InverseGaussian(μ, λ) via JAX PRNG.</p>
+<p>Uses the algorithm from Michael, Schucany &amp; Haas (1976) as described
+in <a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution">https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution</a>:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>ν ~ N(0,1), y = ν²</p></li>
+<li><p>x = μ + μ²y/(2λ) − (μ/(2λ))√(4μλy + μ²y²)</p></li>
+<li><p>z ~ U(0,1); return x if z ≤ μ/(μ+x), else μ²/x</p></li>
+</ol>
+</div></blockquote>
+<p>Uses jnp.where (not jax.lax.cond) for vectorized branching over
+the full sample array in a single pass.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -883,7 +901,7 @@ t(x)  = [x, 1/x]
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>np.ndarray</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1069,17 +1087,24 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">
-<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations. Uses numpy/scipy (not JIT-able).</p>
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'devroye'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs" title="Link to this definition"></a></dt>
+<dd><p>Sample <em>n</em> observations from GIG(p, a, b).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>n</strong> (<em>sample size</em>)</p></li>
+<li><p><strong>seed</strong> (<em>integer seed for JAX PRNG</em><em> (or </em><em>scipy random_state for 'scipy'</em><em>)</em>)</p></li>
+<li><p><strong>method</strong> (<em>'devroye'</em><em> (</em><em>default</em><em>)</em><em>, </em><em>'pinv'</em><em>, or </em><em>'scipy'</em>) – <ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">devroye</span></code> — TDR rejection on log(x), pure JAX, no Bessel.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pinv</span></code> — numerical inverse CDF (CPU table build + JAX sampling),
+no Bessel.  Best for large <em>n</em> with fixed parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scipy</span></code> — <code class="docutils literal notranslate"><span class="pre">scipy.stats.geninvgauss</span></code> (CPU, original fallback).</p></li>
+</ul>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>ndarray</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1328,12 +1353,12 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample (X, Y) from the joint distribution.</p>
+<dd><p>Sample (X, Y) from the joint distribution via JAX PRNG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>X</strong> (<em>(n, d) array</em>)</p></li>
-<li><p><strong>Y</strong> (<em>(n,) array</em>)</p></li>
+<li><p><strong>X</strong> (<em>(n, d) jax.Array</em>)</p></li>
+<li><p><strong>Y</strong> (<em>(n,)   jax.Array</em>)</p></li>
 </ul>
 </p>
 </dd>
@@ -1344,7 +1369,7 @@ Subordinator parameters defined by concrete subclasses.</p>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>ndarray</em></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>ndarray</em></a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1518,7 +1543,7 @@ fit(X, …)  — convenience EM fitting with multi-start</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>ndarray</em></a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
