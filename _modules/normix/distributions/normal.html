@@ -77,10 +77,15 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Multivariate Normal distribution.</span>
 
-<span class="sd">Stored: mu (d,), L_Sigma (d,d) lower-triangular Cholesky of Σ.</span>
-<span class="sd">All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.</span>
+<span class="sd">Stored: ``mu`` (d,), ``L_Sigma`` (d×d) lower-triangular Cholesky of :math:`\\Sigma`.</span>
+<span class="sd">All linear algebra via ``L_Sigma`` — never form :math:`\\Sigma^{-1}` explicitly.</span>
 
-<span class="sd">PDF: f(x) = (2π)^{-d/2} |Σ|^{-1/2} exp(-½(x-μ)ᵀΣ⁻¹(x-μ))</span>
+<span class="sd">PDF:</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    f(x) = (2\\pi)^{-d/2} |\\Sigma|^{-1/2}</span>
+<span class="sd">    \\exp\\!\\left(-\\tfrac{1}{2}(x-\\mu)^\\top\\Sigma^{-1}(x-\\mu)\\right)</span>
 
 <span class="sd">Exponential family:</span>
 
@@ -105,13 +110,15 @@
 <div class="viewcode-block" id="MultivariateNormal">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultivariateNormal</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multivariate Normal with Cholesky parametrization.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    mu : (d,) array</span>
-<span class="sd">    L_Sigma : (d,d) lower-triangular Cholesky factor of Σ</span>
+<span class="sd">    mu : jax.Array</span>
+<span class="sd">        ``(d,)`` mean vector.</span>
+<span class="sd">    L_Sigma : jax.Array</span>
+<span class="sd">        ``(d, d)`` lower-triangular Cholesky factor of :math:`\Sigma`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>         <span class="c1"># (d,)</span>
@@ -160,7 +167,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Covariance matrix Σ = L_Sigma L_Sigmaᵀ.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
 
 </pre></div>

@@ -77,10 +77,12 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Normal-Inverse Gaussian (NIG) distribution.</span>
 
-<span class="sd">Special case of GH with GIG → InverseGaussian subordinator (p = −½).</span>
-<span class="sd">Y ~ InverseGaussian(μ_IG, λ), i.e. GIG(p = −½, a = λ/μ_IG², b = λ).</span>
+<span class="sd">Special case of GH with GIG → InverseGaussian subordinator (:math:`p = -1/2`).</span>
+<span class="sd">:math:`Y \\sim \\mathrm{InvGaussian}(\\mu_{IG}, \\lambda)`,</span>
+<span class="sd">i.e. GIG(:math:`p = -1/2`, :math:`a = \\lambda/\\mu_{IG}^2`, :math:`b = \\lambda`).</span>
 
-<span class="sd">Stored: μ, γ, L_Σ (Cholesky of Σ), μ_IG (IG mean), λ (IG shape).</span>
+<span class="sd">Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),</span>
+<span class="sd">:math:`\\mu_{IG}` (IG mean), :math:`\\lambda` (IG shape).</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -101,11 +103,12 @@
 <div class="viewcode-block" id="JointNormalInverseGaussian">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointNormalInverseGaussian</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGaussian(μ_IG, λ).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
+<span class="sd">    :math:`Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)`.</span>
 
-<span class="sd">    Stored: μ_IG (IG mean) and λ (IG shape) directly.</span>
-<span class="sd">    GIG params: p = −½, a = λ/μ_IG², b = λ.</span>
+<span class="sd">    Stored: :math:`\mu_{IG}` (IG mean) and :math:`\lambda` (IG shape) directly.</span>
+<span class="sd">    GIG params: :math:`p = -1/2`, :math:`a = \lambda/\mu_{IG}^2`, :math:`b = \lambda`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mu_ig</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>   <span class="c1"># IG mean parameter</span>
@@ -135,9 +138,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Posterior Y|X=x ~ GIG(-1/2-d/2, a_post, b_post)</span>
-<span class="sd">        where a_post = lam/mu_ig² + γᵀΣ⁻¹γ,  b_post = lam + (x-μ)ᵀΣ⁻¹(x-μ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            a_{\mathrm{post}} = \lambda/\mu_{IG}^2 + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
+<span class="sd">            b_{\mathrm{post}} = \lambda + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
@@ -171,9 +178,12 @@
 <div class="viewcode-block" id="JointNormalInverseGaussian.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        θ = [-3/2-d/2, -(b+½μᵀΛμ), -(a+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]</span>
-<span class="sd">        where p=-½, a=λ/μ_IG², b=λ.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;</span>
+<span class="sd">        -(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;</span>
+<span class="sd">        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`</span>
+
+<span class="sd">        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">a_ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
@@ -186,8 +196,8 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ψ(θ) for Joint NIG.  Uses K_{-1/2}(z) = √(π/(2z)) e^{-z} —</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi(\theta)` for Joint NIG. Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` —</span>
 <span class="sd">        no Bessel function evaluation needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
@@ -246,11 +256,11 @@
 <div class="viewcode-block" id="NormalInverseGaussian.log_prob">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Marginal NIG log-density.</span>
 
-<span class="sd">        Uses K_{-1/2}(z) = sqrt(pi/(2z)) exp(-z) for the normalisation,</span>
-<span class="sd">        leaving only one log_kv call at order nu = -1/2 - d/2.</span>
+<span class="sd">        Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` for the normalisation,</span>
+<span class="sd">        leaving only one :math:`\log K_\nu` call at order :math:`\nu = -1/2 - d/2`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 

@@ -77,10 +77,13 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Normal-Inverse Gamma (NInvG) distribution.</span>
 
-<span class="sd">Special case of GH with GIG → InverseGamma subordinator (a → 0, p &lt; 0).</span>
-<span class="sd">Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).</span>
+<span class="sd">Special case of GH with GIG → InverseGamma subordinator</span>
+<span class="sd">(:math:`a \\to 0`, :math:`p &lt; 0`).</span>
+<span class="sd">:math:`Y \\sim \\mathrm{InvGamma}(\\alpha, \\beta)`,</span>
+<span class="sd">i.e. GIG(:math:`p = -\\alpha`, :math:`a \\to 0`, :math:`b = 2\\beta`).</span>
 
-<span class="sd">Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of InverseGamma.</span>
+<span class="sd">Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),</span>
+<span class="sd">:math:`\\alpha` (shape), :math:`\\beta` (rate) of InverseGamma.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -101,10 +104,11 @@
 <div class="viewcode-block" id="JointNormalInverseGamma">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointNormalInverseGamma</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGamma(α, β).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
+<span class="sd">    :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`.</span>
 
-<span class="sd">    GIG limit: p = −α, a → 0, b = 2β.</span>
+<span class="sd">    GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -134,9 +138,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Posterior Y|X=x ~ GIG(-alpha-d/2, a_post, b_post)</span>
-<span class="sd">        with a_post = γᵀΣ⁻¹γ, b_post = 2*beta + (x-μ)ᵀΣ⁻¹(x-μ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-\alpha-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            a_{\mathrm{post}} = \gamma^\top\Sigma^{-1}\gamma, \quad</span>
+<span class="sd">            b_{\mathrm{post}} = 2\beta + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
@@ -165,9 +173,12 @@
 <div class="viewcode-block" id="JointNormalInverseGamma.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        θ = [-(α+1)-d/2, -(β+½μᵀΛμ), -½γᵀΛγ, Λγ, Λμ, -½vec(Λ)]</span>
-<span class="sd">        (InverseGamma subordinator: p=-α, a→0, b=2β).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\theta = [-(\alpha+1)-d/2,\; -(\beta+\tfrac{1}{2}\mu^\top\Lambda\mu),\;</span>
+<span class="sd">        -\tfrac{1}{2}\gamma^\top\Lambda\gamma,\;</span>
+<span class="sd">        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`</span>
+
+<span class="sd">        (InverseGamma subordinator: :math:`p=-\alpha`, :math:`a\to 0`, :math:`b=2\beta`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
@@ -179,8 +190,9 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi(\theta) = \tfrac{1}{2}\log|\Sigma| + \log\Gamma(\alpha) - \alpha\log\beta + \mu^\top\Lambda\gamma`.</span>
+
 <span class="sd">        Analytical — no Bessel function needed (InverseGamma subordinator).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
@@ -236,12 +248,12 @@
 <div class="viewcode-block" id="NormalInverseGamma.log_prob">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Marginal NInvG log-density (own formula, no GH delegation).</span>
 
-<span class="sd">        GIG params: p=-α, a=γᵀΛγ, b=2β+Q(x).</span>
-<span class="sd">        The normalising integral is 2(b/a)^{p/2} K_p(sqrt(ab)).</span>
-<span class="sd">        For the symmetric case (γ≈0, a→0), uses Γ-function closed form.</span>
+<span class="sd">        GIG params: :math:`p=-\alpha`, :math:`a=\gamma^\top\Lambda\gamma`,</span>
+<span class="sd">        :math:`b=2\beta+Q(x)`.</span>
+<span class="sd">        The normalising integral is :math:`2(b/a)^{p/2} K_p(\sqrt{ab})`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 

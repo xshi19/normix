@@ -77,14 +77,29 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Gamma distribution as an exponential family.</span>
 
-<span class="sd">PDF: p(x|α,β) = β^α/Γ(α) · x^{α-1} · exp(-βx),  x &gt; 0</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Exponential family:</span>
-<span class="sd">  h(x)    = 1</span>
-<span class="sd">  t(x)    = [log x, x]</span>
-<span class="sd">  θ       = [α-1, -β]       (θ₁ &gt; -1, θ₂ &lt; 0)</span>
-<span class="sd">  ψ(θ)    = log Γ(θ₁+1) − (θ₁+1) log(−θ₂)</span>
-<span class="sd">  η       = [ψ(α) − log β,  α/β]   (digamma, mean)</span>
+<span class="sd">    p(x \\mid \\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)}</span>
+<span class="sd">    x^{\\alpha-1} e^{-\\beta x}, \\quad x &gt; 0</span>
+
+<span class="sd">**Exponential family structure:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    h(x) = 1, \\quad t(x) = [\\log x,\\; x]</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta = [\\alpha-1,\\; -\\beta], \\quad \\theta_1 &gt; -1,\\; \\theta_2 &lt; 0</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\psi(\\theta) = \\log\\Gamma(\\theta_1+1) - (\\theta_1+1)\\log(-\\theta_2)</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta = [\\psi(\\alpha) - \\log\\beta,\\; \\alpha/\\beta]</span>
+<span class="sd">    \\quad \\text{(digamma, mean)}</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -100,7 +115,7 @@
 <div class="viewcode-block" id="Gamma">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.gamma.Gamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Gamma</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gamma(α, β) distribution — shape α &gt; 0, rate β &gt; 0.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Gamma(:math:`\alpha`, :math:`\beta`) distribution — shape :math:`\alpha &gt; 0`, rate :math:`\beta &gt; 0`.&quot;&quot;&quot;</span>
 
     <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>   <span class="c1"># shape</span>
     <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>    <span class="c1"># rate</span>
@@ -146,7 +161,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [digamma(α) − log β,  α/β].  Analytical.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta) = [\psi(\alpha) - \log\beta,\; \alpha/\beta]`. Analytical.&quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
@@ -156,7 +171,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) = [[trigamma(α), 1/β], [1/β, α/β²]].  Analytical.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta) = [[\psi&#39;(\alpha),\; 1/\beta],\; [1/\beta,\; \alpha/\beta^2]]`. Analytical.&quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">H00</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">polygamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>   <span class="c1"># trigamma</span>
@@ -190,7 +205,7 @@
 <div class="viewcode-block" id="Gamma.rvs">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.gamma.Gamma.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample n observations from Gamma(α, β) via JAX PRNG.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{Gamma}(\alpha, \beta)` via JAX PRNG.&quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span></div>
 
@@ -219,10 +234,12 @@
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Gamma&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Closed-form η → θ via Newton&#39;s method on ψ(α) − log(α) = η₁ − log(η₂).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closed-form :math:`\eta \to \theta` via Newton on</span>
+<span class="sd">        :math:`\psi(\alpha) - \log\alpha = \eta_1 - \log\eta_2`.</span>
 
-<span class="sd">        η = [E[log X], E[X]]  →  α from digamma inversion, β = α/η₂.</span>
+<span class="sd">        :math:`\eta = [E[\log X],\; E[X]]` → :math:`\alpha` from digamma inversion,</span>
+<span class="sd">        :math:`\beta = \alpha / \eta_2`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -239,11 +256,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_newton_digamma</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Solve ψ(α) − log(α) = target for α &gt; 0 via Newton iterations.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solve :math:`\psi(\alpha) - \log\alpha = \text{target}` for :math:`\alpha &gt; 0`</span>
+<span class="sd">    via Newton iterations.</span>
 
-<span class="sd">    Uses jax.lax.fori_loop for JIT-compatibility.</span>
-<span class="sd">    Initial guess from alpha ≈ exp(target + log(exp(-target) - 1)).</span>
+<span class="sd">    Uses ``jax.lax.fori_loop`` for JIT-compatibility.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Reasonable initial guess for α</span>
     <span class="n">alpha0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>

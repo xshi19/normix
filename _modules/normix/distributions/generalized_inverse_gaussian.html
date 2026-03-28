@@ -77,33 +77,55 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Generalized Inverse Gaussian (GIG) distribution as an exponential family.</span>
 
-<span class="sd">PDF: f(x|p,a,b) = (a/b)^{p/2} / (2 K_p(√(ab))) · x^{p-1} · exp(-(ax+b/x)/2)</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Exponential family:</span>
-<span class="sd">  h(x)  = 1</span>
-<span class="sd">  t(x)  = [log x, 1/x, x]</span>
-<span class="sd">  θ     = [p-1, -b/2, -a/2]     (θ₂ ≤ 0, θ₃ ≤ 0)</span>
-<span class="sd">  ψ(θ)  = log 2 + log K_p(√(ab)) + (p/2) log(b/a)</span>
-<span class="sd">         where p = θ₁+1, a = -2θ₃, b = -2θ₂</span>
-<span class="sd">  η     = [E[log X], E[1/X], E[X]]</span>
+<span class="sd">    f(x \\mid p, a, b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})}</span>
+<span class="sd">    \\, x^{p-1} \\exp\\!\\left(-\\frac{ax + b/x}{2}\\right), \\quad x &gt; 0</span>
 
-<span class="sd">Special cases:</span>
-<span class="sd">  b→0, p&gt;0:  GIG → Gamma(p, a/2)</span>
-<span class="sd">  a→0, p&lt;0:  GIG → InverseGamma(-p, b/2)</span>
-<span class="sd">  p=-1/2:    GIG → InverseGaussian</span>
+<span class="sd">**Exponential family structure:**</span>
 
-<span class="sd">η→θ optimization uses η-rescaling to reduce Fisher condition number:</span>
-<span class="sd">  s = √(η₂/η₃),  η̃ = (η₁+½log(η₂/η₃), √(η₂η₃), √(η₂η₃))</span>
-<span class="sd">  Solve η̃→θ̃ with symmetric GIG (ã=b̃), then unscale.</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Log-Partition Triad Overrides</span>
-<span class="sd">------------------------------</span>
-<span class="sd">  _log_partition_from_theta  : JAX, uses log_kv(backend=&#39;jax&#39;)</span>
-<span class="sd">  _grad_log_partition        : inherits default jax.grad (custom JVP on log_kv)</span>
-<span class="sd">  _hessian_log_partition     : analytical 7-Bessel Hessian in θ-space</span>
-<span class="sd">  _log_partition_cpu         : numpy + log_kv(backend=&#39;cpu&#39;)</span>
-<span class="sd">  _grad_log_partition_cpu    : analytical Bessel ratios via scipy.kve</span>
-<span class="sd">  _hessian_log_partition_cpu : central FD on _log_partition_cpu</span>
+<span class="sd">    h(x) = 1, \\quad t(x) = [\\log x,\\; 1/x,\\; x]</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta = [p-1,\\; -b/2,\\; -a/2], \\quad \\theta_2 \\le 0,\\; \\theta_3 \\le 0</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\psi(\\theta) = \\log 2 + \\log K_p(\\sqrt{ab}) + \\tfrac{p}{2}\\log(b/a),</span>
+<span class="sd">    \\quad p = \\theta_1+1,\\; a = -2\\theta_3,\\; b = -2\\theta_2</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta = [E[\\log X],\\; E[1/X],\\; E[X]]</span>
+
+<span class="sd">**Special cases:**</span>
+
+<span class="sd">- :math:`b \\to 0,\\; p &gt; 0`: GIG → :math:`\\mathrm{Gamma}(p,\\; a/2)`</span>
+<span class="sd">- :math:`a \\to 0,\\; p &lt; 0`: GIG → :math:`\\mathrm{InvGamma}(-p,\\; b/2)`</span>
+<span class="sd">- :math:`p = -1/2`: GIG → InverseGaussian</span>
+
+<span class="sd">**η→θ rescaling** (reduces Fisher condition number):</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    s = \\sqrt{\\eta_2/\\eta_3}, \\quad</span>
+<span class="sd">    \\tilde{\\eta} = \\bigl(\\eta_1 + \\tfrac{1}{2}\\log(\\eta_2/\\eta_3),\\;</span>
+<span class="sd">    \\sqrt{\\eta_2\\eta_3},\\; \\sqrt{\\eta_2\\eta_3}\\bigr)</span>
+
+<span class="sd">Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG</span>
+<span class="sd">(:math:`\\tilde{a} = \\tilde{b}`), then unscale.</span>
+
+<span class="sd">**Log-Partition Triad Overrides:**</span>
+
+<span class="sd">- ``_log_partition_from_theta`` : JAX, uses ``log_kv(backend=&#39;jax&#39;)``</span>
+<span class="sd">- ``_grad_log_partition``       : analytical Bessel ratios (5 :math:`K_\\nu` calls)</span>
+<span class="sd">- ``_hessian_log_partition``    : analytical 7-Bessel Hessian in :math:`\\theta`-space</span>
+<span class="sd">- ``_log_partition_cpu``        : numpy + ``log_kv(backend=&#39;cpu&#39;)``</span>
+<span class="sd">- ``_grad_log_partition_cpu``   : analytical Bessel ratios via ``scipy.kve``</span>
+<span class="sd">- ``_hessian_log_partition_cpu``: central FD on ``_log_partition_cpu``</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -129,10 +151,10 @@
 <div class="viewcode-block" id="GeneralizedInverseGaussian">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedInverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generalized Inverse Gaussian distribution.</span>
 
-<span class="sd">    Stored: p (shape, any real), a &gt; 0, b &gt; 0.</span>
+<span class="sd">    Stored: :math:`p` (shape, any real), :math:`a &gt; 0`, :math:`b &gt; 0`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -150,12 +172,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ψ(θ) = log 2 + log K_p(√(ab)) + (p/2)(log b − log a)</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + (p/2)(\log b - \log a)`.</span>
 
-<span class="sd">        Degenerate limit (√(ab) &lt; threshold): delegate to Gamma/InverseGamma.</span>
-<span class="sd">        All branches use safe clamped values so no NaN gradients from</span>
-<span class="sd">        non-selected jnp.where branches.</span>
+<span class="sd">        Degenerate limit (:math:`\sqrt{ab} &lt; \text{threshold}`): delegate to</span>
+<span class="sd">        Gamma/InverseGamma. All branches use safe clamped values so no NaN</span>
+<span class="sd">        gradients from non-selected ``jnp.where`` branches.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
@@ -216,17 +238,25 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [E[log X], E[1/X], E[X]] via analytical Bessel ratios.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via analytical Bessel ratios.</span>
 
-<span class="sd">        Uses 5 log_kv evaluations (at orders p, p±1, p±ε) and the identities:</span>
-<span class="sd">          E[1/X] = √(a/b) · K_{p−1}(√ab) / K_p(√ab)</span>
-<span class="sd">          E[X]   = √(b/a) · K_{p+1}(√ab) / K_p(√ab)</span>
-<span class="sd">          E[log X] = ∂/∂p log K_p(√ab) + ½ log(b/a)</span>
+<span class="sd">        Uses 5 :math:`\log K_\nu` evaluations (at orders :math:`p, p\pm 1, p\pm\varepsilon`)</span>
+<span class="sd">        and the identities:</span>
 
-<span class="sd">        Clamping a, b to TINY (not 0) ensures the Bessel small-z asymptotics</span>
-<span class="sd">        handle the degenerate Gamma/InverseGamma limits via cancellation.</span>
-<span class="sd">        The default jax.grad path fails here because jnp.where evaluates</span>
-<span class="sd">        all branches, and d(sqrt(ab))/da → ∞ as a → 0.</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            E[1/X] = \sqrt{a/b}\cdot K_{p-1}(\sqrt{ab}) / K_p(\sqrt{ab}), \quad</span>
+<span class="sd">            E[X]   = \sqrt{b/a}\cdot K_{p+1}(\sqrt{ab}) / K_p(\sqrt{ab})</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            E[\log X] = \partial_p \log K_p(\sqrt{ab}) + \tfrac{1}{2}\log(b/a)</span>
+
+<span class="sd">        Clamping :math:`a, b` to ``TINY`` ensures Bessel small-:math:`z` asymptotics</span>
+<span class="sd">        handle the degenerate Gamma/InvGamma limits. The default ``jax.grad`` path</span>
+<span class="sd">        fails because ``jnp.where`` evaluates all branches and</span>
+<span class="sd">        :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">b_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
@@ -247,20 +277,20 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) — analytical 7-Bessel Hessian in θ-space.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\nabla^2\psi(\theta)` — analytical 7-Bessel Hessian in :math:`\theta`-space.</span>
 
-<span class="sd">        Uses exact Bessel recurrences for z-derivatives and FD for all</span>
-<span class="sd">        ν-derivatives. 7 log_kv evaluations total.</span>
+<span class="sd">        Uses exact Bessel recurrences for :math:`z`-derivatives and finite differences</span>
+<span class="sd">        for :math:`\nu`-derivatives. 7 :math:`\log K_\nu` evaluations total.</span>
 
-<span class="sd">        The mixed derivative L_vz = ∂²log K_ν/∂ν∂z is approximated via</span>
-<span class="sd">        integer-shift FD: L_vz ≈ (L_z(ν+1,z) − L_z(ν−1,z))/2.</span>
-<span class="sd">        L_z at integer-shifted orders reuses evaluations at p±1, p±2.</span>
+<span class="sd">        The mixed derivative :math:`\partial^2\log K_\nu/\partial\nu\partial z` is</span>
+<span class="sd">        approximated via integer-shift FD reusing evaluations at :math:`p\pm 1, p\pm 2`.</span>
 
-<span class="sd">        Note: H_theta may have small negative eigenvalues from this</span>
-<span class="sd">        approximation; the Newton solver applies HESSIAN_DAMPING before</span>
+<span class="sd">        Note: :math:`H_\theta` may have small negative eigenvalues from this</span>
+<span class="sd">        approximation; the Newton solver applies ``HESSIAN_DAMPING`` before</span>
 <span class="sd">        solving so convergence is not affected.</span>
 
-<span class="sd">        Valid in the non-degenerate regime (√(ab) &gt;&gt; GIG_DEGEN_THRESHOLD).</span>
+<span class="sd">        Valid in the non-degenerate regime (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>
@@ -307,7 +337,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ψ(θ) via numpy + log_kv(backend=&#39;cpu&#39;). Accepts numpy or jax arrays.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\psi(\theta)` via numpy + ``log_kv(backend=&#39;cpu&#39;)``. Accepts numpy or JAX arrays.&quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
@@ -333,7 +363,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [E[log X], E[1/X], E[X]] via scipy.kve.  Pure CPU.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via ``scipy.kve``. Pure CPU.&quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="n">b_safe</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">TINY</span><span class="p">)</span>
@@ -356,7 +386,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) via central finite differences on _log_partition_cpu.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta)` via central finite differences on ``_log_partition_cpu``.&quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
         <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
@@ -447,14 +477,14 @@
 <div class="viewcode-block" id="GeneralizedInverseGaussian.mean">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;E[X] = η₃ from expectation parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \eta_3` from expectation parameters.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.var">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2].&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2].&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fisher_information</span><span class="p">()[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span></div>
 
 
@@ -463,17 +493,22 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;devroye&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample *n* observations from GIG(p, a, b).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{GIG}(p, a, b)`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        n : sample size</span>
-<span class="sd">        seed : integer seed for JAX PRNG (or scipy random_state for &#39;scipy&#39;)</span>
-<span class="sd">        method : &#39;devroye&#39; (default), &#39;pinv&#39;, or &#39;scipy&#39;</span>
-<span class="sd">            * ``devroye`` — TDR rejection on log(x), pure JAX, no Bessel.</span>
-<span class="sd">            * ``pinv`` — numerical inverse CDF (CPU table build + JAX sampling),</span>
-<span class="sd">              no Bessel.  Best for large *n* with fixed parameters.</span>
-<span class="sd">            * ``scipy`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).</span>
+<span class="sd">        n : int</span>
+<span class="sd">            Sample size.</span>
+<span class="sd">        seed : int</span>
+<span class="sd">            Integer seed for JAX PRNG (or ``scipy`` ``random_state`` for ``&#39;scipy&#39;``).</span>
+<span class="sd">        method : str</span>
+<span class="sd">            Sampling algorithm:</span>
+
+<span class="sd">            * ``&#39;devroye&#39;`` (default) — Transformed density rejection (TDR) on</span>
+<span class="sd">              :math:`\log(x)`, pure JAX, no Bessel functions.</span>
+<span class="sd">            * ``&#39;pinv&#39;`` — Numerical inverse CDF (CPU table build + JAX sampling),</span>
+<span class="sd">              no Bessel. Best for large *n* with fixed parameters.</span>
+<span class="sd">            * ``&#39;scipy&#39;`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions._gig_rvs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
             <span class="n">gig_rvs_devroye</span><span class="p">,</span> <span class="n">gig_build_pinv_table</span><span class="p">,</span> <span class="n">gig_rvs_pinv</span><span class="p">,</span>
@@ -530,18 +565,21 @@
         <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;newton&quot;</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        η → θ via η-rescaling + optimization.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\eta \to \theta` via :math:`\eta`-rescaling + optimization.</span>
 
-<span class="sd">        Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing</span>
-<span class="sd">        condition number by up to :math:`10^{30}` for extreme a/b ratios.</span>
+<span class="sd">        Rescaling makes the Fisher matrix symmetric (:math:`\tilde{a} = \tilde{b}`),</span>
+<span class="sd">        reducing condition number by up to :math:`10^{30}` for extreme :math:`a/b` ratios.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        theta0 : warm-start point (required for JAX solvers; if None, uses</span>
-<span class="sd">                 multi-start CPU solver with Gamma/InvGamma/InvGauss seeds)</span>
-<span class="sd">        backend : &#39;jax&#39; (default, JIT-able) or &#39;cpu&#39; (scipy, no JAX dispatch)</span>
-<span class="sd">        method : &#39;newton&#39;, &#39;lbfgs&#39;, &#39;bfgs&#39;</span>
+<span class="sd">        theta0 : jax.Array, optional</span>
+<span class="sd">            Warm-start point (required for JAX solvers; if ``None``, uses</span>
+<span class="sd">            multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</span>
+<span class="sd">        backend : str</span>
+<span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (scipy, more robust).</span>
+<span class="sd">        method : str</span>
+<span class="sd">            ``&#39;newton&#39;``, ``&#39;lbfgs&#39;``, or ``&#39;bfgs&#39;``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>

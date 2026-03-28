@@ -77,15 +77,34 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Inverse Gaussian (Wald) distribution as an exponential family.</span>
 
-<span class="sd">PDF: f(x|μ,λ) = √(λ/(2π)) · x^{-3/2} · exp(−λ(x−μ)²/(2μ²x)),  x &gt; 0</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Exponential family:</span>
-<span class="sd">  h(x)  = (2π)^{-1/2} · x^{-3/2}</span>
-<span class="sd">  t(x)  = [x, 1/x]</span>
-<span class="sd">  θ     = [−λ/(2μ²), −λ/2]   (θ₁ &lt; 0, θ₂ &lt; 0)</span>
-<span class="sd">  ψ(θ)  = ½log(2π) − ½log(−2θ₂) + √((−2θ₁)(−2θ₂))</span>
-<span class="sd">         (the ½log(2π) is absorbed into log h(x) = −½log(2π) − 3/2 log x)</span>
-<span class="sd">  η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]</span>
+<span class="sd">    f(x \\mid \\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi}}\\,</span>
+<span class="sd">    x^{-3/2} \\exp\\!\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right),</span>
+<span class="sd">    \\quad x &gt; 0</span>
+
+<span class="sd">**Exponential family structure:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    h(x) = (2\\pi)^{-1/2} x^{-3/2}, \\quad t(x) = [x,\\; 1/x]</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta = \\Bigl[-\\tfrac{\\lambda}{2\\mu^2},\\; -\\tfrac{\\lambda}{2}\\Bigr],</span>
+<span class="sd">    \\quad \\theta_1 &lt; 0,\\; \\theta_2 &lt; 0</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\psi(\\theta) = -\\tfrac{1}{2}\\log(-2\\theta_2)</span>
+<span class="sd">    + \\sqrt{(-2\\theta_1)(-2\\theta_2)}</span>
+
+<span class="sd">    \\bigl(\\tfrac{1}{2}\\log(2\\pi)\\ \\text{is absorbed into}\\</span>
+<span class="sd">    \\log h(x) = -\\tfrac{1}{2}\\log(2\\pi) - \\tfrac{3}{2}\\log x\\bigr)</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta = [E[X],\\; E[1/X]] = [\\mu,\\; 1/\\mu + 1/\\lambda]</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -101,7 +120,7 @@
 <div class="viewcode-block" id="InverseGaussian">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;InverseGaussian(μ, λ) — mean μ &gt; 0, shape λ &gt; 0.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;InverseGaussian(:math:`\mu`, :math:`\lambda`) — mean :math:`\mu &gt; 0`, shape :math:`\lambda &gt; 0`.&quot;&quot;&quot;</span>
 
     <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="n">lam</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -155,7 +174,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [E[X], E[1/X]] = [√(b/a), 1/b + √(a/b)].  Analytical.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta) = [E[X],\; E[1/X]] = [\sqrt{b/a},\; 1/b + \sqrt{a/b}]`. Analytical.&quot;&quot;&quot;</span>
         <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># λ/μ²</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>   <span class="c1"># λ</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
@@ -166,12 +185,18 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ).  Analytical.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta)`. Analytical.</span>
 
-<span class="sd">        H = [[(b/a)^{1/2}/a,    -1/√(ab)         ],</span>
-<span class="sd">             [-1/√(ab),          2/b² + √a/b^{3/2}]]</span>
+<span class="sd">        .. math::</span>
 
-<span class="sd">        In terms of μ, λ:  H = [[μ³/λ, -μ/λ], [-μ/λ, 2/λ² + 1/(μλ)]]</span>
+<span class="sd">            H = \begin{pmatrix}</span>
+<span class="sd">                (b/a)^{1/2}/a &amp; -1/\sqrt{ab} \\</span>
+<span class="sd">                -1/\sqrt{ab}  &amp; 2/b^2 + \sqrt{a}/b^{3/2}</span>
+<span class="sd">            \end{pmatrix}</span>
+<span class="sd">            = \begin{pmatrix}</span>
+<span class="sd">                \mu^3/\lambda &amp; -\mu/\lambda \\</span>
+<span class="sd">                -\mu/\lambda  &amp; 2/\lambda^2 + 1/(\mu\lambda)</span>
+<span class="sd">            \end{pmatrix}</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>   <span class="c1"># λ/μ²</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">LOG_EPS</span><span class="p">)</span>   <span class="c1"># λ</span>
@@ -212,16 +237,17 @@
 <div class="viewcode-block" id="InverseGaussian.rvs">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample n observations from InverseGaussian(μ, λ) via JAX PRNG.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.</span>
 
-<span class="sd">        Uses the algorithm from Michael, Schucany &amp; Haas (1976) as described</span>
-<span class="sd">        in https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution:</span>
-<span class="sd">          1. ν ~ N(0,1), y = ν²</span>
-<span class="sd">          2. x = μ + μ²y/(2λ) − (μ/(2λ))√(4μλy + μ²y²)</span>
-<span class="sd">          3. z ~ U(0,1); return x if z ≤ μ/(μ+x), else μ²/x</span>
+<span class="sd">        Uses the algorithm from Michael, Schucany &amp; Haas (1976):</span>
 
-<span class="sd">        Uses jnp.where (not jax.lax.cond) for vectorized branching over</span>
-<span class="sd">        the full sample array in a single pass.</span>
+<span class="sd">        1. :math:`\nu \sim \mathcal{N}(0,1)`, :math:`y = \nu^2`</span>
+<span class="sd">        2. :math:`x = \mu + \frac{\mu^2 y}{2\lambda}</span>
+<span class="sd">           - \frac{\mu}{2\lambda}\sqrt{4\mu\lambda y + \mu^2 y^2}`</span>
+<span class="sd">        3. :math:`z \sim \mathrm{Uniform}(0,1)`; return :math:`x` if</span>
+<span class="sd">           :math:`z \le \mu/(\mu+x)`, else :math:`\mu^2/x`</span>
+
+<span class="sd">        Uses ``jnp.where`` for vectorized branching over the full sample array.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -264,9 +290,10 @@
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InverseGaussian&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Closed-form from η = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]:</span>
-<span class="sd">          μ = η₁,   1/λ = η₂ - 1/η₁  →  λ = 1/(η₂ - 1/η₁)</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closed-form from :math:`\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]`:</span>
+
+<span class="sd">        :math:`\mu = \eta_1`, :math:`\lambda = 1/(\eta_2 - 1/\eta_1)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

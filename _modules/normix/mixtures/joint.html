@@ -77,37 +77,66 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">JointNormalMixture — abstract exponential family for normal variance-mean mixtures.</span>
 
-<span class="sd">Joint distribution f(x,y):</span>
-<span class="sd">  X|Y ~ N(μ + γy, Σy)</span>
-<span class="sd">  Y   ~ subordinator (GIG, Gamma, InverseGamma, InverseGaussian)</span>
+<span class="sd">Joint distribution :math:`f(x, y)`:</span>
 
-<span class="sd">Sufficient statistics:</span>
-<span class="sd">  t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Natural parameters:</span>
-<span class="sd">  θ₁ = p_sub - 1 - d/2          (GIG p; scalar, depends on subordinator)</span>
-<span class="sd">  θ₂ = -(b_sub + ½μᵀΣ⁻¹μ)       &lt; 0</span>
-<span class="sd">  θ₃ = -(a_sub + ½γᵀΣ⁻¹γ)       &lt; 0</span>
-<span class="sd">  θ₄ = Σ⁻¹γ                      (d-vector)</span>
-<span class="sd">  θ₅ = Σ⁻¹μ                      (d-vector)</span>
-<span class="sd">  θ₆ = -½vec(Σ⁻¹)                (d²-vector)</span>
+<span class="sd">    X \\mid Y \\sim \\mathcal{N}(\\mu + \\gamma y,\\; \\Sigma y), \\quad</span>
+<span class="sd">    Y \\sim \\text{subordinator (GIG, Gamma, InvGamma, InvGaussian)}</span>
 
-<span class="sd">Log partition:</span>
-<span class="sd">  ψ = ψ_sub(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ</span>
+<span class="sd">**Sufficient statistics:**</span>
 
-<span class="sd">Expectation parameters (EM E-step quantities):</span>
-<span class="sd">  η₁ = E[log Y]</span>
-<span class="sd">  η₂ = E[1/Y]</span>
-<span class="sd">  η₃ = E[Y]</span>
-<span class="sd">  η₄ = E[X]      = μ + γ E[Y]</span>
-<span class="sd">  η₅ = E[X/Y]    = μ E[1/Y] + γ</span>
-<span class="sd">  η₆ = E[XXᵀ/Y]  = Σ + μμᵀ E[1/Y] + γγᵀ E[Y] + μγᵀ + γμᵀ</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">EM M-step closed-form (from η):</span>
-<span class="sd">  Let D = 1 - E[1/Y]·E[Y]</span>
-<span class="sd">  μ = (E[X] - E[Y]·E[X/Y]) / D</span>
-<span class="sd">  γ = (E[X/Y] - E[1/Y]·E[X]) / D</span>
-<span class="sd">  Σ = E[XXᵀ/Y] - E[X/Y]μᵀ - μE[X/Y]ᵀ + E[1/Y]μμᵀ - E[Y]γγᵀ</span>
+<span class="sd">    t(x, y) = [\\log y,\\; 1/y,\\; y,\\; x,\\; x/y,\\; \\mathrm{vec}(xx^\\top/y)]</span>
+
+<span class="sd">**Natural parameters:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta_1 = p_{\\mathrm{sub}} - 1 - d/2, \\quad</span>
+<span class="sd">    \\theta_2 = -(b_{\\mathrm{sub}} + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) &lt; 0</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta_3 = -(a_{\\mathrm{sub}} + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) &lt; 0, \\quad</span>
+<span class="sd">    \\theta_4 = \\Sigma^{-1}\\gamma, \\quad</span>
+<span class="sd">    \\theta_5 = \\Sigma^{-1}\\mu, \\quad</span>
+<span class="sd">    \\theta_6 = -\\tfrac{1}{2}\\mathrm{vec}(\\Sigma^{-1})</span>
+
+<span class="sd">**Log-partition:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\psi = \\psi_{\\mathrm{sub}}(p, a, b) + \\tfrac{1}{2}\\log|\\Sigma| + \\mu^\\top\\Sigma^{-1}\\gamma</span>
+
+<span class="sd">**Expectation parameters (EM E-step quantities):**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta_1 = E[\\log Y], \\quad \\eta_2 = E[1/Y], \\quad \\eta_3 = E[Y]</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta_4 = E[X] = \\mu + \\gamma E[Y], \\quad</span>
+<span class="sd">    \\eta_5 = E[X/Y] = \\mu E[1/Y] + \\gamma</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta_6 = E[XX^\\top/Y] = \\Sigma + \\mu\\mu^\\top E[1/Y]</span>
+<span class="sd">    + \\gamma\\gamma^\\top E[Y] + \\mu\\gamma^\\top + \\gamma\\mu^\\top</span>
+
+<span class="sd">**EM M-step closed-form** (let :math:`D = 1 - E[1/Y] \\cdot E[Y]`):</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\mu = \\frac{E[X] - E[Y] E[X/Y]}{D}, \\quad</span>
+<span class="sd">    \\gamma = \\frac{E[X/Y] - E[1/Y] E[X]}{D}</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\Sigma = E[XX^\\top/Y] - E[X/Y]\\mu^\\top - \\mu E[X/Y]^\\top</span>
+<span class="sd">    + E[1/Y]\\mu\\mu^\\top - E[Y]\\gamma\\gamma^\\top</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -129,10 +158,10 @@
 <div class="viewcode-block" id="JointNormalMixture">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointNormalMixture</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Abstract joint distribution f(x, y) for normal variance-mean mixtures.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract joint distribution :math:`f(x, y)` for normal variance-mean mixtures.</span>
 
-<span class="sd">    Stored: mu (d,), gamma (d,), L_Sigma (d,d lower Cholesky of Σ)</span>
+<span class="sd">    Stored: ``mu`` (d,), ``gamma`` (d,), ``L_Sigma`` (d×d lower Cholesky of :math:`\Sigma`).</span>
 <span class="sd">    Subordinator parameters defined by concrete subclasses.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -172,14 +201,14 @@
 <div class="viewcode-block" id="JointNormalMixture.sigma">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Covariance matrix Σ = L_Sigma L_Sigmaᵀ.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
 
 
 <div class="viewcode-block" id="JointNormalMixture.log_det_sigma">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.log_det_sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;log|Σ| = 2 Σᵢ log Lᵢᵢ, via Cholesky diagonal.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma| = 2\sum_i \log L_{ii}`, via Cholesky diagonal.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">)))</span></div>
 
 
@@ -191,12 +220,14 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sample (X, Y) from the joint distribution via JAX PRNG.</span>
+<span class="sd">        Sample :math:`(X, Y)` from the joint distribution via JAX PRNG.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        X : (n, d) jax.Array</span>
-<span class="sd">        Y : (n,)   jax.Array</span>
+<span class="sd">        X : jax.Array</span>
+<span class="sd">            Shape ``(n, d)``.</span>
+<span class="sd">        Y : jax.Array</span>
+<span class="sd">            Shape ``(n,)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -215,14 +246,16 @@
 <div class="viewcode-block" id="JointNormalMixture.log_prob_joint">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.log_prob_joint">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob_joint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        log f(x, y) = log f(x|y) + log f_Y(y).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\log f(x, y) = \log f(x\mid y) + \log f_Y(y)`.</span>
 
-<span class="sd">        log f(x|y) = -d/2 log(2π) - ½ log|Σy| - ½(x-μ-γy)ᵀ(Σy)⁻¹(x-μ-γy)</span>
-<span class="sd">                   = -d/2 log(2π) - ½ log|Σ| - d/2 log y</span>
-<span class="sd">                     - 1/(2y) ‖L⁻¹(x-μ)‖² + γᵀΣ⁻¹(x-μ) - y/2 γᵀΣ⁻¹γ</span>
+<span class="sd">        .. math::</span>
 
-<span class="sd">        log f_Y(y) from subordinator.</span>
+<span class="sd">            \log f(x\mid y) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma|</span>
+<span class="sd">            - \tfrac{d}{2}\log y - \frac{1}{2y}\|L^{-1}(x-\mu)\|^2</span>
+<span class="sd">            + \gamma^\top\Sigma^{-1}(x-\mu) - \tfrac{y}{2}\gamma^\top\Sigma^{-1}\gamma</span>
+
+<span class="sd">        :math:`\log f_Y(y)` from subordinator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -256,16 +289,18 @@
 <div class="viewcode-block" id="JointNormalMixture.conditional_expectations">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">conditional_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute E[g(Y)|X=x] for EM E-step.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute :math:`E[g(Y)\mid X=x]` for EM E-step.</span>
 
-<span class="sd">        The posterior Y|X follows a GIG-like distribution with parameters:</span>
-<span class="sd">          p_post = p_eff - d/2</span>
-<span class="sd">          a_post = a_eff + γᵀΣ⁻¹γ</span>
-<span class="sd">          b_post = b_eff + (x-μ)ᵀΣ⁻¹(x-μ)</span>
+<span class="sd">        The posterior :math:`Y\mid X` follows a GIG-like distribution:</span>
 
-<span class="sd">        Returns dict with keys: E_log_Y, E_inv_Y, E_Y.</span>
-<span class="sd">        These are then used in the M-step.</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad</span>
+<span class="sd">            a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
+<span class="sd">            b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
+
+<span class="sd">        Returns dict with keys: ``E_log_Y``, ``E_inv_Y``, ``E_Y``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_posterior_expectations</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
@@ -282,9 +317,9 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_quad_forms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute z = L_Sigma⁻¹(x-μ), w = L_Sigma⁻¹γ.</span>
-<span class="sd">        Returns z, w, ‖z‖², ‖w‖², zᵀw.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute :math:`z = L_\Sigma^{-1}(x-\mu)`, :math:`w = L_\Sigma^{-1}\gamma`.</span>
+<span class="sd">        Returns :math:`z, w, \|z\|^2, \|w\|^2, z^\top w`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
         <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -296,11 +331,11 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_precision_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Cholesky-based precision decomposition shared by all Joint subclasses.</span>
 
-<span class="sd">        Returns (Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda)</span>
-<span class="sd">        where Lambda = Σ⁻¹, Lambda_x = Σ⁻¹x, x_quad = ½ xᵀΣ⁻¹x.</span>
+<span class="sd">        Returns :math:`(\Lambda\mu, \Lambda\gamma, \mu_{\mathrm{quad}}, \gamma_{\mathrm{quad}}, \Lambda)`</span>
+<span class="sd">        where :math:`\Lambda = \Sigma^{-1}` and :math:`x_{\mathrm{quad}} = \tfrac{1}{2}x^\top\Sigma^{-1}x`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
         <span class="n">z_mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -317,10 +352,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_assemble_natural_params</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Assemble the full θ vector from scalar θ₁, θ₂, θ₃ and shared Cholesky quantities.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assemble the full :math:`\theta` vector from scalars :math:`\theta_1, \theta_2, \theta_3`</span>
+<span class="sd">        and shared Cholesky quantities.</span>
 
-<span class="sd">        θ = [θ₁, θ₂, θ₃, Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]</span>
+<span class="sd">        :math:`\theta = [\theta_1, \theta_2, \theta_3, \Sigma^{-1}\gamma, \Sigma^{-1}\mu, -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
@@ -378,9 +414,10 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.sufficient_statistics">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">xy</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]</span>
-<span class="sd">        Input: flat vector [x..., y] where x is d-dimensional.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`t(x,y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]`.</span>
+
+<span class="sd">        Input: flat vector :math:`[x_1,\ldots,x_d, y]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">xy</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[:</span><span class="n">d</span><span class="p">]</span>
@@ -418,10 +455,10 @@
         <span class="n">E_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">E_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Closed-form M-step for μ, γ, Σ from expectation parameters.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closed-form M-step for :math:`\mu, \gamma, \Sigma` from expectation parameters.</span>
 
-<span class="sd">        Returns (mu_new, gamma_new, L_new).</span>
+<span class="sd">        Returns ``(mu_new, gamma_new, L_new)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">D</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">E_Y</span>
 

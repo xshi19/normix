@@ -121,17 +121,17 @@
 <nav class="contents local" id="modules">
 <p class="topic-title">Modules</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#module-normix.exponential_family" id="id13">Base Classes</a></p></li>
-<li><p><a class="reference internal" href="#univariate-distributions" id="id14">Univariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id15">Multivariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#mixture-base-classes" id="id16">Mixture Base Classes</a></p></li>
-<li><p><a class="reference internal" href="#mixture-distributions" id="id17">Mixture Distributions</a></p></li>
-<li><p><a class="reference internal" href="#fitting" id="id18">Fitting</a></p></li>
-<li><p><a class="reference internal" href="#utilities" id="id19">Utilities</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.exponential_family" id="id5">Base Classes</a></p></li>
+<li><p><a class="reference internal" href="#univariate-distributions" id="id6">Univariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id7">Multivariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#mixture-base-classes" id="id8">Mixture Base Classes</a></p></li>
+<li><p><a class="reference internal" href="#mixture-distributions" id="id9">Mixture Distributions</a></p></li>
+<li><p><a class="reference internal" href="#fitting" id="id10">Fitting</a></p></li>
+<li><p><a class="reference internal" href="#utilities" id="id11">Utilities</a></p></li>
 </ul>
 </nav>
 <section id="module-normix.exponential_family">
-<span id="base-classes"></span><h2><a class="toc-backref" href="#id13" role="doc-backlink">Base Classes</a><a class="headerlink" href="#module-normix.exponential_family" title="Link to this heading"></a></h2>
+<span id="base-classes"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Base Classes</a><a class="headerlink" href="#module-normix.exponential_family" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.exponential_family.</span></span><span class="sig-name descname"><span class="pre">ExponentialFamily</span></span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily" title="Link to this definition"></a></dt>
@@ -147,7 +147,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.natural_params">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ from stored classical parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -158,7 +158,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -172,7 +172,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.log_base_measure">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -186,7 +186,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.log_partition">
 <span class="sig-name descname"><span class="pre">log_partition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.log_partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.log_partition" title="Link to this definition"></a></dt>
-<dd><p>ψ(θ) at current parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\psi(\theta)\)</span> at current parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -197,10 +197,10 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.expectation_params">
 <span class="sig-name descname"><span class="pre">expectation_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.expectation_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.expectation_params" title="Link to this definition"></a></dt>
-<dd><p>η = ∇ψ(θ).</p>
+<dd><p><span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>default</em><em>, </em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>numpy/scipy</em><em>)</em>)</p>
+<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (numpy/scipy).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -211,10 +211,10 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.fisher_information">
 <span class="sig-name descname"><span class="pre">fisher_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.fisher_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.fisher_information" title="Link to this definition"></a></dt>
-<dd><p>I(θ) = ∇²ψ(θ).</p>
+<dd><p><span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>default</em><em>, </em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>numpy/scipy</em><em>)</em>)</p>
+<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (numpy/scipy).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -225,7 +225,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.log_prob" title="Link to this definition"></a></dt>
-<dd><p>log p(x|θ) = log h(x) + θᵀt(x) − ψ(θ), single observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)\)</span>, single observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -275,7 +275,7 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.std">
 <span class="sig-name descname"><span class="pre">std</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.std"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.std" title="Link to this definition"></a></dt>
-<dd><p>Std[X] = √Var[X].</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Std}[X] = \sqrt{\mathrm{Var}[X]}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -331,9 +331,9 @@ sufficient_statistics, log_base_measure</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.bregman_divergence">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bregman_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.bregman_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.bregman_divergence" title="Link to this definition"></a></dt>
-<dd><p>Bregman divergence ψ(θ) − θ·η (conjugate dual).</p>
-<p>Minimising over θ yields ∇ψ(θ*) = η, i.e. the natural parameters
-corresponding to expectation parameters η.</p>
+<dd><p>Bregman divergence <span class="math notranslate nohighlight">\(\psi(\theta) - \theta\cdot\eta\)</span> (conjugate dual).</p>
+<p>Minimising over <span class="math notranslate nohighlight">\(\theta\)</span> yields <span class="math notranslate nohighlight">\(\nabla\psi(\theta^*) = \eta\)</span>,
+i.e. the natural parameters corresponding to expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -350,15 +350,15 @@ corresponding to expectation parameters η.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lbfgs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.from_expectation" title="Link to this definition"></a></dt>
-<dd><p>Construct from expectation parameters η by solving ∇ψ(θ) = η.</p>
-<p>Minimises the Bregman divergence ψ(θ) − θ·η via solve_bregman.
-Subclasses can override for closed-form inverses.</p>
+<dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span> by solving <span class="math notranslate nohighlight">\(\nabla\psi(\theta) = \eta\)</span>.</p>
+<p>Minimises the Bregman divergence <span class="math notranslate nohighlight">\(\psi(\theta) - \theta\cdot\eta\)</span>
+via <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code>. Subclasses can override for closed-form inverses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>default</em><em>, </em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>more robust</em><em>)</em>)</p></li>
-<li><p><strong>method</strong> (<em>'lbfgs'</em><em> (</em><em>default</em><em>)</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
-<li><p><strong>verbose</strong> (<em>0 = silent</em><em>, </em><em>&gt;= 1 = print solver summary</em>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code> (default), <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print solver summary.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
@@ -374,16 +374,16 @@ Subclasses can override for closed-form inverses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.fit_mle">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">fit_mle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.fit_mle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.fit_mle" title="Link to this definition"></a></dt>
-<dd><p>MLE via exponential family identity: η̂ = mean_i t(xᵢ).</p>
-<p>Batches over X using jax.vmap, then calls from_expectation(η̂).</p>
+<dd><p>MLE via exponential family identity: <span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i t(x_i)\)</span>.</p>
+<p>Batches over <code class="docutils literal notranslate"><span class="pre">X</span></code> using <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, then calls <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>(<span class="math notranslate nohighlight">\(\hat\eta\)</span>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><em>...</em><em>) </em><em>array</em><em> of </em><em>observations</em>)</p></li>
-<li><p><strong>theta0</strong> (<em>optional initial natural parameters θ₀ for the η→θ solver</em>)</p></li>
-<li><p><strong>maxiter</strong> (<em>maximum iterations for the η→θ solver</em>)</p></li>
-<li><p><strong>tol</strong> (<em>convergence tolerance for the η→θ solver</em>)</p></li>
-<li><p><strong>verbose</strong> (<em>0 = silent</em><em>, </em><em>&gt;= 1 = print solver summary</em>)</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">...)</span></code> array of observations.</p></li>
+<li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Initial natural parameters <span class="math notranslate nohighlight">\(\theta_0\)</span> for the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> solver.</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum iterations for the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> solver.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance for the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> solver.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print solver summary.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -396,15 +396,16 @@ Subclasses can override for closed-form inverses.</p>
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit using self as initialization (warm start).</p>
-<p>Computes η̂ = mean_i t(xᵢ) and solves from_expectation(η̂)
-using <code class="docutils literal notranslate"><span class="pre">self.natural_params()</span></code> as the initial theta0.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i t(x_i)\)</span> and solves
+<code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>(<span class="math notranslate nohighlight">\(\hat\eta\)</span>) using <code class="docutils literal notranslate"><span class="pre">self.natural_params()</span></code>
+as the initial <span class="math notranslate nohighlight">\(\theta_0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><em>...</em><em>) </em><em>array</em><em> of </em><em>observations</em>)</p></li>
-<li><p><strong>maxiter</strong> (<em>maximum iterations for the η→θ solver</em>)</p></li>
-<li><p><strong>tol</strong> (<em>convergence tolerance for the η→θ solver</em>)</p></li>
-<li><p><strong>verbose</strong> (<em>0 = silent</em><em>, </em><em>&gt;= 1 = print solver summary</em>)</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">...)</span></code> array of observations.</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum iterations for the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> solver.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance for the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> solver.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print solver summary.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -417,9 +418,9 @@ using <code class="docutils literal notranslate"><span class="pre">self.natural_
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.default_init">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.default_init" title="Link to this definition"></a></dt>
 <dd><p>Moment-based initialisation from data.</p>
-<p>Computes η̂ = mean_i t(xᵢ) and inverts to get an initial model.
-For distributions with closed-form <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> (Gamma,
-InverseGamma, InverseGaussian), this gives the MLE directly.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i t(x_i)\)</span> and inverts to get
+an initial model. For distributions with closed-form <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>
+(Gamma, InverseGamma, InverseGaussian), this gives the MLE directly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -434,24 +435,28 @@ InverseGamma, InverseGaussian), this gives the MLE directly.</p>
 
 </section>
 <section id="univariate-distributions">
-<h2><a class="toc-backref" href="#id14" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading"></a></h2>
 <section id="module-normix.distributions.gamma">
 <span id="gamma"></span><h3>Gamma<a class="headerlink" href="#module-normix.distributions.gamma" title="Link to this heading"></a></h3>
 <p>Gamma distribution as an exponential family.</p>
-<p>PDF: p(x|α,β) = β^α/Γ(α) · x^{α-1} · exp(-βx),  x &gt; 0</p>
-<dl class="simple">
-<dt>Exponential family:</dt><dd><p>h(x)    = 1
-t(x)    = [log x, x]
-θ       = [α-1, -β]       (θ₁ &gt; -1, θ₂ &lt; 0)
-ψ(θ)    = log Γ(θ₁+1) − (θ₁+1) log(−θ₂)
-η       = [ψ(α) − log β,  α/β]   (digamma, mean)</p>
-</dd>
-</dl>
+<div class="math notranslate nohighlight">
+\[p(x \mid \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)}
+x^{\alpha-1} e^{-\beta x}, \quad x &gt; 0\]</div>
+<p><strong>Exponential family structure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x) = 1, \quad t(x) = [\log x,\; x]\]</div>
+<div class="math notranslate nohighlight">
+\[\theta = [\alpha-1,\; -\beta], \quad \theta_1 &gt; -1,\; \theta_2 &lt; 0\]</div>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log\Gamma(\theta_1+1) - (\theta_1+1)\log(-\theta_2)\]</div>
+<div class="math notranslate nohighlight">
+\[\eta = [\psi(\alpha) - \log\beta,\; \alpha/\beta]
+\quad \text{(digamma, mean)}\]</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.gamma.</span></span><span class="sig-name descname"><span class="pre">Gamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
-<p>Gamma(α, β) distribution — shape α &gt; 0, rate β &gt; 0.</p>
+<p>Gamma(<span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>) distribution — shape <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>, rate <span class="math notranslate nohighlight">\(\beta &gt; 0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -473,7 +478,7 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ from stored classical parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -484,7 +489,7 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -498,7 +503,7 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.log_base_measure">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -548,7 +553,7 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations from Gamma(α, β) via JAX PRNG.</p>
+<dd><p>Sample <em>n</em> observations from <span class="math notranslate nohighlight">\(\mathrm{Gamma}(\alpha, \beta)\)</span> via JAX PRNG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -579,8 +584,10 @@ t(x)    = [log x, x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.from_expectation" title="Link to this definition"></a></dt>
-<dd><p>Closed-form η → θ via Newton’s method on ψ(α) − log(α) = η₁ − log(η₂).</p>
-<p>η = [E[log X], E[X]]  →  α from digamma inversion, β = α/η₂.</p>
+<dd><p>Closed-form <span class="math notranslate nohighlight">\(\eta \to \theta\)</span> via Newton on
+<span class="math notranslate nohighlight">\(\psi(\alpha) - \log\alpha = \eta_1 - \log\eta_2\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\eta = [E[\log X],\; E[X]]\)</span> → <span class="math notranslate nohighlight">\(\alpha\)</span> from digamma inversion,
+<span class="math notranslate nohighlight">\(\beta = \alpha / \eta_2\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -601,23 +608,25 @@ t(x)    = [log x, x]
 <section id="module-normix.distributions.inverse_gamma">
 <span id="inverse-gamma"></span><h3>Inverse Gamma<a class="headerlink" href="#module-normix.distributions.inverse_gamma" title="Link to this heading"></a></h3>
 <p>InverseGamma distribution as an exponential family.</p>
-<p>PDF: p(x|α,β) = β^α/Γ(α) · x^{-α-1} · exp(-β/x),  x &gt; 0</p>
-<dl>
-<dt>Exponential family:</dt><dd><p>h(x)  = 1
-t(x)  = [-1/x, log x]
-θ     = [β, -(α+1)]        (θ₁ &gt; 0, θ₂ &lt; -1)
-ψ(θ)  = log Γ(-θ₂-1) − (-θ₂-1) log(θ₁)</p>
-<blockquote>
-<div><p>= log Γ(α) − α log β</p>
-</div></blockquote>
-<p>η     = [-α/β,  log β − ψ(α)]   (E[-1/X], E[log X])</p>
-</dd>
-</dl>
+<div class="math notranslate nohighlight">
+\[p(x \mid \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)}
+x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
+<p><strong>Exponential family structure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x) = 1, \quad t(x) = [-1/x,\; \log x]\]</div>
+<div class="math notranslate nohighlight">
+\[\theta = [\beta,\; -(\alpha+1)], \quad \theta_1 &gt; 0,\; \theta_2 &lt; -1\]</div>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log\Gamma(-\theta_2-1) - (-\theta_2-1)\log\theta_1
+= \log\Gamma(\alpha) - \alpha\log\beta\]</div>
+<div class="math notranslate nohighlight">
+\[\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]
+\quad (E[-1/X],\; E[\log X])\]</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">InverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
-<p>InverseGamma(α, β) — shape α &gt; 0, rate β &gt; 0.</p>
+<p>InverseGamma(<span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>) — shape <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>, rate <span class="math notranslate nohighlight">\(\beta &gt; 0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -639,7 +648,7 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ from stored classical parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -650,7 +659,7 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -664,7 +673,7 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.log_base_measure">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -714,8 +723,9 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations from InverseGamma(α, β) via JAX PRNG.</p>
-<p>If X ~ Gamma(α, 1/β) then 1/X ~ InverseGamma(α, β).</p>
+<dd><p>Sample <em>n</em> observations from <span class="math notranslate nohighlight">\(\mathrm{InvGamma}(\alpha, \beta)\)</span> via JAX PRNG.</p>
+<p>Uses the relation: if <span class="math notranslate nohighlight">\(X \sim \mathrm{Gamma}(\alpha, 1/\beta)\)</span> then
+<span class="math notranslate nohighlight">\(1/X \sim \mathrm{InvGamma}(\alpha, \beta)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -746,8 +756,9 @@ t(x)  = [-1/x, log x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.from_expectation" title="Link to this definition"></a></dt>
-<dd><p>η = [-α/β, log β − ψ(α)].</p>
-<p>β = α/(-η₁),  solve ψ(α) − log α = −η₂ − log(-η₁) via Newton.</p>
+<dd><p><span class="math notranslate nohighlight">\(\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\beta = \alpha / (-\eta_1)\)</span>;  solve
+<span class="math notranslate nohighlight">\(\psi(\alpha) - \log\alpha = -\eta_2 - \log(-\eta_1)\)</span> via Newton.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -768,23 +779,27 @@ t(x)  = [-1/x, log x]
 <section id="module-normix.distributions.inverse_gaussian">
 <span id="inverse-gaussian"></span><h3>Inverse Gaussian<a class="headerlink" href="#module-normix.distributions.inverse_gaussian" title="Link to this heading"></a></h3>
 <p>Inverse Gaussian (Wald) distribution as an exponential family.</p>
-<p>PDF: f(x|μ,λ) = √(λ/(2π)) · x^{-3/2} · exp(−λ(x−μ)²/(2μ²x)),  x &gt; 0</p>
-<dl>
-<dt>Exponential family:</dt><dd><p>h(x)  = (2π)^{-1/2} · x^{-3/2}
-t(x)  = [x, 1/x]
-θ     = [−λ/(2μ²), −λ/2]   (θ₁ &lt; 0, θ₂ &lt; 0)
-ψ(θ)  = ½log(2π) − ½log(−2θ₂) + √((−2θ₁)(−2θ₂))</p>
-<blockquote>
-<div><p>(the ½log(2π) is absorbed into log h(x) = −½log(2π) − 3/2 log x)</p>
-</div></blockquote>
-<p>η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]</p>
-</dd>
-</dl>
+<div class="math notranslate nohighlight">
+\[f(x \mid \mu, \lambda) = \sqrt{\frac{\lambda}{2\pi}}\,
+x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
+\quad x &gt; 0\]</div>
+<p><strong>Exponential family structure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x) = (2\pi)^{-1/2} x^{-3/2}, \quad t(x) = [x,\; 1/x]\]</div>
+<div class="math notranslate nohighlight">
+\[\theta = \Bigl[-\tfrac{\lambda}{2\mu^2},\; -\tfrac{\lambda}{2}\Bigr],
+\quad \theta_1 &lt; 0,\; \theta_2 &lt; 0\]</div>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\psi(\theta) = -\tfrac{1}{2}\log(-2\theta_2)
++ \sqrt{(-2\theta_1)(-2\theta_2)}\\\bigl(\tfrac{1}{2}\log(2\pi)\ \text{is absorbed into}\
+\log h(x) = -\tfrac{1}{2}\log(2\pi) - \tfrac{3}{2}\log x\bigr)\end{aligned}\end{align} \]</div>
+<div class="math notranslate nohighlight">
+\[\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]\]</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.inverse_gaussian.</span></span><span class="sig-name descname"><span class="pre">InverseGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
-<p>InverseGaussian(μ, λ) — mean μ &gt; 0, shape λ &gt; 0.</p>
+<p>InverseGaussian(<span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\lambda\)</span>) — mean <span class="math notranslate nohighlight">\(\mu &gt; 0\)</span>, shape <span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -806,7 +821,7 @@ t(x)  = [x, 1/x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ from stored classical parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -817,7 +832,7 @@ t(x)  = [x, 1/x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -831,7 +846,7 @@ t(x)  = [x, 1/x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -881,18 +896,16 @@ t(x)  = [x, 1/x]
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample n observations from InverseGaussian(μ, λ) via JAX PRNG.</p>
-<p>Uses the algorithm from Michael, Schucany &amp; Haas (1976) as described
-in <a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution">https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution</a>:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>ν ~ N(0,1), y = ν²</p></li>
-<li><p>x = μ + μ²y/(2λ) − (μ/(2λ))√(4μλy + μ²y²)</p></li>
-<li><p>z ~ U(0,1); return x if z ≤ μ/(μ+x), else μ²/x</p></li>
+<dd><p>Sample <em>n</em> observations from <span class="math notranslate nohighlight">\(\mathrm{InvGaussian}(\mu, \lambda)\)</span> via JAX PRNG.</p>
+<p>Uses the algorithm from Michael, Schucany &amp; Haas (1976):</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(\nu \sim \mathcal{N}(0,1)\)</span>, <span class="math notranslate nohighlight">\(y = \nu^2\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(x = \mu + \frac{\mu^2 y}{2\lambda}
+- \frac{\mu}{2\lambda}\sqrt{4\mu\lambda y + \mu^2 y^2}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(z \sim \mathrm{Uniform}(0,1)\)</span>; return <span class="math notranslate nohighlight">\(x\)</span> if
+<span class="math notranslate nohighlight">\(z \le \mu/(\mu+x)\)</span>, else <span class="math notranslate nohighlight">\(\mu^2/x\)</span></p></li>
 </ol>
-</div></blockquote>
-<p>Uses jnp.where (not jax.lax.cond) for vectorized branching over
-the full sample array in a single pass.</p>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">jnp.where</span></code> for vectorized branching over the full sample array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -923,10 +936,8 @@ the full sample array in a single pass.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Closed-form from η = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]:</dt><dd><p>μ = η₁,   1/λ = η₂ - 1/η₁  →  λ = 1/(η₂ - 1/η₁)</p>
-</dd>
-</dl>
+<dd><p>Closed-form from <span class="math notranslate nohighlight">\(\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]\)</span>:</p>
+<p><span class="math notranslate nohighlight">\(\mu = \eta_1\)</span>, <span class="math notranslate nohighlight">\(\lambda = 1/(\eta_2 - 1/\eta_1)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -947,42 +958,47 @@ the full sample array in a single pass.</p>
 <section id="module-normix.distributions.generalized_inverse_gaussian">
 <span id="generalized-inverse-gaussian"></span><h3>Generalized Inverse Gaussian<a class="headerlink" href="#module-normix.distributions.generalized_inverse_gaussian" title="Link to this heading"></a></h3>
 <p>Generalized Inverse Gaussian (GIG) distribution as an exponential family.</p>
-<p>PDF: f(x|p,a,b) = (a/b)^{p/2} / (2 K_p(√(ab))) · x^{p-1} · exp(-(ax+b/x)/2)</p>
-<dl>
-<dt>Exponential family:</dt><dd><p>h(x)  = 1
-t(x)  = [log x, 1/x, x]
-θ     = [p-1, -b/2, -a/2]     (θ₂ ≤ 0, θ₃ ≤ 0)
-ψ(θ)  = log 2 + log K_p(√(ab)) + (p/2) log(b/a)</p>
-<blockquote>
-<div><p>where p = θ₁+1, a = -2θ₃, b = -2θ₂</p>
-</div></blockquote>
-<p>η     = [E[log X], E[1/X], E[X]]</p>
-</dd>
-<dt>Special cases:</dt><dd><p>b→0, p&gt;0:  GIG → Gamma(p, a/2)
-a→0, p&lt;0:  GIG → InverseGamma(-p, b/2)
-p=-1/2:    GIG → InverseGaussian</p>
-</dd>
-<dt>η→θ optimization uses η-rescaling to reduce Fisher condition number:</dt><dd><p>s = √(η₂/η₃),  η̃ = (η₁+½log(η₂/η₃), √(η₂η₃), √(η₂η₃))
-Solve η̃→θ̃ with symmetric GIG (ã=b̃), then unscale.</p>
-</dd>
-</dl>
-<section id="log-partition-triad-overrides">
-<h4>Log-Partition Triad Overrides<a class="headerlink" href="#log-partition-triad-overrides" title="Link to this heading"></a></h4>
-<blockquote>
-<div><p>_log_partition_from_theta  : JAX, uses log_kv(backend=’jax’)
-_grad_log_partition        : inherits default jax.grad (custom JVP on log_kv)
-_hessian_log_partition     : analytical 7-Bessel Hessian in θ-space
-_log_partition_cpu         : numpy + log_kv(backend=’cpu’)
-_grad_log_partition_cpu    : analytical Bessel ratios via scipy.kve
-_hessian_log_partition_cpu : central FD on _log_partition_cpu</p>
-</div></blockquote>
-</section>
+<div class="math notranslate nohighlight">
+\[f(x \mid p, a, b) = \frac{(a/b)^{p/2}}{2 K_p(\sqrt{ab})}
+\, x^{p-1} \exp\!\left(-\frac{ax + b/x}{2}\right), \quad x &gt; 0\]</div>
+<p><strong>Exponential family structure:</strong></p>
+<div class="math notranslate nohighlight">
+\[h(x) = 1, \quad t(x) = [\log x,\; 1/x,\; x]\]</div>
+<div class="math notranslate nohighlight">
+\[\theta = [p-1,\; -b/2,\; -a/2], \quad \theta_2 \le 0,\; \theta_3 \le 0\]</div>
+<div class="math notranslate nohighlight">
+\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a),
+\quad p = \theta_1+1,\; a = -2\theta_3,\; b = -2\theta_2\]</div>
+<div class="math notranslate nohighlight">
+\[\eta = [E[\log X],\; E[1/X],\; E[X]]\]</div>
+<p><strong>Special cases:</strong></p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(b \to 0,\; p &gt; 0\)</span>: GIG → <span class="math notranslate nohighlight">\(\mathrm{Gamma}(p,\; a/2)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(a \to 0,\; p &lt; 0\)</span>: GIG → <span class="math notranslate nohighlight">\(\mathrm{InvGamma}(-p,\; b/2)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(p = -1/2\)</span>: GIG → InverseGaussian</p></li>
+</ul>
+<p><strong>η→θ rescaling</strong> (reduces Fisher condition number):</p>
+<div class="math notranslate nohighlight">
+\[s = \sqrt{\eta_2/\eta_3}, \quad
+\tilde{\eta} = \bigl(\eta_1 + \tfrac{1}{2}\log(\eta_2/\eta_3),\;
+\sqrt{\eta_2\eta_3},\; \sqrt{\eta_2\eta_3}\bigr)\]</div>
+<p>Solve <span class="math notranslate nohighlight">\(\tilde{\eta} \to \tilde{\theta}\)</span> with symmetric GIG
+(<span class="math notranslate nohighlight">\(\tilde{a} = \tilde{b}\)</span>), then unscale.</p>
+<p><strong>Log-Partition Triad Overrides:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> : JAX, uses <code class="docutils literal notranslate"><span class="pre">log_kv(backend='jax')</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code>       : analytical Bessel ratios (5 <span class="math notranslate nohighlight">\(K_\nu\)</span> calls)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>    : analytical 7-Bessel Hessian in <span class="math notranslate nohighlight">\(\theta\)</span>-space</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code>        : numpy + <code class="docutils literal notranslate"><span class="pre">log_kv(backend='cpu')</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition_cpu</span></code>   : analytical Bessel ratios via <code class="docutils literal notranslate"><span class="pre">scipy.kve</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition_cpu</span></code>: central FD on <code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code></p></li>
+</ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.generalized_inverse_gaussian.</span></span><span class="sig-name descname"><span class="pre">GeneralizedInverseGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
 <p>Generalized Inverse Gaussian distribution.</p>
-<p>Stored: p (shape, any real), a &gt; 0, b &gt; 0.</p>
+<p>Stored: <span class="math notranslate nohighlight">\(p\)</span> (shape, any real), <span class="math notranslate nohighlight">\(a &gt; 0\)</span>, <span class="math notranslate nohighlight">\(b &gt; 0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1010,7 +1026,7 @@ _hessian_log_partition_cpu : central FD on _log_partition_cpu</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ from stored classical parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1021,7 +1037,7 @@ _hessian_log_partition_cpu : central FD on _log_partition_cpu</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1035,7 +1051,7 @@ _hessian_log_partition_cpu : central FD on _log_partition_cpu</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1066,7 +1082,7 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean" title="Link to this definition"></a></dt>
-<dd><p>E[X] = η₃ from expectation parameters.</p>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \eta_3\)</span> from expectation parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1077,7 +1093,7 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">
 <span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var" title="Link to this definition"></a></dt>
-<dd><p>Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2].</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2\)</span> = Fisher information [2,2].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1088,17 +1104,19 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'devroye'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample <em>n</em> observations from GIG(p, a, b).</p>
+<dd><p>Sample <em>n</em> observations from <span class="math notranslate nohighlight">\(\mathrm{GIG}(p, a, b)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>sample size</em>)</p></li>
-<li><p><strong>seed</strong> (<em>integer seed for JAX PRNG</em><em> (or </em><em>scipy random_state for 'scipy'</em><em>)</em>)</p></li>
-<li><p><strong>method</strong> (<em>'devroye'</em><em> (</em><em>default</em><em>)</em><em>, </em><em>'pinv'</em><em>, or </em><em>'scipy'</em>) – <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">devroye</span></code> — TDR rejection on log(x), pure JAX, no Bessel.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pinv</span></code> — numerical inverse CDF (CPU table build + JAX sampling),
-no Bessel.  Best for large <em>n</em> with fixed parameters.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">scipy</span></code> — <code class="docutils literal notranslate"><span class="pre">scipy.stats.geninvgauss</span></code> (CPU, original fallback).</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Sample size.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer seed for JAX PRNG (or <code class="docutils literal notranslate"><span class="pre">scipy</span></code> <code class="docutils literal notranslate"><span class="pre">random_state</span></code> for <code class="docutils literal notranslate"><span class="pre">'scipy'</span></code>).</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Sampling algorithm:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">'devroye'</span></code> (default) — Transformed density rejection (TDR) on
+<span class="math notranslate nohighlight">\(\log(x)\)</span>, pure JAX, no Bessel functions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'pinv'</span></code> — Numerical inverse CDF (CPU table build + JAX sampling),
+no Bessel. Best for large <em>n</em> with fixed parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'scipy'</span></code> — <code class="docutils literal notranslate"><span class="pre">scipy.stats.geninvgauss</span></code> (CPU, original fallback).</p></li>
 </ul>
 </p></li>
 </ul>
@@ -1126,15 +1144,16 @@ no Bessel.  Best for large <em>n</em> with fixed parameters.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation" title="Link to this definition"></a></dt>
-<dd><p>η → θ via η-rescaling + optimization.</p>
-<p>Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing
-condition number by up to <span class="math notranslate nohighlight">\(10^{30}\)</span> for extreme a/b ratios.</p>
+<dd><p><span class="math notranslate nohighlight">\(\eta \to \theta\)</span> via <span class="math notranslate nohighlight">\(\eta\)</span>-rescaling + optimization.</p>
+<p>Rescaling makes the Fisher matrix symmetric (<span class="math notranslate nohighlight">\(\tilde{a} = \tilde{b}\)</span>),
+reducing condition number by up to <span class="math notranslate nohighlight">\(10^{30}\)</span> for extreme <span class="math notranslate nohighlight">\(a/b\)</span> ratios.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>theta0</strong> (<em>warm-start point</em><em> (</em><em>required for JAX solvers; if None</em><em>, </em><em>uses</em>) – multi-start CPU solver with Gamma/InvGamma/InvGauss seeds)</p></li>
-<li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>default</em><em>, </em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>no JAX dispatch</em><em>)</em>)</p></li>
-<li><p><strong>method</strong> (<em>'newton'</em><em>, </em><em>'lbfgs'</em><em>, </em><em>'bfgs'</em>)</p></li>
+<li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Warm-start point (required for JAX solvers; if <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
+multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
@@ -1158,11 +1177,14 @@ condition number by up to <span class="math notranslate nohighlight">\(10^{30}\)
 </section>
 </section>
 <section id="module-normix.distributions.normal">
-<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id15" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading"></a></h2>
+<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id7" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading"></a></h2>
 <p>Multivariate Normal distribution.</p>
-<p>Stored: mu (d,), L_Sigma (d,d) lower-triangular Cholesky of Σ.
-All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.</p>
-<p>PDF: f(x) = (2π)^{-d/2} <a href="#id1"><span class="problematic" id="id2">|</span></a>Σ|^{-1/2} exp(-½(x-μ)ᵀΣ⁻¹(x-μ))</p>
+<p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (d×d) lower-triangular Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>.
+All linear algebra via <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> — never form <span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> explicitly.</p>
+<p>PDF:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = (2\pi)^{-d/2} |\Sigma|^{-1/2}
+\exp\!\left(-\tfrac{1}{2}(x-\mu)^\top\Sigma^{-1}(x-\mu)\right)\]</div>
 <p>Exponential family:</p>
 <div class="math notranslate nohighlight">
 \[t(x) = [x, \operatorname{vec}(xx^\top)],\quad
@@ -1177,8 +1199,8 @@ All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mu</strong> (<em>(</em><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture.d" title="normix.mixtures.joint.JointNormalMixture.d"><em>d</em></a><em>,</em><em>) </em><em>array</em>)</p></li>
-<li><p><strong>L_Sigma</strong> (<em>(</em><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture.d" title="normix.mixtures.joint.JointNormalMixture.d"><em>d</em></a><em>,</em><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture.d" title="normix.mixtures.joint.JointNormalMixture.d"><em>d</em></a><em>) </em><em>lower-triangular Cholesky factor</em><em> of </em><em>Σ</em>)</p></li>
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> mean vector.</p></li>
+<li><p><strong>L_Sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> lower-triangular Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1220,7 +1242,7 @@ All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sample" title="Link to this definition"></a></dt>
-<dd><p>Draw samples of shape (<a href="#id3"><span class="problematic" id="id4">*</span></a>shape, d).</p>
+<dd><p>Draw samples of shape (<a href="#id1"><span class="problematic" id="id2">*</span></a>shape, d).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1242,51 +1264,58 @@ All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sigma">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sigma" title="Link to this definition"></a></dt>
-<dd><p>Covariance matrix Σ = L_Sigma L_Sigmaᵀ.</p>
+<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span>.</p>
 </dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="mixture-base-classes">
-<h2><a class="toc-backref" href="#id16" role="doc-backlink">Mixture Base Classes</a><a class="headerlink" href="#mixture-base-classes" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Mixture Base Classes</a><a class="headerlink" href="#mixture-base-classes" title="Link to this heading"></a></h2>
 <section id="module-normix.mixtures.joint">
 <span id="jointnormalmixture"></span><h3>JointNormalMixture<a class="headerlink" href="#module-normix.mixtures.joint" title="Link to this heading"></a></h3>
 <p>JointNormalMixture — abstract exponential family for normal variance-mean mixtures.</p>
-<dl class="simple">
-<dt>Joint distribution f(x,y):</dt><dd><p>X|Y ~ N(μ + γy, Σy)
-Y   ~ subordinator (GIG, Gamma, InverseGamma, InverseGaussian)</p>
-</dd>
-<dt>Sufficient statistics:</dt><dd><p>t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]</p>
-</dd>
-<dt>Natural parameters:</dt><dd><p>θ₁ = p_sub - 1 - d/2          (GIG p; scalar, depends on subordinator)
-θ₂ = -(b_sub + ½μᵀΣ⁻¹μ)       &lt; 0
-θ₃ = -(a_sub + ½γᵀΣ⁻¹γ)       &lt; 0
-θ₄ = Σ⁻¹γ                      (d-vector)
-θ₅ = Σ⁻¹μ                      (d-vector)
-θ₆ = -½vec(Σ⁻¹)                (d²-vector)</p>
-</dd>
-<dt>Log partition:</dt><dd><p>ψ = ψ_sub(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ</p>
-</dd>
-<dt>Expectation parameters (EM E-step quantities):</dt><dd><p>η₁ = E[log Y]
-η₂ = E[1/Y]
-η₃ = E[Y]
-η₄ = E[X]      = μ + γ E[Y]
-η₅ = E[X/Y]    = μ E[1/Y] + γ
-η₆ = E[XXᵀ/Y]  = Σ + μμᵀ E[1/Y] + γγᵀ E[Y] + μγᵀ + γμᵀ</p>
-</dd>
-<dt>EM M-step closed-form (from η):</dt><dd><p>Let D = 1 - E[1/Y]·E[Y]
-μ = (E[X] - E[Y]·E[X/Y]) / D
-γ = (E[X/Y] - E[1/Y]·E[X]) / D
-Σ = E[XXᵀ/Y] - E[X/Y]μᵀ - μE[X/Y]ᵀ + E[1/Y]μμᵀ - E[Y]γγᵀ</p>
-</dd>
-</dl>
+<p>Joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[X \mid Y \sim \mathcal{N}(\mu + \gamma y,\; \Sigma y), \quad
+Y \sim \text{subordinator (GIG, Gamma, InvGamma, InvGaussian)}\]</div>
+<p><strong>Sufficient statistics:</strong></p>
+<div class="math notranslate nohighlight">
+\[t(x, y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]\]</div>
+<p><strong>Natural parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\theta_1 = p_{\mathrm{sub}} - 1 - d/2, \quad
+\theta_2 = -(b_{\mathrm{sub}} + \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu) &lt; 0\]</div>
+<div class="math notranslate nohighlight">
+\[\theta_3 = -(a_{\mathrm{sub}} + \tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma) &lt; 0, \quad
+\theta_4 = \Sigma^{-1}\gamma, \quad
+\theta_5 = \Sigma^{-1}\mu, \quad
+\theta_6 = -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})\]</div>
+<p><strong>Log-partition:</strong></p>
+<div class="math notranslate nohighlight">
+\[\psi = \psi_{\mathrm{sub}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma\]</div>
+<p><strong>Expectation parameters (EM E-step quantities):</strong></p>
+<div class="math notranslate nohighlight">
+\[\eta_1 = E[\log Y], \quad \eta_2 = E[1/Y], \quad \eta_3 = E[Y]\]</div>
+<div class="math notranslate nohighlight">
+\[\eta_4 = E[X] = \mu + \gamma E[Y], \quad
+\eta_5 = E[X/Y] = \mu E[1/Y] + \gamma\]</div>
+<div class="math notranslate nohighlight">
+\[\eta_6 = E[XX^\top/Y] = \Sigma + \mu\mu^\top E[1/Y]
++ \gamma\gamma^\top E[Y] + \mu\gamma^\top + \gamma\mu^\top\]</div>
+<p><strong>EM M-step closed-form</strong> (let <span class="math notranslate nohighlight">\(D = 1 - E[1/Y] \cdot E[Y]\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\mu = \frac{E[X] - E[Y] E[X/Y]}{D}, \quad
+\gamma = \frac{E[X/Y] - E[1/Y] E[X]}{D}\]</div>
+<div class="math notranslate nohighlight">
+\[\Sigma = E[XX^\top/Y] - E[X/Y]\mu^\top - \mu E[X/Y]^\top
++ E[1/Y]\mu\mu^\top - E[Y]\gamma\gamma^\top\]</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.joint.</span></span><span class="sig-name descname"><span class="pre">JointNormalMixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
-<p>Abstract joint distribution f(x, y) for normal variance-mean mixtures.</p>
-<p>Stored: mu (d,), gamma (d,), L_Sigma (d,d lower Cholesky of Σ)
+<p>Abstract joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> for normal variance-mean mixtures.</p>
+<p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">gamma</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (d×d lower Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>).
 Subordinator parameters defined by concrete subclasses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1331,7 +1360,7 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.sigma">
 <span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.sigma" title="Link to this definition"></a></dt>
-<dd><p>Covariance matrix Σ = L_Sigma L_Sigmaᵀ.</p>
+<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1342,7 +1371,7 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_det_sigma">
 <span class="sig-name descname"><span class="pre">log_det_sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma" title="Link to this definition"></a></dt>
-<dd><p>log|Σ| = 2 Σᵢ log Lᵢᵢ, via Cholesky diagonal.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log|\Sigma| = 2\sum_i \log L_{ii}\)</span>, via Cholesky diagonal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1353,12 +1382,12 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.rvs" title="Link to this definition"></a></dt>
-<dd><p>Sample (X, Y) from the joint distribution via JAX PRNG.</p>
+<dd><p>Sample <span class="math notranslate nohighlight">\((X, Y)\)</span> from the joint distribution via JAX PRNG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>X</strong> (<em>(n, d) jax.Array</em>)</p></li>
-<li><p><strong>Y</strong> (<em>(n,)   jax.Array</em>)</p></li>
+<li><p><strong>X</strong> (<em>jax.Array</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>Y</strong> (<em>jax.Array</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
 </ul>
 </p>
 </dd>
@@ -1377,17 +1406,12 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_prob_joint">
 <span class="sig-name descname"><span class="pre">log_prob_joint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_prob_joint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_prob_joint" title="Link to this definition"></a></dt>
-<dd><p>log f(x, y) = log f(x|y) + log f_Y(y).</p>
-<dl class="simple">
-<dt>log f(x|y) = -d/2 log(2π) - ½ log|Σy| - ½(x-μ-γy)ᵀ(Σy)⁻¹(x-μ-γy)</dt><dd><dl class="simple">
-<dt>= -d/2 log(2π) - ½ log|Σ| - d/2 log y</dt><dd><ul class="simple">
-<li><p>1/(2y) ‖L⁻¹(x-μ)‖² + γᵀΣ⁻¹(x-μ) - y/2 γᵀΣ⁻¹γ</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>log f_Y(y) from subordinator.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log f(x, y) = \log f(x\mid y) + \log f_Y(y)\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\log f(x\mid y) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma|
+- \tfrac{d}{2}\log y - \frac{1}{2y}\|L^{-1}(x-\mu)\|^2
++ \gamma^\top\Sigma^{-1}(x-\mu) - \tfrac{y}{2}\gamma^\top\Sigma^{-1}\gamma\]</div>
+<p><span class="math notranslate nohighlight">\(\log f_Y(y)\)</span> from subordinator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1404,15 +1428,13 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.conditional_expectations">
 <span class="sig-name descname"><span class="pre">conditional_expectations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.conditional_expectations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="Link to this definition"></a></dt>
-<dd><p>Compute E[g(Y)|X=x] for EM E-step.</p>
-<dl class="simple">
-<dt>The posterior Y|X follows a GIG-like distribution with parameters:</dt><dd><p>p_post = p_eff - d/2
-a_post = a_eff + γᵀΣ⁻¹γ
-b_post = b_eff + (x-μ)ᵀΣ⁻¹(x-μ)</p>
-</dd>
-</dl>
-<p>Returns dict with keys: E_log_Y, E_inv_Y, E_Y.
-These are then used in the M-step.</p>
+<dd><p>Compute <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x]\)</span> for EM E-step.</p>
+<p>The posterior <span class="math notranslate nohighlight">\(Y\mid X\)</span> follows a GIG-like distribution:</p>
+<div class="math notranslate nohighlight">
+\[p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad
+a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad
+b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)\]</div>
+<p>Returns dict with keys: <code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1426,8 +1448,8 @@ These are then used in the M-step.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.sufficient_statistics">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.sufficient_statistics" title="Link to this definition"></a></dt>
-<dd><p>t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]
-Input: flat vector [x…, y] where x is d-dimensional.</p>
+<dd><p><span class="math notranslate nohighlight">\(t(x,y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]\)</span>.</p>
+<p>Input: flat vector <span class="math notranslate nohighlight">\([x_1,\ldots,x_d, y]\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>xy</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1441,7 +1463,7 @@ Input: flat vector [x…, y] where x is d-dimensional.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_base_measure">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_base_measure" title="Link to this definition"></a></dt>
-<dd><p>log h(x) for a <em>single</em> unbatched observation.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>xy</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1457,20 +1479,20 @@ Input: flat vector [x…, y] where x is d-dimensional.</p>
 </section>
 <section id="module-normix.mixtures.marginal">
 <span id="normalmixture"></span><h3>NormalMixture<a class="headerlink" href="#module-normix.mixtures.marginal" title="Link to this heading"></a></h3>
-<p>NormalMixture — marginal f(x) = ∫ f(x,y) dy.</p>
-<dl class="simple">
-<dt>Owns a JointNormalMixture. Provides:</dt><dd><p>log_prob(x)  — closed-form marginal log-density
-e_step(X)    — jax.vmap over conditional_expectations
-m_step(X, expectations) — returns new NormalMixture
-fit(X, …)  — convenience EM fitting with multi-start</p>
-</dd>
-</dl>
+<p>NormalMixture — marginal <span class="math notranslate nohighlight">\(f(x) = \int_0^\infty f(x,y)\,dy\)</span>.</p>
+<p>Owns a <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>. Provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">log_prob(x)</span></code> — closed-form marginal log-density</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e_step(X)</span></code> — <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vmap.html#jax.vmap" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.vmap()</span></code></a> over conditional expectations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m_step(X,</span> <span class="pre">expectations)</span></code> — returns new <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit(X,</span> <span class="pre">...)</span></code> — convenience EM fitting with multi-start</p></li>
+</ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.marginal.</span></span><span class="sig-name descname"><span class="pre">NormalMixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>Marginal f(x) = ∫₀^∞ f(x,y) dy.</p>
-<p>Not an exponential family. Owns a JointNormalMixture (which is).</p>
+<p>Marginal <span class="math notranslate nohighlight">\(f(x) = \int_0^\infty f(x,y)\,dy\)</span>.</p>
+<p>Not an exponential family. Owns a <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a> (which is).</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">joint</span></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint" title="Link to this definition"></a></dt>
@@ -1512,7 +1534,7 @@ fit(X, …)  — convenience EM fitting with multi-start</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.mean" title="Link to this definition"></a></dt>
-<dd><p>E[X] = μ + γ E[Y].</p>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma E[Y]\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1523,7 +1545,7 @@ fit(X, …)  — convenience EM fitting with multi-start</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.cov">
 <span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.cov" title="Link to this definition"></a></dt>
-<dd><p>Cov[X] = E[Y] Σ + Var[Y] γγᵀ.</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1551,19 +1573,16 @@ fit(X, …)  — convenience EM fitting with multi-start</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.e_step">
 <span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition"></a></dt>
-<dd><p>E-step: compute conditional expectations E[g(Y)|X=xᵢ] for each i.</p>
-<p>Returns dict of arrays with shape (n, …) for each expectation.</p>
-<dl class="simple">
-<dt>backend=’jax’ (default): jax.vmap over conditional_expectations.</dt><dd><p>JIT-able, differentiable.</p>
-</dd>
-<dt>backend=’cpu’: quad forms in JAX (vmapped) + GIG Bessel on CPU.</dt><dd><p>Faster for large N; not JIT-able.</p>
-</dd>
-</dl>
+<dd><p>E-step: compute conditional expectations <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x_i]\)</span> for each <span class="math notranslate nohighlight">\(i\)</span>.</p>
+<p>Returns dict of arrays with shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">...)</span></code> for each expectation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over <code class="docutils literal notranslate"><span class="pre">conditional_expectations</span></code>. JIT-able.</p>
+<p><code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: quad forms in JAX (vmapped) + GIG Bessel on CPU.
+Faster for large <span class="math notranslate nohighlight">\(N\)</span>; not JIT-able.</p>
+</p></li>
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1594,9 +1613,10 @@ Subclasses must override _m_step_subordinator.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">
 <span class="sig-name descname"><span class="pre">regularize_det_sigma_one</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one" title="Link to this definition"></a></dt>
-<dd><p>Enforce <a href="#id9"><span class="problematic" id="id10">|Σ|</span></a> = 1 by rescaling.</p>
-<p>Σ → Σ/s, γ → γ/s, subordinator params scaled via _scale_subordinator.
-s = det(Σ)^{1/d}.</p>
+<dd><p>Enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> by rescaling.</p>
+<p><span class="math notranslate nohighlight">\(\Sigma \to \Sigma/s\)</span>, <span class="math notranslate nohighlight">\(\gamma \to \gamma/s\)</span>,
+subordinator params scaled via <code class="docutils literal notranslate"><span class="pre">_build_rescaled</span></code>.
+<span class="math notranslate nohighlight">\(s = \det(\Sigma)^{1/d}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
@@ -1668,19 +1688,23 @@ subordinator = distribution-specific defaults</p>
 </section>
 </section>
 <section id="mixture-distributions">
-<h2><a class="toc-backref" href="#id17" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading"></a></h2>
 <section id="module-normix.distributions.variance_gamma">
 <span id="variance-gamma"></span><h3>Variance Gamma<a class="headerlink" href="#module-normix.distributions.variance_gamma" title="Link to this heading"></a></h3>
 <p>Variance Gamma (VG) distribution.</p>
-<p>Special case of GH with GIG → Gamma subordinator (b → 0, p &gt; 0).
-Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).</p>
-<p>Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of Gamma.</p>
+<p>Special case of GH with GIG → Gamma subordinator
+(<span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(p &gt; 0\)</span>).
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{Gamma}(\alpha, \beta)\)</span>,
+i.e. GIG(<span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span class="math notranslate nohighlight">\(a = 2\beta\)</span>, <span class="math notranslate nohighlight">\(b \to 0\)</span>).</p>
+<p>Stored: <span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(L_\Sigma\)</span> (Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>),
+<span class="math notranslate nohighlight">\(\alpha\)</span> (shape), <span class="math notranslate nohighlight">\(\beta\)</span> (rate) of Gamma.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.variance_gamma.</span></span><span class="sig-name descname"><span class="pre">JointVarianceGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></p>
-<p>Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ Gamma(α, β).</p>
-<p>GIG limit: p = α, a = 2β, b → 0.</p>
+<p>Joint <span class="math notranslate nohighlight">\(f(x,y)\)</span>: <span class="math notranslate nohighlight">\(X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)\)</span>,
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{Gamma}(\alpha, \beta)\)</span>.</p>
+<p>GIG limit: <span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span class="math notranslate nohighlight">\(a = 2\beta\)</span>, <span class="math notranslate nohighlight">\(b \to 0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1716,8 +1740,10 @@ Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ = [α-1-d/2, -½μᵀΛμ, -(β+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
-(Gamma subordinator: p=α, a=2β, b→0).</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta = [\alpha-1-d/2,\; -\tfrac{1}{2}\mu^\top\Lambda\mu,\;
+-(\beta+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+\Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]\)</span></p>
+<p>(Gamma subordinator: <span class="math notranslate nohighlight">\(p=\alpha\)</span>, <span class="math notranslate nohighlight">\(a=2\beta\)</span>, <span class="math notranslate nohighlight">\(b\to 0\)</span>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1770,8 +1796,12 @@ Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).</p>
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.log_prob" title="Link to this definition"></a></dt>
 <dd><p>Marginal VG log-density (own formula, no GH delegation).</p>
-<p>f(x) = C * (q/(2c))^{nu/2} * K_nu(sqrt(2qc)) * exp(linear)
-where nu=alpha-d/2, c=beta+½γᵀΛγ, q=(x-μ)ᵀΛ(x-μ).</p>
+<div class="math notranslate nohighlight">
+\[f(x) \propto \left(\frac{q}{2c}\right)^{\nu/2}
+K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
+<p>where <span class="math notranslate nohighlight">\(\nu = \alpha - d/2\)</span>,
+<span class="math notranslate nohighlight">\(c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma\)</span>,
+<span class="math notranslate nohighlight">\(q = (x-\mu)^\top\Lambda(x-\mu)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1795,15 +1825,19 @@ the degenerate-GIG posterior arising from the Gamma subordinator).</p>
 <section id="module-normix.distributions.normal_inverse_gamma">
 <span id="normal-inverse-gamma"></span><h3>Normal Inverse Gamma<a class="headerlink" href="#module-normix.distributions.normal_inverse_gamma" title="Link to this heading"></a></h3>
 <p>Normal-Inverse Gamma (NInvG) distribution.</p>
-<p>Special case of GH with GIG → InverseGamma subordinator (a → 0, p &lt; 0).
-Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).</p>
-<p>Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of InverseGamma.</p>
+<p>Special case of GH with GIG → InverseGamma subordinator
+(<span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(p &lt; 0\)</span>).
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGamma}(\alpha, \beta)\)</span>,
+i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(b = 2\beta\)</span>).</p>
+<p>Stored: <span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(L_\Sigma\)</span> (Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>),
+<span class="math notranslate nohighlight">\(\alpha\)</span> (shape), <span class="math notranslate nohighlight">\(\beta\)</span> (rate) of InverseGamma.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">JointNormalInverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#JointNormalInverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></p>
-<p>Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGamma(α, β).</p>
-<p>GIG limit: p = −α, a → 0, b = 2β.</p>
+<p>Joint <span class="math notranslate nohighlight">\(f(x,y)\)</span>: <span class="math notranslate nohighlight">\(X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)\)</span>,
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGamma}(\alpha, \beta)\)</span>.</p>
+<p>GIG limit: <span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(b = 2\beta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1839,8 +1873,10 @@ Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#JointNormalInverseGamma.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ = [-(α+1)-d/2, -(β+½μᵀΛμ), -½γᵀΛγ, Λγ, Λμ, -½vec(Λ)]
-(InverseGamma subordinator: p=-α, a→0, b=2β).</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta = [-(\alpha+1)-d/2,\; -(\beta+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+-\tfrac{1}{2}\gamma^\top\Lambda\gamma,\;
+\Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]\)</span></p>
+<p>(InverseGamma subordinator: <span class="math notranslate nohighlight">\(p=-\alpha\)</span>, <span class="math notranslate nohighlight">\(a\to 0\)</span>, <span class="math notranslate nohighlight">\(b=2\beta\)</span>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1880,9 +1916,9 @@ Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).</p>
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob" title="Link to this definition"></a></dt>
 <dd><p>Marginal NInvG log-density (own formula, no GH delegation).</p>
-<p>GIG params: p=-α, a=γᵀΛγ, b=2β+Q(x).
-The normalising integral is 2(b/a)^{p/2} K_p(sqrt(ab)).
-For the symmetric case (γ≈0, a→0), uses Γ-function closed form.</p>
+<p>GIG params: <span class="math notranslate nohighlight">\(p=-\alpha\)</span>, <span class="math notranslate nohighlight">\(a=\gamma^\top\Lambda\gamma\)</span>,
+<span class="math notranslate nohighlight">\(b=2\beta+Q(x)\)</span>.
+The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^{p/2} K_p(\sqrt{ab})\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1907,16 +1943,19 @@ subordinator).</p>
 <section id="module-normix.distributions.normal_inverse_gaussian">
 <span id="normal-inverse-gaussian"></span><h3>Normal Inverse Gaussian<a class="headerlink" href="#module-normix.distributions.normal_inverse_gaussian" title="Link to this heading"></a></h3>
 <p>Normal-Inverse Gaussian (NIG) distribution.</p>
-<p>Special case of GH with GIG → InverseGaussian subordinator (p = −½).
-Y ~ InverseGaussian(μ_IG, λ), i.e. GIG(p = −½, a = λ/μ_IG², b = λ).</p>
-<p>Stored: μ, γ, L_Σ (Cholesky of Σ), μ_IG (IG mean), λ (IG shape).</p>
+<p>Special case of GH with GIG → InverseGaussian subordinator (<span class="math notranslate nohighlight">\(p = -1/2\)</span>).
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)\)</span>,
+i.e. GIG(<span class="math notranslate nohighlight">\(p = -1/2\)</span>, <span class="math notranslate nohighlight">\(a = \lambda/\mu_{IG}^2\)</span>, <span class="math notranslate nohighlight">\(b = \lambda\)</span>).</p>
+<p>Stored: <span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(L_\Sigma\)</span> (Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>),
+<span class="math notranslate nohighlight">\(\mu_{IG}\)</span> (IG mean), <span class="math notranslate nohighlight">\(\lambda\)</span> (IG shape).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gaussian.</span></span><span class="sig-name descname"><span class="pre">JointNormalInverseGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_ig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></p>
-<p>Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGaussian(μ_IG, λ).</p>
-<p>Stored: μ_IG (IG mean) and λ (IG shape) directly.
-GIG params: p = −½, a = λ/μ_IG², b = λ.</p>
+<p>Joint <span class="math notranslate nohighlight">\(f(x,y)\)</span>: <span class="math notranslate nohighlight">\(X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)\)</span>,
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)\)</span>.</p>
+<p>Stored: <span class="math notranslate nohighlight">\(\mu_{IG}\)</span> (IG mean) and <span class="math notranslate nohighlight">\(\lambda\)</span> (IG shape) directly.
+GIG params: <span class="math notranslate nohighlight">\(p = -1/2\)</span>, <span class="math notranslate nohighlight">\(a = \lambda/\mu_{IG}^2\)</span>, <span class="math notranslate nohighlight">\(b = \lambda\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1952,8 +1991,10 @@ GIG params: p = −½, a = λ/μ_IG², b = λ.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ = [-3/2-d/2, -(b+½μᵀΛμ), -(a+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
-where p=-½, a=λ/μ_IG², b=λ.</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+-(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+\Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]\)</span></p>
+<p>where <span class="math notranslate nohighlight">\(p=-1/2\)</span>, <span class="math notranslate nohighlight">\(a=\lambda/\mu_{IG}^2\)</span>, <span class="math notranslate nohighlight">\(b=\lambda\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1993,8 +2034,8 @@ where p=-½, a=λ/μ_IG², b=λ.</p>
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#NormalInverseGaussian.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.log_prob" title="Link to this definition"></a></dt>
 <dd><p>Marginal NIG log-density.</p>
-<p>Uses K_{-1/2}(z) = sqrt(pi/(2z)) exp(-z) for the normalisation,
-leaving only one log_kv call at order nu = -1/2 - d/2.</p>
+<p>Uses <span class="math notranslate nohighlight">\(K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}\)</span> for the normalisation,
+leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span> call at order <span class="math notranslate nohighlight">\(\nu = -1/2 - d/2\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -2011,41 +2052,29 @@ leaving only one log_kv call at order nu = -1/2 - d/2.</p>
 <section id="module-normix.distributions.generalized_hyperbolic">
 <span id="generalized-hyperbolic"></span><h3>Generalized Hyperbolic<a class="headerlink" href="#module-normix.distributions.generalized_hyperbolic" title="Link to this heading"></a></h3>
 <p>Generalized Hyperbolic (GH) distribution.</p>
-<p>Joint: X|Y ~ N(μ+γy, Σy), Y ~ GIG(p, a, b)
-Marginal: GH(μ, γ, Σ, p, a, b)</p>
-<dl>
-<dt>Marginal log-density (closed form via Bessel functions):</dt><dd><p>Let Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ
-log f(x) = const</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>(p - d/2) log(Q(x) + b) / 2 - p/2 log A</p></li>
-<li><p>log K_{p-d/2}(√(A(Q(x)+b)))</p></li>
-</ul>
-<ul class="simple">
-<li><p>log K_p(√(ab))</p></li>
-</ul>
-<ul class="simple">
-<li><p>(x-μ)ᵀΣ⁻¹γ · … (skewness term)</p></li>
-</ul>
-</div></blockquote>
-</dd>
-<dt>Full formula:</dt><dd><dl class="simple">
-<dt>f(x) = C(p,a,b,Σ) · (A/(Q(x)+b))^{(p-d/2)/2}</dt><dd><p>· K_{p-d/2}(√(A(Q(x)+b)))
-· exp(γᵀΣ⁻¹(x-μ))</p>
-</dd>
-<dt>C = (2π)^{-d/2} <a href="#id5"><span class="problematic" id="id6">|</span></a>Σ|^{-1/2} (a/b)^{p/2} / (2 K_p(√(ab))) · A^{(d/2-p)/2} · …</dt><dd><p>(see below for precise formula)</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>Posterior Y|X = x ~ GIG(p - d/2, a + γᵀΣ⁻¹γ, b + (x-μ)ᵀΣ⁻¹(x-μ))
-→ conditional expectations computed from GIG.</p>
+<p>Joint: <span class="math notranslate nohighlight">\(X \mid Y \sim \mathcal{N}(\mu + \gamma y, \Sigma y)\)</span>,
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span>.</p>
+<p>Marginal: <span class="math notranslate nohighlight">\(\mathrm{GH}(\mu, \gamma, \Sigma, p, a, b)\)</span>.</p>
+<p><strong>Marginal log-density</strong> (closed form via Bessel functions):</p>
+<p>Let <span class="math notranslate nohighlight">\(Q(x) = (x-\mu)^\top \Sigma^{-1}(x-\mu)\)</span>,
+<span class="math notranslate nohighlight">\(A = a + \gamma^\top \Sigma^{-1} \gamma\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\log f(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma|
++ \tfrac{p}{2}(\log a - \log b) - \log K_p(\sqrt{ab})
++ \tfrac{d/2-p}{2}\log\frac{A}{Q(x)+b}
++ \log K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)
++ \gamma^\top \Sigma^{-1}(x - \mu)\]</div>
+<p><strong>Posterior:</strong> <span class="math notranslate nohighlight">\(Y \mid X = x \sim
+\mathrm{GIG}(p - d/2,\; a + \gamma^\top\Sigma^{-1}\gamma,\;
+b + (x-\mu)^\top\Sigma^{-1}(x-\mu))\)</span>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.generalized_hyperbolic.</span></span><span class="sig-name descname"><span class="pre">JointGeneralizedHyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></p>
-<p>Joint f(x,y): X|Y~N(μ+γy, Σy), Y~GIG(p,a,b).</p>
-<p>Stored: mu, gamma, L (from JointNormalMixture) + p, a, b (GIG parameters).</p>
+<p>Joint <span class="math notranslate nohighlight">\(f(x,y)\)</span>: <span class="math notranslate nohighlight">\(X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)\)</span>,
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span>.</p>
+<p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (from <code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code>) +
+<code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code> (GIG parameters).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2087,7 +2116,9 @@ log f(x) = const</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params" title="Link to this definition"></a></dt>
-<dd><p>θ = [p-1-d/2, -(b+½μᵀΣ⁻¹μ), -(a+½γᵀΣ⁻¹γ), Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]</p>
+<dd><p><span class="math notranslate nohighlight">\(\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
+-(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
+\Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]\)</span></p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -2121,13 +2152,13 @@ log f(x) = const</p>
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.generalized_hyperbolic.</span></span><span class="sig-name descname"><span class="pre">GeneralizedHyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
-<p>Marginal Generalized Hyperbolic distribution f(x).</p>
-<dl class="simple">
-<dt>Stores a JointGeneralizedHyperbolic. Provides:</dt><dd><p>log_prob(x) — closed-form Bessel expression
-e_step, m_step — for EM fitting
-fit(X, …) — convenience class method</p>
-</dd>
-</dl>
+<p>Marginal Generalized Hyperbolic distribution <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
+<p>Stores a <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code></a>. Provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">log_prob(x)</span></code> — closed-form Bessel expression</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e_step</span></code>, <code class="docutils literal notranslate"><span class="pre">m_step</span></code> — for EM fitting</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit(X,</span> <span class="pre">...)</span></code> — convenience fitting method</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>joint</strong> (<a class="reference internal" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic"><em>JointGeneralizedHyperbolic</em></a>)</p>
@@ -2146,16 +2177,13 @@ fit(X, …) — convenience class method</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob" title="Link to this definition"></a></dt>
-<dd><p>Marginal log f(x).</p>
-<p>f(x) ∝ ((Q(x)+b)/A)^{(p-d/2)/2} · K_{p-d/2}(√(A(Q(x)+b))) · exp(γᵀΣ⁻¹(x-μ))</p>
-<p>where Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ.</p>
-<dl class="simple">
-<dt>Full normalizing constant:</dt><dd><dl class="simple">
-<dt>C = (2π)^{-d/2} <a href="#id7"><span class="problematic" id="id8">|</span></a>Σ|^{-1/2} · (A/b)^{p/2} · A^{-d/4} · b^{d/4}</dt><dd><p>/ K_p(√(ab)) · (some power)</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[f(x) \propto \left(\frac{A}{Q(x)+b}\right)^{(d/2-p)/2}
+K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)
+\exp\!\left(\gamma^\top\Sigma^{-1}(x-\mu)\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(Q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu)\)</span>,
+<span class="math notranslate nohighlight">\(A = a + \gamma^\top\Sigma^{-1}\gamma\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -2188,7 +2216,7 @@ Falls back to moment-based default if all sub-models fail.</p>
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'det_sigma_one'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit GH distribution using EM.</p>
 <p>Defaults to CPU backends and det_sigma_one regularization
-(GH has scale non-identifiability requiring <a href="#id11"><span class="problematic" id="id12">|Sigma|</span></a> = 1).</p>
+(GH has scale non-identifiability requiring <a href="#id3"><span class="problematic" id="id4">|Sigma|</span></a> = 1).</p>
 </dd></dl>
 
 </dd></dl>
@@ -2196,7 +2224,7 @@ Falls back to moment-based default if all sub-models fail.</p>
 </section>
 </section>
 <section id="fitting">
-<h2><a class="toc-backref" href="#id18" role="doc-backlink">Fitting</a><a class="headerlink" href="#fitting" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id10" role="doc-backlink">Fitting</a><a class="headerlink" href="#fitting" title="Link to this heading"></a></h2>
 <section id="module-normix.fitting.em">
 <span id="em-fitters"></span><h3>EM Fitters<a class="headerlink" href="#module-normix.fitting.em" title="Link to this heading"></a></h3>
 <p>EM fitters for normix distributions.</p>
@@ -2548,7 +2576,7 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 </section>
 </section>
 <section id="utilities">
-<h2><a class="toc-backref" href="#id19" role="doc-backlink">Utilities</a><a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id11" role="doc-backlink">Utilities</a><a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
 <section id="module-normix.utils.bessel">
 <span id="bessel-functions"></span><h3>Bessel Functions<a class="headerlink" href="#module-normix.utils.bessel" title="Link to this heading"></a></h3>
 <p>JAX-compatible log modified Bessel function of the second kind.</p>

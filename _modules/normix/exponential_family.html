@@ -78,37 +78,34 @@
 <span class="sd">ExponentialFamily base class for JAX normix.</span>
 
 <span class="sd">Subclasses implement four abstract methods:</span>
-<span class="sd">  _log_partition_from_theta(theta) → scalar</span>
-<span class="sd">  natural_params()                 → 1-D array θ</span>
-<span class="sd">  sufficient_statistics(x)         → 1-D array t(x)</span>
-<span class="sd">  log_base_measure(x)              → scalar</span>
 
-<span class="sd">The Log-Partition Triad</span>
-<span class="sd">-----------------------</span>
-<span class="sd">Each subclass gets six derived classmethods, grouped as three pairs:</span>
+<span class="sd">- ``_log_partition_from_theta(theta)`` → scalar :math:`\\psi(\\theta)`</span>
+<span class="sd">- ``natural_params()`` → 1-D array :math:`\\theta`</span>
+<span class="sd">- ``sufficient_statistics(x)`` → 1-D array :math:`t(x)`</span>
+<span class="sd">- ``log_base_measure(x)`` → scalar :math:`\\log h(x)`</span>
 
-<span class="sd">    JAX (JIT-able)                   CPU (numpy/scipy)</span>
-<span class="sd">    ──────────────                   ─────────────────</span>
-<span class="sd">    _log_partition_from_theta        _log_partition_cpu</span>
-<span class="sd">    _grad_log_partition              _grad_log_partition_cpu</span>
-<span class="sd">    _hessian_log_partition           _hessian_log_partition_cpu</span>
+<span class="sd">**Log-Partition Triad**</span>
 
-<span class="sd">Tier 1 (_log_partition_from_theta) is abstract; all others have defaults.</span>
-<span class="sd">Tier 2 (JAX grad/hessian) defaults to jax.grad / jax.hessian; subclasses</span>
-<span class="sd">  override with analytical formulas when available.</span>
-<span class="sd">Tier 3 (CPU) defaults to wrapping the JAX versions; Bessel-dependent</span>
-<span class="sd">  distributions (GIG) override with native numpy/scipy implementations.</span>
+<span class="sd">Each subclass gets six derived classmethods, grouped as three pairs::</span>
 
-<span class="sd">Everything else is derived automatically:</span>
-<span class="sd">  log_partition()       = ψ(θ)</span>
-<span class="sd">  expectation_params()  = ∇ψ(θ)   via _grad_log_partition</span>
-<span class="sd">  fisher_information()  = ∇²ψ(θ)  via _hessian_log_partition</span>
-<span class="sd">  log_prob(x)           = log h(x) + t(x)·θ − ψ(θ)</span>
+<span class="sd">    JAX (JIT-able)                 CPU (numpy/scipy)</span>
+<span class="sd">    ─────────────────────────────  ─────────────────────────────</span>
+<span class="sd">    _log_partition_from_theta      _log_partition_cpu</span>
+<span class="sd">    _grad_log_partition            _grad_log_partition_cpu</span>
+<span class="sd">    _hessian_log_partition         _hessian_log_partition_cpu</span>
 
-<span class="sd">Constructors:</span>
-<span class="sd">  from_natural(theta)     → subclass instance</span>
-<span class="sd">  from_expectation(eta)   → solved via solve_bregman</span>
-<span class="sd">  fit_mle(X)              → from_expectation(mean t(X))</span>
+<span class="sd">Tier 1 (``_log_partition_from_theta``) is abstract; all others have defaults.</span>
+<span class="sd">Tier 2 defaults to ``jax.grad`` / ``jax.hessian``; subclasses override with</span>
+<span class="sd">analytical formulas when available.</span>
+<span class="sd">Tier 3 defaults to wrapping Tier 2; GIG overrides with native numpy/scipy.</span>
+
+<span class="sd">**Derived automatically:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta = \\nabla\\psi(\\theta), \\quad</span>
+<span class="sd">    I(\\theta) = \\nabla^2\\psi(\\theta), \\quad</span>
+<span class="sd">    \\log p(x \\mid \\theta) = \\log h(x) + \\theta^\\top t(x) - \\psi(\\theta)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -142,13 +139,13 @@
     <span class="nd">@staticmethod</span>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ψ(θ) — single source of truth for the log-partition function.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\psi(\theta)` — single source of truth for the log-partition function.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ExponentialFamily.natural_params">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.natural_params">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;θ from stored classical parameters.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\theta` from stored classical parameters.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.sufficient_statistics">
@@ -156,7 +153,7 @@
     <span class="nd">@staticmethod</span>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;t(x) for a *single* unbatched observation.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`t(x)` for a *single* unbatched observation.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.log_base_measure">
@@ -164,7 +161,7 @@
     <span class="nd">@staticmethod</span>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;log h(x) for a *single* unbatched observation.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log h(x)` for a *single* unbatched observation.&quot;&quot;&quot;</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -173,12 +170,12 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ). Default: jax.grad.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta)`. Default: ``jax.grad``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">)(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) = I(θ). Default: jax.hessian.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta) = I(\theta)`. Default: ``jax.hessian``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">)(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -187,19 +184,19 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ψ(θ) on CPU. Default: wraps JAX version.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\psi(\theta)` on CPU. Default: wraps JAX version.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)))</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) on CPU. Default: wraps JAX grad.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta)` on CPU. Default: wraps JAX grad.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)))</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition_cpu</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) on CPU. Default: wraps JAX hessian.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta)` on CPU. Default: wraps JAX hessian.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_hessian_log_partition</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)))</span>
 
@@ -210,18 +207,19 @@
 <div class="viewcode-block" id="ExponentialFamily.log_partition">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.log_partition">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;ψ(θ) at current parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\psi(\theta)` at current parameters.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.expectation_params">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.expectation_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">expectation_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;η = ∇ψ(θ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\eta = \nabla\psi(\theta)`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        backend : &#39;jax&#39; (default, JIT-able) or &#39;cpu&#39; (numpy/scipy)</span>
+<span class="sd">        backend : str</span>
+<span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (numpy/scipy).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
@@ -233,11 +231,12 @@
 <div class="viewcode-block" id="ExponentialFamily.fisher_information">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.fisher_information">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fisher_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;I(θ) = ∇²ψ(θ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`I(\theta) = \nabla^2\psi(\theta)`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        backend : &#39;jax&#39; (default, JIT-able) or &#39;cpu&#39; (numpy/scipy)</span>
+<span class="sd">        backend : str</span>
+<span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (numpy/scipy).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
@@ -249,7 +248,7 @@
 <div class="viewcode-block" id="ExponentialFamily.log_prob">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;log p(x|θ) = log h(x) + θᵀt(x) − ψ(θ), single observation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)`, single observation.&quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -281,7 +280,7 @@
 <div class="viewcode-block" id="ExponentialFamily.std">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.std">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">std</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Std[X] = √Var[X].&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Std}[X] = \sqrt{\mathrm{Var}[X]}`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="p">())</span></div>
 
 
@@ -319,10 +318,10 @@
         <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bregman divergence ψ(θ) − θ·η (conjugate dual).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta` (conjugate dual).</span>
 
-<span class="sd">        Minimising over θ yields ∇ψ(θ*) = η, i.e. the natural parameters</span>
-<span class="sd">        corresponding to expectation parameters η.</span>
+<span class="sd">        Minimising over :math:`\theta` yields :math:`\nabla\psi(\theta^*) = \eta`,</span>
+<span class="sd">        i.e. the natural parameters corresponding to expectation parameters :math:`\eta`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span></div>
 
@@ -341,17 +340,20 @@
         <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Construct from expectation parameters η by solving ∇ψ(θ) = η.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct from expectation parameters :math:`\eta` by solving :math:`\nabla\psi(\theta) = \eta`.</span>
 
-<span class="sd">        Minimises the Bregman divergence ψ(θ) − θ·η via solve_bregman.</span>
-<span class="sd">        Subclasses can override for closed-form inverses.</span>
+<span class="sd">        Minimises the Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta`</span>
+<span class="sd">        via ``solve_bregman``. Subclasses can override for closed-form inverses.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        backend : &#39;jax&#39; (default, JIT-able) or &#39;cpu&#39; (scipy, more robust)</span>
-<span class="sd">        method  : &#39;lbfgs&#39; (default), &#39;bfgs&#39;, or &#39;newton&#39;</span>
-<span class="sd">        verbose : 0 = silent, &gt;= 1 = print solver summary</span>
+<span class="sd">        backend : str</span>
+<span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (scipy, more robust).</span>
+<span class="sd">        method : str</span>
+<span class="sd">            ``&#39;lbfgs&#39;`` (default), ``&#39;bfgs&#39;``, or ``&#39;newton&#39;``.</span>
+<span class="sd">        verbose : int</span>
+<span class="sd">            0 = silent, &gt;= 1 = print solver summary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bregman</span>
 
@@ -397,18 +399,23 @@
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        MLE via exponential family identity: η̂ = mean_i t(xᵢ).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        MLE via exponential family identity: :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)`.</span>
 
-<span class="sd">        Batches over X using jax.vmap, then calls from_expectation(η̂).</span>
+<span class="sd">        Batches over ``X`` using ``jax.vmap``, then calls ``from_expectation``\ (:math:`\hat\eta`).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X : (n, ...) array of observations</span>
-<span class="sd">        theta0 : optional initial natural parameters θ₀ for the η→θ solver</span>
-<span class="sd">        maxiter : maximum iterations for the η→θ solver</span>
-<span class="sd">        tol : convergence tolerance for the η→θ solver</span>
-<span class="sd">        verbose : 0 = silent, &gt;= 1 = print solver summary</span>
+<span class="sd">        X : jax.Array</span>
+<span class="sd">            ``(n, ...)`` array of observations.</span>
+<span class="sd">        theta0 : jax.Array, optional</span>
+<span class="sd">            Initial natural parameters :math:`\theta_0` for the :math:`\eta\to\theta` solver.</span>
+<span class="sd">        maxiter : int</span>
+<span class="sd">            Maximum iterations for the :math:`\eta\to\theta` solver.</span>
+<span class="sd">        tol : float</span>
+<span class="sd">            Convergence tolerance for the :math:`\eta\to\theta` solver.</span>
+<span class="sd">        verbose : int</span>
+<span class="sd">            0 = silent, &gt;= 1 = print solver summary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">stats</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">sufficient_statistics</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>   <span class="c1"># (n, dim_t)</span>
@@ -428,17 +435,22 @@
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit using self as initialization (warm start).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit using self as initialization (warm start).</span>
 
-<span class="sd">        Computes η̂ = mean_i t(xᵢ) and solves from_expectation(η̂)</span>
-<span class="sd">        using ``self.natural_params()`` as the initial theta0.</span>
+<span class="sd">        Computes :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)` and solves</span>
+<span class="sd">        ``from_expectation``\ (:math:`\hat\eta`) using ``self.natural_params()``</span>
+<span class="sd">        as the initial :math:`\theta_0`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X : (n, ...) array of observations</span>
-<span class="sd">        maxiter : maximum iterations for the η→θ solver</span>
-<span class="sd">        tol : convergence tolerance for the η→θ solver</span>
-<span class="sd">        verbose : 0 = silent, &gt;= 1 = print solver summary</span>
+<span class="sd">        X : jax.Array</span>
+<span class="sd">            ``(n, ...)`` array of observations.</span>
+<span class="sd">        maxiter : int</span>
+<span class="sd">            Maximum iterations for the :math:`\eta\to\theta` solver.</span>
+<span class="sd">        tol : float</span>
+<span class="sd">            Convergence tolerance for the :math:`\eta\to\theta` solver.</span>
+<span class="sd">        verbose : int</span>
+<span class="sd">            0 = silent, &gt;= 1 = print solver summary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -457,11 +469,11 @@
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Moment-based initialisation from data.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Moment-based initialisation from data.</span>
 
-<span class="sd">        Computes η̂ = mean_i t(xᵢ) and inverts to get an initial model.</span>
-<span class="sd">        For distributions with closed-form ``from_expectation`` (Gamma,</span>
-<span class="sd">        InverseGamma, InverseGaussian), this gives the MLE directly.</span>
+<span class="sd">        Computes :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)` and inverts to get</span>
+<span class="sd">        an initial model. For distributions with closed-form ``from_expectation``</span>
+<span class="sd">        (Gamma, InverseGamma, InverseGaussian), this gives the MLE directly.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">stats</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">sufficient_statistics</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>

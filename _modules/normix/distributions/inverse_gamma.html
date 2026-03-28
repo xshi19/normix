@@ -77,15 +77,30 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">InverseGamma distribution as an exponential family.</span>
 
-<span class="sd">PDF: p(x|α,β) = β^α/Γ(α) · x^{-α-1} · exp(-β/x),  x &gt; 0</span>
+<span class="sd">.. math::</span>
 
-<span class="sd">Exponential family:</span>
-<span class="sd">  h(x)  = 1</span>
-<span class="sd">  t(x)  = [-1/x, log x]</span>
-<span class="sd">  θ     = [β, -(α+1)]        (θ₁ &gt; 0, θ₂ &lt; -1)</span>
-<span class="sd">  ψ(θ)  = log Γ(-θ₂-1) − (-θ₂-1) log(θ₁)</span>
-<span class="sd">         = log Γ(α) − α log β</span>
-<span class="sd">  η     = [-α/β,  log β − ψ(α)]   (E[-1/X], E[log X])</span>
+<span class="sd">    p(x \\mid \\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)}</span>
+<span class="sd">    x^{-\\alpha-1} e^{-\\beta/x}, \\quad x &gt; 0</span>
+
+<span class="sd">**Exponential family structure:**</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    h(x) = 1, \\quad t(x) = [-1/x,\\; \\log x]</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\theta = [\\beta,\\; -(\\alpha+1)], \\quad \\theta_1 &gt; 0,\\; \\theta_2 &lt; -1</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\psi(\\theta) = \\log\\Gamma(-\\theta_2-1) - (-\\theta_2-1)\\log\\theta_1</span>
+<span class="sd">    = \\log\\Gamma(\\alpha) - \\alpha\\log\\beta</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\eta = [-\\alpha/\\beta,\\; \\log\\beta - \\psi(\\alpha)]</span>
+<span class="sd">    \\quad (E[-1/X],\\; E[\\log X])</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -101,7 +116,7 @@
 <div class="viewcode-block" id="InverseGamma">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGamma</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;InverseGamma(α, β) — shape α &gt; 0, rate β &gt; 0.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;InverseGamma(:math:`\alpha`, :math:`\beta`) — shape :math:`\alpha &gt; 0`, rate :math:`\beta &gt; 0`.&quot;&quot;&quot;</span>
 
     <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -149,7 +164,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇ψ(θ) = [-α/β,  log β − digamma(α)].  Analytical.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla\psi(\theta) = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`. Analytical.&quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
@@ -159,11 +174,11 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;∇²ψ(θ) = [[α/β², 1/β], [1/β, trigamma(α)]].  Analytical.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\nabla^2\psi(\theta) = [[\alpha/\beta^2,\; 1/\beta],\; [1/\beta,\; \psi&#39;(\alpha)]]`. Analytical.</span>
 
-<span class="sd">        H[0,0] = ∂²ψ/∂θ₁²  = α/β²</span>
-<span class="sd">        H[0,1] = ∂²ψ/∂θ₁∂θ₂ = ∂/∂θ₂[-α/β] = 1/β  (∂α/∂θ₂ = −1)</span>
-<span class="sd">        H[1,1] = ∂²ψ/∂θ₂²  = trigamma(α)</span>
+<span class="sd">        :math:`H_{00} = \partial^2\psi/\partial\theta_1^2 = \alpha/\beta^2`,</span>
+<span class="sd">        :math:`H_{01} = 1/\beta` (:math:`\partial\alpha/\partial\theta_2 = -1`),</span>
+<span class="sd">        :math:`H_{11} = \psi&#39;(\alpha)` (trigamma).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -198,9 +213,10 @@
 <div class="viewcode-block" id="InverseGamma.rvs">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample n observations from InverseGamma(α, β) via JAX PRNG.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{InvGamma}(\alpha, \beta)` via JAX PRNG.</span>
 
-<span class="sd">        If X ~ Gamma(α, 1/β) then 1/X ~ InverseGamma(α, β).</span>
+<span class="sd">        Uses the relation: if :math:`X \sim \mathrm{Gamma}(\alpha, 1/\beta)` then</span>
+<span class="sd">        :math:`1/X \sim \mathrm{InvGamma}(\alpha, \beta)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="n">g</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -233,10 +249,11 @@
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InverseGamma&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        η = [-α/β, log β − ψ(α)].</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`.</span>
 
-<span class="sd">        β = α/(-η₁),  solve ψ(α) − log α = −η₂ − log(-η₁) via Newton.</span>
+<span class="sd">        :math:`\beta = \alpha / (-\eta_1)`;  solve</span>
+<span class="sd">        :math:`\psi(\alpha) - \log\alpha = -\eta_2 - \log(-\eta_1)` via Newton.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>

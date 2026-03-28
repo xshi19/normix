@@ -77,10 +77,13 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Variance Gamma (VG) distribution.</span>
 
-<span class="sd">Special case of GH with GIG → Gamma subordinator (b → 0, p &gt; 0).</span>
-<span class="sd">Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).</span>
+<span class="sd">Special case of GH with GIG → Gamma subordinator</span>
+<span class="sd">(:math:`b \\to 0`, :math:`p &gt; 0`).</span>
+<span class="sd">:math:`Y \\sim \\mathrm{Gamma}(\\alpha, \\beta)`,</span>
+<span class="sd">i.e. GIG(:math:`p = \\alpha`, :math:`a = 2\\beta`, :math:`b \\to 0`).</span>
 
-<span class="sd">Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of Gamma.</span>
+<span class="sd">Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),</span>
+<span class="sd">:math:`\\alpha` (shape), :math:`\\beta` (rate) of Gamma.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -101,10 +104,11 @@
 <div class="viewcode-block" id="JointVarianceGamma">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.JointVarianceGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointVarianceGamma</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ Gamma(α, β).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
+<span class="sd">    :math:`Y \sim \mathrm{Gamma}(\alpha, \beta)`.</span>
 
-<span class="sd">    GIG limit: p = α, a = 2β, b → 0.</span>
+<span class="sd">    GIG limit: :math:`p = \alpha`, :math:`a = 2\beta`, :math:`b \to 0`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>   <span class="c1"># Gamma shape</span>
@@ -132,12 +136,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Posterior Y|X=x ~ GIG(alpha-d/2, beta_post_a, beta_post_b)</span>
-<span class="sd">        where beta_post_a = 2*beta + γᵀΣ⁻¹γ,  beta_post_b = (x-μ)ᵀΣ⁻¹(x-μ)</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
 
-<span class="sd">        Actually for Gamma subordinator (b→0), the posterior is GIG:</span>
-<span class="sd">          p_post = alpha - d/2,  a_post = 2β + γᵀΣ⁻¹γ,  b_post = (x-μ)ᵀΣ⁻¹(x-μ)</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            p_{\mathrm{post}} = \alpha - d/2, \quad</span>
+<span class="sd">            a_{\mathrm{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
+<span class="sd">            b_{\mathrm{post}} = (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
@@ -166,9 +172,12 @@
 <div class="viewcode-block" id="JointVarianceGamma.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.JointVarianceGamma.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        θ = [α-1-d/2, -½μᵀΛμ, -(β+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]</span>
-<span class="sd">        (Gamma subordinator: p=α, a=2β, b→0).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\theta = [\alpha-1-d/2,\; -\tfrac{1}{2}\mu^\top\Lambda\mu,\;</span>
+<span class="sd">        -(\beta+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;</span>
+<span class="sd">        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`</span>
+
+<span class="sd">        (Gamma subordinator: :math:`p=\alpha`, :math:`a=2\beta`, :math:`b\to 0`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
@@ -180,8 +189,9 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi(\theta) = \tfrac{1}{2}\log|\Sigma| + \log\Gamma(\alpha) - \alpha\log\beta + \mu^\top\Lambda\gamma`.</span>
+
 <span class="sd">        Analytical — no Bessel function needed (Gamma subordinator).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
@@ -237,11 +247,17 @@
 <div class="viewcode-block" id="VarianceGamma.log_prob">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.VarianceGamma.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Marginal VG log-density (own formula, no GH delegation).</span>
 
-<span class="sd">        f(x) = C * (q/(2c))^{nu/2} * K_nu(sqrt(2qc)) * exp(linear)</span>
-<span class="sd">        where nu=alpha-d/2, c=beta+½γᵀΛγ, q=(x-μ)ᵀΛ(x-μ).</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            f(x) \propto \left(\frac{q}{2c}\right)^{\nu/2}</span>
+<span class="sd">            K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))</span>
+
+<span class="sd">        where :math:`\nu = \alpha - d/2`,</span>
+<span class="sd">        :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,</span>
+<span class="sd">        :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 

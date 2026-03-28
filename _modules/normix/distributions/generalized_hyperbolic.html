@@ -77,27 +77,27 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Generalized Hyperbolic (GH) distribution.</span>
 
-<span class="sd">Joint: X|Y ~ N(μ+γy, Σy), Y ~ GIG(p, a, b)</span>
-<span class="sd">Marginal: GH(μ, γ, Σ, p, a, b)</span>
+<span class="sd">Joint: :math:`X \\mid Y \\sim \\mathcal{N}(\\mu + \\gamma y, \\Sigma y)`,</span>
+<span class="sd">:math:`Y \\sim \\mathrm{GIG}(p, a, b)`.</span>
 
-<span class="sd">Marginal log-density (closed form via Bessel functions):</span>
-<span class="sd">  Let Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ</span>
-<span class="sd">  log f(x) = const</span>
-<span class="sd">    + (p - d/2) log(Q(x) + b) / 2 - p/2 log A</span>
-<span class="sd">    + log K_{p-d/2}(√(A(Q(x)+b)))</span>
-<span class="sd">    - log K_p(√(ab))</span>
-<span class="sd">    + (x-μ)ᵀΣ⁻¹γ · ... (skewness term)</span>
+<span class="sd">Marginal: :math:`\\mathrm{GH}(\\mu, \\gamma, \\Sigma, p, a, b)`.</span>
 
-<span class="sd">Full formula:</span>
-<span class="sd">  f(x) = C(p,a,b,Σ) · (A/(Q(x)+b))^{(p-d/2)/2}</span>
-<span class="sd">          · K_{p-d/2}(√(A(Q(x)+b)))</span>
-<span class="sd">          · exp(γᵀΣ⁻¹(x-μ))</span>
+<span class="sd">**Marginal log-density** (closed form via Bessel functions):</span>
 
-<span class="sd">  C = (2π)^{-d/2} |Σ|^{-1/2} (a/b)^{p/2} / (2 K_p(√(ab))) · A^{(d/2-p)/2} · ... </span>
-<span class="sd">      (see below for precise formula)</span>
+<span class="sd">Let :math:`Q(x) = (x-\\mu)^\\top \\Sigma^{-1}(x-\\mu)`,</span>
+<span class="sd">:math:`A = a + \\gamma^\\top \\Sigma^{-1} \\gamma`.</span>
 
-<span class="sd">Posterior Y|X = x ~ GIG(p - d/2, a + γᵀΣ⁻¹γ, b + (x-μ)ᵀΣ⁻¹(x-μ))</span>
-<span class="sd">→ conditional expectations computed from GIG.</span>
+<span class="sd">.. math::</span>
+
+<span class="sd">    \\log f(x) = -\\tfrac{d}{2}\\log(2\\pi) - \\tfrac{1}{2}\\log|\\Sigma|</span>
+<span class="sd">    + \\tfrac{p}{2}(\\log a - \\log b) - \\log K_p(\\sqrt{ab})</span>
+<span class="sd">    + \\tfrac{d/2-p}{2}\\log\\frac{A}{Q(x)+b}</span>
+<span class="sd">    + \\log K_{p-d/2}\\!\\left(\\sqrt{A(Q(x)+b)}\\right)</span>
+<span class="sd">    + \\gamma^\\top \\Sigma^{-1}(x - \\mu)</span>
+
+<span class="sd">**Posterior:** :math:`Y \\mid X = x \\sim</span>
+<span class="sd">\\mathrm{GIG}(p - d/2,\\; a + \\gamma^\\top\\Sigma^{-1}\\gamma,\\;</span>
+<span class="sd">b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -124,10 +124,12 @@
 <div class="viewcode-block" id="JointGeneralizedHyperbolic">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointGeneralizedHyperbolic</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Joint f(x,y): X|Y~N(μ+γy, Σy), Y~GIG(p,a,b).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
+<span class="sd">    :math:`Y \sim \mathrm{GIG}(p, a, b)`.</span>
 
-<span class="sd">    Stored: mu, gamma, L (from JointNormalMixture) + p, a, b (GIG parameters).</span>
+<span class="sd">    Stored: ``mu``, ``gamma``, ``L_Sigma`` (from :class:`JointNormalMixture`) +</span>
+<span class="sd">    ``p``, ``a``, ``b`` (GIG parameters).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -162,8 +164,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Posterior Y|X=x ~ GIG(p-d/2, a+γᵀΣ⁻¹γ, b+(x-μ)ᵀΣ⁻¹(x-μ)).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p-d/2,\;</span>
+<span class="sd">        a+\gamma^\top\Sigma^{-1}\gamma,\;</span>
+<span class="sd">        b+(x-\mu)^\top\Sigma^{-1}(x-\mu))`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
 
@@ -184,7 +188,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Posterior GIG (p, a, b) given quad-form scalars z2=‖L⁻¹(x-μ)‖², w2=‖L⁻¹γ‖².&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Posterior GIG :math:`(p, a, b)` given quad-form scalars :math:`z_2=\|L^{-1}(x-\mu)\|^2`, :math:`w_2=\|L^{-1}\gamma\|^2`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">z2</span><span class="p">)</span>
@@ -196,8 +200,10 @@
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        θ = [p-1-d/2, -(b+½μᵀΣ⁻¹μ), -(a+½γᵀΣ⁻¹γ), Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;</span>
+<span class="sd">        -(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;</span>
+<span class="sd">        \Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
@@ -209,11 +215,11 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ψ = ψ_GIG(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi = \psi_{\mathrm{GIG}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma`.</span>
 
-<span class="sd">        Recover p,a,b,μ,γ,Σ from theta.</span>
-<span class="sd">        Dimension d is inferred from len(θ) = 3 + 2d + d².</span>
+<span class="sd">        Recovers :math:`p, a, b, \mu, \gamma, \Sigma` from :math:`\theta`.</span>
+<span class="sd">        Dimension :math:`d` is inferred from :math:`|\theta| = 3 + 2d + d^2`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
@@ -263,12 +269,13 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">NormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Marginal Generalized Hyperbolic distribution f(x).</span>
+<span class="sd">    Marginal Generalized Hyperbolic distribution :math:`f(x)`.</span>
 
-<span class="sd">    Stores a JointGeneralizedHyperbolic. Provides:</span>
-<span class="sd">      log_prob(x) — closed-form Bessel expression</span>
-<span class="sd">      e_step, m_step — for EM fitting</span>
-<span class="sd">      fit(X, ...) — convenience class method</span>
+<span class="sd">    Stores a :class:`JointGeneralizedHyperbolic`. Provides:</span>
+
+<span class="sd">    - ``log_prob(x)`` — closed-form Bessel expression</span>
+<span class="sd">    - ``e_step``, ``m_step`` — for EM fitting</span>
+<span class="sd">    - ``fit(X, ...)`` — convenience fitting method</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">):</span>
@@ -290,16 +297,17 @@
 <div class="viewcode-block" id="GeneralizedHyperbolic.log_prob">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Marginal log f(x).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Marginal :math:`\log f(x)`.</span>
 
-<span class="sd">        f(x) ∝ ((Q(x)+b)/A)^{(p-d/2)/2} · K_{p-d/2}(√(A(Q(x)+b))) · exp(γᵀΣ⁻¹(x-μ))</span>
+<span class="sd">        .. math::</span>
 
-<span class="sd">        where Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ.</span>
+<span class="sd">            f(x) \propto \left(\frac{A}{Q(x)+b}\right)^{(d/2-p)/2}</span>
+<span class="sd">            K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)</span>
+<span class="sd">            \exp\!\left(\gamma^\top\Sigma^{-1}(x-\mu)\right)</span>
 
-<span class="sd">        Full normalizing constant:</span>
-<span class="sd">          C = (2π)^{-d/2} |Σ|^{-1/2} · (A/b)^{p/2} · A^{-d/4} · b^{d/4}</span>
-<span class="sd">              / K_p(√(ab)) · (some power)</span>
+<span class="sd">        where :math:`Q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,</span>
+<span class="sd">        :math:`A = a + \gamma^\top\Sigma^{-1}\gamma`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
