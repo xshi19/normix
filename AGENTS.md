@@ -53,6 +53,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | Migration status | `docs/plans/migration_plan.md` |
 | Bessel functions | `docs/ARCHITECTURE.md` § Bessel Functions |
 | GIG η→θ optimization | `docs/ARCHITECTURE.md` § GIG η→θ |
+| RVS generation (PINV, TDR) | `docs/ARCHITECTURE.md` § Random Variate Generation |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
 | Technical notes | `docs/tech_notes/` |
 | Git conventions | `.cursor/skills/git-conventions/` |

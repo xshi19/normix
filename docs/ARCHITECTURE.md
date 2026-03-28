@@ -12,6 +12,7 @@ normix/                     # JAX implementation
 │   ├── inverse_gamma.py                  # InverseGamma(α, β)
 │   ├── inverse_gaussian.py               # InverseGaussian(μ, λ)
 │   ├── generalized_inverse_gaussian.py   # GeneralizedInverseGaussian (primary), GIG (alias)
+│   ├── _gig_rvs.py                      # GIG Devroye TDR sampler + PINV wrappers
 │   ├── normal.py                         # MultivariateNormal(μ, L_Sigma)
 │   ├── variance_gamma.py                 # VarianceGamma / JointVarianceGamma
 │   ├── normal_inverse_gamma.py           # NormalInverseGamma / JointNormalInverseGamma
@@ -27,6 +28,7 @@ normix/                     # JAX implementation
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
+    ├── rvs.py               # Generic RVS: build_pinv_table, rvs_pinv
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
     └── validation.py        # moment validation, parameter printing (notebooks)
 ```
@@ -78,7 +80,7 @@ Everything else is derived automatically:
 - `pdf(x)` = `exp(log_prob(x))`
 - `cdf(x)` — analytical where available (Gamma, InverseGamma, InverseGaussian)
 - `mean()`, `var()`, `std()` — analytical formulas per distribution
-- `rvs(n, seed)` — numpy/scipy-based sampling (not JIT-able)
+- `rvs(n, seed)` — JAX-based sampling (Devroye TDR / PINV for GIG; JAX primitives for others)
 
 ### Three Parametrizations
 
@@ -176,6 +178,20 @@ The triad classmethods provide this automatically:
 
 When adding new distributions that call `log_kv`, override the Tier 3 CPU classmethods with implementations that use `log_kv(backend='cpu')` and numpy operations. Distributions that do not call `log_kv` inherit the default CPU wrappers (which call the JAX versions) at no additional cost.
 
+## Random Variate Generation (`utils/rvs.py`, `distributions/_gig_rvs.py`)
+
+Generic PINV (Polynomial-Interpolation-based Numerical Inversion) in `utils/rvs.py`:
+
+- `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)` — builds a quantile table on CPU from any univariate log-kernel. No normalising constant needed.
+- `rvs_pinv(key, u_grid, x_grid, n)` — samples via `jnp.interp`. Fully vectorised, GPU-friendly.
+
+GIG-specific sampling in `distributions/_gig_rvs.py`:
+
+- `gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
+- `gig_build_pinv_table(p, a, b)` — wraps generic PINV with GIG log-kernel.
+
+Neither method evaluates the Bessel normalising constant. See `docs/tech_notes/gig_rvs.md`.
+
 ## Numerical Constants (`utils/constants.py`)
 
 All shared numerical constants are defined in `utils/constants.py` and imported
@@ -219,6 +235,6 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | Document | Content |
 |---|---|
 | `docs/design/design.md` | Design rationale, architecture decisions |
-| `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization details |
+| `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks |
 | `docs/theory/` | Mathematical derivations (rst) |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
