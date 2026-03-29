@@ -1230,7 +1230,7 @@ provides-extras = ["dev", "scripts", "docs"]
 dev = [
     { name = "nbconvert", specifier = ">=7.17.0" },
     { name = "nbsphinx", specifier = ">=0.9.8" },
-    { name = "pandas", specifier = ">=3.0.0" },
+    { name = "pandas", specifier = ">=2.0.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "sphinx", specifier = ">=9.1.0" },
     { name = "sphinx-rtd-theme", specifier = ">=3.1.0" },
