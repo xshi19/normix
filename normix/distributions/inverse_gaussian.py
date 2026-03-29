@@ -1,15 +1,34 @@
 """
 Inverse Gaussian (Wald) distribution as an exponential family.
 
-PDF: f(x|μ,λ) = √(λ/(2π)) · x^{-3/2} · exp(−λ(x−μ)²/(2μ²x)),  x > 0
+.. math::
 
-Exponential family:
-  h(x)  = (2π)^{-1/2} · x^{-3/2}
-  t(x)  = [x, 1/x]
-  θ     = [−λ/(2μ²), −λ/2]   (θ₁ < 0, θ₂ < 0)
-  ψ(θ)  = ½log(2π) − ½log(−2θ₂) + √((−2θ₁)(−2θ₂))
-         (the ½log(2π) is absorbed into log h(x) = −½log(2π) − 3/2 log x)
-  η     = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]
+    f(x \\mid \\mu, \\lambda) = \\sqrt{\\frac{\\lambda}{2\\pi}}\\,
+    x^{-3/2} \\exp\\!\\left(-\\frac{\\lambda(x-\\mu)^2}{2\\mu^2 x}\\right),
+    \\quad x > 0
+
+**Exponential family structure:**
+
+.. math::
+
+    h(x) = (2\\pi)^{-1/2} x^{-3/2}, \\quad t(x) = [x,\\; 1/x]
+
+.. math::
+
+    \\theta = \\Bigl[-\\tfrac{\\lambda}{2\\mu^2},\\; -\\tfrac{\\lambda}{2}\\Bigr],
+    \\quad \\theta_1 < 0,\\; \\theta_2 < 0
+
+.. math::
+
+    \\psi(\\theta) = -\\tfrac{1}{2}\\log(-2\\theta_2)
+    + \\sqrt{(-2\\theta_1)(-2\\theta_2)}
+
+    \\bigl(\\tfrac{1}{2}\\log(2\\pi)\\ \\text{is absorbed into}\\
+    \\log h(x) = -\\tfrac{1}{2}\\log(2\\pi) - \\tfrac{3}{2}\\log x\\bigr)
+
+.. math::
+
+    \\eta = [E[X],\\; E[1/X]] = [\\mu,\\; 1/\\mu + 1/\\lambda]
 """
 from __future__ import annotations
 
@@ -23,7 +42,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 class InverseGaussian(ExponentialFamily):
-    """InverseGaussian(μ, λ) — mean μ > 0, shape λ > 0."""
+    r"""InverseGaussian(:math:`\mu`, :math:`\lambda`) — mean :math:`\mu > 0`, shape :math:`\lambda > 0`."""
 
     mu: jax.Array
     lam: jax.Array
@@ -68,7 +87,7 @@ class InverseGaussian(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇ψ(θ) = [E[X], E[1/X]] = [√(b/a), 1/b + √(a/b)].  Analytical."""
+        r""":math:`\nabla\psi(\theta) = [E[X],\; E[1/X]] = [\sqrt{b/a},\; 1/b + \sqrt{a/b}]`. Analytical."""
         a = -2.0 * theta[0]   # λ/μ²
         b = jnp.maximum(-2.0 * theta[1], LOG_EPS)   # λ
         sqrt_ab = jnp.sqrt(jnp.maximum(a * b, 0.0))
@@ -79,12 +98,18 @@ class InverseGaussian(ExponentialFamily):
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇²ψ(θ).  Analytical.
+        r""":math:`\nabla^2\psi(\theta)`. Analytical.
 
-        H = [[(b/a)^{1/2}/a,    -1/√(ab)         ],
-             [-1/√(ab),          2/b² + √a/b^{3/2}]]
+        .. math::
 
-        In terms of μ, λ:  H = [[μ³/λ, -μ/λ], [-μ/λ, 2/λ² + 1/(μλ)]]
+            H = \begin{pmatrix}
+                (b/a)^{1/2}/a & -1/\sqrt{ab} \\
+                -1/\sqrt{ab}  & 2/b^2 + \sqrt{a}/b^{3/2}
+            \end{pmatrix}
+            = \begin{pmatrix}
+                \mu^3/\lambda & -\mu/\lambda \\
+                -\mu/\lambda  & 2/\lambda^2 + 1/(\mu\lambda)
+            \end{pmatrix}
         """
         a = jnp.maximum(-2.0 * theta[0], LOG_EPS)   # λ/μ²
         b = jnp.maximum(-2.0 * theta[1], LOG_EPS)   # λ
@@ -114,16 +139,17 @@ class InverseGaussian(ExponentialFamily):
                 * jax.scipy.stats.norm.cdf(-t2))
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
-        """Sample n observations from InverseGaussian(μ, λ) via JAX PRNG.
+        r"""Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.
 
-        Uses the algorithm from Michael, Schucany & Haas (1976) as described
-        in https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution:
-          1. ν ~ N(0,1), y = ν²
-          2. x = μ + μ²y/(2λ) − (μ/(2λ))√(4μλy + μ²y²)
-          3. z ~ U(0,1); return x if z ≤ μ/(μ+x), else μ²/x
+        Uses the algorithm from Michael, Schucany & Haas (1976):
 
-        Uses jnp.where (not jax.lax.cond) for vectorized branching over
-        the full sample array in a single pass.
+        1. :math:`\nu \sim \mathcal{N}(0,1)`, :math:`y = \nu^2`
+        2. :math:`x = \mu + \frac{\mu^2 y}{2\lambda}
+           - \frac{\mu}{2\lambda}\sqrt{4\mu\lambda y + \mu^2 y^2}`
+        3. :math:`z \sim \mathrm{Uniform}(0,1)`; return :math:`x` if
+           :math:`z \le \mu/(\mu+x)`, else :math:`\mu^2/x`
+
+        Uses ``jnp.where`` for vectorized branching over the full sample array.
         """
         key = jax.random.PRNGKey(seed)
         key1, key2 = jax.random.split(key)
@@ -160,9 +186,10 @@ class InverseGaussian(ExponentialFamily):
         tol: float = 1e-12,
         **kwargs,
     ) -> "InverseGaussian":
-        """
-        Closed-form from η = [E[X], E[1/X]] = [μ, 1/μ + 1/λ]:
-          μ = η₁,   1/λ = η₂ - 1/η₁  →  λ = 1/(η₂ - 1/η₁)
+        r"""
+        Closed-form from :math:`\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]`:
+
+        :math:`\mu = \eta_1`, :math:`\lambda = 1/(\eta_2 - 1/\eta_1)`.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         mu = eta[0]

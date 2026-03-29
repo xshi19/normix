@@ -1,27 +1,27 @@
 """
 Generalized Hyperbolic (GH) distribution.
 
-Joint: X|Y ~ N(μ+γy, Σy), Y ~ GIG(p, a, b)
-Marginal: GH(μ, γ, Σ, p, a, b)
+Joint: :math:`X \\mid Y \\sim \\mathcal{N}(\\mu + \\gamma y, \\Sigma y)`,
+:math:`Y \\sim \\mathrm{GIG}(p, a, b)`.
 
-Marginal log-density (closed form via Bessel functions):
-  Let Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ
-  log f(x) = const
-    + (p - d/2) log(Q(x) + b) / 2 - p/2 log A
-    + log K_{p-d/2}(√(A(Q(x)+b)))
-    - log K_p(√(ab))
-    + (x-μ)ᵀΣ⁻¹γ · ... (skewness term)
+Marginal: :math:`\\mathrm{GH}(\\mu, \\gamma, \\Sigma, p, a, b)`.
 
-Full formula:
-  f(x) = C(p,a,b,Σ) · (A/(Q(x)+b))^{(p-d/2)/2}
-          · K_{p-d/2}(√(A(Q(x)+b)))
-          · exp(γᵀΣ⁻¹(x-μ))
+**Marginal log-density** (closed form via Bessel functions):
 
-  C = (2π)^{-d/2} |Σ|^{-1/2} (a/b)^{p/2} / (2 K_p(√(ab))) · A^{(d/2-p)/2} · ... 
-      (see below for precise formula)
+Let :math:`Q(x) = (x-\\mu)^\\top \\Sigma^{-1}(x-\\mu)`,
+:math:`A = a + \\gamma^\\top \\Sigma^{-1} \\gamma`.
 
-Posterior Y|X = x ~ GIG(p - d/2, a + γᵀΣ⁻¹γ, b + (x-μ)ᵀΣ⁻¹(x-μ))
-→ conditional expectations computed from GIG.
+.. math::
+
+    \\log f(x) = -\\tfrac{d}{2}\\log(2\\pi) - \\tfrac{1}{2}\\log|\\Sigma|
+    + \\tfrac{p}{2}(\\log a - \\log b) - \\log K_p(\\sqrt{ab})
+    + \\tfrac{d/2-p}{2}\\log\\frac{A}{Q(x)+b}
+    + \\log K_{p-d/2}\\!\\left(\\sqrt{A(Q(x)+b)}\\right)
+    + \\gamma^\\top \\Sigma^{-1}(x - \\mu)
+
+**Posterior:** :math:`Y \\mid X = x \\sim
+\\mathrm{GIG}(p - d/2,\\; a + \\gamma^\\top\\Sigma^{-1}\\gamma,\\;
+b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 """
 from __future__ import annotations
 
@@ -46,10 +46,12 @@ from normix.utils.constants import LOG_EPS
 # ============================================================================
 
 class JointGeneralizedHyperbolic(JointNormalMixture):
-    """
-    Joint f(x,y): X|Y~N(μ+γy, Σy), Y~GIG(p,a,b).
+    r"""
+    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,
+    :math:`Y \sim \mathrm{GIG}(p, a, b)`.
 
-    Stored: mu, gamma, L (from JointNormalMixture) + p, a, b (GIG parameters).
+    Stored: ``mu``, ``gamma``, ``L_Sigma`` (from :class:`JointNormalMixture`) +
+    ``p``, ``a``, ``b`` (GIG parameters).
     """
 
     p: jax.Array
@@ -81,8 +83,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        """
-        Posterior Y|X=x ~ GIG(p-d/2, a+γᵀΣ⁻¹γ, b+(x-μ)ᵀΣ⁻¹(x-μ)).
+        r"""
+        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p-d/2,\;
+        a+\gamma^\top\Sigma^{-1}\gamma,\;
+        b+(x-\mu)^\top\Sigma^{-1}(x-\mu))`.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
 
@@ -103,7 +107,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     def _posterior_gig_params(
         self, z2: jax.Array, w2: jax.Array
     ):
-        """Posterior GIG (p, a, b) given quad-form scalars z2=‖L⁻¹(x-μ)‖², w2=‖L⁻¹γ‖²."""
+        r"""Posterior GIG :math:`(p, a, b)` given quad-form scalars :math:`z_2=\|L^{-1}(x-\mu)\|^2`, :math:`w_2=\|L^{-1}\gamma\|^2`."""
         return (self.p - self.d / 2.0,
                 self.a + w2,
                 self.b + z2)
@@ -113,8 +117,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # ------------------------------------------------------------------
 
     def natural_params(self) -> jax.Array:
-        """
-        θ = [p-1-d/2, -(b+½μᵀΣ⁻¹μ), -(a+½γᵀΣ⁻¹γ), Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]
+        r"""
+        :math:`\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
+        -(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
+        \Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`
         """
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
         return self._assemble_natural_params(
@@ -125,11 +131,11 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """
-        ψ = ψ_GIG(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ
+        r"""
+        :math:`\psi = \psi_{\mathrm{GIG}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma`.
 
-        Recover p,a,b,μ,γ,Σ from theta.
-        Dimension d is inferred from len(θ) = 3 + 2d + d².
+        Recovers :math:`p, a, b, \mu, \gamma, \Sigma` from :math:`\theta`.
+        Dimension :math:`d` is inferred from :math:`|\theta| = 3 + 2d + d^2`.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         from normix.mixtures.joint import JointNormalMixture
@@ -170,12 +176,13 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
 class GeneralizedHyperbolic(NormalMixture):
     """
-    Marginal Generalized Hyperbolic distribution f(x).
+    Marginal Generalized Hyperbolic distribution :math:`f(x)`.
 
-    Stores a JointGeneralizedHyperbolic. Provides:
-      log_prob(x) — closed-form Bessel expression
-      e_step, m_step — for EM fitting
-      fit(X, ...) — convenience class method
+    Stores a :class:`JointGeneralizedHyperbolic`. Provides:
+
+    - ``log_prob(x)`` — closed-form Bessel expression
+    - ``e_step``, ``m_step`` — for EM fitting
+    - ``fit(X, ...)`` — convenience fitting method
     """
 
     def __init__(self, joint: JointGeneralizedHyperbolic):
@@ -192,16 +199,17 @@ class GeneralizedHyperbolic(NormalMixture):
     # ------------------------------------------------------------------
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        """
-        Marginal log f(x).
+        r"""
+        Marginal :math:`\log f(x)`.
 
-        f(x) ∝ ((Q(x)+b)/A)^{(p-d/2)/2} · K_{p-d/2}(√(A(Q(x)+b))) · exp(γᵀΣ⁻¹(x-μ))
+        .. math::
 
-        where Q(x) = (x-μ)ᵀΣ⁻¹(x-μ),  A = a + γᵀΣ⁻¹γ.
+            f(x) \propto \left(\frac{A}{Q(x)+b}\right)^{(d/2-p)/2}
+            K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)
+            \exp\!\left(\gamma^\top\Sigma^{-1}(x-\mu)\right)
 
-        Full normalizing constant:
-          C = (2π)^{-d/2} |Σ|^{-1/2} · (A/b)^{p/2} · A^{-d/4} · b^{d/4}
-              / K_p(√(ab)) · (some power)
+        where :math:`Q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
+        :math:`A = a + \gamma^\top\Sigma^{-1}\gamma`.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
         j = self._joint

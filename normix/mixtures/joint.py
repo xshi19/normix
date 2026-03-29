@@ -1,37 +1,66 @@
 """
 JointNormalMixture — abstract exponential family for normal variance-mean mixtures.
 
-Joint distribution f(x,y):
-  X|Y ~ N(μ + γy, Σy)
-  Y   ~ subordinator (GIG, Gamma, InverseGamma, InverseGaussian)
+Joint distribution :math:`f(x, y)`:
 
-Sufficient statistics:
-  t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]
+.. math::
 
-Natural parameters:
-  θ₁ = p_sub - 1 - d/2          (GIG p; scalar, depends on subordinator)
-  θ₂ = -(b_sub + ½μᵀΣ⁻¹μ)       < 0
-  θ₃ = -(a_sub + ½γᵀΣ⁻¹γ)       < 0
-  θ₄ = Σ⁻¹γ                      (d-vector)
-  θ₅ = Σ⁻¹μ                      (d-vector)
-  θ₆ = -½vec(Σ⁻¹)                (d²-vector)
+    X \\mid Y \\sim \\mathcal{N}(\\mu + \\gamma y,\\; \\Sigma y), \\quad
+    Y \\sim \\text{subordinator (GIG, Gamma, InvGamma, InvGaussian)}
 
-Log partition:
-  ψ = ψ_sub(p, a, b) + ½log|Σ| + μᵀΣ⁻¹γ
+**Sufficient statistics:**
 
-Expectation parameters (EM E-step quantities):
-  η₁ = E[log Y]
-  η₂ = E[1/Y]
-  η₃ = E[Y]
-  η₄ = E[X]      = μ + γ E[Y]
-  η₅ = E[X/Y]    = μ E[1/Y] + γ
-  η₆ = E[XXᵀ/Y]  = Σ + μμᵀ E[1/Y] + γγᵀ E[Y] + μγᵀ + γμᵀ
+.. math::
 
-EM M-step closed-form (from η):
-  Let D = 1 - E[1/Y]·E[Y]
-  μ = (E[X] - E[Y]·E[X/Y]) / D
-  γ = (E[X/Y] - E[1/Y]·E[X]) / D
-  Σ = E[XXᵀ/Y] - E[X/Y]μᵀ - μE[X/Y]ᵀ + E[1/Y]μμᵀ - E[Y]γγᵀ
+    t(x, y) = [\\log y,\\; 1/y,\\; y,\\; x,\\; x/y,\\; \\mathrm{vec}(xx^\\top/y)]
+
+**Natural parameters:**
+
+.. math::
+
+    \\theta_1 = p_{\\mathrm{sub}} - 1 - d/2, \\quad
+    \\theta_2 = -(b_{\\mathrm{sub}} + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) < 0
+
+.. math::
+
+    \\theta_3 = -(a_{\\mathrm{sub}} + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) < 0, \\quad
+    \\theta_4 = \\Sigma^{-1}\\gamma, \\quad
+    \\theta_5 = \\Sigma^{-1}\\mu, \\quad
+    \\theta_6 = -\\tfrac{1}{2}\\mathrm{vec}(\\Sigma^{-1})
+
+**Log-partition:**
+
+.. math::
+
+    \\psi = \\psi_{\\mathrm{sub}}(p, a, b) + \\tfrac{1}{2}\\log|\\Sigma| + \\mu^\\top\\Sigma^{-1}\\gamma
+
+**Expectation parameters (EM E-step quantities):**
+
+.. math::
+
+    \\eta_1 = E[\\log Y], \\quad \\eta_2 = E[1/Y], \\quad \\eta_3 = E[Y]
+
+.. math::
+
+    \\eta_4 = E[X] = \\mu + \\gamma E[Y], \\quad
+    \\eta_5 = E[X/Y] = \\mu E[1/Y] + \\gamma
+
+.. math::
+
+    \\eta_6 = E[XX^\\top/Y] = \\Sigma + \\mu\\mu^\\top E[1/Y]
+    + \\gamma\\gamma^\\top E[Y] + \\mu\\gamma^\\top + \\gamma\\mu^\\top
+
+**EM M-step closed-form** (let :math:`D = 1 - E[1/Y] \\cdot E[Y]`):
+
+.. math::
+
+    \\mu = \\frac{E[X] - E[Y] E[X/Y]}{D}, \\quad
+    \\gamma = \\frac{E[X/Y] - E[1/Y] E[X]}{D}
+
+.. math::
+
+    \\Sigma = E[XX^\\top/Y] - E[X/Y]\\mu^\\top - \\mu E[X/Y]^\\top
+    + E[1/Y]\\mu\\mu^\\top - E[Y]\\gamma\\gamma^\\top
 """
 from __future__ import annotations
 
@@ -51,10 +80,10 @@ from normix.utils.constants import LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
 
 
 class JointNormalMixture(ExponentialFamily):
-    """
-    Abstract joint distribution f(x, y) for normal variance-mean mixtures.
+    r"""
+    Abstract joint distribution :math:`f(x, y)` for normal variance-mean mixtures.
 
-    Stored: mu (d,), gamma (d,), L_Sigma (d,d lower Cholesky of Σ)
+    Stored: ``mu`` (d,), ``gamma`` (d,), ``L_Sigma`` (d×d lower Cholesky of :math:`\Sigma`).
     Subordinator parameters defined by concrete subclasses.
     """
 
@@ -89,11 +118,11 @@ class JointNormalMixture(ExponentialFamily):
         return int(self.mu.shape[0])
 
     def sigma(self) -> jax.Array:
-        """Covariance matrix Σ = L_Sigma L_Sigmaᵀ."""
+        r"""Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top`."""
         return self.L_Sigma @ self.L_Sigma.T
 
     def log_det_sigma(self) -> jax.Array:
-        """log|Σ| = 2 Σᵢ log Lᵢᵢ, via Cholesky diagonal."""
+        r""":math:`\log|\Sigma| = 2\sum_i \log L_{ii}`, via Cholesky diagonal."""
         return 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
 
     # ------------------------------------------------------------------
@@ -102,12 +131,14 @@ class JointNormalMixture(ExponentialFamily):
 
     def rvs(self, n: int, seed: int = 42) -> Tuple[jax.Array, jax.Array]:
         """
-        Sample (X, Y) from the joint distribution via JAX PRNG.
+        Sample :math:`(X, Y)` from the joint distribution via JAX PRNG.
 
         Returns
         -------
-        X : (n, d) jax.Array
-        Y : (n,)   jax.Array
+        X : jax.Array
+            Shape ``(n, d)``.
+        Y : jax.Array
+            Shape ``(n,)``.
         """
         Y = self.subordinator().rvs(n, seed)
         key = jax.random.PRNGKey(seed + 1)
@@ -123,14 +154,16 @@ class JointNormalMixture(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def log_prob_joint(self, x: jax.Array, y: jax.Array) -> jax.Array:
-        """
-        log f(x, y) = log f(x|y) + log f_Y(y).
+        r"""
+        :math:`\log f(x, y) = \log f(x\mid y) + \log f_Y(y)`.
 
-        log f(x|y) = -d/2 log(2π) - ½ log|Σy| - ½(x-μ-γy)ᵀ(Σy)⁻¹(x-μ-γy)
-                   = -d/2 log(2π) - ½ log|Σ| - d/2 log y
-                     - 1/(2y) ‖L⁻¹(x-μ)‖² + γᵀΣ⁻¹(x-μ) - y/2 γᵀΣ⁻¹γ
+        .. math::
 
-        log f_Y(y) from subordinator.
+            \log f(x\mid y) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma|
+            - \tfrac{d}{2}\log y - \frac{1}{2y}\|L^{-1}(x-\mu)\|^2
+            + \gamma^\top\Sigma^{-1}(x-\mu) - \tfrac{y}{2}\gamma^\top\Sigma^{-1}\gamma
+
+        :math:`\log f_Y(y)` from subordinator.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
         y = jnp.asarray(y, dtype=jnp.float64)
@@ -161,16 +194,18 @@ class JointNormalMixture(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def conditional_expectations(self, x: jax.Array) -> Dict[str, jax.Array]:
-        """
-        Compute E[g(Y)|X=x] for EM E-step.
+        r"""
+        Compute :math:`E[g(Y)\mid X=x]` for EM E-step.
 
-        The posterior Y|X follows a GIG-like distribution with parameters:
-          p_post = p_eff - d/2
-          a_post = a_eff + γᵀΣ⁻¹γ
-          b_post = b_eff + (x-μ)ᵀΣ⁻¹(x-μ)
+        The posterior :math:`Y\mid X` follows a GIG-like distribution:
 
-        Returns dict with keys: E_log_Y, E_inv_Y, E_Y.
-        These are then used in the M-step.
+        .. math::
+
+            p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad
+            a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad
+            b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)
+
+        Returns dict with keys: ``E_log_Y``, ``E_inv_Y``, ``E_Y``.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
         return self._compute_posterior_expectations(x)
@@ -186,9 +221,9 @@ class JointNormalMixture(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def _quad_forms(self, x: jax.Array):
-        """
-        Compute z = L_Sigma⁻¹(x-μ), w = L_Sigma⁻¹γ.
-        Returns z, w, ‖z‖², ‖w‖², zᵀw.
+        r"""
+        Compute :math:`z = L_\Sigma^{-1}(x-\mu)`, :math:`w = L_\Sigma^{-1}\gamma`.
+        Returns :math:`z, w, \|z\|^2, \|w\|^2, z^\top w`.
         """
         r = x - self.mu
         z = jax.scipy.linalg.solve_triangular(self.L_Sigma, r, lower=True)
@@ -200,11 +235,11 @@ class JointNormalMixture(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def _precision_quantities(self):
-        """
+        r"""
         Cholesky-based precision decomposition shared by all Joint subclasses.
 
-        Returns (Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda)
-        where Lambda = Σ⁻¹, Lambda_x = Σ⁻¹x, x_quad = ½ xᵀΣ⁻¹x.
+        Returns :math:`(\Lambda\mu, \Lambda\gamma, \mu_{\mathrm{quad}}, \gamma_{\mathrm{quad}}, \Lambda)`
+        where :math:`\Lambda = \Sigma^{-1}` and :math:`x_{\mathrm{quad}} = \tfrac{1}{2}x^\top\Sigma^{-1}x`.
         """
         d = self.d
         z_mu = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
@@ -221,10 +256,11 @@ class JointNormalMixture(ExponentialFamily):
     def _assemble_natural_params(
         self, theta_1: jax.Array, theta_2: jax.Array, theta_3: jax.Array,
     ) -> jax.Array:
-        """
-        Assemble the full θ vector from scalar θ₁, θ₂, θ₃ and shared Cholesky quantities.
+        r"""
+        Assemble the full :math:`\theta` vector from scalars :math:`\theta_1, \theta_2, \theta_3`
+        and shared Cholesky quantities.
 
-        θ = [θ₁, θ₂, θ₃, Σ⁻¹γ, Σ⁻¹μ, -½vec(Σ⁻¹)]
+        :math:`\theta = [\theta_1, \theta_2, \theta_3, \Sigma^{-1}\gamma, \Sigma^{-1}\mu, -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`
         """
         Lambda_mu, Lambda_gamma, _, _, Lambda = self._precision_quantities()
         return jnp.concatenate([
@@ -280,9 +316,10 @@ class JointNormalMixture(ExponentialFamily):
 
     @staticmethod
     def sufficient_statistics(xy: jax.Array) -> jax.Array:
-        """
-        t(x,y) = [log y, 1/y, y, x, x/y, vec(xxᵀ/y)]
-        Input: flat vector [x..., y] where x is d-dimensional.
+        r"""
+        :math:`t(x,y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]`.
+
+        Input: flat vector :math:`[x_1,\ldots,x_d, y]`.
         """
         d = xy.shape[0] - 1
         x = xy[:d]
@@ -316,10 +353,10 @@ class JointNormalMixture(ExponentialFamily):
         E_inv_Y: jax.Array,
         E_Y: jax.Array,
     ):
-        """
-        Closed-form M-step for μ, γ, Σ from expectation parameters.
+        r"""
+        Closed-form M-step for :math:`\mu, \gamma, \Sigma` from expectation parameters.
 
-        Returns (mu_new, gamma_new, L_new).
+        Returns ``(mu_new, gamma_new, L_new)``.
         """
         D = 1.0 - E_inv_Y * E_Y
 

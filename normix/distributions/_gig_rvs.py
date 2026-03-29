@@ -4,13 +4,14 @@ JAX-based random variate generation for the Generalized Inverse Gaussian.
 Two methods, neither requires Bessel function evaluation:
 
 1. **devroye** — Transformed density rejection (TDR) with log-concavity.
-   Works in w = log(x) where the GIG log-kernel g(w) = p·w − (a·eʷ + b·e⁻ʷ)/2
-   is strictly concave.  A three-piece hat (tangent lines at mode ± σ joined by
+   Works in :math:`w = \\log(x)` where the GIG log-kernel
+   :math:`g(w) = pw - (a e^w + b e^{-w})/2` is strictly concave.
+   A three-piece hat (tangent lines at mode :math:`\\pm\\sigma` joined by
    a flat cap) gives ≈ 80–90 % acceptance.  All proposals generated in parallel
    — no ``while_loop``, GPU-friendly.
 
 2. **pinv** — Numerical inverse CDF via the generic ``utils.rvs`` module.
-   Builds the quantile function F⁻¹ on CPU using the GIG log-kernel (no
+   Builds the quantile function :math:`F^{-1}` on CPU using the GIG log-kernel (no
    Bessel needed), then samples via ``jnp.interp``.
 """
 from __future__ import annotations
@@ -33,7 +34,7 @@ _MAX_REJECT_ROUNDS = 20
 # ---------------------------------------------------------------------------
 
 def _tdr_setup(p, a, b):
-    """Compute the three-piece TDR envelope for g(w) = p·w − (a·eʷ + b·e⁻ʷ)/2.
+    r"""Compute the three-piece TDR envelope for :math:`g(w) = pw - (a e^w + b e^{-w})/2`.
 
     Returns a dict of envelope constants (all JAX scalars).
     """
@@ -67,14 +68,14 @@ def _tdr_setup(p, a, b):
 
 
 def gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
-    """Sample *n* GIG(p, a, b) variates via transformed density rejection.
+    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via transformed density rejection.
 
-    The GIG density in w = log(x) is h(w) = exp(g(w)) where
-    g(w) = p·w − (a·eʷ + b·e⁻ʷ)/2 is strictly concave.
+    The GIG density in :math:`w = \log(x)` is :math:`h(w) = \exp(g(w))` where
+    :math:`g(w) = pw - (a e^w + b e^{-w})/2` is strictly concave.
 
-    Envelope: three-piece hat from tangent lines at mode ± σ (flat cap
+    Envelope: three-piece hat from tangent lines at mode :math:`\pm\sigma` (flat cap
     at the mode value, exponential tails from tangent lines).
-    Acceptance rate ≈ 80–90 % for typical parameters.
+    Acceptance rate ≈ 80–90% for typical parameters.
 
     All ``_MAX_REJECT_ROUNDS × n`` proposals are generated in a single
     batch — no ``while_loop`` or ``fori_loop``, fully GPU-parallel.

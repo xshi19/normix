@@ -1,11 +1,12 @@
 """
-NormalMixture — marginal f(x) = ∫ f(x,y) dy.
+NormalMixture — marginal :math:`f(x) = \\int_0^\\infty f(x,y)\\,dy`.
 
-Owns a JointNormalMixture. Provides:
-  log_prob(x)  — closed-form marginal log-density
-  e_step(X)    — jax.vmap over conditional_expectations
-  m_step(X, expectations) — returns new NormalMixture
-  fit(X, ...)  — convenience EM fitting with multi-start
+Owns a :class:`~normix.mixtures.joint.JointNormalMixture`. Provides:
+
+- ``log_prob(x)`` — closed-form marginal log-density
+- ``e_step(X)`` — :func:`jax.vmap` over conditional expectations
+- ``m_step(X, expectations)`` — returns new :class:`NormalMixture`
+- ``fit(X, ...)`` — convenience EM fitting with multi-start
 """
 from __future__ import annotations
 
@@ -23,10 +24,10 @@ from normix.utils.constants import SIGMA_INIT_REG
 
 
 class NormalMixture(eqx.Module):
-    """
-    Marginal f(x) = ∫₀^∞ f(x,y) dy.
+    r"""
+    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy`.
 
-    Not an exponential family. Owns a JointNormalMixture (which is).
+    Not an exponential family. Owns a :class:`~normix.mixtures.joint.JointNormalMixture` (which is).
     """
 
     _joint: "JointNormalMixture"  # type: ignore[name-defined]
@@ -54,13 +55,13 @@ class NormalMixture(eqx.Module):
         return jnp.exp(self.log_prob(x))
 
     def mean(self) -> jax.Array:
-        """E[X] = μ + γ E[Y]."""
+        r""":math:`E[X] = \mu + \gamma E[Y]`."""
         j = self._joint
         E_Y = j.subordinator().mean()
         return j.mu + j.gamma * E_Y
 
     def cov(self) -> jax.Array:
-        """Cov[X] = E[Y] Σ + Var[Y] γγᵀ."""
+        r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`."""
         j = self._joint
         E_Y = j.subordinator().mean()
         Var_Y = j.subordinator().var()
@@ -72,15 +73,18 @@ class NormalMixture(eqx.Module):
         return X
 
     def e_step(self, X: jax.Array, backend: str = 'jax') -> Dict[str, jax.Array]:
-        """
-        E-step: compute conditional expectations E[g(Y)|X=xᵢ] for each i.
+        r"""
+        E-step: compute conditional expectations :math:`E[g(Y)\mid X=x_i]` for each :math:`i`.
 
-        Returns dict of arrays with shape (n, ...) for each expectation.
+        Returns dict of arrays with shape ``(n, ...)`` for each expectation.
 
-        backend='jax' (default): jax.vmap over conditional_expectations.
-            JIT-able, differentiable.
-        backend='cpu': quad forms in JAX (vmapped) + GIG Bessel on CPU.
-            Faster for large N; not JIT-able.
+        Parameters
+        ----------
+        backend : str
+            ``'jax'`` (default): ``jax.vmap`` over ``conditional_expectations``. JIT-able.
+
+            ``'cpu'``: quad forms in JAX (vmapped) + GIG Bessel on CPU.
+            Faster for large :math:`N`; not JIT-able.
         """
         if backend == 'cpu':
             return self._e_step_cpu(X)
@@ -177,11 +181,12 @@ class NormalMixture(eqx.Module):
     # ------------------------------------------------------------------
 
     def regularize_det_sigma_one(self) -> "NormalMixture":
-        """
-        Enforce |Σ| = 1 by rescaling.
+        r"""
+        Enforce :math:`|\Sigma| = 1` by rescaling.
 
-        Σ → Σ/s, γ → γ/s, subordinator params scaled via _scale_subordinator.
-        s = det(Σ)^{1/d}.
+        :math:`\Sigma \to \Sigma/s`, :math:`\gamma \to \gamma/s`,
+        subordinator params scaled via ``_build_rescaled``.
+        :math:`s = \det(\Sigma)^{1/d}`.
         """
         j = self._joint
         d = j.d

@@ -1,15 +1,30 @@
 """
 InverseGamma distribution as an exponential family.
 
-PDF: p(x|α,β) = β^α/Γ(α) · x^{-α-1} · exp(-β/x),  x > 0
+.. math::
 
-Exponential family:
-  h(x)  = 1
-  t(x)  = [-1/x, log x]
-  θ     = [β, -(α+1)]        (θ₁ > 0, θ₂ < -1)
-  ψ(θ)  = log Γ(-θ₂-1) − (-θ₂-1) log(θ₁)
-         = log Γ(α) − α log β
-  η     = [-α/β,  log β − ψ(α)]   (E[-1/X], E[log X])
+    p(x \\mid \\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)}
+    x^{-\\alpha-1} e^{-\\beta/x}, \\quad x > 0
+
+**Exponential family structure:**
+
+.. math::
+
+    h(x) = 1, \\quad t(x) = [-1/x,\\; \\log x]
+
+.. math::
+
+    \\theta = [\\beta,\\; -(\\alpha+1)], \\quad \\theta_1 > 0,\\; \\theta_2 < -1
+
+.. math::
+
+    \\psi(\\theta) = \\log\\Gamma(-\\theta_2-1) - (-\\theta_2-1)\\log\\theta_1
+    = \\log\\Gamma(\\alpha) - \\alpha\\log\\beta
+
+.. math::
+
+    \\eta = [-\\alpha/\\beta,\\; \\log\\beta - \\psi(\\alpha)]
+    \\quad (E[-1/X],\\; E[\\log X])
 """
 from __future__ import annotations
 
@@ -23,7 +38,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 class InverseGamma(ExponentialFamily):
-    """InverseGamma(α, β) — shape α > 0, rate β > 0."""
+    r"""InverseGamma(:math:`\alpha`, :math:`\beta`) — shape :math:`\alpha > 0`, rate :math:`\beta > 0`."""
 
     alpha: jax.Array
     beta: jax.Array
@@ -62,7 +77,7 @@ class InverseGamma(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇ψ(θ) = [-α/β,  log β − digamma(α)].  Analytical."""
+        r""":math:`\nabla\psi(\theta) = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`. Analytical."""
         alpha = -theta[1] - 1.0
         beta = theta[0]
         return jnp.array([
@@ -72,11 +87,11 @@ class InverseGamma(ExponentialFamily):
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇²ψ(θ) = [[α/β², 1/β], [1/β, trigamma(α)]].  Analytical.
+        r""":math:`\nabla^2\psi(\theta) = [[\alpha/\beta^2,\; 1/\beta],\; [1/\beta,\; \psi'(\alpha)]]`. Analytical.
 
-        H[0,0] = ∂²ψ/∂θ₁²  = α/β²
-        H[0,1] = ∂²ψ/∂θ₁∂θ₂ = ∂/∂θ₂[-α/β] = 1/β  (∂α/∂θ₂ = −1)
-        H[1,1] = ∂²ψ/∂θ₂²  = trigamma(α)
+        :math:`H_{00} = \partial^2\psi/\partial\theta_1^2 = \alpha/\beta^2`,
+        :math:`H_{01} = 1/\beta` (:math:`\partial\alpha/\partial\theta_2 = -1`),
+        :math:`H_{11} = \psi'(\alpha)` (trigamma).
         """
         alpha = -theta[1] - 1.0
         beta = theta[0]
@@ -100,9 +115,10 @@ class InverseGamma(ExponentialFamily):
         return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
-        """Sample n observations from InverseGamma(α, β) via JAX PRNG.
+        r"""Sample *n* observations from :math:`\mathrm{InvGamma}(\alpha, \beta)` via JAX PRNG.
 
-        If X ~ Gamma(α, 1/β) then 1/X ~ InverseGamma(α, β).
+        Uses the relation: if :math:`X \sim \mathrm{Gamma}(\alpha, 1/\beta)` then
+        :math:`1/X \sim \mathrm{InvGamma}(\alpha, \beta)`.
         """
         key = jax.random.PRNGKey(seed)
         g = jax.random.gamma(key, self.alpha, shape=(n,), dtype=jnp.float64)
@@ -129,10 +145,11 @@ class InverseGamma(ExponentialFamily):
         tol: float = 1e-12,
         **kwargs,
     ) -> "InverseGamma":
-        """
-        η = [-α/β, log β − ψ(α)].
+        r"""
+        :math:`\eta = [-\alpha/\beta,\; \log\beta - \psi(\alpha)]`.
 
-        β = α/(-η₁),  solve ψ(α) − log α = −η₂ − log(-η₁) via Newton.
+        :math:`\beta = \alpha / (-\eta_1)`;  solve
+        :math:`\psi(\alpha) - \log\alpha = -\eta_2 - \log(-\eta_1)` via Newton.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]

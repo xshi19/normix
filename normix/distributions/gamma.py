@@ -1,14 +1,29 @@
 """
 Gamma distribution as an exponential family.
 
-PDF: p(x|α,β) = β^α/Γ(α) · x^{α-1} · exp(-βx),  x > 0
+.. math::
 
-Exponential family:
-  h(x)    = 1
-  t(x)    = [log x, x]
-  θ       = [α-1, -β]       (θ₁ > -1, θ₂ < 0)
-  ψ(θ)    = log Γ(θ₁+1) − (θ₁+1) log(−θ₂)
-  η       = [ψ(α) − log β,  α/β]   (digamma, mean)
+    p(x \\mid \\alpha, \\beta) = \\frac{\\beta^\\alpha}{\\Gamma(\\alpha)}
+    x^{\\alpha-1} e^{-\\beta x}, \\quad x > 0
+
+**Exponential family structure:**
+
+.. math::
+
+    h(x) = 1, \\quad t(x) = [\\log x,\\; x]
+
+.. math::
+
+    \\theta = [\\alpha-1,\\; -\\beta], \\quad \\theta_1 > -1,\\; \\theta_2 < 0
+
+.. math::
+
+    \\psi(\\theta) = \\log\\Gamma(\\theta_1+1) - (\\theta_1+1)\\log(-\\theta_2)
+
+.. math::
+
+    \\eta = [\\psi(\\alpha) - \\log\\beta,\\; \\alpha/\\beta]
+    \\quad \\text{(digamma, mean)}
 """
 from __future__ import annotations
 
@@ -22,7 +37,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 class Gamma(ExponentialFamily):
-    """Gamma(α, β) distribution — shape α > 0, rate β > 0."""
+    r"""Gamma(:math:`\alpha`, :math:`\beta`) distribution — shape :math:`\alpha > 0`, rate :math:`\beta > 0`."""
 
     alpha: jax.Array   # shape
     beta: jax.Array    # rate
@@ -59,7 +74,7 @@ class Gamma(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇ψ(θ) = [digamma(α) − log β,  α/β].  Analytical."""
+        r""":math:`\nabla\psi(\theta) = [\psi(\alpha) - \log\beta,\; \alpha/\beta]`. Analytical."""
         alpha = theta[0] + 1.0
         beta = -theta[1]
         return jnp.array([
@@ -69,7 +84,7 @@ class Gamma(ExponentialFamily):
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇²ψ(θ) = [[trigamma(α), 1/β], [1/β, α/β²]].  Analytical."""
+        r""":math:`\nabla^2\psi(\theta) = [[\psi'(\alpha),\; 1/\beta],\; [1/\beta,\; \alpha/\beta^2]]`. Analytical."""
         alpha = theta[0] + 1.0
         beta = -theta[1]
         H00 = jax.scipy.special.polygamma(1, alpha)   # trigamma
@@ -92,7 +107,7 @@ class Gamma(ExponentialFamily):
         return jax.scipy.special.gammainc(self.alpha, self.beta * x)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
-        """Sample n observations from Gamma(α, β) via JAX PRNG."""
+        r"""Sample *n* observations from :math:`\mathrm{Gamma}(\alpha, \beta)` via JAX PRNG."""
         key = jax.random.PRNGKey(seed)
         return jax.random.gamma(key, self.alpha, shape=(n,), dtype=jnp.float64) / self.beta
 
@@ -115,10 +130,12 @@ class Gamma(ExponentialFamily):
         tol: float = 1e-12,
         **kwargs,
     ) -> "Gamma":
-        """
-        Closed-form η → θ via Newton's method on ψ(α) − log(α) = η₁ − log(η₂).
+        r"""
+        Closed-form :math:`\eta \to \theta` via Newton on
+        :math:`\psi(\alpha) - \log\alpha = \eta_1 - \log\eta_2`.
 
-        η = [E[log X], E[X]]  →  α from digamma inversion, β = α/η₂.
+        :math:`\eta = [E[\log X],\; E[X]]` → :math:`\alpha` from digamma inversion,
+        :math:`\beta = \alpha / \eta_2`.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
@@ -133,11 +150,11 @@ class Gamma(ExponentialFamily):
 
 
 def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
-    """
-    Solve ψ(α) − log(α) = target for α > 0 via Newton iterations.
+    r"""
+    Solve :math:`\psi(\alpha) - \log\alpha = \text{target}` for :math:`\alpha > 0`
+    via Newton iterations.
 
-    Uses jax.lax.fori_loop for JIT-compatibility.
-    Initial guess from alpha ≈ exp(target + log(exp(-target) - 1)).
+    Uses ``jax.lax.fori_loop`` for JIT-compatibility.
     """
     # Reasonable initial guess for α
     alpha0 = jnp.where(

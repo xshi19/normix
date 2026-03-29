@@ -1,10 +1,12 @@
 """
 Normal-Inverse Gaussian (NIG) distribution.
 
-Special case of GH with GIG → InverseGaussian subordinator (p = −½).
-Y ~ InverseGaussian(μ_IG, λ), i.e. GIG(p = −½, a = λ/μ_IG², b = λ).
+Special case of GH with GIG → InverseGaussian subordinator (:math:`p = -1/2`).
+:math:`Y \\sim \\mathrm{InvGaussian}(\\mu_{IG}, \\lambda)`,
+i.e. GIG(:math:`p = -1/2`, :math:`a = \\lambda/\\mu_{IG}^2`, :math:`b = \\lambda`).
 
-Stored: μ, γ, L_Σ (Cholesky of Σ), μ_IG (IG mean), λ (IG shape).
+Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),
+:math:`\\mu_{IG}` (IG mean), :math:`\\lambda` (IG shape).
 """
 from __future__ import annotations
 
@@ -23,11 +25,12 @@ from normix.utils.constants import LOG_EPS
 
 
 class JointNormalInverseGaussian(JointNormalMixture):
-    """
-    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGaussian(μ_IG, λ).
+    r"""
+    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,
+    :math:`Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)`.
 
-    Stored: μ_IG (IG mean) and λ (IG shape) directly.
-    GIG params: p = −½, a = λ/μ_IG², b = λ.
+    Stored: :math:`\mu_{IG}` (IG mean) and :math:`\lambda` (IG shape) directly.
+    GIG params: :math:`p = -1/2`, :math:`a = \lambda/\mu_{IG}^2`, :math:`b = \lambda`.
     """
 
     mu_ig: jax.Array   # IG mean parameter
@@ -54,9 +57,13 @@ class JointNormalInverseGaussian(JointNormalMixture):
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        """
-        Posterior Y|X=x ~ GIG(-1/2-d/2, a_post, b_post)
-        where a_post = lam/mu_ig² + γᵀΣ⁻¹γ,  b_post = lam + (x-μ)ᵀΣ⁻¹(x-μ).
+        r"""
+        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
+
+        .. math::
+
+            a_{\mathrm{post}} = \lambda/\mu_{IG}^2 + \gamma^\top\Sigma^{-1}\gamma, \quad
+            b_{\mathrm{post}} = \lambda + (x-\mu)^\top\Sigma^{-1}(x-\mu)
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         d = self.d
@@ -88,9 +95,12 @@ class JointNormalInverseGaussian(JointNormalMixture):
                 self.lam + z2)
 
     def natural_params(self) -> jax.Array:
-        """
-        θ = [-3/2-d/2, -(b+½μᵀΛμ), -(a+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
-        where p=-½, a=λ/μ_IG², b=λ.
+        r"""
+        :math:`\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+        -(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`
+
+        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`.
         """
         a_ig = self.lam / (self.mu_ig ** 2)
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
@@ -102,8 +112,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """
-        ψ(θ) for Joint NIG.  Uses K_{-1/2}(z) = √(π/(2z)) e^{-z} —
+        r"""
+        :math:`\psi(\theta)` for Joint NIG. Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` —
         no Bessel function evaluation needed.
         """
         from normix.mixtures.joint import JointNormalMixture
@@ -148,11 +158,11 @@ class NormalInverseGaussian(NormalMixture):
         return cls(joint)
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        """
+        r"""
         Marginal NIG log-density.
 
-        Uses K_{-1/2}(z) = sqrt(pi/(2z)) exp(-z) for the normalisation,
-        leaving only one log_kv call at order nu = -1/2 - d/2.
+        Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` for the normalisation,
+        leaving only one :math:`\log K_\nu` call at order :math:`\nu = -1/2 - d/2`.
         """
         from normix.utils.bessel import log_kv
 

@@ -1,10 +1,15 @@
 """
 Multivariate Normal distribution.
 
-Stored: mu (d,), L_Sigma (d,d) lower-triangular Cholesky of Σ.
-All linear algebra via L_Sigma — never form Σ⁻¹ explicitly.
+Stored: ``mu`` (d,), ``L_Sigma`` (d×d) lower-triangular Cholesky of :math:`\\Sigma`.
+All linear algebra via ``L_Sigma`` — never form :math:`\\Sigma^{-1}` explicitly.
 
-PDF: f(x) = (2π)^{-d/2} |Σ|^{-1/2} exp(-½(x-μ)ᵀΣ⁻¹(x-μ))
+PDF:
+
+.. math::
+
+    f(x) = (2\\pi)^{-d/2} |\\Sigma|^{-1/2}
+    \\exp\\!\\left(-\\tfrac{1}{2}(x-\\mu)^\\top\\Sigma^{-1}(x-\\mu)\\right)
 
 Exponential family:
 
@@ -27,13 +32,15 @@ jax.config.update("jax_enable_x64", True)
 
 
 class MultivariateNormal(eqx.Module):
-    """
+    r"""
     Multivariate Normal with Cholesky parametrization.
 
     Parameters
     ----------
-    mu : (d,) array
-    L_Sigma : (d,d) lower-triangular Cholesky factor of Σ
+    mu : jax.Array
+        ``(d,)`` mean vector.
+    L_Sigma : jax.Array
+        ``(d, d)`` lower-triangular Cholesky factor of :math:`\Sigma`.
     """
 
     mu: jax.Array         # (d,)
@@ -73,5 +80,5 @@ class MultivariateNormal(eqx.Module):
 
     @property
     def sigma(self) -> jax.Array:
-        """Covariance matrix Σ = L_Sigma L_Sigmaᵀ."""
+        r"""Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top`."""
         return self.L_Sigma @ self.L_Sigma.T

@@ -1,10 +1,13 @@
 """
 Variance Gamma (VG) distribution.
 
-Special case of GH with GIG → Gamma subordinator (b → 0, p > 0).
-Y ~ Gamma(α, β), i.e. GIG(p = α, a = 2β, b → 0).
+Special case of GH with GIG → Gamma subordinator
+(:math:`b \\to 0`, :math:`p > 0`).
+:math:`Y \\sim \\mathrm{Gamma}(\\alpha, \\beta)`,
+i.e. GIG(:math:`p = \\alpha`, :math:`a = 2\\beta`, :math:`b \\to 0`).
 
-Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of Gamma.
+Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),
+:math:`\\alpha` (shape), :math:`\\beta` (rate) of Gamma.
 """
 from __future__ import annotations
 
@@ -23,10 +26,11 @@ from normix.utils.constants import LOG_EPS
 
 
 class JointVarianceGamma(JointNormalMixture):
-    """
-    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ Gamma(α, β).
+    r"""
+    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,
+    :math:`Y \sim \mathrm{Gamma}(\alpha, \beta)`.
 
-    GIG limit: p = α, a = 2β, b → 0.
+    GIG limit: :math:`p = \alpha`, :math:`a = 2\beta`, :math:`b \to 0`.
     """
 
     alpha: jax.Array   # Gamma shape
@@ -51,12 +55,14 @@ class JointVarianceGamma(JointNormalMixture):
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        """
-        Posterior Y|X=x ~ GIG(alpha-d/2, beta_post_a, beta_post_b)
-        where beta_post_a = 2*beta + γᵀΣ⁻¹γ,  beta_post_b = (x-μ)ᵀΣ⁻¹(x-μ)
+        r"""
+        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
 
-        Actually for Gamma subordinator (b→0), the posterior is GIG:
-          p_post = alpha - d/2,  a_post = 2β + γᵀΣ⁻¹γ,  b_post = (x-μ)ᵀΣ⁻¹(x-μ)
+        .. math::
+
+            p_{\mathrm{post}} = \alpha - d/2, \quad
+            a_{\mathrm{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma, \quad
+            b_{\mathrm{post}} = (x-\mu)^\top\Sigma^{-1}(x-\mu)
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         d = self.d
@@ -83,9 +89,12 @@ class JointVarianceGamma(JointNormalMixture):
                 z2)
 
     def natural_params(self) -> jax.Array:
-        """
-        θ = [α-1-d/2, -½μᵀΛμ, -(β+½γᵀΛγ), Λγ, Λμ, -½vec(Λ)]
-        (Gamma subordinator: p=α, a=2β, b→0).
+        r"""
+        :math:`\theta = [\alpha-1-d/2,\; -\tfrac{1}{2}\mu^\top\Lambda\mu,\;
+        -(\beta+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`
+
+        (Gamma subordinator: :math:`p=\alpha`, :math:`a=2\beta`, :math:`b\to 0`).
         """
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
         return self._assemble_natural_params(
@@ -96,8 +105,9 @@ class JointVarianceGamma(JointNormalMixture):
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """
-        ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ
+        r"""
+        :math:`\psi(\theta) = \tfrac{1}{2}\log|\Sigma| + \log\Gamma(\alpha) - \alpha\log\beta + \mu^\top\Lambda\gamma`.
+
         Analytical — no Bessel function needed (Gamma subordinator).
         """
         from normix.mixtures.joint import JointNormalMixture
@@ -139,11 +149,17 @@ class VarianceGamma(NormalMixture):
         return cls(joint)
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        """
+        r"""
         Marginal VG log-density (own formula, no GH delegation).
 
-        f(x) = C * (q/(2c))^{nu/2} * K_nu(sqrt(2qc)) * exp(linear)
-        where nu=alpha-d/2, c=beta+½γᵀΛγ, q=(x-μ)ᵀΛ(x-μ).
+        .. math::
+
+            f(x) \propto \left(\frac{q}{2c}\right)^{\nu/2}
+            K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))
+
+        where :math:`\nu = \alpha - d/2`,
+        :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,
+        :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.
         """
         from normix.utils.bessel import log_kv
 

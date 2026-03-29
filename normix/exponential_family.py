@@ -2,37 +2,34 @@
 ExponentialFamily base class for JAX normix.
 
 Subclasses implement four abstract methods:
-  _log_partition_from_theta(theta) → scalar
-  natural_params()                 → 1-D array θ
-  sufficient_statistics(x)         → 1-D array t(x)
-  log_base_measure(x)              → scalar
 
-The Log-Partition Triad
------------------------
-Each subclass gets six derived classmethods, grouped as three pairs:
+- ``_log_partition_from_theta(theta)`` → scalar :math:`\\psi(\\theta)`
+- ``natural_params()`` → 1-D array :math:`\\theta`
+- ``sufficient_statistics(x)`` → 1-D array :math:`t(x)`
+- ``log_base_measure(x)`` → scalar :math:`\\log h(x)`
 
-    JAX (JIT-able)                   CPU (numpy/scipy)
-    ──────────────                   ─────────────────
-    _log_partition_from_theta        _log_partition_cpu
-    _grad_log_partition              _grad_log_partition_cpu
-    _hessian_log_partition           _hessian_log_partition_cpu
+**Log-Partition Triad**
 
-Tier 1 (_log_partition_from_theta) is abstract; all others have defaults.
-Tier 2 (JAX grad/hessian) defaults to jax.grad / jax.hessian; subclasses
-  override with analytical formulas when available.
-Tier 3 (CPU) defaults to wrapping the JAX versions; Bessel-dependent
-  distributions (GIG) override with native numpy/scipy implementations.
+Each subclass gets six derived classmethods, grouped as three pairs::
 
-Everything else is derived automatically:
-  log_partition()       = ψ(θ)
-  expectation_params()  = ∇ψ(θ)   via _grad_log_partition
-  fisher_information()  = ∇²ψ(θ)  via _hessian_log_partition
-  log_prob(x)           = log h(x) + t(x)·θ − ψ(θ)
+    JAX (JIT-able)                 CPU (numpy/scipy)
+    ─────────────────────────────  ─────────────────────────────
+    _log_partition_from_theta      _log_partition_cpu
+    _grad_log_partition            _grad_log_partition_cpu
+    _hessian_log_partition         _hessian_log_partition_cpu
 
-Constructors:
-  from_natural(theta)     → subclass instance
-  from_expectation(eta)   → solved via solve_bregman
-  fit_mle(X)              → from_expectation(mean t(X))
+Tier 1 (``_log_partition_from_theta``) is abstract; all others have defaults.
+Tier 2 defaults to ``jax.grad`` / ``jax.hessian``; subclasses override with
+analytical formulas when available.
+Tier 3 defaults to wrapping Tier 2; GIG overrides with native numpy/scipy.
+
+**Derived automatically:**
+
+.. math::
+
+    \\eta = \\nabla\\psi(\\theta), \\quad
+    I(\\theta) = \\nabla^2\\psi(\\theta), \\quad
+    \\log p(x \\mid \\theta) = \\log h(x) + \\theta^\\top t(x) - \\psi(\\theta)
 """
 from __future__ import annotations
 
@@ -64,21 +61,21 @@ class ExponentialFamily(eqx.Module):
     @staticmethod
     @abc.abstractmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """ψ(θ) — single source of truth for the log-partition function."""
+        r""":math:`\psi(\theta)` — single source of truth for the log-partition function."""
 
     @abc.abstractmethod
     def natural_params(self) -> jax.Array:
-        """θ from stored classical parameters."""
+        r""":math:`\theta` from stored classical parameters."""
 
     @staticmethod
     @abc.abstractmethod
     def sufficient_statistics(x: jax.Array) -> jax.Array:
-        """t(x) for a *single* unbatched observation."""
+        r""":math:`t(x)` for a *single* unbatched observation."""
 
     @staticmethod
     @abc.abstractmethod
     def log_base_measure(x: jax.Array) -> jax.Array:
-        """log h(x) for a *single* unbatched observation."""
+        r""":math:`\log h(x)` for a *single* unbatched observation."""
 
     # ------------------------------------------------------------------
     # Tier 2: JAX grad & Hessian (override with analytical formulas)
@@ -86,12 +83,12 @@ class ExponentialFamily(eqx.Module):
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇ψ(θ). Default: jax.grad."""
+        r""":math:`\nabla\psi(\theta)`. Default: ``jax.grad``."""
         return jax.grad(cls._log_partition_from_theta)(theta)
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇²ψ(θ) = I(θ). Default: jax.hessian."""
+        r""":math:`\nabla^2\psi(\theta) = I(\theta)`. Default: ``jax.hessian``."""
         return jax.hessian(cls._log_partition_from_theta)(theta)
 
     # ------------------------------------------------------------------
@@ -100,19 +97,19 @@ class ExponentialFamily(eqx.Module):
 
     @classmethod
     def _log_partition_cpu(cls, theta) -> float:
-        """ψ(θ) on CPU. Default: wraps JAX version."""
+        r""":math:`\psi(\theta)` on CPU. Default: wraps JAX version."""
         return float(cls._log_partition_from_theta(
             jnp.asarray(theta, dtype=jnp.float64)))
 
     @classmethod
     def _grad_log_partition_cpu(cls, theta) -> np.ndarray:
-        """∇ψ(θ) on CPU. Default: wraps JAX grad."""
+        r""":math:`\nabla\psi(\theta)` on CPU. Default: wraps JAX grad."""
         return np.asarray(cls._grad_log_partition(
             jnp.asarray(theta, dtype=jnp.float64)))
 
     @classmethod
     def _hessian_log_partition_cpu(cls, theta) -> np.ndarray:
-        """∇²ψ(θ) on CPU. Default: wraps JAX hessian."""
+        r""":math:`\nabla^2\psi(\theta)` on CPU. Default: wraps JAX hessian."""
         return np.asarray(cls._hessian_log_partition(
             jnp.asarray(theta, dtype=jnp.float64)))
 
@@ -121,15 +118,16 @@ class ExponentialFamily(eqx.Module):
     # ------------------------------------------------------------------
 
     def log_partition(self) -> jax.Array:
-        """ψ(θ) at current parameters."""
+        r""":math:`\psi(\theta)` at current parameters."""
         return type(self)._log_partition_from_theta(self.natural_params())
 
     def expectation_params(self, backend: str = 'jax') -> jax.Array:
-        """η = ∇ψ(θ).
+        r""":math:`\eta = \nabla\psi(\theta)`.
 
         Parameters
         ----------
-        backend : 'jax' (default, JIT-able) or 'cpu' (numpy/scipy)
+        backend : str
+            ``'jax'`` (default, JIT-able) or ``'cpu'`` (numpy/scipy).
         """
         theta = self.natural_params()
         if backend == 'cpu':
@@ -138,11 +136,12 @@ class ExponentialFamily(eqx.Module):
         return type(self)._grad_log_partition(theta)
 
     def fisher_information(self, backend: str = 'jax') -> jax.Array:
-        """I(θ) = ∇²ψ(θ).
+        r""":math:`I(\theta) = \nabla^2\psi(\theta)`.
 
         Parameters
         ----------
-        backend : 'jax' (default, JIT-able) or 'cpu' (numpy/scipy)
+        backend : str
+            ``'jax'`` (default, JIT-able) or ``'cpu'`` (numpy/scipy).
         """
         theta = self.natural_params()
         if backend == 'cpu':
@@ -151,7 +150,7 @@ class ExponentialFamily(eqx.Module):
         return type(self)._hessian_log_partition(theta)
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        """log p(x|θ) = log h(x) + θᵀt(x) − ψ(θ), single observation."""
+        r""":math:`\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)`, single observation."""
         cls = type(self)
         theta = self.natural_params()
         return (cls.log_base_measure(x)
@@ -171,7 +170,7 @@ class ExponentialFamily(eqx.Module):
         raise NotImplementedError(f"{type(self).__name__}.var not implemented")
 
     def std(self) -> jax.Array:
-        """Std[X] = √Var[X]."""
+        r""":math:`\mathrm{Std}[X] = \sqrt{\mathrm{Var}[X]}`."""
         return jnp.sqrt(self.var())
 
     def cdf(self, x: jax.Array) -> jax.Array:
@@ -197,10 +196,10 @@ class ExponentialFamily(eqx.Module):
         theta: jax.Array,
         eta: jax.Array,
     ) -> jax.Array:
-        """Bregman divergence ψ(θ) − θ·η (conjugate dual).
+        r"""Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta` (conjugate dual).
 
-        Minimising over θ yields ∇ψ(θ*) = η, i.e. the natural parameters
-        corresponding to expectation parameters η.
+        Minimising over :math:`\theta` yields :math:`\nabla\psi(\theta^*) = \eta`,
+        i.e. the natural parameters corresponding to expectation parameters :math:`\eta`.
         """
         return cls._log_partition_from_theta(theta) - jnp.dot(theta, eta)
 
@@ -216,17 +215,20 @@ class ExponentialFamily(eqx.Module):
         method: str = "lbfgs",
         verbose: int = 0,
     ) -> "ExponentialFamily":
-        """
-        Construct from expectation parameters η by solving ∇ψ(θ) = η.
+        r"""
+        Construct from expectation parameters :math:`\eta` by solving :math:`\nabla\psi(\theta) = \eta`.
 
-        Minimises the Bregman divergence ψ(θ) − θ·η via solve_bregman.
-        Subclasses can override for closed-form inverses.
+        Minimises the Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta`
+        via ``solve_bregman``. Subclasses can override for closed-form inverses.
 
         Parameters
         ----------
-        backend : 'jax' (default, JIT-able) or 'cpu' (scipy, more robust)
-        method  : 'lbfgs' (default), 'bfgs', or 'newton'
-        verbose : 0 = silent, >= 1 = print solver summary
+        backend : str
+            ``'jax'`` (default, JIT-able) or ``'cpu'`` (scipy, more robust).
+        method : str
+            ``'lbfgs'`` (default), ``'bfgs'``, or ``'newton'``.
+        verbose : int
+            0 = silent, >= 1 = print solver summary.
         """
         from normix.fitting.solvers import solve_bregman
 
@@ -269,18 +271,23 @@ class ExponentialFamily(eqx.Module):
         tol: float = 1e-10,
         verbose: int = 0,
     ) -> "ExponentialFamily":
-        """
-        MLE via exponential family identity: η̂ = mean_i t(xᵢ).
+        r"""
+        MLE via exponential family identity: :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)`.
 
-        Batches over X using jax.vmap, then calls from_expectation(η̂).
+        Batches over ``X`` using ``jax.vmap``, then calls ``from_expectation``\ (:math:`\hat\eta`).
 
         Parameters
         ----------
-        X : (n, ...) array of observations
-        theta0 : optional initial natural parameters θ₀ for the η→θ solver
-        maxiter : maximum iterations for the η→θ solver
-        tol : convergence tolerance for the η→θ solver
-        verbose : 0 = silent, >= 1 = print solver summary
+        X : jax.Array
+            ``(n, ...)`` array of observations.
+        theta0 : jax.Array, optional
+            Initial natural parameters :math:`\theta_0` for the :math:`\eta\to\theta` solver.
+        maxiter : int
+            Maximum iterations for the :math:`\eta\to\theta` solver.
+        tol : float
+            Convergence tolerance for the :math:`\eta\to\theta` solver.
+        verbose : int
+            0 = silent, >= 1 = print solver summary.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         stats = jax.vmap(cls.sufficient_statistics)(X)   # (n, dim_t)
@@ -297,17 +304,22 @@ class ExponentialFamily(eqx.Module):
         verbose: int = 0,
         **kwargs,
     ) -> "ExponentialFamily":
-        """Fit using self as initialization (warm start).
+        r"""Fit using self as initialization (warm start).
 
-        Computes η̂ = mean_i t(xᵢ) and solves from_expectation(η̂)
-        using ``self.natural_params()`` as the initial theta0.
+        Computes :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)` and solves
+        ``from_expectation``\ (:math:`\hat\eta`) using ``self.natural_params()``
+        as the initial :math:`\theta_0`.
 
         Parameters
         ----------
-        X : (n, ...) array of observations
-        maxiter : maximum iterations for the η→θ solver
-        tol : convergence tolerance for the η→θ solver
-        verbose : 0 = silent, >= 1 = print solver summary
+        X : jax.Array
+            ``(n, ...)`` array of observations.
+        maxiter : int
+            Maximum iterations for the :math:`\eta\to\theta` solver.
+        tol : float
+            Convergence tolerance for the :math:`\eta\to\theta` solver.
+        verbose : int
+            0 = silent, >= 1 = print solver summary.
         """
         cls = type(self)
         X = jnp.asarray(X, dtype=jnp.float64)
@@ -323,11 +335,11 @@ class ExponentialFamily(eqx.Module):
 
     @classmethod
     def default_init(cls, X: jax.Array) -> "ExponentialFamily":
-        """Moment-based initialisation from data.
+        r"""Moment-based initialisation from data.
 
-        Computes η̂ = mean_i t(xᵢ) and inverts to get an initial model.
-        For distributions with closed-form ``from_expectation`` (Gamma,
-        InverseGamma, InverseGaussian), this gives the MLE directly.
+        Computes :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)` and inverts to get
+        an initial model. For distributions with closed-form ``from_expectation``
+        (Gamma, InverseGamma, InverseGaussian), this gives the MLE directly.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         stats = jax.vmap(cls.sufficient_statistics)(X)

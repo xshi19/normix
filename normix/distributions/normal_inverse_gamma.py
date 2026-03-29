@@ -1,10 +1,13 @@
 """
 Normal-Inverse Gamma (NInvG) distribution.
 
-Special case of GH with GIG → InverseGamma subordinator (a → 0, p < 0).
-Y ~ InverseGamma(α, β), i.e. GIG(p = −α, a → 0, b = 2β).
+Special case of GH with GIG → InverseGamma subordinator
+(:math:`a \\to 0`, :math:`p < 0`).
+:math:`Y \\sim \\mathrm{InvGamma}(\\alpha, \\beta)`,
+i.e. GIG(:math:`p = -\\alpha`, :math:`a \\to 0`, :math:`b = 2\\beta`).
 
-Stored: μ, γ, L_Σ (Cholesky of Σ), α (shape), β (rate) of InverseGamma.
+Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\Sigma`),
+:math:`\\alpha` (shape), :math:`\\beta` (rate) of InverseGamma.
 """
 from __future__ import annotations
 
@@ -23,10 +26,11 @@ from normix.utils.constants import LOG_EPS
 
 
 class JointNormalInverseGamma(JointNormalMixture):
-    """
-    Joint f(x,y): X|Y ~ N(μ+γy, Σy), Y ~ InverseGamma(α, β).
+    r"""
+    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,
+    :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`.
 
-    GIG limit: p = −α, a → 0, b = 2β.
+    GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.
     """
 
     alpha: jax.Array
@@ -53,9 +57,13 @@ class JointNormalInverseGamma(JointNormalMixture):
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        """
-        Posterior Y|X=x ~ GIG(-alpha-d/2, a_post, b_post)
-        with a_post = γᵀΣ⁻¹γ, b_post = 2*beta + (x-μ)ᵀΣ⁻¹(x-μ).
+        r"""
+        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-\alpha-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
+
+        .. math::
+
+            a_{\mathrm{post}} = \gamma^\top\Sigma^{-1}\gamma, \quad
+            b_{\mathrm{post}} = 2\beta + (x-\mu)^\top\Sigma^{-1}(x-\mu)
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         d = self.d
@@ -82,9 +90,12 @@ class JointNormalInverseGamma(JointNormalMixture):
                 2.0 * self.beta + z2)
 
     def natural_params(self) -> jax.Array:
-        """
-        θ = [-(α+1)-d/2, -(β+½μᵀΛμ), -½γᵀΛγ, Λγ, Λμ, -½vec(Λ)]
-        (InverseGamma subordinator: p=-α, a→0, b=2β).
+        r"""
+        :math:`\theta = [-(\alpha+1)-d/2,\; -(\beta+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+        -\tfrac{1}{2}\gamma^\top\Lambda\gamma,\;
+        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`
+
+        (InverseGamma subordinator: :math:`p=-\alpha`, :math:`a\to 0`, :math:`b=2\beta`).
         """
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
         return self._assemble_natural_params(
@@ -95,8 +106,9 @@ class JointNormalInverseGamma(JointNormalMixture):
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """
-        ψ(θ) = ½ log|Σ| + log Γ(α) − α log β + μᵀΛγ
+        r"""
+        :math:`\psi(\theta) = \tfrac{1}{2}\log|\Sigma| + \log\Gamma(\alpha) - \alpha\log\beta + \mu^\top\Lambda\gamma`.
+
         Analytical — no Bessel function needed (InverseGamma subordinator).
         """
         from normix.mixtures.joint import JointNormalMixture
@@ -138,12 +150,12 @@ class NormalInverseGamma(NormalMixture):
         return cls(joint)
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        """
+        r"""
         Marginal NInvG log-density (own formula, no GH delegation).
 
-        GIG params: p=-α, a=γᵀΛγ, b=2β+Q(x).
-        The normalising integral is 2(b/a)^{p/2} K_p(sqrt(ab)).
-        For the symmetric case (γ≈0, a→0), uses Γ-function closed form.
+        GIG params: :math:`p=-\alpha`, :math:`a=\gamma^\top\Lambda\gamma`,
+        :math:`b=2\beta+Q(x)`.
+        The normalising integral is :math:`2(b/a)^{p/2} K_p(\sqrt{ab})`.
         """
         from normix.utils.bessel import log_kv
 

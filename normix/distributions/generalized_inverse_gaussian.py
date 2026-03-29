@@ -1,33 +1,55 @@
 """
 Generalized Inverse Gaussian (GIG) distribution as an exponential family.
 
-PDF: f(x|p,a,b) = (a/b)^{p/2} / (2 K_p(√(ab))) · x^{p-1} · exp(-(ax+b/x)/2)
+.. math::
 
-Exponential family:
-  h(x)  = 1
-  t(x)  = [log x, 1/x, x]
-  θ     = [p-1, -b/2, -a/2]     (θ₂ ≤ 0, θ₃ ≤ 0)
-  ψ(θ)  = log 2 + log K_p(√(ab)) + (p/2) log(b/a)
-         where p = θ₁+1, a = -2θ₃, b = -2θ₂
-  η     = [E[log X], E[1/X], E[X]]
+    f(x \\mid p, a, b) = \\frac{(a/b)^{p/2}}{2 K_p(\\sqrt{ab})}
+    \\, x^{p-1} \\exp\\!\\left(-\\frac{ax + b/x}{2}\\right), \\quad x > 0
 
-Special cases:
-  b→0, p>0:  GIG → Gamma(p, a/2)
-  a→0, p<0:  GIG → InverseGamma(-p, b/2)
-  p=-1/2:    GIG → InverseGaussian
+**Exponential family structure:**
 
-η→θ optimization uses η-rescaling to reduce Fisher condition number:
-  s = √(η₂/η₃),  η̃ = (η₁+½log(η₂/η₃), √(η₂η₃), √(η₂η₃))
-  Solve η̃→θ̃ with symmetric GIG (ã=b̃), then unscale.
+.. math::
 
-Log-Partition Triad Overrides
-------------------------------
-  _log_partition_from_theta  : JAX, uses log_kv(backend='jax')
-  _grad_log_partition        : inherits default jax.grad (custom JVP on log_kv)
-  _hessian_log_partition     : analytical 7-Bessel Hessian in θ-space
-  _log_partition_cpu         : numpy + log_kv(backend='cpu')
-  _grad_log_partition_cpu    : analytical Bessel ratios via scipy.kve
-  _hessian_log_partition_cpu : central FD on _log_partition_cpu
+    h(x) = 1, \\quad t(x) = [\\log x,\\; 1/x,\\; x]
+
+.. math::
+
+    \\theta = [p-1,\\; -b/2,\\; -a/2], \\quad \\theta_2 \\le 0,\\; \\theta_3 \\le 0
+
+.. math::
+
+    \\psi(\\theta) = \\log 2 + \\log K_p(\\sqrt{ab}) + \\tfrac{p}{2}\\log(b/a),
+    \\quad p = \\theta_1+1,\\; a = -2\\theta_3,\\; b = -2\\theta_2
+
+.. math::
+
+    \\eta = [E[\\log X],\\; E[1/X],\\; E[X]]
+
+**Special cases:**
+
+- :math:`b \\to 0,\\; p > 0`: GIG → :math:`\\mathrm{Gamma}(p,\\; a/2)`
+- :math:`a \\to 0,\\; p < 0`: GIG → :math:`\\mathrm{InvGamma}(-p,\\; b/2)`
+- :math:`p = -1/2`: GIG → InverseGaussian
+
+**η→θ rescaling** (reduces Fisher condition number):
+
+.. math::
+
+    s = \\sqrt{\\eta_2/\\eta_3}, \\quad
+    \\tilde{\\eta} = \\bigl(\\eta_1 + \\tfrac{1}{2}\\log(\\eta_2/\\eta_3),\\;
+    \\sqrt{\\eta_2\\eta_3},\\; \\sqrt{\\eta_2\\eta_3}\\bigr)
+
+Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
+(:math:`\\tilde{a} = \\tilde{b}`), then unscale.
+
+**Log-Partition Triad Overrides:**
+
+- ``_log_partition_from_theta`` : JAX, uses ``log_kv(backend='jax')``
+- ``_grad_log_partition``       : analytical Bessel ratios (5 :math:`K_\\nu` calls)
+- ``_hessian_log_partition``    : analytical 7-Bessel Hessian in :math:`\\theta`-space
+- ``_log_partition_cpu``        : numpy + ``log_kv(backend='cpu')``
+- ``_grad_log_partition_cpu``   : analytical Bessel ratios via ``scipy.kve``
+- ``_hessian_log_partition_cpu``: central FD on ``_log_partition_cpu``
 """
 from __future__ import annotations
 
@@ -51,10 +73,10 @@ jax.config.update("jax_enable_x64", True)
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
-    """
+    r"""
     Generalized Inverse Gaussian distribution.
 
-    Stored: p (shape, any real), a > 0, b > 0.
+    Stored: :math:`p` (shape, any real), :math:`a > 0`, :math:`b > 0`.
     """
 
     p: jax.Array
@@ -72,12 +94,12 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @staticmethod
     def _log_partition_from_theta(theta: jax.Array) -> jax.Array:
-        """
-        ψ(θ) = log 2 + log K_p(√(ab)) + (p/2)(log b − log a)
+        r"""
+        :math:`\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + (p/2)(\log b - \log a)`.
 
-        Degenerate limit (√(ab) < threshold): delegate to Gamma/InverseGamma.
-        All branches use safe clamped values so no NaN gradients from
-        non-selected jnp.where branches.
+        Degenerate limit (:math:`\sqrt{ab} < \text{threshold}`): delegate to
+        Gamma/InverseGamma. All branches use safe clamped values so no NaN
+        gradients from non-selected ``jnp.where`` branches.
         """
         p = theta[0] + 1.0
         b = jnp.maximum(-2.0 * theta[1], 0.0)
@@ -129,17 +151,25 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇ψ(θ) = [E[log X], E[1/X], E[X]] via analytical Bessel ratios.
+        r"""
+        :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via analytical Bessel ratios.
 
-        Uses 5 log_kv evaluations (at orders p, p±1, p±ε) and the identities:
-          E[1/X] = √(a/b) · K_{p−1}(√ab) / K_p(√ab)
-          E[X]   = √(b/a) · K_{p+1}(√ab) / K_p(√ab)
-          E[log X] = ∂/∂p log K_p(√ab) + ½ log(b/a)
+        Uses 5 :math:`\log K_\nu` evaluations (at orders :math:`p, p\pm 1, p\pm\varepsilon`)
+        and the identities:
 
-        Clamping a, b to TINY (not 0) ensures the Bessel small-z asymptotics
-        handle the degenerate Gamma/InverseGamma limits via cancellation.
-        The default jax.grad path fails here because jnp.where evaluates
-        all branches, and d(sqrt(ab))/da → ∞ as a → 0.
+        .. math::
+
+            E[1/X] = \sqrt{a/b}\cdot K_{p-1}(\sqrt{ab}) / K_p(\sqrt{ab}), \quad
+            E[X]   = \sqrt{b/a}\cdot K_{p+1}(\sqrt{ab}) / K_p(\sqrt{ab})
+
+        .. math::
+
+            E[\log X] = \partial_p \log K_p(\sqrt{ab}) + \tfrac{1}{2}\log(b/a)
+
+        Clamping :math:`a, b` to ``TINY`` ensures Bessel small-:math:`z` asymptotics
+        handle the degenerate Gamma/InvGamma limits. The default ``jax.grad`` path
+        fails because ``jnp.where`` evaluates all branches and
+        :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.
         """
         p = theta[0] + 1.0
         b_safe = jnp.maximum(-2.0 * theta[1], TINY)
@@ -160,20 +190,20 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
-        """∇²ψ(θ) — analytical 7-Bessel Hessian in θ-space.
+        r"""
+        :math:`\nabla^2\psi(\theta)` — analytical 7-Bessel Hessian in :math:`\theta`-space.
 
-        Uses exact Bessel recurrences for z-derivatives and FD for all
-        ν-derivatives. 7 log_kv evaluations total.
+        Uses exact Bessel recurrences for :math:`z`-derivatives and finite differences
+        for :math:`\nu`-derivatives. 7 :math:`\log K_\nu` evaluations total.
 
-        The mixed derivative L_vz = ∂²log K_ν/∂ν∂z is approximated via
-        integer-shift FD: L_vz ≈ (L_z(ν+1,z) − L_z(ν−1,z))/2.
-        L_z at integer-shifted orders reuses evaluations at p±1, p±2.
+        The mixed derivative :math:`\partial^2\log K_\nu/\partial\nu\partial z` is
+        approximated via integer-shift FD reusing evaluations at :math:`p\pm 1, p\pm 2`.
 
-        Note: H_theta may have small negative eigenvalues from this
-        approximation; the Newton solver applies HESSIAN_DAMPING before
+        Note: :math:`H_\theta` may have small negative eigenvalues from this
+        approximation; the Newton solver applies ``HESSIAN_DAMPING`` before
         solving so convergence is not affected.
 
-        Valid in the non-degenerate regime (√(ab) >> GIG_DEGEN_THRESHOLD).
+        Valid in the non-degenerate regime (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``).
         """
         p = theta[0] + 1.0
         b = jnp.maximum(-2.0 * theta[1], LOG_EPS)
@@ -220,7 +250,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _log_partition_cpu(cls, theta) -> float:
-        """ψ(θ) via numpy + log_kv(backend='cpu'). Accepts numpy or jax arrays."""
+        r""":math:`\psi(\theta)` via numpy + ``log_kv(backend='cpu')``. Accepts numpy or JAX arrays."""
         theta = np.asarray(theta, dtype=np.float64)
         p = theta[0] + 1.0
         b = max(-2.0 * theta[1], 0.0)
@@ -246,7 +276,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition_cpu(cls, theta) -> np.ndarray:
-        """∇ψ(θ) = [E[log X], E[1/X], E[X]] via scipy.kve.  Pure CPU."""
+        r""":math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via ``scipy.kve``. Pure CPU."""
         theta = np.asarray(theta, dtype=np.float64)
         p = theta[0] + 1.0
         b_safe = max(-2.0 * theta[1], TINY)
@@ -269,7 +299,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _hessian_log_partition_cpu(cls, theta) -> np.ndarray:
-        """∇²ψ(θ) via central finite differences on _log_partition_cpu."""
+        r""":math:`\nabla^2\psi(\theta)` via central finite differences on ``_log_partition_cpu``."""
         theta = np.asarray(theta, dtype=np.float64)
         n = len(theta)
         H = np.zeros((n, n))
@@ -355,27 +385,32 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def mean(self) -> jax.Array:
-        """E[X] = η₃ from expectation parameters."""
+        r""":math:`E[X] = \eta_3` from expectation parameters."""
         return self.expectation_params()[2]
 
     def var(self) -> jax.Array:
-        """Var[X] = ∂²ψ/∂θ₃² = Fisher information [2,2]."""
+        r""":math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2]."""
         return self.fisher_information()[2, 2]
 
     def rvs(
         self, n: int, seed: int = 42, method: str = "devroye",
     ) -> jax.Array:
-        """Sample *n* observations from GIG(p, a, b).
+        r"""Sample *n* observations from :math:`\mathrm{GIG}(p, a, b)`.
 
         Parameters
         ----------
-        n : sample size
-        seed : integer seed for JAX PRNG (or scipy random_state for 'scipy')
-        method : 'devroye' (default), 'pinv', or 'scipy'
-            * ``devroye`` — TDR rejection on log(x), pure JAX, no Bessel.
-            * ``pinv`` — numerical inverse CDF (CPU table build + JAX sampling),
-              no Bessel.  Best for large *n* with fixed parameters.
-            * ``scipy`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).
+        n : int
+            Sample size.
+        seed : int
+            Integer seed for JAX PRNG (or ``scipy`` ``random_state`` for ``'scipy'``).
+        method : str
+            Sampling algorithm:
+
+            * ``'devroye'`` (default) — Transformed density rejection (TDR) on
+              :math:`\log(x)`, pure JAX, no Bessel functions.
+            * ``'pinv'`` — Numerical inverse CDF (CPU table build + JAX sampling),
+              no Bessel. Best for large *n* with fixed parameters.
+            * ``'scipy'`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).
         """
         from normix.distributions._gig_rvs import (
             gig_rvs_devroye, gig_build_pinv_table, gig_rvs_pinv,
@@ -426,18 +461,21 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         method: str = "newton",
         verbose: int = 0,
     ) -> "GeneralizedInverseGaussian":
-        """
-        η → θ via η-rescaling + optimization.
+        r"""
+        :math:`\eta \to \theta` via :math:`\eta`-rescaling + optimization.
 
-        Rescaling makes the Fisher matrix symmetric (ã = b̃), reducing
-        condition number by up to :math:`10^{30}` for extreme a/b ratios.
+        Rescaling makes the Fisher matrix symmetric (:math:`\tilde{a} = \tilde{b}`),
+        reducing condition number by up to :math:`10^{30}` for extreme :math:`a/b` ratios.
 
         Parameters
         ----------
-        theta0 : warm-start point (required for JAX solvers; if None, uses
-                 multi-start CPU solver with Gamma/InvGamma/InvGauss seeds)
-        backend : 'jax' (default, JIT-able) or 'cpu' (scipy, no JAX dispatch)
-        method : 'newton', 'lbfgs', 'bfgs'
+        theta0 : jax.Array, optional
+            Warm-start point (required for JAX solvers; if ``None``, uses
+            multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).
+        backend : str
+            ``'jax'`` (default, JIT-able) or ``'cpu'`` (scipy, more robust).
+        method : str
+            ``'newton'``, ``'lbfgs'``, or ``'bfgs'``.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
