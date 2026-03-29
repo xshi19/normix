@@ -7,6 +7,7 @@
 ```
 normix/                     # JAX implementation
 ├── exponential_family.py   # ExponentialFamily(eqx.Module)
+├── divergences.py          # squared_hellinger, kl_divergence (Tier 1 + Tier 3)
 ├── distributions/
 │   ├── gamma.py                          # Gamma(α, β)
 │   ├── inverse_gamma.py                  # InverseGamma(α, β)
@@ -97,6 +98,16 @@ expectation η = E[t(X)]
 ```
 
 All conversions are JIT-compatible and support `jax.grad` and `jax.vmap`.
+
+### Divergences
+
+Three-tier design for statistical divergences between exponential family distributions:
+
+**Tier 1** (`divergences.py`): Functional core — `squared_hellinger_from_psi(psi, θ_p, θ_q)`, `kl_divergence_from_psi(psi, grad_psi, θ_p, θ_q)`. Pure functions of callables + arrays. Maximally composable with `jax.jit`, `jax.vmap`, `jax.grad`.
+
+**Tier 2** (`ExponentialFamily`): Instance methods — `model.squared_hellinger(other)`, `model.kl_divergence(other)`. Default calls Tier 1 with the class's `_log_partition_from_theta`. Subclasses may override for numerically improved variants. `NormalMixture` delegates to its joint distribution (upper bound).
+
+**Tier 3** (`divergences.py`): Module convenience — `squared_hellinger(p, q)`, `kl_divergence(p, q)`. Accepts `ExponentialFamily` or `NormalMixture`, delegates to Tier 2.
 
 ### Distribution Storage
 
