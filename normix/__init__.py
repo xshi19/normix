@@ -42,6 +42,13 @@ from normix.mixtures.marginal import NormalMixture
 
 from normix.fitting.em import BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
 
+from normix.divergences import (
+    squared_hellinger,
+    kl_divergence,
+    squared_hellinger_from_psi,
+    kl_divergence_from_psi,
+)
+
 __version__ = "0.2.0"
 
 __all__ = [
@@ -74,4 +81,9 @@ __all__ = [
     "BatchEMFitter",
     "OnlineEMFitter",
     "MiniBatchEMFitter",
+    # Divergences
+    "squared_hellinger",
+    "kl_divergence",
+    "squared_hellinger_from_psi",
+    "kl_divergence_from_psi",
 ]

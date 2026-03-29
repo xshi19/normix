@@ -182,6 +182,39 @@ class ExponentialFamily(eqx.Module):
         raise NotImplementedError(f"{type(self).__name__}.rvs not implemented")
 
     # ------------------------------------------------------------------
+    # Divergences (Tier 2 — subclasses may override)
+    # ------------------------------------------------------------------
+
+    def squared_hellinger(self, other: "ExponentialFamily") -> jax.Array:
+        r"""Squared Hellinger distance :math:`H^2(p, q)`.
+
+        Default uses the general exponential-family formula via :math:`\psi`.
+        Subclasses may override for numerically improved variants.
+        """
+        from normix.divergences import squared_hellinger_from_psi
+        cls = type(self)
+        return squared_hellinger_from_psi(
+            cls._log_partition_from_theta,
+            self.natural_params(),
+            other.natural_params(),
+        )
+
+    def kl_divergence(self, other: "ExponentialFamily") -> jax.Array:
+        r"""KL divergence :math:`D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})`.
+
+        Default uses the Bregman-divergence formula via :math:`\psi` and :math:`\nabla\psi`.
+        Subclasses may override.
+        """
+        from normix.divergences import kl_divergence_from_psi
+        cls = type(self)
+        return kl_divergence_from_psi(
+            cls._log_partition_from_theta,
+            cls._grad_log_partition,
+            self.natural_params(),
+            other.natural_params(),
+        )
+
+    # ------------------------------------------------------------------
     # Constructors — classmethod stubs; subclasses override as needed
     # ------------------------------------------------------------------
 

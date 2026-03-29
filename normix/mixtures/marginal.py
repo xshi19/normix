@@ -72,6 +72,22 @@ class NormalMixture(eqx.Module):
         X, _ = self._joint.rvs(n, seed)
         return X
 
+    # ------------------------------------------------------------------
+    # Divergences (delegate to joint)
+    # ------------------------------------------------------------------
+
+    def squared_hellinger(self, other: "NormalMixture") -> jax.Array:
+        r"""Squared Hellinger distance via joint distributions (upper bound on marginal)."""
+        return self._joint.squared_hellinger(other._joint)
+
+    def kl_divergence(self, other: "NormalMixture") -> jax.Array:
+        r"""KL divergence via joint distributions."""
+        return self._joint.kl_divergence(other._joint)
+
+    # ------------------------------------------------------------------
+    # EM E-step
+    # ------------------------------------------------------------------
+
     def e_step(self, X: jax.Array, backend: str = 'jax') -> Dict[str, jax.Array]:
         r"""
         E-step: compute conditional expectations :math:`E[g(Y)\mid X=x_i]` for each :math:`i`.
