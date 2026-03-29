@@ -153,10 +153,50 @@ class NormalMixture(eqx.Module):
         **kwargs,
     ) -> "NormalMixture":
         """
-        M-step: update model parameters from sufficient statistics.
+        Full M-step: update all parameters from sufficient statistics.
 
         Returns a NEW NormalMixture with updated parameters.
-        Subclasses must override _m_step_subordinator.
+        """
+        mu_new, gamma_new, L_new, gig_eta = self._normal_params_from_expectations(
+            X, expectations)
+        model = self._replace_normal_params(mu_new, gamma_new, L_new)
+        return model._m_step_subordinator(gig_eta, **kwargs)
+
+    def m_step_normal(
+        self,
+        X: jax.Array,
+        expectations: Dict[str, jax.Array],
+    ) -> "NormalMixture":
+        """
+        M-step for normal parameters only (MCECM Cycle 1).
+
+        Updates :math:`\\mu, \\gamma, \\Sigma`; subordinator unchanged.
+        """
+        mu_new, gamma_new, L_new, _ = self._normal_params_from_expectations(
+            X, expectations)
+        return self._replace_normal_params(mu_new, gamma_new, L_new)
+
+    @abc.abstractmethod
+    def _m_step_subordinator(
+        self,
+        gig_eta: jax.Array,
+        **kwargs,
+    ) -> "NormalMixture":
+        """Update subordinator parameters from GIG expectation params.
+
+        Normal params are read from ``self._joint``; only the subordinator
+        is re-estimated. Returns a new model.
+        """
+
+    # ------------------------------------------------------------------
+    # M-step helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _normal_params_from_expectations(X, expectations):
+        """Solve closed-form M-step for (mu, gamma, L) and compute gig_eta.
+
+        Returns ``(mu_new, gamma_new, L_new, gig_eta)``.
         """
         from normix.mixtures.joint import JointNormalMixture
 
@@ -177,20 +217,16 @@ class NormalMixture(eqx.Module):
             E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y)
 
         gig_eta = jnp.array([jnp.mean(E_log_Y), mean_E_inv_Y, mean_E_Y])
+        return mu_new, gamma_new, L_new, gig_eta
 
-        return self._m_step_subordinator(
-            mu_new, gamma_new, L_new, gig_eta, **kwargs)
-
-    @abc.abstractmethod
-    def _m_step_subordinator(
-        self,
-        mu_new: jax.Array,
-        gamma_new: jax.Array,
-        L_new: jax.Array,
-        gig_eta: jax.Array,
-        **kwargs,
-    ) -> "NormalMixture":
-        """Update subordinator parameters and construct a new marginal model."""
+    def _replace_normal_params(self, mu, gamma, L) -> "NormalMixture":
+        """Return a copy with updated (mu, gamma, L_Sigma), subordinator unchanged."""
+        new_joint = eqx.tree_at(
+            lambda j: (j.mu, j.gamma, j.L_Sigma),
+            self._joint,
+            (mu, gamma, L),
+        )
+        return type(self)(new_joint)
 
     # ------------------------------------------------------------------
     # Regularisation
@@ -238,6 +274,7 @@ class NormalMixture(eqx.Module):
         self,
         X: jax.Array,
         *,
+        algorithm: str = 'em',
         verbose: int = 0,
         max_iter: int = 200,
         tol: float = 1e-3,
@@ -251,6 +288,7 @@ class NormalMixture(eqx.Module):
         Parameters
         ----------
         X : (n, d) data array
+        algorithm : 'em' (default) or 'mcecm'
         verbose : 0 = silent, 1 = summary, 2 = per-iteration table
         max_iter, tol : EM convergence parameters
         regularization : 'det_sigma_one' or 'none'
@@ -263,6 +301,7 @@ class NormalMixture(eqx.Module):
         """
         from normix.fitting.em import BatchEMFitter
         fitter = BatchEMFitter(
+            algorithm=algorithm,
             verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,

@@ -43,20 +43,26 @@ class EMResult:
 
 class BatchEMFitter:
     """
-    Batch EM algorithm with dual-loop architecture.
+    Batch EM / MCECM algorithm with dual-loop architecture.
 
-    Runs E-step (all data) -> M-step -> regularize until convergence.
+    **EM** (default): E-step → M-step (all params) → regularize.
+
+    **MCECM**: E-step → M-step (normal params only) → regularize →
+    E-step → M-step (subordinator only).
+
     Convergence is measured by relative parameter change in the normal
     parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.
 
     Loop selection is automatic:
-      - lax.scan when both backends are 'jax' and verbose <= 1
-      - Python for-loop otherwise (CPU backends, or verbose >= 2)
+      - lax.scan when both backends are 'jax', verbose <= 1, and algorithm='em'
+      - Python for-loop otherwise
 
     Parameters
     ----------
+    algorithm : str
+        'em' (default) or 'mcecm'.
     max_iter : int
-        Maximum number of EM iterations.
+        Maximum number of iterations.
     tol : float
         Convergence tolerance on max relative parameter change.
     verbose : int
@@ -74,6 +80,7 @@ class BatchEMFitter:
     def __init__(
         self,
         *,
+        algorithm: str = 'em',
         max_iter: int = 200,
         tol: float = 1e-3,
         verbose: int = 0,
@@ -82,6 +89,9 @@ class BatchEMFitter:
         m_step_backend: str = 'cpu',
         m_step_method: str = 'newton',
     ):
+        if algorithm not in ('em', 'mcecm'):
+            raise ValueError(f"algorithm must be 'em' or 'mcecm', got {algorithm!r}")
+        self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol = tol
         self.verbose = verbose
@@ -96,7 +106,7 @@ class BatchEMFitter:
 
     def fit(self, model, X: jax.Array) -> EMResult:
         """
-        Run batch EM. Auto-selects lax.scan or Python loop.
+        Run batch EM or MCECM. Auto-selects lax.scan or Python loop.
 
         Parameters
         ----------
@@ -111,7 +121,8 @@ class BatchEMFitter:
         dist_name = type(model).__name__
 
         use_scan = (
-            self.e_step_backend == 'jax'
+            self.algorithm == 'em'
+            and self.e_step_backend == 'jax'
             and self.m_step_backend == 'jax'
             and self.verbose <= 1
         )
@@ -130,14 +141,17 @@ class BatchEMFitter:
             return self._fit_loop(model, X)
 
     # ------------------------------------------------------------------
-    # Pure EM step (JIT-able, no side effects)
+    # Pure EM / MCECM step (no prints, no float(), no list.append())
     # ------------------------------------------------------------------
 
-    def _em_step(self, model, X):
-        """One EM iteration. No prints, no float(), no list.append().
+    def _step(self, model, X):
+        """One iteration (EM or MCECM). Returns (new_model, max_change)."""
+        if self.algorithm == 'mcecm':
+            return self._mcecm_step(model, X)
+        return self._em_step(model, X)
 
-        Returns (new_model, max_relative_param_change).
-        """
+    def _em_step(self, model, X):
+        """One EM iteration: E → M(all) → regularize."""
         prev_mu = model._joint.mu
         prev_gamma = model._joint.gamma
         prev_L = model._joint.L_Sigma
@@ -145,6 +159,33 @@ class BatchEMFitter:
         expectations = model.e_step(X, backend=self.e_step_backend)
         model = self._m_step(model, X, expectations)
         model = self._regularize(model)
+
+        max_change = _param_change(
+            model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
+            prev_mu, prev_gamma, prev_L,
+        )
+        return model, max_change
+
+    def _mcecm_step(self, model, X):
+        """One MCECM iteration: E → M_normal → regularize → E → M_subordinator."""
+        prev_mu = model._joint.mu
+        prev_gamma = model._joint.gamma
+        prev_L = model._joint.L_Sigma
+
+        # Cycle 1: update (mu, gamma, Sigma), keep subordinator
+        expectations = model.e_step(X, backend=self.e_step_backend)
+        model = model.m_step_normal(X, expectations)
+        model = self._regularize(model)
+
+        # Cycle 2: re-E-step with updated normal params, then update subordinator
+        expectations = model.e_step(X, backend=self.e_step_backend)
+        gig_eta = jnp.array([
+            jnp.mean(expectations['E_log_Y']),
+            jnp.mean(expectations['E_inv_Y']),
+            jnp.mean(expectations['E_Y']),
+        ])
+        model = model._m_step_subordinator(
+            gig_eta, backend=self.m_step_backend, method=self.m_step_method)
 
         max_change = _param_change(
             model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
@@ -161,7 +202,7 @@ class BatchEMFitter:
 
         def body(carry, _):
             mdl, converged = carry
-            mdl_new, max_change = self._em_step(mdl, X)
+            mdl_new, max_change = self._step(mdl, X)
             conv_new = max_change < self.tol
             mdl_out = jax.tree.map(
                 lambda n, o: jnp.where(converged, o, n), mdl_new, mdl)
@@ -213,7 +254,7 @@ class BatchEMFitter:
 
         for i in range(self.max_iter):
             t_iter = time.perf_counter()
-            model, max_change = self._em_step(model, X)
+            model, max_change = self._step(model, X)
             dt = time.perf_counter() - t_iter
             changes.append(max_change)
             n_iter = i + 1
@@ -277,13 +318,17 @@ class BatchEMFitter:
         return model
 
     def _print_header(self, dist_name: str):
+        algo_label = "MCECM" if self.algorithm == 'mcecm' else "EM"
         sep = "=" * 60
         print(f"\n{sep}")
-        print(f"  EM Fitting: {dist_name}")
+        print(f"  {algo_label} Fitting: {dist_name}")
         print(sep)
         loop = "lax.scan" if (
-            self.e_step_backend == 'jax' and self.m_step_backend == 'jax'
+            self.algorithm == 'em'
+            and self.e_step_backend == 'jax'
+            and self.m_step_backend == 'jax'
         ) else "Python loop"
+        print(f"  Algorithm    : {algo_label}")
         print(f"  Loop         : {loop}")
         print(f"  E-step       : {self.e_step_backend}")
         print(f"  M-step       : {self.m_step_backend} / {self.m_step_method}")

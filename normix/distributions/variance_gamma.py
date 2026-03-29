@@ -193,11 +193,12 @@ class VarianceGamma(NormalMixture):
                  + linear)
         return log_f
 
-    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
+    def _m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.gamma import Gamma
+        j = self._joint
         gamma_dist = Gamma.from_expectation(jnp.array([gig_eta[0], gig_eta[2]]))
         joint_new = JointVarianceGamma(
-            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
+            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             alpha=gamma_dist.alpha, beta=gamma_dist.beta,
         )
         return VarianceGamma(joint_new)
@@ -210,14 +211,15 @@ class VarianceGamma(NormalMixture):
         )
         return VarianceGamma(joint_new)
 
-    def fit(self, X, *, verbose=0, max_iter=200, tol=1e-3,
+    def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
             regularization='none',
             e_step_backend='cpu', m_step_backend='cpu',
             m_step_method='newton'):
-        """Fit VG using EM.  Defaults to CPU E-step (faster than JAX vmap for
-        the degenerate-GIG posterior arising from the Gamma subordinator)."""
+        """Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
+        vmap for the degenerate-GIG posterior arising from the Gamma subordinator)."""
         return super().fit(
-            X, verbose=verbose, max_iter=max_iter, tol=tol,
+            X, algorithm=algorithm,
+            verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
             m_step_method=m_step_method)

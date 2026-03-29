@@ -187,12 +187,13 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
-    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
+    def _m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.inverse_gamma import InverseGamma
+        j = self._joint
         ig_eta = jnp.array([-gig_eta[1], gig_eta[0]])
         ig_new = InverseGamma.from_expectation(ig_eta)
         joint_new = JointNormalInverseGamma(
-            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
+            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             alpha=ig_new.alpha, beta=ig_new.beta,
         )
         return NormalInverseGamma(joint_new)
@@ -205,15 +206,16 @@ class NormalInverseGamma(NormalMixture):
         )
         return NormalInverseGamma(joint_new)
 
-    def fit(self, X, *, verbose=0, max_iter=200, tol=1e-3,
+    def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
             regularization='none',
             e_step_backend='cpu', m_step_backend='cpu',
             m_step_method='newton'):
-        """Fit NInvG using EM.  Defaults to CPU E-step (faster than JAX vmap
-        for the degenerate-GIG posterior arising from the InverseGamma
+        """Fit NInvG using EM or MCECM.  Defaults to CPU E-step (faster than
+        JAX vmap for the degenerate-GIG posterior arising from the InverseGamma
         subordinator)."""
         return super().fit(
-            X, verbose=verbose, max_iter=max_iter, tol=tol,
+            X, algorithm=algorithm,
+            verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
             m_step_method=m_step_method)

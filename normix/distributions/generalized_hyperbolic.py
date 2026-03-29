@@ -262,7 +262,7 @@ class GeneralizedHyperbolic(NormalMixture):
     # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def _m_step_subordinator(self, mu_new, gamma_new, L_new, gig_eta, **kwargs):
+    def _m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
@@ -284,7 +284,7 @@ class GeneralizedHyperbolic(NormalMixture):
             gig_new = current_gig
 
         joint_new = JointGeneralizedHyperbolic(
-            mu=mu_new, gamma=gamma_new, L_Sigma=L_new,
+            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             p=gig_new.p, a=gig_new.a, b=gig_new.b,
         )
         return GeneralizedHyperbolic(joint_new)
@@ -369,17 +369,18 @@ class GeneralizedHyperbolic(NormalMixture):
         return cls.from_classical(
             mu=mu, gamma=gamma_v, sigma=sigma, p=p, a=a, b=b)
 
-    def fit(self, X, *, verbose=0, max_iter=200, tol=1e-3,
+    def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
             regularization='det_sigma_one',
             e_step_backend='cpu', m_step_backend='cpu',
             m_step_method='newton'):
-        """Fit GH distribution using EM.
+        """Fit GH distribution using EM or MCECM.
 
         Defaults to CPU backends and det_sigma_one regularization
         (GH has scale non-identifiability requiring |Sigma| = 1).
         """
         return super().fit(
-            X, verbose=verbose, max_iter=max_iter, tol=tol,
+            X, algorithm=algorithm,
+            verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
             m_step_method=m_step_method)
