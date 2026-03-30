@@ -184,7 +184,7 @@ class BatchEMFitter:
             jnp.mean(expectations['E_inv_Y']),
             jnp.mean(expectations['E_Y']),
         ])
-        model = model._m_step_subordinator(
+        model = model.m_step_subordinator(
             gig_eta, backend=self.m_step_backend, method=self.m_step_method)
 
         max_change = _param_change(

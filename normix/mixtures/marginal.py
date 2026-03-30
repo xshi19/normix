@@ -160,7 +160,7 @@ class NormalMixture(eqx.Module):
         mu_new, gamma_new, L_new, gig_eta = self._normal_params_from_expectations(
             X, expectations)
         model = self._replace_normal_params(mu_new, gamma_new, L_new)
-        return model._m_step_subordinator(gig_eta, **kwargs)
+        return model.m_step_subordinator(gig_eta, **kwargs)
 
     def m_step_normal(
         self,
@@ -177,7 +177,7 @@ class NormalMixture(eqx.Module):
         return self._replace_normal_params(mu_new, gamma_new, L_new)
 
     @abc.abstractmethod
-    def _m_step_subordinator(
+    def m_step_subordinator(
         self,
         gig_eta: jax.Array,
         **kwargs,

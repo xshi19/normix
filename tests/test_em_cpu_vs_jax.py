@@ -103,7 +103,7 @@ def test_m_step_cpu_vs_jax_sp500(dist_name):
     """M-step with CPU and JAX backends produce the same model on SP500 data.
 
     VG, NInvG, NIG have closed-form subordinator M-steps (no backend kwarg
-    in _m_step_subordinator). The CPU vs JAX difference comes solely from
+    in m_step_subordinator). The CPU vs JAX difference comes solely from
     the GH M-step (GIG from_expectation solver). For the non-GH distributions,
     we verify that the normal parameter updates (mu, gamma, L) are identical
     regardless of the backend kwarg passed to m_step.

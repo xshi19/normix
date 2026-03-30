@@ -165,12 +165,12 @@ def test_m_step_normal_preserves_subordinator(dist_name):
 
 
 # ---------------------------------------------------------------------------
-# Full m_step == m_step_normal + _m_step_subordinator
+# Full m_step == m_step_normal + m_step_subordinator
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG"])
 def test_full_m_step_matches_split(dist_name):
-    """m_step should produce the same result as m_step_normal + _m_step_subordinator."""
+    """m_step should produce the same result as m_step_normal + m_step_subordinator."""
     X = _load_sp500()
     models = _make_models(X)
     model = models[dist_name]
@@ -185,7 +185,7 @@ def test_full_m_step_matches_split(dist_name):
         jnp.mean(expectations['E_inv_Y']),
         jnp.mean(expectations['E_Y']),
     ])
-    model_split = model_split._m_step_subordinator(gig_eta)
+    model_split = model_split.m_step_subordinator(gig_eta)
 
     j_full = model_full._joint
     j_split = model_split._joint

@@ -195,7 +195,7 @@ class NormalInverseGaussian(NormalMixture):
         )
         return log_f
 
-    def _m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.inverse_gaussian import InverseGaussian
         j = self._joint
         ig_new = InverseGaussian.from_expectation(

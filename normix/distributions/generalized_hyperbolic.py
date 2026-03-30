@@ -38,7 +38,7 @@ from normix.mixtures.marginal import NormalMixture
 
 jax.config.update("jax_enable_x64", True)
 
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import LOG_EPS, GIG_CLAMP_LO, GIG_CLAMP_HI, GIG_P_MAX
 
 
 # ============================================================================
@@ -262,7 +262,7 @@ class GeneralizedHyperbolic(NormalMixture):
     # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def _m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
@@ -270,18 +270,38 @@ class GeneralizedHyperbolic(NormalMixture):
         maxiter = kwargs.get('maxiter', 20)
 
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
-        try:
+
+        if backend == 'cpu':
+            try:
+                gig_new = GIG.from_expectation(
+                    gig_eta,
+                    theta0=current_gig.natural_params(),
+                    backend='cpu', method=method, maxiter=maxiter,
+                )
+                p_new = float(gig_new.p)
+                a_new = float(gig_new.a)
+                b_new = float(gig_new.b)
+                if (abs(p_new) > GIG_P_MAX
+                        or a_new > GIG_CLAMP_HI or b_new > GIG_CLAMP_HI
+                        or a_new < GIG_CLAMP_LO or b_new < GIG_CLAMP_LO):
+                    gig_new = current_gig
+            except Exception:
+                gig_new = current_gig
+        else:
             gig_new = GIG.from_expectation(
                 gig_eta,
                 theta0=current_gig.natural_params(),
                 backend=backend, method=method, maxiter=maxiter,
             )
-            p_new, a_new, b_new = float(gig_new.p), float(gig_new.a), float(gig_new.b)
-            if (abs(p_new) > 50 or a_new > 1e10 or b_new > 1e10
-                    or a_new < 1e-10 or b_new < 1e-10):
-                gig_new = current_gig
-        except Exception:
-            gig_new = current_gig
+            sane = (
+                (jnp.abs(gig_new.p) <= GIG_P_MAX)
+                & (gig_new.a >= GIG_CLAMP_LO) & (gig_new.a <= GIG_CLAMP_HI)
+                & (gig_new.b >= GIG_CLAMP_LO) & (gig_new.b <= GIG_CLAMP_HI)
+            )
+            gig_new = jax.tree.map(
+                lambda new, old: jnp.where(sane, new, old),
+                gig_new, current_gig,
+            )
 
         joint_new = JointGeneralizedHyperbolic(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
@@ -291,10 +311,8 @@ class GeneralizedHyperbolic(NormalMixture):
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale):
         j = self._joint
-        _GIG_CLAMP_LO = 1e-6
-        _GIG_CLAMP_HI = 1e6
-        a_new = jnp.clip(j.a / scale, _GIG_CLAMP_LO, _GIG_CLAMP_HI)
-        b_new = jnp.clip(j.b * scale, _GIG_CLAMP_LO, _GIG_CLAMP_HI)
+        a_new = jnp.clip(j.a / scale, GIG_CLAMP_LO, GIG_CLAMP_HI)
+        b_new = jnp.clip(j.b * scale, GIG_CLAMP_LO, GIG_CLAMP_HI)
         joint_new = JointGeneralizedHyperbolic(
             mu=mu, gamma=gamma_new, L_Sigma=L_new,
             p=j.p, a=a_new, b=b_new,
@@ -353,16 +371,16 @@ class GeneralizedHyperbolic(NormalMixture):
 
         if best_name == 'NIG':
             p = jnp.float64(-0.4999)
-            a = jnp.clip(j.lam / (j.mu_ig ** 2), 1e-6, 1e6)
-            b = jnp.clip(j.lam, 1e-6, 1e6)
+            a = jnp.clip(j.lam / (j.mu_ig ** 2), GIG_CLAMP_LO, GIG_CLAMP_HI)
+            b = jnp.clip(j.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
         elif best_name == 'VG':
             p = j.alpha
-            a = jnp.clip(2.0 * j.beta, 1e-6, 1e6)
+            a = jnp.clip(2.0 * j.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
             b = jnp.float64(1e-4)
         elif best_name == 'NInvG':
             p = -j.alpha
             a = jnp.float64(1e-4)
-            b = jnp.clip(2.0 * j.beta, 1e-6, 1e6)
+            b = jnp.clip(2.0 * j.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
         else:
             return super().default_init(X)
 

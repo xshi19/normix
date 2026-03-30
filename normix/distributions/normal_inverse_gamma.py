@@ -187,7 +187,7 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
-    def _m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, gig_eta, **kwargs):
         from normix.distributions.inverse_gamma import InverseGamma
         j = self._joint
         ig_eta = jnp.array([-gig_eta[1], gig_eta[0]])
