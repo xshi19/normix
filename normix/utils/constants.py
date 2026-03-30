@@ -24,6 +24,18 @@ HESSIAN_DAMPING: float = 1e-6
 # Floor for GIG θ₂, θ₃ during warm-start initialisation
 THETA_FLOOR: float = -1e-8
 
+# ── GIG parameter clamps ──────────────────────────────────────────────
+
+# Near-zero perturbation for θ₂, θ₃ in GIG multi-start initialisation
+GIG_THETA_PERTURB: float = 1e-4
+
+# Clamp bounds for GIG parameters a, b in the GH M-step
+GIG_CLAMP_LO: float = 1e-6
+GIG_CLAMP_HI: float = 1e6
+
+# Maximum allowed |p| from GIG solver before falling back
+GIG_P_MAX: float = 50.0
+
 # ── M-step constants ──────────────────────────────────────────────────
 
 # Regularisation added to Σ in the M-step Cholesky factorisation
