@@ -90,7 +90,7 @@ def solve_bregman(
     *,
     backend: str = "jax",
     method: str = "lbfgs",
-    bounds: Optional[List[Tuple[float, float]]] = None,
+    bounds: Optional[Tuple[jax.Array, jax.Array]] = None,
     max_steps: int = 500,
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
@@ -106,10 +106,10 @@ def solve_bregman(
     theta0 : initial guess
     backend : 'jax' (JIT-able) or 'cpu' (scipy, not JIT-able)
     method : 'lbfgs', 'bfgs', or 'newton'
-    bounds : list of (lo, hi) per dimension; None → unconstrained.
-        For backend='jax': enforced via reparameterization (except
-        method='lbfgs' which uses jaxopt.LBFGSB natively).
-        For backend='cpu': passed directly as scipy bounds.
+    bounds : ``(lower, upper)`` pair of JAX arrays, each shape ``(d,)``;
+        ``None`` → unconstrained.
+        For backend='jax': enforced via reparameterization.
+        For backend='cpu': converted to scipy format internally.
     max_steps : iteration budget
     tol : convergence tolerance on ‖∇f(θ) − η‖∞
     grad_fn : θ → ∇f(θ).
@@ -183,7 +183,7 @@ def solve_bregman_multistart(
     *,
     backend: str = "jax",
     method: str = "lbfgs",
-    bounds: Optional[List[Tuple[float, float]]] = None,
+    bounds: Optional[Tuple[jax.Array, jax.Array]] = None,
     max_steps: int = 500,
     tol: float = 1e-10,
     grad_fn: Optional[Callable] = None,
@@ -233,9 +233,15 @@ def solve_bregman_multistart(
 # Reparameterization  (bounded → unconstrained)
 # ---------------------------------------------------------------------------
 
+_NEG_EXP = 0
+_POS_EXP = 1
+_IDENTITY = 2
+_BOUNDED = 3
+
+
 def _setup_reparam(
     theta0: jax.Array,
-    bounds: Optional[List[Tuple[float, float]]],
+    bounds: Optional[Tuple[jax.Array, jax.Array]],
 ):
     """Return (phi0, to_theta, to_phi) for bounded ↔ unconstrained transforms.
 
@@ -244,46 +250,46 @@ def _setup_reparam(
       (0, +∞)  : θ = exp(φ),   φ = log(θ)
       (-∞, +∞) : θ = φ         (identity)
       (lo, hi) : θ = lo+(hi−lo)·σ(φ),  φ = logit((θ−lo)/(hi−lo))
+
+    Parameters
+    ----------
+    bounds : (lower, upper) pair of JAX arrays, each shape ``(d,)``, or None.
     """
     if bounds is None:
         return theta0, lambda phi: phi, lambda theta: theta
 
-    transforms: list = []
-    for lo, hi in bounds:
-        lo, hi = float(lo), float(hi)
-        if lo == -np.inf and hi == 0.0:
-            transforms.append("neg_exp")
-        elif lo == 0.0 and hi == np.inf:
-            transforms.append("pos_exp")
-        elif lo == -np.inf and hi == np.inf:
-            transforms.append("identity")
-        else:
-            transforms.append(("bounded", lo, hi))
+    lower, upper = bounds
+    lower = jnp.asarray(lower, dtype=jnp.float64)
+    upper = jnp.asarray(upper, dtype=jnp.float64)
+
+    is_neg_inf_lo = jnp.isinf(lower) & (lower < 0)
+    is_pos_inf_hi = jnp.isinf(upper) & (upper > 0)
+
+    btype = jnp.where(
+        is_neg_inf_lo & (upper == 0.0), _NEG_EXP,
+        jnp.where(
+            (lower == 0.0) & is_pos_inf_hi, _POS_EXP,
+            jnp.where(
+                is_neg_inf_lo & is_pos_inf_hi, _IDENTITY,
+                _BOUNDED)))
+
+    lo_safe = jnp.where(jnp.isinf(lower), 0.0, lower)
+    hi_safe = jnp.where(jnp.isinf(upper), 1.0, upper)
+    span = jnp.maximum(hi_safe - lo_safe, LOG_EPS)
 
     def to_theta(phi: jax.Array) -> jax.Array:
-        result = phi
-        for i, t in enumerate(transforms):
-            if t == "neg_exp":
-                result = result.at[i].set(-jnp.exp(phi[i]))
-            elif t == "pos_exp":
-                result = result.at[i].set(jnp.exp(phi[i]))
-            elif isinstance(t, tuple):
-                lo, hi = t[1], t[2]
-                result = result.at[i].set(lo + (hi - lo) * jax.nn.sigmoid(phi[i]))
-        return result
+        return jnp.where(btype == _NEG_EXP, -jnp.exp(phi),
+               jnp.where(btype == _POS_EXP, jnp.exp(phi),
+               jnp.where(btype == _BOUNDED,
+                          lo_safe + span * jax.nn.sigmoid(phi),
+                          phi)))
 
     def to_phi(theta: jax.Array) -> jax.Array:
-        result = theta
-        for i, t in enumerate(transforms):
-            if t == "neg_exp":
-                result = result.at[i].set(jnp.log(jnp.maximum(-theta[i], LOG_EPS)))
-            elif t == "pos_exp":
-                result = result.at[i].set(jnp.log(jnp.maximum(theta[i], LOG_EPS)))
-            elif isinstance(t, tuple):
-                lo, hi = t[1], t[2]
-                normalized = jnp.clip((theta[i] - lo) / (hi - lo), LOG_EPS, 1.0 - LOG_EPS)
-                result = result.at[i].set(jnp.log(normalized / (1.0 - normalized)))
-        return result
+        norm = jnp.clip((theta - lo_safe) / span, LOG_EPS, 1.0 - LOG_EPS)
+        return jnp.where(btype == _NEG_EXP, jnp.log(jnp.maximum(-theta, LOG_EPS)),
+               jnp.where(btype == _POS_EXP, jnp.log(jnp.maximum(theta, LOG_EPS)),
+               jnp.where(btype == _BOUNDED, jnp.log(norm / (1.0 - norm)),
+                          theta)))
 
     phi0 = to_phi(theta0)
     return phi0, to_theta, to_phi
@@ -465,12 +471,18 @@ def _cpu_solve(
 
     scipy_method = {"lbfgs": "L-BFGS-B", "bfgs": "BFGS", "newton": "trust-exact"}[method]
 
+    scipy_bounds = None
+    if bounds is not None:
+        lo_np = np.asarray(bounds[0], dtype=np.float64)
+        hi_np = np.asarray(bounds[1], dtype=np.float64)
+        scipy_bounds = list(zip(lo_np, hi_np))
+
     kwargs: dict = {
         "jac": jac_np,
         "options": {"maxiter": max_steps, "gtol": tol},
     }
     if method == "lbfgs":
-        kwargs["bounds"] = bounds
+        kwargs["bounds"] = scipy_bounds
         kwargs["options"]["ftol"] = tol ** 2
     if method == "newton":
         if hess_fn is None:

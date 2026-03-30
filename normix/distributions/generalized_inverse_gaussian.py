@@ -63,7 +63,7 @@ from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
     LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD,
-    THETA_FLOOR, FD_EPS_FISHER,
+    THETA_FLOOR, FD_EPS_FISHER, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
     bregman_objective, solve_bregman, solve_bregman_multistart,
@@ -484,7 +484,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         geom = jnp.sqrt(eta2 * eta3)
         eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
 
-        _GIG_BOUNDS = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
+        _GIG_BOUNDS = cls._theta_bounds()
 
         # Select triad functions for the chosen backend
         if backend == "cpu":
@@ -570,7 +570,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                             float(eta_scaled[1]),
                             float(eta_scaled[2]))
         starting_points = []
-        eps = 1e-4
+        eps = GIG_THETA_PERTURB
 
         # 1. Gamma limit (b→0): match η₁ = E[log X], η₃ = E[X]
         try:

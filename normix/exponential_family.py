@@ -269,12 +269,7 @@ class ExponentialFamily(eqx.Module):
         if theta0 is None:
             theta0 = jnp.zeros_like(eta)
 
-        jax_bounds = cls._theta_bounds()
-        if jax_bounds is not None:
-            lower, upper = jax_bounds
-            bounds = [(float(lo), float(hi)) for lo, hi in zip(lower, upper)]
-        else:
-            bounds = None
+        bounds = cls._theta_bounds()
 
         if backend == 'cpu':
             f = cls._log_partition_cpu

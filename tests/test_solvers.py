@@ -94,7 +94,7 @@ class TestSetupReparam:
     def test_neg_exp_bound(self):
         # (-inf, 0): theta = -exp(phi)
         theta = jnp.array([-0.5, -2.0])
-        bounds = [(-np.inf, 0.0), (-np.inf, 0.0)]
+        bounds = (jnp.array([-jnp.inf, -jnp.inf]), jnp.array([0.0, 0.0]))
         phi0, to_theta, to_phi = _setup_reparam(theta, bounds)
         # round-trip
         theta_rt = to_theta(phi0)
@@ -105,7 +105,7 @@ class TestSetupReparam:
 
     def test_pos_exp_bound(self):
         theta = jnp.array([2.0, 3.0])
-        bounds = [(0.0, np.inf), (0.0, np.inf)]
+        bounds = (jnp.array([0.0, 0.0]), jnp.array([jnp.inf, jnp.inf]))
         phi0, to_theta, to_phi = _setup_reparam(theta, bounds)
         theta_rt = to_theta(phi0)
         np.testing.assert_allclose(theta_rt, theta, rtol=1e-10)
@@ -113,14 +113,14 @@ class TestSetupReparam:
 
     def test_mixed_bounds(self):
         theta = jnp.array([1.0, -0.5, -0.3])
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
+        bounds = (jnp.array([-jnp.inf, -jnp.inf, -jnp.inf]), jnp.array([jnp.inf, 0.0, 0.0]))
         phi0, to_theta, to_phi = _setup_reparam(theta, bounds)
         theta_rt = to_theta(phi0)
         np.testing.assert_allclose(theta_rt, theta, rtol=1e-10)
 
     def test_bounded_interval(self):
         theta = jnp.array([0.3])
-        bounds = [(0.0, 1.0)]
+        bounds = (jnp.array([0.0]), jnp.array([1.0]))
         phi0, to_theta, to_phi = _setup_reparam(theta, bounds)
         theta_rt = to_theta(phi0)
         np.testing.assert_allclose(theta_rt, theta, rtol=1e-6)
@@ -180,7 +180,7 @@ class TestSolveBregmanQuadratic:
         # η = [−0.5] should be found even with bound (−∞, 0).
         eta = jnp.array([-0.5])
         theta0 = jnp.array([-0.4])
-        bounds = [(-np.inf, 0.0)]
+        bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
         r = solve_bregman(
             lambda t: 0.5 * jnp.dot(t, t),
             eta, theta0,
@@ -227,9 +227,8 @@ class TestSolveBregmanGamma:
 
     @pytest.mark.parametrize("method", ["newton", "lbfgs", "bfgs"])
     def test_jax_backend(self, method):
-        # theta[1] must be strictly negative (not 0) due to log(-theta[1]) reparam
         theta0 = jnp.array([0.0, -1.0])
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0)]
+        bounds = (jnp.array([-jnp.inf, -jnp.inf]), jnp.array([jnp.inf, 0.0]))
         r = solve_bregman(
             self.f, self.eta, theta0,
             backend="jax", method=method, bounds=bounds, max_steps=200, tol=1e-9,
@@ -239,7 +238,7 @@ class TestSolveBregmanGamma:
     @pytest.mark.parametrize("method", ["lbfgs", "bfgs"])
     def test_cpu_backend(self, method):
         theta0 = jnp.array([0.0, -1.0])
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0)]
+        bounds = (jnp.array([-jnp.inf, -jnp.inf]), jnp.array([jnp.inf, 0.0]))
         r = solve_bregman(
             self.f, self.eta, theta0,
             backend="cpu", method=method, bounds=bounds, max_steps=300, tol=1e-9,
@@ -260,6 +259,7 @@ class TestSolveBregmanGIG:
         gig = GIG(p=self.p, a=self.a, b=self.b)
         self.eta = gig.expectation_params()
         self.theta_true = gig.natural_params()
+        self.bounds = GIG._theta_bounds()
         # warm theta0 that's close to truth
         self.theta0 = self.theta_true + jnp.array([0.1, -0.1, -0.1])
 
@@ -294,32 +294,29 @@ class TestSolveBregmanGIG:
 
     def test_solve_bregman_jax_newton(self):
         from normix import GIG
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
             GIG._log_partition_from_theta, self.eta, self.theta0,
             backend="jax", method="newton",
-            bounds=bounds, max_steps=30, tol=1e-9,
+            bounds=self.bounds, max_steps=30, tol=1e-9,
         )
         self._check(r)
 
     def test_solve_bregman_cpu_hybrid(self):
         from normix import GIG
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
             GIG._log_partition_from_theta, self.eta, self.theta0,
             backend="cpu", method="lbfgs",
-            bounds=bounds, max_steps=200, tol=1e-9,
+            bounds=self.bounds, max_steps=200, tol=1e-9,
         )
         self._check(r)
 
     def test_solve_bregman_cpu_pure_grad(self):
         """Use GIG triad CPU classmethods directly with solver."""
         from normix import GIG
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
             GIG._log_partition_cpu, self.eta, self.theta0,
             backend="cpu", method="lbfgs",
-            bounds=bounds, max_steps=200, tol=1e-9,
+            bounds=self.bounds, max_steps=200, tol=1e-9,
             grad_fn=GIG._grad_log_partition_cpu,
         )
         self._check(r)
@@ -327,11 +324,10 @@ class TestSolveBregmanGIG:
     def test_solve_bregman_jax_newton_with_analytical_hessian(self):
         """JAX Newton + GIG analytical Hessian via hess_fn."""
         from normix import GIG
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
             GIG._log_partition_from_theta, self.eta, self.theta0,
             backend="jax", method="newton",
-            bounds=bounds, max_steps=50, tol=1e-9,
+            bounds=self.bounds, max_steps=50, tol=1e-9,
             grad_fn=GIG._grad_log_partition,
             hess_fn=GIG._hessian_log_partition,
         )
@@ -339,11 +335,10 @@ class TestSolveBregmanGIG:
 
     def test_result_converged(self):
         from normix import GIG
-        bounds = [(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)]
         r = solve_bregman(
             GIG._log_partition_from_theta, self.eta, self.theta_true,
             backend="jax", method="lbfgs",
-            bounds=bounds, max_steps=500, tol=1e-9,
+            bounds=self.bounds, max_steps=500, tol=1e-9,
         )
         assert r.converged or r.grad_norm < 1e-6
 
@@ -397,7 +392,7 @@ class TestSolveBregmanMultistart:
         r = solve_bregman_multistart(
             GIG._log_partition_cpu, eta_scaled, processed,
             backend="cpu", method="lbfgs",
-            bounds=[(-np.inf, np.inf), (-np.inf, 0.0), (-np.inf, 0.0)],
+            bounds=GIG._theta_bounds(),
             max_steps=300, tol=1e-9,
             grad_fn=GIG._grad_log_partition_cpu,
         )
