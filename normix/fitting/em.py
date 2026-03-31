@@ -215,9 +215,8 @@ class BatchEMFitter:
 
         elapsed = time.perf_counter() - t0
 
-        valid_mask = param_changes > 0
-        n_iter = int(jnp.sum(valid_mask)) + (1 if bool(converged) else 0)
-        n_iter = min(n_iter, self.max_iter)
+        n_iter = jnp.sum(param_changes > 0) + jnp.where(converged, 1, 0)
+        n_iter = jnp.minimum(n_iter, self.max_iter)
 
         log_likelihoods = None
         if self.verbose >= 1:
@@ -225,7 +224,7 @@ class BatchEMFitter:
             log_likelihoods = jnp.array([ll])
             status = "Converged" if bool(converged) else "NOT converged"
             print(
-                f"  {status} after {n_iter} iterations "
+                f"  {status} after {int(n_iter)} iterations "
                 f"({elapsed:.2f}s), final LL={float(ll):.6f}"
             )
 
@@ -234,7 +233,7 @@ class BatchEMFitter:
             log_likelihoods=log_likelihoods,
             param_changes=param_changes,
             n_iter=n_iter,
-            converged=bool(converged),
+            converged=converged,
             elapsed_time=elapsed,
         )
 
