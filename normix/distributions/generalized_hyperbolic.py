@@ -326,66 +326,74 @@ class GeneralizedHyperbolic(NormalMixture):
 
     @classmethod
     def default_init(cls, X: jax.Array) -> "GeneralizedHyperbolic":
-        """Warm-start from the best of NIG / VG / NInvG sub-model fits.
+        r"""Warm-start from the best of NIG / VG / NInvG sub-model fits.
 
-        Runs 5 EM iterations for each special case, converts the winner
-        to GH parametrisation, and uses it as the starting point.
-        Falls back to moment-based default if all sub-models fail.
+        Runs 5 EM iterations (JAX backend, Newton method) for each special
+        case, converts each to GH parametrisation, and selects the candidate
+        with the highest marginal log-likelihood.  A moment-based fallback
+        (:math:`p=1, a=1, b=1`) is included as a fourth candidate.
+
+        Fully JAX-native: no try/except, no Python branching on data values.
         """
-        import warnings
-        import numpy as np
         from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
         from normix.distributions.variance_gamma import VarianceGamma
         from normix.distributions.normal_inverse_gamma import NormalInverseGamma
+        from normix.fitting.em import BatchEMFitter
 
         X = jnp.asarray(X, dtype=jnp.float64)
-        candidates = []
 
-        for SubModel, name in [
-            (NormalInverseGaussian, 'NIG'),
-            (VarianceGamma, 'VG'),
-            (NormalInverseGamma, 'NInvG'),
-        ]:
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    init_m = SubModel.default_init(X)
-                    result = init_m.fit(X, max_iter=5, tol=1e-6, verbose=0)
-                    model = result.model
-                    ll = float(model.marginal_log_likelihood(X))
-                    if np.isfinite(ll):
-                        candidates.append((name, ll, model))
-            except Exception:
-                pass
+        fitter = BatchEMFitter(
+            max_iter=5, tol=1e-6, verbose=0,
+            e_step_backend='jax', m_step_backend='jax',
+            m_step_method='newton',
+        )
 
-        if not candidates:
-            return super().default_init(X)
+        # --- NIG: p=-0.5, a=λ/μ², b=λ ---
+        nig = fitter.fit(NormalInverseGaussian.default_init(X), X).model
+        j_nig = nig._joint
+        p_nig = jnp.float64(-0.4999)
+        a_nig = jnp.clip(j_nig.lam / (j_nig.mu_ig ** 2), GIG_CLAMP_LO, GIG_CLAMP_HI)
+        b_nig = jnp.clip(j_nig.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
+        ll_nig = nig.marginal_log_likelihood(X)
 
-        best_name, _, best_model = max(candidates, key=lambda c: c[1])
-        j = best_model._joint
+        # --- VG: p=α, a=2β, b≈0 ---
+        vg = fitter.fit(VarianceGamma.default_init(X), X).model
+        j_vg = vg._joint
+        p_vg = j_vg.alpha
+        a_vg = jnp.clip(2.0 * j_vg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
+        b_vg = jnp.float64(1e-4)
+        ll_vg = vg.marginal_log_likelihood(X)
 
-        mu = j.mu
-        gamma_v = j.gamma
-        L = j.L_Sigma
-        sigma = L @ L.T
+        # --- NInvG: p=-α, a≈0, b=2β ---
+        ninvg = fitter.fit(NormalInverseGamma.default_init(X), X).model
+        j_ninvg = ninvg._joint
+        p_ninvg = -j_ninvg.alpha
+        a_ninvg = jnp.float64(1e-4)
+        b_ninvg = jnp.clip(2.0 * j_ninvg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
+        ll_ninvg = ninvg.marginal_log_likelihood(X)
 
-        if best_name == 'NIG':
-            p = jnp.float64(-0.4999)
-            a = jnp.clip(j.lam / (j.mu_ig ** 2), GIG_CLAMP_LO, GIG_CLAMP_HI)
-            b = jnp.clip(j.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        elif best_name == 'VG':
-            p = j.alpha
-            a = jnp.clip(2.0 * j.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-            b = jnp.float64(1e-4)
-        elif best_name == 'NInvG':
-            p = -j.alpha
-            a = jnp.float64(1e-4)
-            b = jnp.clip(2.0 * j.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        else:
-            return super().default_init(X)
+        # --- Fallback: moment-based default (p=1, a=1, b=1) ---
+        fallback = super().default_init(X)
+        j_fb = fallback._joint
+        ll_fb = fallback.marginal_log_likelihood(X)
+
+        # Stack candidates and select best by log-likelihood
+        lls = jnp.array([ll_nig, ll_vg, ll_ninvg, ll_fb])
+        lls = jnp.where(jnp.isfinite(lls), lls, -jnp.inf)
+        best = jnp.argmax(lls)
+
+        mus = jnp.stack([j_nig.mu, j_vg.mu, j_ninvg.mu, j_fb.mu])
+        gammas = jnp.stack([j_nig.gamma, j_vg.gamma, j_ninvg.gamma, j_fb.gamma])
+        Ls = jnp.stack([j_nig.L_Sigma, j_vg.L_Sigma, j_ninvg.L_Sigma, j_fb.L_Sigma])
+        ps = jnp.array([p_nig, p_vg, p_ninvg, j_fb.p])
+        a_s = jnp.array([a_nig, a_vg, a_ninvg, j_fb.a])
+        bs = jnp.array([b_nig, b_vg, b_ninvg, j_fb.b])
 
         return cls.from_classical(
-            mu=mu, gamma=gamma_v, sigma=sigma, p=p, a=a, b=b)
+            mu=mus[best], gamma=gammas[best],
+            sigma=Ls[best] @ Ls[best].T,
+            p=ps[best], a=a_s[best], b=bs[best],
+        )
 
     def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
             regularization='det_sigma_one',
