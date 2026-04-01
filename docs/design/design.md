@@ -38,7 +38,7 @@ normix/
 │   ├── joint.py                  # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py               # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   ├── em.py                     # EMResult; Batch / Online / MiniBatch EM fitters
+│   ├── em.py                     # EMResult; BatchEMFitter, IncrementalEMFitter
 │   └── solvers.py                # solve_bregman*, BregmanResult (η→θ Bregman minimisation)
 └── utils/
     ├── bessel.py                 # log_kv with custom_jvp
@@ -152,19 +152,21 @@ Following GMMX: the model knows math, the fitter knows iteration.
 
 **`EMResult`** (frozen dataclass): `model`, optional `log_likelihoods`, `param_changes`, `n_iter`, `converged`, `elapsed_time`.
 
-**`BatchEMFitter`** is a plain Python class (configuration + `fit`); it is **not** an `eqx.Module`. Construct with backends, tolerances, and verbosity, then `fit(model, X) -> EMResult`.
+Fitters are plain Python classes (configuration + `fit`), **not** `eqx.Module`s:
 
-- **Convergence**: max relative change in **normal** parameters (μ, γ, Cholesky `L_Sigma`) below `tol` (default **`1e-3`**). Subordinator (GIG) parameters are excluded from this criterion.
-- **Loop**: `jax.lax.scan` when **both** `e_step_backend` and `m_step_backend` are `'jax'` and `verbose <= 1`; otherwise a Python loop (needed for CPU backends or `verbose >= 2`).
-- **Regularization**: `regularization='none'` by default; `'det_sigma_one'` enforces `det(Σ)=1` via rescaling (see `NormalMixture.regularize_det_sigma_one`).
+- **`BatchEMFitter`** — full-dataset EM with convergence monitoring. Supports an optional `eta_update` rule for penalised / shrinkage EM.
+- **`IncrementalEMFitter`** — mini-batch / online / fine-tuning EM with configurable η-update rules and fixed iteration budget.
 
-The same `NormalMixture` model works with `BatchEMFitter`, `OnlineEMFitter`, or `MiniBatchEMFitter`. The E-step and M-step are methods on the model; the fitter controls the outer loop and returns **`EMResult`**.
+Both return `EMResult`. Full fitter design: [`docs/design/fitters_redesign.md`](fitters_redesign.md).
 
 **EM steps on `NormalMixture`:**
 - `e_step(X, backend='jax'|'cpu')` — conditional expectations via vmap (or hybrid CPU Bessel path)
 - `m_step(X, expectations)` → new `NormalMixture` with updated parameters
+- `compute_eta(X, expectations) -> EtaSummary` — averaged sufficient statistics as a pytree
+- `m_step_from_eta(eta) -> NormalMixture` — M-step from pre-computed η
+- `compute_eta_from_model() -> EtaSummary` — reconstruct η from current parameters
 - `fit(X, **kwargs) -> EMResult` — convenience: `BatchEMFitter(**kwargs).fit(self, X)` using **`self` as initialization**
-- `default_init(X)` — moment-based starting model (sample mean, zero γ, regularized empirical Σ, default subordinator); pair with `model.fit(X)` for a full pipeline without hand-picking true parameters in notebooks
+- `default_init(X)` — moment-based starting model; pair with `model.fit(X)` for cold start
 
 ---
 
@@ -262,7 +264,9 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
 | EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace; `result.model` is the fitted pytree |
 | Batch EM convergence | Relative change in μ, γ, L (not GIG) | Stable criterion; GIG η→θ has its own solver tolerance |
-| `BatchEMFitter` | Plain class, not `eqx.Module` | Fitter is configuration + loop; no pytree overhead |
+| Fitter classes | `BatchEMFitter` + `IncrementalEMFitter` | Batch has convergence monitoring; incremental has fixed budget. [Design](fitters_redesign.md) |
+| η-update rules | Affine combination $\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta$ | Unifies online, EWMA, shrinkage, sample-weighted in one abstraction |
+| `EtaSummary` | Pytree of 6 heterogeneous-shape components | Readable; `jax.tree.map` applies scalar weights naturally |
 | `lax.scan` EM | When both EM backends JAX and low verbosity | JIT-friendly full batch EM; else Python loop for CPU / verbose tables |
 | Cold vs warm η→θ | `default_init` / `theta0=None` vs `fit(self,X)` | Zeros-like default in `from_expectation`; instance `fit` uses `natural_params()` |
 | Bessel | Pure-JAX + CPU backend | JAX for JIT/autodiff; CPU for EM performance |
