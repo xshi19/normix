@@ -21,7 +21,7 @@ Inverse Gaussian (Wald) distribution as an exponential family.
 .. math::
 
     \\psi(\\theta) = -\\tfrac{1}{2}\\log(-2\\theta_2)
-    + \\sqrt{(-2\\theta_1)(-2\\theta_2)}
+    - \\sqrt{(-2\\theta_1)(-2\\theta_2)}
 
     \\bigl(\\tfrac{1}{2}\\log(2\\pi)\\ \\text{is absorbed into}\\
     \\log h(x) = -\\tfrac{1}{2}\\log(2\\pi) - \\tfrac{3}{2}\\log x\\bigr)
@@ -130,13 +130,22 @@ class InverseGaussian(ExponentialFamily):
         return self.mu**3 / self.lam
 
     def cdf(self, x: jax.Array) -> jax.Array:
+        r"""CDF of the Inverse Gaussian distribution (log-space stable).
+
+        .. math::
+
+            F(x) = \Phi(t_1) + \exp\!\bigl(2\lambda/\mu + \log\Phi(-t_2)\bigr)
+
+        where :math:`t_1 = \sqrt{\lambda/x}\,(x/\mu - 1)` and
+        :math:`t_2 = \sqrt{\lambda/x}\,(x/\mu + 1)`.  The second term uses
+        ``log_ndtr`` to avoid overflow when :math:`\lambda/\mu` is large.
+        """
         x = jnp.asarray(x, dtype=jnp.float64)
         sqrt_lam_over_x = jnp.sqrt(self.lam / x)
         t1 = sqrt_lam_over_x * (x / self.mu - 1.0)
         t2 = sqrt_lam_over_x * (x / self.mu + 1.0)
-        return (jax.scipy.stats.norm.cdf(t1)
-                + jnp.exp(2.0 * self.lam / self.mu)
-                * jax.scipy.stats.norm.cdf(-t2))
+        log_term2 = 2.0 * self.lam / self.mu + jax.scipy.special.log_ndtr(-t2)
+        return jax.scipy.stats.norm.cdf(t1) + jnp.exp(log_term2)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.

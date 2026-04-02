@@ -201,22 +201,20 @@ class BatchEMFitter:
         t0 = time.perf_counter()
 
         def body(carry, _):
-            mdl, converged = carry
+            mdl, converged, n = carry
             mdl_new, max_change = self._step(mdl, X)
             conv_new = max_change < self.tol
             mdl_out = jax.tree.map(
                 lambda n, o: jnp.where(converged, o, n), mdl_new, mdl)
             change_out = jnp.where(converged, 0.0, max_change)
-            return (mdl_out, converged | conv_new), change_out
+            n_out = n + jnp.where(converged, 0, 1)
+            return (mdl_out, converged | conv_new, n_out), change_out
 
-        init = (model, jnp.bool_(False))
-        (final_model, converged), param_changes = jax.lax.scan(
+        init = (model, jnp.bool_(False), jnp.int32(0))
+        (final_model, converged, n_iter), param_changes = jax.lax.scan(
             body, init, None, length=self.max_iter)
 
         elapsed = time.perf_counter() - t0
-
-        n_iter = jnp.sum(param_changes > 0) + jnp.where(converged, 1, 0)
-        n_iter = jnp.minimum(n_iter, self.max_iter)
 
         log_likelihoods = None
         if self.verbose >= 1:
