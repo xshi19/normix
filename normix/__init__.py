@@ -5,15 +5,15 @@ Built on Equinox. Float64 precision throughout.
 
 Quick start
 -----------
->>> import jax.numpy as jnp
->>> from normix import GeneralizedHyperbolic, GIG, Gamma
-
->>> # Fit GH to data
 >>> import jax
+>>> import jax.numpy as jnp
+>>> from normix import GeneralizedHyperbolic
+
 >>> key = jax.random.PRNGKey(0)
 >>> X = jax.random.normal(key, (1000, 2))
->>> model = GeneralizedHyperbolic.fit(X, key=key, max_iter=50)
->>> log_p = jax.vmap(model.log_prob)(X)
+>>> model = GeneralizedHyperbolic.default_init(X)
+>>> result = model.fit(X, max_iter=50)
+>>> log_p = jax.vmap(result.model.log_prob)(X)
 """
 from __future__ import annotations
 

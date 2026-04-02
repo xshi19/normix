@@ -16,21 +16,21 @@ pip install -e .   # or pip
 ```python
 import jax
 import jax.numpy as jnp
-from normix import GeneralizedHyperbolic, GIG, Gamma, log_kv
+from normix import GeneralizedHyperbolic
+from normix.fitting.em import BatchEMFitter
 
 # Fit GH distribution to data via EM
 key = jax.random.PRNGKey(0)
 X = jax.random.normal(key, (1000, 3))
 
-dist = GeneralizedHyperbolic.from_classical(
+model = GeneralizedHyperbolic.from_classical(
     mu=jnp.zeros(3), gamma=jnp.zeros(3),
     sigma=jnp.eye(3), p=-0.5, a=2.0, b=1.0,
 )
-fitter = normix.fitting.em.BatchEMFitter(max_iter=100)
-fitted = fitter.fit(dist, X)
+result = BatchEMFitter(max_iter=100).fit(model, X)
 
 # Evaluate log-density (batched via vmap)
-log_p = jax.vmap(fitted.log_prob)(X)   # shape (1000,)
+log_p = jax.vmap(result.model.log_prob)(X)   # shape (1000,)
 ```
 
 ## Distributions
@@ -87,20 +87,24 @@ dist4 = Gamma.fit_mle(X)           # η̂ = mean t(xᵢ)
 ## EM Algorithm
 
 ```python
+import jax.numpy as jnp
 from normix import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter
 
+d = 3
+X = ...  # (n, d) data array
+
 # Initialise from classical parameters
-joint = JointGeneralizedHyperbolic.from_classical(
+model = GeneralizedHyperbolic.from_classical(
     mu=jnp.zeros(d), gamma=jnp.zeros(d), sigma=jnp.eye(d),
     p=-0.5, a=2.0, b=1.0,
 )
-model = GeneralizedHyperbolic(joint)
 
 # Fit with hybrid CPU/JAX backend for maximum speed
 fitter = BatchEMFitter(max_iter=200, tol=1e-6,
-                       e_step_backend='cpu', m_step_solver='cpu')
-fitted = fitter.fit(model, X)
+                       e_step_backend='cpu', m_step_backend='cpu')
+result = fitter.fit(model, X)
+fitted = result.model
 ```
 
 ## Bessel Functions
@@ -131,7 +135,7 @@ normix/
 │   ├── normal_inverse_gaussian.py
 │   └── generalized_hyperbolic.py
 ├── mixtures/                     # Joint and marginal base classes
-├── fitting/em.py                 # Batch / Online / MiniBatch EM fitters
+├── fitting/em.py                 # BatchEMFitter, EMResult
 └── utils/
     ├── bessel.py                 # log_kv with custom JVP
     ├── constants.py              # Shared numerical constants
