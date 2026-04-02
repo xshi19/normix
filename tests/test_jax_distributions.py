@@ -179,6 +179,33 @@ class TestInverseGaussian:
             ref = float(sp_invgauss.logpdf(x, mu=mu / lam, scale=lam))
             assert abs(our - ref) < 1e-9, f"x={x}: ours={our}, scipy={ref}"
 
+    def test_cdf_moderate(self):
+        from scipy.stats import invgauss as sp_invgauss
+        mu, lam = 2.0, 4.0
+        ig = InverseGaussian(mu=mu, lam=lam)
+        for x in [0.5, 1.0, 2.0, 3.0, 5.0]:
+            our = float(ig.cdf(jnp.array(x)))
+            ref = float(sp_invgauss.cdf(x, mu=mu / lam, scale=lam))
+            np.testing.assert_allclose(our, ref, rtol=1e-8,
+                                       err_msg=f"CDF mismatch at x={x}")
+
+    @pytest.mark.parametrize("mu,lam,x", [
+        (1.0, 1000.0, 1.0),
+        (1.0, 1e4, 1.0),
+        (1.0, 1e6, 1.0),
+        (0.5, 1000.0, 0.5),
+        (2.0, 500.0, 2.0),
+    ])
+    def test_cdf_extreme_shape(self, mu, lam, x):
+        """CDF must be finite and match scipy in high-shape (lam/mu large) regimes."""
+        from scipy.stats import invgauss as sp_invgauss
+        ig = InverseGaussian(mu=mu, lam=lam)
+        our = float(ig.cdf(jnp.array(x)))
+        ref = float(sp_invgauss.cdf(x, mu=mu / lam, scale=lam))
+        assert np.isfinite(our), f"CDF returned non-finite for mu={mu}, lam={lam}, x={x}"
+        np.testing.assert_allclose(our, ref, rtol=1e-6,
+                                   err_msg=f"mu={mu}, lam={lam}, x={x}")
+
 
 # ===========================================================================
 # GIG
