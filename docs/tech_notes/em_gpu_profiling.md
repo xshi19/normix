@@ -126,8 +126,8 @@ model = result.model
 
 Or equivalently, call directly:
 ```python
-exp = model.e_step(X, backend='cpu')
-model = model.m_step(X, exp, backend='cpu', method='lbfgs')
+eta = model.e_step(X, backend='cpu')
+model = model.m_step(eta, backend='cpu', method='lbfgs')
 ```
 
 The `backend='jax'` default remains correct for `log_prob`, `pdf`, `cdf`, `jax.jit`, and `jax.grad`.

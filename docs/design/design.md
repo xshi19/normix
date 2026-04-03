@@ -39,6 +39,8 @@ normix/
 │   └── marginal.py               # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
 │   ├── em.py                     # EMResult; BatchEMFitter, IncrementalEMFitter
+│   ├── eta.py                    # NormalMixtureEta, affine_combine
+│   ├── eta_rules.py              # EtaUpdateRule (eqx.Module) and concrete rules
 │   └── solvers.py                # solve_bregman*, BregmanResult (η→θ Bregman minimisation)
 └── utils/
     ├── bessel.py                 # log_kv with custom_jvp
@@ -155,18 +157,24 @@ Following GMMX: the model knows math, the fitter knows iteration.
 Fitters are plain Python classes (configuration + `fit`), **not** `eqx.Module`s:
 
 - **`BatchEMFitter`** — full-dataset EM with convergence monitoring. Supports an optional `eta_update` rule for penalised / shrinkage EM.
-- **`IncrementalEMFitter`** — mini-batch / online / fine-tuning EM with configurable η-update rules and fixed iteration budget.
+- **`IncrementalEMFitter`** — mini-batch / online / fine-tuning EM with configurable η-update rules and fixed iteration budget. Replaces the former `OnlineEMFitter` and `MiniBatchEMFitter`.
 
-Both return `EMResult`. Full fitter design: [`docs/design/fitters_redesign.md`](fitters_redesign.md).
+Both return `EMResult`.
 
 **EM steps on `NormalMixture`:**
-- `e_step(X, backend='jax'|'cpu')` — conditional expectations via vmap (or hybrid CPU Bessel path)
-- `m_step(X, expectations)` → new `NormalMixture` with updated parameters
-- `compute_eta(X, expectations) -> EtaSummary` — averaged sufficient statistics as a pytree
-- `m_step_from_eta(eta) -> NormalMixture` — M-step from pre-computed η
-- `compute_eta_from_model() -> EtaSummary` — reconstruct η from current parameters
+- `e_step(X, backend='jax'|'cpu') -> NormalMixtureEta` — subordinator conditionals + batch aggregation into a 6-field pytree
+- `m_step(eta, **kwargs) -> NormalMixture` — full M-step (normal params + subordinator) from aggregated η
+- `m_step_normal(eta) -> NormalMixture` — MCECM cycle 1: update μ, γ, Σ only
+- `m_step_subordinator(eta, **kwargs) -> NormalMixture` — MCECM cycle 2: update subordinator only
+- `compute_eta_from_model() -> NormalMixtureEta` — reconstruct η from current parameters (initialises incremental EM)
 - `fit(X, **kwargs) -> EMResult` — convenience: `BatchEMFitter(**kwargs).fit(self, X)` using **`self` as initialization**
 - `default_init(X)` — moment-based starting model; pair with `model.fit(X)` for cold start
+
+**`NormalMixtureEta`** — the six batch-averaged sufficient statistics as an `eqx.Module` pytree: `E_log_Y` (scalar), `E_inv_Y` (scalar), `E_Y` (scalar), `E_X` (d,), `E_X_inv_Y` (d,), `E_XXT_inv_Y` (d,d). This is the expectation parametrization of the joint distribution — $\hat\eta = E[t(X,Y)|X]$ averaged over observations. The pytree structure (vs. a flat vector) keeps heterogeneous shapes readable and makes `jax.tree.map` apply affine weights naturally.
+
+**`affine_combine(eta_prev, eta_new, b, c, a=None)`** — the single operation behind all η-update rules: $\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta$. JIT-able (pure function on pytrees).
+
+**`EtaUpdateRule`** (`eqx.Module` ABC) — each concrete rule computes $(a, b, c)$ from step index, batch size, and state. Hyperparameters are JAX array leaves — JIT-compatible and differentiable for meta-learning step-size schedules. Concrete rules: `IdentityUpdate`, `RobbinsMonroUpdate`, `SampleWeightedUpdate`, `EWMAUpdate`, `ShrinkageUpdate`, `AffineUpdate`.
 
 ---
 
@@ -264,9 +272,10 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
 | EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace; `result.model` is the fitted pytree |
 | Batch EM convergence | Relative change in μ, γ, L (not GIG) | Stable criterion; GIG η→θ has its own solver tolerance |
-| Fitter classes | `BatchEMFitter` + `IncrementalEMFitter` | Batch has convergence monitoring; incremental has fixed budget. [Design](fitters_redesign.md) |
+| Fitter classes | `BatchEMFitter` + `IncrementalEMFitter` | Batch has convergence monitoring; incremental has fixed budget |
 | η-update rules | Affine combination $\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta$ | Unifies online, EWMA, shrinkage, sample-weighted in one abstraction |
-| `EtaSummary` | Pytree of 6 heterogeneous-shape components | Readable; `jax.tree.map` applies scalar weights naturally |
+| `EtaUpdateRule` | `eqx.Module` (not plain ABC) | Hyperparameters are JAX array leaves — JIT-compatible, differentiable for future meta-learning |
+| `NormalMixtureEta` | Pytree of 6 heterogeneous-shape components | Readable; `jax.tree.map` applies scalar weights naturally |
 | `lax.scan` EM | When both EM backends JAX and low verbosity | JIT-friendly full batch EM; else Python loop for CPU / verbose tables |
 | Cold vs warm η→θ | `default_init` / `theta0=None` vs `fit(self,X)` | Zeros-like default in `from_expectation`; instance `fit` uses `natural_params()` |
 | Bessel | Pure-JAX + CPU backend | JAX for JIT/autodiff; CPU for EM performance |

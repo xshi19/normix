@@ -98,8 +98,8 @@ Reference: `docs/design/design.md` for architecture decisions.
 ### 3.3 NormalMixture
 - Stores `_joint: JointNormalMixture`
 - `log_prob(x)`: closed-form marginal log-density (Bessel for GH)
-- `e_step(X) = jax.vmap(self._joint.conditional_expectations)(X)`
-- `m_step(X, expectations) → NormalMixture` (returns new immutable model)
+- `e_step(X, backend) → NormalMixtureEta` (subordinator conditionals + aggregation)
+- `m_step(eta: NormalMixtureEta, **kwargs) → NormalMixture` (returns new immutable model)
 
 ## Phase 4: Mixture Distributions
 
@@ -125,12 +125,10 @@ Each follows the same pattern:
 - **Convergence:** max relative change in normal parameters (μ, γ, `L_Sigma`) < `tol` (default `1e-3`); not log-likelihood delta.
 - **Regularization:** `regularization='none'` by default; optional `det_sigma_one` (normalize `det(Σ)`).
 
-### 5.2 OnlineEMFitter
-- `jax.lax.scan` per epoch, Robbins-Monro step sizes τₜ = τ₀ + t
-- Update running sufficient statistics η
-
-### 5.3 MiniBatchEMFitter
-- Random mini-batches, Robbins-Monro averaging on η
+### 5.2 IncrementalEMFitter
+- Mini-batch / online / fine-tuning EM with pluggable `EtaUpdateRule`
+- `EtaUpdateRule` (`eqx.Module`) computes affine weights $(a, b, c)$; concrete rules: `RobbinsMonroUpdate`, `SampleWeightedUpdate`, `EWMAUpdate`, `ShrinkageUpdate`, `AffineUpdate`
+- `affine_combine(eta_prev, eta_new, b, c, a)` applies the update on `NormalMixtureEta` pytrees
 
 ### 5.4 Multi-start
 - `jax.vmap(fit_one)(keys)` for parallel initializations

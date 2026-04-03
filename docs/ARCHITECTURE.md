@@ -23,7 +23,9 @@ normix/                     # JAX implementation
 │   ├── joint.py            # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   ├── em.py               # EMResult; BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+│   ├── em.py               # EMResult; BatchEMFitter, IncrementalEMFitter
+│   ├── eta.py              # NormalMixtureEta, affine_combine
+│   ├── eta_rules.py        # EtaUpdateRule (eqx.Module) + Identity, RobbinsMonro, EWMA, ...
 │   ├── solvers.py          # solve_bregman*, BregmanResult; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 └── utils/
@@ -146,20 +148,23 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
 Key methods on `JointNormalMixture`:
 - `conditional_expectations(x)` → E[log Y|x], E[1/Y|x], E[Y|x] (EM E-step)
 - `_compute_posterior_expectations(x)` — implemented by each concrete joint
-- `_mstep_normal_params(...)` → μ, γ, L_Sigma (closed-form M-step for normal parameters)
+- `_mstep_normal_params(eta: NormalMixtureEta)` → μ, γ, L_Sigma (closed-form M-step for normal parameters)
 - `_quad_forms(x)` → z=L_Sigma⁻¹(x-μ), w=L_Sigma⁻¹γ (EM hot path)
 
 ## EM Algorithm
 
 The model knows math; the fitter knows iteration (following GMMX).
 
-- **E-step**: `model.e_step(X, backend='jax'|'cpu')`
+- **E-step**: `model.e_step(X, backend='jax'|'cpu') -> NormalMixtureEta`
   - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
   - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
-- **M-step**: `model.m_step(X, expectations)` → new immutable model
-- **Batch fitter**: `BatchEMFitter` is a plain Python class (not an `eqx.Module`). Its `fit(model, X)` returns **`EMResult`**: fitted `model`, optional per-iteration log-likelihoods, `param_changes` (max relative change in normal parameters μ, γ, `L_Sigma` — GIG/subordinator excluded), `n_iter`, `converged`, `elapsed_time`.
+  - Returns a `NormalMixtureEta` pytree (6 aggregated expectation fields), not raw per-observation dicts.
+- **M-step**: `model.m_step(eta: NormalMixtureEta, **kwargs) -> NormalMixture` — full update from aggregated η. MCECM uses `m_step_normal(eta)` and `m_step_subordinator(eta, **kwargs)` separately.
+- **`compute_eta_from_model() -> NormalMixtureEta`**: reconstruct η from model parameters (initialises incremental EM running average).
+- **Batch fitter**: `BatchEMFitter` is a plain Python class (not an `eqx.Module`). Its `fit(model, X)` returns **`EMResult`**: fitted `model`, optional per-iteration log-likelihoods, `param_changes` (max relative change in normal parameters μ, γ, `L_Sigma` — GIG/subordinator excluded), `n_iter`, `converged`, `elapsed_time`. Optional `eta_update` rule enables penalised / shrinkage batch EM.
+- **Incremental fitter**: `IncrementalEMFitter` processes data in random mini-batches with a pluggable `EtaUpdateRule` (Robbins-Monro, EWMA, sample-weighted, shrinkage, etc.). `inner_iter > 1` enables fine-tuning mode.
 - **Defaults**: `tol=1e-3`, `regularization='none'`, `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`. Regularization `'det_sigma_one'` rescales Σ (and matched γ / subordinator) so `det(Σ)=1`.
-- **Dual loop**: when **both** E- and M-step backends are `'jax'` and `verbose <= 1`, the batch EM body runs inside **`jax.lax.scan`** (JIT-friendly). Otherwise a Python `for` loop is used (CPU backends, or `verbose >= 2` for a per-iteration table).
+- **Dual loop**: when **both** E- and M-step backends are `'jax'`, `verbose <= 1`, and no `eta_update` rule, the batch EM body runs inside **`jax.lax.scan`** (JIT-friendly). Otherwise a Python `for` loop is used.
 - **Verbosity**: `verbose=0` silent, `1` summary, `2` per-iteration diagnostics.
 - **Convenience**: `NormalMixture.fit(X, **fitter_kwargs) → EMResult` delegates to `BatchEMFitter` using **`self` as initialization**. Cold start: `SomeMixture.default_init(X)` then `result = model.fit(X)` (or `BatchEMFitter(...).fit(model, X)`).
 

@@ -34,7 +34,8 @@ not change. Immutability matches this semantics perfectly. The EM M-step returns
 
 .. code-block:: python
 
-   new_model = model.m_step(X, expectations)  # returns new instance
+   eta = model.e_step(X)     # returns NormalMixtureEta
+   new_model = model.m_step(eta)  # returns new instance
 
 This is cleaner than mutable alternatives (Flax NNX, sklearn-style ``fit``
 returning ``self``), and is the same design choice made by FlowJAX.
@@ -218,7 +219,7 @@ Following the GMMX design: **the model knows math, the fitter knows iteration.**
 
 The E-step and M-step are methods on the model. The fitter controls the outer
 loop, convergence checking, and timing. This separation means the same model
-works with ``BatchEMFitter``, ``OnlineEMFitter``, or ``MiniBatchEMFitter``.
+works with ``BatchEMFitter`` or ``IncrementalEMFitter``.
 
 **``EMResult`` instead of a bare model:**
 ``fitter.fit()`` returns an ``EMResult`` containing the fitted model, diagnostics

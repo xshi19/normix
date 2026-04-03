@@ -315,12 +315,12 @@ def bench_em(n_stocks: int = 20) -> None:
             except Exception:
                 t_e_cpu = float('nan'); e_ratio = "N/A"
 
-            expectations = model.e_step(X, backend='jax')
-            t_m_jax = timeit(lambda: model.m_step(X, expectations), n_runs=5, warmup=2)
+            eta = model.e_step(X, backend='jax')
+            t_m_jax = timeit(lambda: model.m_step(eta), n_runs=5, warmup=2)
             try:
                 if name == "GH":
                     t_m_cpu = timeit(
-                        lambda: model.m_step(X, expectations, solver='cpu'),
+                        lambda: model.m_step(eta, backend='cpu'),
                         n_runs=10, warmup=3)
                 else:
                     t_m_cpu = t_m_jax
@@ -369,23 +369,17 @@ def bench_em_full(n_stocks: int = 20, n_iter: int = 5) -> None:
     ]
 
     def run_em(model, X, n_iter, e_backend, m_solver='newton'):
-        exp = model.e_step(X, backend=e_backend)
-        try:
-            model.m_step(X, exp, solver=m_solver)
-        except TypeError:
-            model.m_step(X, exp)
+        eta = model.e_step(X, backend=e_backend)
+        model.m_step(eta, backend=m_solver, method=m_solver)
         e_total = 0.0; m_total = 0.0
         for _ in range(n_iter):
             t0 = time.perf_counter()
-            exp = model.e_step(X, backend=e_backend)
-            if hasattr(exp.get('E_Y', None), 'block_until_ready'):
-                exp['E_Y'].block_until_ready()
+            eta = model.e_step(X, backend=e_backend)
+            if hasattr(eta.E_Y, 'block_until_ready'):
+                eta.E_Y.block_until_ready()
             e_total += time.perf_counter() - t0
             t0 = time.perf_counter()
-            try:
-                model = model.m_step(X, exp, solver=m_solver)
-            except TypeError:
-                model = model.m_step(X, exp)
+            model = model.m_step(eta, backend=m_solver, method=m_solver)
             m_total += time.perf_counter() - t0
         return e_total, m_total
 
@@ -470,23 +464,17 @@ def bench_em_solver_comparison(n_stocks: int = 20, n_iter: int = 10) -> None:
     def run_timed(model, e_backend, m_solver, n_iter):
         """Run n_iter EM steps; return (e_time, m_time, final_ll)."""
         # warm-up (1 step)
-        exp = model.e_step(X, backend=e_backend)
-        try:
-            model.m_step(X, exp, solver=m_solver)
-        except TypeError:
-            model.m_step(X, exp)
+        eta = model.e_step(X, backend=e_backend)
+        model.m_step(eta, backend=m_solver, method=m_solver)
 
         e_total = 0.0; m_total = 0.0
         for _ in range(n_iter):
             t0 = time.perf_counter()
-            exp = model.e_step(X, backend=e_backend)
+            eta = model.e_step(X, backend=e_backend)
             e_total += time.perf_counter() - t0
 
             t0 = time.perf_counter()
-            try:
-                model = model.m_step(X, exp, solver=m_solver)
-            except TypeError:
-                model = model.m_step(X, exp)
+            model = model.m_step(eta, backend=m_solver, method=m_solver)
             m_total += time.perf_counter() - t0
 
         # final log-likelihood

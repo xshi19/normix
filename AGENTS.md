@@ -48,7 +48,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
 | Design decisions | `docs/design/design.md` |
-| Fitters redesign (D1) | `docs/design/fitters_redesign.md` |
+| Fitters & eta rules (D1, done) | `docs/design/design.md` § EM Framework |
 | Agent instructions design | `docs/design/agent_instructions_design.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
 | Migration status | `docs/plans/migration_plan.md` |
