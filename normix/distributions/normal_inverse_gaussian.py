@@ -195,11 +195,11 @@ class NormalInverseGaussian(NormalMixture):
         )
         return log_f
 
-    def m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.inverse_gaussian import InverseGaussian
         j = self._joint
         ig_new = InverseGaussian.from_expectation(
-            jnp.array([gig_eta[2], gig_eta[1]]))
+            jnp.array([eta.E_Y, eta.E_inv_Y]))
         joint_new = JointNormalInverseGaussian(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             mu_ig=ig_new.mu, lam=ig_new.lam,

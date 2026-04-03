@@ -262,13 +262,14 @@ class GeneralizedHyperbolic(NormalMixture):
     # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
         method = kwargs.get('method', 'newton')
         maxiter = kwargs.get('maxiter', 20)
 
+        gig_eta = jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y])
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
 
         if backend == 'cpu':

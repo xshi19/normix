@@ -346,37 +346,34 @@ class JointNormalMixture(ExponentialFamily):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _mstep_normal_params(
-        E_X: jax.Array,
-        E_X_inv_Y: jax.Array,
-        E_XXT_inv_Y: jax.Array,
-        E_inv_Y: jax.Array,
-        E_Y: jax.Array,
-    ):
+    def _mstep_normal_params(eta: "NormalMixtureEta"):
         r"""
         Closed-form M-step for :math:`\mu, \gamma, \Sigma` from expectation parameters.
 
+        Parameters
+        ----------
+        eta : NormalMixtureEta
+            Aggregated expectation parameters.
+
         Returns ``(mu_new, gamma_new, L_new)``.
         """
-        D = 1.0 - E_inv_Y * E_Y
+        from normix.fitting.eta import NormalMixtureEta  # noqa: F811
 
-        # Handle near-singular denominator
+        D = 1.0 - eta.E_inv_Y * eta.E_Y
+
         safe_D = jnp.where(jnp.abs(D) > SAFE_DENOMINATOR, D, SAFE_DENOMINATOR)
 
-        mu_new = (E_X - E_Y * E_X_inv_Y) / safe_D
-        gamma_new = (E_X_inv_Y - E_inv_Y * E_X) / safe_D
+        mu_new = (eta.E_X - eta.E_Y * eta.E_X_inv_Y) / safe_D
+        gamma_new = (eta.E_X_inv_Y - eta.E_inv_Y * eta.E_X) / safe_D
 
-        # Σ = E[XXᵀ/Y] - E[X/Y]μᵀ - μE[X/Y]ᵀ + E[1/Y]μμᵀ - E[Y]γγᵀ
-        Sigma = (E_XXT_inv_Y
-                 - jnp.outer(E_X_inv_Y, mu_new)
-                 - jnp.outer(mu_new, E_X_inv_Y)
-                 + E_inv_Y * jnp.outer(mu_new, mu_new)
-                 - E_Y * jnp.outer(gamma_new, gamma_new))
+        Sigma = (eta.E_XXT_inv_Y
+                 - jnp.outer(eta.E_X_inv_Y, mu_new)
+                 - jnp.outer(mu_new, eta.E_X_inv_Y)
+                 + eta.E_inv_Y * jnp.outer(mu_new, mu_new)
+                 - eta.E_Y * jnp.outer(gamma_new, gamma_new))
 
-        # Symmetrize and ensure positive definite
         Sigma = 0.5 * (Sigma + Sigma.T)
         d = Sigma.shape[0]
-        # Add small regularization for numerical stability
         Sigma = Sigma + SIGMA_REG * jnp.eye(d)
         L_new = jnp.linalg.cholesky(Sigma)
 

@@ -187,10 +187,10 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
-    def m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.inverse_gamma import InverseGamma
         j = self._joint
-        ig_eta = jnp.array([-gig_eta[1], gig_eta[0]])
+        ig_eta = jnp.array([-eta.E_inv_Y, eta.E_log_Y])
         ig_new = InverseGamma.from_expectation(ig_eta)
         joint_new = JointNormalInverseGamma(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,

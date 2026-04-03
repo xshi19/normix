@@ -193,10 +193,11 @@ class VarianceGamma(NormalMixture):
                  + linear)
         return log_f
 
-    def m_step_subordinator(self, gig_eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.gamma import Gamma
         j = self._joint
-        gamma_dist = Gamma.from_expectation(jnp.array([gig_eta[0], gig_eta[2]]))
+        gamma_dist = Gamma.from_expectation(
+            jnp.array([eta.E_log_Y, eta.E_Y]))
         joint_new = JointVarianceGamma(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             alpha=gamma_dist.alpha, beta=gamma_dist.beta,

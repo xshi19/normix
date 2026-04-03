@@ -88,33 +88,36 @@ class NormalMixture(eqx.Module):
     # EM E-step
     # ------------------------------------------------------------------
 
-    def e_step(self, X: jax.Array, backend: str = 'jax') -> Dict[str, jax.Array]:
+    def e_step(self, X: jax.Array, backend: str = 'jax') -> "NormalMixtureEta":
         r"""
-        E-step: compute conditional expectations :math:`E[g(Y)\mid X=x_i]` for each :math:`i`.
+        Full E-step: subordinator conditionals + batch aggregation.
 
-        Returns dict of arrays with shape ``(n, ...)`` for each expectation.
+        Returns a :class:`~normix.fitting.eta.NormalMixtureEta` with the
+        six aggregated expectation parameters.
 
         Parameters
         ----------
+        X : (n, d) data array
         backend : str
-            ``'jax'`` (default): ``jax.vmap`` over ``conditional_expectations``. JIT-able.
+            ``'jax'`` (default): ``jax.vmap`` over ``conditional_expectations``.
+            ``'cpu'``: quad forms in JAX + GIG Bessel on CPU.
+        """
+        sub_exp = self._e_step_subordinator(X, backend=backend)
+        return self._aggregate_eta(X, sub_exp)
 
-            ``'cpu'``: quad forms in JAX (vmapped) + GIG Bessel on CPU.
-            Faster for large :math:`N`; not JIT-able.
+    def _e_step_subordinator(
+        self, X: jax.Array, backend: str = 'jax',
+    ) -> Dict[str, jax.Array]:
+        r"""Per-observation subordinator conditional expectations.
+
+        Returns dict ``{E_log_Y: (n,), E_inv_Y: (n,), E_Y: (n,)}``.
         """
         if backend == 'cpu':
-            return self._e_step_cpu(X)
+            return self._e_step_subordinator_cpu(X)
         return jax.vmap(self._joint.conditional_expectations)(X)
 
-    def _e_step_cpu(self, X: jax.Array) -> Dict[str, jax.Array]:
-        """
-        E-step with quad forms in JAX (vmapped) and Bessel computation on CPU.
-
-        Phase 1: Quad forms (d-dimensional matrix ops) stay in JAX — GPU-friendly.
-        Phase 2: GIG expectations via vectorized scipy.kve — C-level, fast.
-
-        Requires self._joint to implement _posterior_gig_params(z2, w2).
-        """
+    def _e_step_subordinator_cpu(self, X: jax.Array) -> Dict[str, jax.Array]:
+        """CPU path: quad forms in JAX (vmapped) + GIG Bessel via scipy."""
         from normix.distributions.generalized_inverse_gaussian import GIG
 
         j = self._joint
@@ -142,48 +145,62 @@ class NormalMixture(eqx.Module):
             'E_Y':     eta[:, 2],
         }
 
+    @staticmethod
+    def _aggregate_eta(X: jax.Array, sub_exp: Dict[str, jax.Array]) -> "NormalMixtureEta":
+        """Average per-observation expectations into a NormalMixtureEta."""
+        from normix.fitting.eta import NormalMixtureEta
+
+        X = jnp.asarray(X, dtype=jnp.float64)
+        E_inv_Y = sub_exp['E_inv_Y']
+
+        return NormalMixtureEta(
+            E_log_Y=jnp.mean(sub_exp['E_log_Y']),
+            E_inv_Y=jnp.mean(E_inv_Y),
+            E_Y=jnp.mean(sub_exp['E_Y']),
+            E_X=jnp.mean(X, axis=0),
+            E_X_inv_Y=jnp.mean(X * E_inv_Y[:, None], axis=0),
+            E_XXT_inv_Y=jnp.mean(
+                jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0),
+        )
+
     # ------------------------------------------------------------------
     # M-step
     # ------------------------------------------------------------------
 
     def m_step(
         self,
-        X: jax.Array,
-        expectations: Dict[str, jax.Array],
+        eta: "NormalMixtureEta",
         **kwargs,
     ) -> "NormalMixture":
-        """
-        Full M-step: update all parameters from sufficient statistics.
+        """Full M-step: update normal params + subordinator from eta.
 
         Returns a NEW NormalMixture with updated parameters.
         """
-        mu_new, gamma_new, L_new, gig_eta = self._normal_params_from_expectations(
-            X, expectations)
-        model = self._replace_normal_params(mu_new, gamma_new, L_new)
-        return model.m_step_subordinator(gig_eta, **kwargs)
+        model = self.m_step_normal(eta)
+        return model.m_step_subordinator(eta, **kwargs)
 
     def m_step_normal(
         self,
-        X: jax.Array,
-        expectations: Dict[str, jax.Array],
+        eta: "NormalMixtureEta",
     ) -> "NormalMixture":
-        """
-        M-step for normal parameters only (MCECM Cycle 1).
+        r"""M-step for normal parameters only (MCECM Cycle 1).
 
-        Updates :math:`\\mu, \\gamma, \\Sigma`; subordinator unchanged.
+        Updates :math:`\mu, \gamma, \Sigma`; subordinator unchanged.
         """
-        mu_new, gamma_new, L_new, _ = self._normal_params_from_expectations(
-            X, expectations)
+        from normix.mixtures.joint import JointNormalMixture
+
+        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(eta)
         return self._replace_normal_params(mu_new, gamma_new, L_new)
 
     @abc.abstractmethod
     def m_step_subordinator(
         self,
-        gig_eta: jax.Array,
+        eta: "NormalMixtureEta",
         **kwargs,
     ) -> "NormalMixture":
-        """Update subordinator parameters from GIG expectation params.
+        """Update subordinator parameters from expectation parameters.
 
+        Reads subordinator-specific fields from ``eta`` (e.g. ``eta.E_log_Y``).
         Normal params are read from ``self._joint``; only the subordinator
         is re-estimated. Returns a new model.
         """
@@ -191,33 +208,6 @@ class NormalMixture(eqx.Module):
     # ------------------------------------------------------------------
     # M-step helpers
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def _normal_params_from_expectations(X, expectations):
-        """Solve closed-form M-step for (mu, gamma, L) and compute gig_eta.
-
-        Returns ``(mu_new, gamma_new, L_new, gig_eta)``.
-        """
-        from normix.mixtures.joint import JointNormalMixture
-
-        X = jnp.asarray(X, dtype=jnp.float64)
-
-        E_log_Y = expectations['E_log_Y']
-        E_inv_Y = expectations['E_inv_Y']
-        E_Y = expectations['E_Y']
-
-        mean_E_inv_Y = jnp.mean(E_inv_Y)
-        mean_E_Y = jnp.mean(E_Y)
-        E_X = jnp.mean(X, axis=0)
-        E_X_inv_Y = jnp.mean(X * E_inv_Y[:, None], axis=0)
-        E_XXT_inv_Y = jnp.mean(
-            jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)
-
-        mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(
-            E_X, E_X_inv_Y, E_XXT_inv_Y, mean_E_inv_Y, mean_E_Y)
-
-        gig_eta = jnp.array([jnp.mean(E_log_Y), mean_E_inv_Y, mean_E_Y])
-        return mu_new, gamma_new, L_new, gig_eta
 
     def _replace_normal_params(self, mu, gamma, L) -> "NormalMixture":
         """Return a copy with updated (mu, gamma, L_Sigma), subordinator unchanged."""

@@ -156,8 +156,9 @@ class BatchEMFitter:
         prev_gamma = model._joint.gamma
         prev_L = model._joint.L_Sigma
 
-        expectations = model.e_step(X, backend=self.e_step_backend)
-        model = self._m_step(model, X, expectations)
+        eta = model.e_step(X, backend=self.e_step_backend)
+        model = model.m_step(
+            eta, backend=self.m_step_backend, method=self.m_step_method)
         model = self._regularize(model)
 
         max_change = _param_change(
@@ -172,20 +173,13 @@ class BatchEMFitter:
         prev_gamma = model._joint.gamma
         prev_L = model._joint.L_Sigma
 
-        # Cycle 1: update (mu, gamma, Sigma), keep subordinator
-        expectations = model.e_step(X, backend=self.e_step_backend)
-        model = model.m_step_normal(X, expectations)
+        eta = model.e_step(X, backend=self.e_step_backend)
+        model = model.m_step_normal(eta)
         model = self._regularize(model)
 
-        # Cycle 2: re-E-step with updated normal params, then update subordinator
-        expectations = model.e_step(X, backend=self.e_step_backend)
-        gig_eta = jnp.array([
-            jnp.mean(expectations['E_log_Y']),
-            jnp.mean(expectations['E_inv_Y']),
-            jnp.mean(expectations['E_Y']),
-        ])
+        eta = model.e_step(X, backend=self.e_step_backend)
         model = model.m_step_subordinator(
-            gig_eta, backend=self.m_step_backend, method=self.m_step_method)
+            eta, backend=self.m_step_backend, method=self.m_step_method)
 
         max_change = _param_change(
             model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
@@ -301,13 +295,6 @@ class BatchEMFitter:
     # Helpers
     # ------------------------------------------------------------------
 
-    def _m_step(self, model, X, expectations):
-        """Call m_step, forwarding backend/method via kwargs."""
-        return model.m_step(
-            X, expectations,
-            backend=self.m_step_backend, method=self.m_step_method,
-        )
-
     def _regularize(self, model):
         if self.regularization == 'det_sigma_one':
             if hasattr(model, 'regularize_det_sigma_one'):
@@ -401,7 +388,8 @@ class OnlineEMFitter:
                 exp_batch = {k: v[None] for k, v in exp_t.items()}
 
                 step = 1.0 / tau_t
-                new_model = model.m_step(X_shuffled[t:t+1], exp_batch)
+                eta = model._aggregate_eta(X_shuffled[t:t+1], exp_batch)
+                new_model = model.m_step(eta)
 
                 if self.regularization == 'det_sigma_one':
                     if hasattr(new_model, 'regularize_det_sigma_one'):
@@ -490,8 +478,8 @@ class MiniBatchEMFitter:
             prev_gamma = model._joint.gamma
             prev_L = model._joint.L_Sigma
 
-            expectations = model.e_step(X_batch)
-            model = model.m_step(X_batch, expectations)
+            eta = model.e_step(X_batch)
+            model = model.m_step(eta)
 
             if self.regularization == 'det_sigma_one':
                 if hasattr(model, 'regularize_det_sigma_one'):
