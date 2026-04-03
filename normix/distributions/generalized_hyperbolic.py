@@ -262,6 +262,11 @@ class GeneralizedHyperbolic(NormalMixture):
     # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
+    def _subordinator_expectations(self):
+        j = self._joint
+        eta = j.subordinator().expectation_params()
+        return eta[0], eta[1], eta[2]
+
     def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint

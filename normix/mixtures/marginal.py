@@ -85,6 +85,46 @@ class NormalMixture(eqx.Module):
         return self._joint.kl_divergence(other._joint)
 
     # ------------------------------------------------------------------
+    # Eta from model (for incremental EM initialisation)
+    # ------------------------------------------------------------------
+
+    def compute_eta_from_model(self) -> "NormalMixtureEta":
+        r"""Reconstruct :math:`\eta` from the model's own parameters.
+
+        Uses the *marginal* expectations of the joint sufficient statistics:
+
+        .. math::
+
+            \eta_4 = \mu + \gamma\,E[Y], \quad
+            \eta_5 = \mu\,E[1/Y] + \gamma, \quad
+            \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
+                     + \mu\gamma^\top + \gamma\mu^\top
+        """
+        from normix.fitting.eta import NormalMixtureEta
+
+        E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
+        j = self._joint
+        mu, gamma = j.mu, j.gamma
+        sigma = j.sigma()
+
+        return NormalMixtureEta(
+            E_log_Y=E_log_Y,
+            E_inv_Y=E_inv_Y,
+            E_Y=E_Y,
+            E_X=mu + gamma * E_Y,
+            E_X_inv_Y=mu * E_inv_Y + gamma,
+            E_XXT_inv_Y=(sigma
+                         + jnp.outer(mu, mu) * E_inv_Y
+                         + jnp.outer(gamma, gamma) * E_Y
+                         + jnp.outer(mu, gamma)
+                         + jnp.outer(gamma, mu)),
+        )
+
+    @abc.abstractmethod
+    def _subordinator_expectations(self):
+        r"""Return ``(E[log Y], E[1/Y], E[Y])`` under the subordinator prior."""
+
+    # ------------------------------------------------------------------
     # EM E-step
     # ------------------------------------------------------------------
 

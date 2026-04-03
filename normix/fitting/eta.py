@@ -13,6 +13,8 @@ This is the expectation parametrization of
 """
 from __future__ import annotations
 
+from typing import Optional
+
 import equinox as eqx
 import jax
 
@@ -42,3 +44,31 @@ class NormalMixtureEta(eqx.Module):
     E_X: jax.Array
     E_X_inv_Y: jax.Array
     E_XXT_inv_Y: jax.Array
+
+
+def affine_combine(
+    eta_prev: NormalMixtureEta,
+    eta_new: NormalMixtureEta,
+    b: float,
+    c: float,
+    a: Optional[NormalMixtureEta] = None,
+) -> NormalMixtureEta:
+    r"""Affine combination :math:`\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta`.
+
+    Parameters
+    ----------
+    eta_prev : NormalMixtureEta
+        Running state :math:`\eta_{t-1}`.
+    eta_new : NormalMixtureEta
+        New batch estimate :math:`\hat\eta`.
+    b : float
+        Weight on previous state.
+    c : float
+        Weight on new estimate.
+    a : NormalMixtureEta or None
+        Additive shift (e.g. shrinkage prior). ``None`` means zero.
+    """
+    result = jax.tree.map(lambda prev, new: b * prev + c * new, eta_prev, eta_new)
+    if a is not None:
+        result = jax.tree.map(lambda r, a_val: r + a_val, result, a)
+    return result

@@ -3,10 +3,9 @@ EM fitters for normix distributions.
 
 Model knows math, fitter knows iteration.
 
-  BatchEMFitter     — standard batch EM with dual-loop architecture:
-                      lax.scan (JIT-able) or Python for-loop (CPU-compatible)
-  OnlineEMFitter    — online EM, one sample at a time
-  MiniBatchEMFitter — mini-batch EM, Robbins-Monro averaging
+  BatchEMFitter        — standard batch EM with dual-loop architecture:
+                         lax.scan (JIT-able) or Python for-loop (CPU-compatible)
+  IncrementalEMFitter  — online / mini-batch EM with pluggable eta update rules
 """
 from __future__ import annotations
 
@@ -54,7 +53,8 @@ class BatchEMFitter:
     parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.
 
     Loop selection is automatic:
-      - lax.scan when both backends are 'jax', verbose <= 1, and algorithm='em'
+      - lax.scan when both backends are 'jax', verbose <= 1, algorithm='em',
+        and no eta_update rule
       - Python for-loop otherwise
 
     Parameters
@@ -75,6 +75,9 @@ class BatchEMFitter:
         'jax' or 'cpu' (default, faster for GIG).
     m_step_method : str
         'newton' (default), 'lbfgs', or 'bfgs'.
+    eta_update : EtaUpdateRule or None
+        Optional eta combination rule (e.g. ``ShrinkageUpdate``).
+        When set, the E-step output is transformed before the M-step.
     """
 
     def __init__(
@@ -88,6 +91,7 @@ class BatchEMFitter:
         e_step_backend: str = 'jax',
         m_step_backend: str = 'cpu',
         m_step_method: str = 'newton',
+        eta_update=None,
     ):
         if algorithm not in ('em', 'mcecm'):
             raise ValueError(f"algorithm must be 'em' or 'mcecm', got {algorithm!r}")
@@ -99,6 +103,7 @@ class BatchEMFitter:
         self.e_step_backend = e_step_backend
         self.m_step_backend = m_step_backend
         self.m_step_method = m_step_method
+        self.eta_update = eta_update
 
     # ------------------------------------------------------------------
     # Public API
@@ -125,6 +130,7 @@ class BatchEMFitter:
             and self.e_step_backend == 'jax'
             and self.m_step_backend == 'jax'
             and self.verbose <= 1
+            and self.eta_update is None
         )
 
         if use_scan:
@@ -144,19 +150,31 @@ class BatchEMFitter:
     # Pure EM / MCECM step (no prints, no float(), no list.append())
     # ------------------------------------------------------------------
 
-    def _step(self, model, X):
-        """One iteration (EM or MCECM). Returns (new_model, max_change)."""
+    def _step(self, model, X, eta_state=None):
+        """One iteration (EM or MCECM). Returns (new_model, max_change, eta_state)."""
         if self.algorithm == 'mcecm':
-            return self._mcecm_step(model, X)
-        return self._em_step(model, X)
+            return self._mcecm_step(model, X, eta_state)
+        return self._em_step(model, X, eta_state)
 
-    def _em_step(self, model, X):
-        """One EM iteration: E → M(all) → regularize."""
+    def _em_step(self, model, X, eta_state=None):
+        """One EM iteration: E → (eta_update) → M(all) → regularize.
+
+        Returns ``(model, max_change, eta_state)``.
+        """
         prev_mu = model._joint.mu
         prev_gamma = model._joint.gamma
         prev_L = model._joint.L_Sigma
 
         eta = model.e_step(X, backend=self.e_step_backend)
+
+        if eta_state is not None:
+            from normix.fitting.eta import affine_combine
+            eta_prev, rule_state, step = eta_state
+            a, b, c, rule_state = self.eta_update.weights(
+                step, X.shape[0], rule_state)
+            eta = affine_combine(eta_prev, eta, b, c, a)
+            eta_state = (eta, rule_state, step + 1)
+
         model = model.m_step(
             eta, backend=self.m_step_backend, method=self.m_step_method)
         model = self._regularize(model)
@@ -165,15 +183,27 @@ class BatchEMFitter:
             model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
             prev_mu, prev_gamma, prev_L,
         )
-        return model, max_change
+        return model, max_change, eta_state
 
-    def _mcecm_step(self, model, X):
-        """One MCECM iteration: E → M_normal → regularize → E → M_subordinator."""
+    def _mcecm_step(self, model, X, eta_state=None):
+        """One MCECM iteration: E → M_normal → regularize → E → M_subordinator.
+
+        Returns ``(model, max_change, eta_state)``.
+        """
         prev_mu = model._joint.mu
         prev_gamma = model._joint.gamma
         prev_L = model._joint.L_Sigma
 
         eta = model.e_step(X, backend=self.e_step_backend)
+
+        if eta_state is not None:
+            from normix.fitting.eta import affine_combine
+            eta_prev, rule_state, step = eta_state
+            a, b, c, rule_state = self.eta_update.weights(
+                step, X.shape[0], rule_state)
+            eta = affine_combine(eta_prev, eta, b, c, a)
+            eta_state = (eta, rule_state, step + 1)
+
         model = model.m_step_normal(eta)
         model = self._regularize(model)
 
@@ -185,7 +215,7 @@ class BatchEMFitter:
             model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
             prev_mu, prev_gamma, prev_L,
         )
-        return model, max_change
+        return model, max_change, eta_state
 
     # ------------------------------------------------------------------
     # lax.scan path (JIT-able, requires backend='jax')
@@ -196,7 +226,7 @@ class BatchEMFitter:
 
         def body(carry, _):
             mdl, converged, n = carry
-            mdl_new, max_change = self._step(mdl, X)
+            mdl_new, max_change, _ = self._step(mdl, X)
             conv_new = max_change < self.tol
             mdl_out = jax.tree.map(
                 lambda n, o: jnp.where(converged, o, n), mdl_new, mdl)
@@ -240,12 +270,18 @@ class BatchEMFitter:
         prev_ll = None
         n_iter = 0
 
+        eta_state = None
+        if self.eta_update is not None:
+            eta_prev = model.compute_eta_from_model()
+            rule_state = self.eta_update.initial_state()
+            eta_state = (eta_prev, rule_state, 0)
+
         if self.verbose >= 2:
             self._print_table_header()
 
         for i in range(self.max_iter):
             t_iter = time.perf_counter()
-            model, max_change = self._step(model, X)
+            model, max_change, eta_state = self._step(model, X, eta_state)
             dt = time.perf_counter() - t_iter
             changes.append(max_change)
             n_iter = i + 1
@@ -337,122 +373,66 @@ class BatchEMFitter:
 
 
 # ---------------------------------------------------------------------------
-# OnlineEMFitter
+# IncrementalEMFitter
 # ---------------------------------------------------------------------------
 
-class OnlineEMFitter:
+class IncrementalEMFitter:
     """
-    Online EM algorithm (Robbins-Monro stochastic approximation).
+    Incremental EM with pluggable eta update rules.
 
-    Updates running sufficient statistics with step size 1/(tau0 + t).
-    One epoch = one full pass through data in random order.
+    Replaces ``OnlineEMFitter`` and ``MiniBatchEMFitter``.  Processes data
+    in random mini-batches, applies an :class:`~normix.fitting.eta_rules.EtaUpdateRule`
+    to combine the running :math:`\\eta` with each batch estimate, then
+    M-steps on the combined :math:`\\eta`.
+
+    Parameters
+    ----------
+    eta_update : EtaUpdateRule
+        How to combine running η with each batch estimate.
+    batch_size : int
+        Observations per batch.
+    max_steps : int
+        Number of batches to process (total budget).
+    inner_iter : int
+        1 = online (default); >1 = fine-tuning on each batch.
+    verbose : int
+        0 = silent, 1 = periodic summary.
+    regularization : str
+        ``'det_sigma_one'`` or ``'none'``.
+    e_step_backend, m_step_backend, m_step_method : str
+        Passed through to ``e_step`` / ``m_step``.
     """
 
     def __init__(
         self,
         *,
-        tau0: float = 10.0,
-        max_epochs: int = 5,
-        verbose: int = 0,
-        regularization: str = 'none',
-    ):
-        self.tau0 = tau0
-        self.max_epochs = max_epochs
-        self.verbose = verbose
-        self.regularization = regularization
-
-    def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
-        """Online EM. Returns EMResult."""
-        t_total = time.perf_counter()
-        X = jnp.asarray(X, dtype=jnp.float64)
-        n = X.shape[0]
-        dist_name = type(model).__name__
-        changes = []
-
-        if self.verbose >= 1:
-            print(
-                f"EM [online] {dist_name}: "
-                f"tau0={self.tau0}, epochs={self.max_epochs}"
-            )
-
-        for epoch in range(self.max_epochs):
-            key, subkey = jax.random.split(key)
-            perm = jax.random.permutation(subkey, n)
-            X_shuffled = X[perm]
-
-            for t in range(n):
-                x_t = X_shuffled[t]
-                tau_t = self.tau0 + epoch * n + t
-
-                exp_t = model._joint.conditional_expectations(x_t)
-                exp_batch = {k: v[None] for k, v in exp_t.items()}
-
-                step = 1.0 / tau_t
-                eta = model._aggregate_eta(X_shuffled[t:t+1], exp_batch)
-                new_model = model.m_step(eta)
-
-                if self.regularization == 'det_sigma_one':
-                    if hasattr(new_model, 'regularize_det_sigma_one'):
-                        new_model = new_model.regularize_det_sigma_one()
-
-                change = _param_change(
-                    new_model._joint.mu, new_model._joint.gamma,
-                    new_model._joint.L_Sigma,
-                    model._joint.mu, model._joint.gamma,
-                    model._joint.L_Sigma,
-                )
-                model = new_model
-
-            changes.append(change)
-            if self.verbose >= 1:
-                print(f"  Epoch {epoch+1}/{self.max_epochs}, |Δparams|={float(change):.4e}")
-
-        elapsed = time.perf_counter() - t_total
-
-        log_likelihoods = None
-        if self.verbose >= 1:
-            ll = model.marginal_log_likelihood(X)
-            log_likelihoods = jnp.array([ll])
-            print(f"  Done ({elapsed:.2f}s), final LL={float(ll):.6f}")
-
-        return EMResult(
-            model=model,
-            log_likelihoods=log_likelihoods,
-            param_changes=jnp.array(changes),
-            n_iter=self.max_epochs * n,
-            converged=True,
-            elapsed_time=elapsed,
-        )
-
-
-# ---------------------------------------------------------------------------
-# MiniBatchEMFitter
-# ---------------------------------------------------------------------------
-
-class MiniBatchEMFitter:
-    """
-    Mini-batch EM with Robbins-Monro averaging of sufficient statistics.
-    """
-
-    def __init__(
-        self,
-        *,
+        eta_update=None,
         batch_size: int = 256,
-        max_iter: int = 200,
-        tol: float = 1e-3,
-        tau0: float = 10.0,
+        max_steps: int = 200,
+        inner_iter: int = 1,
         verbose: int = 0,
         regularization: str = 'none',
+        e_step_backend: str = 'jax',
+        m_step_backend: str = 'cpu',
+        m_step_method: str = 'newton',
     ):
+        if eta_update is None:
+            from normix.fitting.eta_rules import RobbinsMonroUpdate
+            eta_update = RobbinsMonroUpdate(tau0=10.0)
+        self.eta_update = eta_update
         self.batch_size = batch_size
-        self.max_iter = max_iter
-        self.tol = tol
-        self.tau0 = tau0
+        self.max_steps = max_steps
+        self.inner_iter = inner_iter
         self.verbose = verbose
         self.regularization = regularization
+        self.e_step_backend = e_step_backend
+        self.m_step_backend = m_step_backend
+        self.m_step_method = m_step_method
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
-        """Mini-batch EM. Returns EMResult."""
+        """Run incremental EM. Returns :class:`EMResult`."""
+        from normix.fitting.eta import affine_combine
+
         t_total = time.perf_counter()
         X = jnp.asarray(X, dtype=jnp.float64)
         n = X.shape[0]
@@ -460,16 +440,19 @@ class MiniBatchEMFitter:
         dist_name = type(model).__name__
         changes = []
         lls = []
-        n_iter = 0
 
         if self.verbose >= 1:
+            rule_name = type(self.eta_update).__name__
             print(
-                f"EM [mini-batch] {dist_name}: "
-                f"batch_size={bs}, tol={self.tol:.0e}, "
-                f"max_iter={self.max_iter}"
+                f"EM [incremental] {dist_name}: "
+                f"rule={rule_name}, batch_size={bs}, "
+                f"max_steps={self.max_steps}, inner_iter={self.inner_iter}"
             )
 
-        for t in range(self.max_iter):
+        eta_prev = model.compute_eta_from_model()
+        rule_state = self.eta_update.initial_state()
+
+        for step in range(self.max_steps):
             key, subkey = jax.random.split(key)
             indices = jax.random.choice(subkey, n, shape=(bs,), replace=False)
             X_batch = X[indices]
@@ -478,48 +461,61 @@ class MiniBatchEMFitter:
             prev_gamma = model._joint.gamma
             prev_L = model._joint.L_Sigma
 
-            eta = model.e_step(X_batch)
-            model = model.m_step(eta)
+            if self.inner_iter > 1:
+                for _ in range(self.inner_iter):
+                    eta = model.e_step(X_batch, backend=self.e_step_backend)
+                    model = model.m_step(
+                        eta, backend=self.m_step_backend,
+                        method=self.m_step_method)
+                    model = self._regularize(model)
+                eta_new = model.compute_eta_from_model()
+            else:
+                eta_new = model.e_step(X_batch, backend=self.e_step_backend)
 
-            if self.regularization == 'det_sigma_one':
-                if hasattr(model, 'regularize_det_sigma_one'):
-                    model = model.regularize_det_sigma_one()
+            a, b, c, rule_state = self.eta_update.weights(
+                step, bs, rule_state)
+            eta_prev = affine_combine(eta_prev, eta_new, b, c, a)
+            model = model.m_step(
+                eta_prev, backend=self.m_step_backend,
+                method=self.m_step_method)
+            model = self._regularize(model)
 
             max_change = _param_change(
                 model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
                 prev_mu, prev_gamma, prev_L,
             )
             changes.append(max_change)
-            n_iter = t + 1
 
-            if t % 10 == 0 and self.verbose >= 1:
+            if self.verbose >= 1 and (step + 1) % max(1, self.max_steps // 10) == 0:
                 ll = model.marginal_log_likelihood(X)
                 lls.append(ll)
-                if self.verbose >= 2:
-                    print(
-                        f"  {n_iter:4d}  LL={float(ll):.6f}  "
-                        f"|Δparams|={float(max_change):.4e}"
-                    )
-
-            if max_change < self.tol and t > 0:
-                break
+                print(
+                    f"  step {step+1:4d}/{self.max_steps}  "
+                    f"LL={float(ll):.6f}  |Δparams|={float(max_change):.4e}"
+                )
 
         elapsed = time.perf_counter() - t_total
-        converged = bool(max_change < self.tol) and n_iter > 1
 
+        log_likelihoods = None
         if self.verbose >= 1:
-            status = "Converged" if converged else "NOT converged"
-            ll_str = f", final LL={float(lls[-1]):.6f}" if lls else ""
-            print(f"  {status} after {n_iter} iterations ({elapsed:.2f}s){ll_str}")
+            ll = model.marginal_log_likelihood(X)
+            log_likelihoods = jnp.array(lls + [ll]) if lls else jnp.array([ll])
+            print(f"  Done ({elapsed:.2f}s), final LL={float(ll):.6f}")
 
         return EMResult(
             model=model,
-            log_likelihoods=jnp.array(lls) if lls else None,
+            log_likelihoods=log_likelihoods,
             param_changes=jnp.array(changes),
-            n_iter=n_iter,
-            converged=converged,
+            n_iter=self.max_steps,
+            converged=True,
             elapsed_time=elapsed,
         )
+
+    def _regularize(self, model):
+        if self.regularization == 'det_sigma_one':
+            if hasattr(model, 'regularize_det_sigma_one'):
+                return model.regularize_det_sigma_one()
+        return model
 
 
 # ---------------------------------------------------------------------------

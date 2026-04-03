@@ -187,6 +187,13 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
+    def _subordinator_expectations(self):
+        j = self._joint
+        E_log_Y = jnp.log(j.beta) - jax.scipy.special.digamma(j.alpha)
+        E_inv_Y = j.alpha / j.beta
+        E_Y = j.beta / (j.alpha - 1.0)
+        return E_log_Y, E_inv_Y, E_Y
+
     def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.inverse_gamma import InverseGamma
         j = self._joint

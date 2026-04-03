@@ -193,6 +193,13 @@ class VarianceGamma(NormalMixture):
                  + linear)
         return log_f
 
+    def _subordinator_expectations(self):
+        j = self._joint
+        E_log_Y = jax.scipy.special.digamma(j.alpha) - jnp.log(j.beta)
+        E_inv_Y = j.beta / (j.alpha - 1.0)
+        E_Y = j.alpha / j.beta
+        return E_log_Y, E_inv_Y, E_Y
+
     def m_step_subordinator(self, eta, **kwargs):
         from normix.distributions.gamma import Gamma
         j = self._joint

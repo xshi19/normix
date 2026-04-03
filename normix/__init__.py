@@ -40,7 +40,17 @@ from normix.distributions.generalized_hyperbolic import (
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
 
-from normix.fitting.em import BatchEMFitter, OnlineEMFitter, MiniBatchEMFitter
+from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
+from normix.fitting.eta import NormalMixtureEta, affine_combine
+from normix.fitting.eta_rules import (
+    EtaUpdateRule,
+    IdentityUpdate,
+    RobbinsMonroUpdate,
+    SampleWeightedUpdate,
+    EWMAUpdate,
+    ShrinkageUpdate,
+    AffineUpdate,
+)
 
 from normix.divergences import (
     squared_hellinger,
@@ -79,8 +89,18 @@ __all__ = [
     "NormalMixture",
     # Fitters
     "BatchEMFitter",
-    "OnlineEMFitter",
-    "MiniBatchEMFitter",
+    "IncrementalEMFitter",
+    # Eta parametrization
+    "NormalMixtureEta",
+    "affine_combine",
+    # Eta update rules
+    "EtaUpdateRule",
+    "IdentityUpdate",
+    "RobbinsMonroUpdate",
+    "SampleWeightedUpdate",
+    "EWMAUpdate",
+    "ShrinkageUpdate",
+    "AffineUpdate",
     # Divergences
     "squared_hellinger",
     "kl_divergence",
