@@ -9,11 +9,11 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | ID | Type | Issue / Recommendation | Priority | Difficulty | Est. LOC | Impact | Prerequisites | Multi-phase |
 |----|------|------------------------|----------|------------|----------|--------|---------------|-------------|
 | B1 | Bug | `InverseGaussian.cdf` returns NaN in high-shape regimes (`lam/mu` large). Rewrite second term in log-space using `log_ndtr`. | P1 | Medium | ~30 | **High** — correctness bug in a public method; affects scientific users in concentrated regimes. | None | No |
-| B2 | Bug | `OnlineEMFitter` does not use its computed `step`; `MiniBatchEMFitter` runs ordinary batch E/M on each minibatch instead of Robbins-Monro averaging; `tau0` unused; `OnlineEMFitter` returns `converged=True` unconditionally. | P1 | High | ~150–300 | **High** — algorithmically mis-specified; users get different estimators than documented. | Design decision: implement properly vs. deprecate/remove (D1). | Yes |
+| B2 | Bug | ~~`OnlineEMFitter`/`MiniBatchEMFitter` algorithmically mis-specified.~~ **Fixed:** replaced by `IncrementalEMFitter` with correct Robbins-Monro, EWMA, etc. | ✅ | High | ~450 | Done. | D1. | Yes |
 | B3 | Bug | `BatchEMFitter._fit_scan` double-counts the terminating iteration in `n_iter`. | P2 | Low | ~15 | **Medium** — convergence diagnostics are inaccurate; scan vs. loop paths report different counts. | None | No |
 | B4 | Bug | `JointNormalInverseGamma._subordinator_log_partition` passes wrong sign convention, returns NaN. | P2 | Low | ~10 | **Low** — currently dead code, but a maintenance hazard. Fix or delete. | None | No |
 | B5 | Bug | `InverseGaussian` module docstring has wrong sign for the log-partition formula. Code is correct. | P3 | Trivial | ~2 | **Low** — misleads readers; no runtime effect. | None | No |
-| D1 | Design | Decide the fate of `OnlineEMFitter` / `MiniBatchEMFitter`: implement genuine stochastic EM, or deprecate/remove. | P1 | — | 0 | **High** — blocks B2 resolution. | None | No |
+| D1 | Design | ~~Decide the fate of `OnlineEMFitter` / `MiniBatchEMFitter`.~~ **Resolved:** replaced by `IncrementalEMFitter` + `EtaUpdateRule`. | ✅ | — | 0 | Done. | None | No |
 | D2 | Design | Decide public status of joint distribution classes: full public exponential-family objects (finish `from_natural` etc.) or internal helpers (document as such). | P2 | — | 0 | **High** — blocks multiple downstream tasks (T3, C3). | None | No |
 | D3 | Design | Rationalize `MultivariateNormal` relative to the rest of the package: add `rvs`, `mean`/`cov`, make it `ExponentialFamily`, or document as a lightweight helper. | P3 | High | ~80–150 | **Medium** — API inconsistency; users see it as a peer but it lacks standard methods. | D2 (public API boundary decision). | Yes |
 | D4 | Design | Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings. Plan migration path. | P3 | High | ~100–200 | **Medium** — long-term dependency risk; not an immediate blocker. | None | Yes |
@@ -25,7 +25,7 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | T2 | Testing | Add mathematical invariants test layer: ∇ψ = η, Hessian SPD, density vs. SciPy across moderate and extreme regimes. | P2 | Medium | ~100–150 | **Medium** — catches regressions in exponential-family contract. | None | No |
 | T3 | Testing | Add exponential-family round-trip tests for joint distribution classes (`from_natural` / `from_expectation` if implemented). | P2 | Medium | ~60–100 | **Medium** — validates the contract advertised in docs. | D2 (public status decision). | No |
 | T4 | Testing | Add extreme-parameter tests for all functions using exponentials outside log-space. | P2 | Medium | ~50–80 | **Medium** — catches overflow/underflow in production regimes. | B1 (IG CDF fix first). | No |
-| T5 | Testing | Add dedicated tests for `OnlineEMFitter` / `MiniBatchEMFitter`: verify `tau0` dependence, compare trajectories to batch EM. | P1 | Medium | ~60–100 | **High** — validates that stochastic fitters work as advertised. | B2 (fitter implementation). | No |
+| T5 | Testing | ~~Add tests for `OnlineEMFitter`/`MiniBatchEMFitter`.~~ **Done:** `test_incremental_em.py` (29 tests). | ✅ | Medium | ~350 | Done. | B2. | No |
 | T6 | Testing | Add more property-based and edge-case tests for GIG. | P3 | Medium | ~60–80 | **Medium** — GIG is the most numerically critical module. | None | No |
 | DOC1 | Docs | Fix broken `README.md` examples: missing imports, wrong method names (`m_step_solver` → `m_step_backend`/`m_step_method`), `fit` called as classmethod. | P1 | Low | ~30 | **High** — first-use experience is currently broken. | None | No |
 | DOC2 | Docs | Fix `normix/__init__.py` docstring: `GeneralizedHyperbolic.fit(X, key=key, ...)` is shown as a classmethod but `fit` is an instance method. | P1 | Low | ~10 | **High** — package-level docstring is wrong. | None | No |
@@ -66,10 +66,10 @@ All other items are independent.
 
 **Goal:** Make the two blocking architectural decisions so downstream work can proceed.
 
-| Item | Action |
-|------|--------|
-| **D1** | Decide: implement real stochastic EM, or deprecate `OnlineEMFitter`/`MiniBatchEMFitter`. |
-| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. |
+| Item | Action | Status |
+|------|--------|--------|
+| **D1** | Decide: implement real stochastic EM, or deprecate `OnlineEMFitter`/`MiniBatchEMFitter`. | ✅ Replaced by `IncrementalEMFitter` + `EtaUpdateRule` |
+| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. | Open |
 
 **Exit criteria:** Each decision documented in `docs/design/design.md` with rationale.
 
@@ -92,17 +92,18 @@ All other items are independent.
 
 ---
 
-### Phase 2 — Fitter Repair (depends on D1)
+### Phase 2 — Fitter Repair (depends on D1) ✅ DONE
 
 **Goal:** Make the EM fitter family correct and tested.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **B2** | Implement or remove `OnlineEMFitter`/`MiniBatchEMFitter` per D1 decision. | ~150–300 |
-| **T5** | Add dedicated stochastic-fitter tests (or removal tests if deprecated). | ~60–100 |
+**Completed.** D1 decision: replace `OnlineEMFitter`/`MiniBatchEMFitter` with
+`IncrementalEMFitter` + pluggable `EtaUpdateRule` (eqx.Module) η-update rules.
 
-**Total estimated LOC:** ~210–400
-**Exit criteria:** If kept, stochastic fitters pass trajectory comparison tests against batch EM. If removed, all references cleaned up and `__init__` exports updated.
+| Item | Description | Status |
+|------|-------------|--------|
+| **B2** | `IncrementalEMFitter` replaces old fitters; `BatchEMFitter` gains optional `eta_update`. `NormalMixtureEta` pytree + `affine_combine` + 6 concrete rules (Identity, RobbinsMonro, SampleWeighted, EWMA, Shrinkage, Affine). | ✅ Done |
+| **T5** | `tests/test_incremental_em.py`: 29 tests covering `compute_eta_from_model`, `affine_combine`, rule contracts, all fitter variants, shrinkage batch EM, pytree leaves. | ✅ Done |
+| **D1** | Documented in `docs/design/design.md` § EM Framework. | ✅ Done |
 
 ---
 
@@ -187,7 +188,7 @@ These are larger architectural efforts that can be tackled opportunistically or 
 |-------|-------|----------|------------------|
 | 0 | Design decisions | 0 | — |
 | 1 | Critical bugs & docs | ~90 | — |
-| 2 | Fitter repair | ~210–400 | D1 |
+| 2 | Fitter repair | ~210–400 | D1 — **✅ DONE** |
 | 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) |
 | 4 | API consistency & dead code | ~150–240 | D2 |
 | 5 | Code hygiene | ~155–175 | — |
