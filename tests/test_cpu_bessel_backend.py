@@ -212,14 +212,15 @@ def test_e_step_cpu_vs_jax_gh(d):
     rng = np.random.default_rng(0)
     X = jnp.array(rng.standard_normal((20, d)))
 
-    exp_jax = model.e_step(X, backend='jax')
-    exp_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax')
+    eta_cpu = model.e_step(X, backend='cpu')
 
-    for key in ['E_log_Y', 'E_inv_Y', 'E_Y']:
+    for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(
-            np.array(exp_cpu[key]), np.array(exp_jax[key]),
+            np.array(getattr(eta_cpu, field)),
+            np.array(getattr(eta_jax, field)),
             rtol=1e-5, atol=1e-7,
-            err_msg=f"e_step cpu vs jax mismatch for {key} (d={d})"
+            err_msg=f"e_step cpu vs jax mismatch for {field} (d={d})"
         )
 
 
@@ -227,11 +228,12 @@ def test_e_step_default_backend_unchanged():
     """Default e_step (no backend arg) still uses JAX path."""
     model = _make_gh_model(d=2)
     X = jnp.array(np.random.default_rng(1).standard_normal((10, 2)))
-    exp_default = model.e_step(X)
-    exp_jax = model.e_step(X, backend='jax')
-    for key in ['E_log_Y', 'E_inv_Y', 'E_Y']:
+    eta_default = model.e_step(X)
+    eta_jax = model.e_step(X, backend='jax')
+    for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_array_equal(
-            np.array(exp_default[key]), np.array(exp_jax[key])
+            np.array(getattr(eta_default, field)),
+            np.array(getattr(eta_jax, field)),
         )
 
 
@@ -278,14 +280,15 @@ def test_e_step_cpu_vs_jax_all_distributions(model_fn, name):
     model = model_fn(d=2)
     X = jnp.array(np.random.default_rng(7).standard_normal((15, 2)))
 
-    exp_jax = model.e_step(X, backend='jax')
-    exp_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax')
+    eta_cpu = model.e_step(X, backend='cpu')
 
-    for key in ['E_log_Y', 'E_inv_Y', 'E_Y']:
+    for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(
-            np.array(exp_cpu[key]), np.array(exp_jax[key]),
+            np.array(getattr(eta_cpu, field)),
+            np.array(getattr(eta_jax, field)),
             rtol=1e-5, atol=1e-7,
-            err_msg=f"{name} e_step cpu vs jax mismatch for {key}"
+            err_msg=f"{name} e_step cpu vs jax mismatch for {field}"
         )
 
 

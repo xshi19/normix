@@ -139,8 +139,8 @@ def test_m_step_normal_preserves_subordinator(dist_name):
     models = _make_models(X)
     model = models[dist_name]
 
-    expectations = model.e_step(X, backend='cpu')
-    model_after = model.m_step_normal(X, expectations)
+    eta = model.e_step(X, backend='cpu')
+    model_after = model.m_step_normal(eta)
 
     j_before = model._joint
     j_after = model_after._joint
@@ -175,17 +175,12 @@ def test_full_m_step_matches_split(dist_name):
     models = _make_models(X)
     model = models[dist_name]
 
-    expectations = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu')
 
-    model_full = model.m_step(X, expectations)
+    model_full = model.m_step(eta)
 
-    model_split = model.m_step_normal(X, expectations)
-    gig_eta = jnp.array([
-        jnp.mean(expectations['E_log_Y']),
-        jnp.mean(expectations['E_inv_Y']),
-        jnp.mean(expectations['E_Y']),
-    ])
-    model_split = model_split.m_step_subordinator(gig_eta)
+    model_split = model.m_step_normal(eta)
+    model_split = model_split.m_step_subordinator(eta)
 
     j_full = model_full._joint
     j_split = model_split._joint

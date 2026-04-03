@@ -83,14 +83,15 @@ def test_e_step_cpu_vs_jax_sp500(dist_name):
     models = _make_models(X)
     model = models[dist_name]
 
-    exp_jax = model.e_step(X, backend='jax')
-    exp_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax')
+    eta_cpu = model.e_step(X, backend='cpu')
 
-    for key in ['E_log_Y', 'E_inv_Y', 'E_Y']:
+    for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(
-            np.array(exp_cpu[key]), np.array(exp_jax[key]),
+            np.array(getattr(eta_cpu, field)),
+            np.array(getattr(eta_jax, field)),
             rtol=1e-5, atol=1e-7,
-            err_msg=f"{dist_name} e_step CPU vs JAX mismatch for {key} on SP500",
+            err_msg=f"{dist_name} e_step CPU vs JAX mismatch for {field} on SP500",
         )
 
 
@@ -112,10 +113,10 @@ def test_m_step_cpu_vs_jax_sp500(dist_name):
     models = _make_models(X)
     model = models[dist_name]
 
-    expectations = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu')
 
-    model_jax = model.m_step(X, expectations, backend='jax', method='newton')
-    model_cpu = model.m_step(X, expectations, backend='cpu', method='lbfgs')
+    model_jax = model.m_step(eta, backend='jax', method='newton')
+    model_cpu = model.m_step(eta, backend='cpu', method='lbfgs')
 
     j_jax = model_jax._joint
     j_cpu = model_cpu._joint
@@ -206,8 +207,8 @@ def test_em_one_step_ll_improves_sp500(dist_name, backend):
     e_backend = backend
     m_method = 'lbfgs' if backend == 'cpu' else 'newton'
 
-    exp = model.e_step(X, backend=e_backend)
-    new_model = model.m_step(X, exp, backend=backend, method=m_method)
+    eta = model.e_step(X, backend=e_backend)
+    new_model = model.m_step(eta, backend=backend, method=m_method)
 
     if dist_name == 'GH':
         new_model = new_model.regularize_det_sigma_one()

@@ -331,17 +331,22 @@ class TestGeneralizedHyperbolic:
         assert float(cond['E_inv_Y']) > 0
 
     def test_e_step_shapes(self, gh_2d):
+        from normix.fitting.eta import NormalMixtureEta
         X = jax.random.normal(jax.random.PRNGKey(1), (30, 2), dtype=jnp.float64)
-        exp = gh_2d.e_step(X)
-        assert exp['E_Y'].shape == (30,)
-        assert exp['E_inv_Y'].shape == (30,)
-        assert exp['E_log_Y'].shape == (30,)
+        eta = gh_2d.e_step(X)
+        assert isinstance(eta, NormalMixtureEta)
+        assert eta.E_Y.shape == ()
+        assert eta.E_inv_Y.shape == ()
+        assert eta.E_log_Y.shape == ()
+        assert eta.E_X.shape == (2,)
+        assert eta.E_X_inv_Y.shape == (2,)
+        assert eta.E_XXT_inv_Y.shape == (2, 2)
 
     def test_m_step_increases_ll(self, gh_2d):
         X = jax.random.normal(jax.random.PRNGKey(2), (100, 2), dtype=jnp.float64)
         ll0 = float(gh_2d.marginal_log_likelihood(X))
-        exp = gh_2d.e_step(X)
-        gh_new = gh_2d.m_step(X, exp)
+        eta = gh_2d.e_step(X)
+        gh_new = gh_2d.m_step(eta)
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
 
@@ -357,8 +362,8 @@ class TestGeneralizedHyperbolic:
         ll_prev = float(gh0.marginal_log_likelihood(X))
         model = gh0
         for _ in range(5):
-            exp = model.e_step(X)
-            model = model.m_step(X, exp)
+            eta = model.e_step(X)
+            model = model.m_step(eta)
             ll = float(model.marginal_log_likelihood(X))
             assert ll >= ll_prev - 1e-4, f"LL decreased: {ll_prev:.4f} → {ll:.4f}"
             ll_prev = ll
