@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest tests/ -q --tb=short
+
+  readme-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Extract and run README code blocks
+        run: |
+          uv run python -c "
+          import re, sys, textwrap
+
+          with open('README.md') as f:
+              content = f.read()
+
+          blocks = re.findall(r'\`\`\`python\n(.*?)\`\`\`', content, re.DOTALL)
+          if not blocks:
+              print('No Python code blocks found in README.md')
+              sys.exit(0)
+
+          for i, block in enumerate(blocks, 1):
+              # Skip blocks that need external data (... placeholder)
+              if '...' in block and 'X = ...' in block:
+                  print(f'Block {i}: skipped (placeholder data)')
+                  continue
+              print(f'Block {i}: running ({len(block.splitlines())} lines)')
+              try:
+                  exec(compile(block, f'README-block-{i}', 'exec'))
+                  print(f'Block {i}: OK')
+              except Exception as e:
+                  print(f'Block {i}: FAILED — {e}')
+                  sys.exit(1)
+
+          print(f'All {len(blocks)} README code blocks checked.')
+          "
+
+  docstring-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run module docstring example
+        run: |
+          uv run python -c "
+          # Verify the normix.__init__ quick-start docstring example works
+          import jax
+          import jax.numpy as jnp
+          from normix import GeneralizedHyperbolic
+
+          key = jax.random.PRNGKey(0)
+          X = jax.random.normal(key, (1000, 2))
+          model = GeneralizedHyperbolic.default_init(X)
+          result = model.fit(X, max_iter=50)
+          log_p = jax.vmap(result.model.log_prob)(X)
+          assert log_p.shape == (1000,)
+          assert jnp.all(jnp.isfinite(log_p))
+          print('Module docstring example: OK')
+          "

@@ -36,13 +36,18 @@ classifiers = [
 dependencies = [
     "numpy>=2.0.0",
     "scipy>=1.14.0",
-    "jax[cuda12]>=0.4.38",
+    "jax>=0.4.38",
     "equinox>=0.13",
     "jaxopt>=0.8",
-    "matplotlib>=3.10.0",
 ]
 
 [project.optional-dependencies]
+cuda12 = [
+    "jax[cuda12]>=0.4.38",
+]
+plotting = [
+    "matplotlib>=3.10.0",
+]
 dev = [
     "pytest>=8.0",
     "matplotlib>=3.9",

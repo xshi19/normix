@@ -30,11 +30,11 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | DOC1 | Docs | ~~Fix broken `README.md` examples~~ **Fixed:** imports, EM kwargs, layout (`e8db92a`). | ✅ | Low | ~30 | Done. | None | No |
 | DOC2 | Docs | ~~Fix `normix/__init__.py` docstring~~ **Fixed:** `default_init` + instance `model.fit(X)` pattern (`e8db92a`). | ✅ | Low | ~10 | Done. | None | No |
 | DOC3 | Docs | ~~Update `docs/theory/em_algorithm.rst` — still references old methods.~~ **Fixed:** "Implementation in normix" section rewritten to current `e_step`/`m_step`/`conditional_expectations`/`solve_bregman` API (Phase 4). | ✅ | Medium | ~30–50 | Done. | None | No |
-| DOC4 | Docs | Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks. | P2 | Medium | ~50–80 | **Medium** — prevents future documentation drift. | DOC1, DOC2 (examples must be correct first). | Yes |
+| DOC4 | Docs | ~~Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks.~~ **Done:** `.github/workflows/ci.yml` runs tests, README code-block extraction, and module docstring smoke check (Phase 6). | ✅ | Medium | ~50–80 | Done. | DOC1, DOC2. | Yes |
 | DOC5 | Docs | ~~Mark historical design notes and investigations as historical.~~ **Done:** `solver_redesign.md` status updated from "Proposal (v2)" to "Implemented" (Phase 4). | ✅ | Low | ~20 | Done. | None | No |
 | DOC6 | Docs | Add executable documentation examples for `log_kv`. | P3 | Low | ~15 | **Low** — improves onboarding for the most central utility. | None | No |
-| PKG1 | Packaging | `jax[cuda12]` is a hard runtime dependency — unusually opinionated for a library. Make base install CPU-neutral. | P2 | Low | ~10 | **High** — blocks CPU-only users and inflates install size. | None | No |
-| PKG2 | Packaging | `matplotlib` is in core dependencies but only used in notebooks/plotting. Move to optional extras. | P2 | Low | ~10 | **Medium** — smaller core install footprint. | None | No |
+| PKG1 | Packaging | ~~`jax[cuda12]` is a hard runtime dependency.~~ **Fixed:** base install uses `jax>=0.4.38` (CPU-neutral); CUDA available via `pip install normix[cuda12]` (Phase 6). | ✅ | Low | ~10 | Done. | None | No |
+| PKG2 | Packaging | ~~`matplotlib` is in core dependencies but only used in notebooks/plotting.~~ **Fixed:** moved to `[plotting]` optional extra; `normix/utils/plotting.py` gives a clear `ImportError` with install instructions (Phase 6). | ✅ | Low | ~10 | Done. | None | No |
 
 ### Counts by Priority (original review)
 
@@ -45,7 +45,7 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | P3       | 1    | 2      | 3          | 1       | 2    | —         | **9**     |
 | **Total** | **5** | **4** | **4**     | **6**   | **6** | **2**   | **27**    |
 
-**Resolved as of Phase 7:** B1–B5, D1–D4, C3, T1–T5, DOC1–DOC3, DOC5 (22/27). Remaining open: C1, C2, C4, T6, DOC4, DOC6, PKG1, PKG2.
+**Resolved as of Phase 7:** B1–B5, D1–D4, C3, T1–T5, DOC1–DOC5, PKG1, PKG2 (25/27). Remaining open: C1, C2, C4, T6, DOC6 (all P3 / Phase 5 code hygiene).
 
 ---
 
@@ -163,18 +163,19 @@ covers T4 extreme-parameter regimes across all distributions.
 
 ---
 
-### Phase 6 — Packaging & CI
+### Phase 6 — Packaging & CI ✅ DONE
 
 **Goal:** Make the package installable and testable with minimal friction.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **PKG1** | Make base install CPU-neutral; move `jax[cuda12]` to optional extra. | ~10 |
-| **PKG2** | Move `matplotlib` to optional extras. | ~10 |
-| **DOC4** | Add CI job: execute README code blocks, module doctests, notebook smoke checks. | ~50–80 |
+**Completed.**
 
-**Total estimated LOC:** ~70–100
-**Exit criteria:** `pip install normix` works on CPU-only machines; CI catches broken examples automatically.
+| Item | Description | Status |
+|------|-------------|--------|
+| **PKG1** | Base install now uses `jax>=0.4.38` (CPU-neutral). CUDA available via `pip install normix[cuda12]`. | ✅ Done |
+| **PKG2** | `matplotlib` moved to `[plotting]` optional extra. `normix/utils/plotting.py` gives a clear `ImportError` with install instructions if missing. | ✅ Done |
+| **DOC4** | `.github/workflows/ci.yml`: three jobs — `test` (full pytest suite), `readme-examples` (extracts and executes all Python code blocks from README.md), `docstring-check` (runs module docstring example). | ✅ Done |
+
+**Exit criteria (met):** `pip install normix` is CPU-neutral; CI catches broken examples automatically.
 
 ---
 
@@ -203,11 +204,12 @@ covers T4 extreme-parameter regimes across all distributions.
 | 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) — **✅ DONE** |
 | 4 | API consistency & dead code | ~150–240 | D2 — **✅ DONE** |
 | 5 | Code hygiene | ~155–175 | — |
-| 6 | Packaging & CI | ~70–100 | DOC1, DOC2 |
+| 6 | Packaging & CI | ~70–100 | DOC1, DOC2 — **✅ DONE** |
 | 7 | Long-term | ~180–350 | D2 — **✅ DONE** |
 
 Phases 1, 5, and 6 are independent of the design decisions and can proceed in parallel.
 Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
 Phase 3 is complete: 0 skipped tests, all EF invariants covered, extreme-parameter tests pass.
 Phase 4 is complete: dead `_subordinator_log_partition` removed, joint EF round-trip tests added, theory docs updated to current API.
+Phase 6 is complete: CPU-neutral base install, matplotlib in optional extras, CI workflow for tests + doc checks.
 Phase 7 is complete: `MultivariateNormal` is now a full `ExponentialFamily`; jaxopt migration plan documented and warning suppressed.

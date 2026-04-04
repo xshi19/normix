@@ -1,11 +1,22 @@
-"""Plotting utilities for normix notebooks."""
+"""Plotting utilities for normix notebooks.
+
+Requires the ``plotting`` extra: ``pip install normix[plotting]``.
+"""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as mgs
+
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.gridspec as mgs
+except ImportError as e:
+    raise ImportError(
+        "matplotlib is required for normix.utils.plotting. "
+        "Install it with: pip install normix[plotting]"
+    ) from e
+
 from scipy.stats import gaussian_kde
 
 import jax
