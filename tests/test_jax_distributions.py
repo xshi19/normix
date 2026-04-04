@@ -16,7 +16,7 @@ jax.config.update("jax_enable_x64", True)
 
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
-    GeneralizedHyperbolic,
+    GeneralizedHyperbolic, MultivariateNormal,
     JointGeneralizedHyperbolic,
     JointNormalInverseGamma,
     JointNormalInverseGaussian,
@@ -581,3 +581,111 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.eye(2), p=1.0, a=1.0, b=1.0,
         )
         self._check_cond_expectations(j)
+
+
+# ===========================================================================
+# MultivariateNormal — ExponentialFamily round-trip tests (D3)
+# ===========================================================================
+
+class TestMultivariateNormal:
+    """
+    Validate the full ExponentialFamily contract for MultivariateNormal:
+      1. log_partition() agrees with _log_partition_from_theta(natural_params()).
+      2. natural_params() → from_natural() recovers original parameters.
+      3. expectation_params() = jax.grad(_log_partition_from_theta)(natural_params()).
+      4. log_prob agrees with scipy.stats.multivariate_normal.
+      5. mean(), cov() return correct values.
+      6. rvs produces finite samples with correct shape.
+      7. fit_mle recovers parameters from large sample.
+    """
+
+    @pytest.fixture
+    def mvn_1d(self):
+        return MultivariateNormal.from_classical(
+            mu=jnp.array([1.5]),
+            sigma=jnp.array([[2.0]]),
+        )
+
+    @pytest.fixture
+    def mvn_2d(self):
+        return MultivariateNormal.from_classical(
+            mu=jnp.array([1.0, -0.5]),
+            sigma=jnp.array([[2.0, 0.6], [0.6, 1.5]]),
+        )
+
+    def test_log_partition_consistency(self, mvn_2d):
+        theta = mvn_2d.natural_params()
+        psi_direct = float(mvn_2d.log_partition())
+        psi_from_theta = float(MultivariateNormal._log_partition_from_theta(theta))
+        np.testing.assert_allclose(psi_direct, psi_from_theta, rtol=1e-10)
+
+    def test_from_natural_roundtrip(self, mvn_2d):
+        theta = mvn_2d.natural_params()
+        mvn2 = MultivariateNormal.from_natural(theta)
+        np.testing.assert_allclose(
+            np.array(mvn2.mu), np.array(mvn_2d.mu), rtol=1e-9)
+        np.testing.assert_allclose(
+            np.array(mvn2.cov()), np.array(mvn_2d.cov()), rtol=1e-9)
+
+    def test_expectation_params_eq_grad(self, mvn_2d):
+        theta = mvn_2d.natural_params()
+        eta = mvn_2d.expectation_params()
+        grad_eta = jax.grad(MultivariateNormal._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(
+            np.array(eta), np.array(grad_eta), rtol=1e-6)
+
+    def test_log_prob_vs_scipy(self, mvn_2d):
+        from scipy.stats import multivariate_normal
+        mu = np.array([1.0, -0.5])
+        cov = np.array([[2.0, 0.6], [0.6, 1.5]])
+        xs = [np.array([0.0, 0.0]), np.array([1.0, -0.5]), np.array([2.0, 1.0])]
+        for x in xs:
+            our = float(mvn_2d.log_prob(jnp.array(x)))
+            ref = float(multivariate_normal.logpdf(x, mean=mu, cov=cov))
+            np.testing.assert_allclose(our, ref, rtol=1e-9,
+                                       err_msg=f"log_prob mismatch at x={x}")
+
+    def test_log_prob_1d_vs_scipy(self, mvn_1d):
+        from scipy.stats import norm
+        for x in [-1.0, 0.0, 1.5, 3.0]:
+            our = float(mvn_1d.log_prob(jnp.array([x])))
+            ref = float(norm.logpdf(x, loc=1.5, scale=np.sqrt(2.0)))
+            np.testing.assert_allclose(our, ref, rtol=1e-9)
+
+    def test_mean(self, mvn_2d):
+        mu = np.array([1.0, -0.5])
+        np.testing.assert_allclose(np.array(mvn_2d.mean()), mu, rtol=1e-12)
+
+    def test_cov(self, mvn_2d):
+        cov = np.array([[2.0, 0.6], [0.6, 1.5]])
+        np.testing.assert_allclose(np.array(mvn_2d.cov()), cov, rtol=1e-9)
+
+    def test_rvs_shape_and_finite(self, mvn_2d):
+        X = mvn_2d.rvs(50, seed=7)
+        assert X.shape == (50, 2)
+        assert jnp.all(jnp.isfinite(X))
+
+    def test_rvs_empirical_mean(self, mvn_2d):
+        X = mvn_2d.rvs(10000, seed=0)
+        emp_mean = jnp.mean(X, axis=0)
+        np.testing.assert_allclose(
+            np.array(emp_mean), np.array(mvn_2d.mean()), atol=0.05)
+
+    def test_fit_mle_recovers_params(self):
+        """fit_mle should recover μ and Σ from a large sample."""
+        mu_true = jnp.array([1.0, -0.5])
+        cov_true = jnp.array([[2.0, 0.6], [0.6, 1.5]])
+        mvn_true = MultivariateNormal.from_classical(mu=mu_true, sigma=cov_true)
+        X = mvn_true.rvs(5000, seed=42)
+        mvn_fit = MultivariateNormal.fit_mle(X)
+        np.testing.assert_allclose(
+            np.array(mvn_fit.mean()), np.array(mu_true), atol=0.05)
+        np.testing.assert_allclose(
+            np.array(mvn_fit.cov()), np.array(cov_true), atol=0.1)
+
+    def test_sample_backward_compat(self, mvn_2d):
+        """Legacy sample(key, shape) API still works."""
+        key = jax.random.PRNGKey(0)
+        X = mvn_2d.sample(key, shape=(20,))
+        assert X.shape == (20, 2)
+        assert jnp.all(jnp.isfinite(X))

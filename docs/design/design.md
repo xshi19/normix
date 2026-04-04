@@ -299,3 +299,49 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Numerical constants | Centralized in `utils/constants.py` | Single source of truth; no scattered magic numbers |
 | Class naming | `GeneralizedInverseGaussian` primary, `GIG` alias | Full name is canonical; short alias for backward compatibility |
 | Module-level functions | Never; use classmethods or staticmethods | Keeps the interface on the class; avoids scattered module globals |
+
+---
+
+## MultivariateNormal as ExponentialFamily (D3)
+
+**Decision (Phase 7):** `MultivariateNormal` is promoted from a plain `eqx.Module` to a full `ExponentialFamily` subclass.
+
+**EF structure:**
+
+| Component | Expression |
+|-----------|-----------|
+| $t(x)$ | $[x,\; \operatorname{vec}(xx^\top)]$ — shape $(d + d^2,)$ |
+| $\theta$ | $[\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})]$ — same shape |
+| $\log h(x)$ | $0$ |
+| $\psi(\theta)$ | $\tfrac{1}{2}\theta_1^\top\Lambda^{-1}\theta_1 - \tfrac{1}{2}\log\|\Lambda\| + \tfrac{d}{2}\log(2\pi)$ where $\Lambda = -2\,\mathrm{reshape}(\theta_2, d, d)$ |
+
+`vec` uses row-major (`ravel()`) throughout. All parametrization conversions are analytical (closed-form) — no Bregman solver is ever invoked:
+
+| Conversion | Method | Formula |
+|---|---|---|
+| classical → natural | `natural_params()` | $\theta_1 = \Sigma^{-1}\mu$, $\theta_2 = -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})$ |
+| natural → classical | `from_natural(θ)` | $\Lambda = -2\,\mathrm{reshape}(\theta_2)$, $\mu = \Lambda^{-1}\theta_1$, $\Sigma = \Lambda^{-1}$ |
+| natural → expectation | `_grad_log_partition(θ)` | $\eta = [\mu,\; \operatorname{vec}(\Sigma + \mu\mu^\top)]$ (analytical Tier 2 override) |
+| expectation → classical | `from_expectation(η)` | $\mu = \eta_1$, $\Sigma = \mathrm{reshape}(\eta_2) - \mu\mu^\top$ |
+
+`_log_partition_from_theta` uses the Cholesky of $\Lambda$ for numerical stability. `log_prob` overrides the inherited EF formula with the direct Cholesky path (more efficient). `fit_mle` computes $\hat\eta = n^{-1}\sum_i t(x_i)$ then calls the closed-form `from_expectation`.
+
+Added: `mean()`, `cov()`, `rvs(n, seed)`. Legacy `sample(key, shape)` kept for notebook backward compatibility.
+
+---
+
+## jaxopt migration (D4)
+
+**Evaluation (Phase 7):** jaxopt is unmaintained upstream (last release 0.8.3, 2024) and emits a `DeprecationWarning` on import. In `normix`, jaxopt is used exclusively in `fitting/solvers.py` for `jaxopt.LBFGS` and `jaxopt.BFGS` in the `backend='jax', method='lbfgs'|'bfgs'` solver paths. The `LBFGSB` variant is deliberately avoided (int32/int64 dtype mismatch with `jax_enable_x64`).
+
+**Why not migrate now:**
+- `optax` absorbed L-BFGS from jaxopt but provides only an update rule (`optax.scale_by_lbfgs`), not a ready-made convergence-monitored solver loop. Writing that loop correctly (gradient norm stopping, step size scheduling) adds ~100–150 lines of non-trivial code.
+- `optimistix` (Kidger) has `LBFGS` but lacks box constraints; it would require the same reparameterization we already do, and its convergence API differs from jaxopt's. Not yet production-mature for this use case.
+- jaxopt still functions correctly despite the deprecation warning.
+
+**Migration path (when jaxopt breaks or is removed from PyPI):**
+1. Implement a thin `_lbfgs_loop(f, phi0, max_steps, tol)` using `optax.scale_by_lbfgs` + `jax.lax.while_loop` (~100 lines) — see `fitting/solvers.py` docstring for the reparameterization convention.
+2. Replace the `jaxopt.LBFGS(...)` / `jaxopt.BFGS(...)` calls in `_jax_quasi_newton` with this loop.
+3. Drop `jaxopt` from `pyproject.toml` dependencies.
+
+**Current mitigation:** The `DeprecationWarning` is suppressed in `normix/__init__.py` so library users are not affected.

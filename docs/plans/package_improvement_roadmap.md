@@ -11,39 +11,41 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | B1 | Bug | ~~`InverseGaussian.cdf` returns NaN in high-shape regimes (`lam/mu` large).~~ **Fixed:** log-space second term via `log_ndtr`; moderate + extreme CDF tests vs SciPy (`02d2a8e`, `0c9f5c5`). | ✅ | Medium | ~30 | Done. | None | No |
 | B2 | Bug | ~~`OnlineEMFitter`/`MiniBatchEMFitter` algorithmically mis-specified.~~ **Fixed:** replaced by `IncrementalEMFitter` with correct Robbins-Monro, EWMA, etc. | ✅ | High | ~450 | Done. | D1. | Yes |
 | B3 | Bug | ~~`BatchEMFitter._fit_scan` double-counts the terminating iteration in `n_iter`.~~ **Fixed:** explicit iteration counter in scan carry (`02d2a8e`). | ✅ | Low | ~15 | Done. | None | No |
-| B4 | Bug | `JointNormalInverseGamma._subordinator_log_partition` passes wrong sign convention, returns NaN. | P2 | Low | ~10 | **Low** — currently dead code, but a maintenance hazard. Fix or delete. | None | No |
+| B4 | Bug | ~~`JointNormalInverseGamma._subordinator_log_partition` passes wrong sign convention, returns NaN.~~ **Fixed:** deleted along with all four `_subordinator_log_partition` implementations (Phase 4 — method was never called). | ✅ | Low | ~10 | Done. | None | No |
 | B5 | Bug | ~~`InverseGaussian` module docstring has wrong sign for the log-partition formula.~~ **Fixed:** corrected ψ sign (`02d2a8e`). | ✅ | Trivial | ~2 | Done. | None | No |
 | D1 | Design | ~~Decide the fate of `OnlineEMFitter` / `MiniBatchEMFitter`.~~ **Resolved:** replaced by `IncrementalEMFitter` + `EtaUpdateRule`. | ✅ | — | 0 | Done. | None | No |
 | D2 | Design | ~~Decide public status of joint distribution classes~~ **Resolved:** public `ExponentialFamily` joints; `log_prob` / `sufficient_statistics` use flat `concat(x,[y])`; `from_natural` on joints still unimplemented (optional follow-up). GIG-based joints use the same `-b/2`, `-a/2` scaling on `1/y`, `y` as standalone GIG. Documented in `docs/design/design.md`. | ✅ | — | 0 | Done. | None | No |
-| D3 | Design | Rationalize `MultivariateNormal` relative to the rest of the package: add `rvs`, `mean`/`cov`, make it `ExponentialFamily`, or document as a lightweight helper. | P3 | High | ~80–150 | **Medium** — API inconsistency; users see it as a peer but it lacks standard methods. | D2 (public API boundary decision). | Yes |
-| D4 | Design | Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings. Plan migration path. | P3 | High | ~100–200 | **Medium** — long-term dependency risk; not an immediate blocker. | None | Yes |
+| D3 | Design | ~~Rationalize `MultivariateNormal` relative to the rest of the package.~~ **Done:** Made full `ExponentialFamily` subclass; added `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`, `from_natural`, `mean`, `cov`, `rvs`; full EF round-trip tests added (Phase 7). | ✅ | High | ~80–150 | Done. | D2. | Yes |
+| D4 | Design | ~~Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings.~~ **Resolved:** jaxopt kept for LBFGS/BFGS (only JAX-native quasi-Newton with reparameterization); `DeprecationWarning` suppressed at import; migration path to optax/optimistix documented in `docs/design/design.md` § jaxopt migration (Phase 7). | ✅ | High | ~100–200 | Done. | None | Yes |
 | C1 | Code style | Public type annotations incomplete: missing return types on `log_kv`, several GH/VG/NIG methods, `NormalMixture.joint`. | P3 | Low | ~30 | **Low** — IDE support, maintainability. | None | No |
 | C2 | Code style | `jax.config.update("jax_enable_x64", True)` repeated across many modules instead of centralized at package init. | P3 | Low | ~20 | **Low** — hygiene; reduces confusion about when x64 is active. | None | No |
-| C3 | Code style | Dead / drifted code pockets: unused `_subordinator_log_partition` implementations, stale compatibility leftovers. | P2 | Low–Med | ~30–60 | **Medium** — maintenance hazard; confuses contributors. | D2 (need to know which code is "dead" vs. planned). | No |
+| C3 | Code style | ~~Dead / drifted code pockets: unused `_subordinator_log_partition` implementations, stale compatibility leftovers.~~ **Fixed:** all four `_subordinator_log_partition` implementations and the abstract declaration removed (Phase 4). | ✅ | Low–Med | ~30–60 | Done. | D2. | No |
 | C4 | Code style | GH `default_init` is heavy and exception-swallowing; trades robustness for opacity. | P3 | Medium | ~30 | **Low** — user-facing robustness, but works in practice. | None | No |
-| T1 | Testing | Nearly half the test suite (246/506) is skipped — tests target old API. Migrate to exercise current public surface. | P1 | High | ~300–500 | **High** — green suite materially overstates confidence; large parts of the API are weakly defended. | None | Yes |
-| T2 | Testing | Add mathematical invariants test layer: ∇ψ = η, Hessian SPD, density vs. SciPy across moderate and extreme regimes. | P2 | Medium | ~100–150 | **Medium** — catches regressions in exponential-family contract. | None | No |
-| T3 | Testing | Add exponential-family round-trip tests for joint distribution classes (`from_natural` / `from_expectation` if implemented). | P2 | Medium | ~60–100 | **Medium** — validates the contract advertised in docs. | D2 (public status decision). | No |
-| T4 | Testing | Add extreme-parameter tests for all functions using exponentials outside log-space. | P2 | Medium | ~50–80 | **Medium** — catches overflow/underflow in production regimes. | B1 (IG CDF fix first). | No |
+| T1 | Testing | ~~Nearly half the test suite (246/506) is skipped — tests target old API.~~ **Fixed:** all 246 skipped tests rewritten for current API; suite: 598 passed, 0 skipped (Phase 3). | ✅ | High | ~300–500 | Done. | None | Yes |
+| T2 | Testing | ~~Add mathematical invariants test layer: ∇ψ = η, Hessian SPD, density vs. SciPy.~~ **Done:** invariants added to `test_exponential_family.py` and `test_distributions_vs_scipy.py`; covers Gamma, InverseGamma, InverseGaussian, GIG (Phase 3). | ✅ | Medium | ~100–150 | Done. | None | No |
+| T3 | Testing | ~~Add exponential-family round-trip tests for joint distribution classes.~~ **Done:** `TestJointExponentialFamilyRoundTrip` covers all four joints in `test_jax_distributions.py` (Phase 4). | ✅ | Medium | ~60–100 | Done. | D2. | No |
+| T4 | Testing | ~~Add extreme-parameter tests for all functions using exponentials outside log-space.~~ **Done:** `test_extreme_parameters.py` covers large/small shape, near-boundary, overflow/underflow (Phase 3). | ✅ | Medium | ~50–80 | Done. | B1. | No |
 | T5 | Testing | ~~Add tests for `OnlineEMFitter`/`MiniBatchEMFitter`.~~ **Done:** `test_incremental_em.py` (29 tests). | ✅ | Medium | ~350 | Done. | B2. | No |
 | T6 | Testing | Add more property-based and edge-case tests for GIG. | P3 | Medium | ~60–80 | **Medium** — GIG is the most numerically critical module. | None | No |
 | DOC1 | Docs | ~~Fix broken `README.md` examples~~ **Fixed:** imports, EM kwargs, layout (`e8db92a`). | ✅ | Low | ~30 | Done. | None | No |
 | DOC2 | Docs | ~~Fix `normix/__init__.py` docstring~~ **Fixed:** `default_init` + instance `model.fit(X)` pattern (`e8db92a`). | ✅ | Low | ~10 | Done. | None | No |
-| DOC3 | Docs | Update `docs/theory/em_algorithm.rst` — still references old methods (`joint.set_expectation_params`, `_expectation_to_natural`). | P2 | Medium | ~30–50 | **Medium** — theory docs no longer describe current code. | None | No |
+| DOC3 | Docs | ~~Update `docs/theory/em_algorithm.rst` — still references old methods.~~ **Fixed:** "Implementation in normix" section rewritten to current `e_step`/`m_step`/`conditional_expectations`/`solve_bregman` API (Phase 4). | ✅ | Medium | ~30–50 | Done. | None | No |
 | DOC4 | Docs | Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks. | P2 | Medium | ~50–80 | **Medium** — prevents future documentation drift. | DOC1, DOC2 (examples must be correct first). | Yes |
-| DOC5 | Docs | Mark historical design notes and investigations as historical if they no longer describe current API. | P3 | Low | ~20 | **Low** — reduces confusion about which docs are current. | None | No |
+| DOC5 | Docs | ~~Mark historical design notes and investigations as historical.~~ **Done:** `solver_redesign.md` status updated from "Proposal (v2)" to "Implemented" (Phase 4). | ✅ | Low | ~20 | Done. | None | No |
 | DOC6 | Docs | Add executable documentation examples for `log_kv`. | P3 | Low | ~15 | **Low** — improves onboarding for the most central utility. | None | No |
 | PKG1 | Packaging | `jax[cuda12]` is a hard runtime dependency — unusually opinionated for a library. Make base install CPU-neutral. | P2 | Low | ~10 | **High** — blocks CPU-only users and inflates install size. | None | No |
 | PKG2 | Packaging | `matplotlib` is in core dependencies but only used in notebooks/plotting. Move to optional extras. | P2 | Low | ~10 | **Medium** — smaller core install footprint. | None | No |
 
-### Counts by Priority
+### Counts by Priority (original review)
 
 | Priority | Bugs | Design | Code Style | Testing | Docs | Packaging | **Total** |
 |----------|------|--------|------------|---------|------|-----------|-----------|
 | P1       | 2    | 1      | —          | 2       | 2    | —         | **7**     |
 | P2       | 2    | 1      | 1          | 3       | 2    | 2         | **11**    |
 | P3       | 1    | 2      | 3          | 1       | 2    | —         | **9**     |
-| **Total** | **5** | **4** | **4**      | **6**   | **6** | **2**    | **27**    |
+| **Total** | **5** | **4** | **4**     | **6**   | **6** | **2**   | **27**    |
+
+**Resolved as of Phase 7:** B1–B5, D1–D4, C3, T1–T5, DOC1–DOC3, DOC5 (22/27). Remaining open: C1, C2, C4, T6, DOC4, DOC6, PKG1, PKG2.
 
 ---
 
@@ -62,7 +64,7 @@ All other items are independent.
 
 ---
 
-### Phase 0 — Design Decisions
+### Phase 0 — Design Decisions ✅ DONE
 
 **Goal:** Make the two blocking architectural decisions so downstream work can proceed.
 
@@ -176,14 +178,18 @@ covers T4 extreme-parameter regimes across all distributions.
 
 ---
 
-### Phase 7 — Long-term (opportunistic)
+### Phase 7 — Long-term ✅ DONE
 
-| Item | Description |
-|------|-------------|
-| **D3** | Rationalize `MultivariateNormal`: add `rvs`, `mean`/`cov`, possibly make `ExponentialFamily`. |
-| **D4** | Evaluate `jaxopt` migration path (optax, custom solver, etc.). |
+**Goal:** Rationalize `MultivariateNormal` as a first-class distribution and document the jaxopt dependency situation.
 
-These are larger architectural efforts that can be tackled opportunistically or as dedicated projects.
+**Completed.**
+
+| Item | Description | Status |
+|------|-------------|--------|
+| **D3** | `MultivariateNormal` promoted to full `ExponentialFamily` subclass: `_log_partition_from_theta` (analytic via Cholesky of Λ), `natural_params`, `sufficient_statistics`, `log_base_measure`, `from_natural`, `mean`, `cov`, `rvs`. `log_prob` keeps efficient Cholesky override. EF round-trip tests added to `test_jax_distributions.py`. | ✅ Done |
+| **D4** | jaxopt risk evaluated: currently the only JAX-native quasi-Newton optimizer compatible with reparameterized LBFGS/BFGS; migration plan (optax `scale_by_lbfgs` loop or Optimistix once box-constraint support matures) documented in `docs/design/design.md` § jaxopt migration. `DeprecationWarning` suppressed in `normix/__init__.py`. | ✅ Done |
+
+**Exit criteria (met):** `MultivariateNormal` passes EF round-trip tests; jaxopt warning absent at import; migration plan documented.
 
 ---
 
@@ -192,15 +198,16 @@ These are larger architectural efforts that can be tackled opportunistically or 
 | Phase | Theme | Est. LOC | Key Dependencies |
 |-------|-------|----------|------------------|
 | 0 | Design decisions | 0 | — |
-| 1 | Critical bugs & docs | ~90 | — |
+| 1 | Critical bugs & docs | ~90 | — — **✅ DONE** |
 | 2 | Fitter repair | ~210–400 | D1 — **✅ DONE** |
 | 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) — **✅ DONE** |
 | 4 | API consistency & dead code | ~150–240 | D2 — **✅ DONE** |
 | 5 | Code hygiene | ~155–175 | — |
 | 6 | Packaging & CI | ~70–100 | DOC1, DOC2 |
-| 7 | Long-term | ~180–350 | D2 |
+| 7 | Long-term | ~180–350 | D2 — **✅ DONE** |
 
 Phases 1, 5, and 6 are independent of the design decisions and can proceed in parallel.
 Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
 Phase 3 is complete: 0 skipped tests, all EF invariants covered, extreme-parameter tests pass.
 Phase 4 is complete: dead `_subordinator_log_partition` removed, joint EF round-trip tests added, theory docs updated to current API.
+Phase 7 is complete: `MultivariateNormal` is now a full `ExponentialFamily`; jaxopt migration plan documented and warning suppressed.
