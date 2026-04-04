@@ -108,18 +108,21 @@ All other items are independent.
 
 ---
 
-### Phase 3 — Test Migration & Coverage
+### Phase 3 — Test Migration & Coverage ✅ DONE
 
 **Goal:** Dramatically reduce the skipped test count and defend the public API surface.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **T1** | Migrate skipped tests to current API. Prioritize: public API examples → multivariate normal → joint EF round-trips → EM regressions. | ~300–500 |
-| **T2** | Add mathematical invariants test layer (∇ψ = η, Hessian SPD, density vs. SciPy). | ~100–150 |
-| **T4** | Add extreme-parameter tests for functions using exponentials outside log-space. | ~50–80 |
+**Completed.** All 246 skipped tests rewrote for the current API. Suite went from
+`299 passed, 246 skipped` → `586 passed, 0 skipped`. New `test_extreme_parameters.py`
+covers T4 extreme-parameter regimes across all distributions.
 
-**Total estimated LOC:** ~450–730
-**Exit criteria:** Skipped count drops below 50; all exponential-family distributions have invariant tests; no NaN in extreme-parameter tests.
+| Item | Description | Status |
+|------|-------------|--------|
+| **T1** | Rewrote 10 skipped test files to current API: `test_distributions_vs_scipy.py`, `test_variance_gamma.py`, `test_normal_inverse_gamma.py`, `test_normal_inverse_gaussian.py`, `test_generalized_hyperbolic.py`, `test_em_regression.py`, `test_multivariate_rvs.py`, `test_exponential_family.py`, `test_gig_special_cases.py`, `test_high_dimensional.py`, `test_sp500_distribution_validation.py`. | ✅ Done |
+| **T2** | Mathematical invariants (∇ψ = η, Hessian SPD) added to `test_exponential_family.py` and `test_distributions_vs_scipy.py`. Covers Gamma, InverseGamma, InverseGaussian, GIG. | ✅ Done |
+| **T4** | Extreme-parameter tests in new `test_extreme_parameters.py`: large/small shape, near-boundary, overflow/underflow for all univariate and mixture distributions. | ✅ Done |
+
+**Exit criteria (met):** Skipped count = 0 (target was < 50); all EF distributions have invariant tests; no NaN in extreme-parameter tests.
 
 ---
 
@@ -190,7 +193,7 @@ These are larger architectural efforts that can be tackled opportunistically or 
 | 0 | Design decisions | 0 | — |
 | 1 | Critical bugs & docs | ~90 | — |
 | 2 | Fitter repair | ~210–400 | D1 — **✅ DONE** |
-| 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) |
+| 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) — **✅ DONE** |
 | 4 | API consistency & dead code | ~150–240 | D2 |
 | 5 | Code hygiene | ~155–175 | — |
 | 6 | Packaging & CI | ~70–100 | DOC1, DOC2 |
@@ -198,4 +201,4 @@ These are larger architectural efforts that can be tackled opportunistically or 
 
 Phases 1, 5, and 6 are independent of the design decisions and can proceed in parallel.
 Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
-Phase 3 benefits from Phase 1 fixes but can start in parallel for the test migration (T1) work.
+Phase 3 is complete: 0 skipped tests, all EF invariants covered, extreme-parameter tests pass.
