@@ -126,20 +126,21 @@ covers T4 extreme-parameter regimes across all distributions.
 
 ---
 
-### Phase 4 — API Consistency & Dead Code (D2 resolved)
+### Phase 4 — API Consistency & Dead Code (D2 resolved) ✅ DONE
 
 **Goal:** Align the exponential-family contract, clean dead code, tighten the public surface.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **B4** | Fix or delete `JointNormalInverseGamma._subordinator_log_partition`. | ~10 |
-| **C3** | Remove dead/drifted code identified during D2 decision. | ~30–60 |
-| **T3** | Add round-trip tests for joint classes (`from_natural` / `from_expectation` if implemented); partial: `test_jax_distributions` checks `log_prob` vs `log_prob_joint` for all four joints. | ~60–100 |
-| **DOC3** | Update `docs/theory/em_algorithm.rst` to current method names. | ~30–50 |
-| **DOC5** | Mark historical design notes as historical. | ~20 |
+**Completed.** All five items delivered.
 
-**Total estimated LOC:** ~150–240
-**Exit criteria:** No `NotImplementedError` in public-facing methods (or documented as internal); theory docs match current code; no dead code flagged in review.
+| Item | Description | Status |
+|------|-------------|--------|
+| **B4** | Deleted `JointNormalInverseGamma._subordinator_log_partition` (wrong sign convention, never called). | ✅ Done |
+| **C3** | Removed `_subordinator_log_partition` from all four joint subclasses and the abstract declaration from `JointNormalMixture`; method was never called anywhere. | ✅ Done |
+| **T3** | Added `TestJointExponentialFamilyRoundTrip` to `test_jax_distributions.py`: EF contract (log_partition self-consistency, expectation_params = ∇ψ), `rvs` finiteness, and `conditional_expectations` sign correctness for all four joints. | ✅ Done |
+| **DOC3** | Updated `docs/theory/em_algorithm.rst` "Implementation in normix" section: replaced stale `_conditional_expectation_y_given_x`, `joint.set_expectation_params`, `joint._expectation_to_natural` with current `e_step`, `m_step`, `conditional_expectations`, `solve_bregman`. | ✅ Done |
+| **DOC5** | Updated `docs/design/solver_redesign.md` status from "Proposal (v2)" to "Implemented". | ✅ Done |
+
+**Exit criteria (met):** No dead `_subordinator_log_partition` code; theory docs match current API; new T3 tests pass.
 
 ---
 
@@ -194,7 +195,7 @@ These are larger architectural efforts that can be tackled opportunistically or 
 | 1 | Critical bugs & docs | ~90 | — |
 | 2 | Fitter repair | ~210–400 | D1 — **✅ DONE** |
 | 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) — **✅ DONE** |
-| 4 | API consistency & dead code | ~150–240 | D2 |
+| 4 | API consistency & dead code | ~150–240 | D2 — **✅ DONE** |
 | 5 | Code hygiene | ~155–175 | — |
 | 6 | Packaging & CI | ~70–100 | DOC1, DOC2 |
 | 7 | Long-term | ~180–350 | D2 |
@@ -202,3 +203,4 @@ These are larger architectural efforts that can be tackled opportunistically or 
 Phases 1, 5, and 6 are independent of the design decisions and can proceed in parallel.
 Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
 Phase 3 is complete: 0 skipped tests, all EF invariants covered, extreme-parameter tests pass.
+Phase 4 is complete: dead `_subordinator_log_partition` removed, joint EF round-trip tests added, theory docs updated to current API.

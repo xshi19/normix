@@ -423,3 +423,161 @@ class TestJointExponentialFamilyLogProb:
         xy = jnp.concatenate([x, jnp.array([y])])
         np.testing.assert_allclose(
             float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)
+
+
+# ===========================================================================
+# Joint normal mixtures — exponential-family round-trip tests (T3)
+# ===========================================================================
+
+class TestJointExponentialFamilyRoundTrip:
+    """
+    Verify the EF contract for each joint class:
+      1. log_partition() agrees with _log_partition_from_theta(natural_params()).
+      2. expectation_params() = jax.grad(_log_partition_from_theta)(natural_params()).
+      3. rvs produces finite (X, Y) samples.
+      4. conditional_expectations returns finite, sign-correct moments.
+    """
+
+    # -----------------------------------------------------------------------
+    # Helpers
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _check_ef_contract(joint):
+        """Shared checks: log_partition self-consistency and grad=eta."""
+        theta = joint.natural_params()
+        psi_direct = float(joint.log_partition())
+        psi_from_theta = float(type(joint)._log_partition_from_theta(theta))
+        np.testing.assert_allclose(psi_direct, psi_from_theta, rtol=1e-10,
+                                   err_msg="log_partition() != _log_partition_from_theta(theta)")
+
+        eta = joint.expectation_params()
+        grad_eta = jax.grad(type(joint)._log_partition_from_theta)(theta)
+        np.testing.assert_allclose(np.array(eta), np.array(grad_eta), rtol=1e-6,
+                                   err_msg="expectation_params() != grad log_partition")
+
+    @staticmethod
+    def _check_rvs(joint, n=30):
+        X, Y = joint.rvs(n, seed=0)
+        assert X.shape == (n, joint.d)
+        assert Y.shape == (n,)
+        assert jnp.all(jnp.isfinite(X)), "rvs X contains non-finite values"
+        assert jnp.all(jnp.isfinite(Y)), "rvs Y contains non-finite values"
+        assert jnp.all(Y > 0), "rvs Y contains non-positive values"
+
+    @staticmethod
+    def _check_cond_expectations(joint):
+        x = jnp.zeros(joint.d, dtype=jnp.float64)
+        cond = joint.conditional_expectations(x)
+        for k, v in cond.items():
+            assert np.isfinite(float(v)), f"conditional_expectations[{k}] is not finite"
+        assert float(cond['E_Y']) > 0
+        assert float(cond['E_inv_Y']) > 0
+
+    # -----------------------------------------------------------------------
+    # JointVarianceGamma
+    # -----------------------------------------------------------------------
+
+    def test_vg_ef_contract(self):
+        j = JointVarianceGamma(
+            mu=jnp.array([0.5, -0.3]),
+            gamma=jnp.array([0.2, 0.1]),
+            L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
+            alpha=2.0, beta=1.0,
+        )
+        self._check_ef_contract(j)
+
+    def test_vg_rvs(self):
+        j = JointVarianceGamma(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), alpha=2.0, beta=1.0,
+        )
+        self._check_rvs(j)
+
+    def test_vg_cond_expectations(self):
+        j = JointVarianceGamma(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), alpha=2.0, beta=1.0,
+        )
+        self._check_cond_expectations(j)
+
+    # -----------------------------------------------------------------------
+    # JointNormalInverseGamma
+    # -----------------------------------------------------------------------
+
+    def test_ninvg_ef_contract(self):
+        j = JointNormalInverseGamma(
+            mu=jnp.array([0.5, -0.3]),
+            gamma=jnp.array([0.2, 0.1]),
+            L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
+            alpha=3.0, beta=1.5,
+        )
+        self._check_ef_contract(j)
+
+    def test_ninvg_rvs(self):
+        j = JointNormalInverseGamma(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), alpha=3.0, beta=1.5,
+        )
+        self._check_rvs(j)
+
+    def test_ninvg_cond_expectations(self):
+        j = JointNormalInverseGamma(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), alpha=3.0, beta=1.5,
+        )
+        self._check_cond_expectations(j)
+
+    # -----------------------------------------------------------------------
+    # JointNormalInverseGaussian
+    # -----------------------------------------------------------------------
+
+    def test_nig_ef_contract(self):
+        j = JointNormalInverseGaussian(
+            mu=jnp.array([0.5, -0.3]),
+            gamma=jnp.array([0.2, 0.1]),
+            L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
+            mu_ig=1.0, lam=2.0,
+        )
+        self._check_ef_contract(j)
+
+    def test_nig_rvs(self):
+        j = JointNormalInverseGaussian(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), mu_ig=1.0, lam=2.0,
+        )
+        self._check_rvs(j)
+
+    def test_nig_cond_expectations(self):
+        j = JointNormalInverseGaussian(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), mu_ig=1.0, lam=2.0,
+        )
+        self._check_cond_expectations(j)
+
+    # -----------------------------------------------------------------------
+    # JointGeneralizedHyperbolic
+    # -----------------------------------------------------------------------
+
+    def test_gh_ef_contract(self):
+        j = JointGeneralizedHyperbolic(
+            mu=jnp.array([0.5, -0.3]),
+            gamma=jnp.array([0.2, 0.1]),
+            L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
+            p=1.0, a=1.0, b=1.0,
+        )
+        self._check_ef_contract(j)
+
+    def test_gh_rvs(self):
+        j = JointGeneralizedHyperbolic(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), p=1.0, a=1.0, b=1.0,
+        )
+        self._check_rvs(j)
+
+    def test_gh_cond_expectations(self):
+        j = JointGeneralizedHyperbolic(
+            mu=jnp.zeros(2), gamma=jnp.array([0.1, -0.1]),
+            L_Sigma=jnp.eye(2), p=1.0, a=1.0, b=1.0,
+        )
+        self._check_cond_expectations(j)

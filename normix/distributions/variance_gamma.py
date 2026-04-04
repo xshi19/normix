@@ -47,11 +47,6 @@ class JointVarianceGamma(JointNormalMixture):
         from normix.distributions.gamma import Gamma
         return Gamma(alpha=self.alpha, beta=self.beta)
 
-    def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        from normix.distributions.gamma import Gamma
-        theta = jnp.array([p_eff - 1.0, -a_eff / 2.0])
-        return Gamma._log_partition_from_theta(theta)
-
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:

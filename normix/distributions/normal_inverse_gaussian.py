@@ -47,13 +47,6 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.inverse_gaussian import InverseGaussian
         return InverseGaussian(mu=self.mu_ig, lam=self.lam)
 
-    def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        from normix.distributions.inverse_gaussian import InverseGaussian
-        lam_p = b_eff     # b = lam
-        mu_p = jnp.sqrt(b_eff / a_eff)
-        theta = jnp.array([-lam_p / (2.0 * mu_p**2), -lam_p / 2.0])
-        return InverseGaussian._log_partition_from_theta(theta)
-
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:

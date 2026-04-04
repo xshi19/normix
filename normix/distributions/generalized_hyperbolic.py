@@ -75,11 +75,6 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(p=self.p, a=self.a, b=self.b)
 
-    def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        theta = jnp.array([p_eff - 1.0, -b_eff / 2.0, -a_eff / 2.0])
-        return GIG._log_partition_from_theta(theta)
-
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:

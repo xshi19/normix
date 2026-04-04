@@ -104,16 +104,6 @@ class JointNormalMixture(ExponentialFamily):
     def subordinator(self) -> ExponentialFamily:
         """Return the fitted subordinator distribution."""
 
-    @abc.abstractmethod
-    def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        """
-        Log partition of the subordinator given effective (p, a, b) parameters.
-        For Gamma: p_eff=α, a_eff=β, b_eff=0 (ignored).
-        For InverseGamma: p_eff=-α, a_eff=0 (ignored), b_eff=β.
-        For InverseGaussian: uses μ_ig, λ_ig.
-        For GIG: uses all three.
-        """
-
     # ------------------------------------------------------------------
     # Derived from subclass
     # ------------------------------------------------------------------

@@ -47,13 +47,6 @@ class JointNormalInverseGamma(JointNormalMixture):
         from normix.distributions.inverse_gamma import InverseGamma
         return InverseGamma(alpha=self.alpha, beta=self.beta)
 
-    def _subordinator_log_partition(self, p_eff, a_eff, b_eff) -> jax.Array:
-        from normix.distributions.inverse_gamma import InverseGamma
-        alpha_ig = -p_eff
-        beta_ig = b_eff / 2.0
-        theta = jnp.array([-beta_ig, -(alpha_ig + 1.0)])
-        return InverseGamma._log_partition_from_theta(theta)
-
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
