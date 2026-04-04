@@ -30,7 +30,6 @@ import numpy as np
 
 from normix.utils.constants import TINY, LOG_EPS, BESSEL_SMALLZ_THRESHOLD
 
-jax.config.update("jax_enable_x64", True)
 
 _N_QUAD = 64
 _GL_NODES_NP, _GL_WEIGHTS_NP = np.polynomial.legendre.leggauss(_N_QUAD)
@@ -246,23 +245,54 @@ def _log_kv_cpu(v, z):
 # Public API — unified dispatcher with backend selection
 # ---------------------------------------------------------------------------
 
-def log_kv(v, z, backend: str = 'jax'):
-    """
-    log K_v(z) — log modified Bessel function of the second kind.
+def log_kv(v, z, backend: str = 'jax') -> jax.Array:
+    r"""
+    :math:`\log K_v(z)` — log modified Bessel function of the second kind.
 
     Parameters
     ----------
-    v : scalar or array — order (any real; K_v = K_{-v})
-    z : scalar or array — argument (must be > 0)
-    backend : 'jax' (default) or 'cpu'
-        'jax' : pure-JAX, lax.cond regime selection, custom JVP.
-                JIT-able, differentiable. Default for log_prob, pdf, etc.
-        'cpu' : scipy.special.kve, fully vectorized numpy.
-                Not JIT-able. Fast for EM hot path.
+    v : scalar or array
+        Order (any real; :math:`K_v = K_{-v}`).
+    z : scalar or array
+        Argument (must be > 0).
+    backend : str, optional
+        ``'jax'`` (default) or ``'cpu'``.
+
+        - ``'jax'``: pure-JAX, ``lax.cond`` regime selection, custom JVP.
+          JIT-able, differentiable. Default for ``log_prob``, ``pdf``, etc.
+        - ``'cpu'``: ``scipy.special.kve``, fully vectorised NumPy.
+          Not JIT-able. Fast for EM hot path.
 
     Returns
     -------
-    scalar or array of same broadcast shape as (v, z).
+    jax.Array
+        Same broadcast shape as ``(v, z)``.
+
+    Examples
+    --------
+    Evaluate at a single point (JAX backend, JIT-able):
+
+    >>> import jax.numpy as jnp
+    >>> from normix import log_kv
+    >>> float(log_kv(v=0.5, z=1.0))        # doctest: +ELLIPSIS
+    -0.112...
+
+    CPU backend (uses scipy, faster for EM hot-paths):
+
+    >>> float(log_kv(v=0.5, z=1.0, backend='cpu'))  # doctest: +ELLIPSIS
+    -0.112...
+
+    Symmetry :math:`K_v(z) = K_{-v}(z)`:
+
+    >>> abs(float(log_kv(0.5, 2.0)) - float(log_kv(-0.5, 2.0))) < 1e-10
+    True
+
+    Differentiable via JAX:
+
+    >>> import jax
+    >>> dlogkv_dz = jax.grad(lambda z: log_kv(0.5, z))(jnp.array(1.0))
+    >>> float(dlogkv_dz) < 0   # K_v decreases with z
+    True
     """
     if backend == 'cpu':
         return _log_kv_cpu(v, z)

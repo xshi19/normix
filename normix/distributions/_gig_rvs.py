@@ -22,7 +22,6 @@ import numpy as np
 
 from normix.utils.rvs import build_pinv_table, rvs_pinv
 
-jax.config.update("jax_enable_x64", True)
 
 _TINY64 = jnp.finfo(jnp.float64).tiny
 

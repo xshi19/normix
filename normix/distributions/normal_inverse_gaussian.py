@@ -10,7 +10,7 @@ Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\S
 """
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -19,7 +19,6 @@ from normix.exponential_family import ExponentialFamily
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
 
-jax.config.update("jax_enable_x64", True)
 
 from normix.utils.constants import LOG_EPS
 
@@ -189,14 +188,14 @@ class NormalInverseGaussian(NormalMixture):
         )
         return log_f
 
-    def _subordinator_expectations(self):
+    def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         gig = GIG(p=jnp.float64(-0.5), a=j.lam / j.mu_ig**2, b=j.lam)
         eta = gig.expectation_params()
         return eta[0], eta[1], eta[2]
 
-    def m_step_subordinator(self, eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs) -> "NormalInverseGaussian":
         from normix.distributions.inverse_gaussian import InverseGaussian
         j = self._joint
         ig_new = InverseGaussian.from_expectation(
@@ -207,7 +206,7 @@ class NormalInverseGaussian(NormalMixture):
         )
         return NormalInverseGaussian(joint_new)
 
-    def _build_rescaled(self, mu, gamma_new, L_new, scale):
+    def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "NormalInverseGaussian":
         j = self._joint
         joint_new = JointNormalInverseGaussian(
             mu=mu, gamma=gamma_new, L_Sigma=L_new,

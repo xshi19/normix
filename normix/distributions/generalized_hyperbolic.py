@@ -25,7 +25,7 @@ b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 """
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import equinox as eqx
 import jax
@@ -36,7 +36,6 @@ from normix.exponential_family import ExponentialFamily
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
 
-jax.config.update("jax_enable_x64", True)
 
 from normix.utils.constants import LOG_EPS, GIG_CLAMP_LO, GIG_CLAMP_HI, GIG_P_MAX
 
@@ -261,12 +260,12 @@ class GeneralizedHyperbolic(NormalMixture):
     # M-step subordinator (GIG requires backend/method/maxiter)
     # ------------------------------------------------------------------
 
-    def _subordinator_expectations(self):
+    def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
         j = self._joint
         eta = j.subordinator().expectation_params()
         return eta[0], eta[1], eta[2]
 
-    def m_step_subordinator(self, eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
@@ -314,7 +313,7 @@ class GeneralizedHyperbolic(NormalMixture):
         )
         return GeneralizedHyperbolic(joint_new)
 
-    def _build_rescaled(self, mu, gamma_new, L_new, scale):
+    def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "GeneralizedHyperbolic":
         j = self._joint
         a_new = jnp.clip(j.a / scale, GIG_CLAMP_LO, GIG_CLAMP_HI)
         b_new = jnp.clip(j.b * scale, GIG_CLAMP_LO, GIG_CLAMP_HI)

@@ -11,7 +11,7 @@ Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\S
 """
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -20,7 +20,6 @@ from normix.exponential_family import ExponentialFamily
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
 
-jax.config.update("jax_enable_x64", True)
 
 from normix.utils.constants import LOG_EPS
 
@@ -188,14 +187,14 @@ class VarianceGamma(NormalMixture):
                  + linear)
         return log_f
 
-    def _subordinator_expectations(self):
+    def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
         j = self._joint
         E_log_Y = jax.scipy.special.digamma(j.alpha) - jnp.log(j.beta)
         E_inv_Y = j.beta / (j.alpha - 1.0)
         E_Y = j.alpha / j.beta
         return E_log_Y, E_inv_Y, E_Y
 
-    def m_step_subordinator(self, eta, **kwargs):
+    def m_step_subordinator(self, eta, **kwargs) -> "VarianceGamma":
         from normix.distributions.gamma import Gamma
         j = self._joint
         gamma_dist = Gamma.from_expectation(
@@ -206,7 +205,7 @@ class VarianceGamma(NormalMixture):
         )
         return VarianceGamma(joint_new)
 
-    def _build_rescaled(self, mu, gamma_new, L_new, scale):
+    def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "VarianceGamma":
         j = self._joint
         joint_new = JointVarianceGamma(
             mu=mu, gamma=gamma_new, L_Sigma=L_new,

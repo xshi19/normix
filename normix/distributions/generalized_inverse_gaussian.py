@@ -69,7 +69,6 @@ from normix.fitting.solvers import (
     bregman_objective, solve_bregman, solve_bregman_multistart,
 )
 
-jax.config.update("jax_enable_x64", True)
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):

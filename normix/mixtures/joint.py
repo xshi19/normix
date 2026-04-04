@@ -79,7 +79,6 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 
-jax.config.update("jax_enable_x64", True)
 
 from normix.utils.constants import LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
 
@@ -215,7 +214,7 @@ class JointNormalMixture(ExponentialFamily):
     # Helper: solve Cholesky-based quantities
     # ------------------------------------------------------------------
 
-    def _quad_forms(self, x: jax.Array):
+    def _quad_forms(self, x: jax.Array) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""
         Compute :math:`z = L_\Sigma^{-1}(x-\mu)`, :math:`w = L_\Sigma^{-1}\gamma`.
         Returns :math:`z, w, \|z\|^2, \|w\|^2, z^\top w`.
@@ -229,7 +228,7 @@ class JointNormalMixture(ExponentialFamily):
     # Shared natural_params computation
     # ------------------------------------------------------------------
 
-    def _precision_quantities(self):
+    def _precision_quantities(self) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""
         Cholesky-based precision decomposition shared by all Joint subclasses.
 

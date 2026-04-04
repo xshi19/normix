@@ -22,7 +22,6 @@ from scipy.stats import gaussian_kde
 import jax
 import jax.numpy as jnp
 
-jax.config.update("jax_enable_x64", True)
 
 _COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 

@@ -17,22 +17,22 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | D2 | Design | ~~Decide public status of joint distribution classes~~ **Resolved:** public `ExponentialFamily` joints; `log_prob` / `sufficient_statistics` use flat `concat(x,[y])`; `from_natural` on joints still unimplemented (optional follow-up). GIG-based joints use the same `-b/2`, `-a/2` scaling on `1/y`, `y` as standalone GIG. Documented in `docs/design/design.md`. | ✅ | — | 0 | Done. | None | No |
 | D3 | Design | ~~Rationalize `MultivariateNormal` relative to the rest of the package.~~ **Done:** Made full `ExponentialFamily` subclass; added `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`, `from_natural`, `mean`, `cov`, `rvs`; full EF round-trip tests added (Phase 7). | ✅ | High | ~80–150 | Done. | D2. | Yes |
 | D4 | Design | ~~Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings.~~ **Resolved:** jaxopt kept for LBFGS/BFGS (only JAX-native quasi-Newton with reparameterization); `DeprecationWarning` suppressed at import; migration path to optax/optimistix documented in `docs/design/design.md` § jaxopt migration (Phase 7). | ✅ | High | ~100–200 | Done. | None | Yes |
-| C1 | Code style | Public type annotations incomplete: missing return types on `log_kv`, several GH/VG/NIG methods, `NormalMixture.joint`. | P3 | Low | ~30 | **Low** — IDE support, maintainability. | None | No |
-| C2 | Code style | `jax.config.update("jax_enable_x64", True)` repeated across many modules instead of centralized at package init. | P3 | Low | ~20 | **Low** — hygiene; reduces confusion about when x64 is active. | None | No |
+| C1 | Code style | ~~Public type annotations incomplete: missing return types on `log_kv`, several GH/VG/NIG methods, `NormalMixture.joint`.~~ **Fixed:** return types added to `log_kv`, `NormalMixture.joint`, `_subordinator_expectations`, `m_step_subordinator`, `_build_rescaled` (all four mixture families), `_quad_forms`, `_precision_quantities` (Phase 5). | ✅ | Low | ~30 | Done. | None | No |
+| C2 | Code style | ~~`jax.config.update("jax_enable_x64", True)` repeated across many modules.~~ **Fixed:** removed from all 19 submodules; `normix/__init__.py` is now the single entry point (Phase 5). | ✅ | Low | ~20 | Done. | None | No |
 | C3 | Code style | ~~Dead / drifted code pockets: unused `_subordinator_log_partition` implementations, stale compatibility leftovers.~~ **Fixed:** all four `_subordinator_log_partition` implementations and the abstract declaration removed (Phase 4). | ✅ | Low–Med | ~30–60 | Done. | D2. | No |
-| C4 | Code style | GH `default_init` is heavy and exception-swallowing; trades robustness for opacity. | P3 | Medium | ~30 | **Low** — user-facing robustness, but works in practice. | None | No |
+| C4 | Code style | ~~GH `default_init` is heavy and exception-swallowing.~~ **Fixed:** `default_init` was rewritten as fully JAX-native with no `try/except` and no Python branching on data values; uses `jnp.where` for safe candidate selection (resolved during earlier refactor, confirmed Phase 5). | ✅ | Medium | ~30 | Done. | None | No |
 | T1 | Testing | ~~Nearly half the test suite (246/506) is skipped — tests target old API.~~ **Fixed:** all 246 skipped tests rewritten for current API; suite: 598 passed, 0 skipped (Phase 3). | ✅ | High | ~300–500 | Done. | None | Yes |
 | T2 | Testing | ~~Add mathematical invariants test layer: ∇ψ = η, Hessian SPD, density vs. SciPy.~~ **Done:** invariants added to `test_exponential_family.py` and `test_distributions_vs_scipy.py`; covers Gamma, InverseGamma, InverseGaussian, GIG (Phase 3). | ✅ | Medium | ~100–150 | Done. | None | No |
 | T3 | Testing | ~~Add exponential-family round-trip tests for joint distribution classes.~~ **Done:** `TestJointExponentialFamilyRoundTrip` covers all four joints in `test_jax_distributions.py` (Phase 4). | ✅ | Medium | ~60–100 | Done. | D2. | No |
 | T4 | Testing | ~~Add extreme-parameter tests for all functions using exponentials outside log-space.~~ **Done:** `test_extreme_parameters.py` covers large/small shape, near-boundary, overflow/underflow (Phase 3). | ✅ | Medium | ~50–80 | Done. | B1. | No |
 | T5 | Testing | ~~Add tests for `OnlineEMFitter`/`MiniBatchEMFitter`.~~ **Done:** `test_incremental_em.py` (29 tests). | ✅ | Medium | ~350 | Done. | B2. | No |
-| T6 | Testing | Add more property-based and edge-case tests for GIG. | P3 | Medium | ~60–80 | **Medium** — GIG is the most numerically critical module. | None | No |
+| T6 | Testing | ~~Add more property-based and edge-case tests for GIG.~~ **Done:** `test_gig_properties.py` covers K_v symmetry, log_prob finiteness, EF contract (∇ψ=η, Hessian SPD), natural round-trip, Cauchy-Schwarz moments, rvs positivity, extreme-parameter edge cases, and scale invariance across 11-parameter grid (Phase 5). | ✅ | Medium | ~60–80 | Done. | None | No |
 | DOC1 | Docs | ~~Fix broken `README.md` examples~~ **Fixed:** imports, EM kwargs, layout (`e8db92a`). | ✅ | Low | ~30 | Done. | None | No |
 | DOC2 | Docs | ~~Fix `normix/__init__.py` docstring~~ **Fixed:** `default_init` + instance `model.fit(X)` pattern (`e8db92a`). | ✅ | Low | ~10 | Done. | None | No |
 | DOC3 | Docs | ~~Update `docs/theory/em_algorithm.rst` — still references old methods.~~ **Fixed:** "Implementation in normix" section rewritten to current `e_step`/`m_step`/`conditional_expectations`/`solve_bregman` API (Phase 4). | ✅ | Medium | ~30–50 | Done. | None | No |
 | DOC4 | Docs | ~~Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks.~~ **Done:** `.github/workflows/ci.yml` runs tests, README code-block extraction, and module docstring smoke check (Phase 6). | ✅ | Medium | ~50–80 | Done. | DOC1, DOC2. | Yes |
 | DOC5 | Docs | ~~Mark historical design notes and investigations as historical.~~ **Done:** `solver_redesign.md` status updated from "Proposal (v2)" to "Implemented" (Phase 4). | ✅ | Low | ~20 | Done. | None | No |
-| DOC6 | Docs | Add executable documentation examples for `log_kv`. | P3 | Low | ~15 | **Low** — improves onboarding for the most central utility. | None | No |
+| DOC6 | Docs | ~~Add executable documentation examples for `log_kv`.~~ **Done:** docstring in `normix/utils/bessel.py` now has four executable `doctest` examples: single-point evaluation (JAX and CPU backends), K_v symmetry check, and differentiability via `jax.grad` (Phase 5). | ✅ | Low | ~15 | Done. | None | No |
 | PKG1 | Packaging | ~~`jax[cuda12]` is a hard runtime dependency.~~ **Fixed:** base install uses `jax>=0.4.38` (CPU-neutral); CUDA available via `pip install normix[cuda12]` (Phase 6). | ✅ | Low | ~10 | Done. | None | No |
 | PKG2 | Packaging | ~~`matplotlib` is in core dependencies but only used in notebooks/plotting.~~ **Fixed:** moved to `[plotting]` optional extra; `normix/utils/plotting.py` gives a clear `ImportError` with install instructions (Phase 6). | ✅ | Low | ~10 | Done. | None | No |
 
@@ -45,7 +45,7 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | P3       | 1    | 2      | 3          | 1       | 2    | —         | **9**     |
 | **Total** | **5** | **4** | **4**     | **6**   | **6** | **2**   | **27**    |
 
-**Resolved as of Phase 7:** B1–B5, D1–D4, C3, T1–T5, DOC1–DOC5, PKG1, PKG2 (25/27). Remaining open: C1, C2, C4, T6, DOC6 (all P3 / Phase 5 code hygiene).
+**All 27 items resolved** across Phases 1–7 and Phase 5 & 6.
 
 ---
 
@@ -146,20 +146,21 @@ covers T4 extreme-parameter regimes across all distributions.
 
 ---
 
-### Phase 5 — Code Hygiene
+### Phase 5 — Code Hygiene ✅ DONE
 
 **Goal:** Polish code style and centralize configuration.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **C1** | Add missing return type annotations on all public methods. | ~30 |
-| **C2** | Centralize `jax_enable_x64` to a single entry point. | ~20 |
-| **C4** | Improve GH `default_init` error handling transparency. | ~30 |
-| **T6** | Add GIG property-based and edge-case tests. | ~60–80 |
-| **DOC6** | Add executable examples for `log_kv`. | ~15 |
+**Completed.**
 
-**Total estimated LOC:** ~155–175
-**Exit criteria:** `rg "jax_enable_x64"` returns exactly one hit (in `__init__.py`); all public methods have return annotations; GIG edge-case test suite passes.
+| Item | Description | Status |
+|------|-------------|--------|
+| **C1** | Return types added to `log_kv`, `NormalMixture.joint`, `_subordinator_expectations` / `m_step_subordinator` / `_build_rescaled` (all four mixture families), `_quad_forms`, `_precision_quantities`. | ✅ Done |
+| **C2** | `jax_enable_x64` removed from all 19 submodules; one canonical call in `normix/__init__.py`. `rg "jax_enable_x64" normix/` returns exactly one hit. | ✅ Done |
+| **C4** | `default_init` already rewritten as fully JAX-native with no `try/except` (confirmed and documented). | ✅ Done |
+| **T6** | `tests/test_gig_properties.py`: K_v symmetry, log_prob finiteness, ∇ψ=η, Hessian SPD, natural round-trip, Cauchy-Schwarz, rvs positivity, extreme-parameter edge cases, and scale invariance across 11-parameter grid. | ✅ Done |
+| **DOC6** | `log_kv` docstring gains four executable doctest examples: single-point (JAX and CPU backends), symmetry check, differentiability. | ✅ Done |
+
+**Exit criteria (met):** `rg "jax_enable_x64" normix/` returns exactly one hit; T6 tests pass.
 
 ---
 
@@ -203,7 +204,7 @@ covers T4 extreme-parameter regimes across all distributions.
 | 2 | Fitter repair | ~210–400 | D1 — **✅ DONE** |
 | 3 | Test migration & coverage | ~450–730 | Phase 1 (B1) — **✅ DONE** |
 | 4 | API consistency & dead code | ~150–240 | D2 — **✅ DONE** |
-| 5 | Code hygiene | ~155–175 | — |
+| 5 | Code hygiene | ~155–175 | — — **✅ DONE** |
 | 6 | Packaging & CI | ~70–100 | DOC1, DOC2 — **✅ DONE** |
 | 7 | Long-term | ~180–350 | D2 — **✅ DONE** |
 
@@ -211,5 +212,6 @@ Phases 1, 5, and 6 are independent of the design decisions and can proceed in pa
 Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
 Phase 3 is complete: 0 skipped tests, all EF invariants covered, extreme-parameter tests pass.
 Phase 4 is complete: dead `_subordinator_log_partition` removed, joint EF round-trip tests added, theory docs updated to current API.
+Phase 5 is complete: jax_enable_x64 centralized, return types added, GIG edge-case tests, log_kv examples.
 Phase 6 is complete: CPU-neutral base install, matplotlib in optional extras, CI workflow for tests + doc checks.
 Phase 7 is complete: `MultivariateNormal` is now a full `ExponentialFamily`; jaxopt migration plan documented and warning suppressed.

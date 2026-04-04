@@ -34,7 +34,6 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
 
-jax.config.update("jax_enable_x64", True)
 
 
 class InverseGamma(ExponentialFamily):

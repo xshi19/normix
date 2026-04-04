@@ -18,7 +18,6 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-jax.config.update("jax_enable_x64", True)
 
 from normix.utils.constants import SIGMA_INIT_REG
 
@@ -37,7 +36,7 @@ class NormalMixture(eqx.Module):
         self._joint = joint
 
     @property
-    def joint(self):
+    def joint(self) -> "JointNormalMixture":
         return self._joint
 
     @property
