@@ -17,6 +17,10 @@ jax.config.update("jax_enable_x64", True)
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
     GeneralizedHyperbolic,
+    JointGeneralizedHyperbolic,
+    JointNormalInverseGamma,
+    JointNormalInverseGaussian,
+    JointVarianceGamma,
 )
 
 
@@ -367,3 +371,55 @@ class TestGeneralizedHyperbolic:
             ll = float(model.marginal_log_likelihood(X))
             assert ll >= ll_prev - 1e-4, f"LL decreased: {ll_prev:.4f} → {ll:.4f}"
             ll_prev = ll
+
+
+# ===========================================================================
+# Joint normal mixtures — exponential-family log_prob vs explicit joint density
+# ===========================================================================
+
+class TestJointExponentialFamilyLogProb:
+    """``log_prob(concat(x,[y]))`` must agree with ``log_prob_joint(x, y)``."""
+
+    def test_joint_variance_gamma(self):
+        mu = jnp.array([0.0, 0.0])
+        gamma = jnp.array([0.1, -0.1])
+        L = jnp.eye(2)
+        j = JointVarianceGamma(mu, gamma, L, alpha=2.0, beta=1.0)
+        x = jnp.array([0.3, -0.2])
+        y = jnp.array(0.8)
+        xy = jnp.concatenate([x, jnp.array([y])])
+        np.testing.assert_allclose(
+            float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)
+
+    def test_joint_generalized_hyperbolic(self):
+        mu = jnp.array([0.0, 0.0])
+        gamma = jnp.array([0.1, -0.1])
+        L = jnp.eye(2)
+        j = JointGeneralizedHyperbolic(mu, gamma, L, p=1.0, a=1.0, b=1.0)
+        x = jnp.array([0.3, -0.2])
+        y = jnp.array(0.8)
+        xy = jnp.concatenate([x, jnp.array([y])])
+        np.testing.assert_allclose(
+            float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)
+
+    def test_joint_normal_inverse_gaussian(self):
+        mu = jnp.array([0.0, 0.0])
+        gamma = jnp.array([0.1, -0.1])
+        L = jnp.eye(2)
+        j = JointNormalInverseGaussian(mu, gamma, L, mu_ig=1.0, lam=2.0)
+        x = jnp.array([0.3, -0.2])
+        y = jnp.array(0.8)
+        xy = jnp.concatenate([x, jnp.array([y])])
+        np.testing.assert_allclose(
+            float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)
+
+    def test_joint_normal_inverse_gamma(self):
+        mu = jnp.array([0.0, 0.0])
+        gamma = jnp.array([0.1, -0.1])
+        L = jnp.eye(2)
+        j = JointNormalInverseGamma(mu, gamma, L, alpha=3.0, beta=1.5)
+        x = jnp.array([0.3, -0.2])
+        y = jnp.array(0.8)
+        xy = jnp.concatenate([x, jnp.array([y])])
+        np.testing.assert_allclose(
+            float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)

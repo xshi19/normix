@@ -146,6 +146,16 @@ The `JointNormalMixture` provides:
 
 Each concrete joint implements `_compute_posterior_expectations(x)` which computes posterior GIG parameters and returns expectations.
 
+### Joint classes as public exponential families (D2)
+
+**Decision:** `JointVarianceGamma`, `JointNormalInverseGamma`, `JointNormalInverseGaussian`, `JointGeneralizedHyperbolic`, and the abstract `JointNormalMixture` are **first-class public** `ExponentialFamily` objects: exported from `normix`, documented alongside marginals, and intended for direct use where the joint law :math:`f(x,y)` matters (simulation, complete-data MLE, divergences, custom EM variants).
+
+**Observation vector for Tier-1 methods:** `sufficient_statistics`, `log_base_measure`, and inherited `log_prob` / `pdf` take a **single** flat array `xy = jnp.concatenate([x, y])` with `x` of shape `(d,)` and scalar `y > 0` last. This matches the sufficient-statistic block :math:`[\log y,\,1/y,\,y,\,\ldots]` in `mixtures/joint.py`. For readability, `log_prob_joint(x, y)` and `rvs(n, seed) -> (X, Y)` remain the preferred entry points when you already have :math:`x` and :math:`y` separate.
+
+**Constructors:** Use `from_classical(...)` (and, for analysis, `natural_params()` / `expectation_params()` / the log-partition triad). `from_natural` is **not** implemented on concrete joints (it would require a joint constrained inverse map); `from_expectation` on the full joint is therefore unsupported until such a constructor exists. Marginal `NormalMixture` subclasses continue to drive EM via `e_step` / `m_step` and classical parameters.
+
+**Correctness:** For GIG-based joints, natural parameters :math:`\theta_2,\theta_3` must align with the **GIG** convention :math:`\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]` on :math:`[\log y,\,1/y,\,y]`, i.e. scalar coefficients :math:`-(b/2 + \cdots)` and :math:`-(a/2 + \cdots)` on :math:`1/y` and :math:`y`, not :math:`-b` and :math:`-a`. Gamma and inverse-gamma joints already matched this limit; generalized hyperbolic and NIG joints follow the same pattern.
+
 ---
 
 ## EM Framework: Model/Fitter Separation
@@ -269,6 +279,7 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 | Analytical overrides | Classmethods `_grad_log_partition`, `_hessian_log_partition` | Separates formula from evaluation; override without affecting autodiff |
 | Unbatched core | `log_prob(x)` for single obs | Clean; batch via `jax.vmap` at call site |
 | Mixture design | Joint + Marginal classes | Joint IS an exponential family; marginal is not |
+| Joint public API (D2) | Public `ExponentialFamily` exports | Joints are first-class; `log_prob` uses flat `concat(x,[y])`; `from_natural` on joints unimplemented by design until a robust inverse exists |
 | EM separation | Model + Fitter (GMMX-style) | Swap fitter without changing distribution |
 | EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace; `result.model` is the fitted pytree |
 | Batch EM convergence | Relative change in μ, γ, L (not GIG) | Stable criterion; GIG η→θ has its own solver tolerance |

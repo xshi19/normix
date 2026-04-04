@@ -8,13 +8,13 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 
 | ID | Type | Issue / Recommendation | Priority | Difficulty | Est. LOC | Impact | Prerequisites | Multi-phase |
 |----|------|------------------------|----------|------------|----------|--------|---------------|-------------|
-| B1 | Bug | `InverseGaussian.cdf` returns NaN in high-shape regimes (`lam/mu` large). Rewrite second term in log-space using `log_ndtr`. | P1 | Medium | ~30 | **High** — correctness bug in a public method; affects scientific users in concentrated regimes. | None | No |
+| B1 | Bug | ~~`InverseGaussian.cdf` returns NaN in high-shape regimes (`lam/mu` large).~~ **Fixed:** log-space second term via `log_ndtr`; moderate + extreme CDF tests vs SciPy (`02d2a8e`, `0c9f5c5`). | ✅ | Medium | ~30 | Done. | None | No |
 | B2 | Bug | ~~`OnlineEMFitter`/`MiniBatchEMFitter` algorithmically mis-specified.~~ **Fixed:** replaced by `IncrementalEMFitter` with correct Robbins-Monro, EWMA, etc. | ✅ | High | ~450 | Done. | D1. | Yes |
-| B3 | Bug | `BatchEMFitter._fit_scan` double-counts the terminating iteration in `n_iter`. | P2 | Low | ~15 | **Medium** — convergence diagnostics are inaccurate; scan vs. loop paths report different counts. | None | No |
+| B3 | Bug | ~~`BatchEMFitter._fit_scan` double-counts the terminating iteration in `n_iter`.~~ **Fixed:** explicit iteration counter in scan carry (`02d2a8e`). | ✅ | Low | ~15 | Done. | None | No |
 | B4 | Bug | `JointNormalInverseGamma._subordinator_log_partition` passes wrong sign convention, returns NaN. | P2 | Low | ~10 | **Low** — currently dead code, but a maintenance hazard. Fix or delete. | None | No |
-| B5 | Bug | `InverseGaussian` module docstring has wrong sign for the log-partition formula. Code is correct. | P3 | Trivial | ~2 | **Low** — misleads readers; no runtime effect. | None | No |
+| B5 | Bug | ~~`InverseGaussian` module docstring has wrong sign for the log-partition formula.~~ **Fixed:** corrected ψ sign (`02d2a8e`). | ✅ | Trivial | ~2 | Done. | None | No |
 | D1 | Design | ~~Decide the fate of `OnlineEMFitter` / `MiniBatchEMFitter`.~~ **Resolved:** replaced by `IncrementalEMFitter` + `EtaUpdateRule`. | ✅ | — | 0 | Done. | None | No |
-| D2 | Design | Decide public status of joint distribution classes: full public exponential-family objects (finish `from_natural` etc.) or internal helpers (document as such). | P2 | — | 0 | **High** — blocks multiple downstream tasks (T3, C3). | None | No |
+| D2 | Design | ~~Decide public status of joint distribution classes~~ **Resolved:** public `ExponentialFamily` joints; `log_prob` / `sufficient_statistics` use flat `concat(x,[y])`; `from_natural` on joints still unimplemented (optional follow-up). GIG-based joints use the same `-b/2`, `-a/2` scaling on `1/y`, `y` as standalone GIG. Documented in `docs/design/design.md`. | ✅ | — | 0 | Done. | None | No |
 | D3 | Design | Rationalize `MultivariateNormal` relative to the rest of the package: add `rvs`, `mean`/`cov`, make it `ExponentialFamily`, or document as a lightweight helper. | P3 | High | ~80–150 | **Medium** — API inconsistency; users see it as a peer but it lacks standard methods. | D2 (public API boundary decision). | Yes |
 | D4 | Design | Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings. Plan migration path. | P3 | High | ~100–200 | **Medium** — long-term dependency risk; not an immediate blocker. | None | Yes |
 | C1 | Code style | Public type annotations incomplete: missing return types on `log_kv`, several GH/VG/NIG methods, `NormalMixture.joint`. | P3 | Low | ~30 | **Low** — IDE support, maintainability. | None | No |
@@ -27,8 +27,8 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | T4 | Testing | Add extreme-parameter tests for all functions using exponentials outside log-space. | P2 | Medium | ~50–80 | **Medium** — catches overflow/underflow in production regimes. | B1 (IG CDF fix first). | No |
 | T5 | Testing | ~~Add tests for `OnlineEMFitter`/`MiniBatchEMFitter`.~~ **Done:** `test_incremental_em.py` (29 tests). | ✅ | Medium | ~350 | Done. | B2. | No |
 | T6 | Testing | Add more property-based and edge-case tests for GIG. | P3 | Medium | ~60–80 | **Medium** — GIG is the most numerically critical module. | None | No |
-| DOC1 | Docs | Fix broken `README.md` examples: missing imports, wrong method names (`m_step_solver` → `m_step_backend`/`m_step_method`), `fit` called as classmethod. | P1 | Low | ~30 | **High** — first-use experience is currently broken. | None | No |
-| DOC2 | Docs | Fix `normix/__init__.py` docstring: `GeneralizedHyperbolic.fit(X, key=key, ...)` is shown as a classmethod but `fit` is an instance method. | P1 | Low | ~10 | **High** — package-level docstring is wrong. | None | No |
+| DOC1 | Docs | ~~Fix broken `README.md` examples~~ **Fixed:** imports, EM kwargs, layout (`e8db92a`). | ✅ | Low | ~30 | Done. | None | No |
+| DOC2 | Docs | ~~Fix `normix/__init__.py` docstring~~ **Fixed:** `default_init` + instance `model.fit(X)` pattern (`e8db92a`). | ✅ | Low | ~10 | Done. | None | No |
 | DOC3 | Docs | Update `docs/theory/em_algorithm.rst` — still references old methods (`joint.set_expectation_params`, `_expectation_to_natural`). | P2 | Medium | ~30–50 | **Medium** — theory docs no longer describe current code. | None | No |
 | DOC4 | Docs | Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks. | P2 | Medium | ~50–80 | **Medium** — prevents future documentation drift. | DOC1, DOC2 (examples must be correct first). | Yes |
 | DOC5 | Docs | Mark historical design notes and investigations as historical if they no longer describe current API. | P3 | Low | ~20 | **Low** — reduces confusion about which docs are current. | None | No |
@@ -62,33 +62,34 @@ All other items are independent.
 
 ---
 
-### Phase 0 — Design Decisions (no code changes)
+### Phase 0 — Design Decisions
 
 **Goal:** Make the two blocking architectural decisions so downstream work can proceed.
 
 | Item | Action | Status |
 |------|--------|--------|
 | **D1** | Decide: implement real stochastic EM, or deprecate `OnlineEMFitter`/`MiniBatchEMFitter`. | ✅ Replaced by `IncrementalEMFitter` + `EtaUpdateRule` |
-| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. | Open |
+| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. | ✅ Public `ExponentialFamily`; see `docs/design/design.md` § Joint classes as public exponential families (D2). |
 
-**Exit criteria:** Each decision documented in `docs/design/design.md` with rationale.
+**Exit criteria:** Each decision documented in `docs/design/design.md` with rationale. (D1, D2 satisfied.)
 
 ---
 
-### Phase 1 — Critical Bugs & Broken Docs
+### Phase 1 — Critical Bugs & Broken Docs ✅ DONE
 
 **Goal:** Fix all P1 correctness bugs and restore a working first-use experience.
 
-| Item | Description | Est. LOC |
-|------|-------------|----------|
-| **B1** | Rewrite `InverseGaussian.cdf` in log-space (`log_ndtr`). Add extreme-regime tests. | ~30 |
-| **B5** | Fix IG docstring sign error. | ~2 |
-| **DOC1** | Fix all `README.md` examples: add imports, fix method names. | ~30 |
-| **DOC2** | Fix `normix/__init__.py` docstring (instance method, not classmethod). | ~10 |
-| **B3** | Fix `_fit_scan` iteration accounting (store explicit stop index in scan carry). | ~15 |
+**Completed.** Code and tests: `02d2a8e` (IG CDF log-space rewrite, IG docstring, `_fit_scan` `n_iter`) and `0c9f5c5` (IG CDF moderate + extreme tests vs SciPy). README and package docstring: `e8db92a`.
 
-**Total estimated LOC:** ~90
-**Exit criteria:** `InverseGaussian(mu=1.0, lam=1000.0).cdf(1.0)` returns correct value; all README snippets are copy-paste runnable; scan path reports correct `n_iter`.
+| Item | Description | Status |
+|------|-------------|--------|
+| **B1** | `InverseGaussian.cdf` via `log_ndtr`; moderate + extreme tests. | ✅ Done |
+| **B5** | IG module docstring ψ sign. | ✅ Done |
+| **B3** | `_fit_scan` iteration counter in scan carry (correct `n_iter`). | ✅ Done |
+| **DOC1** | `README.md` examples runnable. | ✅ Done |
+| **DOC2** | `normix/__init__.py` quick-start docstring. | ✅ Done |
+
+**Exit criteria (met):** `InverseGaussian(mu=1.0, lam=1000.0).cdf(1.0)` is correct; README snippets copy-paste; scan path reports correct `n_iter`.
 
 ---
 
@@ -122,7 +123,7 @@ All other items are independent.
 
 ---
 
-### Phase 4 — API Consistency & Dead Code (depends on D2)
+### Phase 4 — API Consistency & Dead Code (D2 resolved)
 
 **Goal:** Align the exponential-family contract, clean dead code, tighten the public surface.
 
@@ -130,7 +131,7 @@ All other items are independent.
 |------|-------------|----------|
 | **B4** | Fix or delete `JointNormalInverseGamma._subordinator_log_partition`. | ~10 |
 | **C3** | Remove dead/drifted code identified during D2 decision. | ~30–60 |
-| **T3** | Add round-trip tests for joint classes (if D2 = public). | ~60–100 |
+| **T3** | Add round-trip tests for joint classes (`from_natural` / `from_expectation` if implemented); partial: `test_jax_distributions` checks `log_prob` vs `log_prob_joint` for all four joints. | ~60–100 |
 | **DOC3** | Update `docs/theory/em_algorithm.rst` to current method names. | ~30–50 |
 | **DOC5** | Mark historical design notes as historical. | ~20 |
 
@@ -196,5 +197,5 @@ These are larger architectural efforts that can be tackled opportunistically or 
 | 7 | Long-term | ~180–350 | D2 |
 
 Phases 1, 5, and 6 are independent of the design decisions and can proceed in parallel.
-Phases 2 and 4 are blocked until D1 and D2 are resolved respectively.
+Phase 4 (API consistency) was blocked on D2; D2 is resolved. Phase 2 was blocked on D1; D1 is resolved.
 Phase 3 benefits from Phase 1 fixes but can start in parallel for the test migration (T1) work.

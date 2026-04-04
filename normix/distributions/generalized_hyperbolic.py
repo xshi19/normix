@@ -118,15 +118,19 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
     def natural_params(self) -> jax.Array:
         r"""
-        :math:`\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
-        -(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
+        :math:`\theta = [p-1-d/2,\; -(b/2+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
+        -(a/2+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
         \Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`
+
+        The scalar coefficients on sufficient statistics :math:`1/y` and :math:`y`
+        match the GIG convention :math:`\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]`
+        on :math:`t_Y = [\log y,\,1/y,\,y]`.
         """
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
         return self._assemble_natural_params(
             self.p - 1.0 - self.d / 2.0,
-            -(self.b + mu_quad),
-            -(self.a + gamma_quad),
+            -(self.b / 2.0 + mu_quad),
+            -(self.a / 2.0 + gamma_quad),
         )
 
     @staticmethod
@@ -144,8 +148,8 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
          mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
         p = theta_1 + 1.0 + d / 2.0
-        b = -theta_2 - mu_quad
-        a = -theta_3 - gamma_quad
+        b = 2.0 * (-theta_2 - mu_quad)
+        a = 2.0 * (-theta_3 - gamma_quad)
 
         gig_theta = jnp.array([p - 1.0, -b / 2.0, -a / 2.0])
         psi_gig = GIG._log_partition_from_theta(gig_theta)

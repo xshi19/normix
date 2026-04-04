@@ -96,18 +96,19 @@ class JointNormalInverseGaussian(JointNormalMixture):
 
     def natural_params(self) -> jax.Array:
         r"""
-        :math:`\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
-        -(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+        :math:`\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+        -(\lambda/(2\mu_{IG}^2)+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
         \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`
 
-        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`.
+        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`, aligned
+        with GIG natural parameters on :math:`[\log y,\,1/y,\,y]`.
         """
         a_ig = self.lam / (self.mu_ig ** 2)
         _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
         return self._assemble_natural_params(
             -1.5 - self.d / 2.0,
-            -(self.lam + mu_quad),
-            -(a_ig + gamma_quad),
+            -(self.lam / 2.0 + mu_quad),
+            -(a_ig / 2.0 + gamma_quad),
         )
 
     @staticmethod
@@ -120,8 +121,8 @@ class JointNormalInverseGaussian(JointNormalMixture):
         (d, _, theta_2, theta_3, *_, log_det_Sigma, _, _,
          mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
 
-        b = -theta_2 - mu_quad
-        a = -theta_3 - gamma_quad
+        b = 2.0 * (-theta_2 - mu_quad)
+        a = 2.0 * (-theta_3 - gamma_quad)
 
         p = -0.5
         sqrt_ab = jnp.sqrt(a * b)

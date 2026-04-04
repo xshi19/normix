@@ -19,14 +19,19 @@ Joint distribution :math:`f(x, y)`:
 .. math::
 
     \\theta_1 = p_{\\mathrm{sub}} - 1 - d/2, \\quad
-    \\theta_2 = -(b_{\\mathrm{sub}} + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) < 0
+    \\theta_2 = -(b_{\\mathrm{sub}}/2 + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) < 0
 
 .. math::
 
-    \\theta_3 = -(a_{\\mathrm{sub}} + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) < 0, \\quad
+    \\theta_3 = -(a_{\\mathrm{sub}}/2 + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) < 0, \\quad
     \\theta_4 = \\Sigma^{-1}\\gamma, \\quad
     \\theta_5 = \\Sigma^{-1}\\mu, \\quad
     \\theta_6 = -\\tfrac{1}{2}\\mathrm{vec}(\\Sigma^{-1})
+
+For a GIG subordinator, :math:`\\theta_2,\\theta_3` combine :math:`-b/2,-a/2` with the
+normal quadratic forms so that :math:`\\theta^{\\top} t` matches
+:math:`-(a y + b/y)/2` from :math:`f_Y` plus the :math:`y`-dependent terms from
+:math:`f_{X\\mid Y}`.
 
 **Log-partition:**
 
