@@ -1,15 +1,16 @@
 """
-EM algorithm regression tests with fixed seeds.
+EM algorithm regression tests (current API).
 
-These tests were written against an older normix API (from_classical_params,
-VarianceGamma().fit(), classical_params, _fitted). They are kept for reference
-but skipped until updated to the current API.
+Verify that EM fitting produces valid, finite results with reasonable
+log-likelihoods for all mixture distribution families.
 """
-import pytest
-pytestmark = pytest.mark.skip(reason="Legacy tests using old normix API; needs rewrite")
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pytest
+
+jax.config.update("jax_enable_x64", True)
 
 from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
@@ -18,255 +19,130 @@ from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 
 
 class TestVGEMRegression:
-    """Regression test for Variance Gamma EM fitting."""
 
-    def test_vg_em_1d_regression(self):
-        """VG 1D EM should reproduce fixed parameter estimates."""
-        true_dist = VarianceGamma.from_classical_params(
-            mu=np.array([0.5]),
-            gamma=np.array([0.3]),
-            sigma=np.array([[1.0]]),
-            shape=2.0,
-            rate=1.0
+    def test_vg_em_1d(self):
+        true = VarianceGamma.from_classical(
+            mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
+            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
         )
-        X = true_dist.rvs(size=2000, random_state=42)
+        X = true.rvs(2000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        np.testing.assert_allclose(
+            np.array(fitted.mean()), np.array(true.mean()), atol=0.3)
+        assert result.n_iter <= 50
 
-        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        # Verify fitted state
-        assert fitted._fitted is True
-        assert fitted._joint._fitted is True
-
-        # Check parameters match to 4 decimal places
-        np.testing.assert_allclose(params['mu'], [0.5], atol=0.3)
-        np.testing.assert_allclose(params['gamma'], [0.3], atol=0.3)
-        assert params['shape'] > 0.5
-        assert params['rate'] > 0.1
-        assert fitted.n_iter_ <= 50
-
-    def test_vg_em_2d_regression(self):
-        """VG 2D EM should produce valid fitted distribution."""
-        true_dist = VarianceGamma.from_classical_params(
-            mu=np.array([0.0, 1.0]),
-            gamma=np.array([0.2, -0.3]),
-            sigma=np.array([[1.0, 0.3], [0.3, 1.0]]),
-            shape=3.0,
-            rate=2.0
+    def test_vg_em_2d(self):
+        true = VarianceGamma.from_classical(
+            mu=jnp.array([0.0, 1.0]),
+            gamma=jnp.array([0.2, -0.3]),
+            sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
+            alpha=3.0, beta=2.0,
         )
-        X = true_dist.rvs(size=3000, random_state=42)
-
-        fitted = VarianceGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert params['mu'].shape == (2,)
-        assert params['gamma'].shape == (2,)
-        assert params['sigma'].shape == (2, 2)
-        # Sigma should be symmetric positive definite
-        eigvals = np.linalg.eigvalsh(params['sigma'])
-        assert np.all(eigvals > 0)
+        X = true.rvs(3000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        L = np.array(fitted._joint.L_Sigma)
+        Sigma = L @ L.T
+        eigvals = np.linalg.eigvalsh(Sigma)
+        assert np.all(eigvals > 0), "Sigma not PD"
 
 
 class TestNInvGEMRegression:
-    """Regression test for Normal Inverse Gamma EM fitting."""
 
-    def test_ninvg_em_1d_regression(self):
-        """NInvG 1D EM should reproduce fixed parameter estimates."""
-        true_dist = NormalInverseGamma.from_classical_params(
-            mu=np.array([0.0]),
-            gamma=np.array([0.5]),
-            sigma=np.array([[1.0]]),
-            shape=3.0,
-            rate=1.0
+    def test_ninvg_em_1d(self):
+        true = NormalInverseGamma.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.5]),
+            sigma=jnp.array([[1.0]]), alpha=3.0, beta=1.0,
         )
-        X = true_dist.rvs(size=2000, random_state=42)
+        X = true.rvs(2000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        assert float(fitted._joint.alpha) > 1.0
+        assert result.n_iter <= 50
 
-        fitted = NormalInverseGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert fitted._joint._fitted is True
-        assert params['shape'] > 1.5  # Need α > 1 for finite mean
-        assert params['rate'] > 0.1
-        assert fitted.n_iter_ <= 50
-
-    def test_ninvg_em_2d_regression(self):
-        """NInvG 2D EM should produce valid fitted distribution."""
-        true_dist = NormalInverseGamma.from_classical_params(
-            mu=np.array([0.0, 0.5]),
-            gamma=np.array([0.3, -0.2]),
-            sigma=np.array([[1.0, 0.2], [0.2, 1.0]]),
-            shape=4.0,
-            rate=2.0
+    def test_ninvg_em_2d(self):
+        true = NormalInverseGamma.from_classical(
+            mu=jnp.array([0.0, 0.5]),
+            gamma=jnp.array([0.3, -0.2]),
+            sigma=jnp.array([[1.0, 0.2], [0.2, 1.0]]),
+            alpha=4.0, beta=2.0,
         )
-        X = true_dist.rvs(size=3000, random_state=42)
-
-        fitted = NormalInverseGamma().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert params['sigma'].shape == (2, 2)
-        eigvals = np.linalg.eigvalsh(params['sigma'])
+        X = true.rvs(3000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        L = np.array(fitted._joint.L_Sigma)
+        Sigma = L @ L.T
+        eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
 
 
 class TestNIGEMRegression:
-    """Regression test for Normal Inverse Gaussian EM fitting."""
 
-    def test_nig_em_1d_regression(self):
-        """NIG 1D EM should reproduce fixed parameter estimates."""
-        true_dist = NormalInverseGaussian.from_classical_params(
-            mu=np.array([0.0]),
-            gamma=np.array([0.5]),
-            sigma=np.array([[1.0]]),
-            delta=1.0,
-            eta=1.0
+    def test_nig_em_1d(self):
+        true = NormalInverseGaussian.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.5]),
+            sigma=jnp.array([[1.0]]), mu_ig=1.0, lam=1.0,
         )
-        X = true_dist.rvs(size=2000, random_state=42)
+        X = true.rvs(2000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        assert float(fitted._joint.mu_ig) > 0
+        assert float(fitted._joint.lam) > 0
+        assert result.n_iter <= 50
 
-        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert fitted._joint._fitted is True
-        assert params['delta'] > 0
-        assert params['eta'] > 0
-        assert fitted.n_iter_ <= 50
-
-    def test_nig_em_2d_regression(self):
-        """NIG 2D EM should produce valid fitted distribution."""
-        true_dist = NormalInverseGaussian.from_classical_params(
-            mu=np.array([0.0, 0.5]),
-            gamma=np.array([0.3, -0.2]),
-            sigma=np.array([[1.0, 0.2], [0.2, 1.0]]),
-            delta=1.0,
-            eta=2.0
+    def test_nig_em_2d(self):
+        true = NormalInverseGaussian.from_classical(
+            mu=jnp.array([0.0, 0.5]),
+            gamma=jnp.array([0.3, -0.2]),
+            sigma=jnp.array([[1.0, 0.2], [0.2, 1.0]]),
+            mu_ig=1.0, lam=2.0,
         )
-        X = true_dist.rvs(size=3000, random_state=42)
-
-        fitted = NormalInverseGaussian().fit(X, max_iter=50, tol=1e-8, random_state=123)
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert params['sigma'].shape == (2, 2)
-        eigvals = np.linalg.eigvalsh(params['sigma'])
+        X = true.rvs(3000, seed=42)
+        result = true.fit(X, max_iter=50, tol=1e-8, verbose=0,
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        L = np.array(fitted._joint.L_Sigma)
+        Sigma = L @ L.T
+        eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
 
 
 class TestGHEMRegression:
-    """Regression test for Generalized Hyperbolic EM fitting."""
 
-    def test_gh_em_1d_regression(self):
-        """GH 1D EM with det_sigma_one regularization."""
-        true_dist = GeneralizedHyperbolic.from_classical_params(
-            mu=np.array([0.0]),
-            gamma=np.array([0.3]),
-            sigma=np.array([[1.0]]),
-            p=1.0,
-            a=1.0,
-            b=1.0
+    def test_gh_em_1d_det_sigma_one(self):
+        true = GeneralizedHyperbolic.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
+            sigma=jnp.array([[1.0]]), p=1.0, a=1.0, b=1.0,
         )
-        X = true_dist.rvs(size=2000, random_state=42)
+        X = true.rvs(2000, seed=42)
+        result = true.fit(X, max_iter=30, tol=1e-4, verbose=0,
+                          regularization='det_sigma_one',
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        assert float(fitted._joint.a) > 0
+        assert float(fitted._joint.b) > 0
+        ll = float(fitted.marginal_log_likelihood(X))
+        assert np.isfinite(ll)
 
-        fitted = GeneralizedHyperbolic().fit(
-            X, max_iter=30, tol=1e-4,
-            regularization='det_sigma_one',
-            random_state=123
+    def test_gh_em_2d_det_sigma_one(self):
+        true = GeneralizedHyperbolic.from_classical(
+            mu=jnp.array([0.0, 0.5]),
+            gamma=jnp.array([0.2, -0.3]),
+            sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
+            p=-0.5, a=1.0, b=1.0,
         )
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert fitted._joint._fitted is True
-        assert params['a'] > 0
-        assert params['b'] > 0
-        # det(Sigma) should be finite and positive (det_sigma_one regularization
-        # constrains the normalized-space det to 1; original-space det is
-        # rescaled by the data MAD)
-        det_sigma = np.linalg.det(params['sigma'])
-        assert det_sigma > 0
-        assert np.isfinite(det_sigma)
-
-    def test_gh_em_2d_regression(self):
-        """GH 2D EM with det_sigma_one regularization."""
-        true_dist = GeneralizedHyperbolic.from_classical_params(
-            mu=np.array([0.0, 0.5]),
-            gamma=np.array([0.2, -0.3]),
-            sigma=np.array([[1.0, 0.3], [0.3, 1.0]]),
-            p=-0.5,
-            a=1.0,
-            b=1.0
-        )
-        X = true_dist.rvs(size=3000, random_state=42)
-
-        fitted = GeneralizedHyperbolic().fit(
-            X, max_iter=30, tol=1e-4,
-            regularization='det_sigma_one',
-            random_state=123
-        )
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        assert params['sigma'].shape == (2, 2)
-        eigvals = np.linalg.eigvalsh(params['sigma'])
+        X = true.rvs(3000, seed=42)
+        result = true.fit(X, max_iter=30, tol=1e-4, verbose=0,
+                          regularization='det_sigma_one',
+                          e_step_backend='cpu', m_step_backend='cpu')
+        fitted = result.model
+        L = np.array(fitted._joint.L_Sigma)
+        Sigma = L @ L.T
+        eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
-
-    def test_gh_em_fix_p_regression(self):
-        """GH EM with fix_p regularization (NIG-like)."""
-        true_dist = GeneralizedHyperbolic.from_classical_params(
-            mu=np.array([0.0]),
-            gamma=np.array([0.5]),
-            sigma=np.array([[1.0]]),
-            p=-0.5,
-            a=2.0,
-            b=1.0
-        )
-        X = true_dist.rvs(size=2000, random_state=42)
-
-        fitted = GeneralizedHyperbolic().fit(
-            X, max_iter=30, tol=1e-4,
-            regularization='fix_p',
-            regularization_params={'p_fixed': -0.5},
-            random_state=123
-        )
-        params = fitted.classical_params
-
-        assert fitted._fitted is True
-        # p should be fixed at -0.5
-        np.testing.assert_allclose(params['p'], -0.5)
-
-
-class TestFittedStateSyncRegression:
-    """Verify _fitted state syncs correctly after fit()."""
-
-    def test_vg_fitted_after_em(self):
-        """VarianceGamma._fitted should be True after fit()."""
-        vg = VarianceGamma()
-        assert vg._fitted is False
-
-        X = VarianceGamma.from_classical_params(
-            mu=np.array([0.0]), gamma=np.array([0.1]),
-            sigma=np.array([[1.0]]), shape=2.0, rate=1.0
-        ).rvs(size=500, random_state=42)
-
-        vg.fit(X, max_iter=10, random_state=0)
-        assert vg._fitted is True
-        assert vg._joint._fitted is True
-        # Should be able to call methods without error
-        vg.logpdf(X[:5])
-        repr(vg)
-
-    def test_nig_fit_complete_sets_fitted(self):
-        """NIG.fit_complete() should set _fitted."""
-        true_dist = NormalInverseGaussian.from_classical_params(
-            mu=np.array([0.0]), gamma=np.array([0.1]),
-            sigma=np.array([[1.0]]), delta=1.0, eta=1.0
-        )
-        X, Y = true_dist.rvs_joint(size=500, random_state=42)
-
-        nig = NormalInverseGaussian()
-        assert nig._fitted is False
-
-        nig.fit_complete(X, Y)
-        assert nig._fitted is True
-        assert nig._joint._fitted is True
