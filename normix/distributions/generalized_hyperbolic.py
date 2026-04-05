@@ -120,11 +120,12 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         match the GIG convention :math:`\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]`
         on :math:`t_Y = [\log y,\,1/y,\,y]`.
         """
-        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda = self._precision_quantities()
         return self._assemble_natural_params(
             self.p - 1.0 - self.d / 2.0,
             -(self.b / 2.0 + mu_quad),
             -(self.a / 2.0 + gamma_quad),
+            Lambda_mu, Lambda_gamma, Lambda,
         )
 
     @staticmethod
@@ -136,19 +137,11 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         Dimension :math:`d` is inferred from :math:`|\theta| = 3 + 2d + d^2`.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
-        from normix.mixtures.joint import JointNormalMixture
 
-        (d, theta_1, theta_2, theta_3, *_, log_det_Sigma, _, _,
-         mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
-
-        p = theta_1 + 1.0 + d / 2.0
-        b = 2.0 * (-theta_2 - mu_quad)
-        a = 2.0 * (-theta_3 - gamma_quad)
-
-        gig_theta = jnp.array([p - 1.0, -b / 2.0, -a / 2.0])
+        j = JointGeneralizedHyperbolic.from_natural(theta)
+        gig_theta = jnp.array([j.p - 1.0, -j.b / 2.0, -j.a / 2.0])
         psi_gig = GIG._log_partition_from_theta(gig_theta)
-
-        return psi_gig + 0.5 * log_det_Sigma + mu_Lambda_gamma
+        return psi_gig + 0.5 * j.log_det_sigma() + j._mu_Lambda_gamma()
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, p, a, b):
@@ -168,12 +161,13 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         :math:`a = -2\theta_3 - 2\gamma_{\mathrm{quad}}`.
         """
         from normix.mixtures.joint import JointNormalMixture
-        (d, mu, gamma, L_Sigma,
-         theta_1, theta_2, theta_3, mu_quad, gamma_quad,
-         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
-        p = theta_1 + 1.0 + d / 2.0
-        b = 2.0 * (-theta_2 - mu_quad)
-        a = 2.0 * (-theta_3 - gamma_quad)
+        theta = jnp.asarray(theta, dtype=jnp.float64)
+        d, mu, gamma, L_Sigma = JointNormalMixture._recover_normal_params(theta)
+        mu_quad = 0.5 * jnp.dot(mu, theta[3 + d:3 + 2 * d])
+        gamma_quad = 0.5 * jnp.dot(gamma, theta[3:3 + d])
+        p = theta[0] + 1.0 + d / 2.0
+        b = 2.0 * (-theta[1] - mu_quad)
+        a = 2.0 * (-theta[2] - gamma_quad)
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, p=p, a=a, b=b)
 
 

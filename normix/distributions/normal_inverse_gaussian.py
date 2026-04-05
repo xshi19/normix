@@ -96,11 +96,12 @@ class JointNormalInverseGaussian(JointNormalMixture):
         with GIG natural parameters on :math:`[\log y,\,1/y,\,y]`.
         """
         a_ig = self.lam / (self.mu_ig ** 2)
-        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda = self._precision_quantities()
         return self._assemble_natural_params(
             -1.5 - self.d / 2.0,
             -(self.lam / 2.0 + mu_quad),
             -(a_ig / 2.0 + gamma_quad),
+            Lambda_mu, Lambda_gamma, Lambda,
         )
 
     @staticmethod
@@ -109,20 +110,15 @@ class JointNormalInverseGaussian(JointNormalMixture):
         :math:`\psi(\theta)` for Joint NIG. Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` —
         no Bessel function evaluation needed.
         """
-        from normix.mixtures.joint import JointNormalMixture
-        (d, _, theta_2, theta_3, *_, log_det_Sigma, _, _,
-         mu_quad, gamma_quad, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
-
-        b = 2.0 * (-theta_2 - mu_quad)
-        a = 2.0 * (-theta_3 - gamma_quad)
-
-        p = -0.5
+        j = JointNormalInverseGaussian.from_natural(theta)
+        a = j.lam / (j.mu_ig ** 2)
+        b = j.lam
         sqrt_ab = jnp.sqrt(a * b)
         log_K = 0.5 * jnp.log(jnp.pi / (2.0 * sqrt_ab + LOG_EPS)) - sqrt_ab
 
-        return (0.5 * log_det_Sigma + jnp.log(2.0) + log_K
-                + 0.5 * p * jnp.log((b + LOG_EPS) / (a + LOG_EPS))
-                + mu_Lambda_gamma)
+        return (0.5 * j.log_det_sigma() + jnp.log(2.0) + log_K
+                + 0.5 * (-0.5) * jnp.log((b + LOG_EPS) / (a + LOG_EPS))
+                + j._mu_Lambda_gamma())
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, mu_ig, lam):
@@ -141,11 +137,12 @@ class JointNormalInverseGaussian(JointNormalMixture):
         so :math:`\mu_{IG} = \sqrt{b/a}`.
         """
         from normix.mixtures.joint import JointNormalMixture
-        (d, mu, gamma, L_Sigma,
-         _, theta_2, theta_3, mu_quad, gamma_quad,
-         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
-        lam = 2.0 * (-theta_2 - mu_quad)           # b = λ
-        a_ig = 2.0 * (-theta_3 - gamma_quad)       # a = λ/μ_IG²
+        theta = jnp.asarray(theta, dtype=jnp.float64)
+        d, mu, gamma, L_Sigma = JointNormalMixture._recover_normal_params(theta)
+        mu_quad = 0.5 * jnp.dot(mu, theta[3 + d:3 + 2 * d])
+        gamma_quad = 0.5 * jnp.dot(gamma, theta[3:3 + d])
+        lam = 2.0 * (-theta[1] - mu_quad)           # b = λ
+        a_ig = 2.0 * (-theta[2] - gamma_quad)       # a = λ/μ_IG²
         mu_ig = jnp.sqrt(lam / jnp.maximum(a_ig, 1e-30))
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, mu_ig=mu_ig, lam=lam)
 

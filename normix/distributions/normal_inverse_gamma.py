@@ -89,11 +89,12 @@ class JointNormalInverseGamma(JointNormalMixture):
 
         (InverseGamma subordinator: :math:`p=-\alpha`, :math:`a\to 0`, :math:`b=2\beta`).
         """
-        _, _, mu_quad, gamma_quad, _ = self._precision_quantities()
+        Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda = self._precision_quantities()
         return self._assemble_natural_params(
             -(self.alpha + 1.0) - self.d / 2.0,
             -(self.beta + mu_quad),
             -gamma_quad,
+            Lambda_mu, Lambda_gamma, Lambda,
         )
 
     @staticmethod
@@ -103,17 +104,11 @@ class JointNormalInverseGamma(JointNormalMixture):
 
         Analytical — no Bessel function needed (InverseGamma subordinator).
         """
-        from normix.mixtures.joint import JointNormalMixture
-        (d, theta_1, theta_2, _, *_, log_det_Sigma, _, _,
-         mu_quad, _, mu_Lambda_gamma) = JointNormalMixture._parse_joint_theta(theta)
-
-        alpha = -(theta_1 + d / 2.0) - 1.0
-        beta = -theta_2 - mu_quad
-
-        return (0.5 * log_det_Sigma
-                + jax.scipy.special.gammaln(alpha)
-                - alpha * jnp.log(beta)
-                + mu_Lambda_gamma)
+        j = JointNormalInverseGamma.from_natural(theta)
+        return (0.5 * j.log_det_sigma()
+                + jax.scipy.special.gammaln(j.alpha)
+                - j.alpha * jnp.log(j.beta)
+                + j._mu_Lambda_gamma())
 
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
@@ -130,11 +125,11 @@ class JointNormalInverseGamma(JointNormalMixture):
         :math:`\alpha = -(\theta_1 + d/2) - 1`, :math:`\beta = -\theta_2 - \mu_{\mathrm{quad}}`.
         """
         from normix.mixtures.joint import JointNormalMixture
-        (d, mu, gamma, L_Sigma,
-         theta_1, theta_2, _, mu_quad, _,
-         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
-        alpha = -(theta_1 + d / 2.0) - 1.0
-        beta = -theta_2 - mu_quad
+        theta = jnp.asarray(theta, dtype=jnp.float64)
+        d, mu, gamma, L_Sigma = JointNormalMixture._recover_normal_params(theta)
+        mu_quad = 0.5 * jnp.dot(mu, theta[3 + d:3 + 2 * d])
+        alpha = -(theta[0] + d / 2.0) - 1.0
+        beta = -theta[1] - mu_quad
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, alpha=alpha, beta=beta)
 
 

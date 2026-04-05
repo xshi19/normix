@@ -119,6 +119,12 @@ class JointNormalMixture(ExponentialFamily):
         r""":math:`\log|\Sigma| = 2\sum_i \log L_{ii}`, via Cholesky diagonal."""
         return 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
 
+    def _mu_Lambda_gamma(self) -> jax.Array:
+        r""":math:`\mu^\top \Sigma^{-1} \gamma` via Cholesky."""
+        z = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)
+        w = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.gamma, lower=True)
+        return jnp.dot(z, w)
+
     # ------------------------------------------------------------------
     # Sampling
     # ------------------------------------------------------------------
@@ -248,15 +254,14 @@ class JointNormalMixture(ExponentialFamily):
         return Lambda_mu, Lambda_gamma, mu_quad, gamma_quad, Lambda
 
     def _assemble_natural_params(
-        self, theta_1: jax.Array, theta_2: jax.Array, theta_3: jax.Array,
+          self,
+        theta_1: jax.Array, theta_2: jax.Array, theta_3: jax.Array,
+        Lambda_mu: jax.Array, Lambda_gamma: jax.Array, Lambda: jax.Array,
     ) -> jax.Array:
         r"""
-        Assemble the full :math:`\theta` vector from scalars :math:`\theta_1, \theta_2, \theta_3`
-        and shared Cholesky quantities.
-
-        :math:`\theta = [\theta_1, \theta_2, \theta_3, \Sigma^{-1}\gamma, \Sigma^{-1}\mu, -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`
+        Assemble the full :math:`\theta` vector from subordinator scalars
+        and precomputed precision components (from :meth:`_precision_quantities`).
         """
-        Lambda_mu, Lambda_gamma, _, _, Lambda = self._precision_quantities()
         return jnp.concatenate([
             jnp.array([theta_1, theta_2, theta_3]),
             Lambda_gamma,
@@ -272,56 +277,20 @@ class JointNormalMixture(ExponentialFamily):
     @staticmethod
     def _recover_normal_params(theta: jax.Array):
         """
-        Parse theta and recover classical normal parameters (mu, gamma, L_Sigma).
+        Recover (d, mu, gamma, L_Sigma) from a joint theta vector.
 
-        Returns ``(d, mu, gamma, L_Sigma, theta_1, theta_2, theta_3, mu_quad, gamma_quad)``.
-        Subclass ``from_natural`` methods use theta_1–3 and the quad forms to
-        recover their subordinator parameters.
+        Delegates Λ → (μ, L_Σ) to :meth:`MultivariateNormal.from_natural`,
+        then γ = Σ θ₄ = L_Σ L_Σᵀ θ₄.
         """
-        parsed = JointNormalMixture._parse_joint_theta(theta)
-        (d, theta_1, theta_2, theta_3, _, _,
-         Lambda, _, mu, gamma,
-         mu_quad, gamma_quad, _) = parsed
-        L_Lambda = jnp.linalg.cholesky(Lambda)
-        L_inv = jax.scipy.linalg.solve_triangular(
-            L_Lambda, jnp.eye(d, dtype=jnp.float64), lower=True)
-        L_Sigma = jnp.linalg.cholesky(L_inv.T @ L_inv)
-        return d, mu, gamma, L_Sigma, theta_1, theta_2, theta_3, mu_quad, gamma_quad
+        from normix.distributions.normal import MultivariateNormal
 
-    @staticmethod
-    def _parse_joint_theta(theta: jax.Array):
-        """
-        Parse a joint theta vector into its components.
-
-        Returns (d, theta_1..3, theta_4..6, Lambda, log_det_Sigma, mu, gamma,
-                 mu_quad, gamma_quad, mu_Lambda_gamma).
-        """
         n = theta.shape[0]
         d = JointNormalMixture._dim_from_theta_length(n)
 
-        theta_1 = theta[0]
-        theta_2 = theta[1]
-        theta_3 = theta[2]
-        theta_4 = theta[3:3 + d]
-        theta_5 = theta[3 + d:3 + 2 * d]
-        theta_6 = theta[3 + 2 * d:].reshape(d, d)
-
-        Lambda = -2.0 * theta_6
-        Lambda = 0.5 * (Lambda + Lambda.T)
-
-        _sign, log_det_Lambda = jnp.linalg.slogdet(Lambda)
-        log_det_Sigma = -log_det_Lambda
-
-        mu = jnp.linalg.solve(Lambda, theta_5)
-        gamma = jnp.linalg.solve(Lambda, theta_4)
-
-        mu_quad = 0.5 * jnp.dot(mu, theta_5)
-        gamma_quad = 0.5 * jnp.dot(gamma, theta_4)
-        mu_Lambda_gamma = jnp.dot(mu, theta_4)
-
-        return (d, theta_1, theta_2, theta_3, theta_4, theta_5,
-                Lambda, log_det_Sigma, mu, gamma,
-                mu_quad, gamma_quad, mu_Lambda_gamma)
+        mvn = MultivariateNormal.from_natural(
+            jnp.concatenate([theta[3 + d:3 + 2 * d], theta[3 + 2 * d:]]))
+        gamma = mvn.L_Sigma @ (mvn.L_Sigma.T @ theta[3:3 + d])
+        return d, mvn.mu, gamma, mvn.L_Sigma
 
     # ------------------------------------------------------------------
     # ExponentialFamily abstract methods
