@@ -161,10 +161,20 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
 
     @classmethod
     def from_natural(cls, theta: jax.Array) -> "JointGeneralizedHyperbolic":
-        raise NotImplementedError(
-            "JointGeneralizedHyperbolic.from_natural: not implemented — "
-            "use from_classical or m_step."
-        )
+        r"""Recover classical parameters from :math:`\theta`.
+
+        :math:`p = \theta_1 + 1 + d/2`,
+        :math:`b = -2\theta_2 - 2\mu_{\mathrm{quad}}`,
+        :math:`a = -2\theta_3 - 2\gamma_{\mathrm{quad}}`.
+        """
+        from normix.mixtures.joint import JointNormalMixture
+        (d, mu, gamma, L_Sigma,
+         theta_1, theta_2, theta_3, mu_quad, gamma_quad,
+         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
+        p = theta_1 + 1.0 + d / 2.0
+        b = 2.0 * (-theta_2 - mu_quad)
+        a = 2.0 * (-theta_3 - gamma_quad)
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, p=p, a=a, b=b)
 
 
 

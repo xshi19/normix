@@ -53,7 +53,7 @@ def _hankel_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     for k in range(1, 21):
         term = term * (mu - (2.0 * k - 1.0) ** 2) / (8.0 * k * z)
         total = total + term
-    return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(jnp.maximum(total, TINY))
+    return 0.5 * jnp.log(jnp.pi / (2.0 * z)) - z + jnp.log(jnp.maximum(total, LOG_EPS))
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ def _olver_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     return (0.5 * jnp.log(jnp.pi / (2.0 * v))
             - v * eta
             - 0.25 * jnp.log(1.0 + zeta2)
-            + jnp.log(jnp.maximum(S, TINY)))
+            + jnp.log(jnp.maximum(S, LOG_EPS)))
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +94,7 @@ def _smallz_log_kv(v: jax.Array, z: jax.Array) -> jax.Array:
     """K_v(z) ~ Gamma(|v|)/2 * (2/z)^|v| for z→0, |v|>0."""
     v_abs = jnp.abs(v)
     log_large_v = jax.lax.lgamma(v_abs) + v_abs * jnp.log(2.0 / z) - jnp.log(2.0)
-    log_small_v = jnp.log(jnp.maximum(-jnp.log(z / 2.0) - jnp.euler_gamma, TINY))
+    log_small_v = jnp.log(jnp.maximum(-jnp.log(z / 2.0) - jnp.euler_gamma, LOG_EPS))
     # v_abs > 0.5 is a scalar bool here (called from _log_kv_scalar)
     return jax.lax.cond(v_abs > 0.5, lambda: log_large_v, lambda: log_small_v)
 
@@ -110,7 +110,7 @@ def _log_cosh(x: jax.Array) -> jax.Array:
 
 def _quadrature_upper_bound(v_abs: jax.Array, z: jax.Array) -> jax.Array:
     P = 50.0
-    z_safe = jnp.maximum(z, TINY)
+    z_safe = jnp.maximum(z, LOG_EPS)
     T = jnp.maximum(jnp.log(2.0 * P / z_safe), 1.0)
     for _ in range(6):
         T = jnp.maximum(jnp.log(2.0 * (P + v_abs * T) / z_safe), 1.0)
@@ -141,11 +141,11 @@ def _log_kv_scalar(v: jax.Array, z: jax.Array) -> jax.Array:
     # Innermost: Olver vs Small-z vs Quadrature
     def _not_hankel():
         def _olver():
-            return _olver_log_kv(v_abs, jnp.maximum(z, TINY))
+            return _olver_log_kv(v_abs, jnp.maximum(z, LOG_EPS))
         def _not_olver():
             return jax.lax.cond(
                 use_smallz,
-                lambda: _smallz_log_kv(v_abs, jnp.clip(z, TINY, 0.5)),
+                lambda: _smallz_log_kv(v_abs, jnp.clip(z, LOG_EPS, 0.5)),
                 lambda: _quadrature_log_kv(v_abs, jnp.maximum(z, LOG_EPS)),
             )
         return jax.lax.cond(use_olver, _olver, _not_olver)

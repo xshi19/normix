@@ -1,11 +1,12 @@
 """
 normix — JAX package for Generalized Hyperbolic distributions as exponential families.
 
-Built on Equinox. Float64 precision throughout.
+Built on Equinox. Float64 precision strongly recommended.
 
 Quick start
 -----------
 >>> import jax
+>>> jax.config.update("jax_enable_x64", True)  # recommended
 >>> import jax.numpy as jnp
 >>> from normix import GeneralizedHyperbolic
 
@@ -20,7 +21,14 @@ from __future__ import annotations
 import warnings
 import jax
 
-jax.config.update("jax_enable_x64", True)
+if not jax.config.jax_enable_x64:
+    warnings.warn(
+        "normix: float64 is not enabled. Bessel functions, GIG optimization, "
+        "and log-density evaluation may lose accuracy under float32. "
+        "Enable before importing normix:\n"
+        "  jax.config.update('jax_enable_x64', True)",
+        stacklevel=2,
+    )
 
 # jaxopt is unmaintained upstream and emits a DeprecationWarning on import.
 # We use it intentionally for JAX-native LBFGS/BFGS in fitting/solvers.py

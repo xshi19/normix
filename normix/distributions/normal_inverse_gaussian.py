@@ -133,8 +133,21 @@ class JointNormalInverseGaussian(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L, mu_ig=mu_ig, lam=lam)
 
     @classmethod
-    def from_natural(cls, theta):
-        raise NotImplementedError("Use from_classical or m_step.")
+    def from_natural(cls, theta: jax.Array) -> "JointNormalInverseGaussian":
+        r"""Recover classical parameters from :math:`\theta`.
+
+        From :math:`b = -2\theta_2 - 2\mu_{\mathrm{quad}} = \lambda` and
+        :math:`a = -2\theta_3 - 2\gamma_{\mathrm{quad}} = \lambda/\mu_{IG}^2`,
+        so :math:`\mu_{IG} = \sqrt{b/a}`.
+        """
+        from normix.mixtures.joint import JointNormalMixture
+        (d, mu, gamma, L_Sigma,
+         _, theta_2, theta_3, mu_quad, gamma_quad,
+         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
+        lam = 2.0 * (-theta_2 - mu_quad)           # b = λ
+        a_ig = 2.0 * (-theta_3 - gamma_quad)       # a = λ/μ_IG²
+        mu_ig = jnp.sqrt(lam / jnp.maximum(a_ig, 1e-30))
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, mu_ig=mu_ig, lam=lam)
 
 
 

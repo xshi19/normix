@@ -124,8 +124,18 @@ class JointNormalInverseGamma(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L, alpha=alpha, beta=beta)
 
     @classmethod
-    def from_natural(cls, theta):
-        raise NotImplementedError("Use from_classical or m_step.")
+    def from_natural(cls, theta: jax.Array) -> "JointNormalInverseGamma":
+        r"""Recover classical parameters from :math:`\theta`.
+
+        :math:`\alpha = -(\theta_1 + d/2) - 1`, :math:`\beta = -\theta_2 - \mu_{\mathrm{quad}}`.
+        """
+        from normix.mixtures.joint import JointNormalMixture
+        (d, mu, gamma, L_Sigma,
+         theta_1, theta_2, _, mu_quad, _,
+         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
+        alpha = -(theta_1 + d / 2.0) - 1.0
+        beta = -theta_2 - mu_quad
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, alpha=alpha, beta=beta)
 
 
 

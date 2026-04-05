@@ -270,6 +270,25 @@ class JointNormalMixture(ExponentialFamily):
         return int(-1 + (1 + 4 * (n - 3)) ** 0.5) // 2
 
     @staticmethod
+    def _recover_normal_params(theta: jax.Array):
+        """
+        Parse theta and recover classical normal parameters (mu, gamma, L_Sigma).
+
+        Returns ``(d, mu, gamma, L_Sigma, theta_1, theta_2, theta_3, mu_quad, gamma_quad)``.
+        Subclass ``from_natural`` methods use theta_1–3 and the quad forms to
+        recover their subordinator parameters.
+        """
+        parsed = JointNormalMixture._parse_joint_theta(theta)
+        (d, theta_1, theta_2, theta_3, _, _,
+         Lambda, _, mu, gamma,
+         mu_quad, gamma_quad, _) = parsed
+        L_Lambda = jnp.linalg.cholesky(Lambda)
+        L_inv = jax.scipy.linalg.solve_triangular(
+            L_Lambda, jnp.eye(d, dtype=jnp.float64), lower=True)
+        L_Sigma = jnp.linalg.cholesky(L_inv.T @ L_inv)
+        return d, mu, gamma, L_Sigma, theta_1, theta_2, theta_3, mu_quad, gamma_quad
+
+    @staticmethod
     def _parse_joint_theta(theta: jax.Array):
         """
         Parse a joint theta vector into its components.

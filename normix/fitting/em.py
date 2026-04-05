@@ -31,7 +31,7 @@ class EMResult:
     log_likelihoods: Optional[jax.Array]    # (n_iter,) or None when not computed
     param_changes: jax.Array                # (n_iter,) max relative param change
     n_iter: int
-    converged: bool
+    converged: Optional[bool]               # None for IncrementalEMFitter (no convergence criterion)
     elapsed_time: float                     # wall-clock seconds
 
 
@@ -506,7 +506,7 @@ class IncrementalEMFitter:
             log_likelihoods=log_likelihoods,
             param_changes=jnp.array(changes),
             n_iter=self.max_steps,
-            converged=True,
+            converged=None,
             elapsed_time=elapsed,
         )
 

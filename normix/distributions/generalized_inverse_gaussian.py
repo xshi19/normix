@@ -165,14 +165,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
             E[\log X] = \partial_p \log K_p(\sqrt{ab}) + \tfrac{1}{2}\log(b/a)
 
-        Clamping :math:`a, b` to ``TINY`` ensures Bessel small-:math:`z` asymptotics
+        Clamping :math:`a, b` to ``LOG_EPS`` ensures Bessel small-:math:`z` asymptotics
         handle the degenerate Gamma/InvGamma limits. The default ``jax.grad`` path
         fails because ``jnp.where`` evaluates all branches and
         :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.
         """
         p = theta[0] + 1.0
-        b_safe = jnp.maximum(-2.0 * theta[1], TINY)
-        a_safe = jnp.maximum(-2.0 * theta[2], TINY)
+        b_safe = jnp.maximum(-2.0 * theta[1], LOG_EPS)
+        a_safe = jnp.maximum(-2.0 * theta[2], LOG_EPS)
         sqrt_ab = jnp.sqrt(a_safe * b_safe)
         log_sqrt_ba = 0.5 * (jnp.log(b_safe) - jnp.log(a_safe))
 

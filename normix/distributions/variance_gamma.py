@@ -126,7 +126,17 @@ class JointVarianceGamma(JointNormalMixture):
 
     @classmethod
     def from_natural(cls, theta: jax.Array) -> "JointVarianceGamma":
-        raise NotImplementedError("Use from_classical or m_step.")
+        r"""Recover classical parameters from :math:`\theta`.
+
+        :math:`\alpha = \theta_1 + 1 + d/2`, :math:`\beta = -\theta_3 - \gamma_{\mathrm{quad}}`.
+        """
+        from normix.mixtures.joint import JointNormalMixture
+        (d, mu, gamma, L_Sigma,
+         theta_1, _, theta_3, _, gamma_quad,
+         ) = JointNormalMixture._recover_normal_params(jnp.asarray(theta, dtype=jnp.float64))
+        alpha = theta_1 + 1.0 + d / 2.0
+        beta = -theta_3 - gamma_quad
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, alpha=alpha, beta=beta)
 
 
 
