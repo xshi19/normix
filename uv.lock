@@ -1172,14 +1172,16 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "equinox" },
-    { name = "jax", extra = ["cuda12"] },
+    { name = "jax" },
     { name = "jaxopt" },
-    { name = "matplotlib" },
     { name = "numpy" },
     { name = "scipy" },
 ]
 
 [package.optional-dependencies]
+cuda12 = [
+    { name = "jax", extra = ["cuda12"] },
+]
 dev = [
     { name = "ipykernel" },
     { name = "matplotlib" },
@@ -1190,6 +1192,9 @@ docs = [
     { name = "pandoc" },
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
+]
+plotting = [
+    { name = "matplotlib" },
 ]
 scripts = [
     { name = "lxml" },
@@ -1210,11 +1215,12 @@ dev = [
 requires-dist = [
     { name = "equinox", specifier = ">=0.13" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29" },
-    { name = "jax", extras = ["cuda12"], specifier = ">=0.4.38" },
+    { name = "jax", specifier = ">=0.4.38" },
+    { name = "jax", extras = ["cuda12"], marker = "extra == 'cuda12'", specifier = ">=0.4.38" },
     { name = "jaxopt", specifier = ">=0.8" },
     { name = "lxml", marker = "extra == 'scripts'", specifier = ">=6.0.2" },
-    { name = "matplotlib", specifier = ">=3.10.0" },
     { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.9" },
+    { name = "matplotlib", marker = "extra == 'plotting'", specifier = ">=3.10.0" },
     { name = "nbsphinx", marker = "extra == 'docs'", specifier = ">=0.9" },
     { name = "numpy", specifier = ">=2.0.0" },
     { name = "pandoc", marker = "extra == 'docs'", specifier = ">=2.4" },
@@ -1224,7 +1230,7 @@ requires-dist = [
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.0" },
     { name = "yfinance", marker = "extra == 'scripts'", specifier = ">=1.1.0" },
 ]
-provides-extras = ["dev", "scripts", "docs"]
+provides-extras = ["cuda12", "plotting", "dev", "scripts", "docs"]
 
 [package.metadata.requires-dev]
 dev = [
