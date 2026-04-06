@@ -152,7 +152,7 @@ Each concrete joint implements `_compute_posterior_expectations(x)` which comput
 
 **Observation vector for Tier-1 methods:** `sufficient_statistics`, `log_base_measure`, and inherited `log_prob` / `pdf` take a **single** flat array `xy = jnp.concatenate([x, y])` with `x` of shape `(d,)` and scalar `y > 0` last. This matches the sufficient-statistic block :math:`[\log y,\,1/y,\,y,\,\ldots]` in `mixtures/joint.py`. For readability, `log_prob_joint(x, y)` and `rvs(n, seed) -> (X, Y)` remain the preferred entry points when you already have :math:`x` and :math:`y` separate.
 
-**Constructors:** Use `from_classical(...)` (and, for analysis, `natural_params()` / `expectation_params()` / the log-partition triad). `from_natural` is **not** implemented on concrete joints (it would require a joint constrained inverse map); `from_expectation` on the full joint is therefore unsupported until such a constructor exists. Marginal `NormalMixture` subclasses continue to drive EM via `e_step` / `m_step` and classical parameters.
+**Constructors:** Use `from_classical(...)` for ordinary construction. Concrete joints now also implement `from_natural(theta)`: `JointGeneralizedHyperbolic` inverts the full joint family directly, while `JointVarianceGamma`, `JointNormalInverseGamma`, and `JointNormalInverseGaussian` validate that `theta` lies on the corresponding constrained subfamily before reconstructing classical parameters. Marginal `NormalMixture` subclasses continue to drive EM via `e_step` / `m_step` and classical parameters.
 
 **Correctness:** For GIG-based joints, natural parameters :math:`\theta_2,\theta_3` must align with the **GIG** convention :math:`\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]` on :math:`[\log y,\,1/y,\,y]`, i.e. scalar coefficients :math:`-(b/2 + \cdots)` and :math:`-(a/2 + \cdots)` on :math:`1/y` and :math:`y`, not :math:`-b` and :math:`-a`. Gamma and inverse-gamma joints already matched this limit; generalized hyperbolic and NIG joints follow the same pattern.
 
@@ -162,7 +162,7 @@ Each concrete joint implements `_compute_posterior_expectations(x)` which comput
 
 Following GMMX: the model knows math, the fitter knows iteration.
 
-**`EMResult`** (frozen dataclass): `model`, optional `log_likelihoods`, `param_changes`, `n_iter`, `converged`, `elapsed_time`.
+**`EMResult`** (frozen dataclass): `model`, optional `log_likelihoods`, `param_changes`, `n_iter`, `converged`, `stop_reason`, `elapsed_time`. For fixed-budget algorithms such as `IncrementalEMFitter`, `converged` is `None` and `stop_reason='budget'`.
 
 Fitters are plain Python classes (configuration + `fit`), **not** `eqx.Module`s:
 
