@@ -3,10 +3,9 @@ Mixture model EM benchmark — all distributions, all backend combinations.
 
 Runs EM to convergence (tol=1e-2) for each combination and reports a table:
 
-    Distribution | Step | Backend | Method | Total Time | Iterations | Time/Iter
+    Distribution | E Backend | M Backend | M Method | Total Time | Iterations | Time/Iter
 
 Baseline setup: E-step=cpu, M-step=cpu/lbfgs.
-Each row varies exactly one step from the baseline.
 
 Usage:
     PYTHONUNBUFFERED=1 uv run python scripts/benchmark_mixture_em.py [--n-stocks N]
@@ -75,7 +74,6 @@ class BenchConfig:
     """One benchmark row configuration."""
     dist_name: str
     dist_cls: type
-    step_varied: str        # "E-step", "M-step", or "baseline"
     e_backend: str
     m_backend: str
     m_method: str
@@ -85,32 +83,27 @@ class BenchConfig:
 def build_configs():
     """Build all benchmark configurations.
 
-    Baseline: E=cpu, M=cpu/lbfgs (default setup).
-    Vary E-step: E=jax (rest stays baseline).
-    Vary M-step backend: M=jax/newton (E stays baseline=cpu).
-    Vary M-step method:  M=cpu/newton (only meaningful for GH where
-        the subordinator M-step involves a GIG solver).
+    Baseline: E=cpu, M=cpu/lbfgs.
+    Variants: jax E-step, jax/newton M-step.
+    GH extra: cpu/newton M-step (different solver for the GIG subordinator).
     """
     configs = []
 
     for dist_name, dist_cls in DISTRIBUTIONS:
         configs.append(BenchConfig(
             dist_name=dist_name, dist_cls=dist_cls,
-            step_varied="both",
             e_backend="cpu", m_backend="cpu", m_method="lbfgs",
             label="cpu/lbfgs (baseline)",
         ))
 
         configs.append(BenchConfig(
             dist_name=dist_name, dist_cls=dist_cls,
-            step_varied="E-step",
             e_backend="jax", m_backend="cpu", m_method="lbfgs",
             label="jax E",
         ))
 
         configs.append(BenchConfig(
             dist_name=dist_name, dist_cls=dist_cls,
-            step_varied="M-step",
             e_backend="cpu", m_backend="jax", m_method="newton",
             label="jax/newton M",
         ))
@@ -118,7 +111,6 @@ def build_configs():
         if dist_name == "GH":
             configs.append(BenchConfig(
                 dist_name=dist_name, dist_cls=dist_cls,
-                step_varied="M-step",
                 e_backend="cpu", m_backend="cpu", m_method="newton",
                 label="cpu/newton M",
             ))
@@ -133,7 +125,6 @@ def build_configs():
 @dataclass
 class BenchResult:
     dist_name: str
-    step_varied: str
     e_backend: str
     m_backend: str
     m_method: str
@@ -169,7 +160,6 @@ def run_single(cfg: BenchConfig, X: jax.Array, max_iter: int, tol: float) -> Ben
 
         return BenchResult(
             dist_name=cfg.dist_name,
-            step_varied=cfg.step_varied,
             e_backend=cfg.e_backend,
             m_backend=cfg.m_backend,
             m_method=cfg.m_method,
@@ -183,7 +173,6 @@ def run_single(cfg: BenchConfig, X: jax.Array, max_iter: int, tol: float) -> Ben
     except Exception as e:
         return BenchResult(
             dist_name=cfg.dist_name,
-            step_varied=cfg.step_varied,
             e_backend=cfg.e_backend,
             m_backend=cfg.m_backend,
             m_method=cfg.m_method,
@@ -204,19 +193,19 @@ def print_table(results: list[BenchResult]):
     """Print results as a formatted table.
 
     Columns:
-      Distribution | Step Varied | E Backend | M Backend | M Method |
-      Total Time   | Iterations  | Time/Iter | Conv      | Final LL
+      Distribution | E Backend | M Backend | M Method |
+      Total Time   | Iterations  | Time/Iter | Conv   | Final LL
     """
-    W = 125
+    W = 110
 
     header = (
-        f"  {'Dist':<6} {'Step Varied':<12} {'E Bknd':<7} {'M Bknd':<7} {'M Method':<9} "
+        f"  {'Dist':<6} {'E Bknd':<7} {'M Bknd':<7} {'M Method':<9} "
         f"{'Total':>8} {'Iters':>6} {'Per Iter':>10} {'Conv':>5} {'Final LL':>11}"
     )
 
     print(f"\n{'=' * W}")
     print("  Mixture Model EM Benchmark")
-    print(f"  Baseline: E=cpu, M=cpu/lbfgs. Each non-baseline row changes one step.")
+    print(f"  Baseline: E=cpu, M=cpu/lbfgs.")
     print(f"{'=' * W}")
     print(header)
     print(f"  {'-' * (W - 2)}")
@@ -229,7 +218,7 @@ def print_table(results: list[BenchResult]):
 
         if r.error:
             print(
-                f"  {r.dist_name:<6} {r.step_varied:<12} {r.e_backend:<7} "
+                f"  {r.dist_name:<6} {r.e_backend:<7} "
                 f"{r.m_backend:<7} {r.m_method:<9} "
                 f"{'ERROR':>8} {'-':>6} {'-':>10} "
                 f"{'N':>5} {r.error:>11}"
@@ -243,7 +232,7 @@ def print_table(results: list[BenchResult]):
             else:
                 t_per = f"{r.time_per_iter*1e3:.1f}ms"
             print(
-                f"  {r.dist_name:<6} {r.step_varied:<12} {r.e_backend:<7} "
+                f"  {r.dist_name:<6} {r.e_backend:<7} "
                 f"{r.m_backend:<7} {r.m_method:<9} "
                 f"{r.total_time:>7.2f}s {r.n_iter:>6} "
                 f"{t_per:>10} {conv_str:>5} {r.final_ll:>11.4f}"
@@ -259,8 +248,8 @@ def print_table(results: list[BenchResult]):
 def main():
     parser = argparse.ArgumentParser(
         description="Mixture model EM benchmark — all distributions × backends")
-    parser.add_argument("--n-stocks", type=int, default=10,
-                        help="Number of stocks from SP500 (default: 10)")
+    parser.add_argument("--n-stocks", type=int, default=500,
+                        help="Number of stocks from SP500 (default: 500)")
     parser.add_argument("--max-iter", type=int, default=200,
                         help="Maximum EM iterations (default: 200)")
     parser.add_argument("--tol", type=float, default=1e-2,
@@ -287,7 +276,7 @@ def main():
     results = []
 
     for i, cfg in enumerate(configs, 1):
-        desc = f"{cfg.dist_name} {cfg.step_varied} {cfg.label}"
+        desc = f"{cfg.dist_name} {cfg.label}"
         print(f"  [{i:2d}/{len(configs)}] {desc:<40}", end="", flush=True)
         r = run_single(cfg, X, args.max_iter, args.tol)
         results.append(r)

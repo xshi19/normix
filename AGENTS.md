@@ -8,6 +8,7 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only), `optax`
 - Install: `uv sync`
 - Tests: `uv run pytest tests/`
 - Single test: `uv run pytest tests/test_gamma.py -v`
+- Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
 - Notebooks: `uv run jupyter lab`
 - Add dependency: `uv add <package>` / `uv add --dev <package>`
 - This project uses **uv**, NOT conda.
@@ -57,6 +58,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | RVS generation (PINV, TDR) | `docs/ARCHITECTURE.md` § Random Variate Generation |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
 | Technical notes | `docs/tech_notes/` |
+| Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers; `run_all.py` orchestrator; `compare.py` diff tool |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
