@@ -73,6 +73,14 @@ Documentation = "https://xshi19.github.io/normix/"
 [tool.hatch.build.targets.wheel]
 packages = ["normix"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/normix",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -117,4 +125,3 @@ dev = [
     "sphinx>=9.1.0",
     "sphinx-rtd-theme>=3.1.0",
 ]
-
