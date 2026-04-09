@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import jax
+import pytest
 
 
 jax.config.update("jax_enable_x64", True)
@@ -47,6 +48,7 @@ print("ok")
 
 def test_plotting_exports_remain_available():
     """The public plotting re-exports remain available lazily."""
+    pytest.importorskip("matplotlib")
     from normix.utils import FIG_H, FIG_W, PHI, plot_pdf_cdf_comparison
 
     assert PHI > 1.0
@@ -57,6 +59,7 @@ def test_plotting_exports_remain_available():
 
 def test_plotting_module_remains_importable():
     """Notebook-style submodule imports still work."""
+    pytest.importorskip("matplotlib")
     from normix.utils import plotting
 
     assert hasattr(plotting, "plot_pdf_cdf_comparison")
