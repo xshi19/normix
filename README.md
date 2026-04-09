@@ -7,8 +7,20 @@ Built on [Equinox](https://docs.kidger.site/equinox/) with Float64 precision thr
 ## Installation
 
 ```bash
-uv sync            # recommended (uv)
-pip install -e .   # or pip
+pip install normix
+```
+
+Install optional plotting helpers with:
+
+```bash
+pip install "normix[plotting]"
+```
+
+For local development:
+
+```bash
+uv sync
+pip install -e .
 ```
 
 ## Quick Start
