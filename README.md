@@ -28,6 +28,9 @@ pip install -e .
 ```python
 import jax
 import jax.numpy as jnp
+
+jax.config.update("jax_enable_x64", True)
+
 from normix import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter
 
@@ -80,6 +83,14 @@ The `Joint*` classes (e.g. `JointGeneralizedHyperbolic`) model the full joint $f
 All univariate and joint distributions subclass `ExponentialFamily(eqx.Module)`:
 
 ```python
+import jax
+import jax.numpy as jnp
+
+jax.config.update("jax_enable_x64", True)
+
+from normix import Gamma
+
+X = jnp.array([1.0, 1.5, 2.0, 2.5])
 dist = Gamma(alpha=jnp.array(2.0), beta=jnp.array(1.0))
 
 # Log-density (single observation)
@@ -99,7 +110,11 @@ dist4 = Gamma.fit_mle(X)           # η̂ = mean t(xᵢ)
 ## EM Algorithm
 
 ```python
+import jax
 import jax.numpy as jnp
+
+jax.config.update("jax_enable_x64", True)
+
 from normix import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter
 
@@ -122,6 +137,10 @@ fitted = result.model
 ## Bessel Functions
 
 ```python
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 from normix import log_kv        # or: from normix.utils.bessel import log_kv
 
 # JIT-able, differentiable (backend='jax', default)

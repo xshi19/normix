@@ -96,7 +96,7 @@ jobs:
 
       - name: Extract and run README code blocks
         run: |
-          uv run python -c "
+          JAX_ENABLE_X64=1 uv run python -c "
           import re, sys, textwrap
 
           with open('README.md') as f:
@@ -144,7 +144,7 @@ jobs:
 
       - name: Run module docstring example
         run: |
-          uv run python -c "
+          JAX_ENABLE_X64=1 uv run python -c "
           # Verify the normix.__init__ quick-start docstring example works
           import jax
           import jax.numpy as jnp
