@@ -95,14 +95,19 @@
 <span class="sd">.. math::</span>
 
 <span class="sd">    \\theta_1 = p_{\\mathrm{sub}} - 1 - d/2, \\quad</span>
-<span class="sd">    \\theta_2 = -(b_{\\mathrm{sub}} + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) &lt; 0</span>
+<span class="sd">    \\theta_2 = -(b_{\\mathrm{sub}}/2 + \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu) &lt; 0</span>
 
 <span class="sd">.. math::</span>
 
-<span class="sd">    \\theta_3 = -(a_{\\mathrm{sub}} + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) &lt; 0, \\quad</span>
+<span class="sd">    \\theta_3 = -(a_{\\mathrm{sub}}/2 + \\tfrac{1}{2}\\gamma^\\top\\Sigma^{-1}\\gamma) &lt; 0, \\quad</span>
 <span class="sd">    \\theta_4 = \\Sigma^{-1}\\gamma, \\quad</span>
 <span class="sd">    \\theta_5 = \\Sigma^{-1}\\mu, \\quad</span>
 <span class="sd">    \\theta_6 = -\\tfrac{1}{2}\\mathrm{vec}(\\Sigma^{-1})</span>
+
+<span class="sd">For a GIG subordinator, :math:`\\theta_2,\\theta_3` combine :math:`-b/2,-a/2` with the</span>
+<span class="sd">normal quadratic forms so that :math:`\\theta^{\\top} t` matches</span>
+<span class="sd">:math:`-(a y + b/y)/2` from :math:`f_Y` plus the :math:`y`-dependent terms from</span>
+<span class="sd">:math:`f_{X\\mid Y}`.</span>
 
 <span class="sd">**Log-partition:**</span>
 
@@ -150,7 +155,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">SAFE_DENOMINATOR</span><span class="p">,</span> <span class="n">SIGMA_REG</span>
 
@@ -180,16 +184,6 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the fitted subordinator distribution.&quot;&quot;&quot;</span></div>
 
 
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_eff</span><span class="p">,</span> <span class="n">a_eff</span><span class="p">,</span> <span class="n">b_eff</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Log partition of the subordinator given effective (p, a, b) parameters.</span>
-<span class="sd">        For Gamma: p_eff=α, a_eff=β, b_eff=0 (ignored).</span>
-<span class="sd">        For InverseGamma: p_eff=-α, a_eff=0 (ignored), b_eff=β.</span>
-<span class="sd">        For InverseGaussian: uses μ_ig, λ_ig.</span>
-<span class="sd">        For GIG: uses all three.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Derived from subclass</span>
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -211,6 +205,12 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma| = 2\sum_i \log L_{ii}`, via Cholesky diagonal.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">)))</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mu_Lambda_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mu^\top \Sigma^{-1} \gamma` via Cholesky.&quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Sampling</span>
@@ -316,7 +316,7 @@
     <span class="c1"># Helper: solve Cholesky-based quantities</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_quad_forms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_quad_forms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute :math:`z = L_\Sigma^{-1}(x-\mu)`, :math:`w = L_\Sigma^{-1}\gamma`.</span>
 <span class="sd">        Returns :math:`z, w, \|z\|^2, \|w\|^2, z^\top w`.</span>
@@ -330,7 +330,7 @@
     <span class="c1"># Shared natural_params computation</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_precision_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_precision_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Cholesky-based precision decomposition shared by all Joint subclasses.</span>
 
@@ -350,15 +350,14 @@
         <span class="k">return</span> <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">Lambda</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_assemble_natural_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+          <span class="bp">self</span><span class="p">,</span>
+        <span class="n">theta_1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">Lambda_mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Assemble the full :math:`\theta` vector from scalars :math:`\theta_1, \theta_2, \theta_3`</span>
-<span class="sd">        and shared Cholesky quantities.</span>
-
-<span class="sd">        :math:`\theta = [\theta_1, \theta_2, \theta_3, \Sigma^{-1}\gamma, \Sigma^{-1}\mu, -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`</span>
+<span class="sd">        Assemble the full :math:`\theta` vector from subordinator scalars</span>
+<span class="sd">        and precomputed precision components (from :meth:`_precision_quantities`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">]),</span>
             <span class="n">Lambda_gamma</span><span class="p">,</span>
@@ -372,39 +371,22 @@
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="p">))</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_joint_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_recover_normal_params</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Parse a joint theta vector into its components.</span>
+<span class="sd">        Recover (d, mu, gamma, L_Sigma) from a joint theta vector.</span>
 
-<span class="sd">        Returns (d, theta_1..3, theta_4..6, Lambda, log_det_Sigma, mu, gamma,</span>
-<span class="sd">                 mu_quad, gamma_quad, mu_Lambda_gamma).</span>
+<span class="sd">        Delegates Λ → (μ, L_Σ) to :meth:`MultivariateNormal.from_natural`,</span>
+<span class="sd">        then γ = Σ θ₄ = L_Σ L_Σᵀ θ₄.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>
+
         <span class="n">n</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_dim_from_theta_length</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
-        <span class="n">theta_1</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">theta_2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">theta_3</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">theta_4</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">]</span>
-        <span class="n">theta_5</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">]</span>
-        <span class="n">theta_6</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
-
-        <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta_6</span>
-        <span class="n">Lambda</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-
-        <span class="n">_sign</span><span class="p">,</span> <span class="n">log_det_Lambda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
-        <span class="n">log_det_Sigma</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_det_Lambda</span>
-
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">Lambda</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">)</span>
-        <span class="n">gamma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">Lambda</span><span class="p">,</span> <span class="n">theta_4</span><span class="p">)</span>
-
-        <span class="n">mu_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">)</span>
-        <span class="n">gamma_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">theta_4</span><span class="p">)</span>
-        <span class="n">mu_Lambda_gamma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">theta_4</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">,</span> <span class="n">theta_4</span><span class="p">,</span> <span class="n">theta_5</span><span class="p">,</span>
-                <span class="n">Lambda</span><span class="p">,</span> <span class="n">log_det_Sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span>
-                <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span>
+        <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">],</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">:]]))</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">@</span> <span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">mvn</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">mvn</span><span class="o">.</span><span class="n">L_Sigma</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># ExponentialFamily abstract methods</span>
@@ -448,37 +430,34 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_mstep_normal_params</span><span class="p">(</span>
-        <span class="n">E_X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">E_X_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">E_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">E_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mstep_normal_params</span><span class="p">(</span><span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Closed-form M-step for :math:`\mu, \gamma, \Sigma` from expectation parameters.</span>
 
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : NormalMixtureEta</span>
+<span class="sd">            Aggregated expectation parameters.</span>
+
 <span class="sd">        Returns ``(mu_new, gamma_new, L_new)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">D</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>  <span class="c1"># noqa: F811</span>
 
-        <span class="c1"># Handle near-singular denominator</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span>
+
         <span class="n">safe_D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">SAFE_DENOMINATOR</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">SAFE_DENOMINATOR</span><span class="p">)</span>
 
-        <span class="n">mu_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">E_X</span> <span class="o">-</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">E_X_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe_D</span>
-        <span class="n">gamma_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">E_X_inv_Y</span> <span class="o">-</span> <span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">E_X</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe_D</span>
+        <span class="n">mu_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">eta</span><span class="o">.</span><span class="n">E_X</span> <span class="o">-</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span> <span class="o">*</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe_D</span>
+        <span class="n">gamma_new</span> <span class="o">=</span> <span class="p">(</span><span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span> <span class="o">-</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe_D</span>
 
-        <span class="c1"># Σ = E[XXᵀ/Y] - E[X/Y]μᵀ - μE[X/Y]ᵀ + E[1/Y]μμᵀ - E[Y]γγᵀ</span>
-        <span class="n">Sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">E_XXT_inv_Y</span>
-                 <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
-                 <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="p">)</span>
-                 <span class="o">+</span> <span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
-                 <span class="o">-</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">))</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="p">(</span><span class="n">eta</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span>
+                 <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
+                 <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">)</span>
+                 <span class="o">+</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">)</span>
+                 <span class="o">-</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">))</span>
 
-        <span class="c1"># Symmetrize and ensure positive definite</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="c1"># Add small regularization for numerical stability</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="n">Sigma</span> <span class="o">+</span> <span class="n">SIGMA_REG</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="n">L_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
 

@@ -101,7 +101,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -112,9 +112,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">,</span> <span class="n">GIG_P_MAX</span>
 
 
 <span class="c1"># ============================================================================</span>
@@ -156,11 +155,6 @@
         <span class="k">return</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_eff</span><span class="p">,</span> <span class="n">a_eff</span><span class="p">,</span> <span class="n">b_eff</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_eff</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">b_eff</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">a_eff</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
@@ -201,15 +195,20 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :math:`\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;</span>
-<span class="sd">        -(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;</span>
+<span class="sd">        :math:`\theta = [p-1-d/2,\; -(b/2+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;</span>
+<span class="sd">        -(a/2+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;</span>
 <span class="sd">        \Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]`</span>
+
+<span class="sd">        The scalar coefficients on sufficient statistics :math:`1/y` and :math:`y`</span>
+<span class="sd">        match the GIG convention :math:`\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]`</span>
+<span class="sd">        on :math:`t_Y = [\log y,\,1/y,\,y]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
+        <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">mu_quad</span><span class="p">),</span>
-            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">gamma_quad</span><span class="p">),</span>
+            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">mu_quad</span><span class="p">),</span>
+            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">gamma_quad</span><span class="p">),</span>
+            <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -222,19 +221,11 @@
 <span class="sd">        Dimension :math:`d` is inferred from :math:`|\theta| = 3 + 2d + d^2`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 
-        <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">log_det_Sigma</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span>
-         <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_parse_joint_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-
-        <span class="n">p</span> <span class="o">=</span> <span class="n">theta_1</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta_2</span> <span class="o">-</span> <span class="n">mu_quad</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta_3</span> <span class="o">-</span> <span class="n">gamma_quad</span>
-
-        <span class="n">gig_theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">JointGeneralizedHyperbolic</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">gig_theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">j</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">j</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">j</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span>
         <span class="n">psi_gig</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">gig_theta</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">psi_gig</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_Sigma</span> <span class="o">+</span> <span class="n">mu_Lambda_gamma</span>
+        <span class="k">return</span> <span class="n">psi_gig</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">()</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.from_classical">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_classical">[docs]</a>
@@ -252,10 +243,21 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointGeneralizedHyperbolic&quot;</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">&quot;JointGeneralizedHyperbolic.from_natural: not implemented — &quot;</span>
-            <span class="s2">&quot;use from_classical or m_step.&quot;</span>
-        <span class="p">)</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover classical parameters from :math:`\theta`.</span>
+
+<span class="sd">        :math:`p = \theta_1 + 1 + d/2`,</span>
+<span class="sd">        :math:`b = -2\theta_2 - 2\mu_{\mathrm{quad}}`,</span>
+<span class="sd">        :math:`a = -2\theta_3 - 2\gamma_{\mathrm{quad}}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_recover_normal_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mu_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">])</span>
+        <span class="n">gamma_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">])</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mu_quad</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">gamma_quad</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
 </div>
 
 
@@ -361,39 +363,66 @@
     <span class="c1"># M-step subordinator (GIG requires backend/method/maxiter)</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">gig_eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
         <span class="n">method</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;newton&#39;</span><span class="p">)</span>
         <span class="n">maxiter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;maxiter&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
 
+        <span class="n">gig_eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">])</span>
         <span class="n">current_gig</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gig_new</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
+                    <span class="n">gig_eta</span><span class="p">,</span>
+                    <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+                    <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">p_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+                <span class="n">a_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">b_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">GIG_P_MAX</span>
+                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span>
+                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span><span class="p">):</span>
+                    <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">gig_new</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
                 <span class="n">gig_eta</span><span class="p">,</span>
                 <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                 <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">p_new</span><span class="p">,</span> <span class="n">a_new</span><span class="p">,</span> <span class="n">b_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="mf">1e10</span>
-                    <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">):</span>
-                <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
+            <span class="n">sane</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GIG_P_MAX</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sane</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
+                <span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
             <span class="n">p</span><span class="o">=</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">_GIG_CLAMP_LO</span> <span class="o">=</span> <span class="mf">1e-6</span>
-        <span class="n">_GIG_CLAMP_HI</span> <span class="o">=</span> <span class="mf">1e6</span>
-        <span class="n">a_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="n">_GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">_GIG_CLAMP_HI</span><span class="p">)</span>
-        <span class="n">b_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">_GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">_GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">a_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">b_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>
             <span class="n">p</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_new</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_new</span><span class="p">,</span>
@@ -409,81 +438,90 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warm-start from the best of NIG / VG / NInvG sub-model fits.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Warm-start from the best of NIG / VG / NInvG sub-model fits.</span>
 
-<span class="sd">        Runs 5 EM iterations for each special case, converts the winner</span>
-<span class="sd">        to GH parametrisation, and uses it as the starting point.</span>
-<span class="sd">        Falls back to moment-based default if all sub-models fail.</span>
+<span class="sd">        Runs 5 EM iterations (JAX backend, Newton method) for each special</span>
+<span class="sd">        case, converts each to GH parametrisation, and selects the candidate</span>
+<span class="sd">        with the highest marginal log-likelihood.  A moment-based fallback</span>
+<span class="sd">        (:math:`p=1, a=1, b=1`) is included as a fourth candidate.</span>
+
+<span class="sd">        Fully JAX-native: no try/except, no Python branching on data values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
 
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">SubModel</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">NormalInverseGaussian</span><span class="p">,</span> <span class="s1">&#39;NIG&#39;</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">VarianceGamma</span><span class="p">,</span> <span class="s1">&#39;VG&#39;</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">NormalInverseGamma</span><span class="p">,</span> <span class="s1">&#39;NInvG&#39;</span><span class="p">),</span>
-        <span class="p">]:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-                    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-                    <span class="n">init_m</span> <span class="o">=</span> <span class="n">SubModel</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="n">init_m</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="n">model</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">model</span>
-                    <span class="n">ll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">):</span>
-                        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">ll</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="k">pass</span>
+        <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
+            <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">e_step_backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="p">,</span>
+            <span class="n">m_step_method</span><span class="o">=</span><span class="s1">&#39;newton&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># --- NIG: p=-0.5, a=λ/μ², b=λ ---</span>
+        <span class="n">nig</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">j_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">p_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4999</span><span class="p">)</span>
+        <span class="n">a_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">b_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">ll_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
-        <span class="n">best_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">best_model</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">j</span> <span class="o">=</span> <span class="n">best_model</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="c1"># --- VG: p=α, a=2β, b≈0 ---</span>
+        <span class="n">vg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">VarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">j_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">p_vg</span> <span class="o">=</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">alpha</span>
+        <span class="n">a_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">b_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
+        <span class="n">ll_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">mu</span>
-        <span class="n">gamma_v</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span>
-        <span class="n">L</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">L</span> <span class="o">@</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span>
+        <span class="c1"># --- NInvG: p=-α, a≈0, b=2β ---</span>
+        <span class="n">ninvg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">NormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">j_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">p_ninvg</span> <span class="o">=</span> <span class="o">-</span><span class="n">j_ninvg</span><span class="o">.</span><span class="n">alpha</span>
+        <span class="n">a_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
+        <span class="n">b_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j_ninvg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="n">ll_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">best_name</span> <span class="o">==</span> <span class="s1">&#39;NIG&#39;</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4999</span><span class="p">)</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">best_name</span> <span class="o">==</span> <span class="s1">&#39;VG&#39;</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">best_name</span> <span class="o">==</span> <span class="s1">&#39;NInvG&#39;</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="n">j</span><span class="o">.</span><span class="n">alpha</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># --- Fallback: moment-based default (p=1, a=1, b=1) ---</span>
+        <span class="n">fallback</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">j_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">ll_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Stack candidates and select best by log-likelihood</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ll_nig</span><span class="p">,</span> <span class="n">ll_vg</span><span class="p">,</span> <span class="n">ll_ninvg</span><span class="p">,</span> <span class="n">ll_fb</span><span class="p">])</span>
+        <span class="n">lls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lls</span><span class="p">),</span> <span class="n">lls</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lls</span><span class="p">)</span>
+
+        <span class="n">mus</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">j_nig</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j_ninvg</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">mu</span><span class="p">])</span>
+        <span class="n">gammas</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">j_nig</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j_ninvg</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">gamma</span><span class="p">])</span>
+        <span class="n">Ls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">j_nig</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">j_ninvg</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">])</span>
+        <span class="n">ps</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p_nig</span><span class="p">,</span> <span class="n">p_vg</span><span class="p">,</span> <span class="n">p_ninvg</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">p</span><span class="p">])</span>
+        <span class="n">a_s</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">a_nig</span><span class="p">,</span> <span class="n">a_vg</span><span class="p">,</span> <span class="n">a_ninvg</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">a</span><span class="p">])</span>
+        <span class="n">bs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b_nig</span><span class="p">,</span> <span class="n">b_vg</span><span class="p">,</span> <span class="n">b_ninvg</span><span class="p">,</span> <span class="n">j_fb</span><span class="o">.</span><span class="n">b</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_v</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mus</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gammas</span><span class="p">[</span><span class="n">best</span><span class="p">],</span>
+            <span class="n">sigma</span><span class="o">=</span><span class="n">Ls</span><span class="p">[</span><span class="n">best</span><span class="p">]</span> <span class="o">@</span> <span class="n">Ls</span><span class="p">[</span><span class="n">best</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">ps</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">a</span><span class="o">=</span><span class="n">a_s</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">b</span><span class="o">=</span><span class="n">bs</span><span class="p">[</span><span class="n">best</span><span class="p">],</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.fit">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;det_sigma_one&#39;</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
             <span class="n">m_step_method</span><span class="o">=</span><span class="s1">&#39;newton&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit GH distribution using EM.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit GH distribution using EM or MCECM.</span>
 
 <span class="sd">        Defaults to CPU backends and det_sigma_one regularization</span>
 <span class="sd">        (GH has scale non-identifiability requiring |Sigma| = 1).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
             <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">)</span></div>

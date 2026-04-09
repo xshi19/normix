@@ -87,7 +87,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -96,7 +96,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
 
@@ -127,13 +126,6 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
         <span class="k">return</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_eff</span><span class="p">,</span> <span class="n">a_eff</span><span class="p">,</span> <span class="n">b_eff</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
-        <span class="n">alpha_ig</span> <span class="o">=</span> <span class="o">-</span><span class="n">p_eff</span>
-        <span class="n">beta_ig</span> <span class="o">=</span> <span class="n">b_eff</span> <span class="o">/</span> <span class="mf">2.0</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">beta_ig</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">alpha_ig</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -180,11 +172,12 @@
 
 <span class="sd">        (InverseGamma subordinator: :math:`p=-\alpha`, :math:`a\to 0`, :math:`b=2\beta`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
+        <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
             <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
             <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">mu_quad</span><span class="p">),</span>
             <span class="o">-</span><span class="n">gamma_quad</span><span class="p">,</span>
+            <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -195,17 +188,11 @@
 
 <span class="sd">        Analytical — no Bessel function needed (InverseGamma subordinator).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
-        <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">log_det_Sigma</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span>
-         <span class="n">mu_quad</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_parse_joint_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-
-        <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">theta_1</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta_2</span> <span class="o">-</span> <span class="n">mu_quad</span>
-
-        <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_Sigma</span>
-                <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
-                <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span>
-                <span class="o">+</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">JointNormalInverseGamma</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span>
+                <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+                <span class="o">-</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">())</span>
 
 <div class="viewcode-block" id="JointNormalInverseGamma.from_classical">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_classical">[docs]</a>
@@ -221,8 +208,18 @@
 <div class="viewcode-block" id="JointNormalInverseGamma.from_natural">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Use from_classical or m_step.&quot;</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGamma&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover classical parameters from :math:`\theta`.</span>
+
+<span class="sd">        :math:`\alpha = -(\theta_1 + d/2) - 1`, :math:`\beta = -\theta_2 - \mu_{\mathrm{quad}}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_recover_normal_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mu_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">])</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mu_quad</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
 </div>
 
 
@@ -286,17 +283,28 @@
         <span class="k">return</span> <span class="n">log_f</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">gig_eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="n">j</span><span class="o">.</span><span class="n">beta</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span>
+
+<div class="viewcode-block" id="NormalInverseGamma.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma.m_step_subordinator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGamma&quot;</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
-        <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">gig_eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gig_eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">ig_eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">])</span>
         <span class="n">ig_new</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">ig_eta</span><span class="p">)</span>
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointNormalInverseGamma</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">ig_new</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">ig_new</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGamma&quot;</span><span class="p">:</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointNormalInverseGamma</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>
@@ -306,15 +314,16 @@
 
 <div class="viewcode-block" id="NormalInverseGamma.fit">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
             <span class="n">m_step_method</span><span class="o">=</span><span class="s1">&#39;newton&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit NInvG using EM.  Defaults to CPU E-step (faster than JAX vmap</span>
-<span class="sd">        for the degenerate-GIG posterior arising from the InverseGamma</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit NInvG using EM or MCECM.  Defaults to CPU E-step (faster than</span>
+<span class="sd">        JAX vmap for the degenerate-GIG posterior arising from the InverseGamma</span>
 <span class="sd">        subordinator).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
             <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">)</span></div>

@@ -80,38 +80,48 @@
 <span class="sd">Stored: ``mu`` (d,), ``L_Sigma`` (d×d) lower-triangular Cholesky of :math:`\\Sigma`.</span>
 <span class="sd">All linear algebra via ``L_Sigma`` — never form :math:`\\Sigma^{-1}` explicitly.</span>
 
-<span class="sd">PDF:</span>
+<span class="sd">Exponential family structure</span>
+<span class="sd">-----------------------------</span>
 
 <span class="sd">.. math::</span>
 
-<span class="sd">    f(x) = (2\\pi)^{-d/2} |\\Sigma|^{-1/2}</span>
-<span class="sd">    \\exp\\!\\left(-\\tfrac{1}{2}(x-\\mu)^\\top\\Sigma^{-1}(x-\\mu)\\right)</span>
-
-<span class="sd">Exponential family:</span>
+<span class="sd">    t(x) = [x,\\; \\operatorname{vec}(xx^\\top)], \\quad</span>
+<span class="sd">    \\theta = [\\Sigma^{-1}\\mu,\\; -\\tfrac{1}{2}\\operatorname{vec}(\\Sigma^{-1})], \\quad</span>
+<span class="sd">    \\log h(x) = 0</span>
 
 <span class="sd">.. math::</span>
 
-<span class="sd">    t(x) = [x, \\operatorname{vec}(xx^\\top)],\\quad</span>
-<span class="sd">    \\theta = [\\Sigma^{-1}\\mu,\\; -\\tfrac{1}{2}\\operatorname{vec}(\\Sigma^{-1})],\\quad</span>
-<span class="sd">    \\psi(\\theta) = \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu + \\tfrac{1}{2}\\log|\\Sigma| + \\tfrac{d}{2}\\log(2\\pi)</span>
+<span class="sd">    \\psi(\\theta) = \\tfrac{1}{2}\\mu^\\top\\Sigma^{-1}\\mu</span>
+<span class="sd">    - \\tfrac{1}{2}\\log|\\Sigma^{-1}|</span>
+<span class="sd">    + \\tfrac{d}{2}\\log(2\\pi)</span>
 
-<span class="sd">In practice we use the Cholesky log_prob formula directly.</span>
+<span class="sd">where :math:`\\operatorname{vec}` uses row-major order (:func:`numpy.ndarray.ravel`).</span>
+
+<span class="sd">All parametrization conversions are analytical (closed-form):</span>
+
+<span class="sd">- classical :math:`\\leftrightarrow` natural: ``natural_params`` / ``from_natural``</span>
+<span class="sd">- natural :math:`\\to` expectation: ``_grad_log_partition`` (analytical override)</span>
+<span class="sd">- expectation :math:`\\to` classical: ``from_expectation``</span>
+
+<span class="sd">No Bregman solver is ever invoked.  ``fit_mle`` computes</span>
+<span class="sd">:math:`\\hat\\eta = n^{-1}\\sum_i t(x_i)` and calls ``from_expectation``</span>
+<span class="sd">(closed-form).  ``log_prob`` overrides the inherited EF formula with a</span>
+<span class="sd">direct Cholesky computation for efficiency.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MultivariateNormal">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MultivariateNormal</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultivariateNormal</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Multivariate Normal with Cholesky parametrization.</span>
+<span class="sd">    Multivariate Normal distribution as an exponential family.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -119,14 +129,112 @@
 <span class="sd">        ``(d,)`` mean vector.</span>
 <span class="sd">    L_Sigma : jax.Array</span>
 <span class="sd">        ``(d, d)`` lower-triangular Cholesky factor of :math:`\Sigma`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Natural parameters: :math:`\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})]`.</span>
+<span class="sd">    Sufficient statistics: :math:`t(x) = [x,\; \operatorname{vec}(xx^\top)]`.</span>
+<span class="sd">    Log-partition: :math:`\psi(\theta) = \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu - \tfrac{1}{2}\log|\Sigma^{-1}| + \tfrac{d}{2}\log(2\pi)`.</span>
+<span class="sd">    Log base measure: :math:`\log h(x) = 0`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>         <span class="c1"># (d,)</span>
     <span class="n">L_Sigma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>    <span class="c1"># (d, d) lower-triangular</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;L_Sigma&#39;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Tier 1: ExponentialFamily abstract methods</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\psi(\theta) = \tfrac{1}{2}\theta_1^\top\Lambda^{-1}\theta_1 - \tfrac{1}{2}\log|\Lambda| + \tfrac{d}{2}\log(2\pi)`</span>
+
+<span class="sd">        where :math:`\Lambda = -2\,\mathrm{reshape}(\theta_2, d, d)` is the precision matrix</span>
+<span class="sd">        and :math:`\theta = [\theta_1,\; \theta_2]` with :math:`\theta_1 \in \mathbb{R}^d`,</span>
+<span class="sd">        :math:`\theta_2 \in \mathbb{R}^{d^2}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+        <span class="n">theta_1</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">theta_2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta_2</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>          <span class="c1"># symmetrize</span>
+        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log_det_Lambda</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+                <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_Lambda</span>
+                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MultivariateNormal.natural_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.natural_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})]`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">L_inv</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="n">L_inv</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_inv</span>                    <span class="c1"># Σ⁻¹</span>
+        <span class="n">theta_1</span> <span class="o">=</span> <span class="n">Lambda</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">theta_2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">Lambda</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span></div>
+
+
+<div class="viewcode-block" id="MultivariateNormal.sufficient_statistics">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.sufficient_statistics">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`t(x) = [x,\; \operatorname{vec}(xx^\top)]`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span></div>
+
+
+<div class="viewcode-block" id="MultivariateNormal.log_base_measure">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.log_base_measure">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log h(x) = 0` (base measure is Lebesgue).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Tier 2: analytical gradient (no autodiff needed)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_grad_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\nabla\psi(\theta) = [\mu,\; \operatorname{vec}(\Sigma + \mu\mu^\top)]`</span>
+
+<span class="sd">        Analytical — recovers :math:`\mu = \Lambda^{-1}\theta_1` and</span>
+<span class="sd">        :math:`\Sigma = \Lambda^{-1}` from :math:`\theta`, then assembles</span>
+<span class="sd">        the expectation parameters directly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+        <span class="n">theta_1</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">theta_2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta_2</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+            <span class="n">L_Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">L_inv</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+            <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L_inv</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_inv</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">mu</span><span class="p">,</span> <span class="p">(</span><span class="n">Sigma</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Constructors — all analytical (no Bregman solver)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="MultivariateNormal.from_classical">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.from_classical">[docs]</a>
@@ -139,10 +247,82 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="MultivariateNormal.from_expectation">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.from_expectation">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultivariateNormal&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closed-form inversion :math:`\eta \to \theta \to (\mu, L_\Sigma)`.</span>
+
+<span class="sd">        :math:`\eta = [E[X],\; \operatorname{vec}(E[XX^\top])]`, so</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \mu = \eta_1, \qquad</span>
+<span class="sd">            \Sigma = \operatorname{reshape}(\eta_2, d, d) - \mu\mu^\top</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : jax.Array</span>
+<span class="sd">            Expectation parameters of shape ``(d + d²,)``.</span>
+<span class="sd">        **_kwargs</span>
+<span class="sd">            Ignored (accepts ``backend``, ``theta0``, etc. for API compatibility).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[:</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">E_xxt</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">E_xxt</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Sigma</span> <span class="o">+</span> <span class="n">Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>            <span class="c1"># symmetrize</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultivariateNormal.from_natural">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.from_natural">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultivariateNormal&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct from natural parameters :math:`\theta = [\theta_1, \theta_2]`.</span>
+
+<span class="sd">        Recovers :math:`\Lambda = -2\,\mathrm{reshape}(\theta_2, d, d)`,</span>
+<span class="sd">        then :math:`\mu = \Lambda^{-1}\theta_1` and</span>
+<span class="sd">        :math:`L_\Sigma = \mathrm{chol}(\Lambda^{-1})`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+        <span class="n">theta_1</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">theta_2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">d</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta_2</span>
+        <span class="n">Lambda</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Lambda</span> <span class="o">+</span> <span class="n">Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">L_Lambda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Lambda</span><span class="p">)</span>
+        <span class="c1"># μ = Λ⁻¹θ₁</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+            <span class="n">L_Lambda</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">L_Lambda</span><span class="p">,</span> <span class="n">theta_1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Σ = Λ⁻¹: form via L_inv to avoid explicit inversion</span>
+        <span class="n">L_inv</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+            <span class="n">L_Lambda</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">L_inv</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_inv</span>
+        <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Standard distribution API</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="MultivariateNormal.log_prob">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;log f(x) for a single observation x of shape (d,).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\log f(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma| - \tfrac{1}{2}\|L_\Sigma^{-1}(x-\mu)\|^2`.</span>
+
+<span class="sd">        Overrides the inherited EF formula for numerical efficiency (Cholesky-direct).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -152,23 +332,64 @@
                 <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="MultivariateNormal.mean">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span></div>
+
+
+<div class="viewcode-block" id="MultivariateNormal.cov">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.cov">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = \Sigma = L_\Sigma L_\Sigma^\top`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
+
+
+<div class="viewcode-block" id="MultivariateNormal.rvs">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw ``n`` i.i.d. samples via JAX PRNG.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        jax.Array</span>
+<span class="sd">            Shape ``(n, d)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">z</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
+
+
 <div class="viewcode-block" id="MultivariateNormal.sample">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal.MultivariateNormal.sample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">())</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw samples of shape (*shape, d).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw samples via an explicit JAX key.  Legacy API — prefer ``rvs``.&quot;&quot;&quot;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div>
 
 
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Properties</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">dim</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dimensionality.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dim</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dimensionality (alias for ``d``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top` (alias for ``cov()``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span></div>
 
 </pre></div>
 

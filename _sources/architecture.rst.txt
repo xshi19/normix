@@ -26,7 +26,9 @@ Package Layout
    │   ├── joint.py                 # JointNormalMixture(ExponentialFamily)
    │   └── marginal.py              # NormalMixture (owns a JointNormalMixture)
    ├── fitting/
-   │   ├── em.py                    # EMResult; Batch / Online / MiniBatch EM fitters
+   │   ├── em.py                    # EMResult; BatchEMFitter, IncrementalEMFitter
+   │   ├── eta.py                   # NormalMixtureEta, affine_combine
+   │   ├── eta_rules.py             # EtaUpdateRule (eqx.Module) + concrete rules
    │   └── solvers.py               # Bregman divergence solvers (η→θ)
    └── utils/
        ├── bessel.py                # log_kv with custom JVP
@@ -165,7 +167,7 @@ distribution :math:`f(x)` is not.
 ``NormalMixture`` owns a ``JointNormalMixture``. The joint provides:
 
 - ``conditional_expectations(x)`` — E[log Y|x], E[1/Y|x], E[Y|x] for the EM E-step
-- ``_mstep_normal_params(...)`` — closed-form M-step for μ, γ, L_Σ
+- ``_mstep_normal_params(eta)`` — closed-form M-step for μ, γ, L_Σ from ``NormalMixtureEta``
 
 .. list-table::
    :header-rows: 1
@@ -216,8 +218,6 @@ The EM fitters implement the expectation-maximisation algorithm.
    * - Fitter
      - Description
    * - ``BatchEMFitter``
-     - Standard batch EM; supports ``lax.scan`` (JIT) or Python loop (CPU)
-   * - ``OnlineEMFitter``
-     - Online EM, one sample at a time, Robbins-Monro averaging
-   * - ``MiniBatchEMFitter``
-     - Mini-batch EM with Robbins-Monro averaging
+     - Standard batch EM; supports ``lax.scan`` (JIT) or Python loop (CPU). Optional ``eta_update`` for shrinkage.
+   * - ``IncrementalEMFitter``
+     - Mini-batch / online / fine-tuning EM with pluggable ``EtaUpdateRule`` (Robbins-Monro, EWMA, etc.)

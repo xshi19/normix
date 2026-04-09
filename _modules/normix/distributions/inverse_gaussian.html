@@ -97,7 +97,7 @@
 <span class="sd">.. math::</span>
 
 <span class="sd">    \\psi(\\theta) = -\\tfrac{1}{2}\\log(-2\\theta_2)</span>
-<span class="sd">    + \\sqrt{(-2\\theta_1)(-2\\theta_2)}</span>
+<span class="sd">    - \\sqrt{(-2\\theta_1)(-2\\theta_2)}</span>
 
 <span class="sd">    \\bigl(\\tfrac{1}{2}\\log(2\\pi)\\ \\text{is absorbed into}\\</span>
 <span class="sd">    \\log h(x) = -\\tfrac{1}{2}\\log(2\\pi) - \\tfrac{3}{2}\\log x\\bigr)</span>
@@ -114,7 +114,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="InverseGaussian">
@@ -225,13 +224,22 @@
 <div class="viewcode-block" id="InverseGaussian.cdf">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CDF of the Inverse Gaussian distribution (log-space stable).</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            F(x) = \Phi(t_1) + \exp\!\bigl(2\lambda/\mu + \log\Phi(-t_2)\bigr)</span>
+
+<span class="sd">        where :math:`t_1 = \sqrt{\lambda/x}\,(x/\mu - 1)` and</span>
+<span class="sd">        :math:`t_2 = \sqrt{\lambda/x}\,(x/\mu + 1)`.  The second term uses</span>
+<span class="sd">        ``log_ndtr`` to avoid overflow when :math:`\lambda/\mu` is large.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">sqrt_lam_over_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
         <span class="n">t1</span> <span class="o">=</span> <span class="n">sqrt_lam_over_x</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
         <span class="n">t2</span> <span class="o">=</span> <span class="n">sqrt_lam_over_x</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
-                <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span>
-                <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="o">-</span><span class="n">t2</span><span class="p">))</span></div>
+        <span class="n">log_term2</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">(</span><span class="o">-</span><span class="n">t2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_term2</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InverseGaussian.rvs">

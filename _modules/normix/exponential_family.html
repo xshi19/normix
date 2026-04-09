@@ -118,7 +118,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ExponentialFamily">
@@ -299,6 +298,45 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Divergences (Tier 2 — subclasses may override)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ExponentialFamily.squared_hellinger">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.squared_hellinger">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">squared_hellinger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Squared Hellinger distance :math:`H^2(p, q)`.</span>
+
+<span class="sd">        Default uses the general exponential-family formula via :math:`\psi`.</span>
+<span class="sd">        Subclasses may override for numerically improved variants.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.divergences</span><span class="w"> </span><span class="kn">import</span> <span class="n">squared_hellinger_from_psi</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">squared_hellinger_from_psi</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.kl_divergence">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.kl_divergence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL divergence :math:`D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})`.</span>
+
+<span class="sd">        Default uses the Bregman-divergence formula via :math:`\psi` and :math:`\nabla\psi`.</span>
+<span class="sd">        Subclasses may override.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.divergences</span><span class="w"> </span><span class="kn">import</span> <span class="n">kl_divergence_from_psi</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">kl_divergence_from_psi</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Constructors — classmethod stubs; subclasses override as needed</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
@@ -361,12 +399,7 @@
         <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
 
-        <span class="n">jax_bounds</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">jax_bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">jax_bounds</span>
-            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">float</span><span class="p">(</span><span class="n">lo</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">hi</span><span class="p">))</span> <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
             <span class="n">f</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span>

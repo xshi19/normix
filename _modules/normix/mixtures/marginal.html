@@ -94,7 +94,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SIGMA_INIT_REG</span>
 
@@ -115,7 +114,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span> <span class="o">=</span> <span class="n">joint</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">joint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalMixture&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
 
     <span class="nd">@property</span>
@@ -165,36 +164,104 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
 
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Divergences (delegate to joint)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="NormalMixture.squared_hellinger">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.squared_hellinger">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">squared_hellinger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Squared Hellinger distance via joint distributions (upper bound on marginal).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">squared_hellinger</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_joint</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.kl_divergence">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.kl_divergence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL divergence via joint distributions.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">kl_divergence</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_joint</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Eta from model (for incremental EM initialisation)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="NormalMixture.compute_eta_from_model">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.compute_eta_from_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reconstruct :math:`\eta` from the model&#39;s own parameters.</span>
+
+<span class="sd">        Uses the *marginal* expectations of the joint sufficient statistics:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \eta_4 = \mu + \gamma\,E[Y], \quad</span>
+<span class="sd">            \eta_5 = \mu\,E[1/Y] + \gamma, \quad</span>
+<span class="sd">            \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]</span>
+<span class="sd">                     + \mu\gamma^\top + \gamma\mu^\top</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
+
+        <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
+            <span class="n">E_log_Y</span><span class="o">=</span><span class="n">E_log_Y</span><span class="p">,</span>
+            <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">E_inv_Y</span><span class="p">,</span>
+            <span class="n">E_Y</span><span class="o">=</span><span class="n">E_Y</span><span class="p">,</span>
+            <span class="n">E_X</span><span class="o">=</span><span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span>
+            <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">mu</span> <span class="o">*</span> <span class="n">E_inv_Y</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">,</span>
+            <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="p">(</span><span class="n">sigma</span>
+                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_Y</span>
+                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
+                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">)),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return ``(E[log Y], E[1/Y], E[Y])`` under the subordinator prior.&quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># EM E-step</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="NormalMixture.e_step">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.e_step">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        E-step: compute conditional expectations :math:`E[g(Y)\mid X=x_i]` for each :math:`i`.</span>
+<span class="sd">        Full E-step: subordinator conditionals + batch aggregation.</span>
 
-<span class="sd">        Returns dict of arrays with shape ``(n, ...)`` for each expectation.</span>
+<span class="sd">        Returns a :class:`~normix.fitting.eta.NormalMixtureEta` with the</span>
+<span class="sd">        six aggregated expectation parameters.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
+<span class="sd">        X : (n, d) data array</span>
 <span class="sd">        backend : str</span>
-<span class="sd">            ``&#39;jax&#39;`` (default): ``jax.vmap`` over ``conditional_expectations``. JIT-able.</span>
+<span class="sd">            ``&#39;jax&#39;`` (default): ``jax.vmap`` over ``conditional_expectations``.</span>
+<span class="sd">            ``&#39;cpu&#39;``: quad forms in JAX + GIG Bessel on CPU.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sub_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_eta</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">)</span></div>
 
-<span class="sd">            ``&#39;cpu&#39;``: quad forms in JAX (vmapped) + GIG Bessel on CPU.</span>
-<span class="sd">            Faster for large :math:`N`; not JIT-able.</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Per-observation subordinator conditional expectations.</span>
+
+<span class="sd">        Returns dict ``{E_log_Y: (n,), E_inv_Y: (n,), E_Y: (n,)}``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_cpu</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">conditional_expectations</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator_cpu</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">conditional_expectations</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        E-step with quad forms in JAX (vmapped) and Bessel computation on CPU.</span>
-
-<span class="sd">        Phase 1: Quad forms (d-dimensional matrix ops) stay in JAX — GPU-friendly.</span>
-<span class="sd">        Phase 2: GIG expectations via vectorized scipy.kve — C-level, fast.</span>
-
-<span class="sd">        Requires self._joint to implement _posterior_gig_params(z2, w2).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CPU path: quad forms in JAX (vmapped) + GIG Bessel via scipy.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
 
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -222,6 +289,24 @@
             <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span>     <span class="n">eta</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
         <span class="p">}</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_eta</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Average per-observation expectations into a NormalMixtureEta.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_inv_Y&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
+            <span class="n">E_log_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">]),</span>
+            <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">),</span>
+            <span class="n">E_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]),</span>
+            <span class="n">E_X</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj,n-&gt;nij&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="p">)</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># M-step</span>
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -230,50 +315,61 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">expectations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        M-step: update model parameters from sufficient statistics.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full M-step: update normal params + subordinator from eta.</span>
 
 <span class="sd">        Returns a NEW NormalMixture with updated parameters.</span>
-<span class="sd">        Subclasses must override _m_step_subordinator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_normal</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step_subordinator</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.m_step_normal">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_normal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;M-step for normal parameters only (MCECM Cycle 1).</span>
+
+<span class="sd">        Updates :math:`\mu, \gamma, \Sigma`; subordinator unchanged.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 
-        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-
-        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">expectations</span><span class="p">[</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">]</span>
-        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">expectations</span><span class="p">[</span><span class="s1">&#39;E_inv_Y&#39;</span><span class="p">]</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">expectations</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]</span>
-
-        <span class="n">mean_E_inv_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span>
-        <span class="n">mean_E_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_Y</span><span class="p">)</span>
-        <span class="n">E_X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">E_X_inv_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">E_XXT_inv_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj,n-&gt;nij&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_mstep_normal_params</span><span class="p">(</span>
-            <span class="n">E_X</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">E_XXT_inv_Y</span><span class="p">,</span> <span class="n">mean_E_inv_Y</span><span class="p">,</span> <span class="n">mean_E_Y</span><span class="p">)</span>
-
-        <span class="n">gig_eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">),</span> <span class="n">mean_E_inv_Y</span><span class="p">,</span> <span class="n">mean_E_Y</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_m_step_subordinator</span><span class="p">(</span>
-            <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">gig_eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_mstep_normal_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_normal_params</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="NormalMixture.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_m_step_subordinator</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">mu_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">gamma_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">L_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">gig_eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update subordinator parameters and construct a new marginal model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update subordinator parameters from expectation parameters.</span>
+
+<span class="sd">        Reads subordinator-specific fields from ``eta`` (e.g. ``eta.E_log_Y``).</span>
+<span class="sd">        Normal params are read from ``self._joint``; only the subordinator</span>
+<span class="sd">        is re-estimated. Returns a new model.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># M-step helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replace_normal_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy with updated (mu, gamma, L_Sigma), subordinator unchanged.&quot;&quot;&quot;</span>
+        <span class="n">new_joint</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">j</span><span class="p">:</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">new_joint</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Regularisation</span>
@@ -329,6 +425,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;em&#39;</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
@@ -342,6 +439,7 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        X : (n, d) data array</span>
+<span class="sd">        algorithm : &#39;em&#39; (default) or &#39;mcecm&#39;</span>
 <span class="sd">        verbose : 0 = silent, 1 = summary, 2 = per-iteration table</span>
 <span class="sd">        max_iter, tol : EM convergence parameters</span>
 <span class="sd">        regularization : &#39;det_sigma_one&#39; or &#39;none&#39;</span>
@@ -354,6 +452,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
         <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
+            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>

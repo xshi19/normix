@@ -86,7 +86,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -95,7 +95,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
 
-<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
 
@@ -127,13 +126,6 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
         <span class="k">return</span> <span class="n">InverseGaussian</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_eff</span><span class="p">,</span> <span class="n">a_eff</span><span class="p">,</span> <span class="n">b_eff</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
-        <span class="n">lam_p</span> <span class="o">=</span> <span class="n">b_eff</span>     <span class="c1"># b = lam</span>
-        <span class="n">mu_p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">b_eff</span> <span class="o">/</span> <span class="n">a_eff</span><span class="p">)</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">lam_p</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu_p</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">lam_p</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -179,18 +171,20 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :math:`\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;</span>
-<span class="sd">        -(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;</span>
+<span class="sd">        :math:`\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;</span>
+<span class="sd">        -(\lambda/(2\mu_{IG}^2)+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;</span>
 <span class="sd">        \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]`</span>
 
-<span class="sd">        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`.</span>
+<span class="sd">        where :math:`p=-1/2`, :math:`a=\lambda/\mu_{IG}^2`, :math:`b=\lambda`, aligned</span>
+<span class="sd">        with GIG natural parameters on :math:`[\log y,\,1/y,\,y]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">a_ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
+        <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">Lambda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision_quantities</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_natural_params</span><span class="p">(</span>
             <span class="o">-</span><span class="mf">1.5</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">+</span> <span class="n">mu_quad</span><span class="p">),</span>
-            <span class="o">-</span><span class="p">(</span><span class="n">a_ig</span> <span class="o">+</span> <span class="n">gamma_quad</span><span class="p">),</span>
+            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">mu_quad</span><span class="p">),</span>
+            <span class="o">-</span><span class="p">(</span><span class="n">a_ig</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">gamma_quad</span><span class="p">),</span>
+            <span class="n">Lambda_mu</span><span class="p">,</span> <span class="n">Lambda_gamma</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -200,20 +194,15 @@
 <span class="sd">        :math:`\psi(\theta)` for Joint NIG. Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` —</span>
 <span class="sd">        no Bessel function evaluation needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
-        <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">log_det_Sigma</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span>
-         <span class="n">mu_quad</span><span class="p">,</span> <span class="n">gamma_quad</span><span class="p">,</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_parse_joint_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-
-        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta_2</span> <span class="o">-</span> <span class="n">mu_quad</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta_3</span> <span class="o">-</span> <span class="n">gamma_quad</span>
-
-        <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">JointNormalInverseGaussian</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">lam</span>
         <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
         <span class="n">log_K</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sqrt_ab</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">))</span> <span class="o">-</span> <span class="n">sqrt_ab</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_Sigma</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_K</span>
-                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">b</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">))</span>
-                <span class="o">+</span> <span class="n">mu_Lambda_gamma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_K</span>
+                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">b</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">))</span>
+                <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">())</span>
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.from_classical">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_classical">[docs]</a>
@@ -229,8 +218,22 @@
 <div class="viewcode-block" id="JointNormalInverseGaussian.from_natural">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Use from_classical or m_step.&quot;</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover classical parameters from :math:`\theta`.</span>
+
+<span class="sd">        From :math:`b = -2\theta_2 - 2\mu_{\mathrm{quad}} = \lambda` and</span>
+<span class="sd">        :math:`a = -2\theta_3 - 2\gamma_{\mathrm{quad}} = \lambda/\mu_{IG}^2`,</span>
+<span class="sd">        so :math:`\mu_{IG} = \sqrt{b/a}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span> <span class="o">=</span> <span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">_recover_normal_params</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">mu_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span><span class="p">])</span>
+        <span class="n">gamma_quad</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span> <span class="o">+</span> <span class="n">d</span><span class="p">])</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mu_quad</span><span class="p">)</span>           <span class="c1"># b = λ</span>
+        <span class="n">a_ig</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">gamma_quad</span><span class="p">)</span>       <span class="c1"># a = λ/μ_IG²</span>
+        <span class="n">mu_ig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lam</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a_ig</span><span class="p">,</span> <span class="mf">1e-30</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="o">=</span><span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span></div>
 </div>
 
 
@@ -294,17 +297,28 @@
         <span class="k">return</span> <span class="n">log_f</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">gig_eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">gig</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">a</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="n">j</span><span class="o">.</span><span class="n">mu_ig</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<div class="viewcode-block" id="NormalInverseGaussian.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.m_step_subordinator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">ig_new</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gig_eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">gig_eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span><span class="p">]))</span>
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointNormalInverseGaussian</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
             <span class="n">mu_ig</span><span class="o">=</span><span class="n">ig_new</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">ig_new</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">NormalInverseGaussian</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">NormalInverseGaussian</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">:</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointNormalInverseGaussian</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_new</span><span class="p">,</span>

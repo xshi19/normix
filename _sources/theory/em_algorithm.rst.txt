@@ -402,14 +402,24 @@ Implementation in normix
 ----------------------
 
 In ``normix``, the EM algorithm is implemented in the :meth:`fit` method of
-:class:`~normix.base.NormalMixture` subclasses. The key methods are:
+:class:`~normix.mixtures.marginal.NormalMixture` subclasses
+(e.g. :class:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`,
+:class:`~normix.distributions.variance_gamma.VarianceGamma`, etc.).
+The key methods are:
 
-- :meth:`_conditional_expectation_y_given_x`: Computes :math:`E[Y^{-1}|X]`,
-  :math:`E[Y|X]`, :math:`E[\log Y|X]` for the E-step
-- :meth:`joint.set_expectation_params`: Sets parameters from expectation
-  parameters for the M-step
-- :meth:`joint._expectation_to_natural`: Converts expectation to natural
-  parameters (solves the GIG optimization)
+- :meth:`~normix.mixtures.marginal.NormalMixture.e_step`: Computes the
+  averaged conditional expectations :math:`E[\log Y|X]`, :math:`E[Y^{-1}|X]`,
+  :math:`E[Y|X]`, :math:`E[X|X]`, :math:`E[X/Y|X]`, :math:`E[XX^\top/Y|X]`
+  over the data, returning a :class:`~normix.fitting.eta.NormalMixtureEta`.
+- :meth:`~normix.mixtures.marginal.NormalMixture.m_step`: Updates all
+  parameters from the expectation parameters; the normal-component update
+  is closed-form, and the subordinator update calls
+  :meth:`~normix.mixtures.marginal.NormalMixture.m_step_subordinator` which
+  inverts the exponential family map via
+  :func:`~normix.fitting.solvers.solve_bregman` (or a closed-form override).
+- :meth:`~normix.mixtures.joint.JointNormalMixture.conditional_expectations`:
+  Computes :math:`E[\log Y|X=x]`, :math:`E[Y^{-1}|X=x]`, :math:`E[Y|X=x]`
+  for a single observation, used inside the E-step.
 
 References
 ----------

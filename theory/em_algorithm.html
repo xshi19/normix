@@ -409,14 +409,24 @@ likelihood methods) can help improve the conditioning of <span class="math notra
 <section id="implementation-in-normix">
 <h2>Implementation in normix<a class="headerlink" href="#implementation-in-normix" title="Link to this heading"></a></h2>
 <p>In <code class="docutils literal notranslate"><span class="pre">normix</span></code>, the EM algorithm is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> method of
-<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code> subclasses. The key methods are:</p>
+<a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> subclasses
+(e.g. <a class="reference internal" href="../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>,
+<a class="reference internal" href="../api/index.html#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a>, etc.).
+The key methods are:</p>
 <ul class="simple">
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_conditional_expectation_y_given_x()</span></code>: Computes <span class="math notranslate nohighlight">\(E[Y^{-1}|X]\)</span>,
-<span class="math notranslate nohighlight">\(E[Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[\log Y|X]\)</span> for the E-step</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">joint.set_expectation_params()</span></code>: Sets parameters from expectation
-parameters for the M-step</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">joint._expectation_to_natural()</span></code>: Converts expectation to natural
-parameters (solves the GIG optimization)</p></li>
+<li><p><a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.e_step" title="normix.mixtures.marginal.NormalMixture.e_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">e_step()</span></code></a>: Computes the
+averaged conditional expectations <span class="math notranslate nohighlight">\(E[\log Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[Y^{-1}|X]\)</span>,
+<span class="math notranslate nohighlight">\(E[Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[X|X]\)</span>, <span class="math notranslate nohighlight">\(E[X/Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[XX^\top/Y|X]\)</span>
+over the data, returning a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>.</p></li>
+<li><p><a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.m_step" title="normix.mixtures.marginal.NormalMixture.m_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step()</span></code></a>: Updates all
+parameters from the expectation parameters; the normal-component update
+is closed-form, and the subordinator update calls
+<a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="normix.mixtures.marginal.NormalMixture.m_step_subordinator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step_subordinator()</span></code></a> which
+inverts the exponential family map via
+<a class="reference internal" href="../api/index.html#normix.fitting.solvers.solve_bregman" title="normix.fitting.solvers.solve_bregman"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a> (or a closed-form override).</p></li>
+<li><p><a class="reference internal" href="../api/index.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="normix.mixtures.joint.JointNormalMixture.conditional_expectations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">conditional_expectations()</span></code></a>:
+Computes <span class="math notranslate nohighlight">\(E[\log Y|X=x]\)</span>, <span class="math notranslate nohighlight">\(E[Y^{-1}|X=x]\)</span>, <span class="math notranslate nohighlight">\(E[Y|X=x]\)</span>
+for a single observation, used inside the E-step.</p></li>
 </ul>
 </section>
 <section id="references">

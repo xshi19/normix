@@ -63,6 +63,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-normix.distributions.normal">Multivariate Distributions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#exponential-family-structure">Exponential family structure</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></a></li>
 </ul>
 </li>
@@ -121,17 +122,17 @@
 <nav class="contents local" id="modules">
 <p class="topic-title">Modules</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#module-normix.exponential_family" id="id5">Base Classes</a></p></li>
-<li><p><a class="reference internal" href="#univariate-distributions" id="id6">Univariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id7">Multivariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#mixture-base-classes" id="id8">Mixture Base Classes</a></p></li>
-<li><p><a class="reference internal" href="#mixture-distributions" id="id9">Mixture Distributions</a></p></li>
-<li><p><a class="reference internal" href="#fitting" id="id10">Fitting</a></p></li>
-<li><p><a class="reference internal" href="#utilities" id="id11">Utilities</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.exponential_family" id="id3">Base Classes</a></p></li>
+<li><p><a class="reference internal" href="#univariate-distributions" id="id4">Univariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id5">Multivariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#mixture-base-classes" id="id6">Mixture Base Classes</a></p></li>
+<li><p><a class="reference internal" href="#mixture-distributions" id="id7">Mixture Distributions</a></p></li>
+<li><p><a class="reference internal" href="#fitting" id="id8">Fitting</a></p></li>
+<li><p><a class="reference internal" href="#utilities" id="id9">Utilities</a></p></li>
 </ul>
 </nav>
 <section id="module-normix.exponential_family">
-<span id="base-classes"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Base Classes</a><a class="headerlink" href="#module-normix.exponential_family" title="Link to this heading"></a></h2>
+<span id="base-classes"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Base Classes</a><a class="headerlink" href="#module-normix.exponential_family" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.exponential_family.</span></span><span class="sig-name descname"><span class="pre">ExponentialFamily</span></span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily" title="Link to this definition"></a></dt>
@@ -315,6 +316,38 @@ sufficient_statistics, log_base_measure</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.squared_hellinger">
+<span class="sig-name descname"><span class="pre">squared_hellinger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.squared_hellinger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.squared_hellinger" title="Link to this definition"></a></dt>
+<dd><p>Squared Hellinger distance <span class="math notranslate nohighlight">\(H^2(p, q)\)</span>.</p>
+<p>Default uses the general exponential-family formula via <span class="math notranslate nohighlight">\(\psi\)</span>.
+Subclasses may override for numerically improved variants.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.kl_divergence">
+<span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.kl_divergence" title="Link to this definition"></a></dt>
+<dd><p>KL divergence <span class="math notranslate nohighlight">\(D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})\)</span>.</p>
+<p>Default uses the Bregman-divergence formula via <span class="math notranslate nohighlight">\(\psi\)</span> and <span class="math notranslate nohighlight">\(\nabla\psi\)</span>.
+Subclasses may override.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.from_natural" title="Link to this definition"></a></dt>
 <dd><p>Construct from natural parameters θ. Subclasses must override.</p>
@@ -435,7 +468,7 @@ an initial model. For distributions with closed-form <code class="docutils liter
 
 </section>
 <section id="univariate-distributions">
-<h2><a class="toc-backref" href="#id6" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading"></a></h2>
 <section id="module-normix.distributions.gamma">
 <span id="gamma"></span><h3>Gamma<a class="headerlink" href="#module-normix.distributions.gamma" title="Link to this heading"></a></h3>
 <p>Gamma distribution as an exponential family.</p>
@@ -791,7 +824,7 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 \quad \theta_1 &lt; 0,\; \theta_2 &lt; 0\]</div>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}\psi(\theta) = -\tfrac{1}{2}\log(-2\theta_2)
-+ \sqrt{(-2\theta_1)(-2\theta_2)}\\\bigl(\tfrac{1}{2}\log(2\pi)\ \text{is absorbed into}\
+- \sqrt{(-2\theta_1)(-2\theta_2)}\\\bigl(\tfrac{1}{2}\log(2\pi)\ \text{is absorbed into}\
 \log h(x) = -\tfrac{1}{2}\log(2\pi) - \tfrac{3}{2}\log x\bigr)\end{aligned}\end{align} \]</div>
 <div class="math notranslate nohighlight">
 \[\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]\]</div>
@@ -882,7 +915,12 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.cdf">
 <span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.cdf" title="Link to this definition"></a></dt>
-<dd><p>CDF F(x). Subclasses should override with analytical formulas.</p>
+<dd><p>CDF of the Inverse Gaussian distribution (log-space stable).</p>
+<div class="math notranslate nohighlight">
+\[F(x) = \Phi(t_1) + \exp\!\bigl(2\lambda/\mu + \log\Phi(-t_2)\bigr)\]</div>
+<p>where <span class="math notranslate nohighlight">\(t_1 = \sqrt{\lambda/x}\,(x/\mu - 1)\)</span> and
+<span class="math notranslate nohighlight">\(t_2 = \sqrt{\lambda/x}\,(x/\mu + 1)\)</span>.  The second term uses
+<code class="docutils literal notranslate"><span class="pre">log_ndtr</span></code> to avoid overflow when <span class="math notranslate nohighlight">\(\lambda/\mu\)</span> is large.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1177,25 +1215,37 @@ multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
 </section>
 </section>
 <section id="module-normix.distributions.normal">
-<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id7" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading"></a></h2>
+<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading"></a></h2>
 <p>Multivariate Normal distribution.</p>
 <p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (d×d) lower-triangular Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>.
 All linear algebra via <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> — never form <span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> explicitly.</p>
-<p>PDF:</p>
+<section id="exponential-family-structure">
+<h3>Exponential family structure<a class="headerlink" href="#exponential-family-structure" title="Link to this heading"></a></h3>
 <div class="math notranslate nohighlight">
-\[f(x) = (2\pi)^{-d/2} |\Sigma|^{-1/2}
-\exp\!\left(-\tfrac{1}{2}(x-\mu)^\top\Sigma^{-1}(x-\mu)\right)\]</div>
-<p>Exponential family:</p>
+\[t(x) = [x,\; \operatorname{vec}(xx^\top)], \quad
+\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})], \quad
+\log h(x) = 0\]</div>
 <div class="math notranslate nohighlight">
-\[t(x) = [x, \operatorname{vec}(xx^\top)],\quad
-\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})],\quad
-\psi(\theta) = \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu + \tfrac{1}{2}\log|\Sigma| + \tfrac{d}{2}\log(2\pi)\]</div>
-<p>In practice we use the Cholesky log_prob formula directly.</p>
+\[\psi(\theta) = \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu
+- \tfrac{1}{2}\log|\Sigma^{-1}|
++ \tfrac{d}{2}\log(2\pi)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\operatorname{vec}\)</span> uses row-major order (<code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.ndarray.ravel()</span></code>).</p>
+<p>All parametrization conversions are analytical (closed-form):</p>
+<ul class="simple">
+<li><p>classical <span class="math notranslate nohighlight">\(\leftrightarrow\)</span> natural: <code class="docutils literal notranslate"><span class="pre">natural_params</span></code> / <code class="docutils literal notranslate"><span class="pre">from_natural</span></code></p></li>
+<li><p>natural <span class="math notranslate nohighlight">\(\to\)</span> expectation: <code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code> (analytical override)</p></li>
+<li><p>expectation <span class="math notranslate nohighlight">\(\to\)</span> classical: <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code></p></li>
+</ul>
+<p>No Bregman solver is ever invoked.  <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> computes
+<span class="math notranslate nohighlight">\(\hat\eta = n^{-1}\sum_i t(x_i)\)</span> and calls <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>
+(closed-form).  <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> overrides the inherited EF formula with a
+direct Cholesky computation for efficiency.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal.</span></span><span class="sig-name descname"><span class="pre">MultivariateNormal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>Multivariate Normal with Cholesky parametrization.</p>
+<dd><p>Bases: <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
+<p>Multivariate Normal distribution as an exponential family.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1204,6 +1254,11 @@ All linear algebra via <code class="docutils literal notranslate"><span class="p
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Natural parameters: <span class="math notranslate nohighlight">\(\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})]\)</span>.
+Sufficient statistics: <span class="math notranslate nohighlight">\(t(x) = [x,\; \operatorname{vec}(xx^\top)]\)</span>.
+Log-partition: <span class="math notranslate nohighlight">\(\psi(\theta) = \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu - \tfrac{1}{2}\log|\Sigma^{-1}| + \tfrac{d}{2}\log(2\pi)\)</span>.
+Log base measure: <span class="math notranslate nohighlight">\(\log h(x) = 0\)</span>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.mu">
 <span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.mu" title="Link to this definition"></a></dt>
@@ -1213,6 +1268,45 @@ All linear algebra via <code class="docutils literal notranslate"><span class="p
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.L_Sigma">
 <span class="sig-name descname"><span class="pre">L_Sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.L_Sigma" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.natural_params">
+<span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.natural_params" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\theta = [\Sigma^{-1}\mu,\; -\tfrac{1}{2}\operatorname{vec}(\Sigma^{-1})]\)</span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sufficient_statistics">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sufficient_statistics" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(t(x) = [x,\; \operatorname{vec}(xx^\top)]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.log_base_measure">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.log_base_measure" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x) = 0\)</span> (base measure is Lebesgue).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.from_classical">
@@ -1226,9 +1320,48 @@ All linear algebra via <code class="docutils literal notranslate"><span class="p
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.from_expectation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.from_expectation" title="Link to this definition"></a></dt>
+<dd><p>Closed-form inversion <span class="math notranslate nohighlight">\(\eta \to \theta \to (\mu, L_\Sigma)\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\eta = [E[X],\; \operatorname{vec}(E[XX^\top])]\)</span>, so</p>
+<div class="math notranslate nohighlight">
+\[\mu = \eta_1, \qquad
+\Sigma = \operatorname{reshape}(\eta_2, d, d) - \mu\mu^\top\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Expectation parameters of shape <code class="docutils literal notranslate"><span class="pre">(d</span> <span class="pre">+</span> <span class="pre">d²,)</span></code>.</p></li>
+<li><p><strong>**_kwargs</strong> – Ignored (accepts <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code>, etc. for API compatibility).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal" title="normix.distributions.normal.MultivariateNormal"><em>MultivariateNormal</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.from_natural">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.from_natural" title="Link to this definition"></a></dt>
+<dd><p>Construct from natural parameters <span class="math notranslate nohighlight">\(\theta = [\theta_1, \theta_2]\)</span>.</p>
+<p>Recovers <span class="math notranslate nohighlight">\(\Lambda = -2\,\mathrm{reshape}(\theta_2, d, d)\)</span>,
+then <span class="math notranslate nohighlight">\(\mu = \Lambda^{-1}\theta_1\)</span> and
+<span class="math notranslate nohighlight">\(L_\Sigma = \mathrm{chol}(\Lambda^{-1})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal" title="normix.distributions.normal.MultivariateNormal"><em>MultivariateNormal</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.log_prob" title="Link to this definition"></a></dt>
-<dd><p>log f(x) for a single observation x of shape (d,).</p>
+<dd><p><span class="math notranslate nohighlight">\(\log f(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma| - \tfrac{1}{2}\|L_\Sigma^{-1}(x-\mu)\|^2\)</span>.</p>
+<p>Overrides the inherited EF formula for numerical efficiency (Cholesky-direct).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1240,9 +1373,51 @@ All linear algebra via <code class="docutils literal notranslate"><span class="p
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.mean" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.cov">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.cov" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = \Sigma = L_\Sigma L_\Sigma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.rvs" title="Link to this definition"></a></dt>
+<dd><p>Draw <code class="docutils literal notranslate"><span class="pre">n</span></code> i.i.d. samples via JAX PRNG.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sample" title="Link to this definition"></a></dt>
-<dd><p>Draw samples of shape (<a href="#id1"><span class="problematic" id="id2">*</span></a>shape, d).</p>
+<dd><p>Draw samples via an explicit JAX key.  Legacy API — prefer <code class="docutils literal notranslate"><span class="pre">rvs</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1257,21 +1432,28 @@ All linear algebra via <code class="docutils literal notranslate"><span class="p
 </dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.d">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.d" title="Link to this definition"></a></dt>
+<dd><p>Dimensionality.</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.dim">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dim</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.dim" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Dimensionality (alias for <code class="docutils literal notranslate"><span class="pre">d</span></code>).</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sigma">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sigma" title="Link to this definition"></a></dt>
-<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span>.</p>
+<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span> (alias for <code class="docutils literal notranslate"><span class="pre">cov()</span></code>).</p>
 </dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="mixture-base-classes">
-<h2><a class="toc-backref" href="#id8" role="doc-backlink">Mixture Base Classes</a><a class="headerlink" href="#mixture-base-classes" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Mixture Base Classes</a><a class="headerlink" href="#mixture-base-classes" title="Link to this heading"></a></h2>
 <section id="module-normix.mixtures.joint">
 <span id="jointnormalmixture"></span><h3>JointNormalMixture<a class="headerlink" href="#module-normix.mixtures.joint" title="Link to this heading"></a></h3>
 <p>JointNormalMixture — abstract exponential family for normal variance-mean mixtures.</p>
@@ -1285,12 +1467,16 @@ Y \sim \text{subordinator (GIG, Gamma, InvGamma, InvGaussian)}\]</div>
 <p><strong>Natural parameters:</strong></p>
 <div class="math notranslate nohighlight">
 \[\theta_1 = p_{\mathrm{sub}} - 1 - d/2, \quad
-\theta_2 = -(b_{\mathrm{sub}} + \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu) &lt; 0\]</div>
+\theta_2 = -(b_{\mathrm{sub}}/2 + \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu) &lt; 0\]</div>
 <div class="math notranslate nohighlight">
-\[\theta_3 = -(a_{\mathrm{sub}} + \tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma) &lt; 0, \quad
+\[\theta_3 = -(a_{\mathrm{sub}}/2 + \tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma) &lt; 0, \quad
 \theta_4 = \Sigma^{-1}\gamma, \quad
 \theta_5 = \Sigma^{-1}\mu, \quad
 \theta_6 = -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})\]</div>
+<p>For a GIG subordinator, <span class="math notranslate nohighlight">\(\theta_2,\theta_3\)</span> combine <span class="math notranslate nohighlight">\(-b/2,-a/2\)</span> with the
+normal quadratic forms so that <span class="math notranslate nohighlight">\(\theta^{\top} t\)</span> matches
+<span class="math notranslate nohighlight">\(-(a y + b/y)/2\)</span> from <span class="math notranslate nohighlight">\(f_Y\)</span> plus the <span class="math notranslate nohighlight">\(y\)</span>-dependent terms from
+<span class="math notranslate nohighlight">\(f_{X\mid Y}\)</span>.</p>
 <p><strong>Log-partition:</strong></p>
 <div class="math notranslate nohighlight">
 \[\psi = \psi_{\mathrm{sub}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma\]</div>
@@ -1495,7 +1681,7 @@ b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)\]</div>
 <p>Not an exponential family. Owns a <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a> (which is).</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">joint</span></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">joint</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><span class="pre">JointNormalMixture</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
@@ -1571,41 +1757,113 @@ b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.squared_hellinger">
+<span class="sig-name descname"><span class="pre">squared_hellinger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.squared_hellinger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger" title="Link to this definition"></a></dt>
+<dd><p>Squared Hellinger distance via joint distributions (upper bound on marginal).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.kl_divergence">
+<span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.kl_divergence" title="Link to this definition"></a></dt>
+<dd><p>KL divergence via joint distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.compute_eta_from_model">
+<span class="sig-name descname"><span class="pre">compute_eta_from_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.compute_eta_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.compute_eta_from_model" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct <span class="math notranslate nohighlight">\(\eta\)</span> from the model’s own parameters.</p>
+<p>Uses the <em>marginal</em> expectations of the joint sufficient statistics:</p>
+<div class="math notranslate nohighlight">
+\[\eta_4 = \mu + \gamma\,E[Y], \quad
+\eta_5 = \mu\,E[1/Y] + \gamma, \quad
+\eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
+         + \mu\gamma^\top + \gamma\mu^\top\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NormalMixtureEta</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.e_step">
 <span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition"></a></dt>
-<dd><p>E-step: compute conditional expectations <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x_i]\)</span> for each <span class="math notranslate nohighlight">\(i\)</span>.</p>
-<p>Returns dict of arrays with shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">...)</span></code> for each expectation.</p>
+<dd><p>Full E-step: subordinator conditionals + batch aggregation.</p>
+<p>Returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code> with the
+six aggregated expectation parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over <code class="docutils literal notranslate"><span class="pre">conditional_expectations</span></code>. JIT-able.</p>
-<p><code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: quad forms in JAX (vmapped) + GIG Bessel on CPU.
-Faster for large <span class="math notranslate nohighlight">\(N\)</span>; not JIT-able.</p>
-</p></li>
-<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.d" title="normix.mixtures.marginal.NormalMixture.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over <code class="docutils literal notranslate"><span class="pre">conditional_expectations</span></code>.
+<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: quad forms in JAX + GIG Bessel on CPU.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+<dd class="field-even"><p>NormalMixtureEta</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step">
-<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectations</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step" title="Link to this definition"></a></dt>
-<dd><p>M-step: update model parameters from sufficient statistics.</p>
-<p>Returns a NEW NormalMixture with updated parameters.
-Subclasses must override _m_step_subordinator.</p>
+<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step" title="Link to this definition"></a></dt>
+<dd><p>Full M-step: update normal params + subordinator from eta.</p>
+<p>Returns a NEW NormalMixture with updated parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>expectations</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>eta</strong> (<em>NormalMixtureEta</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step_normal">
+<span class="sig-name descname"><span class="pre">m_step_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_normal" title="Link to this definition"></a></dt>
+<dd><p>M-step for normal parameters only (MCECM Cycle 1).</p>
+<p>Updates <span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span>; subordinator unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<em>NormalMixtureEta</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step_subordinator">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>Update subordinator parameters from expectation parameters.</p>
+<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
+Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
+is re-estimated. Returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<em>NormalMixtureEta</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1640,12 +1898,13 @@ subordinator params scaled via <code class="docutils literal notranslate"><span 
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.fit" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit using self as initialization. Returns EMResult.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.d" title="normix.mixtures.marginal.NormalMixture.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
+<li><p><strong>algorithm</strong> (<em>'em'</em><em> (</em><em>default</em><em>) or </em><em>'mcecm'</em>)</p></li>
 <li><p><strong>verbose</strong> (<em>0 = silent</em><em>, </em><em>1 = summary</em><em>, </em><em>2 = per-iteration table</em>)</p></li>
 <li><p><strong>max_iter</strong> (<em>EM convergence parameters</em>)</p></li>
 <li><p><strong>tol</strong> (<em>EM convergence parameters</em>)</p></li>
@@ -1688,7 +1947,7 @@ subordinator = distribution-specific defaults</p>
 </section>
 </section>
 <section id="mixture-distributions">
-<h2><a class="toc-backref" href="#id9" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading"></a></h2>
 <section id="module-normix.distributions.variance_gamma">
 <span id="variance-gamma"></span><h3>Variance Gamma<a class="headerlink" href="#module-normix.distributions.variance_gamma" title="Link to this heading"></a></h3>
 <p>Variance Gamma (VG) distribution.</p>
@@ -1759,7 +2018,8 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_natural" title="Link to this definition"></a></dt>
-<dd><p>Construct from natural parameters θ. Subclasses must override.</p>
+<dd><p>Recover classical parameters from <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\alpha = \theta_1 + 1 + d/2\)</span>, <span class="math notranslate nohighlight">\(\beta = -\theta_3 - \gamma_{\mathrm{quad}}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1813,10 +2073,24 @@ K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>Update subordinator parameters from expectation parameters.</p>
+<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
+Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
+is re-estimated. Returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><em>VarianceGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.fit" title="Link to this definition"></a></dt>
-<dd><p>Fit VG using EM.  Defaults to CPU E-step (faster than JAX vmap for
-the degenerate-GIG posterior arising from the Gamma subordinator).</p>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
+vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</p>
 </dd></dl>
 
 </dd></dl>
@@ -1892,7 +2166,16 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <spa
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#JointNormalInverseGamma.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_natural" title="Link to this definition"></a></dt>
-<dd><p>Construct from natural parameters θ. Subclasses must override.</p>
+<dd><p>Recover classical parameters from <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\alpha = -(\theta_1 + d/2) - 1\)</span>, <span class="math notranslate nohighlight">\(\beta = -\theta_2 - \mu_{\mathrm{quad}}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma"><em>JointNormalInverseGamma</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1930,10 +2213,24 @@ The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>Update subordinator parameters from expectation parameters.</p>
+<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
+Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
+is re-estimated. Returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><em>NormalInverseGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit" title="Link to this definition"></a></dt>
-<dd><p>Fit NInvG using EM.  Defaults to CPU E-step (faster than JAX vmap
-for the degenerate-GIG posterior arising from the InverseGamma
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit NInvG using EM or MCECM.  Defaults to CPU E-step (faster than
+JAX vmap for the degenerate-GIG posterior arising from the InverseGamma
 subordinator).</p>
 </dd></dl>
 
@@ -1991,10 +2288,11 @@ GIG params: <span class="math notranslate nohighlight">\(p = -1/2\)</span>, <spa
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params" title="Link to this definition"></a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\theta = [-3/2-d/2,\; -(\lambda+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
--(\lambda/\mu_{IG}^2+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
+<dd><p><span class="math notranslate nohighlight">\(\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
+-(\lambda/(2\mu_{IG}^2)+\tfrac{1}{2}\gamma^\top\Lambda\gamma),\;
 \Lambda\gamma,\; \Lambda\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Lambda)]\)</span></p>
-<p>where <span class="math notranslate nohighlight">\(p=-1/2\)</span>, <span class="math notranslate nohighlight">\(a=\lambda/\mu_{IG}^2\)</span>, <span class="math notranslate nohighlight">\(b=\lambda\)</span>.</p>
+<p>where <span class="math notranslate nohighlight">\(p=-1/2\)</span>, <span class="math notranslate nohighlight">\(a=\lambda/\mu_{IG}^2\)</span>, <span class="math notranslate nohighlight">\(b=\lambda\)</span>, aligned
+with GIG natural parameters on <span class="math notranslate nohighlight">\([\log y,\,1/y,\,y]\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -2010,7 +2308,18 @@ GIG params: <span class="math notranslate nohighlight">\(p = -1/2\)</span>, <spa
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural" title="Link to this definition"></a></dt>
-<dd><p>Construct from natural parameters θ. Subclasses must override.</p>
+<dd><p>Recover classical parameters from <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
+<p>From <span class="math notranslate nohighlight">\(b = -2\theta_2 - 2\mu_{\mathrm{quad}} = \lambda\)</span> and
+<span class="math notranslate nohighlight">\(a = -2\theta_3 - 2\gamma_{\mathrm{quad}} = \lambda/\mu_{IG}^2\)</span>,
+so <span class="math notranslate nohighlight">\(\mu_{IG} = \sqrt{b/a}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian"><em>JointNormalInverseGaussian</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -2042,6 +2351,20 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#NormalInverseGaussian.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>Update subordinator parameters from expectation parameters.</p>
+<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
+Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
+is re-estimated. Returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><em>NormalInverseGaussian</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2116,9 +2439,12 @@ b + (x-\mu)^\top\Sigma^{-1}(x-\mu))\)</span>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params" title="Link to this definition"></a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\theta = [p-1-d/2,\; -(b+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
--(a+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
+<dd><p><span class="math notranslate nohighlight">\(\theta = [p-1-d/2,\; -(b/2+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;
+-(a/2+\tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma),\;
 \Sigma^{-1}\gamma,\; \Sigma^{-1}\mu,\; -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})]\)</span></p>
+<p>The scalar coefficients on sufficient statistics <span class="math notranslate nohighlight">\(1/y\)</span> and <span class="math notranslate nohighlight">\(y\)</span>
+match the GIG convention <span class="math notranslate nohighlight">\(\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]\)</span>
+on <span class="math notranslate nohighlight">\(t_Y = [\log y,\,1/y,\,y]\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -2135,7 +2461,10 @@ b + (x-\mu)^\top\Sigma^{-1}(x-\mu))\)</span>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural" title="Link to this definition"></a></dt>
-<dd><p>Construct from natural parameters θ. Subclasses must override.</p>
+<dd><p>Recover classical parameters from <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(p = \theta_1 + 1 + d/2\)</span>,
+<span class="math notranslate nohighlight">\(b = -2\theta_2 - 2\mu_{\mathrm{quad}}\)</span>,
+<span class="math notranslate nohighlight">\(a = -2\theta_3 - 2\gamma_{\mathrm{quad}}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -2195,12 +2524,28 @@ K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>Update subordinator parameters from expectation parameters.</p>
+<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
+Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
+is re-estimated. Returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="Link to this definition"></a></dt>
 <dd><p>Warm-start from the best of NIG / VG / NInvG sub-model fits.</p>
-<p>Runs 5 EM iterations for each special case, converts the winner
-to GH parametrisation, and uses it as the starting point.
-Falls back to moment-based default if all sub-models fail.</p>
+<p>Runs 5 EM iterations (JAX backend, Newton method) for each special
+case, converts each to GH parametrisation, and selects the candidate
+with the highest marginal log-likelihood.  A moment-based fallback
+(<span class="math notranslate nohighlight">\(p=1, a=1, b=1\)</span>) is included as a fourth candidate.</p>
+<p>Fully JAX-native: no try/except, no Python branching on data values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -2213,10 +2558,10 @@ Falls back to moment-based default if all sub-models fail.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'det_sigma_one'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit" title="Link to this definition"></a></dt>
-<dd><p>Fit GH distribution using EM.</p>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'det_sigma_one'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit GH distribution using EM or MCECM.</p>
 <p>Defaults to CPU backends and det_sigma_one regularization
-(GH has scale non-identifiability requiring <a href="#id3"><span class="problematic" id="id4">|Sigma|</span></a> = 1).</p>
+(GH has scale non-identifiability requiring <a href="#id1"><span class="problematic" id="id2">|Sigma|</span></a> = 1).</p>
 </dd></dl>
 
 </dd></dl>
@@ -2224,18 +2569,17 @@ Falls back to moment-based default if all sub-models fail.</p>
 </section>
 </section>
 <section id="fitting">
-<h2><a class="toc-backref" href="#id10" role="doc-backlink">Fitting</a><a class="headerlink" href="#fitting" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Fitting</a><a class="headerlink" href="#fitting" title="Link to this heading"></a></h2>
 <section id="module-normix.fitting.em">
 <span id="em-fitters"></span><h3>EM Fitters<a class="headerlink" href="#module-normix.fitting.em" title="Link to this heading"></a></h3>
 <p>EM fitters for normix distributions.</p>
 <p>Model knows math, fitter knows iteration.</p>
 <blockquote>
 <div><dl class="simple">
-<dt>BatchEMFitter     — standard batch EM with dual-loop architecture:</dt><dd><p>lax.scan (JIT-able) or Python for-loop (CPU-compatible)</p>
+<dt>BatchEMFitter        — standard batch EM with dual-loop architecture:</dt><dd><p>lax.scan (JIT-able) or Python for-loop (CPU-compatible)</p>
 </dd>
 </dl>
-<p>OnlineEMFitter    — online EM, one sample at a time
-MiniBatchEMFitter — mini-batch EM, Robbins-Monro averaging</p>
+<p>IncrementalEMFitter  — online / mini-batch EM with pluggable eta update rules</p>
 </div></blockquote>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult">
@@ -2249,7 +2593,7 @@ MiniBatchEMFitter — mini-batch EM, Robbins-Monro averaging</p>
 <li><p><strong>log_likelihoods</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>param_changes</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
@@ -2276,7 +2620,7 @@ MiniBatchEMFitter — mini-batch EM, Robbins-Monro averaging</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.converged">
-<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.converged" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.converged" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2288,41 +2632,47 @@ MiniBatchEMFitter — mini-batch EM, Robbins-Monro averaging</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.BatchEMFitter">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">BatchEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">BatchEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Batch EM algorithm with dual-loop architecture.</p>
-<p>Runs E-step (all data) -&gt; M-step -&gt; regularize until convergence.
-Convergence is measured by relative parameter change in the normal
+<p>Batch EM / MCECM algorithm with dual-loop architecture.</p>
+<p><strong>EM</strong> (default): E-step → M-step (all params) → regularize.</p>
+<p><strong>MCECM</strong>: E-step → M-step (normal params only) → regularize →
+E-step → M-step (subordinator only).</p>
+<p>Convergence is measured by relative parameter change in the normal
 parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.</p>
 <dl class="simple">
 <dt>Loop selection is automatic:</dt><dd><ul class="simple">
-<li><p>lax.scan when both backends are ‘jax’ and verbose &lt;= 1</p></li>
-<li><p>Python for-loop otherwise (CPU backends, or verbose &gt;= 2)</p></li>
+<li><p>lax.scan when both backends are ‘jax’, verbose &lt;= 1, algorithm=’em’,
+and no eta_update rule</p></li>
+<li><p>Python for-loop otherwise</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of EM iterations.</p></li>
+<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max relative parameter change.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
 <li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Regularization strategy (‘det_sigma_one’ or ‘none’).</p></li>
 <li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ (default) or ‘cpu’.</p></li>
 <li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ or ‘cpu’ (default, faster for GIG).</p></li>
 <li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘newton’ (default), ‘lbfgs’, or ‘bfgs’.</p></li>
+<li><p><strong>eta_update</strong> (<em>EtaUpdateRule</em><em> or </em><em>None</em>) – Optional eta combination rule (e.g. <code class="docutils literal notranslate"><span class="pre">ShrinkageUpdate</span></code>).
+When set, the E-step output is transformed before the M-step.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.fitting.em.BatchEMFitter.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter.fit" title="Link to this definition"></a></dt>
-<dd><p>Run batch EM. Auto-selects lax.scan or Python loop.</p>
+<dd><p>Run batch EM or MCECM. Auto-selects lax.scan or Python loop.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>NormalMixture subclass</em><em> (</em><em>used as initial parameters</em><em>)</em>)</p></li>
-<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture.d" title="normix.mixtures.joint.JointNormalMixture.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
+<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal.d" title="normix.distributions.normal.MultivariateNormal.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2334,62 +2684,33 @@ parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="normix.fitting.em.OnlineEMFitter">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">OnlineEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#OnlineEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.OnlineEMFitter" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">IncrementalEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Online EM algorithm (Robbins-Monro stochastic approximation).</p>
-<p>Updates running sufficient statistics with step size 1/(tau0 + t).
-One epoch = one full pass through data in random order.</p>
+<p>Incremental EM with pluggable eta update rules.</p>
+<p>Replaces <code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code> and <code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code>.  Processes data
+in random mini-batches, applies an <code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code>
+to combine the running <span class="math notranslate nohighlight">\(\eta\)</span> with each batch estimate, then
+M-steps on the combined <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tau0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>max_epochs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>eta_update</strong> (<em>EtaUpdateRule</em>) – How to combine running η with each batch estimate.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Observations per batch.</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of batches to process (total budget).</p></li>
+<li><p><strong>inner_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 1 = online (default); &gt;1 = fine-tuning on each batch.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = periodic summary.</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> or <code class="docutils literal notranslate"><span class="pre">'none'</span></code>.</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="normix.fitting.em.OnlineEMFitter.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#OnlineEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.OnlineEMFitter.fit" title="Link to this definition"></a></dt>
-<dd><p>Online EM. Returns EMResult.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>key</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><em>EMResult</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="normix.fitting.em.MiniBatchEMFitter">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">MiniBatchEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#MiniBatchEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.MiniBatchEMFitter" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Mini-batch EM with Robbins-Monro averaging of sufficient statistics.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>tau0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.fitting.em.MiniBatchEMFitter.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#MiniBatchEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.MiniBatchEMFitter.fit" title="Link to this definition"></a></dt>
-<dd><p>Mini-batch EM. Returns EMResult.</p>
+<dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter.fit" title="Link to this definition"></a></dt>
+<dd><p>Run incremental EM. Returns <a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EMResult</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2525,9 +2846,9 @@ can live inside a lax.scan carry without concretization errors.</p>
 <li><p><strong>theta0</strong> (<em>initial guess</em>)</p></li>
 <li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>not JIT-able</em><em>)</em>)</p></li>
 <li><p><strong>method</strong> (<em>'lbfgs'</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
-<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><em>(</em><em>lo</em><em>, </em><em>hi</em><em>) </em><em>per dimension; None → unconstrained.</em>) – For backend=’jax’: enforced via reparameterization (except
-method=’lbfgs’ which uses jaxopt.LBFGSB natively).
-For backend=’cpu’: passed directly as scipy bounds.</p></li>
+<li><p><strong>bounds</strong> (<code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair of JAX arrays, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>;) – <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
+For backend=’jax’: enforced via reparameterization.
+For backend=’cpu’: converted to scipy format internally.</p></li>
 <li><p><strong>max_steps</strong> (<em>iteration budget</em>)</p></li>
 <li><p><strong>tol</strong> (<em>convergence tolerance on ‖∇f</em><em>(</em><em>θ</em><em>) </em><em>− η‖∞</em>)</p></li>
 <li><p><strong>grad_fn</strong> (<em>θ → ∇f</em><em>(</em><em>θ</em><em>)</em><em>.</em>) – For backend=’cpu’: must accept and return numpy arrays.
@@ -2560,7 +2881,7 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>grad_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em> | </em><em>None</em>)</p></li>
@@ -2576,7 +2897,7 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 </section>
 </section>
 <section id="utilities">
-<h2><a class="toc-backref" href="#id11" role="doc-backlink">Utilities</a><a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Utilities</a><a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
 <section id="module-normix.utils.bessel">
 <span id="bessel-functions"></span><h3>Bessel Functions<a class="headerlink" href="#module-normix.utils.bessel" title="Link to this heading"></a></h3>
 <p>JAX-compatible log modified Bessel function of the second kind.</p>
@@ -2608,25 +2929,54 @@ backend=’cpu’           : scipy.special.kve, fully vectorized numpy.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.utils.bessel.log_kv">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.bessel.</span></span><span class="sig-name descname"><span class="pre">log_kv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/bessel.html#log_kv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.bessel.log_kv" title="Link to this definition"></a></dt>
-<dd><p>log K_v(z) — log modified Bessel function of the second kind.</p>
+<dd><p><span class="math notranslate nohighlight">\(\log K_v(z)\)</span> — log modified Bessel function of the second kind.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>v</strong> (<em>scalar</em><em> or </em><em>array — order</em><em> (</em><em>any real; K_v = K_{-v}</em><em>)</em>)</p></li>
-<li><p><strong>z</strong> (<em>scalar</em><em> or </em><em>array — argument</em><em> (</em><em>must be &gt; 0</em><em>)</em>)</p></li>
-<li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>default</em><em>) or </em><em>'cpu'</em>) – <dl class="simple">
-<dt>‘jax’<span class="classifier">pure-JAX, lax.cond regime selection, custom JVP.</span></dt><dd><p>JIT-able, differentiable. Default for log_prob, pdf, etc.</p>
-</dd>
-<dt>’cpu’<span class="classifier">scipy.special.kve, fully vectorized numpy.</span></dt><dd><p>Not JIT-able. Fast for EM hot path.</p>
-</dd>
-</dl>
+<li><p><strong>v</strong> (<em>scalar</em><em> or </em><em>array</em>) – Order (any real; <span class="math notranslate nohighlight">\(K_v = K_{-v}\)</span>).</p></li>
+<li><p><strong>z</strong> (<em>scalar</em><em> or </em><em>array</em>) – Argument (must be &gt; 0).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code>: pure-JAX, <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> regime selection, custom JVP.
+JIT-able, differentiable. Default for <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>, <code class="docutils literal notranslate"><span class="pre">pdf</span></code>, etc.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>, fully vectorised NumPy.
+Not JIT-able. Fast for EM hot path.</p></li>
+</ul>
 </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>scalar or array of same broadcast shape as (v, z).</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same broadcast shape as <code class="docutils literal notranslate"><span class="pre">(v,</span> <span class="pre">z)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>Evaluate at a single point (JAX backend, JIT-able):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="go">-0.112...</span>
+</pre></div>
+</div>
+<p>CPU backend (uses scipy, faster for EM hot-paths):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+<span class="go">-0.112...</span>
+</pre></div>
+</div>
+<p>Symmetry <span class="math notranslate nohighlight">\(K_v(z) = K_{-v}(z)\)</span>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">1e-10</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Differentiable via JAX:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dlogkv_dz</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="p">))(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">dlogkv_dz</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>   <span class="c1"># K_v decreases with z</span>
+<span class="go">True</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

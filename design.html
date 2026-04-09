@@ -114,7 +114,8 @@ manually implemented gradients and the log-partition function.</p>
 Distributions are mathematical objects — once constructed, their parameters should
 not change. Immutability matches this semantics perfectly. The EM M-step returns a
 <em>new</em> model instance rather than mutating state:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">expectations</span><span class="p">)</span>  <span class="c1"># returns new instance</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">eta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>     <span class="c1"># returns NormalMixtureEta</span>
+<span class="n">new_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>  <span class="c1"># returns new instance</span>
 </pre></div>
 </div>
 <p>This is cleaner than mutable alternatives (Flax NNX, sklearn-style <code class="docutils literal notranslate"><span class="pre">fit</span></code>
@@ -271,7 +272,7 @@ instance (accessible via <code class="docutils literal notranslate"><span class=
 </div>
 <p>The E-step and M-step are methods on the model. The fitter controls the outer
 loop, convergence checking, and timing. This separation means the same model
-works with <code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code>, <code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code>, or <code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code>.</p>
+works with <code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code> or <code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code>.</p>
 <p><strong>``EMResult`` instead of a bare model:</strong>
 <code class="docutils literal notranslate"><span class="pre">fitter.fit()</span></code> returns an <code class="docutils literal notranslate"><span class="pre">EMResult</span></code> containing the fitted model, diagnostics
 (convergence flag, iteration count, wall-clock time), and optionally per-iteration

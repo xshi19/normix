@@ -111,7 +111,9 @@
 │   ├── joint.py                 # JointNormalMixture(ExponentialFamily)
 │   └── marginal.py              # NormalMixture (owns a JointNormalMixture)
 ├── fitting/
-│   ├── em.py                    # EMResult; Batch / Online / MiniBatch EM fitters
+│   ├── em.py                    # EMResult; BatchEMFitter, IncrementalEMFitter
+│   ├── eta.py                   # NormalMixtureEta, affine_combine
+│   ├── eta_rules.py             # EtaUpdateRule (eqx.Module) + concrete rules
 │   └── solvers.py               # Bregman divergence solvers (η→θ)
 └── utils/
     ├── bessel.py                # log_kv with custom JVP
@@ -257,7 +259,7 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
 <p><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code> owns a <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code>. The joint provides:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">conditional_expectations(x)</span></code> — E[log Y|x], E[1/Y|x], E[Y|x] for the EM E-step</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_mstep_normal_params(...)</span></code> — closed-form M-step for μ, γ, L_Σ</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_mstep_normal_params(eta)</span></code> — closed-form M-step for μ, γ, L_Σ from <code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></p></li>
 </ul>
 <table class="docutils align-default">
 <thead>
@@ -313,13 +315,10 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></p></td>
-<td><p>Standard batch EM; supports <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> (JIT) or Python loop (CPU)</p></td>
+<td><p>Standard batch EM; supports <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> (JIT) or Python loop (CPU). Optional <code class="docutils literal notranslate"><span class="pre">eta_update</span></code> for shrinkage.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code></p></td>
-<td><p>Online EM, one sample at a time, Robbins-Monro averaging</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code></p></td>
-<td><p>Mini-batch EM with Robbins-Monro averaging</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></p></td>
+<td><p>Mini-batch / online / fine-tuning EM with pluggable <code class="docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code> (Robbins-Monro, EWMA, etc.)</p></td>
 </tr>
 </tbody>
 </table>
