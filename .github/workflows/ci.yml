@@ -36,6 +36,45 @@ jobs:
       - name: Run tests
         run: uv run pytest tests/ -q --tb=short
 
+  wheel-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Install wheel into a clean environment
+        run: |
+          python -m venv .venv-wheel-smoke
+          . .venv-wheel-smoke/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+
+      - name: Import normix without plotting extras
+        run: |
+          . .venv-wheel-smoke/bin/activate
+          python -c "
+          import sys
+          import normix
+
+          assert 'normix.utils.plotting' not in sys.modules
+          assert callable(normix.log_kv)
+          print('Wheel smoke test: OK')
+          "
+
   readme-examples:
     runs-on: ubuntu-latest
     steps:
