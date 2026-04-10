@@ -194,8 +194,9 @@ class NormalInverseGamma(NormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "NormalInverseGamma":
         from normix.distributions.inverse_gamma import InverseGamma
         j = self._joint
+        backend = kwargs.get('backend', 'jax')
         ig_eta = jnp.array([-eta.E_inv_Y, eta.E_log_Y])
-        ig_new = InverseGamma.from_expectation(ig_eta)
+        ig_new = InverseGamma.from_expectation(ig_eta, backend=backend)
         joint_new = JointNormalInverseGamma(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             alpha=ig_new.alpha, beta=ig_new.beta,

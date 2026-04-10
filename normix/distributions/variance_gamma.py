@@ -202,8 +202,9 @@ class VarianceGamma(NormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "VarianceGamma":
         from normix.distributions.gamma import Gamma
         j = self._joint
+        backend = kwargs.get('backend', 'jax')
         gamma_dist = Gamma.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_Y]))
+            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
         joint_new = JointVarianceGamma(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
             alpha=gamma_dist.alpha, beta=gamma_dist.beta,

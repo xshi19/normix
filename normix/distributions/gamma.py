@@ -127,6 +127,7 @@ class Gamma(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        backend: str = "jax",
         **kwargs,
     ) -> "Gamma":
         r"""
@@ -135,16 +136,24 @@ class Gamma(ExponentialFamily):
 
         :math:`\eta = [E[\log X],\; E[X]]` → :math:`\alpha` from digamma inversion,
         :math:`\beta = \alpha / \eta_2`.
+
+        Parameters
+        ----------
+        backend : str
+            ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
+            ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
-
-        # Solve ψ(α) − log α = η₁ − log η₂ (fixed-point target)
         target = eta1 - jnp.log(eta2)
-        alpha = _newton_digamma(target)
-        beta = alpha / eta2
-        alpha = jnp.maximum(alpha, LOG_EPS)
-        beta = jnp.maximum(beta, LOG_EPS)
+
+        if backend == "cpu":
+            alpha = _newton_digamma_cpu(float(target))
+        else:
+            alpha = _newton_digamma(target)
+
+        alpha = jnp.maximum(jnp.asarray(alpha, dtype=jnp.float64), LOG_EPS)
+        beta = jnp.maximum(alpha / eta2, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
 
 
@@ -155,17 +164,15 @@ def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
 
     Uses ``jax.lax.fori_loop`` for JIT-compatibility.
     """
-    # Reasonable initial guess for α
     alpha0 = jnp.where(
         target >= -2.22,
-        1.0 / (2.0 * (-target)),  # rough: ψ(α)-log(α) ≈ -1/(2α) for large α
+        1.0 / (2.0 * (-target)),
         jnp.exp(-target),
     )
     alpha0 = jnp.maximum(alpha0, 0.1)
 
     def body(_, alpha):
         psi = jax.scipy.special.digamma(alpha)
-        # trigamma = polygamma(1, α)
         psi_prime = jax.scipy.special.polygamma(1, alpha)
         f = psi - jnp.log(alpha) - target
         fp = psi_prime - 1.0 / alpha
@@ -173,3 +180,29 @@ def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
         return jnp.maximum(alpha_new, LOG_EPS)
 
     return jax.lax.fori_loop(0, n_iter, body, alpha0)
+
+
+def _newton_digamma_cpu(target: float, n_iter: int = 50, tol: float = 1e-12) -> float:
+    r"""CPU variant using :func:`scipy.special.digamma` / :func:`scipy.special.polygamma`.
+
+    No XLA tracing — suitable for the Python-loop EM path.
+    """
+    import math
+    from scipy.special import digamma, polygamma
+
+    if target >= -2.22:
+        alpha = max(1.0 / (2.0 * (-target)), 0.1) if target < 0 else 0.1
+    else:
+        alpha = max(math.exp(-target), 0.1)
+
+    for _ in range(n_iter):
+        f = float(digamma(alpha)) - math.log(alpha) - target
+        fp = float(polygamma(1, alpha)) - 1.0 / alpha
+        if abs(fp) < 1e-30:
+            break
+        alpha_new = alpha - f / fp
+        alpha = max(alpha_new, 1e-10)
+        if abs(f) < tol:
+            break
+
+    return alpha

@@ -142,6 +142,7 @@ class InverseGamma(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        backend: str = "jax",
         **kwargs,
     ) -> "InverseGamma":
         r"""
@@ -149,14 +150,24 @@ class InverseGamma(ExponentialFamily):
 
         :math:`\beta = \alpha / (-\eta_1)`;  solve
         :math:`\psi(\alpha) - \log\alpha = -\eta_2 - \log(-\eta_1)` via Newton.
+
+        Parameters
+        ----------
+        backend : str
+            ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
+            ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
-        # From η = [-α/β, log β − ψ(α)]: β = α/(-η₁), so ψ(α) − log α = −η₂ − log(−η₁).
-        from normix.distributions.gamma import _newton_digamma
         target = -eta2 - jnp.log(-eta1)
-        alpha = _newton_digamma(target)
-        beta = alpha / (-eta1)
-        alpha = jnp.maximum(alpha, LOG_EPS)
-        beta = jnp.maximum(beta, LOG_EPS)
+
+        if backend == "cpu":
+            from normix.distributions.gamma import _newton_digamma_cpu
+            alpha = _newton_digamma_cpu(float(target))
+        else:
+            from normix.distributions.gamma import _newton_digamma
+            alpha = _newton_digamma(target)
+
+        alpha = jnp.maximum(jnp.asarray(alpha, dtype=jnp.float64), LOG_EPS)
+        beta = jnp.maximum(alpha / (-eta1), LOG_EPS)
         return cls(alpha=alpha, beta=beta)
