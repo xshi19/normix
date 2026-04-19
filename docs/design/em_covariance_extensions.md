@@ -124,91 +124,145 @@ through `model.e_step` / `model.m_step` / `model.compute_eta_from_model`.
 
 ---
 
-## 4. Affine Combination and Shrinkage Combinator
+## 4. Eta Update Rules
 
-### 4.1 Generalised `affine_combine`
+### 4.1 Two-layer rule abstraction
 
-`a, b, c` may be either:
+The current `EtaUpdateRule` exposes only an affine API
+(`weights(...) -> (a, b, c, state)`). The new design layers a more
+general **predictor** interface on top of it so that future research —
+e.g. an MLP that maps `(η_{t-1}, η̂) → η_t` — slots in without another
+API revision, while everything that exists today continues to be
+expressed as an affine specialisation.
 
-- a scalar (Python `float` or 0-d array) — broadcast to all leaves,
-matching today's behaviour, **or**
-- a stats-shaped pytree (`NormalMixtureEta` for the standard family,
-`FactorMixtureStats` for the factor family) — applied per leaf.
+```python
+class EtaUpdateRule(eqx.Module):
+    """Most general form: η_t = rule(η_{t-1}, η̂).
 
-Each leaf of `a, b, c` may itself be a scalar (broadcast over the leaf's
-shape) or an array matching that leaf's shape (per-element control). This
-gives three useful regimes through one API:
+    Subclasses override __call__. State is a pytree the rule owns
+    across iterations; rules with no memory leave it as the empty dict.
+    """
+
+    def initial_state(self) -> dict:
+        return {}
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        eta_prev: "EtaLike",
+        eta_new: "EtaLike",
+        step: jax.Array,
+        batch_size: jax.Array,
+        state: dict,
+    ) -> tuple["EtaLike", dict]:
+        """Return (η_t, new_state). Pure / JIT-friendly."""
 
 
-| Regime          | `b, c` form                                         |
-| --------------- | --------------------------------------------------- |
-| Uniform (today) | scalars                                             |
-| Per-field       | stats pytree with scalar leaves                     |
-| Per-element     | stats pytree with leaves matching `eta` leaf shapes |
+class AffineRule(EtaUpdateRule):
+    """Specialisation: η_t = a + b·η_{t-1} + c·η̂.
 
+    Subclasses implement `weights(...)` instead of `__call__`. All rules
+    that exist today (`IdentityUpdate`, `RobbinsMonroUpdate`,
+    `EWMAUpdate`, `SampleWeightedUpdate`, `AffineUpdate`) live here.
+    """
+
+    @abc.abstractmethod
+    def weights(
+        self, step, batch_size, state,
+    ) -> tuple["Optional[EtaLike]", "Weight", "Weight", dict]:
+        ...
+
+    def __call__(self, eta_prev, eta_new, step, batch_size, state):
+        a, b, c, state = self.weights(step, batch_size, state)
+        return affine_combine(eta_prev, eta_new, b, c, a), state
+```
+
+The fitter only knows `EtaUpdateRule.__call__`; whether the rule is
+affine, a combinator, or an ML model is invisible at the call site.
+
+`__call__` (rather than a `predict` / `apply` method) is the Equinox
+idiom: a module *is* its forward pass, matching `eqx.nn.Linear(x)`,
+`eqx.nn.MLP(x)`, etc.
+
+### 4.2 Generalised `affine_combine`
+
+`a, b, c` accept three forms; all flow through a single `tree.map`-based
+implementation:
+
+| Form                | Math                                  | Use case                                  |
+| ------------------- | ------------------------------------- | ----------------------------------------- |
+| Scalar              | `b · I_n` (broadcast to every leaf)   | EWMA, Robbins–Monro, uniform shrinkage    |
+| Stats-shape pytree  | block-diagonal: leaf-wise multiply    | Per-field / per-element shrinkage         |
+| Callable `η → η`    | arbitrary linear operator on `η`      | Custom linear maps (e.g. user-supplied)   |
 
 Implementation sketch:
 
 ```python
+def _apply(weight, eta):
+    if callable(weight):
+        return weight(eta)
+    if isinstance(weight, type(eta)):
+        return jax.tree.map(jnp.multiply, weight, eta)
+    return jax.tree.map(lambda x: weight * x, eta)
+
+
 def affine_combine(eta_prev, eta_new, b, c, a=None):
-    is_pytree = isinstance(b, type(eta_prev))
-    if is_pytree:
-        result = jax.tree.map(
-            lambda p, n, bi, ci: bi * p + ci * n,
-            eta_prev, eta_new, b, c,
-        )
-    else:
-        result = jax.tree.map(
-            lambda p, n: b * p + c * n, eta_prev, eta_new,
-        )
+    out = jax.tree.map(jnp.add, _apply(b, eta_prev), _apply(c, eta_new))
     if a is not None:
-        result = jax.tree.map(lambda r, ai: r + ai, result, a)
-    return result
+        out = jax.tree.map(jnp.add, out, a)
+    return out
 ```
 
 JIT-ability is preserved: scalar leaves are JAX scalars, pytree weights
-are leaves of the same kind as `eta`.
+share the structure of `eta`, and callables that close over JAX arrays
+remain pytree leaves of the enclosing rule.
 
-### 4.2 Shrinkage as a combinator
+We do **not** ship a default flat `n × n` matrix form. Such an array
+would force the public API to commit to a flatten order across `(s_1,
+…, s_6)`, leaking the contract into every user script. Users who want
+a true `n × n` linear operator can wrap an `eqx.nn.Linear` inside a
+custom `EtaUpdateRule` (see §4.6) — that path uses
+`jax.flatten_util.ravel_pytree` and keeps the flatten contract local
+to the rule.
 
-`ShrinkageUpdate(eta0, tau)` is replaced by a combinator that wraps **any**
-base rule:
+### 4.3 Shrinkage as a combinator
+
+Shrinkage is itself an `EtaUpdateRule` that wraps **any** base rule.
+Because it only takes a linear combination of two predictions, the base
+may even be a non-linear (`EtaUpdateRule`-not-`AffineRule`) predictor.
 
 ```python
 class Shrinkage(EtaUpdateRule):
-    """Pull the running η toward a prior, on top of any base update rule.
+    """Pull the running η toward a prior, on top of any base rule.
 
-    Composition (single equation, per-field):
+    η_t = (τ / (1+τ)) ⊙ η_0 + (1 / (1+τ)) ⊙ base(η_{t-1}, η̂)
 
-        η_t = (τ / (1+τ)) ⊙ η_0
-            + (1 / (1+τ)) ⊙ (a_b + b_b ⊙ η_{t-1} + c_b ⊙ η̂)
+    where ⊙ is per-field multiplication (broadcast for scalar τ).
 
-    where (a_b, b_b, c_b) come from `base.weights(...)`, ⊙ is per-field
-    multiplication (broadcast for scalar τ), and τ may be either:
-
-    - a Python scalar / 0-d array — uniform shrinkage on all six
-      sufficient statistics (matches the penalised-MLE in
-      `docs/theory/shrinkage.rst`);
-    - a NormalMixtureEta with scalar leaves — per-field shrinkage, e.g.
-      τ = NormalMixtureEta(0, 0, 0, 0, 0, τ_Σ) shrinks only η_6 = Σ.
+    τ accepts:
+      - scalar / 0-d jax.Array  — uniform shrinkage on all sufficient
+        statistics (matches the penalised-MLE in
+        `docs/theory/shrinkage.rst`);
+      - NormalMixtureEta with scalar leaves — per-field shrinkage, e.g.
+        τ = NormalMixtureEta(0, 0, 0, 0, 0, τ_Σ) shrinks only s_6 = Σ.
     """
+
     base: EtaUpdateRule
-    eta0: NormalMixtureEta
-    tau: Union[jax.Array, NormalMixtureEta]
+    eta0: "EtaLike"                # NormalMixtureEta or FactorMixtureStats
+    tau:  "Union[jax.Array, EtaLike]"
 
     def initial_state(self):
         return self.base.initial_state()
 
-    def weights(self, step, batch_size, state):
-        a_b, b_b, c_b, state = self.base.weights(step, batch_size, state)
-        # τ → factor_a = τ/(1+τ), factor_rest = 1/(1+τ); supports
-        # scalar or pytree τ via jax.tree.map.
+    def __call__(self, eta_prev, eta_new, step, batch_size, state):
+        eta_base, state = self.base(eta_prev, eta_new, step, batch_size, state)
+        # factor_a = τ/(1+τ), factor_base = 1/(1+τ); pytree-aware via
+        # jax.tree.map so per-field τ "just works".
         ...
-        return a_new, b_new, c_new, state
+        return eta_t, state
 ```
 
 Resulting concrete patterns:
-
 
 | Use case                              | Construction                                    |
 | ------------------------------------- | ----------------------------------------------- |
@@ -217,21 +271,111 @@ Resulting concrete patterns:
 | Robbins–Monro online + shrinkage      | `Shrinkage(RobbinsMonroUpdate(τ0), eta0, tau)`  |
 | EWMA online + shrinkage               | `Shrinkage(EWMAUpdate(w), eta0, tau)`           |
 | Sample-weighted incremental + shrink. | `Shrinkage(SampleWeightedUpdate(), eta0, tau)`  |
+| ML predictor + shrinkage              | `Shrinkage(MLPPredictor(...), eta0, tau)`       |
 
+The current `ShrinkageUpdate` class is removed (pre-1.0 rename). The
+existing base rules become `AffineRule` subclasses with no behaviour
+change.
 
-The current `ShrinkageUpdate` class is removed (pre-1.0 rename). The base
-rules (`IdentityUpdate`, `RobbinsMonroUpdate`, `SampleWeightedUpdate`,
-`EWMAUpdate`, `AffineUpdate`) are unchanged.
-
-### 4.3 Why a combinator (not `ShrunkX` copies)
+### 4.4 Why a combinator (not `ShrunkX` copies)
 
 Composing shrinkage with a running rule by hand requires getting the
-algebra right twice (once for `b_b, c_b`, once for the prior). A
-combinator does it in one place. The four hypothetical
-`ShrunkRobbinsMonroUpdate` / `ShrunkEWMAUpdate` / `ShrunkSampleWeighted` /
-`ShrunkIdentityUpdate` classes collapse into one `Shrinkage(base, eta0, tau)`, with no behaviour lost.
+algebra right twice. The combinator does it in one place. The four
+hypothetical `ShrunkRobbinsMonroUpdate` / `ShrunkEWMAUpdate` /
+`ShrunkSampleWeighted` / `ShrunkIdentityUpdate` classes collapse into
+one `Shrinkage(base, eta0, tau)` with no behaviour lost — and the
+combinator now extends naturally to non-affine bases.
 
-### 4.4 Shrinkage targets
+### 4.5 State and parameters
+
+This subsection answers two recurring questions about the rule API.
+
+**What `state` is for.** `eqx.Module` instances are immutable, so
+anything that genuinely changes per-iteration (cumulative sample count,
+RNN hidden state, momentum buffers, Adam moment estimates) cannot live
+on the rule itself — the rule would need `self.cumulative_n = ...`,
+which Equinox forbids. State is the JAX-functional answer: the fitter
+asks the rule for `initial_state()` once, then threads
+`(η_t, state) = rule(η_{t-1}, η̂, step, bs, state)` through every step.
+Pure / stateless rules (`IdentityUpdate`, `RobbinsMonroUpdate`,
+`EWMAUpdate`, `Shrinkage` with a stateless base) inherit
+`initial_state -> {}` and round-trip an empty dict at zero overhead.
+This mirrors the Optax pattern (`opt.init(params) -> state`,
+`opt.update(grads, state, params) -> (updates, state)`).
+
+**Where parameters live.** Every JAX-array leaf of an `eqx.Module` is
+already a parameter in the JAX sense: `jax.grad`, `jax.vmap`, `optax`
+treat them uniformly. So rules store whatever hyperparameters they need
+as ordinary fields:
+
+| Rule                  | Stored field(s)              | `(a, b, c)` derived from        |
+| --------------------- | ---------------------------- | ------------------------------- |
+| `IdentityUpdate`      | (none)                       | constants `(0, 0, 1)`           |
+| `EWMAUpdate`          | `w: jax.Array`               | `(0, 1−w, w)`                   |
+| `RobbinsMonroUpdate`  | `tau0: jax.Array`            | `(0, 1−c, c)`, `c = 1/(τ₀+t)`   |
+| `SampleWeightedUpdate`| (state-only)                 | `n/(n+m), m/(n+m)`              |
+| `AffineUpdate`        | `a, b, c` directly           | as-is (literal parameters)      |
+| `Shrinkage`           | `base`, `eta0`, `tau`        | derived from base + prior       |
+
+For most rules the actual stored parameter is a smaller hyperparameter
+that *generates* `(a, b, c)`; `AffineUpdate` is the case where you want
+`(a, b, c)` themselves to be the parameters.
+
+**Trainability is automatic.** All of the above are differentiable
+today: every field above is a `jax.Array`, hence a pytree leaf, hence
+visible to `jax.grad`. To meta-learn an η-update rule end-to-end:
+
+```python
+def meta_loss(rule, model0, X):
+    fitter = BatchEMFitter(eta_update=rule, max_iter=20)
+    result = fitter.fit(model0, X)
+    return -result.model.marginal_log_likelihood(X)
+
+grads      = jax.grad(meta_loss)(rule, model0, X)
+new_rule   = optax.apply_updates(rule, optimizer.update(grads, opt_state)[0])
+```
+
+For meta-gradients to actually flow, the inner EM loop must run inside
+`lax.scan` (no Python branches on traced values). The current
+`BatchEMFitter._fit_scan` path satisfies this; the verbose / mixed-backend
+path does not. Fields that should be excluded from `jax.grad` can be
+marked `eqx.field(static=True)` (we use this nowhere in the rules
+intentionally).
+
+Meta-learning is **not** a goal of the current implementation phases.
+This subsection only documents that the architecture leaves the door
+open.
+
+### 4.6 ML-style predictors (future research)
+
+Non-affine rules subclass `EtaUpdateRule` directly. The standard JAX
+recipe for heterogeneous-feature inputs is
+`jax.flatten_util.ravel_pytree`, which converts any pytree of arrays to
+a 1-D vector (and back via the returned `unravel` closure):
+
+```python
+from jax.flatten_util import ravel_pytree
+
+class MLPPredictor(EtaUpdateRule):
+    """η_t = MLP([flatten(η_{t-1}), flatten(η̂)])."""
+
+    template: "EtaLike"          # used only for unravel; constant
+    mlp:      eqx.nn.MLP         # parameters live here
+
+    def __call__(self, eta_prev, eta_new, step, batch_size, state):
+        v_prev, _    = ravel_pytree(eta_prev)
+        v_new,  _    = ravel_pytree(eta_new)
+        _, unravel   = ravel_pytree(self.template)
+        return unravel(self.mlp(jnp.concatenate([v_prev, v_new]))), state
+```
+
+`template` is fixed at construction time
+(e.g. `model.compute_eta_from_model()`) and provides the shapes needed
+to round-trip the flattening. Because `mlp` is an `eqx.Module` field,
+its weights are automatically pytree leaves and follow the same
+trainability story as §4.5 — no extra plumbing.
+
+### 4.7 Shrinkage targets
 
 A short helper module `normix/fitting/shrinkage_targets.py` will provide
 constructors for common priors:
@@ -520,13 +664,20 @@ starting point, not as committed code.
 
 1. Reorder and rename `NormalMixtureEta` fields to `(E_inv_Y, E_Y,
   E_log_Y, E_X, E_X_inv_Y, E_XXT_inv_Y)`.
-2. Generalise `affine_combine` to accept scalar or pytree weights.
-3. Add `MarginalMixture` ABC; make `NormalMixture` inherit from it.
-4. Add `em_convergence_params()` to `NormalMixture` returning
+2. Generalise `affine_combine` to accept scalar / pytree / callable
+  weights (§4.2).
+3. Layer the rule abstraction (§4.1): introduce `EtaUpdateRule` with
+  `__call__`, add `AffineRule` that delegates to `weights()` +
+  `affine_combine`; migrate `IdentityUpdate`, `RobbinsMonroUpdate`,
+  `EWMAUpdate`, `SampleWeightedUpdate`, `AffineUpdate` to subclass
+  `AffineRule`. Fitter switches to `rule(eta_prev, eta_new, step, bs,
+  state)`.
+4. Add `MarginalMixture` ABC; make `NormalMixture` inherit from it.
+5. Add `em_convergence_params()` to `NormalMixture` returning
   `(mu, gamma, L_Sigma)`.
-5. Replace `_param_change` with the pytree-based version; have the fitter
+6. Replace `_param_change` with the pytree-based version; have the fitter
   call `model.em_convergence_params()` for old/new state.
-6. All existing tests (full-covariance EM, MCECM, batch + incremental,
+7. All existing tests (full-covariance EM, MCECM, batch + incremental,
   shrinkage) must pass unchanged after this phase.
 
 ### Phase 2 — Shrinkage combinator
@@ -535,7 +686,7 @@ starting point, not as committed code.
 2. Remove `ShrinkageUpdate`; users construct
   `Shrinkage(IdentityUpdate(), eta0, tau)` instead.
 3. Add `normix/fitting/shrinkage_targets.py` with the four target builders
-  from §4.4.
+  from §4.7.
 4. Tests:
   - `Shrinkage(base, eta0, tau=0)` ≡ `base` for any base rule;
   - `Shrinkage(IdentityUpdate(), eta0, scalar_tau)` matches the previous
@@ -586,8 +737,10 @@ starting point, not as committed code.
   order;
   - add `MarginalMixture` to the mixture hierarchy diagram.
 2. Update `docs/design/design.md` decision table:
-  - shrinkage combinator (§4.2);
-  - per-field affine combination (§4.1);
+  - two-layer rule abstraction (`EtaUpdateRule.__call__` /
+    `AffineRule.weights`, §4.1);
+  - generalised `affine_combine` weight forms (§4.2);
+  - shrinkage combinator (§4.3);
   - convergence hook generalisation (§5);
   - factor analysis as a sibling family (§7);
   - deferral of `DispersionModel` (§8).
