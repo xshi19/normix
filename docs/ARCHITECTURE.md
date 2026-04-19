@@ -251,6 +251,8 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | Document | Content |
 |---|---|
 | `docs/design/design.md` | Design rationale, architecture decisions |
+| `docs/design/em_covariance_extensions.md` | Proposed shrinkage / factor-analysis EM extensions (covariance work) |
+| `docs/design/finance_architecture.md` | Proposed `normix.finance` layer (portfolio projection, risk, optimization, diversification) |
 | `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks |
 | `docs/theory/` | Mathematical derivations (rst) |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
