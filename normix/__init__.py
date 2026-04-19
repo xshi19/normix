@@ -58,12 +58,13 @@ from normix.distributions.generalized_hyperbolic import (
     GeneralizedHyperbolic, JointGeneralizedHyperbolic)
 
 from normix.mixtures.joint import JointNormalMixture
-from normix.mixtures.marginal import NormalMixture
+from normix.mixtures.marginal import MarginalMixture, NormalMixture
 
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
 from normix.fitting.eta import NormalMixtureEta, affine_combine
 from normix.fitting.eta_rules import (
     EtaUpdateRule,
+    AffineRule,
     IdentityUpdate,
     RobbinsMonroUpdate,
     SampleWeightedUpdate,
@@ -106,6 +107,7 @@ __all__ = [
     "JointGeneralizedHyperbolic",
     # Base mixture classes
     "JointNormalMixture",
+    "MarginalMixture",
     "NormalMixture",
     # Fitters
     "BatchEMFitter",
@@ -115,6 +117,7 @@ __all__ = [
     "affine_combine",
     # Eta update rules
     "EtaUpdateRule",
+    "AffineRule",
     "IdentityUpdate",
     "RobbinsMonroUpdate",
     "SampleWeightedUpdate",

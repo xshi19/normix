@@ -160,28 +160,21 @@ class BatchEMFitter:
 
         Returns ``(model, max_change, eta_state)``.
         """
-        prev_mu = model._joint.mu
-        prev_gamma = model._joint.gamma
-        prev_L = model._joint.L_Sigma
+        prev_params = model.em_convergence_params()
 
         eta = model.e_step(X, backend=self.e_step_backend)
 
         if eta_state is not None:
-            from normix.fitting.eta import affine_combine
             eta_prev, rule_state, step = eta_state
-            a, b, c, rule_state = self.eta_update.weights(
-                step, X.shape[0], rule_state)
-            eta = affine_combine(eta_prev, eta, b, c, a)
+            eta, rule_state = self.eta_update(
+                eta_prev, eta, step, X.shape[0], rule_state)
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step(
             eta, backend=self.m_step_backend, method=self.m_step_method)
         model = self._regularize(model)
 
-        max_change = _param_change(
-            model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
-            prev_mu, prev_gamma, prev_L,
-        )
+        max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state
 
     def _mcecm_step(self, model, X, eta_state=None):
@@ -189,18 +182,14 @@ class BatchEMFitter:
 
         Returns ``(model, max_change, eta_state)``.
         """
-        prev_mu = model._joint.mu
-        prev_gamma = model._joint.gamma
-        prev_L = model._joint.L_Sigma
+        prev_params = model.em_convergence_params()
 
         eta = model.e_step(X, backend=self.e_step_backend)
 
         if eta_state is not None:
-            from normix.fitting.eta import affine_combine
             eta_prev, rule_state, step = eta_state
-            a, b, c, rule_state = self.eta_update.weights(
-                step, X.shape[0], rule_state)
-            eta = affine_combine(eta_prev, eta, b, c, a)
+            eta, rule_state = self.eta_update(
+                eta_prev, eta, step, X.shape[0], rule_state)
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step_normal(eta)
@@ -210,10 +199,7 @@ class BatchEMFitter:
         model = model.m_step_subordinator(
             eta, backend=self.m_step_backend, method=self.m_step_method)
 
-        max_change = _param_change(
-            model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
-            prev_mu, prev_gamma, prev_L,
-        )
+        max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state
 
     # ------------------------------------------------------------------
@@ -430,8 +416,6 @@ class IncrementalEMFitter:
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
         """Run incremental EM. Returns :class:`EMResult`."""
-        from normix.fitting.eta import affine_combine
-
         t_total = time.perf_counter()
         X = jnp.asarray(X, dtype=jnp.float64)
         n = X.shape[0]
@@ -456,9 +440,7 @@ class IncrementalEMFitter:
             indices = jax.random.choice(subkey, n, shape=(bs,), replace=False)
             X_batch = X[indices]
 
-            prev_mu = model._joint.mu
-            prev_gamma = model._joint.gamma
-            prev_L = model._joint.L_Sigma
+            prev_params = model.em_convergence_params()
 
             if self.inner_iter > 1:
                 for _ in range(self.inner_iter):
@@ -471,18 +453,15 @@ class IncrementalEMFitter:
             else:
                 eta_new = model.e_step(X_batch, backend=self.e_step_backend)
 
-            a, b, c, rule_state = self.eta_update.weights(
-                step, bs, rule_state)
-            eta_prev = affine_combine(eta_prev, eta_new, b, c, a)
+            eta_prev, rule_state = self.eta_update(
+                eta_prev, eta_new, step, bs, rule_state)
             model = model.m_step(
                 eta_prev, backend=self.m_step_backend,
                 method=self.m_step_method)
             model = self._regularize(model)
 
             max_change = _param_change(
-                model._joint.mu, model._joint.gamma, model._joint.L_Sigma,
-                prev_mu, prev_gamma, prev_L,
-            )
+                model.em_convergence_params(), prev_params)
             changes.append(max_change)
 
             if self.verbose >= 1 and (step + 1) % max(1, self.max_steps // 10) == 0:
@@ -521,12 +500,18 @@ class IncrementalEMFitter:
 # Shared utility
 # ---------------------------------------------------------------------------
 
-def _param_change(mu_new, gamma_new, L_new, mu_old, gamma_old, L_old):
-    """Max relative change in normal parameters (mu, gamma, L_Sigma)."""
-    rel_mu = jnp.linalg.norm(mu_new - mu_old) / jnp.maximum(
-        jnp.linalg.norm(mu_old), _PARAM_EPS)
-    rel_gamma = jnp.linalg.norm(gamma_new - gamma_old) / jnp.maximum(
-        jnp.linalg.norm(gamma_old), _PARAM_EPS)
-    rel_L = jnp.linalg.norm(L_new - L_old) / jnp.maximum(
-        jnp.linalg.norm(L_old), _PARAM_EPS)
-    return jnp.maximum(jnp.maximum(rel_mu, rel_gamma), rel_L)
+def _param_change(new_params, old_params) -> jax.Array:
+    """Max relative L2 change across leaves of a model's convergence pytree.
+
+    Both pytrees come from :meth:`MarginalMixture.em_convergence_params`
+    (called before and after the iteration). Per-leaf relative change is
+    ``||new - old|| / max(||old||, eps)``; the overall measure is the
+    maximum across leaves.
+    """
+    leaves_new = jax.tree.leaves(new_params)
+    leaves_old = jax.tree.leaves(old_params)
+    rels = jnp.stack([
+        jnp.linalg.norm(n - o) / jnp.maximum(jnp.linalg.norm(o), _PARAM_EPS)
+        for n, o in zip(leaves_new, leaves_old)
+    ])
+    return jnp.max(rels)

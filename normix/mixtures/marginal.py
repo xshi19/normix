@@ -1,7 +1,14 @@
 """
-NormalMixture — marginal :math:`f(x) = \\int_0^\\infty f(x,y)\\,dy`.
+Marginal mixture base classes.
 
-Owns a :class:`~normix.mixtures.joint.JointNormalMixture`. Provides:
+:class:`MarginalMixture` is the abstract interface fitters and the
+divergences module depend on. :class:`NormalMixture` is the
+full-covariance implementation, owning a
+:class:`~normix.mixtures.joint.JointNormalMixture`. A factor-analysis
+implementation will be added in a sibling class
+(see ``docs/design/em_covariance_extensions.md``).
+
+NormalMixture provides:
 
 - ``log_prob(x)`` — closed-form marginal log-density
 - ``e_step(X)`` — :func:`jax.vmap` over conditional expectations
@@ -11,7 +18,7 @@ Owns a :class:`~normix.mixtures.joint.JointNormalMixture`. Provides:
 from __future__ import annotations
 
 import abc
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 import equinox as eqx
@@ -22,11 +29,107 @@ import jax.numpy as jnp
 from normix.utils.constants import SIGMA_INIT_REG
 
 
-class NormalMixture(eqx.Module):
-    r"""
-    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy`.
+class MarginalMixture(eqx.Module):
+    r"""Abstract interface for marginal mixtures used by the EM fitters.
 
-    Not an exponential family. Owns a :class:`~normix.mixtures.joint.JointNormalMixture` (which is).
+    Concrete subclasses pick the storage of the Gaussian dispersion (full
+    Cholesky in :class:`NormalMixture`, low-rank-plus-diagonal in
+    :class:`FactorNormalMixture`) and the type of the EM expectation
+    pytree (``NormalMixtureEta`` vs. ``FactorMixtureStats``).
+
+    The fitter depends only on this contract; it does not know which
+    storage form a model uses.
+    """
+
+    # ------------------------------------------------------------------
+    # Distribution surface
+    # ------------------------------------------------------------------
+
+    @abc.abstractmethod
+    def log_prob(self, x: jax.Array) -> jax.Array:
+        """Marginal :math:`\\log f(x)` for a single observation."""
+
+    def pdf(self, x: jax.Array) -> jax.Array:
+        """Marginal :math:`f(x)` for a single observation."""
+        return jnp.exp(self.log_prob(x))
+
+    def marginal_log_likelihood(self, X: jax.Array) -> jax.Array:
+        """Mean log-likelihood over a dataset."""
+        X = jnp.asarray(X, dtype=jnp.float64)
+        return jnp.mean(jax.vmap(self.log_prob)(X))
+
+    # ------------------------------------------------------------------
+    # EM hooks (stats type chosen by subclass)
+    # ------------------------------------------------------------------
+
+    @abc.abstractmethod
+    def e_step(self, X: jax.Array, *, backend: str = 'jax') -> Any:
+        """E-step: aggregated expectation parameters for the batch."""
+
+    @abc.abstractmethod
+    def m_step(self, eta: Any, **kwargs) -> "MarginalMixture":
+        """Full M-step: updates all parameters; returns a new model."""
+
+    @abc.abstractmethod
+    def m_step_normal(self, eta: Any) -> "MarginalMixture":
+        """M-step for normal parameters only (MCECM cycle 1)."""
+
+    @abc.abstractmethod
+    def m_step_subordinator(self, eta: Any, **kwargs) -> "MarginalMixture":
+        """M-step for subordinator parameters only (MCECM cycle 2)."""
+
+    @abc.abstractmethod
+    def compute_eta_from_model(self) -> Any:
+        """Reconstruct the expectation pytree from the model's own parameters."""
+
+    @abc.abstractmethod
+    def em_convergence_params(self) -> Any:
+        r"""Pytree whose leaf-wise change measures EM convergence.
+
+        Subordinator parameters are intentionally excluded (their solver
+        has its own tolerance, and including them inflates iteration
+        counts). For full-covariance models this is
+        ``(mu, gamma, L_Sigma)``; for factor-analysis models it is
+        ``(mu, gamma, F F^T + D)`` to sidestep the rotational gauge.
+        """
+
+    # ------------------------------------------------------------------
+    # Convenience
+    # ------------------------------------------------------------------
+
+    def fit(
+        self,
+        X: jax.Array,
+        *,
+        algorithm: str = 'em',
+        verbose: int = 0,
+        max_iter: int = 200,
+        tol: float = 1e-3,
+        regularization: str = 'none',
+        e_step_backend: str = 'jax',
+        m_step_backend: str = 'cpu',
+        m_step_method: str = 'newton',
+    ) -> "EMResult":
+        """Fit using ``self`` as initialisation. Returns
+        :class:`~normix.fitting.em.EMResult`."""
+        from normix.fitting.em import BatchEMFitter
+        fitter = BatchEMFitter(
+            algorithm=algorithm,
+            verbose=verbose, max_iter=max_iter, tol=tol,
+            regularization=regularization,
+            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
+            m_step_method=m_step_method,
+        )
+        return fitter.fit(self, X)
+
+
+class NormalMixture(MarginalMixture):
+    r"""
+    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy` for a normal
+    variance-mean mixture.
+
+    Not an exponential family. Owns a
+    :class:`~normix.mixtures.joint.JointNormalMixture` (which is).
     """
 
     _joint: "JointNormalMixture"  # type: ignore[name-defined]
@@ -42,16 +145,6 @@ class NormalMixture(eqx.Module):
     @property
     def d(self) -> int:
         return self._joint.d
-
-    def log_prob(self, x: jax.Array) -> jax.Array:
-        """Marginal log f(x). Subclasses provide closed-form; default raises."""
-        raise NotImplementedError(
-            f"{type(self).__name__}.log_prob: implement closed-form or numerical integration"
-        )
-
-    def pdf(self, x: jax.Array) -> jax.Array:
-        """Marginal f(x), single observation."""
-        return jnp.exp(self.log_prob(x))
 
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \mu + \gamma E[Y]`."""
@@ -291,52 +384,22 @@ class NormalMixture(eqx.Module):
         """Construct a new model with rescaled subordinator parameters."""
 
     # ------------------------------------------------------------------
-    # Fitting
+    # Convergence hook
     # ------------------------------------------------------------------
 
-    def marginal_log_likelihood(self, X: jax.Array) -> jax.Array:
-        """Mean log-likelihood over dataset."""
-        X = jnp.asarray(X, dtype=jnp.float64)
-        return jnp.mean(jax.vmap(self.log_prob)(X))
+    def em_convergence_params(self):
+        r"""Pytree whose leaf-wise change measures EM convergence.
 
-    def fit(
-        self,
-        X: jax.Array,
-        *,
-        algorithm: str = 'em',
-        verbose: int = 0,
-        max_iter: int = 200,
-        tol: float = 1e-3,
-        regularization: str = 'none',
-        e_step_backend: str = 'jax',
-        m_step_backend: str = 'cpu',
-        m_step_method: str = 'newton',
-    ) -> "EMResult":
-        """Fit using self as initialization. Returns EMResult.
-
-        Parameters
-        ----------
-        X : (n, d) data array
-        algorithm : 'em' (default) or 'mcecm'
-        verbose : 0 = silent, 1 = summary, 2 = per-iteration table
-        max_iter, tol : EM convergence parameters
-        regularization : 'det_sigma_one' or 'none'
-        e_step_backend, m_step_backend : 'jax' or 'cpu'
-        m_step_method : 'newton', 'lbfgs', or 'bfgs'
-
-        Returns
-        -------
-        EMResult with .model, .log_likelihoods, .param_changes, etc.
+        Returns ``(mu, gamma, L_Sigma)``. Subordinator parameters
+        (``p, a, b``) are excluded — their solver has its own tolerance
+        and including them inflates iteration counts.
         """
-        from normix.fitting.em import BatchEMFitter
-        fitter = BatchEMFitter(
-            algorithm=algorithm,
-            verbose=verbose, max_iter=max_iter, tol=tol,
-            regularization=regularization,
-            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
-            m_step_method=m_step_method,
-        )
-        return fitter.fit(self, X)
+        j = self._joint
+        return (j.mu, j.gamma, j.L_Sigma)
+
+    # ------------------------------------------------------------------
+    # Fitting
+    # ------------------------------------------------------------------
 
     @classmethod
     def default_init(cls, X: jax.Array) -> "NormalMixture":
