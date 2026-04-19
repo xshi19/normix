@@ -75,9 +75,16 @@
              
   <h1>Source code for normix.mixtures.marginal</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">NormalMixture — marginal :math:`f(x) = \\int_0^\\infty f(x,y)\\,dy`.</span>
+<span class="sd">Marginal mixture base classes.</span>
 
-<span class="sd">Owns a :class:`~normix.mixtures.joint.JointNormalMixture`. Provides:</span>
+<span class="sd">:class:`MarginalMixture` is the abstract interface fitters and the</span>
+<span class="sd">divergences module depend on. :class:`NormalMixture` is the</span>
+<span class="sd">full-covariance implementation, owning a</span>
+<span class="sd">:class:`~normix.mixtures.joint.JointNormalMixture`. A factor-analysis</span>
+<span class="sd">implementation will be added in a sibling class</span>
+<span class="sd">(see ``docs/design/em_covariance_extensions.md``).</span>
+
+<span class="sd">NormalMixture provides:</span>
 
 <span class="sd">- ``log_prob(x)`` — closed-form marginal log-density</span>
 <span class="sd">- ``e_step(X)`` — :func:`jax.vmap` over conditional expectations</span>
@@ -87,7 +94,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
@@ -98,13 +105,142 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SIGMA_INIT_REG</span>
 
 
+<div class="viewcode-block" id="MarginalMixture">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MarginalMixture</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Abstract interface for marginal mixtures used by the EM fitters.</span>
+
+<span class="sd">    Concrete subclasses pick the storage of the Gaussian dispersion (full</span>
+<span class="sd">    Cholesky in :class:`NormalMixture`, low-rank-plus-diagonal in</span>
+<span class="sd">    :class:`FactorNormalMixture`) and the type of the EM expectation</span>
+<span class="sd">    pytree (``NormalMixtureEta`` vs. ``FactorMixtureStats``).</span>
+
+<span class="sd">    The fitter depends only on this contract; it does not know which</span>
+<span class="sd">    storage form a model uses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Distribution surface</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="MarginalMixture.log_prob">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.log_prob">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal :math:`\\log f(x)` for a single observation.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.pdf">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.pdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal :math:`f(x)` for a single observation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.marginal_log_likelihood">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mean log-likelihood over a dataset.&quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># EM hooks (stats type chosen by subclass)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="MarginalMixture.e_step">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.e_step">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;E-step: aggregated expectation parameters for the batch.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.m_step">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full M-step: updates all parameters; returns a new model.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.m_step_normal">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step_normal">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;M-step for normal parameters only (MCECM cycle 1).&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step_subordinator">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;M-step for subordinator parameters only (MCECM cycle 2).&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.compute_eta_from_model">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct the expectation pytree from the model&#39;s own parameters.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarginalMixture.em_convergence_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.em_convergence_params">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
+
+<span class="sd">        Subordinator parameters are intentionally excluded (their solver</span>
+<span class="sd">        has its own tolerance, and including them inflates iteration</span>
+<span class="sd">        counts). For full-covariance models this is</span>
+<span class="sd">        ``(mu, gamma, L_Sigma)``; for factor-analysis models it is</span>
+<span class="sd">        ``(mu, gamma, F F^T + D)`` to sidestep the rotational gauge.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Convenience</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="MarginalMixture.fit">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;em&#39;</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">regularization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
+        <span class="n">e_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
+        <span class="n">m_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
+        <span class="n">m_step_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;newton&#39;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit using ``self`` as initialisation. Returns</span>
+<span class="sd">        :class:`~normix.fitting.em.EMResult`.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
+        <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
+            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+            <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
+            <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
+            <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="NormalMixture">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">NormalMixture</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NormalMixture</span><span class="p">(</span><span class="n">MarginalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy`.</span>
+<span class="sd">    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy` for a normal</span>
+<span class="sd">    variance-mean mixture.</span>
 
-<span class="sd">    Not an exponential family. Owns a :class:`~normix.mixtures.joint.JointNormalMixture` (which is).</span>
+<span class="sd">    Not an exponential family. Owns a</span>
+<span class="sd">    :class:`~normix.mixtures.joint.JointNormalMixture` (which is).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_joint</span><span class="p">:</span> <span class="s2">&quot;JointNormalMixture&quot;</span>  <span class="c1"># type: ignore[name-defined]</span>
@@ -120,22 +256,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">d</span>
-
-<div class="viewcode-block" id="NormalMixture.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.log_prob">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal log f(x). Subclasses provide closed-form; default raises.&quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.log_prob: implement closed-form or numerical integration&quot;</span>
-        <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="NormalMixture.pdf">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.pdf">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal f(x), single observation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
-
 
 <div class="viewcode-block" id="NormalMixture.mean">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.mean">[docs]</a>
@@ -408,58 +528,25 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a new model with rescaled subordinator parameters.&quot;&quot;&quot;</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Fitting</span>
+    <span class="c1"># Convergence hook</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-<div class="viewcode-block" id="NormalMixture.marginal_log_likelihood">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.marginal_log_likelihood">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mean log-likelihood over dataset.&quot;&quot;&quot;</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">))</span></div>
+<div class="viewcode-block" id="NormalMixture.em_convergence_params">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.em_convergence_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
 
-
-<div class="viewcode-block" id="NormalMixture.fit">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.fit">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;em&#39;</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-        <span class="n">regularization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
-        <span class="n">e_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
-        <span class="n">m_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
-        <span class="n">m_step_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;newton&#39;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit using self as initialization. Returns EMResult.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        X : (n, d) data array</span>
-<span class="sd">        algorithm : &#39;em&#39; (default) or &#39;mcecm&#39;</span>
-<span class="sd">        verbose : 0 = silent, 1 = summary, 2 = per-iteration table</span>
-<span class="sd">        max_iter, tol : EM convergence parameters</span>
-<span class="sd">        regularization : &#39;det_sigma_one&#39; or &#39;none&#39;</span>
-<span class="sd">        e_step_backend, m_step_backend : &#39;jax&#39; or &#39;cpu&#39;</span>
-<span class="sd">        m_step_method : &#39;newton&#39;, &#39;lbfgs&#39;, or &#39;bfgs&#39;</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        EMResult with .model, .log_likelihoods, .param_changes, etc.</span>
+<span class="sd">        Returns ``(mu, gamma, L_Sigma)``. Subordinator parameters</span>
+<span class="sd">        (``p, a, b``) are excluded — their solver has its own tolerance</span>
+<span class="sd">        and including them inflates iteration counts.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
-        <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
-            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
-            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
-            <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
-            <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
-            <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">)</span></div>
 
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Fitting</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.default_init">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.default_init">[docs]</a>
