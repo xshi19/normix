@@ -184,7 +184,7 @@ Both return `EMResult`.
 
 **`affine_combine(eta_prev, eta_new, b, c, a=None)`** — the single operation behind all η-update rules: $\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta$. JIT-able (pure function on pytrees).
 
-**`EtaUpdateRule`** (`eqx.Module` ABC) — each concrete rule computes $(a, b, c)$ from step index, batch size, and state. Hyperparameters are JAX array leaves — JIT-compatible and differentiable for meta-learning step-size schedules. Concrete rules: `IdentityUpdate`, `RobbinsMonroUpdate`, `SampleWeightedUpdate`, `EWMAUpdate`, `ShrinkageUpdate`, `AffineUpdate`.
+**`EtaUpdateRule`** (`eqx.Module` ABC) — most general form $\eta_t = \mathrm{rule}(\eta_{t-1}, \hat\eta)$ with `__call__`. **`AffineRule`** is the affine specialisation $\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta$ whose subclasses implement `weights(...)`. Hyperparameters are JAX array leaves — JIT-compatible and differentiable for meta-learning step-size schedules. Concrete affine rules: `IdentityUpdate`, `RobbinsMonroUpdate`, `SampleWeightedUpdate`, `EWMAUpdate`, `AffineUpdate`. **`Shrinkage(base, eta0, tau)`** is a non-affine combinator that wraps any base rule and pulls toward a prior $\eta_0$; `tau` accepts a scalar or a stats-shape pytree for per-field shrinkage (e.g. shrink Σ alone). Companion helpers `eta0_from_model`, `eta0_isotropic`, `eta0_diagonal`, `eta0_with_sigma` build prior pytrees in `normix/fitting/shrinkage_targets.py`. See `docs/design/em_covariance_extensions.md` §4.
 
 ---
 

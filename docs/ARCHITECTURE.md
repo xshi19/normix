@@ -25,7 +25,8 @@ normix/                     # JAX implementation
 ├── fitting/
 │   ├── em.py               # EMResult; BatchEMFitter, IncrementalEMFitter
 │   ├── eta.py              # NormalMixtureEta, affine_combine
-│   ├── eta_rules.py        # EtaUpdateRule (eqx.Module) + Identity, RobbinsMonro, EWMA, ...
+│   ├── eta_rules.py        # EtaUpdateRule + AffineRule; Identity, RobbinsMonro, EWMA, Shrinkage, ...
+│   ├── shrinkage_targets.py # eta0_from_model, eta0_isotropic, eta0_diagonal, eta0_with_sigma
 │   ├── solvers.py          # solve_bregman*, BregmanResult; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 └── utils/
