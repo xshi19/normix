@@ -156,8 +156,9 @@
 <span class="sd">    m_step_method : str</span>
 <span class="sd">        &#39;newton&#39; (default), &#39;lbfgs&#39;, or &#39;bfgs&#39;.</span>
 <span class="sd">    eta_update : EtaUpdateRule or None</span>
-<span class="sd">        Optional eta combination rule (e.g. ``ShrinkageUpdate``).</span>
-<span class="sd">        When set, the E-step output is transformed before the M-step.</span>
+<span class="sd">        Optional eta combination rule (e.g. ``Shrinkage(IdentityUpdate(),</span>
+<span class="sd">        eta0, tau)``). When set, the E-step output is transformed before</span>
+<span class="sd">        the M-step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
