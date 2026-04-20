@@ -75,8 +75,9 @@ class BatchEMFitter:
     m_step_method : str
         'newton' (default), 'lbfgs', or 'bfgs'.
     eta_update : EtaUpdateRule or None
-        Optional eta combination rule (e.g. ``ShrinkageUpdate``).
-        When set, the E-step output is transformed before the M-step.
+        Optional eta combination rule (e.g. ``Shrinkage(IdentityUpdate(),
+        eta0, tau)``). When set, the E-step output is transformed before
+        the M-step.
     """
 
     def __init__(

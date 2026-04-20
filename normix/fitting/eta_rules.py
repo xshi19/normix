@@ -31,7 +31,7 @@ and differentiable for future meta-learning of step-size schedules.
 from __future__ import annotations
 
 import abc
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 import equinox as eqx
 import jax
@@ -158,36 +158,107 @@ class EWMAUpdate(AffineRule):
         return None, 1.0 - self.w, self.w, state
 
 
-class ShrinkageUpdate(AffineRule):
-    r"""Shrinkage toward a prior: :math:`a = \frac{\tau}{1+\tau}\eta_0`,
-    :math:`b = 0`, :math:`c = \frac{1}{1+\tau}`.
+class Shrinkage(EtaUpdateRule):
+    r"""Shrinkage combinator: pull the running η toward a prior on top of any base rule.
+
+    .. math::
+
+        \eta_t = \frac{\tau}{1+\tau} \odot \eta_0
+                 + \frac{1}{1+\tau} \odot \mathrm{base}(\eta_{t-1}, \hat\eta),
+
+    where :math:`\odot` is per-field multiplication (broadcast for scalar
+    :math:`\tau`).
+
+    The combinator composes with **any** base rule — affine
+    (:class:`IdentityUpdate`, :class:`RobbinsMonroUpdate`,
+    :class:`EWMAUpdate`, :class:`SampleWeightedUpdate`) or non-affine
+    (e.g. an MLP-based predictor) — without losing the base rule's state.
 
     Parameters
     ----------
+    base : EtaUpdateRule
+        Base rule that produces the unshrunk update
+        :math:`\mathrm{base}(\eta_{t-1}, \hat\eta)`.
     eta0 : NormalMixtureEta
-        Prior expectation parameters (shrinkage target).
-    tau : float
-        Shrinkage strength (higher → more regularisation).
+        Prior expectation parameters (shrinkage target). Must be a complete
+        stats pytree of the same type as ``eta_prev`` / ``eta_new``.
+    tau : float, jax.Array, or stats pytree
+        Shrinkage strength.
 
-    .. note::
-       This is the legacy uniform-shrinkage rule. Phase 2 of the
-       EM-extension plan replaces it with a ``Shrinkage(base, eta0, tau)``
-       combinator that supports per-field ``tau`` and composes with any
-       base rule.
+        * **scalar** — uniform shrinkage on every sufficient statistic;
+          matches the penalised-MLE in
+          :doc:`../docs/theory/shrinkage`.
+        * **stats pytree** (e.g. :class:`NormalMixtureEta` with scalar
+          leaves) — per-field shrinkage. Setting all but one leaf to
+          ``0`` shrinks only that statistic (e.g. ``Σ`` alone via the
+          ``E_XXT_inv_Y`` field).
+
+    Examples
+    --------
+    Batch EM with uniform shrinkage::
+
+        rule = Shrinkage(IdentityUpdate(), eta0, tau=0.5)
+
+    Batch EM with Σ-only shrinkage::
+
+        tau_pytree = NormalMixtureEta(
+            E_inv_Y=0.0, E_Y=0.0, E_log_Y=0.0,
+            E_X=jnp.zeros(d), E_X_inv_Y=jnp.zeros(d),
+            E_XXT_inv_Y=jnp.full((d, d), 0.5),
+        )
+        rule = Shrinkage(IdentityUpdate(), eta0, tau=tau_pytree)
+
+    Robbins–Monro online + shrinkage::
+
+        rule = Shrinkage(RobbinsMonroUpdate(tau0=10.0), eta0, tau=0.1)
+
+    Notes
+    -----
+    The state pytree is owned by ``base``: :meth:`initial_state` and
+    :meth:`__call__` thread the base rule's state unchanged through the
+    shrinkage step.
+
+    See Also
+    --------
+    normix.fitting.shrinkage_targets : helpers for building ``eta0``.
     """
 
+    base: EtaUpdateRule
     eta0: NormalMixtureEta
-    tau: jax.Array
+    tau: Any  # scalar jax.Array or NormalMixtureEta
 
-    def __init__(self, eta0: NormalMixtureEta, tau: float = 0.5):
+    def __init__(
+        self,
+        base: EtaUpdateRule,
+        eta0: NormalMixtureEta,
+        tau: Union[float, jax.Array, NormalMixtureEta] = 0.5,
+    ):
+        self.base = base
         self.eta0 = eta0
-        self.tau = jnp.asarray(tau, dtype=jnp.float64)
+        if isinstance(tau, NormalMixtureEta):
+            self.tau = tau
+        else:
+            self.tau = jnp.asarray(tau, dtype=jnp.float64)
 
-    def weights(self, step, batch_size, state):
-        factor = self.tau / (1.0 + self.tau)
-        a = jax.tree.map(lambda x: factor * x, self.eta0)
-        c = 1.0 / (1.0 + self.tau)
-        return a, jnp.float64(0.0), c, state
+    def initial_state(self) -> Dict:
+        return self.base.initial_state()
+
+    def __call__(self, eta_prev, eta_new, step, batch_size, state):
+        eta_base, state = self.base(eta_prev, eta_new, step, batch_size, state)
+
+        if isinstance(self.tau, NormalMixtureEta):
+            # Per-field τ: factors are leaf-wise τ/(1+τ) and 1/(1+τ).
+            factor_a = jax.tree.map(lambda t: t / (1.0 + t), self.tau)
+            factor_b = jax.tree.map(lambda t: 1.0 / (1.0 + t), self.tau)
+            shifted_eta0 = jax.tree.map(jnp.multiply, factor_a, self.eta0)
+            scaled_base = jax.tree.map(jnp.multiply, factor_b, eta_base)
+            eta_t = jax.tree.map(jnp.add, shifted_eta0, scaled_base)
+        else:
+            # Scalar τ: factors broadcast to every leaf.
+            factor_a = self.tau / (1.0 + self.tau)
+            factor_b = 1.0 / (1.0 + self.tau)
+            eta_t = affine_combine(self.eta0, eta_base, factor_a, factor_b)
+        return eta_t, state
 
 
 class AffineUpdate(AffineRule):

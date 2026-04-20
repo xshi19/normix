@@ -69,8 +69,14 @@ from normix.fitting.eta_rules import (
     RobbinsMonroUpdate,
     SampleWeightedUpdate,
     EWMAUpdate,
-    ShrinkageUpdate,
+    Shrinkage,
     AffineUpdate,
+)
+from normix.fitting.shrinkage_targets import (
+    eta0_from_model,
+    eta0_isotropic,
+    eta0_diagonal,
+    eta0_with_sigma,
 )
 
 from normix.divergences import (
@@ -122,8 +128,13 @@ __all__ = [
     "RobbinsMonroUpdate",
     "SampleWeightedUpdate",
     "EWMAUpdate",
-    "ShrinkageUpdate",
+    "Shrinkage",
     "AffineUpdate",
+    # Shrinkage targets
+    "eta0_from_model",
+    "eta0_isotropic",
+    "eta0_diagonal",
+    "eta0_with_sigma",
     # Divergences
     "squared_hellinger",
     "kl_divergence",
