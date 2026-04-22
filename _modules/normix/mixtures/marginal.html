@@ -240,10 +240,15 @@
 <span class="sd">    variance-mean mixture.</span>
 
 <span class="sd">    Not an exponential family. Owns a</span>
-<span class="sd">    :class:`~normix.mixtures.joint.JointNormalMixture` (which is).</span>
+<span class="sd">    :class:`~normix.mixtures.joint.JointNormalMixture` (which is). The</span>
+<span class="sd">    classical parameters :math:`(\mu, \gamma, \Sigma, \text{subordinator})`</span>
+<span class="sd">    are forwarded as read-only properties; use :meth:`replace` to obtain</span>
+<span class="sd">    a new model with updated parameters (modules are immutable).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_joint</span><span class="p">:</span> <span class="s2">&quot;JointNormalMixture&quot;</span>  <span class="c1"># type: ignore[name-defined]</span>
+
+    <span class="n">_NORMAL_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;L_Sigma&#39;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
@@ -256,6 +261,57 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">d</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Forwarding views of joint parameters</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mu` — location parameter (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">mu</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\gamma` — skewness parameter (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">gamma</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">L_Sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Lower Cholesky factor of :math:`\Sigma` (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma</span>
+
+<div class="viewcode-block" id="NormalMixture.sigma">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Dispersion :math:`\Sigma = L_\Sigma L_\Sigma^\top` (forwarded from the joint).</span>
+
+<span class="sd">        Distinct from :meth:`cov`, which returns the *marginal* covariance</span>
+<span class="sd">        :math:`E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.log_det_sigma">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.log_det_sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma|` (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_joint_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the :class:`JointNormalMixture` subclass paired with this marginal.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stored subordinator field names on the joint, e.g. ``(&#39;alpha&#39;, &#39;beta&#39;)``.</span>
+
+<span class="sd">        Used by :meth:`replace` to dispatch updates between the normal</span>
+<span class="sd">        block (:attr:`_NORMAL_KEYS`) and the subordinator block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NormalMixture.mean">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.mean">[docs]</a>
@@ -428,6 +484,37 @@
         <span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># η → model: closed-form M-step as exponential-family inversion</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="NormalMixture.from_expectation">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.from_expectation">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Construct from expectation parameters :math:`\eta`.</span>
+
+<span class="sd">        Wraps :meth:`JointNormalMixture.from_expectation`, which performs</span>
+<span class="sd">        the exact closed-form M-step on the normal block and the</span>
+<span class="sd">        subordinator&#39;s ``from_expectation`` on the subordinator block.</span>
+
+<span class="sd">        This is the canonical η→model map: any prior or shrinkage target</span>
+<span class="sd">        :math:`\eta_0` can be inspected as a concrete model via</span>
+<span class="sd">        ``cls.from_expectation(eta_0).sigma()`` etc.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : NormalMixtureEta</span>
+<span class="sd">            Aggregated expectation parameters.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Forwarded to :meth:`JointNormalMixture.from_expectation`</span>
+<span class="sd">            (e.g. ``backend``, ``method``, ``maxiter``, ``theta0``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_joint_class</span><span class="p">()</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># M-step</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
@@ -438,12 +525,15 @@
         <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full M-step: update normal params + subordinator from eta.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Full M-step: update normal params + subordinator from :math:`\eta`.</span>
 
-<span class="sd">        Returns a NEW NormalMixture with updated parameters.</span>
+<span class="sd">        Equivalent to ``type(self).from_expectation(eta, **kwargs)``;</span>
+<span class="sd">        ``self`` is only used to dispatch on the subclass. Subclasses</span>
+<span class="sd">        with iterative subordinator solvers (e.g.</span>
+<span class="sd">        :class:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`)</span>
+<span class="sd">        may override to inject a warm-start :math:`\theta_0`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_normal</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step_subordinator</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.m_step_normal">
@@ -464,18 +554,25 @@
 
 <div class="viewcode-block" id="NormalMixture.m_step_subordinator">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator">[docs]</a>
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update subordinator parameters from expectation parameters.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;M-step for the subordinator only (MCECM Cycle 2).</span>
 
-<span class="sd">        Reads subordinator-specific fields from ``eta`` (e.g. ``eta.E_log_Y``).</span>
-<span class="sd">        Normal params are read from ``self._joint``; only the subordinator</span>
-<span class="sd">        is re-estimated. Returns a new model.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        Reads the subordinator-relevant fields of ``eta``; normal</span>
+<span class="sd">        parameters are read from ``self._joint`` and copied unchanged.</span>
+<span class="sd">        Subclasses with iterative solvers may override to add warm-start</span>
+<span class="sd">        or sanity-check fallbacks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">joint_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">joint_cls</span><span class="o">.</span><span class="n">_subordinator_from_eta</span><span class="p">(</span>
+            <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">new_joint</span> <span class="o">=</span> <span class="n">joint_cls</span><span class="o">.</span><span class="n">_from_normal_and_subordinator</span><span class="p">(</span>
+            <span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">new_joint</span><span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -490,6 +587,63 @@
             <span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">new_joint</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Update API: replace(**) returns a new instance</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="NormalMixture.replace">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.replace">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">updates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a new model with selected parameters replaced.</span>
+
+<span class="sd">        Accepts any subset of:</span>
+
+<span class="sd">        - normal parameters: ``mu``, ``gamma``, ``L_Sigma``;</span>
+<span class="sd">        - dispersion alias ``sigma`` — converted to ``L_Sigma`` via</span>
+<span class="sd">          Cholesky (mutually exclusive with ``L_Sigma``);</span>
+<span class="sd">        - subordinator parameters declared by :meth:`_subordinator_keys`</span>
+<span class="sd">          (e.g. ``alpha, beta`` for VG / NInvG, ``mu_ig, lam`` for NIG,</span>
+<span class="sd">          ``p, a, b`` for GH).</span>
+
+<span class="sd">        The actual storage lives in :attr:`joint`; this method does an</span>
+<span class="sd">        immutable update via :func:`equinox.tree_at`.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; vg2 = vg.replace(mu=new_mu)                    # change μ</span>
+<span class="sd">        &gt;&gt;&gt; vg3 = vg.replace(alpha=2.5, beta=0.5)          # change subordinator</span>
+<span class="sd">        &gt;&gt;&gt; vg4 = vg.replace(sigma=sigma2 * jnp.eye(d))    # set Σ via covariance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;sigma&#39;</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;L_Sigma&#39;</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;specify either `sigma` or `L_Sigma`, not both&quot;</span><span class="p">)</span>
+            <span class="n">updates</span><span class="p">[</span><span class="s1">&#39;L_Sigma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">updates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;sigma&#39;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+
+        <span class="n">sub_keys</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_subordinator_keys</span><span class="p">()</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_NORMAL_KEYS</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">sub_keys</span><span class="p">)</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span> <span class="o">-</span> <span class="n">valid</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;unknown parameter(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2"> for &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; valid keys are </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">new_values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">updates</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)</span>
+
+        <span class="n">new_joint</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">j</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="p">,</span>
+            <span class="n">new_values</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">new_joint</span><span class="p">)</span></div>
+
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Regularisation</span>

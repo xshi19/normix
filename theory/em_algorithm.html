@@ -419,11 +419,20 @@ averaged conditional expectations <span class="math notranslate nohighlight">\(E
 <span class="math notranslate nohighlight">\(E[Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[X|X]\)</span>, <span class="math notranslate nohighlight">\(E[X/Y|X]\)</span>, <span class="math notranslate nohighlight">\(E[XX^\top/Y|X]\)</span>
 over the data, returning a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>.</p></li>
 <li><p><a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.m_step" title="normix.mixtures.marginal.NormalMixture.m_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step()</span></code></a>: Updates all
-parameters from the expectation parameters; the normal-component update
-is closed-form, and the subordinator update calls
-<a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="normix.mixtures.marginal.NormalMixture.m_step_subordinator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step_subordinator()</span></code></a> which
-inverts the exponential family map via
-<a class="reference internal" href="../api/index.html#normix.fitting.solvers.solve_bregman" title="normix.fitting.solvers.solve_bregman"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a> (or a closed-form override).</p></li>
+parameters from the expectation parameters. This is exactly the
+<span class="math notranslate nohighlight">\(\eta\to\theta\)</span> map for the joint exponential family and is
+available in classmethod form as
+<a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.from_expectation" title="normix.mixtures.marginal.NormalMixture.from_expectation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_expectation()</span></code></a>
+(and <a class="reference internal" href="../api/index.html#normix.mixtures.joint.JointNormalMixture.from_expectation" title="normix.mixtures.joint.JointNormalMixture.from_expectation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_expectation()</span></code></a>).
+The normal-component update is closed-form
+(<code class="xref py py-meth docutils literal notranslate"><span class="pre">_mstep_normal_params()</span></code>);
+the subordinator update calls each subordinator’s own
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">from_expectation()</span></code> (closed-form for Gamma, InverseGamma,
+InverseGaussian; numerical via
+<a class="reference internal" href="../api/index.html#normix.fitting.solvers.solve_bregman" title="normix.fitting.solvers.solve_bregman"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a> for the GIG case).
+<a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="normix.mixtures.marginal.NormalMixture.m_step_subordinator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step_subordinator()</span></code></a>
+is the MCECM cycle-2 specialisation (subordinator only, normal block
+unchanged).</p></li>
 <li><p><a class="reference internal" href="../api/index.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="normix.mixtures.joint.JointNormalMixture.conditional_expectations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">conditional_expectations()</span></code></a>:
 Computes <span class="math notranslate nohighlight">\(E[\log Y|X=x]\)</span>, <span class="math notranslate nohighlight">\(E[Y^{-1}|X=x]\)</span>, <span class="math notranslate nohighlight">\(E[Y|X=x]\)</span>
 for a single observation, used inside the E-step.</p></li>

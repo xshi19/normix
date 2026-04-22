@@ -221,7 +221,25 @@
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="o">-</span><span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">gamma_quad</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
-</div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_from_eta</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit Gamma subordinator from :math:`(E[\log Y], E[Y])`.</span>
+
+<span class="sd">        ``theta0`` is accepted for API uniformity and ignored — Gamma&#39;s</span>
+<span class="sd">        :meth:`~normix.distributions.gamma.Gamma.from_expectation` is</span>
+<span class="sd">        closed-form (Newton on digamma).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_normal_and_subordinator</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span>
+                   <span class="n">alpha</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span></div>
 
 
 
@@ -298,20 +316,23 @@
         <span class="n">E_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="n">j</span><span class="o">.</span><span class="n">beta</span>
         <span class="k">return</span> <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span>
 
-<div class="viewcode-block" id="VarianceGamma.m_step_subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.VarianceGamma.m_step_subordinator">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VarianceGamma&quot;</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
-        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
-        <span class="n">gamma_dist</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
-        <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointVarianceGamma</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="n">gamma_dist</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">gamma_dist</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">VarianceGamma</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span></div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_joint_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JointVarianceGamma</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\alpha` — Gamma shape (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">alpha</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\beta` — Gamma rate (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">beta</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VarianceGamma&quot;</span><span class="p">:</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>

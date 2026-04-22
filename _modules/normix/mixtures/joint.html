@@ -426,6 +426,74 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># η → model: closed-form M-step as exponential-family inversion</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="JointNormalMixture.from_expectation">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.from_expectation">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Construct from expectation parameters :math:`\eta`.</span>
+
+<span class="sd">        Two input forms are supported:</span>
+
+<span class="sd">        - :class:`~normix.fitting.eta.NormalMixtureEta` — the natural η</span>
+<span class="sd">          pytree of the joint normal-variance-mean mixture; uses the</span>
+<span class="sd">          closed-form M-step (:math:`\mu, \gamma, \Sigma` analytical;</span>
+<span class="sd">          subordinator via :meth:`_subordinator_from_eta`).</span>
+<span class="sd">        - flat ``jax.Array`` — the generic Bregman solver inherited from</span>
+<span class="sd">          :class:`~normix.exponential_family.ExponentialFamily`.</span>
+
+<span class="sd">        The pytree path is the canonical η→θ map for these distributions:</span>
+<span class="sd">        it is exact (no Bregman iterations on the normal block) and uses</span>
+<span class="sd">        the subordinator&#39;s own ``from_expectation`` (closed-form for</span>
+<span class="sd">        Gamma / InverseGamma / InverseGaussian; numerical for GIG).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eta : NormalMixtureEta or jax.Array</span>
+<span class="sd">            Expectation parameters.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            For the pytree path: forwarded to</span>
+<span class="sd">            :meth:`_subordinator_from_eta` (e.g. ``backend``, ``method``,</span>
+<span class="sd">            ``maxiter``, ``theta0`` for warm-starting GIG).</span>
+<span class="sd">            For the flat-array path: forwarded to the parent solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">NormalMixtureEta</span><span class="p">):</span>
+            <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_mstep_normal_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_subordinator_from_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_normal_and_subordinator</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_from_eta</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit the subordinator from the marginal expectation pytree.</span>
+
+<span class="sd">        Reads the subordinator-relevant fields of ``eta`` (a subset of</span>
+<span class="sd">        :math:`E[\log Y], E[1/Y], E[Y]`) and returns a fitted instance of</span>
+<span class="sd">        the appropriate subordinator family. ``theta0`` is forwarded to</span>
+<span class="sd">        the subordinator&#39;s solver as a warm-start; subordinators with</span>
+<span class="sd">        closed-form ``from_expectation`` may ignore it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_normal_and_subordinator</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">L_Sigma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">subordinator</span><span class="p">:</span> <span class="n">ExponentialFamily</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct from normal parameters and a fitted subordinator.&quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># M-step: closed-form normal parameter update</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 

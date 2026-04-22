@@ -1664,6 +1664,39 @@ b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)\]</div>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.from_expectation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.from_expectation" title="Link to this definition"></a></dt>
+<dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Two input forms are supported:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code> — the natural η
+pytree of the joint normal-variance-mean mixture; uses the
+closed-form M-step (<span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span> analytical;
+subordinator via <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code>).</p></li>
+<li><p>flat <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code> — the generic Bregman solver inherited from
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a>.</p></li>
+</ul>
+<p>The pytree path is the canonical η→θ map for these distributions:
+it is exact (no Bregman iterations on the normal block) and uses
+the subordinator’s own <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> (closed-form for
+Gamma / InverseGamma / InverseGaussian; numerical for GIG).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<em>NormalMixtureEta</em><em> or </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Expectation parameters.</p></li>
+<li><p><strong>**kwargs</strong> – For the pytree path: forwarded to
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">maxiter</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code> for warm-starting GIG).
+For the flat-array path: forwarded to the parent solver.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><em>JointNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -1858,7 +1891,10 @@ counts). For full-covariance models this is
 <p>Marginal <span class="math notranslate nohighlight">\(f(x) = \int_0^\infty f(x,y)\,dy\)</span> for a normal
 variance-mean mixture.</p>
 <p>Not an exponential family. Owns a
-<a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a> (which is).</p>
+<a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a> (which is). The
+classical parameters <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, \text{subordinator})\)</span>
+are forwarded as read-only properties; use <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.replace" title="normix.mixtures.marginal.NormalMixture.replace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">replace()</span></code></a> to obtain
+a new model with updated parameters (modules are immutable).</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">joint</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><span class="pre">JointNormalMixture</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint" title="Link to this definition"></a></dt>
@@ -1868,6 +1904,48 @@ variance-mean mixture.</p>
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.d">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.d" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mu">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.mu" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mu\)</span> — location parameter (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.gamma">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">gamma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.gamma" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\gamma\)</span> — skewness parameter (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.L_Sigma">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">L_Sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.L_Sigma" title="Link to this definition"></a></dt>
+<dd><p>Lower Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span> (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.sigma">
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.sigma" title="Link to this definition"></a></dt>
+<dd><p>Dispersion <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span> (forwarded from the joint).</p>
+<p>Distinct from <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.cov" title="normix.mixtures.marginal.NormalMixture.cov"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cov()</span></code></a>, which returns the <em>marginal</em> covariance
+<span class="math notranslate nohighlight">\(E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.log_det_sigma">
+<span class="sig-name descname"><span class="pre">log_det_sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.log_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.log_det_sigma" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log|\Sigma|\)</span> (forwarded from the joint).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mean">
@@ -1974,10 +2052,38 @@ six aggregated expectation parameters.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.from_expectation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.from_expectation" title="Link to this definition"></a></dt>
+<dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Wraps <code class="xref py py-meth docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code>, which performs
+the exact closed-form M-step on the normal block and the
+subordinator’s <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> on the subordinator block.</p>
+<p>This is the canonical η→model map: any prior or shrinkage target
+<span class="math notranslate nohighlight">\(\eta_0\)</span> can be inspected as a concrete model via
+<code class="docutils literal notranslate"><span class="pre">cls.from_expectation(eta_0).sigma()</span></code> etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<em>NormalMixtureEta</em>) – Aggregated expectation parameters.</p></li>
+<li><p><strong>**kwargs</strong> – Forwarded to <code class="xref py py-meth docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code>
+(e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>, <code class="docutils literal notranslate"><span class="pre">maxiter</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step">
 <span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step" title="Link to this definition"></a></dt>
-<dd><p>Full M-step: update normal params + subordinator from eta.</p>
-<p>Returns a NEW NormalMixture with updated parameters.</p>
+<dd><p>Full M-step: update normal params + subordinator from <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Equivalent to <code class="docutils literal notranslate"><span class="pre">type(self).from_expectation(eta,</span> <span class="pre">**kwargs)</span></code>;
+<code class="docutils literal notranslate"><span class="pre">self</span></code> is only used to dispatch on the subclass. Subclasses
+with iterative subordinator solvers (e.g.
+<a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>)
+may override to inject a warm-start <span class="math notranslate nohighlight">\(\theta_0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>eta</strong> (<em>NormalMixtureEta</em>)</p>
@@ -2005,17 +2111,46 @@ six aggregated expectation parameters.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step_subordinator">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="Link to this definition"></a></dt>
-<dd><p>Update subordinator parameters from expectation parameters.</p>
-<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
-Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
-is re-estimated. Returns a new model.</p>
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>M-step for the subordinator only (MCECM Cycle 2).</p>
+<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>; normal
+parameters are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code> and copied unchanged.
+Subclasses with iterative solvers may override to add warm-start
+or sanity-check fallbacks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>eta</strong> (<em>NormalMixtureEta</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.replace">
+<span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.replace" title="Link to this definition"></a></dt>
+<dd><p>Return a new model with selected parameters replaced.</p>
+<p>Accepts any subset of:</p>
+<ul class="simple">
+<li><p>normal parameters: <code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>;</p></li>
+<li><p>dispersion alias <code class="docutils literal notranslate"><span class="pre">sigma</span></code> — converted to <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> via
+Cholesky (mutually exclusive with <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>);</p></li>
+<li><p>subordinator parameters declared by <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_keys()</span></code>
+(e.g. <code class="docutils literal notranslate"><span class="pre">alpha,</span> <span class="pre">beta</span></code> for VG / NInvG, <code class="docutils literal notranslate"><span class="pre">mu_ig,</span> <span class="pre">lam</span></code> for NIG,
+<code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code> for GH).</p></li>
+</ul>
+<p>The actual storage lives in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.joint" title="normix.mixtures.marginal.NormalMixture.joint"><code class="xref py py-attr docutils literal notranslate"><span class="pre">joint</span></code></a>; this method does an
+immutable update via <code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code>.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vg2</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">new_mu</span><span class="p">)</span>                    <span class="c1"># change μ</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vg3</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>          <span class="c1"># change subordinator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vg4</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>    <span class="c1"># set Σ via covariance</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2195,18 +2330,16 @@ K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.m_step_subordinator">
-<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.m_step_subordinator" title="Link to this definition"></a></dt>
-<dd><p>Update subordinator parameters from expectation parameters.</p>
-<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
-Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
-is re-estimated. Returns a new model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><em>VarianceGamma</em></a></p>
-</dd>
-</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.alpha">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.alpha" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\alpha\)</span> — Gamma shape (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.beta">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.beta" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\beta\)</span> — Gamma rate (forwarded from the joint).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2335,18 +2468,16 @@ The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.m_step_subordinator">
-<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.m_step_subordinator" title="Link to this definition"></a></dt>
-<dd><p>Update subordinator parameters from expectation parameters.</p>
-<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
-Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
-is re-estimated. Returns a new model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><em>NormalInverseGamma</em></a></p>
-</dd>
-</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.alpha">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.alpha" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\alpha\)</span> — InverseGamma shape (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\beta\)</span> — InverseGamma rate (forwarded from the joint).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2478,18 +2609,16 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.m_step_subordinator">
-<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#NormalInverseGaussian.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.m_step_subordinator" title="Link to this definition"></a></dt>
-<dd><p>Update subordinator parameters from expectation parameters.</p>
-<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
-Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
-is re-estimated. Returns a new model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><em>NormalInverseGaussian</em></a></p>
-</dd>
-</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.mu_ig">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mu_ig</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.mu_ig" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mu_{IG}\)</span> — InverseGaussian mean (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.lam">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">lam</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.lam" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\lambda\)</span> — InverseGaussian shape (forwarded from the joint).</p>
 </dd></dl>
 
 </dd></dl>
@@ -2646,13 +2775,48 @@ K_{p-d/2}\!\left(\sqrt{A(Q(x)+b)}\right)
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.p">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">p</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.p" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(p\)</span> — GIG order (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.a">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.a" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(a\)</span> — GIG concentration (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.b">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.b" title="Link to this definition"></a></dt>
+<dd><p><span class="math notranslate nohighlight">\(b\)</span> — GIG concentration (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step">
+<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step" title="Link to this definition"></a></dt>
+<dd><p>Full M-step with warm-started + sanity-checked subordinator solve.</p>
+<p>Overrides the base <code class="docutils literal notranslate"><span class="pre">cls.from_expectation(eta)</span></code> because the GIG
+solver benefits substantially from warm-starting at the current
+<span class="math notranslate nohighlight">\(\theta\)</span> and from a fall-back when the solver wanders into
+unsane regions; both are managed by
+<a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step_subordinator()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">
 <span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator" title="Link to this definition"></a></dt>
-<dd><p>Update subordinator parameters from expectation parameters.</p>
-<p>Reads subordinator-specific fields from <code class="docutils literal notranslate"><span class="pre">eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">eta.E_log_Y</span></code>).
-Normal params are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code>; only the subordinator
-is re-estimated. Returns a new model.</p>
+<dd><p>M-step for the subordinator only (MCECM Cycle 2).</p>
+<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>; normal
+parameters are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code> and copied unchanged.
+Subclasses with iterative solvers may override to add warm-start
+or sanity-check fallbacks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
