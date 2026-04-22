@@ -144,13 +144,21 @@ NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
     └── GeneralizedHyperbolic
 ```
 
-`NormalMixture` owns a `JointNormalMixture`. The joint is an exponential family; the marginal is not.
+`NormalMixture` owns a `JointNormalMixture`. The joint is an exponential family; the marginal is not. Per `docs/theory/gh.rst`, both layers are parameterised by the same classical tuple `(μ, γ, Σ, subordinator)`, so the marginal exposes those parameters as forwarders on top of its joint storage.
 
 Key methods on `JointNormalMixture`:
 - `conditional_expectations(x)` → E[log Y|x], E[1/Y|x], E[Y|x] (EM E-step)
 - `_compute_posterior_expectations(x)` — implemented by each concrete joint
 - `_mstep_normal_params(eta: NormalMixtureEta)` → μ, γ, L_Sigma (closed-form M-step for normal parameters)
 - `_quad_forms(x)` → z=L_Sigma⁻¹(x-μ), w=L_Sigma⁻¹γ (EM hot path)
+- `from_expectation(eta, **kw)` — η→joint constructor; dispatches on `isinstance(eta, NormalMixtureEta)` (closed-form M-step) vs flat `jax.Array` (inherited Bregman solver). Per-subclass `_subordinator_from_eta` and `_from_normal_and_subordinator` hooks bridge the differing subordinator field names.
+
+Key methods on `NormalMixture`:
+- `from_expectation(eta, **kw)` → marginal wrapper around the joint constructor; the canonical η→model map.
+- `mu`, `gamma`, `L_Sigma`, `sigma()`, `log_det_sigma()` — read-only forwarders to the joint.
+- Per-subclass subordinator forwarders: `alpha`/`beta` (VG, NInvG), `mu_ig`/`lam` (NIG), `p`/`a`/`b` (GH).
+- `replace(**updates)` — immutable update via `eqx.tree_at`. Accepts normal keys, subordinator keys (per `_subordinator_keys()`), and `sigma` as a Cholesky-converted alias for `L_Sigma`.
+- `m_step(eta) ≡ type(self).from_expectation(eta, **kw)` for VG / NInvG / NIG; `GeneralizedHyperbolic` overrides to inject a warm-start `theta0` for the GIG solver and a sanity-check fallback.
 
 ## EM Algorithm
 
@@ -252,7 +260,8 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | Document | Content |
 |---|---|
 | `docs/design/design.md` | Design rationale, architecture decisions |
-| `docs/design/em_covariance_extensions.md` | Proposed shrinkage / factor-analysis EM extensions (covariance work) |
+| `docs/design/em_covariance_extensions.md` | Shrinkage / factor-analysis EM extensions (Phases 1–2 implemented) |
+| `docs/design/penalised_em.md` | Penalised EM: `Shrinkage` combinator API, per-field τ, target builders, choosing τ and Σ₀ |
 | `docs/design/finance_architecture.md` | Proposed `normix.finance` layer (portfolio projection, risk, optimization, diversification) |
 | `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks |
 | `docs/theory/` | Mathematical derivations (rst) |

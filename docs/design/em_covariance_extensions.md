@@ -6,7 +6,7 @@
 `normix/fitting/em.py`, `normix/mixtures/marginal.py`,
 new `normix/mixtures/factor.py`
 **Theory:** `docs/theory/shrinkage.rst`, `docs/theory/factor_analysis.rst`
-**Companion docs (planned):** `docs/design/penalised_em.md`
+**Companion docs:** `docs/design/penalised_em.md`
 
 ---
 
@@ -495,6 +495,98 @@ deterministic relations in `factor_analysis.rst` §E-Step using the
 current model's `β`. This is well-defined because the latent `Z` has
 known posterior conditional on `(X, Y, parameters)`.
 
+### 6.3 `from_expectation` as the canonical η → model map
+
+The closed-form M-step is exactly the conjugate-dual map η → θ for the
+joint exponential family. Spelling that out gives `from_expectation`
+matching public surfaces on both layers:
+
+```python
+JointNormalMixture.from_expectation(eta: NormalMixtureEta, **kw) -> JointNormalMixture
+NormalMixture.from_expectation(eta: NormalMixtureEta, **kw) -> NormalMixture
+```
+
+The joint method dispatches on `isinstance(eta, NormalMixtureEta)`:
+
+- pytree path — closed form (`_mstep_normal_params` for μ, γ, Σ;
+  `_subordinator_from_eta` for the subordinator), exact and JIT-friendly;
+- flat `jax.Array` path — falls back to the inherited Bregman solver
+  (`ExponentialFamily.from_expectation`). Kept for API symmetry; not the
+  recommended route for these high-dimensional joint EFs.
+
+Per-subclass plumbing on each `JointXxx`:
+
+| Method | Purpose |
+| --- | --- |
+| `_subordinator_from_eta(cls, eta, *, theta0=None, **kw)` | Fit the subordinator from the relevant subset of `(E[log Y], E[1/Y], E[Y])` using its own `from_expectation`. Accepts `theta0` for warm-starting GIG; closed-form subordinators (Gamma, InverseGamma, InverseGaussian) ignore it. |
+| `_from_normal_and_subordinator(cls, mu, gamma, L_Sigma, sub)` | Construct the joint from normal params and a fitted subordinator instance — one `cls(...)` call per subclass to bridge the differing field names (`alpha`/`beta`, `mu_ig`/`lam`, `p`/`a`/`b`). |
+
+The instance methods collapse to thin wrappers:
+
+```python
+class NormalMixture:
+    def m_step(self, eta, **kw):
+        return type(self).from_expectation(eta, **kw)        # cold start
+
+    def m_step_subordinator(self, eta, **kw):
+        j = self._joint
+        sub = type(j)._subordinator_from_eta(
+            eta, theta0=j.subordinator().natural_params(), **kw)
+        return type(self)(type(j)._from_normal_and_subordinator(
+            j.mu, j.gamma, j.L_Sigma, sub))
+```
+
+The `m_step_normal` cycle-1 helper is unchanged. Only
+`GeneralizedHyperbolic` overrides `m_step` (and keeps its sanity-check
+`m_step_subordinator`) — both of those need a warm-start `theta0` from
+the current GIG and a fall-back when the GIG solver wanders out of the
+sane region. For the closed-form-subordinator families (VG, NInvG, NIG)
+the per-subclass `m_step_subordinator` overrides are removed.
+
+The result: the closed-form M-step lives in exactly one place
+(`JointNormalMixture.from_expectation` plus the two per-subclass hooks).
+Inspecting any prior or shrinkage target as a model becomes a one-liner:
+
+```python
+sigma_recovered = VarianceGamma.from_expectation(eta0_iso).sigma()
+joint_recovered = JointVarianceGamma.from_expectation(eta0_iso)
+```
+
+### 6.4 Parameter facade on the marginal
+
+Per `docs/theory/gh.rst`, the marginal density is parameterised by the
+same classical tuple `(μ, γ, Σ, subordinator)` as the joint, so the
+marginal exposes those parameters as forwarders rather than hiding them
+behind `model._joint.*`:
+
+| Forwarded | Read | Write |
+| --- | --- | --- |
+| `mu`, `gamma`, `L_Sigma` | property | `replace(mu=..., gamma=..., L_Sigma=...)` |
+| `sigma()` | method | `replace(sigma=...)` (computes Cholesky internally) |
+| `log_det_sigma()` | method | — |
+| Subordinator fields (`alpha`, `beta`; `mu_ig`, `lam`; `p`, `a`, `b`) | per-subclass property | `replace(<key>=...)` |
+
+`NormalMixture.replace(**updates)` handles both blocks. It validates
+keys against `_NORMAL_KEYS ∪ _subordinator_keys()`, treats `sigma` as a
+write-only alias for `L_Sigma`, and uses `eqx.tree_at` for an immutable
+update. The actual storage stays in `joint` (and the subordinator
+instance returned by `joint.subordinator()`); the facade is read-only
+forwarders plus an immutable update method, with no duplicated state.
+
+Examples:
+
+```python
+vg2 = vg.replace(mu=new_mu)                           # change μ
+vg3 = vg.replace(alpha=2.5, beta=0.5)                 # change subordinator
+vg4 = vg.replace(sigma=sigma2 * jnp.eye(d))           # set Σ via covariance
+gh2 = gh.replace(p=1.0, a=3.0, b=4.0)                 # change GIG params
+```
+
+The marginal `cov()` (= `E[Y]·Σ + Var[Y]·γγᵀ`) and `mean()` remain
+distinct from `sigma()` and `mu`: those are the *marginal* moments,
+whereas the forwarded `mu` and `sigma()` are parameters of the
+conditional Gaussian.
+
 ---
 
 ## 7. Factor Analysis Model Family
@@ -695,6 +787,33 @@ starting point, not as committed code.
   subordinator updates untouched;
   - `Shrinkage(RobbinsMonroUpdate(...), …)` retains the running mean
   (regression test for the bug noted in §2).
+
+### Phase 2.5 — η → model unification + parameter facade (§6.3, §6.4)
+
+1. Add `JointNormalMixture.from_expectation` with `NormalMixtureEta`
+  dispatch + per-subclass `_subordinator_from_eta` and
+  `_from_normal_and_subordinator` hooks (§6.3).
+2. Add `NormalMixture.from_expectation` wrapper (§6.3).
+3. Add forwarding properties (`mu`, `gamma`, `L_Sigma`, `sigma()`,
+  `log_det_sigma()`) and per-subclass subordinator forwarders on
+  `NormalMixture` and its subclasses; add `_subordinator_keys()`
+  classmethod and `replace(**updates)` instance method (§6.4).
+4. Collapse `NormalMixture.m_step` and the default
+  `m_step_subordinator` to delegate to the joint hooks; remove the
+  per-subclass `m_step_subordinator` overrides for VG / NInvG / NIG
+  (`GeneralizedHyperbolic` keeps its sanity-check override).
+5. Tests in `tests/test_marginal_api.py`:
+  - forwarding properties match the joint;
+  - `JointXxx.from_expectation(eta)` agrees with `m_step(eta)` for
+  closed-form-subordinator families;
+  - `from_expectation(eta0_isotropic(model, σ²)).sigma()` recovers
+  `σ²·I_d` exactly (the validation use case);
+  - `from_expectation(eta0_with_sigma(model, Σ₀)).sigma()` recovers
+  arbitrary `Σ₀`;
+  - `replace(**)` round-trips and rejects unknown keys.
+6. Notebook: drop `_joint.*` accesses in favour of the public
+  forwarders; add a validation cell that inverts `eta0_iso` and prints
+  the recovered Σ.
 
 ### Phase 3 — Penalised EM design doc
 

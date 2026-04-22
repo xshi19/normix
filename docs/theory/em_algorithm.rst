@@ -412,11 +412,20 @@ The key methods are:
   :math:`E[Y|X]`, :math:`E[X|X]`, :math:`E[X/Y|X]`, :math:`E[XX^\top/Y|X]`
   over the data, returning a :class:`~normix.fitting.eta.NormalMixtureEta`.
 - :meth:`~normix.mixtures.marginal.NormalMixture.m_step`: Updates all
-  parameters from the expectation parameters; the normal-component update
-  is closed-form, and the subordinator update calls
-  :meth:`~normix.mixtures.marginal.NormalMixture.m_step_subordinator` which
-  inverts the exponential family map via
-  :func:`~normix.fitting.solvers.solve_bregman` (or a closed-form override).
+  parameters from the expectation parameters. This is exactly the
+  :math:`\eta\to\theta` map for the joint exponential family and is
+  available in classmethod form as
+  :meth:`~normix.mixtures.marginal.NormalMixture.from_expectation`
+  (and :meth:`~normix.mixtures.joint.JointNormalMixture.from_expectation`).
+  The normal-component update is closed-form
+  (:meth:`~normix.mixtures.joint.JointNormalMixture._mstep_normal_params`);
+  the subordinator update calls each subordinator's own
+  :meth:`from_expectation` (closed-form for Gamma, InverseGamma,
+  InverseGaussian; numerical via
+  :func:`~normix.fitting.solvers.solve_bregman` for the GIG case).
+  :meth:`~normix.mixtures.marginal.NormalMixture.m_step_subordinator`
+  is the MCECM cycle-2 specialisation (subordinator only, normal block
+  unchanged).
 - :meth:`~normix.mixtures.joint.JointNormalMixture.conditional_expectations`:
   Computes :math:`E[\log Y|X=x]`, :math:`E[Y^{-1}|X=x]`, :math:`E[Y|X=x]`
   for a single observation, used inside the E-step.

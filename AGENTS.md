@@ -50,6 +50,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
 | Design decisions | `docs/design/design.md` |
 | Fitters & eta rules (D1, done) | `docs/design/design.md` § EM Framework |
+| Penalised EM / shrinkage | `docs/design/penalised_em.md`, `docs/theory/shrinkage.rst` |
 | Agent instructions design | `docs/design/agent_instructions_design.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
 | Migration status | `docs/plans/migration_plan.md` |
