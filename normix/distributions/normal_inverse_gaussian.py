@@ -146,6 +146,23 @@ class JointNormalInverseGaussian(JointNormalMixture):
         mu_ig = jnp.sqrt(lam / jnp.maximum(a_ig, 1e-30))
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, mu_ig=mu_ig, lam=lam)
 
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        r"""Fit InverseGaussian subordinator from :math:`(E[Y], E[1/Y])`.
+
+        ``theta0`` is accepted for API uniformity and ignored —
+        InverseGaussian's ``from_expectation`` is closed-form
+        (:math:`\mu = E[Y]`, :math:`\lambda = 1/(E[1/Y] - 1/E[Y])`).
+        """
+        from normix.distributions.inverse_gaussian import InverseGaussian
+        return InverseGaussian.from_expectation(
+            jnp.array([eta.E_Y, eta.E_inv_Y]))
+
+    @classmethod
+    def _from_normal_and_subordinator(cls, mu, gamma, L_Sigma, subordinator):
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
+                   mu_ig=subordinator.mu, lam=subordinator.lam)
+
 
 
 class NormalInverseGaussian(NormalMixture):
@@ -205,16 +222,23 @@ class NormalInverseGaussian(NormalMixture):
         eta = gig.expectation_params()
         return eta[0], eta[1], eta[2]
 
-    def m_step_subordinator(self, eta, **kwargs) -> "NormalInverseGaussian":
-        from normix.distributions.inverse_gaussian import InverseGaussian
-        j = self._joint
-        ig_new = InverseGaussian.from_expectation(
-            jnp.array([eta.E_Y, eta.E_inv_Y]))
-        joint_new = JointNormalInverseGaussian(
-            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
-            mu_ig=ig_new.mu, lam=ig_new.lam,
-        )
-        return NormalInverseGaussian(joint_new)
+    @classmethod
+    def _joint_class(cls):
+        return JointNormalInverseGaussian
+
+    @classmethod
+    def _subordinator_keys(cls):
+        return ('mu_ig', 'lam')
+
+    @property
+    def mu_ig(self) -> jax.Array:
+        r""":math:`\mu_{IG}` — InverseGaussian mean (forwarded from the joint)."""
+        return self._joint.mu_ig
+
+    @property
+    def lam(self) -> jax.Array:
+        r""":math:`\lambda` — InverseGaussian shape (forwarded from the joint)."""
+        return self._joint.lam
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "NormalInverseGaussian":
         j = self._joint

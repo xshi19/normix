@@ -324,6 +324,71 @@ class JointNormalMixture(ExponentialFamily):
         )
 
     # ------------------------------------------------------------------
+    # η → model: closed-form M-step as exponential-family inversion
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_expectation(cls, eta, **kwargs) -> "JointNormalMixture":
+        r"""Construct from expectation parameters :math:`\eta`.
+
+        Two input forms are supported:
+
+        - :class:`~normix.fitting.eta.NormalMixtureEta` — the natural η
+          pytree of the joint normal-variance-mean mixture; uses the
+          closed-form M-step (:math:`\mu, \gamma, \Sigma` analytical;
+          subordinator via :meth:`_subordinator_from_eta`).
+        - flat ``jax.Array`` — the generic Bregman solver inherited from
+          :class:`~normix.exponential_family.ExponentialFamily`.
+
+        The pytree path is the canonical η→θ map for these distributions:
+        it is exact (no Bregman iterations on the normal block) and uses
+        the subordinator's own ``from_expectation`` (closed-form for
+        Gamma / InverseGamma / InverseGaussian; numerical for GIG).
+
+        Parameters
+        ----------
+        eta : NormalMixtureEta or jax.Array
+            Expectation parameters.
+        **kwargs
+            For the pytree path: forwarded to
+            :meth:`_subordinator_from_eta` (e.g. ``backend``, ``method``,
+            ``maxiter``, ``theta0`` for warm-starting GIG).
+            For the flat-array path: forwarded to the parent solver.
+        """
+        from normix.fitting.eta import NormalMixtureEta
+
+        if isinstance(eta, NormalMixtureEta):
+            mu, gamma, L_Sigma = cls._mstep_normal_params(eta)
+            sub = cls._subordinator_from_eta(eta, **kwargs)
+            return cls._from_normal_and_subordinator(mu, gamma, L_Sigma, sub)
+        return super().from_expectation(eta, **kwargs)
+
+    @classmethod
+    @abc.abstractmethod
+    def _subordinator_from_eta(
+        cls, eta: "NormalMixtureEta", *, theta0=None, **kwargs,
+    ) -> ExponentialFamily:
+        r"""Fit the subordinator from the marginal expectation pytree.
+
+        Reads the subordinator-relevant fields of ``eta`` (a subset of
+        :math:`E[\log Y], E[1/Y], E[Y]`) and returns a fitted instance of
+        the appropriate subordinator family. ``theta0`` is forwarded to
+        the subordinator's solver as a warm-start; subordinators with
+        closed-form ``from_expectation`` may ignore it.
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def _from_normal_and_subordinator(
+        cls,
+        mu: jax.Array,
+        gamma: jax.Array,
+        L_Sigma: jax.Array,
+        subordinator: ExponentialFamily,
+    ) -> "JointNormalMixture":
+        """Construct from normal parameters and a fitted subordinator."""
+
+    # ------------------------------------------------------------------
     # M-step: closed-form normal parameter update
     # ------------------------------------------------------------------
 

@@ -132,6 +132,24 @@ class JointNormalInverseGamma(JointNormalMixture):
         beta = -theta[1] - mu_quad
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, alpha=alpha, beta=beta)
 
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        r"""Fit InverseGamma subordinator from :math:`(-E[1/Y], E[\log Y])`.
+
+        ``theta0`` is accepted for API uniformity and ignored —
+        InverseGamma's ``from_expectation`` is closed-form (Newton on
+        digamma).
+        """
+        from normix.distributions.inverse_gamma import InverseGamma
+        backend = kwargs.get('backend', 'jax')
+        return InverseGamma.from_expectation(
+            jnp.array([-eta.E_inv_Y, eta.E_log_Y]), backend=backend)
+
+    @classmethod
+    def _from_normal_and_subordinator(cls, mu, gamma, L_Sigma, subordinator):
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
+                   alpha=subordinator.alpha, beta=subordinator.beta)
+
 
 
 class NormalInverseGamma(NormalMixture):
@@ -191,17 +209,23 @@ class NormalInverseGamma(NormalMixture):
         E_Y = j.beta / (j.alpha - 1.0)
         return E_log_Y, E_inv_Y, E_Y
 
-    def m_step_subordinator(self, eta, **kwargs) -> "NormalInverseGamma":
-        from normix.distributions.inverse_gamma import InverseGamma
-        j = self._joint
-        backend = kwargs.get('backend', 'jax')
-        ig_eta = jnp.array([-eta.E_inv_Y, eta.E_log_Y])
-        ig_new = InverseGamma.from_expectation(ig_eta, backend=backend)
-        joint_new = JointNormalInverseGamma(
-            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
-            alpha=ig_new.alpha, beta=ig_new.beta,
-        )
-        return NormalInverseGamma(joint_new)
+    @classmethod
+    def _joint_class(cls):
+        return JointNormalInverseGamma
+
+    @classmethod
+    def _subordinator_keys(cls):
+        return ('alpha', 'beta')
+
+    @property
+    def alpha(self) -> jax.Array:
+        r""":math:`\alpha` — InverseGamma shape (forwarded from the joint)."""
+        return self._joint.alpha
+
+    @property
+    def beta(self) -> jax.Array:
+        r""":math:`\beta` — InverseGamma rate (forwarded from the joint)."""
+        return self._joint.beta
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "NormalInverseGamma":
         j = self._joint

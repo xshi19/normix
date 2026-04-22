@@ -129,10 +129,15 @@ class NormalMixture(MarginalMixture):
     variance-mean mixture.
 
     Not an exponential family. Owns a
-    :class:`~normix.mixtures.joint.JointNormalMixture` (which is).
+    :class:`~normix.mixtures.joint.JointNormalMixture` (which is). The
+    classical parameters :math:`(\mu, \gamma, \Sigma, \text{subordinator})`
+    are forwarded as read-only properties; use :meth:`replace` to obtain
+    a new model with updated parameters (modules are immutable).
     """
 
     _joint: "JointNormalMixture"  # type: ignore[name-defined]
+
+    _NORMAL_KEYS = ('mu', 'gamma', 'L_Sigma')
 
     def __init__(self, joint):
         from normix.mixtures.joint import JointNormalMixture
@@ -145,6 +150,51 @@ class NormalMixture(MarginalMixture):
     @property
     def d(self) -> int:
         return self._joint.d
+
+    # ------------------------------------------------------------------
+    # Forwarding views of joint parameters
+    # ------------------------------------------------------------------
+
+    @property
+    def mu(self) -> jax.Array:
+        r""":math:`\mu` — location parameter (forwarded from the joint)."""
+        return self._joint.mu
+
+    @property
+    def gamma(self) -> jax.Array:
+        r""":math:`\gamma` — skewness parameter (forwarded from the joint)."""
+        return self._joint.gamma
+
+    @property
+    def L_Sigma(self) -> jax.Array:
+        r"""Lower Cholesky factor of :math:`\Sigma` (forwarded from the joint)."""
+        return self._joint.L_Sigma
+
+    def sigma(self) -> jax.Array:
+        r"""Dispersion :math:`\Sigma = L_\Sigma L_\Sigma^\top` (forwarded from the joint).
+
+        Distinct from :meth:`cov`, which returns the *marginal* covariance
+        :math:`E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.
+        """
+        return self._joint.sigma()
+
+    def log_det_sigma(self) -> jax.Array:
+        r""":math:`\log|\Sigma|` (forwarded from the joint)."""
+        return self._joint.log_det_sigma()
+
+    @classmethod
+    @abc.abstractmethod
+    def _joint_class(cls) -> type:
+        """Return the :class:`JointNormalMixture` subclass paired with this marginal."""
+
+    @classmethod
+    @abc.abstractmethod
+    def _subordinator_keys(cls) -> tuple:
+        """Stored subordinator field names on the joint, e.g. ``('alpha', 'beta')``.
+
+        Used by :meth:`replace` to dispatch updates between the normal
+        block (:attr:`_NORMAL_KEYS`) and the subordinator block.
+        """
 
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \mu + \gamma E[Y]`."""
@@ -296,6 +346,34 @@ class NormalMixture(MarginalMixture):
         )
 
     # ------------------------------------------------------------------
+    # η → model: closed-form M-step as exponential-family inversion
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_expectation(
+        cls, eta: "NormalMixtureEta", **kwargs,
+    ) -> "NormalMixture":
+        r"""Construct from expectation parameters :math:`\eta`.
+
+        Wraps :meth:`JointNormalMixture.from_expectation`, which performs
+        the exact closed-form M-step on the normal block and the
+        subordinator's ``from_expectation`` on the subordinator block.
+
+        This is the canonical η→model map: any prior or shrinkage target
+        :math:`\eta_0` can be inspected as a concrete model via
+        ``cls.from_expectation(eta_0).sigma()`` etc.
+
+        Parameters
+        ----------
+        eta : NormalMixtureEta
+            Aggregated expectation parameters.
+        **kwargs
+            Forwarded to :meth:`JointNormalMixture.from_expectation`
+            (e.g. ``backend``, ``method``, ``maxiter``, ``theta0``).
+        """
+        return cls(cls._joint_class().from_expectation(eta, **kwargs))
+
+    # ------------------------------------------------------------------
     # M-step
     # ------------------------------------------------------------------
 
@@ -304,12 +382,15 @@ class NormalMixture(MarginalMixture):
         eta: "NormalMixtureEta",
         **kwargs,
     ) -> "NormalMixture":
-        """Full M-step: update normal params + subordinator from eta.
+        r"""Full M-step: update normal params + subordinator from :math:`\eta`.
 
-        Returns a NEW NormalMixture with updated parameters.
+        Equivalent to ``type(self).from_expectation(eta, **kwargs)``;
+        ``self`` is only used to dispatch on the subclass. Subclasses
+        with iterative subordinator solvers (e.g.
+        :class:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`)
+        may override to inject a warm-start :math:`\theta_0`.
         """
-        model = self.m_step_normal(eta)
-        return model.m_step_subordinator(eta, **kwargs)
+        return type(self).from_expectation(eta, **kwargs)
 
     def m_step_normal(
         self,
@@ -324,18 +405,25 @@ class NormalMixture(MarginalMixture):
         mu_new, gamma_new, L_new = JointNormalMixture._mstep_normal_params(eta)
         return self._replace_normal_params(mu_new, gamma_new, L_new)
 
-    @abc.abstractmethod
     def m_step_subordinator(
         self,
         eta: "NormalMixtureEta",
         **kwargs,
     ) -> "NormalMixture":
-        """Update subordinator parameters from expectation parameters.
+        r"""M-step for the subordinator only (MCECM Cycle 2).
 
-        Reads subordinator-specific fields from ``eta`` (e.g. ``eta.E_log_Y``).
-        Normal params are read from ``self._joint``; only the subordinator
-        is re-estimated. Returns a new model.
+        Reads the subordinator-relevant fields of ``eta``; normal
+        parameters are read from ``self._joint`` and copied unchanged.
+        Subclasses with iterative solvers may override to add warm-start
+        or sanity-check fallbacks.
         """
+        j = self._joint
+        joint_cls = type(j)
+        sub = joint_cls._subordinator_from_eta(
+            eta, theta0=j.subordinator().natural_params(), **kwargs)
+        new_joint = joint_cls._from_normal_and_subordinator(
+            j.mu, j.gamma, j.L_Sigma, sub)
+        return type(self)(new_joint)
 
     # ------------------------------------------------------------------
     # M-step helpers
@@ -347,6 +435,60 @@ class NormalMixture(MarginalMixture):
             lambda j: (j.mu, j.gamma, j.L_Sigma),
             self._joint,
             (mu, gamma, L),
+        )
+        return type(self)(new_joint)
+
+    # ------------------------------------------------------------------
+    # Update API: replace(**) returns a new instance
+    # ------------------------------------------------------------------
+
+    def replace(self, **updates) -> "NormalMixture":
+        r"""Return a new model with selected parameters replaced.
+
+        Accepts any subset of:
+
+        - normal parameters: ``mu``, ``gamma``, ``L_Sigma``;
+        - dispersion alias ``sigma`` — converted to ``L_Sigma`` via
+          Cholesky (mutually exclusive with ``L_Sigma``);
+        - subordinator parameters declared by :meth:`_subordinator_keys`
+          (e.g. ``alpha, beta`` for VG / NInvG, ``mu_ig, lam`` for NIG,
+          ``p, a, b`` for GH).
+
+        The actual storage lives in :attr:`joint`; this method does an
+        immutable update via :func:`equinox.tree_at`.
+
+        Examples
+        --------
+        >>> vg2 = vg.replace(mu=new_mu)                    # change μ
+        >>> vg3 = vg.replace(alpha=2.5, beta=0.5)          # change subordinator
+        >>> vg4 = vg.replace(sigma=sigma2 * jnp.eye(d))    # set Σ via covariance
+        """
+        if 'sigma' in updates:
+            if 'L_Sigma' in updates:
+                raise ValueError(
+                    "specify either `sigma` or `L_Sigma`, not both")
+            updates['L_Sigma'] = jnp.linalg.cholesky(
+                jnp.asarray(updates.pop('sigma'), dtype=jnp.float64))
+
+        sub_keys = type(self)._subordinator_keys()
+        valid = set(self._NORMAL_KEYS) | set(sub_keys)
+        unknown = set(updates) - valid
+        if unknown:
+            raise ValueError(
+                f"unknown parameter(s) {sorted(unknown)} for "
+                f"{type(self).__name__}; valid keys are {sorted(valid)}")
+
+        if not updates:
+            return self
+
+        keys = tuple(updates.keys())
+        new_values = tuple(
+            jnp.asarray(updates[k], dtype=jnp.float64) for k in keys)
+
+        new_joint = eqx.tree_at(
+            lambda j: tuple(getattr(j, k) for k in keys),
+            self._joint,
+            new_values,
         )
         return type(self)(new_joint)
 

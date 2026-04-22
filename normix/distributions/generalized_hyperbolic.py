@@ -170,6 +170,31 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         a = 2.0 * (-theta[2] - gamma_quad)
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, p=p, a=a, b=b)
 
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        r"""Fit GIG subordinator from :math:`(E[\log Y], E[1/Y], E[Y])`.
+
+        Forwards ``theta0`` (warm-start), ``backend``, ``method``, and
+        ``maxiter`` to :meth:`GIG.from_expectation`. No sanity-check
+        fallback at the classmethod level — that lives in
+        :meth:`GeneralizedHyperbolic.m_step_subordinator` for the EM
+        instance path where a sane "current" model exists to fall back
+        to.
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        return GIG.from_expectation(
+            jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y]),
+            theta0=theta0,
+            backend=kwargs.get('backend', 'jax'),
+            method=kwargs.get('method', 'newton'),
+            maxiter=kwargs.get('maxiter', 20),
+        )
+
+    @classmethod
+    def _from_normal_and_subordinator(cls, mu, gamma, L_Sigma, subordinator):
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
+                   p=subordinator.p, a=subordinator.a, b=subordinator.b)
+
 
 
 # ============================================================================
@@ -268,6 +293,40 @@ class GeneralizedHyperbolic(NormalMixture):
         j = self._joint
         eta = j.subordinator().expectation_params()
         return eta[0], eta[1], eta[2]
+
+    @classmethod
+    def _joint_class(cls):
+        return JointGeneralizedHyperbolic
+
+    @classmethod
+    def _subordinator_keys(cls):
+        return ('p', 'a', 'b')
+
+    @property
+    def p(self) -> jax.Array:
+        r""":math:`p` — GIG order (forwarded from the joint)."""
+        return self._joint.p
+
+    @property
+    def a(self) -> jax.Array:
+        r""":math:`a` — GIG concentration (forwarded from the joint)."""
+        return self._joint.a
+
+    @property
+    def b(self) -> jax.Array:
+        r""":math:`b` — GIG concentration (forwarded from the joint)."""
+        return self._joint.b
+
+    def m_step(self, eta, **kwargs) -> "GeneralizedHyperbolic":
+        r"""Full M-step with warm-started + sanity-checked subordinator solve.
+
+        Overrides the base ``cls.from_expectation(eta)`` because the GIG
+        solver benefits substantially from warm-starting at the current
+        :math:`\theta` and from a fall-back when the solver wanders into
+        unsane regions; both are managed by
+        :meth:`m_step_subordinator`.
+        """
+        return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
     def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
         from normix.distributions.generalized_inverse_gaussian import GIG

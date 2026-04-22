@@ -133,6 +133,24 @@ class JointVarianceGamma(JointNormalMixture):
         beta = -theta[2] - gamma_quad
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma, alpha=alpha, beta=beta)
 
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        r"""Fit Gamma subordinator from :math:`(E[\log Y], E[Y])`.
+
+        ``theta0`` is accepted for API uniformity and ignored — Gamma's
+        :meth:`~normix.distributions.gamma.Gamma.from_expectation` is
+        closed-form (Newton on digamma).
+        """
+        from normix.distributions.gamma import Gamma
+        backend = kwargs.get('backend', 'jax')
+        return Gamma.from_expectation(
+            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
+
+    @classmethod
+    def _from_normal_and_subordinator(cls, mu, gamma, L_Sigma, subordinator):
+        return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
+                   alpha=subordinator.alpha, beta=subordinator.beta)
+
 
 
 class VarianceGamma(NormalMixture):
@@ -199,17 +217,23 @@ class VarianceGamma(NormalMixture):
         E_Y = j.alpha / j.beta
         return E_log_Y, E_inv_Y, E_Y
 
-    def m_step_subordinator(self, eta, **kwargs) -> "VarianceGamma":
-        from normix.distributions.gamma import Gamma
-        j = self._joint
-        backend = kwargs.get('backend', 'jax')
-        gamma_dist = Gamma.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
-        joint_new = JointVarianceGamma(
-            mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
-            alpha=gamma_dist.alpha, beta=gamma_dist.beta,
-        )
-        return VarianceGamma(joint_new)
+    @classmethod
+    def _joint_class(cls):
+        return JointVarianceGamma
+
+    @classmethod
+    def _subordinator_keys(cls):
+        return ('alpha', 'beta')
+
+    @property
+    def alpha(self) -> jax.Array:
+        r""":math:`\alpha` — Gamma shape (forwarded from the joint)."""
+        return self._joint.alpha
+
+    @property
+    def beta(self) -> jax.Array:
+        r""":math:`\beta` — Gamma rate (forwarded from the joint)."""
+        return self._joint.beta
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "VarianceGamma":
         j = self._joint
