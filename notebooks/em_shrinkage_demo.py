@@ -159,38 +159,10 @@ def _load_data(mo, os, pd):
 
 
 @app.cell
-def _slice_controls(mo):
-    d_slider = mo.ui.slider(
-        start=20, stop=200, step=10, value=80, label="dimension d"
-    )
-    n_train_slider = mo.ui.slider(
-        start=120, stop=1500, step=20, value=200,
-        label="training window n_train"
-    )
-    seed_input = mo.ui.number(value=0, start=0, stop=99, step=1, label="seed")
-    mo.vstack([
-        mo.md("**Slice controls** — small `n_train / d` ratio is where "
-             "shrinkage matters most."),
-        d_slider,
-        n_train_slider,
-        seed_input,
-    ])
-    return d_slider, n_train_slider, seed_input
-
-
-@app.cell
-def _make_slice(
-    d_slider,
-    jnp,
-    log_returns,
-    mo,
-    n_train_slider,
-    np,
-    seed_input,
-):
-    d = int(d_slider.value)
-    n_train = int(n_train_slider.value)
-    _seed = int(seed_input.value)
+def _make_slice(jnp, log_returns, mo, np):
+    d = 468
+    n_train = 1500
+    _seed = 0
 
     _rng = np.random.default_rng(_seed)
     _all_tickers = sorted(log_returns.columns.tolist())
@@ -392,6 +364,52 @@ def _phase2_header(mo):
     scalar version reproduces the legacy `ShrinkageUpdate`
     numerically; the pytree version supports per-field $\tau$ — for
     instance shrinking only $\Sigma$.
+
+    ### Notation
+
+    Let the EM iterate (or mini-batch step) be indexed by $t$ and let
+    $k \in \{1,\dots,6\}$ index the six sufficient-statistics fields
+    of `NormalMixtureEta` — i.e. $s_1 = E[Y^{-1}]$, $s_2 = E[Y]$,
+    $s_3 = E[\log Y]$, $s_4 = E[X]$, $s_5 = E[X/Y]$,
+    $s_6 = E[XX^\top/Y]$.
+
+    - $\hat\eta_k$ — the E-step's data-driven estimate of $s_k$
+      (in batch EM: averaged over the full dataset; in online EM:
+      averaged over the current mini-batch).
+    - $\eta_{t,k}$ — the running estimate of $s_k$ kept by the rule
+      after step $t$.
+    - $\mathrm{base}(\eta_{t-1}, \hat\eta)_k$ — the *base rule*'s
+      update for $s_k$ before shrinkage (e.g. $\hat\eta_k$ for
+      `IdentityUpdate`, or a Robbins–Monro blend
+      $b\,\eta_{t-1,k} + c\,\hat\eta_k$ for `RobbinsMonroUpdate`).
+    - $\eta_{0,k}$ — the prior value for $s_k$.
+    - $\tau_k \ge 0$ — the per-field shrinkage strength.
+
+    ### Update formula
+
+    `Shrinkage` produces, at every step and **independently for each
+    field $k$**,
+
+    $$
+    \eta_{t,k} \;=\; \frac{\tau_k}{1+\tau_k}\,\eta_{0,k}
+                  \;+\; \frac{1}{1+\tau_k}\,
+                        \mathrm{base}(\eta_{t-1}, \hat\eta)_k.
+    $$
+
+    A *scalar* $\tau$ is the special case $\tau_1 = \dots = \tau_6 = \tau$
+    (all six fields shrunk equally). A *pytree* $\tau$ allows a different
+    $\tau_k$ for each field — setting $\tau_k = 0$ for $k \ne 6$ shrinks
+    **only $\Sigma$** (§3.3 below).
+
+    $\tau_k$ has a direct, interpretable meaning:
+
+    - $\tau_k = 0$ → no shrinkage on $s_k$ (use the base rule's value).
+    - $\tau_k = 1$ → 50/50 blend on $s_k$.
+    - $\tau_k \to \infty$ → pure prior on $s_k$ ($\eta_{t,k} = \eta_{0,k}$).
+
+    Equivalently $\tau_k$ is a *pseudo-count*: the prior contributes as
+    much as $\tau_k \cdot n$ effective observations on $s_k$ against $n$
+    real ones (see `docs/theory/shrinkage.rst` for the derivation).
     """)
     return
 
@@ -416,7 +434,7 @@ def _baseline_fit(
 
     base_train_ll = float(base_result.model.marginal_log_likelihood(X_train))
     base_test_ll = float(base_result.model.marginal_log_likelihood(X_test))
-    _base_sigma = base_result.model.sigma()
+    _base_sigma = base_result.model._joint.sigma()
     base_cond = float(jnp.linalg.cond(_base_sigma))
 
     mo.md(
@@ -453,10 +471,11 @@ def _phase2_isotropic(
     eta0_iso = eta0_isotropic(
         VarianceGamma.default_init(X_train), sigma2=_sigma2_data)
 
-    _rows = ["| τ | iters | train LL | test LL | cond(Σ) |",
-             "|---:|---:|---:|---:|---:|"]
+    _rows = ["| τ | weight on η₀ | weight on η̂ | iters | "
+             "train LL | test LL | cond(Σ) |",
+             "|---:|---:|---:|---:|---:|---:|---:|"]
     _rows.append(
-        f"| 0 (baseline) | — | {base_train_ll:.4f} | "
+        f"| 0 (baseline) | 0 | 1 | — | {base_train_ll:.4f} | "
         f"{base_test_ll:.4f} | {base_cond:.2e} |"
     )
 
@@ -471,7 +490,7 @@ def _phase2_isotropic(
         _elapsed = time.perf_counter() - _t0
         _train_ll = float(_res.model.marginal_log_likelihood(X_train))
         _test_ll = float(_res.model.marginal_log_likelihood(X_test))
-        _cond = float(jnp.linalg.cond(_res.model.sigma()))
+        _cond = float(jnp.linalg.cond(_res.model._joint.sigma()))
         iso_results[_tau] = {
             "iters": int(_res.n_iter),
             "train_ll": _train_ll,
@@ -479,43 +498,60 @@ def _phase2_isotropic(
             "cond": _cond,
             "elapsed": _elapsed,
         }
+        _w_prior = _tau / (1.0 + _tau)
+        _w_data = 1.0 / (1.0 + _tau)
         _rows.append(
-            f"| {_tau:g} | {int(_res.n_iter):d} | {_train_ll:.4f} | "
+            f"| {_tau:g} | {_w_prior:.3f} | {_w_data:.3f} | "
+            f"{int(_res.n_iter):d} | {_train_ll:.4f} | "
             f"{_test_ll:.4f} | {_cond:.2e} |"
         )
 
     mo.md(
-        "### 3.2 Scalar τ with isotropic prior $\\Sigma_0 = "
-        "\\mathrm{Var}(X)\\,I$\n\n"
+        "### 3.2 Scalar τ — shrink **all six fields** toward an "
+        "isotropic prior\n\n"
+        "Here `Shrinkage(IdentityUpdate(), eta0_iso, tau=τ)` is run "
+        "inside batch EM (`BatchEMFitter`), so $t$ indexes the EM "
+        "iteration and $\\hat\\eta$ is the E-step on the **full** "
+        "training set. Because $\\tau$ is a **scalar**, the same "
+        "$\\tau_1 = \\dots = \\tau_6 = \\tau$ applies to every "
+        "sufficient-statistics field $s_k$:\n\n"
+        "$$\\eta_{t,k} = \\tfrac{\\tau}{1+\\tau}\\,\\eta_{0,k} "
+        "+ \\tfrac{1}{1+\\tau}\\,\\hat\\eta_k, \\qquad k = 1,\\dots,6.$$\n\n"
+        "**The prior $\\eta_0$ is `eta0_iso`**, built from a "
+        "moment-of-data initialisation:\n\n"
+        "- $s_1, s_2, s_3$: the gamma-subordinator expectations of "
+        "`VarianceGamma.default_init(X_train)`.\n"
+        "- $s_4 = \\mu_0 + \\gamma_0 E[Y]$, "
+        "$\\;s_5 = \\mu_0 E[Y^{-1}] + \\gamma_0$ — built from "
+        "`default_init`'s $(\\mu_0, \\gamma_0)$.\n"
+        "- $s_6$: the $E[XX^\\top/Y]$ form whose extracted "
+        "dispersion is $\\Sigma_0 = \\sigma^2 I_d$ with "
+        f"$\\sigma^2 = \\mathrm{{Var}}(X) = {_sigma2_data:.4e}$.\n\n"
+        "The actual matrix $\\Sigma_0$ that this prior implies — i.e. "
+        "what the next cell prints — is therefore "
+        "$\\sigma^2 I_d$. (Contrast §3.3, where a different prior is "
+        "used **and** all $\\tau_k$ for $k \\ne 6$ are zeroed out so "
+        "those prior values are effectively ignored.)\n\n"
         "Increasing $\\tau$ trades a tiny amount of in-sample LL for a "
-        "**better-conditioned $\\Sigma$**. The test LL typically peaks at a "
-        "moderate $\\tau$ in the small-$n$ regime.\n\n"
+        "**better-conditioned $\\Sigma$**. The test LL typically peaks "
+        "at a moderate $\\tau$ in the small-$n$ regime.\n\n"
         + "\n".join(_rows)
     )
-    return (iso_results,)
+    return eta0_iso, iso_results
 
 
 @app.cell
-def _phase2_validate_eta0(VarianceGamma, eta0_iso, jnp, mo):
-    _validation = VarianceGamma.from_expectation(eta0_iso, backend="cpu")
-    _Sigma = _validation.sigma()
-    _diag = float(jnp.diag(_Sigma).mean())
-    _off = float(
-        (_Sigma - jnp.diag(jnp.diag(_Sigma))).max()
-    )
+def _phase2_iso_target(mo):
+    mo.md("""
+    **Shrinkage target $\Sigma_0$ for §3.2** "
+          "— `VarianceGamma.from_expectation(eta0_iso).sigma()`:
+    """)
+    return
 
-    mo.md(
-        "**Validation of `eta0_isotropic`.** Inverting the prior $\\eta_0$ "
-        "via the closed-form M-step (`from_expectation` on the marginal) "
-        "should recover $\\Sigma_0 = \\sigma^2 I$ exactly when $\\gamma=0$:\n\n"
-        f"- mean diagonal of $\\Sigma$: **{_diag:.6f}** (should equal "
-        f"`Var(X_train)`)\n"
-        f"- max off-diagonal of $\\Sigma$: **{_off:.2e}** (should be ~0)\n\n"
-        "Equivalent inspection on the joint: "
-        "`JointVarianceGamma.from_expectation(eta0_iso).L_Sigma`. "
-        "Because the marginal forwards `mu`, `gamma`, `L_Sigma`, and "
-        "`sigma()` from its joint, no `._joint` indirection is needed."
-    )
+
+@app.cell
+def _phase2_iso_target_matrix(VarianceGamma, eta0_iso):
+    VarianceGamma.from_expectation(eta0_iso).sigma()
     return
 
 
@@ -552,10 +588,11 @@ def _phase2_per_field(
             E_XXT_inv_Y=jnp.full((d, d), value, dtype=jnp.float64),
         )
 
-    _rows = ["| τ_Σ | iters | train LL | test LL | cond(Σ) |",
-             "|---:|---:|---:|---:|---:|"]
+    _rows = ["| τ_Σ | weight on Σ₀ | weight on Σ̂ | "
+             "iters | train LL | test LL | cond(Σ) |",
+             "|---:|---:|---:|---:|---:|---:|---:|"]
     _rows.append(
-        f"| 0 (baseline) | — | {base_train_ll:.4f} | "
+        f"| 0 (baseline) | 0 | 1 | — | {base_train_ll:.4f} | "
         f"{base_test_ll:.4f} | {base_cond:.2e} |"
     )
 
@@ -572,26 +609,65 @@ def _phase2_per_field(
         _elapsed = time.perf_counter() - _t0
         _train_ll = float(_res.model.marginal_log_likelihood(X_train))
         _test_ll = float(_res.model.marginal_log_likelihood(X_test))
-        _cond = float(jnp.linalg.cond(_res.model.sigma()))
+        _cond = float(jnp.linalg.cond(_res.model._joint.sigma()))
         sigma_only_results[_tau_value] = {
             "train_ll": _train_ll, "test_ll": _test_ll, "cond": _cond,
             "elapsed": _elapsed, "iters": int(_res.n_iter),
         }
+        _w_prior = _tau_value / (1.0 + _tau_value)
+        _w_data = 1.0 / (1.0 + _tau_value)
         _rows.append(
-            f"| {_tau_value:g} | {int(_res.n_iter):d} | {_train_ll:.4f} | "
+            f"| {_tau_value:g} | {_w_prior:.3f} | {_w_data:.3f} | "
+            f"{int(_res.n_iter):d} | {_train_ll:.4f} | "
             f"{_test_ll:.4f} | {_cond:.2e} |"
         )
 
     mo.md(
-        "### 3.3 Per-field τ — shrink only Σ with a diagonal prior\n\n"
-        "Setting $\\tau$ as a `NormalMixtureEta` pytree with **only the "
-        "$E[XX^\\top/Y]$ leaf non-zero** leaves the GIG sufficient "
-        "statistics and the $\\mu, \\gamma$ couplings untouched and "
-        "shrinks only the dispersion. This is the building block for "
-        "Ledoit–Wolf-style targets (use `eta0_with_sigma` for an "
-        "arbitrary $\\Sigma_0$).\n\n"
+        "### 3.3 Per-field τ — shrink **only $s_6 = E[XX^\\top/Y]$**\n\n"
+        "Same fitter as §3.2 (`BatchEMFitter` + `IdentityUpdate`), so "
+        "$t$ is again the EM iteration and $\\hat\\eta$ comes from the "
+        "full-data E-step. The difference is `tau`: instead of a scalar "
+        "we pass a `NormalMixtureEta` pytree of $\\tau_k$ values\n\n"
+        "$$\\tau_k = \\begin{cases} 0 & k \\in \\{1,2,3,4,5\\} \\\\ "
+        "\\tau_\\Sigma & k = 6 \\end{cases}$$\n\n"
+        "(`_tau_sigma_only(value)` builds exactly this pytree — every "
+        "leaf zeroed out except `E_XXT_inv_Y`, which is filled with the "
+        "scalar $\\tau_\\Sigma$). Plugging into the per-field formula\n\n"
+        "$$\\eta_{t,k} = \\tfrac{\\tau_k}{1+\\tau_k}\\,\\eta_{0,k} "
+        "+ \\tfrac{1}{1+\\tau_k}\\,\\hat\\eta_k$$\n\n"
+        "the $\\tau_k = 0$ rows simplify to "
+        "$\\eta_{t,k} = \\hat\\eta_k$ (data only — the prior values "
+        "for $s_1,\\dots,s_5$ are multiplied by 0 and **never enter "
+        "the update**). Only $s_6$ is blended:\n\n"
+        "$$\\eta_{t,6} = \\tfrac{\\tau_\\Sigma}{1+\\tau_\\Sigma}\\,"
+        "\\eta_{0,6} + \\tfrac{1}{1+\\tau_\\Sigma}\\,\\hat\\eta_6.$$\n\n"
+        "Because $s_6 = \\Sigma + \\mu\\mu^\\top E[1/Y] + "
+        "\\gamma\\gamma^\\top E[Y] + \\mu\\gamma^\\top + "
+        "\\gamma\\mu^\\top$, this is equivalent to shrinking only the "
+        "dispersion $\\Sigma$ (the $\\mu, \\gamma$ pieces of $s_6$ are "
+        "consistent with the unshrunk $\\hat\\mu, \\hat\\gamma$). The "
+        "prior matrix $\\Sigma_0 = \\mathrm{diag}(\\mathrm{Var}_j(X))$ "
+        "is `_diag_var`; the next cell prints the full matrix that "
+        "`eta0_diag` implies.\n\n"
+        "Building block for Ledoit–Wolf-style targets (use "
+        "`eta0_with_sigma` for an arbitrary $\\Sigma_0$).\n\n"
         + "\n".join(_rows)
     )
+    return (eta0_diag,)
+
+
+@app.cell
+def _phase2_diag_target(mo):
+    mo.md("""
+    **Shrinkage target $\Sigma_0$ for §3.3** "
+          "— `VarianceGamma.from_expectation(eta0_diag).sigma()`:
+    """)
+    return
+
+
+@app.cell
+def _phase2_diag_target_matrix(VarianceGamma, eta0_diag):
+    VarianceGamma.from_expectation(eta0_diag).sigma()
     return
 
 
@@ -617,8 +693,9 @@ def _phase2_composition(
         VarianceGamma.default_init(X_train), sigma2=_sigma2_data)
     _key = jax.random.PRNGKey(0)
 
-    _rows = ["| base rule | τ | test LL | wall (s) |",
-             "|---|---:|---:|---:|"]
+    _rows = ["| base rule | τ | weight on η₀ | weight on base | "
+             "test LL | wall (s) |",
+             "|---|---:|---:|---:|---:|---:|"]
 
     _runs = [
         ("Identity (batch)", IdentityUpdate(), 0.5, 60),
@@ -641,19 +718,58 @@ def _phase2_composition(
         _elapsed = time.perf_counter() - _t0
         _ll = float(_res.model.marginal_log_likelihood(X_test))
         incr_results[_name] = {"test_ll": _ll, "elapsed": _elapsed}
+        _w_prior = _tau_val / (1.0 + _tau_val) if _tau_val > 0 else 0.0
+        _w_base = 1.0 / (1.0 + _tau_val) if _tau_val > 0 else 1.0
         _rows.append(
-            f"| {_name} | {_tau_val:g} | {_ll:.4f} | {_elapsed:.2f} |")
+            f"| {_name} | {_tau_val:g} | {_w_prior:.3f} | {_w_base:.3f} | "
+            f"{_ll:.4f} | {_elapsed:.2f} |")
 
     mo.md(
-        "### 3.4 Composing `Shrinkage` with running rules\n\n"
-        "The combinator threads the base rule's state, so it works on "
-        "online rules without losing the running mean (regression for the "
-        "bug noted in §2 of `em_covariance_extensions.md`). Below: same "
-        "data, different combinations.\n\n"
+        "### 3.4 Composing `Shrinkage` with online rules — "
+        "**different setup from §3.2/§3.3**\n\n"
+        "The fitter here is `IncrementalEMFitter`, not `BatchEMFitter`, "
+        "so the meaning of $t$ and $\\hat\\eta$ changes:\n\n"
+        "- $t$ now indexes the **mini-batch step** (one E-step per "
+        "batch of size 64), not a full EM iteration over the dataset.\n"
+        "- $\\hat\\eta_t$ is the E-step on the **$t$-th mini-batch** "
+        "alone, not on the full $X_\\mathrm{train}$.\n"
+        "- The `base` rule no longer needs to be the identity. For "
+        "`RobbinsMonroUpdate(tau0=10)` the base produces its own "
+        "running blend\n\n"
+        "$$\\mathrm{base}(\\eta_{t-1}, \\hat\\eta)_k "
+        "= b_t\\,\\eta_{t-1,k} + c_t\\,\\hat\\eta_{t,k},\\qquad "
+        "c_t = \\tfrac{1}{\\tau_0 + t},\\;\\; b_t = 1 - c_t,$$\n\n"
+        "  so a single mini-batch never overwrites the running estimate.\n\n"
+        "The shrinkage step then applies the same per-field formula as "
+        "before, but on top of `base`:\n\n"
+        "$$\\eta_{t,k} = \\tfrac{\\tau_k}{1+\\tau_k}\\,\\eta_{0,k} "
+        "+ \\tfrac{1}{1+\\tau_k}\\,"
+        "\\mathrm{base}(\\eta_{t-1}, \\hat\\eta)_k.$$\n\n"
+        "Here $\\tau$ is again a scalar, so the same $\\tau$ applies to "
+        "all six fields. The columns 'weight on η₀' and 'weight on base' "
+        "show $\\tau/(1+\\tau)$ and $1/(1+\\tau)$ for each row. The "
+        "prior $\\eta_0$ = `eta0_compose` is the same isotropic prior "
+        "as §3.2; the next cell prints the implied $\\Sigma_0$.\n\n"
         + "\n".join(_rows) +
         f"\n\nFor reference, the batch baseline test LL was "
         f"**{base_test_ll:.4f}**."
     )
+    return (eta0_compose,)
+
+
+@app.cell
+def _phase2_compose_target(mo):
+    mo.md("""
+    **Shrinkage target $\Sigma_0$ for §3.4** "
+          "— `VarianceGamma.from_expectation(eta0_compose).sigma()` "
+          "(same isotropic prior as §3.2):
+    """)
+    return
+
+
+@app.cell
+def _phase2_compose_target_matrix(VarianceGamma, eta0_compose):
+    VarianceGamma.from_expectation(eta0_compose).sigma()
     return
 
 
