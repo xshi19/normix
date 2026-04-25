@@ -434,7 +434,7 @@ def _baseline_fit(
 
     base_train_ll = float(base_result.model.marginal_log_likelihood(X_train))
     base_test_ll = float(base_result.model.marginal_log_likelihood(X_test))
-    _base_sigma = base_result.model._joint.sigma()
+    _base_sigma = base_result.model.sigma()
     base_cond = float(jnp.linalg.cond(_base_sigma))
 
     mo.md(
@@ -490,7 +490,7 @@ def _phase2_isotropic(
         _elapsed = time.perf_counter() - _t0
         _train_ll = float(_res.model.marginal_log_likelihood(X_train))
         _test_ll = float(_res.model.marginal_log_likelihood(X_test))
-        _cond = float(jnp.linalg.cond(_res.model._joint.sigma()))
+        _cond = float(jnp.linalg.cond(_res.model.sigma()))
         iso_results[_tau] = {
             "iters": int(_res.n_iter),
             "train_ll": _train_ll,
@@ -609,7 +609,7 @@ def _phase2_per_field(
         _elapsed = time.perf_counter() - _t0
         _train_ll = float(_res.model.marginal_log_likelihood(X_train))
         _test_ll = float(_res.model.marginal_log_likelihood(X_test))
-        _cond = float(jnp.linalg.cond(_res.model._joint.sigma()))
+        _cond = float(jnp.linalg.cond(_res.model.sigma()))
         sigma_only_results[_tau_value] = {
             "train_ll": _train_ll, "test_ll": _test_ll, "cond": _cond,
             "elapsed": _elapsed, "iters": int(_res.n_iter),

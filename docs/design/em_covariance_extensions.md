@@ -1,7 +1,7 @@
 # EM Extensions: Shrinkage and Factor Analysis
 
 **Date:** 2026-04-17
-**Status:** Proposed — design finalised, implementation pending
+**Status:** In progress — Phases 1, 2, 2.5 complete; Phases 3–5 pending
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/em.py`, `normix/mixtures/marginal.py`,
 new `normix/mixtures/factor.py`
@@ -752,7 +752,7 @@ starting point, not as committed code.
 
 ## 9. Implementation Plan
 
-### Phase 1 — EM API generalisation (no new model)
+### Phase 1 — EM API generalisation (no new model) ✅ Done
 
 1. Reorder and rename `NormalMixtureEta` fields to `(E_inv_Y, E_Y,
   E_log_Y, E_X, E_X_inv_Y, E_XXT_inv_Y)`.
@@ -772,7 +772,7 @@ starting point, not as committed code.
 7. All existing tests (full-covariance EM, MCECM, batch + incremental,
   shrinkage) must pass unchanged after this phase.
 
-### Phase 2 — Shrinkage combinator
+### Phase 2 — Shrinkage combinator ✅ Done
 
 1. Implement `Shrinkage(base, eta0, tau)` in `eta_rules.py`.
 2. Remove `ShrinkageUpdate`; users construct
@@ -788,7 +788,7 @@ starting point, not as committed code.
   - `Shrinkage(RobbinsMonroUpdate(...), …)` retains the running mean
   (regression test for the bug noted in §2).
 
-### Phase 2.5 — η → model unification + parameter facade (§6.3, §6.4)
+### Phase 2.5 — η → model unification + parameter facade (§6.3, §6.4) ✅ Done
 
 1. Add `JointNormalMixture.from_expectation` with `NormalMixtureEta`
   dispatch + per-subclass `_subordinator_from_eta` and
