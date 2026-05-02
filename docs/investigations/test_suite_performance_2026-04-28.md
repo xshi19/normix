@@ -300,6 +300,8 @@ real-data validation as slow/integration.
 ### Test-suite changes
 
 1. Add pytest markers:
+   - `smoke`
+   - `contract`
    - `slow`
    - `integration`
    - `gpu`
@@ -374,6 +376,9 @@ real-data validation as slow/integration.
 
 ### Phase 1 — Make Cost Visible
 
+Status: implemented. Marker definitions and the default fast marker expression
+live in `pyproject.toml`; the contributor note lives in `README.md`.
+
 1. Add pytest marker definitions in `pyproject.toml`.
 2. Add a short `docs/investigations/` note or README section explaining:
    - default test command
@@ -390,6 +395,11 @@ Exit criteria:
 - contributors can reproduce a per-test duration report
 
 ### Phase 2 — Quick Test-Suite Wins
+
+Status: partially implemented. The slowest stress-style tests are marked, and
+the SciPy PDF comparison grids are batched with `jax.vmap` without reducing
+grid size. Duplicate EM and Monte Carlo coverage can still be consolidated in
+later cleanup.
 
 1. Mark the slowest stress-style tests:
    - GH JAX/JAX incremental EM

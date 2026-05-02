@@ -36,11 +36,11 @@ class TestGammaVsScipy:
     def test_pdf_comparison(self, alpha, beta):
         g = Gamma(alpha=alpha, beta=beta)
         xs = jnp.linspace(0.01, 10.0, 50)
-        for x in xs:
-            our = float(g.pdf(x))
-            ref = float(stats.gamma.pdf(float(x), a=alpha, scale=1.0 / beta))
-            np.testing.assert_allclose(our, ref, rtol=1e-6,
-                                       err_msg=f"alpha={alpha}, beta={beta}, x={float(x)}")
+        our = np.array(jax.vmap(g.pdf)(xs))
+        ref = stats.gamma.pdf(np.array(xs), a=alpha, scale=1.0 / beta)
+        np.testing.assert_allclose(
+            our, ref, rtol=1e-6,
+            err_msg=f"alpha={alpha}, beta={beta}")
 
     @pytest.mark.parametrize("alpha,beta", [
         (2.0, 1.0), (3.0, 1.5), (5.0, 2.0),
@@ -107,11 +107,11 @@ class TestInverseGammaVsScipy:
     def test_pdf_comparison(self, alpha, beta):
         ig = InverseGamma(alpha=alpha, beta=beta)
         xs = jnp.linspace(0.01, 5.0, 50)
-        for x in xs:
-            our = float(ig.pdf(x))
-            ref = float(stats.invgamma.pdf(float(x), a=alpha, scale=beta))
-            np.testing.assert_allclose(our, ref, rtol=1e-6,
-                                       err_msg=f"alpha={alpha}, beta={beta}, x={float(x)}")
+        our = np.array(jax.vmap(ig.pdf)(xs))
+        ref = stats.invgamma.pdf(np.array(xs), a=alpha, scale=beta)
+        np.testing.assert_allclose(
+            our, ref, rtol=1e-6,
+            err_msg=f"alpha={alpha}, beta={beta}")
 
     @pytest.mark.parametrize("alpha,beta", [
         (5.0, 2.0), (6.0, 2.0), (7.0, 1.0),
@@ -175,11 +175,11 @@ class TestInverseGaussianVsScipy:
     def test_pdf_comparison(self, mu, lam):
         ig = InverseGaussian(mu=mu, lam=lam)
         xs = jnp.linspace(0.01, 5.0, 50)
-        for x in xs:
-            our = float(ig.pdf(x))
-            ref = float(stats.invgauss.pdf(float(x), mu=mu / lam, scale=lam))
-            np.testing.assert_allclose(our, ref, rtol=1e-6,
-                                       err_msg=f"mu={mu}, lam={lam}, x={float(x)}")
+        our = np.array(jax.vmap(ig.pdf)(xs))
+        ref = stats.invgauss.pdf(np.array(xs), mu=mu / lam, scale=lam)
+        np.testing.assert_allclose(
+            our, ref, rtol=1e-6,
+            err_msg=f"mu={mu}, lam={lam}")
 
     @pytest.mark.parametrize("mu,lam", [
         (1.0, 1.0), (2.0, 0.5), (0.5, 2.0),
@@ -244,12 +244,12 @@ class TestGIGVsScipy:
     def test_pdf_comparison(self, p, a, b):
         gig = GIG(p=p, a=a, b=b)
         xs = jnp.linspace(0.1, 5.0, 50)
-        for x in xs:
-            our = float(gig.pdf(x))
-            ref = float(stats.geninvgauss.pdf(
-                float(x), p=p, b=np.sqrt(a * b), scale=np.sqrt(b / a)))
-            np.testing.assert_allclose(our, ref, rtol=1e-5,
-                                       err_msg=f"p={p}, a={a}, b={b}, x={float(x)}")
+        our = np.array(jax.vmap(gig.pdf)(xs))
+        ref = stats.geninvgauss.pdf(
+            np.array(xs), p=p, b=np.sqrt(a * b), scale=np.sqrt(b / a))
+        np.testing.assert_allclose(
+            our, ref, rtol=1e-5,
+            err_msg=f"p={p}, a={a}, b={b}")
 
     @pytest.mark.parametrize("p,a,b", [
         (1.0, 1.0, 1.0), (2.0, 2.5, 1.5),

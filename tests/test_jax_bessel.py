@@ -244,6 +244,8 @@ def test_log_kv_grad_v(v, z):
 # Higher-order: jax.hessian
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
+@pytest.mark.contract
 def test_log_kv_hessian_wrt_z():
     """Second derivative d²/dz² log_kv(v, z) via autodiff (z-only hessian)."""
     v_arr = jnp.array(1.0)

@@ -156,6 +156,8 @@ class TestVarianceGamma:
         expected = mu + gamma * (alpha / beta)
         np.testing.assert_allclose(np.array(vg.mean()), np.array(expected), rtol=1e-10)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_mean_matches_analytical(self):
         vg = VarianceGamma.from_classical(
             mu=jnp.array([0.5, -0.3]),
@@ -168,6 +170,8 @@ class TestVarianceGamma:
         analytical_mean = np.array(vg.mean())
         np.testing.assert_allclose(sample_mean, analytical_mean, rtol=0.05, atol=0.05)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_cov_matches_analytical(self):
         """Cov[X] = E[Y]·Σ + Var[Y]·γγ^T."""
         alpha, beta = 2.0, 1.0

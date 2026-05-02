@@ -6,7 +6,8 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only), `optax`
 ## Commands
 
 - Install: `uv sync`
-- Tests: `uv run pytest tests/`
+- Tests: `uv run pytest tests/` (fast default: excludes `slow`, `stress`, `integration`, `gpu`)
+- Full validation: `uv run pytest tests/ -m "slow or stress or integration"`
 - Single test: `uv run pytest tests/test_gamma.py -v`
 - Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
 - Notebooks: `uv run jupyter lab`

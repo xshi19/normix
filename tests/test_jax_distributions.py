@@ -346,6 +346,7 @@ class TestGeneralizedHyperbolic:
         assert eta.E_X_inv_Y.shape == (2,)
         assert eta.E_XXT_inv_Y.shape == (2, 2)
 
+    @pytest.mark.slow
     def test_m_step_increases_ll(self, gh_2d):
         X = jax.random.normal(jax.random.PRNGKey(2), (100, 2), dtype=jnp.float64)
         ll0 = float(gh_2d.marginal_log_likelihood(X))
@@ -354,6 +355,8 @@ class TestGeneralizedHyperbolic:
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
 
+    @pytest.mark.slow
+    @pytest.mark.integration
     def test_em_convergence(self):
         """EM should monotonically increase log-likelihood."""
         from normix.fitting.em import BatchEMFitter

@@ -123,6 +123,8 @@ class TestNormalInverseGaussian:
         expected = mu + gamma * mu_ig
         np.testing.assert_allclose(np.array(nig.mean()), np.array(expected), rtol=1e-10)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_mean_matches(self):
         nig = NormalInverseGaussian.from_classical(
             mu=jnp.array([0.5, -0.3]),
@@ -134,6 +136,8 @@ class TestNormalInverseGaussian:
         np.testing.assert_allclose(
             np.array(X.mean(axis=0)), np.array(nig.mean()), rtol=0.1, atol=0.1)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_cov_matches(self):
         nig = NormalInverseGaussian.from_classical(
             mu=jnp.array([0.0, 0.0]),

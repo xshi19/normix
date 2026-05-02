@@ -90,6 +90,16 @@ addopts = [
     "-v",
     "--strict-markers",
     "--strict-config",
+    "-m",
+    "not slow and not stress and not integration and not gpu",
+]
+markers = [
+    "smoke: small API-level tests that should always be fast",
+    "contract: essential mathematical/API invariants",
+    "slow: tests with noticeably high runtime",
+    "stress: high-iteration, large-sample, or broad numerical stress tests",
+    "integration: larger workflow or real-data validation tests",
+    "gpu: tests that require or specifically exercise GPU behavior",
 ]
 
 [tool.mypy]
@@ -118,9 +128,11 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "marimo>=0.23.2",
     "nbconvert>=7.17.0",
     "nbsphinx>=0.9.8",
     "pandas>=2.0.0",
+    "psutil>=7.2.2",
     "pytest>=9.0.2",
     "sphinx>=9.1.0",
     "sphinx-rtd-theme>=3.1.0",

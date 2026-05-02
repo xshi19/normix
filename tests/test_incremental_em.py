@@ -411,6 +411,8 @@ def test_eta0_diagonal_and_with_sigma_consistent():
 # IncrementalEMFitter — smoke tests
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
+@pytest.mark.gpu
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
 def test_incremental_em_robbins_monro(dist_name):
     """IncrementalEMFitter with RobbinsMonroUpdate produces a finite model."""

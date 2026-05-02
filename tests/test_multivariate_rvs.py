@@ -99,6 +99,8 @@ def _mixing_moments(name, dist):
         return None, None
 
 
+@pytest.mark.slow
+@pytest.mark.stress
 class TestSampleCovariance:
 
     @pytest.mark.parametrize("name,dist", _make_2d_joints(),
@@ -146,6 +148,8 @@ class TestSampleCovariance:
 # 3D covariance test
 # ============================================================
 
+@pytest.mark.slow
+@pytest.mark.stress
 class TestSampleCovariance3D:
 
     def test_vg_3d(self):

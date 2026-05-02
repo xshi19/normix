@@ -177,10 +177,41 @@ normix/
 ## Development
 
 ```bash
-uv run pytest tests/              # run tests
+uv run pytest tests/              # fast default suite
 uv run jupyter lab                # notebooks
 make -C docs html                 # build docs
 ```
+
+### Test Suites
+
+The default pytest configuration excludes tests marked `slow`, `stress`,
+`integration`, or `gpu`:
+
+```bash
+uv run pytest tests/
+```
+
+Use marker expressions to run targeted suites:
+
+```bash
+uv run pytest tests/ -m "smoke or contract"
+uv run pytest tests/ -m "slow or stress or integration"
+uv run pytest tests/ -m gpu
+uv run pytest tests/ -m "not gpu"
+```
+
+Useful profiling recipes:
+
+```bash
+uv run pytest tests/ --durations=50
+JAX_LOG_COMPILES=1 uv run pytest tests/ --durations=50
+XLA_PYTHON_CLIENT_PREALLOCATE=false uv run pytest tests/ --durations=50
+```
+
+Distribution `log_prob` and `pdf` methods are single-observation APIs. Batch
+them explicitly with `jax.vmap`, for example `jax.vmap(dist.pdf)(xs)`. This
+keeps vector-valued observations, such as multivariate normal-mixture samples,
+unambiguous while still giving JAX a stable batched computation.
 
 ## References
 

@@ -112,6 +112,8 @@ class TestGeneralizedHyperbolic:
         lp2 = float(gh.log_prob(jnp.array([2.0])))
         assert lp0 > lp1 > lp2
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_mean_matches(self):
         gh = GeneralizedHyperbolic.from_classical(
             mu=jnp.array([0.5, -0.3]),
@@ -123,6 +125,8 @@ class TestGeneralizedHyperbolic:
         np.testing.assert_allclose(
             np.array(X.mean(axis=0)), np.array(gh.mean()), rtol=0.1, atol=0.1)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_sample_cov_matches(self):
         gh = GeneralizedHyperbolic.from_classical(
             mu=jnp.array([0.0, 0.0]),
@@ -216,6 +220,8 @@ class TestConditionalExpectationsGH:
 
 class TestGeneralizedHyperbolicFitting:
 
+    @pytest.mark.slow
+    @pytest.mark.integration
     def test_fit_em_1d(self):
         true = GeneralizedHyperbolic.from_classical(
             mu=jnp.array([0.0]), gamma=jnp.array([0.0]),
@@ -229,6 +235,8 @@ class TestGeneralizedHyperbolicFitting:
         ll = float(fitted.marginal_log_likelihood(X))
         assert np.isfinite(ll)
 
+    @pytest.mark.slow
+    @pytest.mark.integration
     def test_fit_em_2d(self):
         true = GeneralizedHyperbolic.from_classical(
             mu=jnp.array([0.0, 0.0]),
@@ -244,6 +252,8 @@ class TestGeneralizedHyperbolicFitting:
         np.testing.assert_allclose(
             np.array(fitted.mean()), np.array(true.mean()), rtol=0.25, atol=0.3)
 
+    @pytest.mark.slow
+    @pytest.mark.integration
     def test_em_monotone_ll(self):
         """EM iterations should not decrease log-likelihood."""
         X = jnp.array(np.random.default_rng(0).standard_normal((200, 2)))

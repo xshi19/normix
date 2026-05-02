@@ -273,9 +273,9 @@ class TestSolveBregmanGIG:
 
     @pytest.mark.parametrize("backend,method", [
         ("jax", "newton"),
-        ("jax", "lbfgs"),
-        ("jax", "bfgs"),
-        ("cpu", "lbfgs"),
+        pytest.param("jax", "lbfgs", marks=pytest.mark.slow),
+        pytest.param("jax", "bfgs", marks=pytest.mark.slow),
+        pytest.param("cpu", "lbfgs", marks=pytest.mark.slow),
     ])
     def test_from_expectation_warm_start(self, backend, method):
         from normix import GIG
@@ -301,6 +301,7 @@ class TestSolveBregmanGIG:
         )
         self._check(r)
 
+    @pytest.mark.slow
     def test_solve_bregman_cpu_hybrid(self):
         from normix import GIG
         r = solve_bregman(
@@ -333,6 +334,8 @@ class TestSolveBregmanGIG:
         )
         self._check(r)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_result_converged(self):
         from normix import GIG
         r = solve_bregman(
@@ -377,6 +380,8 @@ class TestSolveBregmanMultistart:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
+    @pytest.mark.slow
+    @pytest.mark.stress
     def test_gig_multistart_cold(self):
         """GIG cold-start multistart via CPU — recovered eta_hat should match eta."""
         from normix import GIG
@@ -437,6 +442,7 @@ class TestExponentialFamilyFromExpectation:
         np.testing.assert_allclose(float(ig2.mu), 2.0, rtol=1e-6)
         np.testing.assert_allclose(float(ig2.lam), 4.0, rtol=1e-6)
 
+    @pytest.mark.slow
     def test_gig_backend_and_method_args(self):
         """GIG from_expectation uses same backend/method args as base class."""
         from normix import GIG

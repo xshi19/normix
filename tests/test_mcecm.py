@@ -14,6 +14,8 @@ import pytest
 
 jax.config.update("jax_enable_x64", True)
 
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
+
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
