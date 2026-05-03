@@ -135,6 +135,42 @@ GPU acceleration benefits the matrix operations in the E-step and M-step
 (Cholesky, solves, einsum on d×d matrices where d=10–468). These are already
 fast. The Bessel function is the only non-matrix-op bottleneck.
 
+## Resolution: stable JIT-cached Newton (May 2026)
+
+Root cause #3 above ("No JIT boundary around the Newton solver") has been
+addressed. `normix/fitting/solvers.py::make_jit_newton_solver` returns a
+`@jax.jit`-decorated Newton solve specialised to a fixed
+`(f, grad_fn, hess_fn, bounds)` 4-tuple, and
+`normix/distributions/generalized_inverse_gaussian.py` builds a module-level
+instance (`_gig_jax_newton_jit`) that all warm-started `backend='jax',
+method='newton'` calls share. The compiled XLA executable now caches across
+EM iterations instead of being re-traced on every call.
+
+The same fix was applied to `_newton_digamma` (Gamma / InverseGamma / VG /
+NInvG) by adding `@jax.jit`.
+
+Measured impact on RTX 4090, JAX 0.9.1
+(`benchmarks/bench_jit_solvers.py`):
+
+| Path | First call (compile + run) | Cached call | Per-call speedup |
+|---|---:|---:|---:|
+| GIG warm-start, symmetric | `3.05 s` | `24 ms` | `126×` |
+| GIG warm-start, asymmetric | `41 ms` (cache hit) | `39 ms` | `1.05×` |
+| Gamma `_newton_digamma`, target=0 | `253 ms` | `4.5 ms` | `56×` |
+
+End-to-end EM (`benchmarks/bench_em_mixture.py --large`):
+
+| Config | Old per-iter | New per-iter | Δ |
+|---|---:|---:|---:|
+| GH `cpu/jax/newton` | `3.29 s` | `1.73 s` | `-47.5 %` |
+| GH `cpu/cpu/lbfgs`  | `383 ms` | `299 ms` | `-21.9 %` |
+
+The 2-iteration GH JAX/JAX run still pays the one-time compile in iteration 1;
+longer EM loops should approach the cached `~24 ms/call` floor and erase the
+2000–7000× headline reported above. Root causes #1 (GPU dispatch latency for
+3D problems) and #2 (`lax.cond`-in-`lax.scan` bug) remain — they affect the
+absolute floor, not the per-call cache miss penalty.
+
 ## References
 
 1. [JAX #5986](https://github.com/google/jax/issues/5986): `lax.cond` inside

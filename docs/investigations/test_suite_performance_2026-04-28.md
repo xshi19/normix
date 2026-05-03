@@ -440,6 +440,18 @@ Exit criteria:
 
 ### Phase 4 — Improve JAX Solver Structure
 
+Status: implemented (2026-05-03). A `make_jit_newton_solver` helper in
+`normix/fitting/solvers.py` builds a `@jax.jit`-decorated Newton solve that
+bakes the distribution-level `(f, grad_fn, hess_fn, bounds)` into one stable
+closure. `GeneralizedInverseGaussian.from_expectation` routes the warm-started
+`backend='jax', method='newton'` path through a module-level instance
+(`_gig_jax_newton_jit`), so all GH M-step solves share one XLA executable.
+The same JIT-cache fix was applied to `_newton_digamma` (used by Gamma /
+InverseGamma / VG / NInvG M-steps) by adding `@jax.jit`.
+
+A new benchmark `benchmarks/bench_jit_solvers.py` measures first-call vs
+cached-call latency and is wired into `run_all.py`.
+
 1. Prototype a stable jitted GIG Newton function outside the classmethod path.
 2. Compare:
    - current JAX/JAX `GIG.from_expectation`
@@ -452,6 +464,26 @@ Exit criteria:
 
 - repeated GH/GIG JAX M-steps avoid repeated tracing/dispatch where possible
 - Robbins-Monro GH JAX/JAX test improves without changing math
+
+Result (`bench_jit_solvers`, RTX 4090, JAX 0.9.1):
+
+| Case | First call | Cached call | Ratio |
+|---|---:|---:|---:|
+| GIG warm-start, symmetric (p=0.5, a=b=1) | `3.05 s` | `24 ms` | `126×` |
+| GIG warm-start, asymmetric (a≫b, p=0.5)  | `41 ms`  | `39 ms` | `1.05×` |
+| GIG warm-start, InvGauss limit (p=-½)    | `41 ms`  | `44 ms` | `0.9×`  |
+| Gamma `_newton_digamma`, target=0.0      | `253 ms` | `4.5 ms`| `56×`   |
+
+The asymmetric / InvGauss cases land at ~40 ms cached because their first
+call hits the cache primed by the symmetric case (same shapes/dtypes). End
+to end, `bench_em_mixture --large` reports the GH `cpu/jax/newton` row
+dropping from `3.29 s/iter` to `1.73 s/iter` (-47.5 %) on a 2-iteration run
+that still pays the one-time compile in iteration 1; longer EM loops should
+amortise the compile and approach the cached `~24 ms/call` floor.
+
+Other distributions: cached time matches CPU/LBFGS within `~1.4×` for GIG
+and `~10–20×` slower than `_newton_digamma_cpu` (still small, sub-millisecond
+for both — Gamma rarely dominates EM time anyway).
 
 ### Phase 5 — JAX-Native Incremental EM Path
 

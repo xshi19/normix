@@ -27,7 +27,7 @@ normix/                     # JAX implementation
 │   ├── eta.py              # NormalMixtureEta, affine_combine
 │   ├── eta_rules.py        # EtaUpdateRule + AffineRule; Identity, RobbinsMonro, EWMA, Shrinkage, ...
 │   ├── shrinkage_targets.py # eta0_from_model, eta0_isotropic, eta0_diagonal, eta0_with_sigma
-│   ├── solvers.py          # solve_bregman*, BregmanResult; Newton, L-BFGS, scipy multi-start
+│   ├── solvers.py          # solve_bregman*, BregmanResult, make_jit_newton_solver; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
@@ -245,13 +245,13 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 
 **Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
 - `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
-- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian).
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian). The warm-started hot path is routed through a module-level `_gig_jax_newton_jit` produced by `make_jit_newton_solver` so all warm-started GIG solves share one cached XLA executable.
 - `backend='jax', method='lbfgs'`: JAXopt L-BFGS.
 - Omitting `theta0` in **`ExponentialFamily.from_expectation`**: defaults to **`jnp.zeros_like(eta)`**. **GIG** overrides: `theta0=None` runs **`solve_bregman_multistart`** on the η-rescaled problem (CPU L-BFGS-B, seeds from Gamma / InverseGamma / InverseGaussian special cases).
 
 The solver passes `grad_fn` and `hess_fn` (both in θ-space) from the triad. The solver applies the φ↔θ chain rule internally via `jax.jacobian(to_theta)`, so distributions never need to know about reparametrization.
 
-The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values.
+The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values. **`make_jit_newton_solver(f, grad_fn, hess_fn, bounds)`** builds a `@jax.jit`-decorated specialised Newton solve whose XLA cache survives across calls — used by the GIG warm-start hot path to avoid the per-call retrace that previously dominated GH JAX/JAX EM time (see `docs/tech_notes/jax_overhead_diagnosis.md` § Resolution).
 
 See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 
