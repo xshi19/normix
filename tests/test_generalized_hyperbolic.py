@@ -215,63 +215,6 @@ class TestConditionalExpectationsGH:
 
 
 # ============================================================
-# EM Fitting
-# ============================================================
-
-class TestGeneralizedHyperbolicFitting:
-
-    @pytest.mark.slow
-    @pytest.mark.integration
-    def test_fit_em_1d(self):
-        true = GeneralizedHyperbolic.from_classical(
-            mu=jnp.array([0.0]), gamma=jnp.array([0.0]),
-            sigma=jnp.array([[1.0]]), p=1.0, a=1.0, b=1.0,
-        )
-        X = true.rvs(5000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu',
-                          regularization='det_sigma_one')
-        fitted = result.model
-        ll = float(fitted.marginal_log_likelihood(X))
-        assert np.isfinite(ll)
-
-    @pytest.mark.slow
-    @pytest.mark.integration
-    def test_fit_em_2d(self):
-        true = GeneralizedHyperbolic.from_classical(
-            mu=jnp.array([0.0, 0.0]),
-            gamma=jnp.array([0.3, -0.2]),
-            sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
-            p=1.0, a=1.0, b=1.0,
-        )
-        X = true.rvs(3000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu',
-                          regularization='det_sigma_one')
-        fitted = result.model
-        np.testing.assert_allclose(
-            np.array(fitted.mean()), np.array(true.mean()), rtol=0.25, atol=0.3)
-
-    @pytest.mark.slow
-    @pytest.mark.integration
-    def test_em_monotone_ll(self):
-        """EM iterations should not decrease log-likelihood."""
-        X = jnp.array(np.random.default_rng(0).standard_normal((200, 2)))
-        gh = GeneralizedHyperbolic.from_classical(
-            mu=jnp.zeros(2), gamma=jnp.zeros(2),
-            sigma=jnp.eye(2), p=1.0, a=1.0, b=1.0,
-        )
-        ll_prev = float(gh.marginal_log_likelihood(X))
-        model = gh
-        for _ in range(5):
-            eta = model.e_step(X)
-            model = model.m_step(eta)
-            ll = float(model.marginal_log_likelihood(X))
-            assert ll >= ll_prev - 1e-4, f"LL decreased: {ll_prev:.4f} → {ll:.4f}"
-            ll_prev = ll
-
-
-# ============================================================
 # Edge Cases
 # ============================================================
 

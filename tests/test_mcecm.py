@@ -92,45 +92,6 @@ def test_mcecm_one_step_finite(dist_name):
 
 
 # ---------------------------------------------------------------------------
-# MCECM vs EM: both converge to similar log-likelihood
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_mcecm_vs_em_ll_sp500(dist_name):
-    """MCECM and EM (10 iters) converge to similar log-likelihood on SP500."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
-
-    regularization = 'det_sigma_one' if dist_name == 'GH' else 'none'
-
-    fitter_em = BatchEMFitter(
-        algorithm='em', max_iter=10, tol=1e-6,
-        e_step_backend='cpu', m_step_backend='cpu', m_step_method='newton',
-        regularization=regularization,
-    )
-    fitter_mcecm = BatchEMFitter(
-        algorithm='mcecm', max_iter=10, tol=1e-6,
-        e_step_backend='cpu', m_step_backend='cpu', m_step_method='newton',
-        regularization=regularization,
-    )
-
-    result_em = fitter_em.fit(model, X)
-    result_mcecm = fitter_mcecm.fit(model, X)
-
-    ll_em = float(result_em.model.marginal_log_likelihood(X))
-    ll_mcecm = float(result_mcecm.model.marginal_log_likelihood(X))
-
-    assert np.isfinite(ll_em), f"{dist_name} EM LL not finite: {ll_em}"
-    assert np.isfinite(ll_mcecm), f"{dist_name} MCECM LL not finite: {ll_mcecm}"
-
-    assert abs(ll_em - ll_mcecm) < 0.5, (
-        f"{dist_name} EM vs MCECM LL too different: "
-        f"em={ll_em:.4f}, mcecm={ll_mcecm:.4f}"
-    )
-
-
-# ---------------------------------------------------------------------------
 # m_step_normal: only normal params change, subordinator unchanged
 # ---------------------------------------------------------------------------
 

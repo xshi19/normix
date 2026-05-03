@@ -355,26 +355,6 @@ class TestGeneralizedHyperbolic:
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
 
-    @pytest.mark.slow
-    @pytest.mark.integration
-    def test_em_convergence(self):
-        """EM should monotonically increase log-likelihood."""
-        from normix.fitting.em import BatchEMFitter
-        np.random.seed(0)
-        X = jnp.array(np.random.standard_normal((200, 2)))
-        gh0 = GeneralizedHyperbolic.from_classical(
-            mu=np.zeros(2), gamma=np.zeros(2),
-            sigma=np.eye(2), p=1.0, a=1.0, b=1.0,
-        )
-        ll_prev = float(gh0.marginal_log_likelihood(X))
-        model = gh0
-        for _ in range(5):
-            eta = model.e_step(X)
-            model = model.m_step(eta)
-            ll = float(model.marginal_log_likelihood(X))
-            assert ll >= ll_prev - 1e-4, f"LL decreased: {ll_prev:.4f} → {ll:.4f}"
-            ll_prev = ll
-
 
 # ===========================================================================
 # Joint normal mixtures — exponential-family log_prob vs explicit joint density

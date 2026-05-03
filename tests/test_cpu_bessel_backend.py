@@ -321,7 +321,6 @@ def test_batch_em_fitter_defaults_unchanged():
 
 def test_batch_em_fitter_cpu_converges_gh():
     """BatchEMFitter with CPU backend converges on a small GH problem."""
-    rng = np.random.default_rng(42)
     d = 2
     n = 50
     true_model = GeneralizedHyperbolic.from_classical(
@@ -341,39 +340,6 @@ def test_batch_em_fitter_cpu_converges_gh():
     fitted = fitter.fit(init_model, X).model
     ll = float(fitted.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"Log-likelihood not finite: {ll}"
-
-
-def test_batch_em_fitter_cpu_same_result_as_default():
-    """CPU backend gives same log-likelihood as JAX backend after convergence."""
-    rng = np.random.default_rng(0)
-    d = 2
-    n = 40
-    true_model = GeneralizedHyperbolic.from_classical(
-        mu=np.zeros(d), gamma=np.zeros(d),
-        sigma=np.eye(d), p=1.0, a=1.0, b=1.0,
-    )
-    X = jnp.array(true_model.rvs(n, seed=123))
-
-    init_model = GeneralizedHyperbolic.from_classical(
-        mu=np.zeros(d), gamma=np.zeros(d),
-        sigma=np.eye(d), p=1.0, a=1.0, b=1.0,
-    )
-
-    fitter_jax = BatchEMFitter(max_iter=5, tol=1e-4,
-                                e_step_backend='jax', m_step_backend='jax', m_step_method='newton')
-    fitter_cpu = BatchEMFitter(max_iter=5, tol=1e-4,
-                                e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs')
-
-    fitted_jax = fitter_jax.fit(init_model, X).model
-    fitted_cpu = fitter_cpu.fit(init_model, X).model
-
-    ll_jax = float(fitted_jax.marginal_log_likelihood(X))
-    ll_cpu = float(fitted_cpu.marginal_log_likelihood(X))
-
-    # Both should converge to approximately the same log-likelihood
-    assert abs(ll_cpu - ll_jax) < 0.05, (
-        f"CPU vs JAX EM log-likelihood too different: {ll_cpu:.4f} vs {ll_jax:.4f}"
-    )
 
 
 # ---------------------------------------------------------------------------

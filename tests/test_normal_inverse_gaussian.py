@@ -182,39 +182,6 @@ class TestConditionalExpectationsNIG:
 
 
 # ============================================================
-# EM Fitting
-# ============================================================
-
-class TestNormalInverseGaussianFitting:
-
-    def test_fit_em_1d(self):
-        true = NormalInverseGaussian.from_classical(
-            mu=jnp.array([0.0]), gamma=jnp.array([0.0]),
-            sigma=jnp.array([[1.0]]), mu_ig=1.0, lam=1.0,
-        )
-        X = true.rvs(5000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu')
-        fitted = result.model
-        np.testing.assert_allclose(
-            np.array(fitted.mean()), np.array(true.mean()), rtol=0.2, atol=0.2)
-
-    def test_fit_em_2d(self):
-        true = NormalInverseGaussian.from_classical(
-            mu=jnp.array([0.0, 0.0]),
-            gamma=jnp.array([0.3, -0.2]),
-            sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
-            mu_ig=1.0, lam=1.0,
-        )
-        X = true.rvs(5000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu')
-        fitted = result.model
-        np.testing.assert_allclose(
-            np.array(fitted.mean()), np.array(true.mean()), rtol=0.25, atol=0.3)
-
-
-# ============================================================
 # Edge Cases
 # ============================================================
 

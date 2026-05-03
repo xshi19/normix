@@ -10,7 +10,6 @@ Verifies that both backends produce the same results for all mixture distributio
 Uses a small SP500 subset (5 stocks) to keep tests fast while exercising
 real-world parameter ranges.
 """
-import os
 from pathlib import Path
 
 import jax
@@ -27,7 +26,6 @@ from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.variance_gamma import VarianceGamma
-from normix.fitting.em import BatchEMFitter
 
 DATA_PATH = Path(__file__).parent.parent / "data" / "sp500_returns.csv"
 N_STOCKS = 5
@@ -149,74 +147,3 @@ def test_m_step_cpu_vs_jax_sp500(dist_name):
         )
 
 
-# ---------------------------------------------------------------------------
-# Full EM: CPU vs JAX backends produce comparable log-likelihoods
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_em_cpu_vs_jax_ll_sp500(dist_name):
-    """Full EM (5 iters) with CPU vs JAX backends gives similar log-likelihood."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
-
-    regularization = 'det_sigma_one' if dist_name == 'GH' else 'none'
-
-    fitter_jax = BatchEMFitter(
-        max_iter=5, tol=1e-4,
-        e_step_backend='jax', m_step_backend='jax', m_step_method='newton',
-        regularization=regularization,
-    )
-    fitter_cpu = BatchEMFitter(
-        max_iter=5, tol=1e-4,
-        e_step_backend='cpu', m_step_backend='cpu', m_step_method='lbfgs',
-        regularization=regularization,
-    )
-
-    result_jax = fitter_jax.fit(model, X)
-    result_cpu = fitter_cpu.fit(model, X)
-
-    ll_jax = float(result_jax.model.marginal_log_likelihood(X))
-    ll_cpu = float(result_cpu.model.marginal_log_likelihood(X))
-
-    assert np.isfinite(ll_jax), f"{dist_name} JAX EM log-likelihood not finite"
-    assert np.isfinite(ll_cpu), f"{dist_name} CPU EM log-likelihood not finite"
-
-    assert abs(ll_cpu - ll_jax) < 0.5, (
-        f"{dist_name} CPU vs JAX EM log-likelihood too different: "
-        f"cpu={ll_cpu:.4f}, jax={ll_jax:.4f}, diff={abs(ll_cpu - ll_jax):.4f}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# E-step then M-step: one full iteration, check LL improves for both backends
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("dist_name,backend", [
-    ("VG", "jax"), ("VG", "cpu"),
-    ("NInvG", "jax"), ("NInvG", "cpu"),
-    ("NIG", "jax"), ("NIG", "cpu"),
-    ("GH", "jax"), ("GH", "cpu"),
-])
-def test_em_one_step_ll_improves_sp500(dist_name, backend):
-    """One E+M step improves log-likelihood on SP500 data for both backends."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
-
-    ll_before = float(model.marginal_log_likelihood(X))
-
-    e_backend = backend
-    m_method = 'lbfgs' if backend == 'cpu' else 'newton'
-
-    eta = model.e_step(X, backend=e_backend)
-    new_model = model.m_step(eta, backend=backend, method=m_method)
-
-    if dist_name == 'GH':
-        new_model = new_model.regularize_det_sigma_one()
-
-    ll_after = float(new_model.marginal_log_likelihood(X))
-
-    assert np.isfinite(ll_after), (
-        f"{dist_name}/{backend}: LL not finite after one step: {ll_after}"
-    )

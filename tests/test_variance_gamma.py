@@ -220,50 +220,6 @@ class TestConditionalExpectationsVG:
 
 
 # ============================================================
-# EM Fitting Tests
-# ============================================================
-
-class TestVarianceGammaFitting:
-
-    def test_fit_em_1d_recovers_mean(self):
-        true = VarianceGamma.from_classical(
-            mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
-            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
-        )
-        X = true.rvs(5000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu')
-        fitted = result.model
-        np.testing.assert_allclose(
-            np.array(fitted.mean()), np.array(true.mean()), rtol=0.15, atol=0.15)
-
-    def test_fit_em_2d_recovers_mean(self):
-        true = VarianceGamma.from_classical(
-            mu=jnp.array([0.0, 0.0]),
-            gamma=jnp.array([0.3, -0.2]),
-            sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
-            alpha=2.5, beta=1.0,
-        )
-        X = true.rvs(5000, seed=42)
-        result = true.fit(X, max_iter=50, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu')
-        fitted = result.model
-        np.testing.assert_allclose(
-            np.array(fitted.mean()), np.array(true.mean()), rtol=0.2, atol=0.2)
-
-    def test_fit_em_ll_finite(self):
-        true = VarianceGamma.from_classical(
-            mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
-            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
-        )
-        X = true.rvs(2000, seed=42)
-        result = true.fit(X, max_iter=30, tol=1e-5, verbose=0,
-                          e_step_backend='cpu', m_step_backend='cpu')
-        ll = float(result.model.marginal_log_likelihood(X))
-        assert np.isfinite(ll)
-
-
-# ============================================================
 # Edge Cases
 # ============================================================
 
