@@ -418,6 +418,12 @@ Exit criteria:
 
 ### Phase 3 — Consolidate EM Coverage
 
+Status: implemented. `test_em_regression.py` is the canonical synthetic batch
+EM suite. Redundant full-fit tests were removed from the per-distribution
+files, the extra GH manual EM loop was removed from `test_jax_distributions.py`,
+and backend/MCECM real-data tests now focus on targeted step-level behavior
+rather than repeated full EM convergence comparisons.
+
 1. Keep `test_em_regression.py` as canonical synthetic batch EM coverage.
 2. Trim per-distribution EM tests to one light smoke test or remove where
    fully redundant.
