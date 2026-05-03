@@ -143,6 +143,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">bregman_objective</span><span class="p">,</span> <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">solve_bregman_multistart</span><span class="p">,</span>
+    <span class="n">make_jit_newton_solver</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -611,23 +612,32 @@
             <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">theta0_scaled</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
                 <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">theta0_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">))</span>
 
-            <span class="n">solver_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;bounds&quot;</span><span class="p">:</span> <span class="n">_GIG_BOUNDS</span><span class="p">,</span>
-                <span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="n">maxiter</span><span class="p">,</span>
-                <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="n">tol</span><span class="p">,</span>
-                <span class="s2">&quot;grad_fn&quot;</span><span class="p">:</span> <span class="n">grad_fn</span><span class="p">,</span>
-                <span class="s2">&quot;hess_fn&quot;</span><span class="p">:</span> <span class="n">hess_fn</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="c1"># trust-exact doesn&#39;t support bounds</span>
-            <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
-                <span class="n">solver_kwargs</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># Hot path: stable jitted Newton with cached XLA executable.</span>
+            <span class="c1"># Avoids the per-call retrace incurred by solve_bregman&#39;s</span>
+            <span class="c1"># fresh Python closures (key bottleneck in GH JAX/JAX EM).</span>
+            <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gig_jax_newton_jit</span><span class="p">(</span>
+                    <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
+                    <span class="n">max_steps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">maxiter</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">tol</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">solver_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;bounds&quot;</span><span class="p">:</span> <span class="n">_GIG_BOUNDS</span><span class="p">,</span>
+                    <span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="n">maxiter</span><span class="p">,</span>
+                    <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="n">tol</span><span class="p">,</span>
+                    <span class="s2">&quot;grad_fn&quot;</span><span class="p">:</span> <span class="n">grad_fn</span><span class="p">,</span>
+                    <span class="s2">&quot;hess_fn&quot;</span><span class="p">:</span> <span class="n">hess_fn</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="c1"># trust-exact doesn&#39;t support bounds</span>
+                <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
+                    <span class="n">solver_kwargs</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman</span><span class="p">(</span>
-                <span class="n">f</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
-                <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman</span><span class="p">(</span>
+                    <span class="n">f</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
+                    <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">theta0_list</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">)</span>
             <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
@@ -718,6 +728,23 @@
 
         <span class="k">return</span> <span class="n">starting_points</span></div>
 
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Stable jitted GIG Newton solver</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1">#</span>
+<span class="c1"># Hoisted to module level so that JAX caches the compiled XLA executable</span>
+<span class="c1"># across all GIG.from_expectation(jax/newton) calls. Without this, every</span>
+<span class="c1"># warm-started solve inside an EM loop builds fresh Python closures and</span>
+<span class="c1"># forces JAX to re-trace the same Newton kernel, dominating GH M-step time.</span>
+
+<span class="n">_gig_jax_newton_jit</span> <span class="o">=</span> <span class="n">make_jit_newton_solver</span><span class="p">(</span>
+    <span class="n">f</span><span class="o">=</span><span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
+    <span class="n">grad_fn</span><span class="o">=</span><span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_grad_log_partition</span><span class="p">,</span>
+    <span class="n">hess_fn</span><span class="o">=</span><span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_hessian_log_partition</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span><span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">(),</span>
+<span class="p">)</span>
 
 
 <span class="c1"># Convenience alias</span>

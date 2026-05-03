@@ -3028,7 +3028,14 @@ solve_bregman_multistart  multiple starting points (vmap for JAX Newton;</p>
 <blockquote>
 <div><p>for-loop for quasi-Newton and CPU)</p>
 </div></blockquote>
-<p>bregman_objective         utility: f(θ) − θ·η</p>
+<p>bregman_objective         utility: f(θ) − θ·η
+make_jit_newton_solver    build a stable <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code> Newton solve specialised</p>
+<blockquote>
+<div><p>to a fixed <code class="docutils literal notranslate"><span class="pre">(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code> —
+repeated calls with matching shapes/dtypes hit the
+XLA cache, avoiding the per-call re-tracing that
+<code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> incurs from fresh closures.</p>
+</div></blockquote>
 </section>
 <section id="backends-methods">
 <h4>Backends × methods<a class="headerlink" href="#backends-methods" title="Link to this heading"></a></h4>
@@ -3178,6 +3185,39 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.fitting.solvers.BregmanResult" title="normix.fitting.solvers.BregmanResult"><em>BregmanResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.solvers.make_jit_newton_solver">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">make_jit_newton_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#make_jit_newton_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.make_jit_newton_solver" title="Link to this definition"></a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated Newton solver specialised to one problem.</p>
+<p>The returned callable has signature
+<code class="docutils literal notranslate"><span class="pre">solve(eta,</span> <span class="pre">theta0,</span> <span class="pre">max_steps=20,</span> <span class="pre">tol=1e-10)</span> <span class="pre">-&gt;</span> <span class="pre">(theta_opt,</span> <span class="pre">fun,</span> <span class="pre">grad_norm,</span> <span class="pre">converged)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">max_steps</span></code> is a static argument (required by <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>).</p>
+<p>All distribution-level inputs (<code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">hess_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">bounds</span></code>)
+are baked into the closure at construction time. Repeated calls with the
+same array shapes and dtypes therefore reuse the compiled XLA executable.</p>
+<p>Use this in EM hot paths where <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> would otherwise build a
+fresh Python closure on every call and force JAX to re-trace the same
+Newton kernel on each iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>convex objective ψ</em><em>(</em><em>θ</em><em>) </em><em>→ scalar</em><em> (</em><em>must be JAX-traceable</em><em>)</em><em>.</em>)</p></li>
+<li><p><strong>grad_fn</strong> (<em>∇ψ</em><em>(</em><em>θ</em><em>) </em><em>→</em><em> (</em><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal.d" title="normix.distributions.normal.MultivariateNormal.d"><em>d</em></a><em>,</em><em>)</em><em>.</em>)</p></li>
+<li><p><strong>hess_fn</strong> (<em>∇²ψ</em><em>(</em><em>θ</em><em>) </em><em>→</em><em> (</em><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal.d" title="normix.distributions.normal.MultivariateNormal.d"><em>d</em></a><em>, </em><a class="reference internal" href="#normix.distributions.normal.MultivariateNormal.d" title="normix.distributions.normal.MultivariateNormal.d"><em>d</em></a><em>)</em><em>.</em>)</p></li>
+<li><p><strong>bounds</strong> (<code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> of shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> each, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Jit-compiled Newton solver. Returns a 4-tuple of JAX arrays
+<code class="docutils literal notranslate"><span class="pre">(theta,</span> <span class="pre">fun,</span> <span class="pre">grad_norm,</span> <span class="pre">converged)</span></code>; wrap in <code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code>
+externally if needed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
 </dd>
 </dl>
 </dd></dl>

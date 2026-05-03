@@ -263,12 +263,17 @@
 
 
 
+<span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_newton_digamma</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Solve :math:`\psi(\alpha) - \log\alpha = \text{target}` for :math:`\alpha &gt; 0`</span>
 <span class="sd">    via Newton iterations.</span>
 
-<span class="sd">    Uses ``jax.lax.fori_loop`` for JIT-compatibility.</span>
+<span class="sd">    Uses ``jax.lax.fori_loop`` for JIT-compatibility. Decorated with</span>
+<span class="sd">    ``@jax.jit`` so repeated Python-loop calls (e.g. inside the VG/NInvG</span>
+<span class="sd">    M-step) hit the XLA cache instead of re-tracing the body every time.</span>
+<span class="sd">    ``n_iter`` defaults are baked in; pass non-default values only inside an</span>
+<span class="sd">    enclosing jit to avoid retracing per call.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">alpha0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
         <span class="n">target</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">2.22</span><span class="p">,</span>

@@ -87,6 +87,11 @@
 <span class="sd">solve_bregman_multistart  multiple starting points (vmap for JAX Newton;</span>
 <span class="sd">                          for-loop for quasi-Newton and CPU)</span>
 <span class="sd">bregman_objective         utility: f(θ) − θ·η</span>
+<span class="sd">make_jit_newton_solver    build a stable ``@jax.jit`` Newton solve specialised</span>
+<span class="sd">                          to a fixed ``(f, grad_fn, hess_fn, bounds)`` —</span>
+<span class="sd">                          repeated calls with matching shapes/dtypes hit the</span>
+<span class="sd">                          XLA cache, avoiding the per-call re-tracing that</span>
+<span class="sd">                          ``solve_bregman`` incurs from fresh closures.</span>
 
 <span class="sd">Backends × methods</span>
 <span class="sd">------------------</span>
@@ -114,6 +119,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -452,6 +458,59 @@
     <span class="n">theta_opt</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi_opt</span><span class="p">)</span>
     <span class="n">final_obj</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">theta_opt</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta_opt</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">final_obj</span><span class="p">,</span> <span class="n">grad_norms</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">converged</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Stable jitted Newton — bake (f, grad, hess, bounds) into one JIT cache key</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="make_jit_newton_solver">
+<a class="viewcode-back" href="../../../api/index.html#normix.fitting.solvers.make_jit_newton_solver">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_jit_newton_solver</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="n">grad_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="n">hess_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Build a ``@jax.jit``\ -decorated Newton solver specialised to one problem.</span>
+
+<span class="sd">    The returned callable has signature</span>
+<span class="sd">    ``solve(eta, theta0, max_steps=20, tol=1e-10) -&gt; (theta_opt, fun, grad_norm, converged)``</span>
+<span class="sd">    where ``max_steps`` is a static argument (required by ``lax.scan``).</span>
+
+<span class="sd">    All distribution-level inputs (``f``, ``grad_fn``, ``hess_fn``, ``bounds``)</span>
+<span class="sd">    are baked into the closure at construction time. Repeated calls with the</span>
+<span class="sd">    same array shapes and dtypes therefore reuse the compiled XLA executable.</span>
+
+<span class="sd">    Use this in EM hot paths where ``solve_bregman`` would otherwise build a</span>
+<span class="sd">    fresh Python closure on every call and force JAX to re-trace the same</span>
+<span class="sd">    Newton kernel on each iteration.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : convex objective ψ(θ) → scalar (must be JAX-traceable).</span>
+<span class="sd">    grad_fn : ∇ψ(θ) → (d,).</span>
+<span class="sd">    hess_fn : ∇²ψ(θ) → (d, d).</span>
+<span class="sd">    bounds : ``(lower, upper)`` of shape ``(d,)`` each, or ``None``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Callable</span>
+<span class="sd">        Jit-compiled Newton solver. Returns a 4-tuple of JAX arrays</span>
+<span class="sd">        ``(theta, fun, grad_norm, converged)``; wrap in ``BregmanResult``</span>
+<span class="sd">        externally if needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;max_steps&quot;</span><span class="p">,</span> <span class="s2">&quot;tol&quot;</span><span class="p">))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta0</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+              <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">):</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_jax_newton_raw</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">solve</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_multistart_jax_newton</span><span class="p">(</span>
