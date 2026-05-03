@@ -157,12 +157,17 @@ class Gamma(ExponentialFamily):
         return cls(alpha=alpha, beta=beta)
 
 
+@jax.jit
 def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
     r"""
     Solve :math:`\psi(\alpha) - \log\alpha = \text{target}` for :math:`\alpha > 0`
     via Newton iterations.
 
-    Uses ``jax.lax.fori_loop`` for JIT-compatibility.
+    Uses ``jax.lax.fori_loop`` for JIT-compatibility. Decorated with
+    ``@jax.jit`` so repeated Python-loop calls (e.g. inside the VG/NInvG
+    M-step) hit the XLA cache instead of re-tracing the body every time.
+    ``n_iter`` defaults are baked in; pass non-default values only inside an
+    enclosing jit to avoid retracing per call.
     """
     alpha0 = jnp.where(
         target >= -2.22,

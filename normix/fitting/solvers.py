@@ -11,6 +11,11 @@ solve_bregman             single starting point
 solve_bregman_multistart  multiple starting points (vmap for JAX Newton;
                           for-loop for quasi-Newton and CPU)
 bregman_objective         utility: f(θ) − θ·η
+make_jit_newton_solver    build a stable ``@jax.jit`` Newton solve specialised
+                          to a fixed ``(f, grad_fn, hess_fn, bounds)`` —
+                          repeated calls with matching shapes/dtypes hit the
+                          XLA cache, avoiding the per-call re-tracing that
+                          ``solve_bregman`` incurs from fresh closures.
 
 Backends × methods
 ------------------
@@ -38,6 +43,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Callable, List, Optional, Tuple
 
 import jax
@@ -364,6 +370,56 @@ def _jax_newton_raw(
     theta_opt = to_theta(phi_opt)
     final_obj = f(theta_opt) - jnp.dot(theta_opt, eta)
     return theta_opt, final_obj, grad_norms[-1], converged
+
+
+# ---------------------------------------------------------------------------
+# Stable jitted Newton — bake (f, grad, hess, bounds) into one JIT cache key
+# ---------------------------------------------------------------------------
+
+def make_jit_newton_solver(
+    f: Callable[[jax.Array], jax.Array],
+    grad_fn: Callable[[jax.Array], jax.Array],
+    hess_fn: Callable[[jax.Array], jax.Array],
+    bounds: Optional[Tuple[jax.Array, jax.Array]] = None,
+) -> Callable:
+    r"""Build a ``@jax.jit``\ -decorated Newton solver specialised to one problem.
+
+    The returned callable has signature
+    ``solve(eta, theta0, max_steps=20, tol=1e-10) -> (theta_opt, fun, grad_norm, converged)``
+    where ``max_steps`` is a static argument (required by ``lax.scan``).
+
+    All distribution-level inputs (``f``, ``grad_fn``, ``hess_fn``, ``bounds``)
+    are baked into the closure at construction time. Repeated calls with the
+    same array shapes and dtypes therefore reuse the compiled XLA executable.
+
+    Use this in EM hot paths where ``solve_bregman`` would otherwise build a
+    fresh Python closure on every call and force JAX to re-trace the same
+    Newton kernel on each iteration.
+
+    Parameters
+    ----------
+    f : convex objective ψ(θ) → scalar (must be JAX-traceable).
+    grad_fn : ∇ψ(θ) → (d,).
+    hess_fn : ∇²ψ(θ) → (d, d).
+    bounds : ``(lower, upper)`` of shape ``(d,)`` each, or ``None``.
+
+    Returns
+    -------
+    Callable
+        Jit-compiled Newton solver. Returns a 4-tuple of JAX arrays
+        ``(theta, fun, grad_norm, converged)``; wrap in ``BregmanResult``
+        externally if needed.
+    """
+    @partial(jax.jit, static_argnames=("max_steps", "tol"))
+    def solve(eta: jax.Array, theta0: jax.Array,
+              max_steps: int = 20, tol: float = 1e-10):
+        eta = jnp.asarray(eta, dtype=jnp.float64)
+        theta0 = jnp.asarray(theta0, dtype=jnp.float64)
+        return _jax_newton_raw(
+            f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
+        )
+
+    return solve
 
 
 def _multistart_jax_newton(

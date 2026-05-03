@@ -67,6 +67,7 @@ from normix.utils.constants import (
 )
 from normix.fitting.solvers import (
     bregman_objective, solve_bregman, solve_bregman_multistart,
+    make_jit_newton_solver,
 )
 
 
@@ -507,23 +508,32 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             theta0_scaled = theta0_scaled.at[2].set(
                 jnp.minimum(theta0_scaled[2], THETA_FLOOR))
 
-            solver_kwargs: dict = {
-                "bounds": _GIG_BOUNDS,
-                "max_steps": maxiter,
-                "tol": tol,
-                "grad_fn": grad_fn,
-                "hess_fn": hess_fn,
-            }
-            # trust-exact doesn't support bounds
-            if backend == "cpu" and method == "newton":
-                solver_kwargs["bounds"] = None
+            # Hot path: stable jitted Newton with cached XLA executable.
+            # Avoids the per-call retrace incurred by solve_bregman's
+            # fresh Python closures (key bottleneck in GH JAX/JAX EM).
+            if backend == "jax" and method == "newton" and verbose <= 0:
+                theta_scaled, _, _, _ = _gig_jax_newton_jit(
+                    eta_scaled, theta0_scaled,
+                    max_steps=int(maxiter), tol=float(tol),
+                )
+            else:
+                solver_kwargs: dict = {
+                    "bounds": _GIG_BOUNDS,
+                    "max_steps": maxiter,
+                    "tol": tol,
+                    "grad_fn": grad_fn,
+                    "hess_fn": hess_fn,
+                }
+                # trust-exact doesn't support bounds
+                if backend == "cpu" and method == "newton":
+                    solver_kwargs["bounds"] = None
 
-            result = solve_bregman(
-                f, eta_scaled, theta0_scaled,
-                backend=backend, method=method, verbose=verbose,
-                **solver_kwargs,
-            )
-            theta_scaled = result.theta
+                result = solve_bregman(
+                    f, eta_scaled, theta0_scaled,
+                    backend=backend, method=method, verbose=verbose,
+                    **solver_kwargs,
+                )
+                theta_scaled = result.theta
         else:
             theta0_list = cls._initial_guesses(eta_scaled)
             processed = []
@@ -612,6 +622,23 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             starting_points.append(np.array([0.0, -0.5, -0.5]))
 
         return starting_points
+
+
+# ---------------------------------------------------------------------------
+# Stable jitted GIG Newton solver
+# ---------------------------------------------------------------------------
+#
+# Hoisted to module level so that JAX caches the compiled XLA executable
+# across all GIG.from_expectation(jax/newton) calls. Without this, every
+# warm-started solve inside an EM loop builds fresh Python closures and
+# forces JAX to re-trace the same Newton kernel, dominating GH M-step time.
+
+_gig_jax_newton_jit = make_jit_newton_solver(
+    f=GeneralizedInverseGaussian._log_partition_from_theta,
+    grad_fn=GeneralizedInverseGaussian._grad_log_partition,
+    hess_fn=GeneralizedInverseGaussian._hessian_log_partition,
+    bounds=GeneralizedInverseGaussian._theta_bounds(),
+)
 
 
 # Convenience alias

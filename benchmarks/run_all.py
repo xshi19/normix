@@ -18,6 +18,7 @@ _BENCH_DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS = {
     "bessel": "benchmarks/bench_bessel.py",
     "gig": "benchmarks/bench_gig_solvers.py",
+    "jit": "benchmarks/bench_jit_solvers.py",
     "em": "benchmarks/bench_em_mixture.py",
 }
 
