@@ -20,6 +20,22 @@ import jax.numpy as jnp
 _PARAM_EPS = 1e-10
 
 
+def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Array:
+    """Stack PRNG keys for each incremental step via a sequential ``split`` chain.
+
+    Matches RNG usage of iterating ``jax.random.split`` in a Python loop, so a
+    :func:`~jax.lax.scan` replay uses the same subkeys batching over steps.
+    """
+    if max_steps <= 0:
+        return jnp.empty((0, *key.shape), dtype=key.dtype)
+    rows: list[jax.Array] = []
+    k = key
+    for _ in range(max_steps):
+        k, sk = jax.random.split(k)
+        rows.append(sk)
+    return jnp.stack(rows)
+
+
 # ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
@@ -382,7 +398,13 @@ class IncrementalEMFitter:
     inner_iter : int
         1 = online (default); >1 = fine-tuning on each batch.
     verbose : int
-        0 = silent, 1 = periodic summary.
+        0 = silent; 1 = periodic summary.
+
+        Scan path (**JAX backends only**):
+
+        ``verbose`` must be ``0`` so diagnostics do not rely on Python
+        side effects each step.
+
     regularization : str
         ``'det_sigma_one'`` or ``'none'``.
     e_step_backend, m_step_backend, m_step_method : str
@@ -417,13 +439,122 @@ class IncrementalEMFitter:
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
         """Run incremental EM. Returns :class:`EMResult`."""
-        t_total = time.perf_counter()
         X = jnp.asarray(X, dtype=jnp.float64)
-        n = X.shape[0]
+        n = int(X.shape[0])
         bs = min(self.batch_size, n)
         dist_name = type(model).__name__
+
+        step_keys = _materialize_incremental_subkeys(key, self.max_steps)
+        use_scan = (
+            self.verbose == 0
+            and self.e_step_backend == 'jax'
+            and self.m_step_backend == 'jax'
+        )
+
+        if use_scan:
+            return self._fit_incremental_scan(model, X, n, bs, step_keys)
+
+        return self._fit_incremental_python(
+            model, X, n, bs, step_keys, dist_name)
+
+    def _fit_incremental_scan(
+        self,
+        model,
+        X: jax.Array,
+        n_obs: int,
+        batch_sz: int,
+        step_keys: jax.Array,
+    ) -> EMResult:
+        t_total = time.perf_counter()
+
+        eb = self.e_step_backend
+        mb = self.m_step_backend
+        mm = self.m_step_method
+
+        eta_init = model.compute_eta_from_model()
+        rs_init = self.eta_update.initial_state()
+
+        bs_i = jnp.asarray(batch_sz, dtype=jnp.int32)
+
+        if self.max_steps == 0:
+            elapsed = time.perf_counter() - t_total
+            return EMResult(
+                model=model,
+                log_likelihoods=None,
+                param_changes=jnp.empty((0,), dtype=jnp.float64),
+                n_iter=0,
+                converged=None,
+                elapsed_time=elapsed,
+            )
+
+        def outer_body(carry, inputs):
+            model_c, eta_run, rule_state = carry
+            sk, step = inputs
+            indices = jax.random.choice(
+                sk, n_obs, shape=(batch_sz,), replace=False)
+            X_batch = X[indices]
+
+            prev_params = model_c.em_convergence_params()
+
+            if self.inner_iter > 1:
+                model_mid = jax.lax.fori_loop(
+                    0,
+                    self.inner_iter,
+                    lambda _, mj: self._incremental_inner_step_jax(
+                        mj, X_batch, mb, mm),
+                    model_c,
+                )
+                eta_new = model_mid.compute_eta_from_model()
+            else:
+                model_mid = model_c
+                eta_new = model_mid.e_step(X_batch, backend=eb)
+
+            eta_run, rule_state = self.eta_update(
+                eta_run, eta_new, step, bs_i, rule_state)
+            model_next = model_mid.m_step(
+                eta_run, backend=mb, method=mm)
+            model_next = self._regularize(model_next)
+
+            max_change = _param_change(
+                model_next.em_convergence_params(), prev_params)
+            return (model_next, eta_run, rule_state), max_change
+
+        scan_xs = (
+            step_keys,
+            jnp.arange(self.max_steps, dtype=jnp.int32),
+        )
+
+        init = (model, eta_init, rs_init)
+        (final_model, _, _), param_changes = jax.lax.scan(
+            outer_body, init, scan_xs)
+
+        elapsed = time.perf_counter() - t_total
+
+        return EMResult(
+            model=final_model,
+            log_likelihoods=None,
+            param_changes=param_changes,
+            n_iter=self.max_steps,
+            converged=None,
+            elapsed_time=elapsed,
+        )
+
+    def _fit_incremental_python(
+        self,
+        model,
+        X: jax.Array,
+        n: int,
+        bs: int,
+        step_keys: jax.Array,
+        dist_name: str,
+    ) -> EMResult:
+        t_total = time.perf_counter()
         changes = []
         lls = []
+
+        eb = self.e_step_backend
+        mb = self.m_step_backend
+        mm = self.m_step_method
 
         if self.verbose >= 1:
             rule_name = type(self.eta_update).__name__
@@ -437,28 +568,26 @@ class IncrementalEMFitter:
         rule_state = self.eta_update.initial_state()
 
         for step in range(self.max_steps):
-            key, subkey = jax.random.split(key)
-            indices = jax.random.choice(subkey, n, shape=(bs,), replace=False)
+            sk = step_keys[step]
+            indices = jax.random.choice(sk, n, shape=(bs,), replace=False)
             X_batch = X[indices]
 
             prev_params = model.em_convergence_params()
 
             if self.inner_iter > 1:
                 for _ in range(self.inner_iter):
-                    eta = model.e_step(X_batch, backend=self.e_step_backend)
+                    eta = model.e_step(X_batch, backend=eb)
                     model = model.m_step(
-                        eta, backend=self.m_step_backend,
-                        method=self.m_step_method)
+                        eta, backend=mb, method=mm)
                     model = self._regularize(model)
                 eta_new = model.compute_eta_from_model()
             else:
-                eta_new = model.e_step(X_batch, backend=self.e_step_backend)
+                eta_new = model.e_step(X_batch, backend=eb)
 
             eta_prev, rule_state = self.eta_update(
                 eta_prev, eta_new, step, bs, rule_state)
             model = model.m_step(
-                eta_prev, backend=self.m_step_backend,
-                method=self.m_step_method)
+                eta_prev, backend=mb, method=mm)
             model = self._regularize(model)
 
             max_change = _param_change(
@@ -490,16 +619,20 @@ class IncrementalEMFitter:
             elapsed_time=elapsed,
         )
 
+    def _incremental_inner_step_jax(
+        self, model_inner, X_batch: jax.Array, mb: str, mm: str,
+    ):
+        eta_inner = model_inner.e_step(X_batch, backend=self.e_step_backend)
+        mi2 = model_inner.m_step(
+            eta_inner, backend=mb, method=mm)
+        return self._regularize(mi2)
+
     def _regularize(self, model):
         if self.regularization == 'det_sigma_one':
             if hasattr(model, 'regularize_det_sigma_one'):
                 return model.regularize_det_sigma_one()
         return model
 
-
-# ---------------------------------------------------------------------------
-# Shared utility
-# ---------------------------------------------------------------------------
 
 def _param_change(new_params, old_params) -> jax.Array:
     """Max relative L2 change across leaves of a model's convergence pytree.

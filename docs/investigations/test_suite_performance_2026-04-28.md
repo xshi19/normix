@@ -487,6 +487,18 @@ for both — Gamma rarely dominates EM time anyway).
 
 ### Phase 5 — JAX-Native Incremental EM Path
 
+Status: implemented (2026-05-05). `IncrementalEMFitter.fit` materialises sequential
+batch PRNG keys up front (`_materialize_incremental_subkeys`), then runs
+`jax.lax.scan` over outer steps when `verbose==0` and both backends are JAX.
+Batch indices inside the scan reuse those keys (`jax.random.choice` per step).
+`inner_iter>1` uses `jax.lax.fori_loop` inside each scan step so the refined
+mixture feeds the subsequent outer M-step, matching the Python loop semantics.
+Verbose / CPU backends remain on an explicit Python path that consumes the same
+pre-stacked keys (RNG-equivalent to the previous per-step split loop).
+
+A new benchmark `benchmarks/bench_incremental_em.py` measures the two paths
+side-by-side on identical inputs and is wired into `run_all.py`.
+
 1. Add an optional scan-based path for `IncrementalEMFitter` when:
    - e-step backend is JAX
    - m-step backend is JAX
@@ -499,6 +511,28 @@ Exit criteria:
 
 - JAX/JAX incremental EM compiles the repeated step once
 - Python-loop overhead no longer dominates tiny mini-batch tests
+
+Result (`bench_incremental_em`, RTX 4090, JAX 0.9.1, Robbins-Monro, `max_steps=20`,
+`n=200`, `d=3`, `batch=50`, both backends `'jax'`):
+
+| Distribution | Python loop (cached) | `lax.scan` (cached) | Speedup | LL gap (scan vs python) |
+|---|---:|---:|---:|---:|
+| VG    | `4.55 s` | `1.34 s` | `3.39×` | `1.7e-12` |
+| NInvG | `4.63 s` | `1.38 s` | `3.34×` | `3.6e-11` |
+| NIG   | `4.58 s` | `1.19 s` | `3.86×` | `8.9e-16` |
+| GH    | `6.45 s` | `4.25 s` | `1.52×` | `2.4e-12` |
+
+The LL gap column confirms that the scan body and the Python loop produce
+RNG-equivalent fits when consuming the same pre-stacked keys (well below the
+fitter's tolerance of `1e-3`). The scan path's first-call overhead amortises
+to ~1.0–1.2× of cached (already JIT-warm from earlier runs in the same
+process), so the cached column reflects steady-state behaviour an outer
+training loop would see. GH gains less in relative terms because its per-step
+GIG M-step solve dominates wall time even when the surrounding loop is
+fused; in absolute terms the slowest pre-Phase-5 individual test,
+`test_incremental_em_robbins_monro[GH]` (`60.06 s` in Phase 1), now runs in
+`11.56 s` cold (a single test in a fresh interpreter pays the JIT compile but
+amortises it across `max_steps=20`), an ~`80 %` reduction.
 
 ### Phase 6 — Benchmark Policy
 

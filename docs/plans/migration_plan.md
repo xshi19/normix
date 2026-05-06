@@ -129,6 +129,7 @@ Each follows the same pattern:
 - Mini-batch / online / fine-tuning EM with pluggable `EtaUpdateRule`
 - `EtaUpdateRule` (`eqx.Module`) computes affine weights $(a, b, c)$; concrete rules: `RobbinsMonroUpdate`, `SampleWeightedUpdate`, `EWMAUpdate`, `ShrinkageUpdate`, `AffineUpdate`
 - `affine_combine(eta_prev, eta_new, b, c, a)` applies the update on `NormalMixtureEta` pytrees
+- **Loop:** `jax.lax.scan` over minibatch steps when both backends are `'jax'` and `verbose==0`; `inner_iter>1` nests `jax.lax.fori_loop`. Otherwise Python loop (verbosity, CPU backends, same stacked PRNG keys as before).
 
 ### 5.4 Multi-start
 - `jax.vmap(fit_one)(keys)` for parallel initializations

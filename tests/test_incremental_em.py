@@ -497,8 +497,62 @@ def test_incremental_em_shrinkage_over_running_rule():
 
 
 # ---------------------------------------------------------------------------
-# BatchEMFitter + eta_update (shrinkage)
+# IncrementalEMFitter — lax.scan parity (JAX backends, verbose==0 path)
 # ---------------------------------------------------------------------------
+
+def test_incremental_em_scan_matches_python_loop():
+    """Pre-materialized RNG + scan replay matches the Python minibatch loop."""
+    from normix.fitting.em import _materialize_incremental_subkeys
+
+    X = _make_data(key=jax.random.key(17), n=120, d=3)
+    model_basis = _make_models(X)["VG"]
+    bs = min(35, X.shape[0])
+
+    rule = RobbinsMonroUpdate(tau0=11.0)
+    fitter = IncrementalEMFitter(
+        eta_update=rule,
+        batch_size=bs,
+        max_steps=9,
+        inner_iter=2,
+        e_step_backend='jax',
+        m_step_backend='jax',
+        verbose=0,
+    )
+    mk = jax.random.key(701)
+    step_keys = _materialize_incremental_subkeys(mk, fitter.max_steps)
+
+    def clone_leaves(mod):
+        return jax.tree.map(lambda z: jnp.array(z), mod)
+
+    r_scan = fitter._fit_incremental_scan(
+        clone_leaves(model_basis),
+        jnp.asarray(X, dtype=jnp.float64),
+        int(X.shape[0]),
+        int(bs),
+        step_keys,
+    )
+    r_py = fitter._fit_incremental_python(
+        clone_leaves(model_basis),
+        jnp.asarray(X, dtype=jnp.float64),
+        int(X.shape[0]),
+        int(bs),
+        step_keys,
+        type(model_basis).__name__,
+    )
+
+    np.testing.assert_allclose(
+        np.asarray(r_scan.model._joint.mu),
+        np.asarray(r_py.model._joint.mu),
+        atol=5e-10,
+        rtol=5e-10,
+    )
+    np.testing.assert_allclose(
+        np.asarray(r_scan.param_changes),
+        np.asarray(r_py.param_changes),
+        atol=1e-9,
+        rtol=1e-9,
+    )
+
 
 def test_batch_em_with_shrinkage():
     """BatchEMFitter with Shrinkage combinator penalises toward prior."""
