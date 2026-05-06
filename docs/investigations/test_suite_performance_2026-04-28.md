@@ -536,6 +536,13 @@ amortises it across `max_steps=20`), an ~`80 %` reduction.
 
 ### Phase 6 — Benchmark Policy
 
+Status: implemented (2026-05-05). Heavy stress validation already lives behind
+`@pytest.mark.slow` / `@pytest.mark.stress` markers (or under `benchmarks/`).
+A new benchmark `benchmarks/bench_gh_paths.py` compares the four GH paths
+(`batch_cpu_cpu`, `batch_jax_jax`, `incr_jax_cpu`, `incr_jax_jax`) across three
+data regimes (small / medium / large). It is wired into `run_all.py` (key
+`gh_paths`).
+
 1. Move heavy stress validation into `benchmarks/` or marked tests.
 2. Add a benchmark comparing:
    - CPU/CPU GH EM
@@ -551,6 +558,47 @@ Exit criteria:
 
 - correctness tests stay fast
 - stress/performance questions are answered by explicit benchmark commands
+
+Result (`bench_gh_paths`, RTX 4090, JAX 0.9.1, GH `p=-0.5, a=2, b=1`,
+`regularization='det_sigma_one'`, batch `max_iter=10` with `tol=0` so all paths
+do the same fixed work, incremental Robbins-Monro `max_steps=20`,
+`batch_size=0.25·n`). Times are cached-call (JIT-warm) per outer EM step, with
+total cached fit time in parentheses:
+
+| Regime | n × d  | batch CPU/CPU | batch JAX/JAX | incr JAX/CPU | incr JAX/JAX |
+|---|---|---:|---:|---:|---:|
+| small  | 200 × 2   | `33 ms` (`334 ms`) | `397 ms` (`3.97 s`) | `243 ms` (`4.86 s`) | `342 ms` (`6.83 s`) |
+| medium | 2000 × 5  | `38 ms` (`384 ms`) | `470 ms` (`4.70 s`) | `245 ms` (`4.89 s`) | `245 ms` (`4.89 s`) |
+| large  | 10000 × 10| `43 ms` (`432 ms`) | `512 ms` (`5.12 s`) | `245 ms` (`4.90 s`) | `362 ms` (`7.23 s`) |
+
+Observations and updated guidance:
+
+- For all three regimes tested, **batch CPU/CPU wins by a wide margin**. The
+  CPU-side SciPy GIG newton on `d ≤ 10` is sub-millisecond, and the E-step
+  numpy work scales benignly with `n`.
+- The JAX/JAX batch path remains compile-amortised but pays per-step kernel
+  launch and `lax.while_loop` overhead in the GIG newton solve. With
+  `max_iter=10` it lands at `~400–510 ms`/iter regardless of `(n, d)`, i.e.
+  the cost is dominated by the M-step inner solver, not the E-step. The break
+  point where the JAX E-step beats CPU is well above the regimes here; users
+  with very large `n` and high `d` should still profile their workload.
+- Incremental EM paths run ~`245 ms`/step from `n=200` up to `n=10000` because
+  the per-step cost is dominated by the M-step on the running `eta`, not by
+  the mini-batch E-step. The `lax.scan` path (Phase 5) does not consistently
+  beat the Python loop here because the GH M-step's `lax.while_loop` newton is
+  the limiting cost; in steady state both paths converge to the same per-step
+  floor. (Phase 5's larger speedups were observed on VG/NInvG/NIG, where the
+  M-step is closed-form.)
+- LL columns are not directly comparable across paths: batch EM runs to fixed
+  iteration count without convergence, and Robbins-Monro incremental EM is a
+  stochastic estimator at `max_steps=20` and is expected to be noisier.
+
+Practical recommendation reinforced:
+
+- **Default to CPU for GH** unless `n` is much larger than the regimes here
+  *and* the surrounding code is already on GPU.
+- **Use JAX/JAX scan paths** for VG / NIG / NInvG (closed-form M-step) and
+  inside differentiable training loops where the trace cache pays off.
 
 ## Practical Short-Term Recommendation
 
