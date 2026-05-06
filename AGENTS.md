@@ -60,7 +60,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | RVS generation (PINV, TDR) | `docs/ARCHITECTURE.md` § Random Variate Generation |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
 | Technical notes | `docs/tech_notes/` |
-| Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers; `run_all.py` orchestrator; `compare.py` diff tool |
+| Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers, JIT solvers, incremental EM, GH path comparison (`bench_gh_paths.py`); `run_all.py` orchestrator; `compare.py` diff tool |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
