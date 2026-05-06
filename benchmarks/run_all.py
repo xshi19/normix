@@ -21,6 +21,7 @@ BENCHMARKS = {
     "jit": "benchmarks/bench_jit_solvers.py",
     "em": "benchmarks/bench_em_mixture.py",
     "incremental": "benchmarks/bench_incremental_em.py",
+    "gh_paths": "benchmarks/bench_gh_paths.py",
 }
 
 
@@ -39,7 +40,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run all normix benchmarks")
     parser.add_argument(
         "--only", type=str, default=None,
-        help="Comma-separated benchmark names: bessel,gig,jit,em,incremental")
+        help="Comma-separated benchmark names: bessel,gig,jit,em,incremental,gh_paths")
     parser.add_argument("--large", action="store_true",
                         help="Pass --large to EM benchmark")
     parser.add_argument("--mcecm", action="store_true",
