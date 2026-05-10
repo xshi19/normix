@@ -1707,8 +1707,8 @@ For the flat-array path: forwarded to the parent solver.</p></li>
 divergences module depend on. <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> is the
 full-covariance implementation, owning a
 <a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>. A factor-analysis
-implementation will be added in a sibling class
-(see <code class="docutils literal notranslate"><span class="pre">docs/design/em_covariance_extensions.md</span></code>).</p>
+implementation lives in the sibling class <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code>
+(see <code class="docutils literal notranslate"><span class="pre">docs/design/mixtures.md</span></code> § 6).</p>
 <p>NormalMixture provides:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">log_prob(x)</span></code> — closed-form marginal log-density</p></li>
