@@ -649,26 +649,58 @@
     <span class="c1"># Regularisation</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rescale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply :math:`Y \to s\,Y` reparameterisation.</span>
+
+<span class="sd">        Pushes the scale ``s`` through every parameter so the joint</span>
+<span class="sd">        distribution is unchanged: :math:`\Sigma \to \Sigma/s`,</span>
+<span class="sd">        :math:`\gamma \to \gamma/s`, and the subordinator-side rescale</span>
+<span class="sd">        is delegated to :meth:`_build_rescaled` (e.g.</span>
+<span class="sd">        :math:`(a, b) \to (a/s, b\cdot s)` for GIG).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">L_new</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+        <span class="n">gamma_new</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_rescaled</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NormalMixture.regularize_det_sigma">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale to enforce :math:`\log|\Sigma| = \mathrm{target\_log\_det}`.</span>
+
+<span class="sd">        Picks :math:`s = \exp((\log|\Sigma| - \tau)/d)` and applies</span>
+<span class="sd">        :meth:`_rescale`. The default ``target_log_det = 0`` recovers the</span>
+<span class="sd">        :math:`|\Sigma| = 1` convention; passing the log-determinant of</span>
+<span class="sd">        an initial reference Σ implements the ``det_sigma_x`` family.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
+        <span class="n">log_scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_log_det</span><span class="p">)</span> <span class="o">/</span> <span class="n">j</span><span class="o">.</span><span class="n">d</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rescale</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="NormalMixture.regularize_det_sigma_one">
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma_one</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Enforce :math:`|\Sigma| = 1` by rescaling.</span>
-
-<span class="sd">        :math:`\Sigma \to \Sigma/s`, :math:`\gamma \to \gamma/s`,</span>
-<span class="sd">        subordinator params scaled via ``_build_rescaled``.</span>
-<span class="sd">        :math:`s = \det(\Sigma)^{1/d}`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enforce :math:`|\Sigma| = 1`. Alias for</span>
+<span class="sd">        :meth:`regularize_det_sigma` with ``target_log_det = 0``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">d</span>
-        <span class="n">log_det_sigma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span>
-        <span class="n">log_scale</span> <span class="o">=</span> <span class="n">log_det_sigma</span> <span class="o">/</span> <span class="n">d</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularize_det_sigma</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span></div>
 
-        <span class="n">L_new</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
-        <span class="n">gamma_new</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span> <span class="o">/</span> <span class="n">scale</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_rescaled</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span></div>
+<div class="viewcode-block" id="NormalMixture.regularize_a_eq_b">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale subordinator so that :math:`a = b = \sqrt{ab}` for</span>
+<span class="sd">        GIG-parameterised families.</span>
+
+<span class="sd">        Default implementation is a no-op; override in subclasses with</span>
+<span class="sd">        both :math:`a, b &gt; 0` (currently GH and NIG; VG and NInvG have</span>
+<span class="sd">        a degenerate ``a=0`` or ``b=0`` and the default no-op is the</span>
+<span class="sd">        right behaviour).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>

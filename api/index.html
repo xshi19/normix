@@ -2156,12 +2156,44 @@ immutable update via <code class="xref py py-func docutils literal notranslate">
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_det_sigma">
+<span class="sig-name descname"><span class="pre">regularize_det_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_log_det</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma" title="Link to this definition"></a></dt>
+<dd><p>Rescale to enforce <span class="math notranslate nohighlight">\(\log|\Sigma| = \mathrm{target\_log\_det}\)</span>.</p>
+<p>Picks <span class="math notranslate nohighlight">\(s = \exp((\log|\Sigma| - \tau)/d)\)</span> and applies
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_rescale()</span></code>. The default <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code> recovers the
+<span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> convention; passing the log-determinant of
+an initial reference Σ implements the <code class="docutils literal notranslate"><span class="pre">det_sigma_x</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>target_log_det</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">
 <span class="sig-name descname"><span class="pre">regularize_det_sigma_one</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one" title="Link to this definition"></a></dt>
-<dd><p>Enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> by rescaling.</p>
-<p><span class="math notranslate nohighlight">\(\Sigma \to \Sigma/s\)</span>, <span class="math notranslate nohighlight">\(\gamma \to \gamma/s\)</span>,
-subordinator params scaled via <code class="docutils literal notranslate"><span class="pre">_build_rescaled</span></code>.
-<span class="math notranslate nohighlight">\(s = \det(\Sigma)^{1/d}\)</span>.</p>
+<dd><p>Enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>. Alias for
+<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma" title="normix.mixtures.marginal.NormalMixture.regularize_det_sigma"><code class="xref py py-meth docutils literal notranslate"><span class="pre">regularize_det_sigma()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b" title="Link to this definition"></a></dt>
+<dd><p>Rescale subordinator so that <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span> for
+GIG-parameterised families.</p>
+<p>Default implementation is a no-op; override in subclasses with
+both <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> (currently GH and NIG; VG and NInvG have
+a degenerate <code class="docutils literal notranslate"><span class="pre">a=0</span></code> or <code class="docutils literal notranslate"><span class="pre">b=0</span></code> and the default no-op is the
+right behaviour).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
@@ -2621,6 +2653,20 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 <dd><p><span class="math notranslate nohighlight">\(\lambda\)</span> — InverseGaussian shape (forwarded from the joint).</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#NormalInverseGaussian.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.regularize_a_eq_b" title="Link to this definition"></a></dt>
+<dd><p>Rescale so <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span>.</p>
+<p>For NIG, <span class="math notranslate nohighlight">\(a = \lambda/\mu_{IG}^2,\;b = \lambda\)</span>, so
+<span class="math notranslate nohighlight">\(s = \sqrt{a/b} = 1/\mu_{IG}\)</span>. After rescaling
+<span class="math notranslate nohighlight">\(\mu_{IG}' = 1\)</span>, i.e. the InverseGaussian has unit mean.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><em>NormalInverseGaussian</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -2825,6 +2871,19 @@ or sanity-check fallbacks.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b" title="Link to this definition"></a></dt>
+<dd><p>Rescale so <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span> (orbit invariant).</p>
+<p>Picks <span class="math notranslate nohighlight">\(s = \sqrt{a/b}\)</span>. Idempotent: applying twice
+leaves the model unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="Link to this definition"></a></dt>
 <dd><p>Warm-start from the best of NIG / VG / NInvG sub-model fits.</p>
@@ -2942,7 +3001,22 @@ and no eta_update rule</p></li>
 <li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max relative parameter change.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Regularization strategy (‘det_sigma_one’ or ‘none’).</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code> — no regularization.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> — enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> (the
+original GH convention; equivalent to
+<code class="docutils literal notranslate"><span class="pre">regularize_det_sigma(target_log_det=0)</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> — enforce <span class="math notranslate nohighlight">\(|\Sigma| = |\Sigma_0|\)</span>
+where <span class="math notranslate nohighlight">\(\Sigma_0\)</span> is the dispersion of the <em>initial</em>
+model passed to <a class="reference internal" href="#normix.fitting.em.BatchEMFitter.fit" title="normix.fitting.em.BatchEMFitter.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>. Useful when comparing GH /
+FactorGH parameters against VG / NIG / NInvG, which leave
+<span class="math notranslate nohighlight">\(|\Sigma|\)</span> at the empirical scale.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> — rescale the GIG subordinator so
+<span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span>. Trivial no-op for VG / NInvG /
+MultivariateNormal.</p></li>
+</ul>
+</p></li>
 <li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ (default) or ‘cpu’.</p></li>
 <li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ or ‘cpu’ (default, faster for GIG).</p></li>
 <li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘newton’ (default), ‘lbfgs’, or ‘bfgs’.</p></li>
@@ -2992,7 +3066,9 @@ M-steps on the combined <span class="math notranslate nohighlight">\(\eta\)</spa
 <p><code class="docutils literal notranslate"><span class="pre">verbose</span></code> must be <code class="docutils literal notranslate"><span class="pre">0</span></code> so diagnostics do not rely on Python
 side effects each step.</p>
 </p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> or <code class="docutils literal notranslate"><span class="pre">'none'</span></code>.</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Same options as <a class="reference internal" href="#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> —
+<code class="docutils literal notranslate"><span class="pre">'none'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> |
+<code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>.</p></li>
 <li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
 <li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
 <li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>

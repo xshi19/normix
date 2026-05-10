@@ -164,7 +164,20 @@
 <span class="sd">    verbose : int</span>
 <span class="sd">        0 = silent, 1 = summary, 2 = per-iteration table.</span>
 <span class="sd">    regularization : str</span>
-<span class="sd">        Regularization strategy (&#39;det_sigma_one&#39; or &#39;none&#39;).</span>
+<span class="sd">        Strategy applied after each M-step:</span>
+
+<span class="sd">        * ``&#39;none&#39;`` — no regularization.</span>
+<span class="sd">        * ``&#39;det_sigma_one&#39;`` — enforce :math:`|\\Sigma| = 1` (the</span>
+<span class="sd">          original GH convention; equivalent to</span>
+<span class="sd">          ``regularize_det_sigma(target_log_det=0)``).</span>
+<span class="sd">        * ``&#39;det_sigma_x&#39;`` — enforce :math:`|\\Sigma| = |\\Sigma_0|`</span>
+<span class="sd">          where :math:`\\Sigma_0` is the dispersion of the *initial*</span>
+<span class="sd">          model passed to :meth:`fit`. Useful when comparing GH /</span>
+<span class="sd">          FactorGH parameters against VG / NIG / NInvG, which leave</span>
+<span class="sd">          :math:`|\\Sigma|` at the empirical scale.</span>
+<span class="sd">        * ``&#39;a_eq_b&#39;`` — rescale the GIG subordinator so</span>
+<span class="sd">          :math:`a = b = \\sqrt{ab}`. Trivial no-op for VG / NInvG /</span>
+<span class="sd">          MultivariateNormal.</span>
 <span class="sd">    e_step_backend : str</span>
 <span class="sd">        &#39;jax&#39; (default) or &#39;cpu&#39;.</span>
 <span class="sd">    m_step_backend : str</span>
@@ -176,6 +189,8 @@
 <span class="sd">        eta0, tau)``). When set, the E-step output is transformed before</span>
 <span class="sd">        the M-step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_REGULARIZATIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">,</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">,</span> <span class="s1">&#39;a_eq_b&#39;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -192,6 +207,10 @@
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="s1">&#39;mcecm&#39;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm must be &#39;em&#39; or &#39;mcecm&#39;, got </span><span class="si">{</span><span class="n">algorithm</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">regularization</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;regularization must be one of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">regularization</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
@@ -201,6 +220,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">=</span> <span class="n">m_step_backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span> <span class="o">=</span> <span class="n">m_step_method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">eta_update</span>
+        <span class="c1"># Set by ``fit`` for ``regularization=&#39;det_sigma_x&#39;``: the</span>
+        <span class="c1"># log-determinant of the initial model&#39;s Σ, captured once.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_log_det</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Public API</span>
@@ -223,6 +245,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># Capture initial log|Σ| once so &#39;det_sigma_x&#39; targets the</span>
+        <span class="c1"># initial reference scale throughout EM.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;em&#39;</span>
@@ -418,9 +446,20 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_regularize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">model</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;regularize_det_sigma_one&#39;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">regularize_det_sigma_one</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;regularize_det_sigma&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">regularize_det_sigma</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">model</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;regularize_det_sigma&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">regularize_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_target_log_det</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">model</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;a_eq_b&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;regularize_a_eq_b&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">regularize_a_eq_b</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">model</span>
         <span class="k">return</span> <span class="n">model</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_print_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -493,10 +532,14 @@
 <span class="sd">        side effects each step.</span>
 
 <span class="sd">    regularization : str</span>
-<span class="sd">        ``&#39;det_sigma_one&#39;`` or ``&#39;none&#39;``.</span>
+<span class="sd">        Same options as :class:`BatchEMFitter` —</span>
+<span class="sd">        ``&#39;none&#39;`` | ``&#39;det_sigma_one&#39;`` | ``&#39;det_sigma_x&#39;`` |</span>
+<span class="sd">        ``&#39;a_eq_b&#39;``.</span>
 <span class="sd">    e_step_backend, m_step_backend, m_step_method : str</span>
 <span class="sd">        Passed through to ``e_step`` / ``m_step``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_REGULARIZATIONS</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -514,6 +557,10 @@
         <span class="k">if</span> <span class="n">eta_update</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">RobbinsMonroUpdate</span>
             <span class="n">eta_update</span> <span class="o">=</span> <span class="n">RobbinsMonroUpdate</span><span class="p">(</span><span class="n">tau0</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">regularization</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;regularization must be one of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">regularization</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">eta_update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">=</span> <span class="n">max_steps</span>
@@ -523,6 +570,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span> <span class="o">=</span> <span class="n">e_step_backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">=</span> <span class="n">m_step_backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span> <span class="o">=</span> <span class="n">m_step_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_log_det</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="IncrementalEMFitter.fit">
 <a class="viewcode-back" href="../../../api/index.html#normix.fitting.em.IncrementalEMFitter.fit">[docs]</a>
@@ -532,6 +580,10 @@
         <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">bs</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
         <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="n">step_keys</span> <span class="o">=</span> <span class="n">_materialize_incremental_subkeys</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">)</span>
         <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
@@ -717,11 +769,8 @@
             <span class="n">eta_inner</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">mb</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">mm</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regularize</span><span class="p">(</span><span class="n">mi2</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_regularize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;regularize_det_sigma_one&#39;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">regularize_det_sigma_one</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">model</span></div>
+    <span class="c1"># Reuse the dispatch from BatchEMFitter so behaviour stays in sync.</span>
+    <span class="n">_regularize</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="o">.</span><span class="n">_regularize</span></div>
 
 
 
