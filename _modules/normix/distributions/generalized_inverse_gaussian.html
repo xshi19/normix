@@ -537,6 +537,55 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># KL projection onto special-case sub-families</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.to_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`Gamma` family.</span>
+
+<span class="sd">        Minimises :math:`D_{\mathrm{KL}}(\mathrm{GIG}\,\|\,q)` over</span>
+<span class="sd">        :math:`q \in \mathrm{Gamma}` by matching the Gamma sufficient</span>
+<span class="sd">        statistics under the source GIG:</span>
+<span class="sd">        :math:`E_{q^*}[\log X] = \eta_1,\; E_{q^*}[X] = \eta_3`. Solved via</span>
+<span class="sd">        :meth:`Gamma.from_expectation`. See</span>
+<span class="sd">        ``docs/tech_notes/distribution_conversions.md`` for the derivation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]]))</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`InverseGamma` family.</span>
+
+<span class="sd">        Matches :math:`E[-1/X] = -\eta_2,\; E[\log X] = \eta_1`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gaussian">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`InverseGaussian` family.</span>
+
+<span class="sd">        Matches :math:`E[X] = \eta_3,\; E[1/X] = \eta_2`. The closed form</span>
+<span class="sd">        :math:`\lambda = 1/(\eta_2 - 1/\eta_3)` is well-defined whenever</span>
+<span class="sd">        :math:`\eta_2 &gt; 1/\eta_3` (Jensen, true for every non-degenerate</span>
+<span class="sd">        GIG); :meth:`InverseGaussian.from_expectation` clamps near</span>
+<span class="sd">        degenerate inputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Constructors</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 

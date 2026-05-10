@@ -251,7 +251,24 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_normal_and_subordinator</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span>
-                   <span class="n">mu_ig</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span></div>
+                   <span class="n">mu_ig</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JointNormalInverseGaussian.to_joint_generalized_hyperbolic">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_generalized_hyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into :class:`JointGeneralizedHyperbolic`.</span>
+
+<span class="sd">        Lifts the InverseGaussian subordinator to GIG via</span>
+<span class="sd">        :meth:`InverseGaussian.to_gig` (no boundary approximation) and</span>
+<span class="sd">        keeps the Normal block unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_hyperbolic</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointGeneralizedHyperbolic</span>
+        <span class="n">gig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">b</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
@@ -365,7 +382,19 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_init_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></div>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NormalInverseGaussian.to_generalized_hyperbolic">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.to_generalized_hyperbolic">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_generalized_hyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the :class:`GeneralizedHyperbolic` family.</span>
+
+<span class="sd">        No boundary approximation: NIG sits in the strict interior of GH&#39;s</span>
+<span class="sd">        parameter space (:math:`p = -1/2,\; a = \lambda/\mu_{IG}^2,\; b = \lambda`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_hyperbolic</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedHyperbolic</span>
+        <span class="k">return</span> <span class="n">GeneralizedHyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_generalized_hyperbolic</span><span class="p">())</span></div>
+</div>
 
 </pre></div>
 

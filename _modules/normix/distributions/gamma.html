@@ -221,6 +221,25 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=-</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
 
 
+<div class="viewcode-block" id="Gamma.to_gig">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.gamma.Gamma.to_gig">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">boundary_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the GIG family.</span>
+
+<span class="sd">        Gamma(:math:`\alpha`, :math:`\beta`) is the :math:`b \to 0` limit of</span>
+<span class="sd">        GIG(:math:`p = \alpha,\; a = 2\beta,\; b`). With ``boundary_eps = 0``</span>
+<span class="sd">        the embedding stores ``b = 0`` exactly; pass a small positive value</span>
+<span class="sd">        to stay in the strict interior of GIG&#39;s domain (matters only for</span>
+<span class="sd">        downstream ``expectation_params`` calls on the lifted GIG).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="k">return</span> <span class="n">GIG</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">a</span><span class="o">=</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
+            <span class="n">b</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">boundary_eps</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Gamma.from_expectation">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.gamma.Gamma.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>

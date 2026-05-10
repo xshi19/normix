@@ -283,7 +283,56 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_normal_and_subordinator</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">L_Sigma</span><span class="p">,</span>
-                   <span class="n">p</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
+                   <span class="n">p</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># KL projection onto special-case sub-families (subordinator only)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1">#</span>
+    <span class="c1"># The Normal block (μ, γ, L_Σ) is preserved. The joint KL between</span>
+    <span class="c1"># ``JointGH`` and any joint-mixture cousin reduces to the KL between</span>
+    <span class="c1"># subordinators:</span>
+    <span class="c1">#</span>
+    <span class="c1">#     D_KL(JointGH ‖ JointVG) = D_KL(GIG ‖ Gamma)</span>
+    <span class="c1">#</span>
+    <span class="c1"># because the X|Y conditional density is identical across families.</span>
+    <span class="c1"># See ``docs/tech_notes/distribution_conversions.md``.</span>
+
+<div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_variance_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_variance_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointVarianceGamma&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointVarianceGamma` (Gamma subordinator).&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointVarianceGamma</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gamma</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">JointVarianceGamma</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">gamma</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">gamma</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_normal_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGamma&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointNormalInverseGamma`.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalInverseGamma</span>
+        <span class="n">ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_inverse_gamma</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">JointNormalInverseGamma</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">ig</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">ig</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_normal_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointNormalInverseGaussian`.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalInverseGaussian</span>
+        <span class="n">ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_inverse_gaussian</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">JointNormalInverseGaussian</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">mu_ig</span><span class="o">=</span><span class="n">ig</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">ig</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
@@ -502,6 +551,34 @@
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="n">j</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rescale</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># KL projection onto special-case sub-families</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_variance_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_variance_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VarianceGamma&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`VarianceGamma` family.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
+        <span class="k">return</span> <span class="n">VarianceGamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_variance_gamma</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGamma&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`NormalInverseGamma` family.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
+        <span class="k">return</span> <span class="n">NormalInverseGamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_normal_inverse_gamma</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gaussian">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`NormalInverseGaussian` family.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+        <span class="k">return</span> <span class="n">NormalInverseGaussian</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_normal_inverse_gaussian</span><span class="p">())</span></div>
 
 
     <span class="nd">@classmethod</span>

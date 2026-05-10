@@ -615,6 +615,22 @@ x^{\alpha-1} e^{-\beta x}, \quad x &gt; 0\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.to_gig">
+<span class="sig-name descname"><span class="pre">to_gig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.to_gig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.to_gig" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the GIG family.</p>
+<p>Gamma(<span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>) is the <span class="math notranslate nohighlight">\(b \to 0\)</span> limit of
+GIG(<span class="math notranslate nohighlight">\(p = \alpha,\; a = 2\beta,\; b\)</span>). With <code class="docutils literal notranslate"><span class="pre">boundary_eps</span> <span class="pre">=</span> <span class="pre">0</span></code>
+the embedding stores <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">=</span> <span class="pre">0</span></code> exactly; pass a small positive value
+to stay in the strict interior of GIG’s domain (matters only for
+downstream <code class="docutils literal notranslate"><span class="pre">expectation_params</span></code> calls on the lifted GIG).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.from_expectation" title="Link to this definition"></a></dt>
 <dd><p>Closed-form <span class="math notranslate nohighlight">\(\eta \to \theta\)</span> via Newton on
@@ -784,6 +800,21 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><em>InverseGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.to_gig">
+<span class="sig-name descname"><span class="pre">to_gig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.to_gig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.to_gig" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the GIG family.</p>
+<p>InverseGamma(<span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>) is the <span class="math notranslate nohighlight">\(a \to 0\)</span>
+limit of GIG(<span class="math notranslate nohighlight">\(p = -\alpha,\; a,\; b = 2\beta\)</span>). With
+<code class="docutils literal notranslate"><span class="pre">boundary_eps</span> <span class="pre">=</span> <span class="pre">0</span></code> the embedding stores <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">=</span> <span class="pre">0</span></code> exactly; pass a
+small positive value to stay in the strict interior of GIG’s domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -973,6 +1004,15 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><em>InverseGaussian</em></a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.to_gig">
+<span class="sig-name descname"><span class="pre">to_gig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.to_gig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.to_gig" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the GIG family.</p>
+<p>InverseGaussian(<span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\lambda\)</span>) is GIG with
+<span class="math notranslate nohighlight">\(p = -1/2,\; a = \lambda/\mu^2,\; b = \lambda\)</span>. No boundary
+approximation: the embedding lands strictly inside GIG’s domain.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1167,6 +1207,36 @@ no Bessel. Best for large <em>n</em> with fixed parameters.</p></li>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma">
+<span class="sig-name descname"><span class="pre">to_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.to_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code> family.</p>
+<p>Minimises <span class="math notranslate nohighlight">\(D_{\mathrm{KL}}(\mathrm{GIG}\,\|\,q)\)</span> over
+<span class="math notranslate nohighlight">\(q \in \mathrm{Gamma}\)</span> by matching the Gamma sufficient
+statistics under the source GIG:
+<span class="math notranslate nohighlight">\(E_{q^*}[\log X] = \eta_1,\; E_{q^*}[X] = \eta_3\)</span>. Solved via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">Gamma.from_expectation()</span></code>. See
+<code class="docutils literal notranslate"><span class="pre">docs/tech_notes/distribution_conversions.md</span></code> for the derivation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma">
+<span class="sig-name descname"><span class="pre">to_inverse_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.to_inverse_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code> family.</p>
+<p>Matches <span class="math notranslate nohighlight">\(E[-1/X] = -\eta_2,\; E[\log X] = \eta_1\)</span>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian">
+<span class="sig-name descname"><span class="pre">to_inverse_gaussian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.to_inverse_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code> family.</p>
+<p>Matches <span class="math notranslate nohighlight">\(E[X] = \eta_3,\; E[1/X] = \eta_2\)</span>. The closed form
+<span class="math notranslate nohighlight">\(\lambda = 1/(\eta_2 - 1/\eta_3)\)</span> is well-defined whenever
+<span class="math notranslate nohighlight">\(\eta_2 &gt; 1/\eta_3\)</span> (Jensen, true for every non-degenerate
+GIG); <code class="xref py py-meth docutils literal notranslate"><span class="pre">InverseGaussian.from_expectation()</span></code> clamps near
+degenerate inputs.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2320,6 +2390,19 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma.to_joint_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_joint_generalized_hyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma.to_joint_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma.to_joint_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into <code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code>.</p>
+<p>Lifts the Gamma subordinator to GIG via <code class="xref py py-meth docutils literal notranslate"><span class="pre">Gamma.to_gig()</span></code> and
+keeps the Normal block (<span class="math notranslate nohighlight">\(\mu, \gamma, L_\Sigma\)</span>) unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -2379,6 +2462,17 @@ K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.fit" title="Link to this definition"></a></dt>
 <dd><p>Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
 vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.to_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_generalized_hyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.to_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.to_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -2466,6 +2560,19 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <spa
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.to_joint_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_joint_generalized_hyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#JointNormalInverseGamma.to_joint_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.to_joint_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into <code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code>.</p>
+<p>Lifts the InverseGamma subordinator to GIG via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">InverseGamma.to_gig()</span></code> and keeps the Normal block unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -2518,6 +2625,17 @@ The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^
 <dd><p>Fit NInvG using EM or MCECM.  Defaults to CPU E-step (faster than
 JAX vmap for the degenerate-GIG posterior arising from the InverseGamma
 subordinator).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.to_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_generalized_hyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.to_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.to_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -2608,6 +2726,15 @@ so <span class="math notranslate nohighlight">\(\mu_{IG} = \sqrt{b/a}\)</span>.<
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_joint_generalized_hyperbolic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian.to_joint_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into <code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code>.</p>
+<p>Lifts the InverseGaussian subordinator to GIG via
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">InverseGaussian.to_gig()</span></code> (no boundary approximation) and
+keeps the Normal block unchanged.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -2665,6 +2792,14 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><em>NormalInverseGaussian</em></a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.to_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_generalized_hyperbolic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#NormalInverseGaussian.to_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.to_generalized_hyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
+<p>No boundary approximation: NIG sits in the strict interior of GH’s
+parameter space (<span class="math notranslate nohighlight">\(p = -1/2,\; a = \lambda/\mu_{IG}^2,\; b = \lambda\)</span>).</p>
 </dd></dl>
 
 </dd></dl>
@@ -2769,6 +2904,39 @@ on <span class="math notranslate nohighlight">\(t_Y = [\log y,\,1/y,\,y]\)</span
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic"><em>JointGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma">
+<span class="sig-name descname"><span class="pre">to_joint_variance_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.to_joint_variance_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto <code class="xref py py-class docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code> (Gamma subordinator).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.JointVarianceGamma" title="normix.distributions.variance_gamma.JointVarianceGamma">JointVarianceGamma</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">
+<span class="sig-name descname"><span class="pre">to_joint_normal_inverse_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto <code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma">JointNormalInverseGamma</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">
+<span class="sig-name descname"><span class="pre">to_joint_normal_inverse_gaussian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto <code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian">JointNormalInverseGaussian</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2879,6 +3047,39 @@ leaves the model unchanged.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">
+<span class="sig-name descname"><span class="pre">to_variance_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.to_variance_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma">VarianceGamma</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">
+<span class="sig-name descname"><span class="pre">to_normal_inverse_gamma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.to_normal_inverse_gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma">NormalInverseGamma</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">
+<span class="sig-name descname"><span class="pre">to_normal_inverse_gaussian</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.to_normal_inverse_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian" title="Link to this definition"></a></dt>
+<dd><p>KL projection onto the <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian">NormalInverseGaussian</a></p>
 </dd>
 </dl>
 </dd></dl>

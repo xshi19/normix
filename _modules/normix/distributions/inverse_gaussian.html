@@ -286,6 +286,23 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="InverseGaussian.to_gig">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.to_gig">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the GIG family.</span>
+
+<span class="sd">        InverseGaussian(:math:`\mu`, :math:`\lambda`) is GIG with</span>
+<span class="sd">        :math:`p = -1/2,\; a = \lambda/\mu^2,\; b = \lambda`. No boundary</span>
+<span class="sd">        approximation: the embedding lands strictly inside GIG&#39;s domain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="k">return</span> <span class="n">GIG</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="InverseGaussian.from_expectation">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
