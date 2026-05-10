@@ -241,12 +241,24 @@ class NormalInverseGaussian(NormalMixture):
         return self._joint.lam
 
     def _build_rescaled(self, mu, gamma_new, L_new, scale) -> "NormalInverseGaussian":
+        # Σ → Σ/s pairs with Y → s·Y. For IG(μ_IG, λ):
+        # s·Y ~ IG(s·μ_IG, s·λ).
         j = self._joint
         joint_new = JointNormalInverseGaussian(
             mu=mu, gamma=gamma_new, L_Sigma=L_new,
-            mu_ig=j.mu_ig / scale, lam=j.lam / scale,
+            mu_ig=j.mu_ig * scale, lam=j.lam * scale,
         )
         return NormalInverseGaussian(joint_new)
+
+    def regularize_a_eq_b(self) -> "NormalInverseGaussian":
+        r"""Rescale so :math:`a = b = \sqrt{ab}`.
+
+        For NIG, :math:`a = \lambda/\mu_{IG}^2,\;b = \lambda`, so
+        :math:`s = \sqrt{a/b} = 1/\mu_{IG}`. After rescaling
+        :math:`\mu_{IG}' = 1`, i.e. the InverseGaussian has unit mean.
+        """
+        scale = 1.0 / self._joint.mu_ig
+        return self._rescale(scale)
 
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):

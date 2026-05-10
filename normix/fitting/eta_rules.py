@@ -224,18 +224,19 @@ class Shrinkage(EtaUpdateRule):
     """
 
     base: EtaUpdateRule
-    eta0: NormalMixtureEta
-    tau: Any  # scalar jax.Array or NormalMixtureEta
+    eta0: Any                # stats pytree (NormalMixtureEta, FactorMixtureStats, ...)
+    tau: Any                 # scalar jax.Array or stats pytree matching eta0
 
     def __init__(
         self,
         base: EtaUpdateRule,
-        eta0: NormalMixtureEta,
-        tau: Union[float, jax.Array, NormalMixtureEta] = 0.5,
+        eta0,
+        tau: Union[float, jax.Array, Any] = 0.5,
     ):
         self.base = base
         self.eta0 = eta0
-        if isinstance(tau, NormalMixtureEta):
+        # τ is per-field iff it has the same pytree type as eta0.
+        if type(tau) is type(eta0):
             self.tau = tau
         else:
             self.tau = jnp.asarray(tau, dtype=jnp.float64)
@@ -246,7 +247,7 @@ class Shrinkage(EtaUpdateRule):
     def __call__(self, eta_prev, eta_new, step, batch_size, state):
         eta_base, state = self.base(eta_prev, eta_new, step, batch_size, state)
 
-        if isinstance(self.tau, NormalMixtureEta):
+        if type(self.tau) is type(self.eta0):
             # Per-field τ: factors are leaf-wise τ/(1+τ) and 1/(1+τ).
             factor_a = jax.tree.map(lambda t: t / (1.0 + t), self.tau)
             factor_b = jax.tree.map(lambda t: 1.0 / (1.0 + t), self.tau)

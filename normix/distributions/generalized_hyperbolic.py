@@ -386,6 +386,16 @@ class GeneralizedHyperbolic(NormalMixture):
         )
         return GeneralizedHyperbolic(joint_new)
 
+    def regularize_a_eq_b(self) -> "GeneralizedHyperbolic":
+        r"""Rescale so :math:`a = b = \sqrt{ab}` (orbit invariant).
+
+        Picks :math:`s = \sqrt{a/b}`. Idempotent: applying twice
+        leaves the model unchanged.
+        """
+        j = self._joint
+        scale = jnp.sqrt(j.a / j.b)
+        return self._rescale(scale)
+
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(

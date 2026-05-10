@@ -83,7 +83,20 @@ class BatchEMFitter:
     verbose : int
         0 = silent, 1 = summary, 2 = per-iteration table.
     regularization : str
-        Regularization strategy ('det_sigma_one' or 'none').
+        Strategy applied after each M-step:
+
+        * ``'none'`` — no regularization.
+        * ``'det_sigma_one'`` — enforce :math:`|\\Sigma| = 1` (the
+          original GH convention; equivalent to
+          ``regularize_det_sigma(target_log_det=0)``).
+        * ``'det_sigma_x'`` — enforce :math:`|\\Sigma| = |\\Sigma_0|`
+          where :math:`\\Sigma_0` is the dispersion of the *initial*
+          model passed to :meth:`fit`. Useful when comparing GH /
+          FactorGH parameters against VG / NIG / NInvG, which leave
+          :math:`|\\Sigma|` at the empirical scale.
+        * ``'a_eq_b'`` — rescale the GIG subordinator so
+          :math:`a = b = \\sqrt{ab}`. Trivial no-op for VG / NInvG /
+          MultivariateNormal.
     e_step_backend : str
         'jax' (default) or 'cpu'.
     m_step_backend : str
@@ -95,6 +108,8 @@ class BatchEMFitter:
         eta0, tau)``). When set, the E-step output is transformed before
         the M-step.
     """
+
+    _REGULARIZATIONS = ('none', 'det_sigma_one', 'det_sigma_x', 'a_eq_b')
 
     def __init__(
         self,
@@ -111,6 +126,10 @@ class BatchEMFitter:
     ):
         if algorithm not in ('em', 'mcecm'):
             raise ValueError(f"algorithm must be 'em' or 'mcecm', got {algorithm!r}")
+        if regularization not in self._REGULARIZATIONS:
+            raise ValueError(
+                f"regularization must be one of {self._REGULARIZATIONS}, "
+                f"got {regularization!r}")
         self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol = tol
@@ -120,6 +139,9 @@ class BatchEMFitter:
         self.m_step_backend = m_step_backend
         self.m_step_method = m_step_method
         self.eta_update = eta_update
+        # Set by ``fit`` for ``regularization='det_sigma_x'``: the
+        # log-determinant of the initial model's Σ, captured once.
+        self._target_log_det: jax.Array | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -140,6 +162,12 @@ class BatchEMFitter:
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         dist_name = type(model).__name__
+
+        # Capture initial log|Σ| once so 'det_sigma_x' targets the
+        # initial reference scale throughout EM.
+        if self.regularization == 'det_sigma_x':
+            self._target_log_det = jnp.asarray(
+                model.log_det_sigma(), dtype=jnp.float64)
 
         use_scan = (
             self.algorithm == 'em'
@@ -334,9 +362,20 @@ class BatchEMFitter:
     # ------------------------------------------------------------------
 
     def _regularize(self, model):
+        if self.regularization == 'none':
+            return model
         if self.regularization == 'det_sigma_one':
-            if hasattr(model, 'regularize_det_sigma_one'):
-                return model.regularize_det_sigma_one()
+            if hasattr(model, 'regularize_det_sigma'):
+                return model.regularize_det_sigma(0.0)
+            return model
+        if self.regularization == 'det_sigma_x':
+            if hasattr(model, 'regularize_det_sigma'):
+                return model.regularize_det_sigma(self._target_log_det)
+            return model
+        if self.regularization == 'a_eq_b':
+            if hasattr(model, 'regularize_a_eq_b'):
+                return model.regularize_a_eq_b()
+            return model
         return model
 
     def _print_header(self, dist_name: str):
@@ -406,10 +445,14 @@ class IncrementalEMFitter:
         side effects each step.
 
     regularization : str
-        ``'det_sigma_one'`` or ``'none'``.
+        Same options as :class:`BatchEMFitter` —
+        ``'none'`` | ``'det_sigma_one'`` | ``'det_sigma_x'`` |
+        ``'a_eq_b'``.
     e_step_backend, m_step_backend, m_step_method : str
         Passed through to ``e_step`` / ``m_step``.
     """
+
+    _REGULARIZATIONS = BatchEMFitter._REGULARIZATIONS
 
     def __init__(
         self,
@@ -427,6 +470,10 @@ class IncrementalEMFitter:
         if eta_update is None:
             from normix.fitting.eta_rules import RobbinsMonroUpdate
             eta_update = RobbinsMonroUpdate(tau0=10.0)
+        if regularization not in self._REGULARIZATIONS:
+            raise ValueError(
+                f"regularization must be one of {self._REGULARIZATIONS}, "
+                f"got {regularization!r}")
         self.eta_update = eta_update
         self.batch_size = batch_size
         self.max_steps = max_steps
@@ -436,6 +483,7 @@ class IncrementalEMFitter:
         self.e_step_backend = e_step_backend
         self.m_step_backend = m_step_backend
         self.m_step_method = m_step_method
+        self._target_log_det: jax.Array | None = None
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
         """Run incremental EM. Returns :class:`EMResult`."""
@@ -443,6 +491,10 @@ class IncrementalEMFitter:
         n = int(X.shape[0])
         bs = min(self.batch_size, n)
         dist_name = type(model).__name__
+
+        if self.regularization == 'det_sigma_x':
+            self._target_log_det = jnp.asarray(
+                model.log_det_sigma(), dtype=jnp.float64)
 
         step_keys = _materialize_incremental_subkeys(key, self.max_steps)
         use_scan = (
@@ -627,11 +679,8 @@ class IncrementalEMFitter:
             eta_inner, backend=mb, method=mm)
         return self._regularize(mi2)
 
-    def _regularize(self, model):
-        if self.regularization == 'det_sigma_one':
-            if hasattr(model, 'regularize_det_sigma_one'):
-                return model.regularize_det_sigma_one()
-        return model
+    # Reuse the dispatch from BatchEMFitter so behaviour stays in sync.
+    _regularize = BatchEMFitter._regularize
 
 
 def _param_change(new_params, old_params) -> jax.Array:

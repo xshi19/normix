@@ -44,6 +44,10 @@ SIGMA_REG: float = 1e-8
 # Floor for the denominator D = 1 − E[1/Y]·E[Y] in the M-step
 SAFE_DENOMINATOR: float = 1e-10
 
+# Positivity floor for the diagonal D in the factor-analysis M-step
+# (Σ = F Fᵀ + diag(D)). See `docs/theory/factor_analysis.rst`.
+D_FLOOR: float = 1e-8
+
 # ── Initialisation constants ──────────────────────────────────────────
 
 # Regularisation added to empirical Σ during moment-based initialisation

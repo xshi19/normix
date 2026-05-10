@@ -1,7 +1,8 @@
 ## Penalised EM with Flexible Shrinkage
 
-**Date:** 2026-04-19
-**Status:** Implemented (Phase 1 + Phase 2 of the EM-extension plan)
+**Date:** 2026-04-19 (revised 2026-05-08)
+**Status:** Phase 3 design doc — describes the Phase 1 + Phase 2
+implementation already in `main`
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/shrinkage_targets.py`, `normix/fitting/em.py`
 **Theory:** `docs/theory/shrinkage.rst`
@@ -196,7 +197,7 @@ JIT-friendliness assumptions at the fitter level. (A future
 optimisation could detect the all-affine case and re-enable `scan`; not
 in scope for Phase 2.)
 
-### 3.3 Inspecting a prior
+### 3.5 Inspecting a prior
 
 A shrinkage target $\eta_0$ can be turned back into a concrete model via
 the η→model classmethod

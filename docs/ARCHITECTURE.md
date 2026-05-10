@@ -21,10 +21,11 @@ normix/                     # JAX implementation
 │   └── generalized_hyperbolic.py         # GeneralizedHyperbolic / JointGeneralizedHyperbolic
 ├── mixtures/
 │   ├── joint.py            # JointNormalMixture(ExponentialFamily)
-│   └── marginal.py         # NormalMixture (owns a JointNormalMixture)
+│   ├── marginal.py         # MarginalMixture ABC + NormalMixture (owns a JointNormalMixture)
+│   └── factor.py           # FactorNormalMixture(MarginalMixture); Σ = F Fᵀ + diag(D)
 ├── fitting/
 │   ├── em.py               # EMResult; BatchEMFitter, IncrementalEMFitter
-│   ├── eta.py              # NormalMixtureEta, affine_combine
+│   ├── eta.py              # NormalMixtureEta, FactorMixtureStats, affine_combine
 │   ├── eta_rules.py        # EtaUpdateRule + AffineRule; Identity, RobbinsMonro, EWMA, Shrinkage, ...
 │   ├── shrinkage_targets.py # eta0_from_model, eta0_isotropic, eta0_diagonal, eta0_with_sigma
 │   ├── solvers.py          # solve_bregman*, BregmanResult, make_jit_newton_solver; Newton, L-BFGS, scipy multi-start
@@ -137,14 +138,22 @@ JointNormalMixture(ExponentialFamily)     f(x,y) — X|Y ~ N(μ + γy, Σy)
     ├── JointNormalInverseGaussian        Y ~ InverseGaussian
     └── JointGeneralizedHyperbolic        Y ~ GeneralizedInverseGaussian
 
-NormalMixture(eqx.Module)                f(x) = ∫ f(x,y) dy
-    ├── VarianceGamma
-    ├── NormalInverseGamma
-    ├── NormalInverseGaussian
-    └── GeneralizedHyperbolic
+MarginalMixture(eqx.Module)              abstract; fitter contract
+├── NormalMixture                         owns a JointNormalMixture (full Σ)
+│   ├── VarianceGamma
+│   ├── NormalInverseGamma
+│   ├── NormalInverseGaussian
+│   └── GeneralizedHyperbolic
+└── FactorNormalMixture                   Σ = F Fᵀ + diag(D); Woodbury solves
+    ├── FactorVarianceGamma
+    ├── FactorNormalInverseGamma
+    ├── FactorNormalInverseGaussian
+    └── FactorGeneralizedHyperbolic
 ```
 
 `NormalMixture` owns a `JointNormalMixture`. The joint is an exponential family; the marginal is not. Per `docs/theory/gh.rst`, both layers are parameterised by the same classical tuple `(μ, γ, Σ, subordinator)`, so the marginal exposes those parameters as forwarders on top of its joint storage.
+
+`FactorNormalMixture` is a sibling of `NormalMixture`: same `MarginalMixture` contract, but stores `(μ, γ, F, D, subordinator)` directly without a joint exponential-family layer (the FA complete-data structure is over `(X, Y, Z)` with ten sufficient statistics — `FactorMixtureStats` in `fitting/eta.py` — rather than the six of `NormalMixtureEta`). All Σ-related linear algebra (`_solve`, `_quad_form`, `_log_det_sigma`, `_beta`) goes through Woodbury at `O(d r² + r³)`, never forming a dense `d × d` solve. Convergence is measured on `Σ = F Fᵀ + diag(D)` to sidestep `F`'s rotational gauge. See `docs/theory/factor_analysis.rst` and `docs/design/em_covariance_extensions.md` §7.
 
 Key methods on `JointNormalMixture`:
 - `conditional_expectations(x)` → E[log Y|x], E[1/Y|x], E[Y|x] (EM E-step)
@@ -232,6 +241,7 @@ from there. Never define magic numbers locally in distribution files.
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
+| `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
 
 ## GIG η→θ Optimization
@@ -260,7 +270,7 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | Document | Content |
 |---|---|
 | `docs/design/design.md` | Design rationale, architecture decisions |
-| `docs/design/em_covariance_extensions.md` | Shrinkage / factor-analysis EM extensions (Phases 1–2 implemented) |
+| `docs/design/em_covariance_extensions.md` | Shrinkage / factor-analysis EM extensions (Phases 1–4 implemented) |
 | `docs/design/penalised_em.md` | Penalised EM: `Shrinkage` combinator API, per-field τ, target builders, choosing τ and Σ₀ |
 | `docs/design/finance_architecture.md` | Proposed `normix.finance` layer (portfolio projection, risk, optimization, diversification) |
 | `docs/tech_notes/` | Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks |

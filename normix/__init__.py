@@ -59,9 +59,16 @@ from normix.distributions.generalized_hyperbolic import (
 
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import MarginalMixture, NormalMixture
+from normix.mixtures.factor import (
+    FactorNormalMixture,
+    FactorVarianceGamma,
+    FactorNormalInverseGamma,
+    FactorNormalInverseGaussian,
+    FactorGeneralizedHyperbolic,
+)
 
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
-from normix.fitting.eta import NormalMixtureEta, affine_combine
+from normix.fitting.eta import NormalMixtureEta, FactorMixtureStats, affine_combine
 from normix.fitting.eta_rules import (
     EtaUpdateRule,
     AffineRule,
@@ -115,11 +122,18 @@ __all__ = [
     "JointNormalMixture",
     "MarginalMixture",
     "NormalMixture",
+    # Factor-analysis mixtures
+    "FactorNormalMixture",
+    "FactorVarianceGamma",
+    "FactorNormalInverseGamma",
+    "FactorNormalInverseGaussian",
+    "FactorGeneralizedHyperbolic",
     # Fitters
     "BatchEMFitter",
     "IncrementalEMFitter",
     # Eta parametrization
     "NormalMixtureEta",
+    "FactorMixtureStats",
     "affine_combine",
     # Eta update rules
     "EtaUpdateRule",

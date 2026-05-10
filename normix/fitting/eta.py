@@ -59,6 +59,52 @@ class NormalMixtureEta(eqx.Module):
     E_XXT_inv_Y: jax.Array
 
 
+class FactorMixtureStats(eqx.Module):
+    r"""Aggregated expectation parameters for factor-analysis mixtures.
+
+    Fields are stored in theory order ``(s_1, …, s_{10})`` from
+    :doc:`../docs/theory/factor_analysis`. The first six are identical to
+    :class:`NormalMixtureEta` (so shrinkage targets, η-update rules, and
+    weight pytrees designed for the standard family broadcast onto the
+    factor family without modification). The four extra fields involve
+    the latent factor :math:`Z`.
+
+    Attributes
+    ----------
+    E_inv_Y : scalar
+        :math:`s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]`
+    E_Y : scalar
+        :math:`s_2 = \frac{1}{n}\sum_i E[Y_i \mid X_i]`
+    E_log_Y : scalar
+        :math:`s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]`
+    E_X : (d,)
+        :math:`s_4 = \frac{1}{n}\sum_i X_i`
+    E_X_inv_Y : (d,)
+        :math:`s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]`
+    E_XXT_inv_Y : (d, d)
+        :math:`s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]`
+    E_XZT_inv_sqrtY : (d, r)
+        :math:`s_7 = \frac{1}{n}\sum_i E[X_i Z_i^\top Y_i^{-1/2} \mid X_i]`
+    E_Z_inv_sqrtY : (r,)
+        :math:`s_8 = \frac{1}{n}\sum_i E[Z_i Y_i^{-1/2} \mid X_i]`
+    E_Z_sqrtY : (r,)
+        :math:`s_9 = \frac{1}{n}\sum_i E[Z_i Y_i^{1/2} \mid X_i]`
+    E_ZZT : (r, r)
+        :math:`s_{10} = \frac{1}{n}\sum_i E[Z_i Z_i^\top \mid X_i]`
+    """
+
+    E_inv_Y: jax.Array
+    E_Y: jax.Array
+    E_log_Y: jax.Array
+    E_X: jax.Array
+    E_X_inv_Y: jax.Array
+    E_XXT_inv_Y: jax.Array
+    E_XZT_inv_sqrtY: jax.Array
+    E_Z_inv_sqrtY: jax.Array
+    E_Z_sqrtY: jax.Array
+    E_ZZT: jax.Array
+
+
 # ---------------------------------------------------------------------------
 # Generalised affine combination
 # ---------------------------------------------------------------------------

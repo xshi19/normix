@@ -1,7 +1,7 @@
 # EM Extensions: Shrinkage and Factor Analysis
 
 **Date:** 2026-04-17
-**Status:** In progress — Phases 1, 2, 2.5 complete; Phases 3–5 pending
+**Status:** In progress — Phases 1, 2, 2.5, 3, 4 complete; Phase 5 pending
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/em.py`, `normix/mixtures/marginal.py`,
 new `normix/mixtures/factor.py`
@@ -815,37 +815,61 @@ starting point, not as committed code.
   forwarders; add a validation cell that inverts `eta0_iso` and prints
   the recovered Σ.
 
-### Phase 3 — Penalised EM design doc
+### Phase 3 — Penalised EM design doc ✅ Done
 
-1. Create `docs/design/penalised_em.md` covering:
-  - the η-affine derivation from `docs/theory/shrinkage.rst`;
-  - the per-field `tau` convention;
-  - the combinator API and target builders;
-  - guidance on choosing `tau` and `Σ_0`.
-2. Cross-link from `docs/ARCHITECTURE.md` and from this doc.
+1. `docs/design/penalised_em.md` covers:
+  - the η-affine derivation from `docs/theory/shrinkage.rst` (§2);
+  - the per-field `tau` convention (§3.2);
+  - the combinator API and target builders (§3.1, §3.3);
+  - guidance on choosing `tau` and `Σ_0` (§4);
+  - a worked Σ-only-shrinkage example (§5).
+2. Cross-linked from `docs/ARCHITECTURE.md` (companion-docs row) and
+  from this doc's header (Companion docs).
 
-### Phase 4 — Factor analysis model family
+### Phase 4 — Factor analysis model family ✅ Done
 
-1. New file `normix/mixtures/factor.py`:
-  - `FactorMixtureStats` pytree;
-  - `FactorNormalMixture(MarginalMixture)` abstract base with `_M`,
-  `_solve`, `_quad_form`, `_log_det_sigma`, `_beta`,
+1. `normix/fitting/eta.py` exports the new `FactorMixtureStats` pytree
+  (10 fields, theory-order) alongside `NormalMixtureEta`.
+2. `normix/mixtures/factor.py` adds:
+  - `FactorNormalMixture(MarginalMixture)` abstract base with
+  `_M`, `_solve`, `_quad_form`, `_log_det_sigma`, `_beta`,
   `e_step`, `m_step`, `m_step_normal`, `m_step_subordinator`,
   `compute_eta_from_model`, `em_convergence_params`;
   - four concrete subclasses (`FactorVarianceGamma`,
   `FactorNormalInverseGamma`, `FactorNormalInverseGaussian`,
   `FactorGeneralizedHyperbolic`) sharing posterior-GIG code with the
-  existing joints.
-2. Reuse `BatchEMFitter` and `IncrementalEMFitter` unchanged.
-3. Tests:
-  - synthetic data with known `(F, D)` recovers them up to the
-   orthogonal rotation gauge;
-  - with `r = d - 1` and large `n`, `Σ = F Fᵀ + D` matches the
-  full-covariance fit within tolerance;
-  - convergence based on `Σ` succeeds even when `F` rotates between
-  iterations;
-  - shrinkage combinator works on the factor stats type as well
-  (per-field `tau` over the first six fields).
+  existing joints (`FactorGH` keeps the warm-start + sanity-check
+  fall-back from `GeneralizedHyperbolic.m_step_subordinator`);
+  - `FactorNormalMixture.default_init(X, r=...)` PCA-style
+  initialiser that splits the empirical covariance into top-`r`
+  eigenvectors plus a positive diagonal residual.
+3. `D_FLOOR` added to `normix/utils/constants.py` for positivity of
+  the diagonal `D` after each M-step.
+4. `Shrinkage` combinator generalised: per-field `tau` is now
+  recognised via `type(tau) is type(eta0)`, so the same combinator
+  works for both `NormalMixtureEta` and `FactorMixtureStats`.
+5. `BatchEMFitter` / `IncrementalEMFitter` reused unchanged — they
+  already type-hint against `MarginalMixture` and call only
+  `e_step`, `m_step*`, `compute_eta_from_model`,
+  `em_convergence_params`, and `regularize_det_sigma_one`.
+6. Tests in `tests/test_factor_mixture.py`:
+  - density agreement: `FactorXxx.log_prob` equals `Xxx.log_prob`
+  when constructed with matched `Σ = F Fᵀ + diag(D)` (validates the
+  Woodbury solve and log-determinant);
+  - synthetic recovery: fitting recovers `Σ` up to `F`'s rotation
+  gauge plus the subordinator `(α, β)`;
+  - full-cov match: with `r = d - 1` and large `n`,
+  `Σ = F Fᵀ + diag(D)` matches the full-covariance fit's marginal
+  log-likelihood to within tolerance;
+  - convergence on `Σ`: `em_convergence_params` is invariant to
+  orthogonal rotations of `F`;
+  - shrinkage on `FactorMixtureStats`:
+  `Shrinkage(IdentityUpdate(), eta0, tau=0)` is a no-op, and
+  per-field `tau` zeroes leave the corresponding statistics
+  untouched (parity with the standard family);
+  - moment / mean / cov / `rvs` consistency;
+  - `regularize_det_sigma_one` is a reparametrisation
+  (`log_prob` invariant; `|Σ| = 1` after).
 
 ### Phase 5 — Documentation
 

@@ -496,24 +496,50 @@ class NormalMixture(MarginalMixture):
     # Regularisation
     # ------------------------------------------------------------------
 
-    def regularize_det_sigma_one(self) -> "NormalMixture":
-        r"""
-        Enforce :math:`|\Sigma| = 1` by rescaling.
+    def _rescale(self, scale: jax.Array) -> "NormalMixture":
+        r"""Apply :math:`Y \to s\,Y` reparameterisation.
 
-        :math:`\Sigma \to \Sigma/s`, :math:`\gamma \to \gamma/s`,
-        subordinator params scaled via ``_build_rescaled``.
-        :math:`s = \det(\Sigma)^{1/d}`.
+        Pushes the scale ``s`` through every parameter so the joint
+        distribution is unchanged: :math:`\Sigma \to \Sigma/s`,
+        :math:`\gamma \to \gamma/s`, and the subordinator-side rescale
+        is delegated to :meth:`_build_rescaled` (e.g.
+        :math:`(a, b) \to (a/s, b\cdot s)` for GIG).
         """
         j = self._joint
-        d = j.d
-        log_det_sigma = j.log_det_sigma()
-        log_scale = log_det_sigma / d
-        scale = jnp.exp(log_scale)
-
         L_new = j.L_Sigma / jnp.sqrt(scale)
         gamma_new = j.gamma / scale
-
         return self._build_rescaled(j.mu, gamma_new, L_new, scale)
+
+    def regularize_det_sigma(
+        self, target_log_det: float = 0.0,
+    ) -> "NormalMixture":
+        r"""Rescale to enforce :math:`\log|\Sigma| = \mathrm{target\_log\_det}`.
+
+        Picks :math:`s = \exp((\log|\Sigma| - \tau)/d)` and applies
+        :meth:`_rescale`. The default ``target_log_det = 0`` recovers the
+        :math:`|\Sigma| = 1` convention; passing the log-determinant of
+        an initial reference Σ implements the ``det_sigma_x`` family.
+        """
+        j = self._joint
+        log_scale = (j.log_det_sigma() - target_log_det) / j.d
+        return self._rescale(jnp.exp(log_scale))
+
+    def regularize_det_sigma_one(self) -> "NormalMixture":
+        r"""Enforce :math:`|\Sigma| = 1`. Alias for
+        :meth:`regularize_det_sigma` with ``target_log_det = 0``.
+        """
+        return self.regularize_det_sigma(0.0)
+
+    def regularize_a_eq_b(self) -> "NormalMixture":
+        r"""Rescale subordinator so that :math:`a = b = \sqrt{ab}` for
+        GIG-parameterised families.
+
+        Default implementation is a no-op; override in subclasses with
+        both :math:`a, b > 0` (currently GH and NIG; VG and NInvG have
+        a degenerate ``a=0`` or ``b=0`` and the default no-op is the
+        right behaviour).
+        """
+        return self
 
     @abc.abstractmethod
     def _build_rescaled(
