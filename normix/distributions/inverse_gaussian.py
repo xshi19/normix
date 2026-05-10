@@ -184,6 +184,20 @@ class InverseGaussian(ExponentialFamily):
         mu = jnp.sqrt(theta[1] / theta[0])   # both negative, ratio positive
         return cls(mu=mu, lam=lam)
 
+    def to_gig(self):
+        r"""Exact embedding into the GIG family.
+
+        InverseGaussian(:math:`\mu`, :math:`\lambda`) is GIG with
+        :math:`p = -1/2,\; a = \lambda/\mu^2,\; b = \lambda`. No boundary
+        approximation: the embedding lands strictly inside GIG's domain.
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        return GIG(
+            p=jnp.full_like(self.mu, -0.5),
+            a=self.lam / self.mu ** 2,
+            b=self.lam,
+        )
+
     @classmethod
     def from_expectation(
         cls,

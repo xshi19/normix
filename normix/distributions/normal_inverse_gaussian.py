@@ -163,6 +163,20 @@ class JointNormalInverseGaussian(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
                    mu_ig=subordinator.mu, lam=subordinator.lam)
 
+    def to_joint_generalized_hyperbolic(self):
+        r"""Exact embedding into :class:`JointGeneralizedHyperbolic`.
+
+        Lifts the InverseGaussian subordinator to GIG via
+        :meth:`InverseGaussian.to_gig` (no boundary approximation) and
+        keeps the Normal block unchanged.
+        """
+        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
+        gig = self.subordinator().to_gig()
+        return JointGeneralizedHyperbolic(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            p=gig.p, a=gig.a, b=gig.b,
+        )
+
 
 
 class NormalInverseGaussian(NormalMixture):
@@ -264,3 +278,12 @@ class NormalInverseGaussian(NormalMixture):
     def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
             mu=mu, gamma=gamma, sigma=sigma, mu_ig=1.0, lam=1.0)
+
+    def to_generalized_hyperbolic(self):
+        r"""Exact embedding into the :class:`GeneralizedHyperbolic` family.
+
+        No boundary approximation: NIG sits in the strict interior of GH's
+        parameter space (:math:`p = -1/2,\; a = \lambda/\mu_{IG}^2,\; b = \lambda`).
+        """
+        from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
+        return GeneralizedHyperbolic(self._joint.to_joint_generalized_hyperbolic())

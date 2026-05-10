@@ -438,6 +438,46 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         raise ValueError(f"Unknown rvs method: {method!r}")
 
     # ------------------------------------------------------------------
+    # KL projection onto special-case sub-families
+    # ------------------------------------------------------------------
+
+    def to_gamma(self):
+        r"""KL projection onto the :class:`Gamma` family.
+
+        Minimises :math:`D_{\mathrm{KL}}(\mathrm{GIG}\,\|\,q)` over
+        :math:`q \in \mathrm{Gamma}` by matching the Gamma sufficient
+        statistics under the source GIG:
+        :math:`E_{q^*}[\log X] = \eta_1,\; E_{q^*}[X] = \eta_3`. Solved via
+        :meth:`Gamma.from_expectation`. See
+        ``docs/tech_notes/distribution_conversions.md`` for the derivation.
+        """
+        from normix.distributions.gamma import Gamma
+        eta = self.expectation_params()
+        return Gamma.from_expectation(jnp.array([eta[0], eta[2]]))
+
+    def to_inverse_gamma(self):
+        r"""KL projection onto the :class:`InverseGamma` family.
+
+        Matches :math:`E[-1/X] = -\eta_2,\; E[\log X] = \eta_1`.
+        """
+        from normix.distributions.inverse_gamma import InverseGamma
+        eta = self.expectation_params()
+        return InverseGamma.from_expectation(jnp.array([-eta[1], eta[0]]))
+
+    def to_inverse_gaussian(self):
+        r"""KL projection onto the :class:`InverseGaussian` family.
+
+        Matches :math:`E[X] = \eta_3,\; E[1/X] = \eta_2`. The closed form
+        :math:`\lambda = 1/(\eta_2 - 1/\eta_3)` is well-defined whenever
+        :math:`\eta_2 > 1/\eta_3` (Jensen, true for every non-degenerate
+        GIG); :meth:`InverseGaussian.from_expectation` clamps near
+        degenerate inputs.
+        """
+        from normix.distributions.inverse_gaussian import InverseGaussian
+        eta = self.expectation_params()
+        return InverseGaussian.from_expectation(jnp.array([eta[2], eta[1]]))
+
+    # ------------------------------------------------------------------
     # Constructors
     # ------------------------------------------------------------------
 

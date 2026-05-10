@@ -151,6 +151,19 @@ class JointVarianceGamma(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
                    alpha=subordinator.alpha, beta=subordinator.beta)
 
+    def to_joint_generalized_hyperbolic(self, *, boundary_eps: float = 0.0):
+        r"""Exact embedding into :class:`JointGeneralizedHyperbolic`.
+
+        Lifts the Gamma subordinator to GIG via :meth:`Gamma.to_gig` and
+        keeps the Normal block (:math:`\mu, \gamma, L_\Sigma`) unchanged.
+        """
+        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
+        gig = self.subordinator().to_gig(boundary_eps=boundary_eps)
+        return JointGeneralizedHyperbolic(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            p=gig.p, a=gig.a, b=gig.b,
+        )
+
 
 
 class VarianceGamma(NormalMixture):
@@ -260,3 +273,9 @@ class VarianceGamma(NormalMixture):
     def _from_init_params(cls, mu, gamma, sigma):
         return cls.from_classical(
             mu=mu, gamma=gamma, sigma=sigma, alpha=2.0, beta=1.0)
+
+    def to_generalized_hyperbolic(self, *, boundary_eps: float = 0.0):
+        r"""Exact embedding into the :class:`GeneralizedHyperbolic` family."""
+        from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
+        return GeneralizedHyperbolic(
+            self._joint.to_joint_generalized_hyperbolic(boundary_eps=boundary_eps))

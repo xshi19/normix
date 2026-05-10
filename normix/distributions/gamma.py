@@ -119,6 +119,22 @@ class Gamma(ExponentialFamily):
         theta = jnp.asarray(theta, dtype=jnp.float64)
         return cls(alpha=theta[0] + 1.0, beta=-theta[1])
 
+    def to_gig(self, *, boundary_eps: float = 0.0):
+        r"""Exact embedding into the GIG family.
+
+        Gamma(:math:`\alpha`, :math:`\beta`) is the :math:`b \to 0` limit of
+        GIG(:math:`p = \alpha,\; a = 2\beta,\; b`). With ``boundary_eps = 0``
+        the embedding stores ``b = 0`` exactly; pass a small positive value
+        to stay in the strict interior of GIG's domain (matters only for
+        downstream ``expectation_params`` calls on the lifted GIG).
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        return GIG(
+            p=self.alpha,
+            a=2.0 * self.beta,
+            b=jnp.full_like(self.alpha, boundary_eps),
+        )
+
     @classmethod
     def from_expectation(
         cls,

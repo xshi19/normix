@@ -134,6 +134,21 @@ class InverseGamma(ExponentialFamily):
         beta = theta[0]
         return cls(alpha=alpha, beta=beta)
 
+    def to_gig(self, *, boundary_eps: float = 0.0):
+        r"""Exact embedding into the GIG family.
+
+        InverseGamma(:math:`\alpha`, :math:`\beta`) is the :math:`a \to 0`
+        limit of GIG(:math:`p = -\alpha,\; a,\; b = 2\beta`). With
+        ``boundary_eps = 0`` the embedding stores ``a = 0`` exactly; pass a
+        small positive value to stay in the strict interior of GIG's domain.
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        return GIG(
+            p=-self.alpha,
+            a=jnp.full_like(self.alpha, boundary_eps),
+            b=2.0 * self.beta,
+        )
+
     @classmethod
     def from_expectation(
         cls,

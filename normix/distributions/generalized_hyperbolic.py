@@ -195,6 +195,46 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
                    p=subordinator.p, a=subordinator.a, b=subordinator.b)
 
+    # ------------------------------------------------------------------
+    # KL projection onto special-case sub-families (subordinator only)
+    # ------------------------------------------------------------------
+    #
+    # The Normal block (μ, γ, L_Σ) is preserved. The joint KL between
+    # ``JointGH`` and any joint-mixture cousin reduces to the KL between
+    # subordinators:
+    #
+    #     D_KL(JointGH ‖ JointVG) = D_KL(GIG ‖ Gamma)
+    #
+    # because the X|Y conditional density is identical across families.
+    # See ``docs/tech_notes/distribution_conversions.md``.
+
+    def to_joint_variance_gamma(self) -> "JointVarianceGamma":
+        r"""KL projection onto :class:`JointVarianceGamma` (Gamma subordinator)."""
+        from normix.distributions.variance_gamma import JointVarianceGamma
+        gamma = self.subordinator().to_gamma()
+        return JointVarianceGamma(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            alpha=gamma.alpha, beta=gamma.beta,
+        )
+
+    def to_joint_normal_inverse_gamma(self) -> "JointNormalInverseGamma":
+        r"""KL projection onto :class:`JointNormalInverseGamma`."""
+        from normix.distributions.normal_inverse_gamma import JointNormalInverseGamma
+        ig = self.subordinator().to_inverse_gamma()
+        return JointNormalInverseGamma(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            alpha=ig.alpha, beta=ig.beta,
+        )
+
+    def to_joint_normal_inverse_gaussian(self) -> "JointNormalInverseGaussian":
+        r"""KL projection onto :class:`JointNormalInverseGaussian`."""
+        from normix.distributions.normal_inverse_gaussian import JointNormalInverseGaussian
+        ig = self.subordinator().to_inverse_gaussian()
+        return JointNormalInverseGaussian(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            mu_ig=ig.mu, lam=ig.lam,
+        )
+
 
 
 # ============================================================================
@@ -395,6 +435,25 @@ class GeneralizedHyperbolic(NormalMixture):
         j = self._joint
         scale = jnp.sqrt(j.a / j.b)
         return self._rescale(scale)
+
+    # ------------------------------------------------------------------
+    # KL projection onto special-case sub-families
+    # ------------------------------------------------------------------
+
+    def to_variance_gamma(self) -> "VarianceGamma":
+        r"""KL projection onto the :class:`VarianceGamma` family."""
+        from normix.distributions.variance_gamma import VarianceGamma
+        return VarianceGamma(self._joint.to_joint_variance_gamma())
+
+    def to_normal_inverse_gamma(self) -> "NormalInverseGamma":
+        r"""KL projection onto the :class:`NormalInverseGamma` family."""
+        from normix.distributions.normal_inverse_gamma import NormalInverseGamma
+        return NormalInverseGamma(self._joint.to_joint_normal_inverse_gamma())
+
+    def to_normal_inverse_gaussian(self) -> "NormalInverseGaussian":
+        r"""KL projection onto the :class:`NormalInverseGaussian` family."""
+        from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
+        return NormalInverseGaussian(self._joint.to_joint_normal_inverse_gaussian())
 
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):
