@@ -49,15 +49,17 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | Distribution code (`normix/`) | `.cursor/rules/coding-conventions.mdc` |
 | Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
-| Design decisions | `docs/design/design.md` |
-| Fitters & eta rules (D1, done) | `docs/design/design.md` § EM Framework |
-| Penalised EM / shrinkage | `docs/design/penalised_em.md`, `docs/theory/shrinkage.rst` |
+| Design docs index | `docs/design/index.md` |
+| Design decisions table | `docs/design/design.md` |
+| Exponential family / triad / solver interface | `docs/design/exponential_family.md` |
+| Joint vs Marginal, factor mixtures | `docs/design/mixtures.md` |
+| EM framework, η-rules, Shrinkage, regularisations | `docs/design/em_framework.md` |
+| GIG η→θ, Bessel, CPU/GPU hybrid, RVS | `docs/design/solvers_and_bessel.md` |
 | Agent instructions design | `docs/design/agent_instructions_design.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
-| Migration status | `docs/plans/migration_plan.md` |
-| Bessel functions | `docs/ARCHITECTURE.md` § Bessel Functions |
-| GIG η→θ optimization | `docs/ARCHITECTURE.md` § GIG η→θ |
-| RVS generation (PINV, TDR) | `docs/ARCHITECTURE.md` § Random Variate Generation |
+| Migration status & roadmap | `docs/plans/` |
+| Unimplemented proposals (e.g. `normix.finance`) | `docs/plans/finance_architecture.md` |
+| Archived design proposals (already implemented) | `docs/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
 | Technical notes | `docs/tech_notes/` |
 | Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers, JIT solvers, incremental EM, GH path comparison (`bench_gh_paths.py`); `run_all.py` orchestrator; `compare.py` diff tool |

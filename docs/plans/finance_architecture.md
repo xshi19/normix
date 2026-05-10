@@ -1,18 +1,20 @@
 # Finance Architecture: `normix.finance`
 
+> **PROPOSAL — not yet implemented.** Moved to `docs/plans/` on
+> 2026-05-10 (previously in `docs/design/`). Cross-references to the
+> EM / covariance work now point to the archived proposal.
+
 **Date:** 2026-04-17
-**Status:** Proposed — design sketch, implementation deferred until the
-EM extensions in `docs/design/em_covariance_extensions.md` are in.
+**Status:** Proposed — design sketch, implementation has not started.
+The EM / covariance prerequisites (Phases A–C / Phases 1–4 of the
+EM extensions plan) are now in `main`.
 **Scope:** new top-level subpackage `normix/finance/`
 **Theory:** `docs/theory/cvar_derivatives.rst`,
 `docs/theory/mean_risk_optimization.rst`,
 `docs/theory/transaction_costs.rst`,
 `docs/theory/diversification.rst` (where applicable)
-
-> The previous combined "next-stage architecture" document has been split:
-> the EM / covariance work lives in
-> `docs/design/em_covariance_extensions.md`, and this document covers only
-> the `normix.finance` layer.
+**Living EM design:** `docs/design/em_framework.md`,
+`docs/design/mixtures.md`.
 
 ---
 
@@ -206,7 +208,7 @@ Required core ingredients:
 - portfolio projection into univariate normal-mixture form;
 - optional future access to covariance operators instead of dense
   matrices (only relevant once the deferred `DispersionModel` work in
-  `docs/design/em_covariance_extensions.md` §8 is undertaken).
+  `docs/design/mixtures.md` § 6.5 is undertaken).
 
 This keeps finance as a thin application layer over the distribution
 engine.
@@ -233,7 +235,7 @@ engine.
 - add comparative examples showing when CVaR-based ENB differs from
   variance-based ENB.
 
-(Phases A–C are the EM / covariance work in
-`docs/design/em_covariance_extensions.md` and should land first, since
-the finance layer benefits from the unified `MarginalMixture` interface
-and from factor-analysis covariance for high-dimensional portfolios.)
+(Phases A–C were the EM / covariance work, now done — see
+`docs/archive/design/em_covariance_extensions.md`. The finance layer
+benefits from the unified `MarginalMixture` interface and the
+factor-analysis covariance family for high-dimensional portfolios.)

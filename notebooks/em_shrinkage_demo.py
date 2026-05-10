@@ -1,8 +1,8 @@
 """Demo: Phase-1 EM API + Phase-2 shrinkage combinator on S&P 500 returns.
 
-A marimo notebook companion to
-`docs/design/em_covariance_extensions.md` (Phase 1, Phase 2) and
-`docs/design/penalised_em.md`. Run with::
+A marimo notebook companion to `docs/design/em_framework.md` (EM
+framework, η-rules, Shrinkage combinator) and the original phase plan
+in `docs/archive/design/em_covariance_extensions.md`. Run with::
 
     uv run marimo edit notebooks/em_shrinkage_demo.py
 
@@ -26,8 +26,9 @@ def _intro(mo):
     # normix EM extensions on S&P 500 returns
 
     This notebook demonstrates the Phase-1 (EM API generalisation) and
-    Phase-2 (shrinkage combinator) work landed in
-    `docs/design/em_covariance_extensions.md`. We use a high-dimensional,
+    Phase-2 (shrinkage combinator) work originally planned in
+    `docs/archive/design/em_covariance_extensions.md` (now landed; see
+    the living `docs/design/em_framework.md`). We use a high-dimensional,
     small-$n$ slice of S&P 500 daily returns — exactly the regime where
     the sample covariance is ill-conditioned and shrinkage is meant to
     help.
@@ -48,7 +49,8 @@ def _intro(mo):
     4. Diagnostic: condition number of $\Sigma$ and out-of-sample LL.
 
     References: `docs/theory/shrinkage.rst`,
-    `docs/design/penalised_em.md`.
+    `docs/design/em_framework.md` § 4 (Penalised EM via the
+    `Shrinkage` combinator).
     """)
     return
 
@@ -835,7 +837,7 @@ def _summary(mo):
           `RobbinsMonroUpdate` / `EWMAUpdate` /
           `SampleWeightedUpdate` for incremental EM.
 
-    See `docs/design/penalised_em.md` for the API rationale and
+    See `docs/design/em_framework.md` § 4 for the API rationale and
     `docs/theory/shrinkage.rst` for the derivation.
     """)
     return

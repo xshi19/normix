@@ -1,5 +1,10 @@
 # Log-Partition Triad: Redesigning the ExponentialFamily–GIG Interface
 
+> **ARCHIVED — 2026-05-10.** The living rationale lives in
+> `docs/design/exponential_family.md` (triad design) and
+> `docs/design/solvers_and_bessel.md` (solver interface, GIG η→θ).
+> Kept here for historical context.
+
 **Date:** 2026-03-20
 **Status:** Implemented (branch: `cursor/log-partition-triad-architecture-a531`)
 **Scope:** `normix/exponential_family.py`, `normix/distributions/generalized_inverse_gaussian.py`,
@@ -479,7 +484,7 @@ For each:
 ### Phase 5: Update documentation
 
 - Update `docs/ARCHITECTURE.md` § "Exponential Family Core" and § "CPU Versions" to reflect the triad
-- Update `docs/design/solver_redesign.md` § 3.1 to reflect `grad_fn` + `hess_fn` replacing `grad_hess_fn`
+- Update `docs/archive/design/solver_redesign.md` § 3.1 to reflect `grad_fn` + `hess_fn` replacing `grad_hess_fn`
 - Update `docs/ARCHITECTURE.md` § "GIG η→θ Optimization" to remove references to `_analytical_grad_hess_phi`
 
 ### Phase 6: Verify

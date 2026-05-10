@@ -1,12 +1,18 @@
 # EM Extensions: Shrinkage and Factor Analysis
 
+> **ARCHIVED — 2026-05-10.** All five phases implemented. The living
+> design rationale lives in `docs/design/em_framework.md` (EM framework
+> + regularisations) and `docs/design/mixtures.md` (factor-analysis
+> sibling family). This document is kept as a record of the original
+> proposal and phase plan.
+
 **Date:** 2026-04-17
-**Status:** In progress — Phases 1, 2, 2.5, 3, 4 complete; Phase 5 pending
+**Status:** Implemented (Phases 1–5)
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/em.py`, `normix/mixtures/marginal.py`,
 new `normix/mixtures/factor.py`
 **Theory:** `docs/theory/shrinkage.rst`, `docs/theory/factor_analysis.rst`
-**Companion docs:** `docs/design/penalised_em.md`
+**Companion docs:** `docs/archive/design/penalised_em.md`
 
 ---
 
@@ -36,7 +42,7 @@ Out of scope:
 - A `DispersionModel` / `FullDispersion` / `FactorDispersion` abstraction.
 Deferred until at least three storage variants are needed (see §8).
 - SVD-based full covariance. Same reason.
-- A new finance layer. See `docs/design/finance_architecture.md`.
+- A new finance layer. See `docs/plans/finance_architecture.md`.
 
 ---
 
@@ -817,7 +823,8 @@ starting point, not as committed code.
 
 ### Phase 3 — Penalised EM design doc ✅ Done
 
-1. `docs/design/penalised_em.md` covers:
+1. `docs/archive/design/penalised_em.md` covers (now archived; living
+   rationale at `docs/design/em_framework.md` § 4):
   - the η-affine derivation from `docs/theory/shrinkage.rst` (§2);
   - the per-field `tau` convention (§3.2);
   - the combinator API and target builders (§3.1, §3.3);
@@ -871,23 +878,31 @@ starting point, not as committed code.
   - `regularize_det_sigma_one` is a reparametrisation
   (`log_prob` invariant; `|Σ| = 1` after).
 
-### Phase 5 — Documentation
+### Phase 5 — Documentation ✅ Done (2026-05-10)
 
-1. Update `docs/ARCHITECTURE.md`:
-  - add `mixtures/factor.py` and `fitting/shrinkage_targets.py` to the
-   module tree;
-  - update the sufficient-statistics description to reference theory
-  order;
-  - add `MarginalMixture` to the mixture hierarchy diagram.
-2. Update `docs/design/design.md` decision table:
-  - two-layer rule abstraction (`EtaUpdateRule.__call__` /
-    `AffineRule.weights`, §4.1);
-  - generalised `affine_combine` weight forms (§4.2);
-  - shrinkage combinator (§4.3);
-  - convergence hook generalisation (§5);
-  - factor analysis as a sibling family (§7);
-  - deferral of `DispersionModel` (§8).
-3. Add a row pointing to `docs/design/penalised_em.md`.
+The Phase 5 documentation work was completed during the
+`docs/design/` cleanup of 2026-05-10:
+
+1. `docs/ARCHITECTURE.md` — `mixtures/factor.py`,
+   `fitting/shrinkage_targets.py`, and the `D_FLOOR` constant were
+   added; sufficient-statistics description references theory order;
+   `MarginalMixture` ABC is on the mixture hierarchy diagram.
+2. `docs/design/design.md` — restructured: rationale split into
+   topical files (`exponential_family.md`, `mixtures.md`,
+   `em_framework.md`, `solvers_and_bessel.md`), with `design.md`
+   reduced to philosophy + canonical decision table. The new EM
+   framework decisions (rule abstraction layers, generalised
+   `affine_combine`, `Shrinkage` combinator, convergence hook,
+   factor sibling, deferred `DispersionModel`) are recorded as
+   rows E5–E10 and M4 in the decision table.
+3. The four covariance regularisations (`'none'`,
+   `'det_sigma_one'`, `'det_sigma_x'`, `'a_eq_b'`) — including
+   the two added during Phase 4 — are documented in
+   `docs/design/em_framework.md` § 5.
+4. The penalised-EM material previously in
+   `docs/design/penalised_em.md` is integrated into
+   `docs/design/em_framework.md` § 4. The original
+   `penalised_em.md` is archived alongside this document.
 
 ### Out of scope / explicitly deferred
 

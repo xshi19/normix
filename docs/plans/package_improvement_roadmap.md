@@ -140,7 +140,7 @@ covers T4 extreme-parameter regimes across all distributions.
 | **C3** | Removed `_subordinator_log_partition` from all four joint subclasses and the abstract declaration from `JointNormalMixture`; method was never called anywhere. | ✅ Done |
 | **T3** | Added `TestJointExponentialFamilyRoundTrip` to `test_jax_distributions.py`: EF contract (log_partition self-consistency, expectation_params = ∇ψ), `rvs` finiteness, and `conditional_expectations` sign correctness for all four joints. | ✅ Done |
 | **DOC3** | Updated `docs/theory/em_algorithm.rst` "Implementation in normix" section: replaced stale `_conditional_expectation_y_given_x`, `joint.set_expectation_params`, `joint._expectation_to_natural` with current `e_step`, `m_step`, `conditional_expectations`, `solve_bregman`. | ✅ Done |
-| **DOC5** | Updated `docs/design/solver_redesign.md` status from "Proposal (v2)" to "Implemented". | ✅ Done |
+| **DOC5** | Updated `docs/archive/design/solver_redesign.md` (was `docs/design/solver_redesign.md`; archived 2026-05-10) status from "Proposal (v2)" to "Implemented". | ✅ Done |
 
 **Exit criteria (met):** No dead `_subordinator_log_partition` code; theory docs match current API; new T3 tests pass.
 

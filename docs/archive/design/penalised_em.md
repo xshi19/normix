@@ -1,12 +1,16 @@
 ## Penalised EM with Flexible Shrinkage
 
+> **ARCHIVED — 2026-05-10.** The living rationale (theory recap,
+> combinator API, target builders, choosing $\tau$ and $\Sigma_0$) lives
+> in `docs/design/em_framework.md` § 4. This document is preserved for
+> historical context.
+
 **Date:** 2026-04-19 (revised 2026-05-08)
-**Status:** Phase 3 design doc — describes the Phase 1 + Phase 2
-implementation already in `main`
+**Status:** Implemented and integrated into `docs/design/em_framework.md`.
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/shrinkage_targets.py`, `normix/fitting/em.py`
 **Theory:** `docs/theory/shrinkage.rst`
-**Parent design:** `docs/design/em_covariance_extensions.md` §4
+**Parent design:** `docs/archive/design/em_covariance_extensions.md` §4
 
 ---
 
@@ -85,7 +89,7 @@ The justification for both extensions is mechanical: each leaf of $\eta$
 is updated by an independent affine map of the corresponding leaf of
 $\hat\eta$ and $\eta_0$, and `affine_combine` already handles
 `tree.map`-broadcast weights (see
-`docs/design/em_covariance_extensions.md` §4.2).
+`docs/archive/design/em_covariance_extensions.md` §4.2).
 
 ---
 
@@ -203,7 +207,7 @@ A shrinkage target $\eta_0$ can be turned back into a concrete model via
 the η→model classmethod
 :meth:`~normix.mixtures.marginal.NormalMixture.from_expectation`. This
 is the cleanest way to verify what an `eta0_*` builder actually produces
-(see also `docs/design/em_covariance_extensions.md` §6.3):
+(see also `docs/archive/design/em_covariance_extensions.md` §6.3):
 
 ```python
 prior_model = type(model).from_expectation(eta0_isotropic(model, sigma2))
@@ -330,11 +334,11 @@ Expected effects vs unshrunk EM at $n\sim d$:
 ## 6. Cross-References
 
 - Theory: `docs/theory/shrinkage.rst`
-- Phase plan / decision log: `docs/design/em_covariance_extensions.md`
+- Phase plan / decision log: `docs/archive/design/em_covariance_extensions.md`
   §4 (rule abstraction, generalised `affine_combine`, combinator) and
   §6 (`MarginalMixture` ABC).
-- API surface: `docs/design/design.md` § "EM Framework: Model/Fitter
-  Separation".
+- Living API surface: `docs/design/em_framework.md` § 4
+  (`Shrinkage` combinator, target builders, choosing $\tau$).
 - Companion demo: `notebooks/em_shrinkage_demo.py` (marimo).
 - Tests: `tests/test_incremental_em.py` covers the four guarantees
   required by the design plan

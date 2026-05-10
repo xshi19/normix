@@ -14,7 +14,8 @@ Covers:
     σ²)).sigma() recovers σ²·I.
 
 These tests pin down the public contract added by the API unification
-(see `docs/design/em_covariance_extensions.md` §9, post-Phase 2).
+(see `docs/archive/design/em_covariance_extensions.md` §9, post-Phase 2;
+living rationale in `docs/design/mixtures.md` § 4 and § 5).
 """
 from __future__ import annotations
 

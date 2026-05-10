@@ -1,5 +1,9 @@
 # Solver Module Redesign
 
+> **ARCHIVED — 2026-05-10.** The living rationale lives in
+> `docs/design/solvers_and_bessel.md`. Kept here for historical
+> context.
+
 **Date:** 2026-03-18  
 **Status:** Implemented — `normix/fitting/solvers.py` now exposes `solve_bregman`, `solve_bregman_multistart`, and `bregman_objective` as described in §3. Library decision (keep JAXopt) and API shape match the proposal. See `normix/fitting/solvers.py` for the current implementation.  
 **Scope:** `normix/fitting/solvers.py`, interactions with `ExponentialFamily.from_expectation`

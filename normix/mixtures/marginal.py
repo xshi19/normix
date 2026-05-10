@@ -5,8 +5,8 @@ Marginal mixture base classes.
 divergences module depend on. :class:`NormalMixture` is the
 full-covariance implementation, owning a
 :class:`~normix.mixtures.joint.JointNormalMixture`. A factor-analysis
-implementation will be added in a sibling class
-(see ``docs/design/em_covariance_extensions.md``).
+implementation lives in the sibling class :class:`FactorNormalMixture`
+(see ``docs/design/mixtures.md`` § 6).
 
 NormalMixture provides:
 

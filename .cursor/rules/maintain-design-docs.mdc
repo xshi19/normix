@@ -12,16 +12,33 @@ alwaysApply: false
 
 Design docs record **why** decisions were made, not just **what** was decided.
 
-- `design.md` contains the **decision table** — the quickest way to look up
-  any architectural choice. Keep it as the single source of truth for decisions.
-- Other design docs (e.g. `solver_redesign.md`, `log_partition_triad.md`)
-  capture the rationale for specific subsystems.
-- Link to relevant tech notes for deep mathematical or algorithmic detail.
+- `design.md` is the **canonical decision table** — the quickest lookup for
+  any architectural choice.
+- Topical files (`exponential_family.md`, `mixtures.md`, `em_framework.md`,
+  `solvers_and_bessel.md`) carry the rationale for each subsystem.
+- `agent_instructions_design.md` covers how AGENTS.md, rules, skills, and
+  design docs work together.
+- `index.md` is the TOC.
+- Don't duplicate `docs/ARCHITECTURE.md`. ARCHITECTURE owns the **structure**
+  (module tree, distribution storage, constants); design owns the **why**.
+- Link to tech notes for deep mathematical or algorithmic detail.
 
 **When to update:**
-- New design decision made → add row to `design.md` decision table
-- Significant subsystem redesign → create or update a dedicated design doc
-- Decision reversed or superseded → mark old decision and add new one
+- New design decision made → add row to `design.md` decision table; add
+  rationale to the relevant topical file if non-trivial.
+- Significant subsystem redesign → write a fresh proposal under
+  `docs/plans/`. Once implemented, **archive** the proposal in
+  `docs/archive/design/` and fold the rationale into the relevant
+  topical file under `docs/design/`.
+- Decision reversed or superseded → mark old decision in `design.md` and
+  add the new one.
+
+**docs/archive/design/** — read-only history. Don't edit archived
+proposals except to mark them as archived or to fix dangling cross-refs.
+
+**docs/plans/** — work not yet started or in progress (migration plans,
+unimplemented proposals). Move proposals here before implementation,
+archive them after.
 
 ## docs/tech_notes/ — Deep Dives
 
