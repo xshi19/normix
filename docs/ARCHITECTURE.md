@@ -276,7 +276,7 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `docs/design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
 | `docs/design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
 | `docs/design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
-| `docs/tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks |
+| `docs/tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions |
 | `docs/theory/` | Mathematical derivations (`.rst`) |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `docs/plans/finance_architecture.md` | Proposed `normix.finance` layer (not yet implemented) |

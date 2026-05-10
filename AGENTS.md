@@ -57,6 +57,7 @@ Architecture and module hierarchy → `docs/ARCHITECTURE.md`
 | GIG η→θ, Bessel, CPU/GPU hybrid, RVS | `docs/design/solvers_and_bessel.md` |
 | Agent instructions design | `docs/design/agent_instructions_design.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
+| Distribution conversions (`to_<name>`) | `docs/tech_notes/distribution_conversions.md` |
 | Migration status & roadmap | `docs/plans/` |
 | Unimplemented proposals (e.g. `normix.finance`) | `docs/plans/finance_architecture.md` |
 | Archived design proposals (already implemented) | `docs/archive/design/` |
