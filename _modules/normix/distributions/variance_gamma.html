@@ -93,10 +93,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.factor</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactorNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
-
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
 
 
@@ -292,8 +292,6 @@
 <span class="sd">        :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,</span>
 <span class="sd">        :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
-
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">d</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span>
@@ -387,6 +385,112 @@
         <span class="k">return</span> <span class="n">GeneralizedHyperbolic</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">to_joint_generalized_hyperbolic</span><span class="p">(</span><span class="n">boundary_eps</span><span class="o">=</span><span class="n">boundary_eps</span><span class="p">))</span></div>
 </div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Factor-analysis Variance Gamma (Σ = F Fᵀ + diag(D))</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="FactorVarianceGamma">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.FactorVarianceGamma">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FactorVarianceGamma</span><span class="p">(</span><span class="n">FactorNormalMixture</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Factor-analysis Variance Gamma:</span>
+<span class="sd">    :math:`Y \sim \mathrm{Gamma}(\alpha, \beta)`,</span>
+<span class="sd">    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.</span>
+
+<span class="sd">    GIG limit of the subordinator: :math:`p = \alpha`,</span>
+<span class="sd">    :math:`a = 2\beta`, :math:`b \to 0`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">FactorNormalMixture</span><span class="o">.</span><span class="n">_check_init_args</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">(</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+            <span class="n">beta</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FactorVarianceGamma.from_classical">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.FactorVarianceGamma.from_classical">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorVarianceGamma&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">alpha</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">beta</span>
+
+<div class="viewcode-block" id="FactorVarianceGamma.log_prob">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.FactorVarianceGamma.log_prob">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Marginal VG log-density evaluated with Woodbury Σ-solve.&quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span>
+
+        <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">w2</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">log_det_sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_det_sigma</span><span class="p">()</span>
+
+        <span class="n">log_C</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+                 <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                 <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_sigma</span>
+                 <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+                 <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+
+        <span class="n">z_arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">z2</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">log_K</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">z_arg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">log_C</span>
+                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">log_K</span> <span class="o">+</span> <span class="n">zw</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span>
+                <span class="n">z2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+        <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span>
+        <span class="k">return</span> <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_from_eta</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+        <span class="c1"># Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the</span>
+        <span class="c1"># dispersion. For Gamma(α, β), Y/s ⇒ β → β·s, α unchanged.</span>
+        <span class="k">return</span> <span class="n">FactorVarianceGamma</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="n">F_new</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D_new</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_init_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></div>
 
 </pre></div>
 

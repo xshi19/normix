@@ -2477,6 +2477,61 @@ vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.variance_gamma.</span></span><span class="sig-name descname"><span class="pre">FactorVarianceGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#FactorVarianceGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p>
+<p>Factor-analysis Variance Gamma:
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{Gamma}(\alpha, \beta)\)</span>,
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>.</p>
+<p>GIG limit of the subordinator: <span class="math notranslate nohighlight">\(p = \alpha\)</span>,
+<span class="math notranslate nohighlight">\(a = 2\beta\)</span>, <span class="math notranslate nohighlight">\(b \to 0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>F</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#FactorVarianceGamma.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.FactorVarianceGamma" title="normix.distributions.variance_gamma.FactorVarianceGamma"><em>FactorVarianceGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma.alpha">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma.alpha" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma.beta">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma.beta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#FactorVarianceGamma.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma.log_prob" title="Link to this definition"></a></dt>
+<dd><p>Marginal VG log-density evaluated with Woodbury Σ-solve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-normix.distributions.normal_inverse_gamma">
 <span id="normal-inverse-gamma"></span><h3>Normal Inverse Gamma<a class="headerlink" href="#module-normix.distributions.normal_inverse_gamma" title="Link to this heading"></a></h3>
@@ -2634,6 +2689,60 @@ subordinator).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">FactorNormalInverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#FactorNormalInverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p>
+<p>Factor-analysis Normal-Inverse-Gamma:
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGamma}(\alpha, \beta)\)</span>,
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>.</p>
+<p>GIG limit: <span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(b = 2\beta\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>F</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#FactorNormalInverseGamma.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma"><em>FactorNormalInverseGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.alpha">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.alpha" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.beta">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.beta" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#FactorNormalInverseGamma.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma.log_prob" title="Link to this definition"></a></dt>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span> for a single observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2800,6 +2909,73 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 <dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
 <p>No boundary approximation: NIG sits in the strict interior of GH’s
 parameter space (<span class="math notranslate nohighlight">\(p = -1/2,\; a = \lambda/\mu_{IG}^2,\; b = \lambda\)</span>).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gaussian.</span></span><span class="sig-name descname"><span class="pre">FactorNormalInverseGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_ig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#FactorNormalInverseGaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p>
+<p>Factor-analysis Normal-Inverse-Gaussian:
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)\)</span>,
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>.</p>
+<p>GIG params: <span class="math notranslate nohighlight">\(p = -1/2\)</span>, <span class="math notranslate nohighlight">\(a = \lambda/\mu_{IG}^2\)</span>,
+<span class="math notranslate nohighlight">\(b = \lambda\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>F</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_ig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#FactorNormalInverseGaussian.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian"><em>FactorNormalInverseGaussian</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.mu_ig">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mu_ig</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.mu_ig" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.lam">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">lam</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.lam" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#FactorNormalInverseGaussian.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.log_prob" title="Link to this definition"></a></dt>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span> for a single observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#FactorNormalInverseGaussian.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.regularize_a_eq_b" title="Link to this definition"></a></dt>
+<dd><p>Rescale so <span class="math notranslate nohighlight">\(a = b\)</span>. For NIG (<span class="math notranslate nohighlight">\(a = \lambda/\mu_{IG}^2\)</span>,
+<span class="math notranslate nohighlight">\(b = \lambda\)</span>), this means <span class="math notranslate nohighlight">\(\mu_{IG} \to 1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian"><em>FactorNormalInverseGaussian</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -3109,6 +3285,133 @@ with the highest marginal log-likelihood.  A moment-based fallback
 <dd><p>Fit GH distribution using EM or MCECM.</p>
 <p>Defaults to CPU backends and det_sigma_one regularization
 (GH has scale non-identifiability requiring <a href="#id1"><span class="problematic" id="id2">|Sigma|</span></a> = 1).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.generalized_hyperbolic.</span></span><span class="sig-name descname"><span class="pre">FactorGeneralizedHyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p>
+<p>Factor-analysis Generalized Hyperbolic:
+<span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span>,
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>.</p>
+<p>The GIG subordinator’s M-step uses warm-started numerical
+optimisation with the same sanity-check fall-back as the standard
+<a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>F</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.p">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">p</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.p" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.a">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.a" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.b">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.b" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.log_prob" title="Link to this definition"></a></dt>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span> for a single observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step">
+<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step" title="Link to this definition"></a></dt>
+<dd><p>Full M-step with warm-started, sanity-checked GIG solve.</p>
+<p>Mirrors <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.m_step()</span></code></a>: do the closed-form
+factor M-step first, then run the subordinator update with
+warm-start and fall-back.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator" title="Link to this definition"></a></dt>
+<dd><p>M-step for the subordinator only (MCECM cycle 2).</p>
+<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>;
+<span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span> are read from <code class="docutils literal notranslate"><span class="pre">self</span></code> and copied
+unchanged. Subclasses with iterative solvers may override to
+add a warm-start or sanity-check fallback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.regularize_a_eq_b" title="Link to this definition"></a></dt>
+<dd><p>Rescale so <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span> (orbit invariant).</p>
+<p>Mirrors <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.regularize_a_eq_b()</span></code></a>. Picks
+<span class="math notranslate nohighlight">\(s = \sqrt{a/b}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init" title="Link to this definition"></a></dt>
+<dd><p>Warm-start from the best of FactorNIG / FactorVG / FactorNInvG fits.</p>
+<p>Mirrors <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.default_init()</span></code></a>: runs a few
+EM iterations of each special-case factor family, converts each
+subordinator to the GIG embedding, and selects the candidate
+with the highest marginal log-likelihood. A moment-based
+fallback (<span class="math notranslate nohighlight">\(p = 1, a = 1, b = 1\)</span>) is included as a fourth
+candidate.</p>
+<p>Fully JAX-native: no try/except, no Python branching on data values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
