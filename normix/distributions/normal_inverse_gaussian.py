@@ -16,10 +16,10 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
+from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
-
-
+from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
 
 
@@ -198,8 +198,6 @@ class NormalInverseGaussian(NormalMixture):
         Uses :math:`K_{-1/2}(z) = \sqrt{\pi/(2z)}\,e^{-z}` for the normalisation,
         leaving only one :math:`\log K_\nu` call at order :math:`\nu = -1/2 - d/2`.
         """
-        from normix.utils.bessel import log_kv
-
         j = self._joint
         d = j.d
         p = -0.5
@@ -287,3 +285,111 @@ class NormalInverseGaussian(NormalMixture):
         """
         from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
         return GeneralizedHyperbolic(self._joint.to_joint_generalized_hyperbolic())
+
+
+# ============================================================================
+# Factor-analysis Normal-Inverse Gaussian (Σ = F Fᵀ + diag(D))
+# ============================================================================
+
+
+class FactorNormalInverseGaussian(FactorNormalMixture):
+    r"""Factor-analysis Normal-Inverse-Gaussian:
+    :math:`Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)`,
+    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
+
+    GIG params: :math:`p = -1/2`, :math:`a = \lambda/\mu_{IG}^2`,
+    :math:`b = \lambda`.
+    """
+
+    def __init__(self, mu, gamma, F, D, *, mu_ig, lam):
+        from normix.distributions.inverse_gaussian import InverseGaussian
+        mu, gamma, F, D = FactorNormalMixture._check_init_args(mu, gamma, F, D)
+        sub = InverseGaussian(
+            mu=jnp.asarray(mu_ig, dtype=jnp.float64),
+            lam=jnp.asarray(lam, dtype=jnp.float64),
+        )
+        object.__setattr__(self, 'mu', mu)
+        object.__setattr__(self, 'gamma', gamma)
+        object.__setattr__(self, 'F', F)
+        object.__setattr__(self, 'D', D)
+        object.__setattr__(self, 'subordinator', sub)
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, F, D, mu_ig, lam,
+    ) -> "FactorNormalInverseGaussian":
+        return cls(mu=mu, gamma=gamma, F=F, D=D, mu_ig=mu_ig, lam=lam)
+
+    @property
+    def mu_ig(self) -> jax.Array:
+        return self.subordinator.mu
+
+    @property
+    def lam(self) -> jax.Array:
+        return self.subordinator.lam
+
+    def log_prob(self, x: jax.Array) -> jax.Array:
+        x = jnp.asarray(x, dtype=jnp.float64)
+        d = self.d
+        p = -0.5
+        a = self.lam / (self.mu_ig ** 2)
+        b = self.lam
+
+        z2, w2, zw = self._quad_forms(x)
+        Q = z2
+        A = a + w2
+        nu = p - d / 2.0
+        log_det_sigma = self._log_det_sigma()
+
+        sqrt_ab = jnp.sqrt(a * b)
+        log_K_p = 0.5 * jnp.log(jnp.pi / (2.0 * sqrt_ab + LOG_EPS)) - sqrt_ab
+        sqrt_A_Qb = jnp.sqrt(A * (Q + b))
+
+        return (-0.5 * d * jnp.log(2.0 * jnp.pi)
+                - 0.5 * log_det_sigma
+                + 0.5 * p * (jnp.log(a + LOG_EPS) - jnp.log(b + LOG_EPS))
+                - log_K_p
+                + 0.5 * (d / 2.0 - p) * jnp.log(A / (Q + b + LOG_EPS))
+                + log_kv(nu, sqrt_A_Qb)
+                + zw)
+
+    def _posterior_gig_params(self, z2, w2):
+        a_ig = self.lam / (self.mu_ig ** 2)
+        return (-0.5 - self.d / 2.0,
+                a_ig + w2,
+                self.lam + z2)
+
+    def _subordinator_expectations(self):
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        gig = GIG(
+            p=jnp.float64(-0.5),
+            a=self.lam / (self.mu_ig ** 2), b=self.lam,
+        )
+        eta = gig.expectation_params()
+        return eta[0], eta[1], eta[2]
+
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        from normix.distributions.inverse_gaussian import InverseGaussian
+        return InverseGaussian.from_expectation(
+            jnp.array([eta.E_Y, eta.E_inv_Y]))
+
+    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
+        # Σ → Σ/s pairs with Y → s·Y so that Y·Σ keeps its dispersion.
+        # IG(μ_IG, λ): Y → s·Y ⇒ μ_IG → s·μ_IG, λ → s·λ.
+        return FactorNormalInverseGaussian(
+            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
+            mu_ig=self.mu_ig * scale, lam=self.lam * scale,
+        )
+
+    def regularize_a_eq_b(self) -> "FactorNormalInverseGaussian":
+        r"""Rescale so :math:`a = b`. For NIG (:math:`a = \lambda/\mu_{IG}^2`,
+        :math:`b = \lambda`), this means :math:`\mu_{IG} \to 1`.
+        """
+        scale = 1.0 / self.mu_ig
+        return self._rescale(scale)
+
+    @classmethod
+    def _from_init_params(cls, mu, gamma, F, D):
+        return cls.from_classical(
+            mu=mu, gamma=gamma, F=F, D=D, mu_ig=1.0, lam=1.0)

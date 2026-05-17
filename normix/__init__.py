@@ -49,23 +49,20 @@ from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
 from normix.distributions.generalized_inverse_gaussian import GIG, GeneralizedInverseGaussian
 from normix.distributions.normal import MultivariateNormal
-from normix.distributions.variance_gamma import VarianceGamma, JointVarianceGamma
+from normix.distributions.variance_gamma import (
+    VarianceGamma, JointVarianceGamma, FactorVarianceGamma)
 from normix.distributions.normal_inverse_gamma import (
-    NormalInverseGamma, JointNormalInverseGamma)
+    NormalInverseGamma, JointNormalInverseGamma, FactorNormalInverseGamma)
 from normix.distributions.normal_inverse_gaussian import (
-    NormalInverseGaussian, JointNormalInverseGaussian)
+    NormalInverseGaussian, JointNormalInverseGaussian,
+    FactorNormalInverseGaussian)
 from normix.distributions.generalized_hyperbolic import (
-    GeneralizedHyperbolic, JointGeneralizedHyperbolic)
+    GeneralizedHyperbolic, JointGeneralizedHyperbolic,
+    FactorGeneralizedHyperbolic)
 
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import MarginalMixture, NormalMixture
-from normix.mixtures.factor import (
-    FactorNormalMixture,
-    FactorVarianceGamma,
-    FactorNormalInverseGamma,
-    FactorNormalInverseGaussian,
-    FactorGeneralizedHyperbolic,
-)
+from normix.mixtures.factor import FactorNormalMixture
 
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
 from normix.fitting.eta import NormalMixtureEta, FactorMixtureStats, affine_combine

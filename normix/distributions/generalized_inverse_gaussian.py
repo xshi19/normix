@@ -60,6 +60,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from normix.utils.bessel import log_kv
+from normix.utils.rvs import build_pinv_table, rvs_pinv
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
     LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD,
@@ -69,6 +70,135 @@ from normix.fitting.solvers import (
     bregman_objective, solve_bregman, solve_bregman_multistart,
     make_jit_newton_solver,
 )
+
+
+# ---------------------------------------------------------------------------
+# Random variate generation helpers (Devroye TDR + PINV wrappers)
+# ---------------------------------------------------------------------------
+#
+# Two GIG sampling methods, neither requiring Bessel evaluation:
+#
+# 1. ``_gig_rvs_devroye`` — Transformed density rejection on
+#    :math:`w = \log x` where the GIG log-kernel
+#    :math:`g(w) = pw - (a e^w + b e^{-w})/2` is strictly concave.
+#    Three-piece tangent-line envelope, batch-parallel (no
+#    ``while_loop``), ~80–90% acceptance.
+#
+# 2. ``_gig_build_pinv_table`` / ``_gig_rvs_pinv`` — Numerical inverse
+#    CDF via the generic ``utils.rvs`` PINV machinery. CPU table build,
+#    GPU-friendly sampling via ``jnp.interp``.
+
+_GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
+_GIG_RVS_MAX_REJECT_ROUNDS = 20
+
+
+def _gig_tdr_setup(p, a, b):
+    r"""Three-piece TDR envelope for :math:`g(w) = pw - (a e^w + b e^{-w})/2`."""
+    t0 = (p + jnp.sqrt(p * p + a * b)) / a
+    w0 = jnp.log(t0)
+    g0 = p * w0 - 0.5 * (a * t0 + b / t0)
+
+    neg_gpp = 0.5 * (a * t0 + b / t0)
+    sigma = 1.0 / jnp.sqrt(neg_gpp)
+
+    wL, wR = w0 - sigma, w0 + sigma
+    tL, tR = jnp.exp(wL), jnp.exp(wR)
+
+    gL = p * wL - 0.5 * (a * tL + b / tL)
+    gR = p * wR - 0.5 * (a * tR + b / tR)
+    gpL = p - 0.5 * a * tL + 0.5 * b / tL      # g′(wL) > 0
+    gpR = p - 0.5 * a * tR + 0.5 * b / tR      # g′(wR) < 0
+
+    wsL = wL + (g0 - gL) / gpL
+    wsR = wR + (g0 - gR) / gpR
+
+    inv_lL = 1.0 / gpL
+    inv_lR = 1.0 / (-gpR)
+    width  = wsR - wsL
+    D      = inv_lL + width + inv_lR
+
+    return dict(
+        g0=g0, wsL=wsL, wsR=wsR, gpL=gpL, gpR=gpR,
+        width=width, pL=inv_lL / D, pM=width / D, lR=-gpR,
+    )
+
+
+def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w = \log x`.
+
+    All ``_GIG_RVS_MAX_REJECT_ROUNDS * n`` proposals are generated in a
+    single batch — no ``while_loop`` or ``fori_loop``, fully GPU-parallel.
+    Acceptance rate ~ 80–90% for typical parameters.
+    """
+    p = jnp.asarray(p, dtype=jnp.float64)
+    a = jnp.asarray(a, dtype=jnp.float64)
+    b = jnp.asarray(b, dtype=jnp.float64)
+
+    env = _gig_tdr_setup(p, a, b)
+    g0, wsL, wsR = env["g0"], env["wsL"], env["wsR"]
+    gpL, gpR, width = env["gpL"], env["gpR"], env["width"]
+    pL, pM, lR = env["pL"], env["pM"], env["lR"]
+
+    M = _GIG_RVS_MAX_REJECT_ROUNDS
+
+    k1, k2, k3 = jax.random.split(key, 3)
+    all_up = jax.random.uniform(k1, (M, n), dtype=jnp.float64)
+    all_u  = jnp.maximum(
+        jax.random.uniform(k2, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
+    all_ua = jnp.maximum(
+        jax.random.uniform(k3, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
+
+    log_u = jnp.log(all_u)
+
+    w_l = wsL + log_u / gpL
+    w_m = wsL + all_u * width
+    w_r = wsR - log_u / lR
+
+    h_l = g0 + gpL * (w_l - wsL)
+    h_m = g0
+    h_r = g0 + gpR * (w_r - wsR)
+
+    left = all_up < pL
+    mid  = (all_up >= pL) & (all_up < pL + pM)
+
+    w = jnp.where(left, w_l, jnp.where(mid, w_m, w_r))
+    h = jnp.where(left, h_l, jnp.where(mid, h_m, h_r))
+
+    ew = jnp.exp(w)
+    gw = p * w - 0.5 * (a * ew + b / ew)
+    ok = jnp.log(all_ua) <= gw - h
+
+    first_idx = jnp.argmax(ok, axis=0)
+    return ew[first_idx, jnp.arange(n)]
+
+
+def _gig_log_kernel_np(w, p, a, b):
+    """GIG log-kernel in w-space (numpy, vectorised)."""
+    w_c = np.clip(w, -500.0, 500.0)
+    ew = np.exp(w_c)
+    return p * w_c - 0.5 * (a * ew + b / ew)
+
+
+def _gig_mode_w(p, a, b):
+    """Mode of the GIG log-kernel in :math:`w = \\log x` space."""
+    t0 = (p + np.sqrt(p ** 2 + a * b)) / a
+    return np.log(t0)
+
+
+def _gig_build_pinv_table(p, a, b, **kwargs):
+    """Build a PINV table for :math:`\\mathrm{GIG}(p, a, b)`."""
+    pf, af, bf = float(p), float(a), float(b)
+    return build_pinv_table(
+        log_kernel=lambda w: _gig_log_kernel_np(w, pf, af, bf),
+        mode=_gig_mode_w(pf, af, bf),
+        x_of_w=np.exp,
+        **kwargs,
+    )
+
+
+def _gig_rvs_pinv(key, u_grid, x_grid, n):
+    """Sample *n* GIG variates from a precomputed PINV table."""
+    return rvs_pinv(key, u_grid, x_grid, n)
 
 
 
@@ -412,18 +542,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
               no Bessel. Best for large *n* with fixed parameters.
             * ``'scipy'`` — ``scipy.stats.geninvgauss`` (CPU, original fallback).
         """
-        from normix.distributions._gig_rvs import (
-            gig_rvs_devroye, gig_build_pinv_table, gig_rvs_pinv,
-        )
-
         if method == "devroye":
             key = jax.random.PRNGKey(seed)
-            return gig_rvs_devroye(key, self.p, self.a, self.b, n)
+            return _gig_rvs_devroye(key, self.p, self.a, self.b, n)
 
         if method == "pinv":
             key = jax.random.PRNGKey(seed)
-            u_grid, x_grid = gig_build_pinv_table(self.p, self.a, self.b)
-            return gig_rvs_pinv(key, u_grid, x_grid, n)
+            u_grid, x_grid = _gig_build_pinv_table(self.p, self.a, self.b)
+            return _gig_rvs_pinv(key, u_grid, x_grid, n)
 
         if method == "scipy":
             from scipy import stats

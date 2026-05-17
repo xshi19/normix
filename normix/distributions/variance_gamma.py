@@ -17,10 +17,10 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
+from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
-
-
+from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
 
 
@@ -191,8 +191,6 @@ class VarianceGamma(NormalMixture):
         :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,
         :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.
         """
-        from normix.utils.bessel import log_kv
-
         j = self._joint
         d = j.d
         alpha = j.alpha
@@ -279,3 +277,100 @@ class VarianceGamma(NormalMixture):
         from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
         return GeneralizedHyperbolic(
             self._joint.to_joint_generalized_hyperbolic(boundary_eps=boundary_eps))
+
+
+# ============================================================================
+# Factor-analysis Variance Gamma (Σ = F Fᵀ + diag(D))
+# ============================================================================
+
+
+class FactorVarianceGamma(FactorNormalMixture):
+    r"""Factor-analysis Variance Gamma:
+    :math:`Y \sim \mathrm{Gamma}(\alpha, \beta)`,
+    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
+
+    GIG limit of the subordinator: :math:`p = \alpha`,
+    :math:`a = 2\beta`, :math:`b \to 0`.
+    """
+
+    def __init__(self, mu, gamma, F, D, *, alpha, beta):
+        from normix.distributions.gamma import Gamma
+        mu, gamma, F, D = FactorNormalMixture._check_init_args(mu, gamma, F, D)
+        sub = Gamma(
+            alpha=jnp.asarray(alpha, dtype=jnp.float64),
+            beta=jnp.asarray(beta, dtype=jnp.float64),
+        )
+        object.__setattr__(self, 'mu', mu)
+        object.__setattr__(self, 'gamma', gamma)
+        object.__setattr__(self, 'F', F)
+        object.__setattr__(self, 'D', D)
+        object.__setattr__(self, 'subordinator', sub)
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, F, D, alpha, beta,
+    ) -> "FactorVarianceGamma":
+        return cls(mu=mu, gamma=gamma, F=F, D=D, alpha=alpha, beta=beta)
+
+    @property
+    def alpha(self) -> jax.Array:
+        return self.subordinator.alpha
+
+    @property
+    def beta(self) -> jax.Array:
+        return self.subordinator.beta
+
+    def log_prob(self, x: jax.Array) -> jax.Array:
+        r"""Marginal VG log-density evaluated with Woodbury Σ-solve."""
+        x = jnp.asarray(x, dtype=jnp.float64)
+        d = self.d
+        alpha = self.alpha
+        beta = self.beta
+
+        z2, w2, zw = self._quad_forms(x)
+        c = beta + 0.5 * w2
+        nu = alpha - d / 2.0
+        log_det_sigma = self._log_det_sigma()
+
+        log_C = (jnp.log(2.0)
+                 - 0.5 * d * jnp.log(2.0 * jnp.pi)
+                 - 0.5 * log_det_sigma
+                 - jax.scipy.special.gammaln(alpha)
+                 + alpha * jnp.log(beta))
+
+        z_arg = jnp.sqrt(2.0 * z2 * c)
+        log_K = log_kv(nu, z_arg)
+        return (log_C
+                + 0.5 * nu * jnp.log(z2 / (2.0 * c + LOG_EPS) + LOG_EPS)
+                + log_K + zw)
+
+    def _posterior_gig_params(self, z2, w2):
+        return (self.alpha - self.d / 2.0,
+                2.0 * self.beta + w2,
+                z2)
+
+    def _subordinator_expectations(self):
+        E_log_Y = jax.scipy.special.digamma(self.alpha) - jnp.log(self.beta)
+        E_inv_Y = self.beta / (self.alpha - 1.0)
+        E_Y = self.alpha / self.beta
+        return E_log_Y, E_inv_Y, E_Y
+
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        from normix.distributions.gamma import Gamma
+        backend = kwargs.get('backend', 'jax')
+        return Gamma.from_expectation(
+            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
+
+    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
+        # Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the
+        # dispersion. For Gamma(α, β), Y/s ⇒ β → β·s, α unchanged.
+        return FactorVarianceGamma(
+            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
+            alpha=self.alpha, beta=self.beta / scale,
+        )
+
+    @classmethod
+    def _from_init_params(cls, mu, gamma, F, D):
+        return cls.from_classical(
+            mu=mu, gamma=gamma, F=F, D=D, alpha=2.0, beta=1.0)

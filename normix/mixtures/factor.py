@@ -1,5 +1,5 @@
 """
-Factor-analysis mixtures: :math:`\\Sigma = F F^\\top + D` storage.
+Factor-analysis mixture base class: :math:`\\Sigma = F F^\\top + \\mathrm{diag}(D)` storage.
 
 A factor-analysis Generalized-Hyperbolic random vector
 
@@ -18,28 +18,25 @@ variance-mean mixture with dispersion :math:`\\Sigma = F F^\\top +
 gauge of :math:`F` irrelevant for convergence (we measure on
 :math:`\\Sigma`).
 
-This module mirrors the four-distribution layout of the full-covariance
-family but skips the joint-:math:`f(x, y)` exponential-family layer:
-the FA complete-data structure is over :math:`(X, Y, Z)` with ten
-sufficient statistics rather than six (see
-``docs/theory/factor_analysis.rst``), so it does not share the joint's
-six-statistic exponential-family signature.
+This module hosts only the abstract :class:`FactorNormalMixture` base.
+The four concrete subordinator families
+(:class:`~normix.distributions.variance_gamma.FactorVarianceGamma`,
+:class:`~normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma`,
+:class:`~normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian`,
+:class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`)
+live next to their full-:math:`\\Sigma` siblings in
+``normix/distributions/``.
 
-Public classes
---------------
-
-- :class:`FactorNormalMixture` — abstract base, :class:`MarginalMixture`
-  contract.
-- :class:`FactorVarianceGamma`, :class:`FactorNormalInverseGamma`,
-  :class:`FactorNormalInverseGaussian`,
-  :class:`FactorGeneralizedHyperbolic` — the four concrete families,
-  each providing the subordinator-specific marginal density,
-  posterior-:math:`\\mathrm{GIG}` parameters, and subordinator M-step.
+The FA complete-data structure is over :math:`(X, Y, Z)` with ten
+sufficient statistics (see ``docs/theory/factor_analysis.rst``), so this
+family does not share the joint's six-statistic exponential-family
+signature — that is why :class:`FactorNormalMixture` is a sibling of
+:class:`~normix.mixtures.marginal.NormalMixture`, not a subclass.
 """
 from __future__ import annotations
 
 import abc
-from typing import Optional, Tuple
+from typing import Tuple
 
 import equinox as eqx
 import jax
@@ -48,15 +45,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
 from normix.mixtures.marginal import MarginalMixture
-from normix.utils.bessel import log_kv
-from normix.utils.constants import (
-    D_FLOOR,
-    GIG_CLAMP_HI,
-    GIG_CLAMP_LO,
-    GIG_P_MAX,
-    LOG_EPS,
-    SIGMA_INIT_REG,
-)
+from normix.utils.constants import D_FLOOR, SIGMA_INIT_REG
 
 
 # ============================================================================
@@ -117,6 +106,21 @@ class FactorNormalMixture(MarginalMixture):
     @property
     def r(self) -> int:
         return int(self.F.shape[1])
+
+    # ------------------------------------------------------------------
+    # Shared subclass helper
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _check_init_args(
+        mu: jax.Array, gamma: jax.Array, F: jax.Array, D: jax.Array,
+    ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        """Coerce ``(mu, gamma, F, D)`` to float64 and floor ``D`` for positivity."""
+        mu = jnp.asarray(mu, dtype=jnp.float64)
+        gamma = jnp.asarray(gamma, dtype=jnp.float64)
+        F = jnp.asarray(F, dtype=jnp.float64)
+        D = jnp.maximum(jnp.asarray(D, dtype=jnp.float64), D_FLOOR)
+        return mu, gamma, F, D
 
     # ------------------------------------------------------------------
     # Woodbury helpers (Σ = F Fᵀ + diag(D), all in O(d r² + r³))
@@ -448,8 +452,8 @@ class FactorNormalMixture(MarginalMixture):
 
         Equivalent to ``self.m_step_normal(eta).m_step_subordinator(eta,
         **kwargs)``. Subclasses with iterative subordinator solvers (e.g.
-        :class:`FactorGeneralizedHyperbolic`) may override to inject a
-        warm-start.
+        :class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`)
+        may override to inject a warm-start.
         """
         return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
@@ -583,8 +587,10 @@ class FactorNormalMixture(MarginalMixture):
     def regularize_a_eq_b(self) -> "FactorNormalMixture":
         r"""Rescale subordinator so that :math:`a = b = \sqrt{ab}`.
 
-        Default no-op; overridden in :class:`FactorGeneralizedHyperbolic`
-        and :class:`FactorNormalInverseGaussian`.
+        Default no-op; overridden in
+        :class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`
+        and
+        :class:`~normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian`.
         """
         return self
 
@@ -674,547 +680,4 @@ class FactorNormalMixture(MarginalMixture):
         return eqx.tree_at(
             lambda m: tuple(getattr(m, k) for k in keys),
             self, new_values,
-        )
-
-
-# ============================================================================
-# Concrete subclasses
-# ============================================================================
-
-
-def _check_factor_init_args(mu, gamma, F, D):
-    mu = jnp.asarray(mu, dtype=jnp.float64)
-    gamma = jnp.asarray(gamma, dtype=jnp.float64)
-    F = jnp.asarray(F, dtype=jnp.float64)
-    D = jnp.maximum(jnp.asarray(D, dtype=jnp.float64), D_FLOOR)
-    return mu, gamma, F, D
-
-
-class FactorVarianceGamma(FactorNormalMixture):
-    r"""Factor-analysis Variance Gamma:
-    :math:`Y \sim \mathrm{Gamma}(\alpha, \beta)`,
-    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
-
-    GIG limit of the subordinator: :math:`p = \alpha`,
-    :math:`a = 2\beta`, :math:`b \to 0`.
-    """
-
-    def __init__(self, mu, gamma, F, D, *, alpha, beta):
-        from normix.distributions.gamma import Gamma
-        mu, gamma, F, D = _check_factor_init_args(mu, gamma, F, D)
-        sub = Gamma(
-            alpha=jnp.asarray(alpha, dtype=jnp.float64),
-            beta=jnp.asarray(beta, dtype=jnp.float64),
-        )
-        object.__setattr__(self, 'mu', mu)
-        object.__setattr__(self, 'gamma', gamma)
-        object.__setattr__(self, 'F', F)
-        object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
-
-    @classmethod
-    def from_classical(
-        cls, *, mu, gamma, F, D, alpha, beta,
-    ) -> "FactorVarianceGamma":
-        return cls(mu=mu, gamma=gamma, F=F, D=D, alpha=alpha, beta=beta)
-
-    # Subordinator forwarders
-    @property
-    def alpha(self) -> jax.Array:
-        return self.subordinator.alpha
-
-    @property
-    def beta(self) -> jax.Array:
-        return self.subordinator.beta
-
-    # ---- log-prob (mirrors VarianceGamma but via Woodbury) ----
-
-    def log_prob(self, x: jax.Array) -> jax.Array:
-        r"""Marginal VG log-density evaluated with Woodbury Σ-solve."""
-        x = jnp.asarray(x, dtype=jnp.float64)
-        d = self.d
-        alpha = self.alpha
-        beta = self.beta
-
-        z2, w2, zw = self._quad_forms(x)
-        c = beta + 0.5 * w2
-        nu = alpha - d / 2.0
-        log_det_sigma = self._log_det_sigma()
-
-        log_C = (jnp.log(2.0)
-                 - 0.5 * d * jnp.log(2.0 * jnp.pi)
-                 - 0.5 * log_det_sigma
-                 - jax.scipy.special.gammaln(alpha)
-                 + alpha * jnp.log(beta))
-
-        z_arg = jnp.sqrt(2.0 * z2 * c)
-        log_K = log_kv(nu, z_arg)
-        return (log_C
-                + 0.5 * nu * jnp.log(z2 / (2.0 * c + LOG_EPS) + LOG_EPS)
-                + log_K + zw)
-
-    # ---- Posterior GIG ----
-
-    def _posterior_gig_params(self, z2, w2):
-        return (self.alpha - self.d / 2.0,
-                2.0 * self.beta + w2,
-                z2)
-
-    # ---- Subordinator E[·] for compute_eta_from_model ----
-
-    def _subordinator_expectations(self):
-        E_log_Y = jax.scipy.special.digamma(self.alpha) - jnp.log(self.beta)
-        E_inv_Y = self.beta / (self.alpha - 1.0)
-        E_Y = self.alpha / self.beta
-        return E_log_Y, E_inv_Y, E_Y
-
-    # ---- Subordinator from η ----
-
-    @classmethod
-    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
-        from normix.distributions.gamma import Gamma
-        backend = kwargs.get('backend', 'jax')
-        return Gamma.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
-
-    # ---- Rescaling ----
-
-    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the
-        # dispersion. For Gamma(α, β), Y/s ⇒ β → β·s, α unchanged.
-        return FactorVarianceGamma(
-            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
-            alpha=self.alpha, beta=self.beta / scale,
-        )
-
-    @classmethod
-    def _from_init_params(cls, mu, gamma, F, D):
-        return cls.from_classical(
-            mu=mu, gamma=gamma, F=F, D=D, alpha=2.0, beta=1.0)
-
-
-class FactorNormalInverseGamma(FactorNormalMixture):
-    r"""Factor-analysis Normal-Inverse-Gamma:
-    :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`,
-    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
-
-    GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.
-    """
-
-    def __init__(self, mu, gamma, F, D, *, alpha, beta):
-        from normix.distributions.inverse_gamma import InverseGamma
-        mu, gamma, F, D = _check_factor_init_args(mu, gamma, F, D)
-        sub = InverseGamma(
-            alpha=jnp.asarray(alpha, dtype=jnp.float64),
-            beta=jnp.asarray(beta, dtype=jnp.float64),
-        )
-        object.__setattr__(self, 'mu', mu)
-        object.__setattr__(self, 'gamma', gamma)
-        object.__setattr__(self, 'F', F)
-        object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
-
-    @classmethod
-    def from_classical(
-        cls, *, mu, gamma, F, D, alpha, beta,
-    ) -> "FactorNormalInverseGamma":
-        return cls(mu=mu, gamma=gamma, F=F, D=D, alpha=alpha, beta=beta)
-
-    @property
-    def alpha(self) -> jax.Array:
-        return self.subordinator.alpha
-
-    @property
-    def beta(self) -> jax.Array:
-        return self.subordinator.beta
-
-    def log_prob(self, x: jax.Array) -> jax.Array:
-        x = jnp.asarray(x, dtype=jnp.float64)
-        d = self.d
-        alpha = self.alpha
-        beta = self.beta
-
-        z2, w2, zw = self._quad_forms(x)
-        a_gig = w2
-        b_gig = 2.0 * beta + z2
-        p_gig = -(alpha + d / 2.0)
-        log_det_sigma = self._log_det_sigma()
-
-        log_C = (-0.5 * d * jnp.log(2.0 * jnp.pi)
-                 - 0.5 * log_det_sigma
-                 - jax.scipy.special.gammaln(alpha)
-                 + alpha * jnp.log(beta))
-
-        sqrt_ab = jnp.sqrt(a_gig * b_gig)
-        log_bessel = log_kv(p_gig, sqrt_ab)
-        log_integral = (jnp.log(2.0)
-                        + 0.5 * p_gig * jnp.log(
-                            (b_gig + LOG_EPS) / (a_gig + LOG_EPS))
-                        + log_bessel)
-        return log_C + zw + log_integral
-
-    def _posterior_gig_params(self, z2, w2):
-        return (-self.alpha - self.d / 2.0,
-                w2,
-                2.0 * self.beta + z2)
-
-    def _subordinator_expectations(self):
-        E_log_Y = jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha)
-        E_inv_Y = self.alpha / self.beta
-        E_Y = self.beta / (self.alpha - 1.0)
-        return E_log_Y, E_inv_Y, E_Y
-
-    @classmethod
-    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
-        from normix.distributions.inverse_gamma import InverseGamma
-        backend = kwargs.get('backend', 'jax')
-        return InverseGamma.from_expectation(
-            jnp.array([-eta.E_inv_Y, eta.E_log_Y]), backend=backend)
-
-    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # InverseGamma(α, β): Y → Y/s ⇒ β → β/s, α unchanged.
-        return FactorNormalInverseGamma(
-            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
-            alpha=self.alpha, beta=self.beta * scale,
-        )
-
-    @classmethod
-    def _from_init_params(cls, mu, gamma, F, D):
-        return cls.from_classical(
-            mu=mu, gamma=gamma, F=F, D=D, alpha=3.0, beta=1.0)
-
-
-class FactorNormalInverseGaussian(FactorNormalMixture):
-    r"""Factor-analysis Normal-Inverse-Gaussian:
-    :math:`Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)`,
-    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
-
-    GIG params: :math:`p = -1/2`, :math:`a = \lambda/\mu_{IG}^2`,
-    :math:`b = \lambda`.
-    """
-
-    def __init__(self, mu, gamma, F, D, *, mu_ig, lam):
-        from normix.distributions.inverse_gaussian import InverseGaussian
-        mu, gamma, F, D = _check_factor_init_args(mu, gamma, F, D)
-        sub = InverseGaussian(
-            mu=jnp.asarray(mu_ig, dtype=jnp.float64),
-            lam=jnp.asarray(lam, dtype=jnp.float64),
-        )
-        object.__setattr__(self, 'mu', mu)
-        object.__setattr__(self, 'gamma', gamma)
-        object.__setattr__(self, 'F', F)
-        object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
-
-    @classmethod
-    def from_classical(
-        cls, *, mu, gamma, F, D, mu_ig, lam,
-    ) -> "FactorNormalInverseGaussian":
-        return cls(mu=mu, gamma=gamma, F=F, D=D, mu_ig=mu_ig, lam=lam)
-
-    @property
-    def mu_ig(self) -> jax.Array:
-        return self.subordinator.mu
-
-    @property
-    def lam(self) -> jax.Array:
-        return self.subordinator.lam
-
-    def log_prob(self, x: jax.Array) -> jax.Array:
-        x = jnp.asarray(x, dtype=jnp.float64)
-        d = self.d
-        p = -0.5
-        a = self.lam / (self.mu_ig ** 2)
-        b = self.lam
-
-        z2, w2, zw = self._quad_forms(x)
-        Q = z2
-        A = a + w2
-        nu = p - d / 2.0
-        log_det_sigma = self._log_det_sigma()
-
-        sqrt_ab = jnp.sqrt(a * b)
-        log_K_p = 0.5 * jnp.log(jnp.pi / (2.0 * sqrt_ab + LOG_EPS)) - sqrt_ab
-        sqrt_A_Qb = jnp.sqrt(A * (Q + b))
-
-        return (-0.5 * d * jnp.log(2.0 * jnp.pi)
-                - 0.5 * log_det_sigma
-                + 0.5 * p * (jnp.log(a + LOG_EPS) - jnp.log(b + LOG_EPS))
-                - log_K_p
-                + 0.5 * (d / 2.0 - p) * jnp.log(A / (Q + b + LOG_EPS))
-                + log_kv(nu, sqrt_A_Qb)
-                + zw)
-
-    def _posterior_gig_params(self, z2, w2):
-        a_ig = self.lam / (self.mu_ig ** 2)
-        return (-0.5 - self.d / 2.0,
-                a_ig + w2,
-                self.lam + z2)
-
-    def _subordinator_expectations(self):
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        gig = GIG(
-            p=jnp.float64(-0.5),
-            a=self.lam / (self.mu_ig ** 2), b=self.lam,
-        )
-        eta = gig.expectation_params()
-        return eta[0], eta[1], eta[2]
-
-    @classmethod
-    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
-        from normix.distributions.inverse_gaussian import InverseGaussian
-        return InverseGaussian.from_expectation(
-            jnp.array([eta.E_Y, eta.E_inv_Y]))
-
-    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # Σ → Σ/s pairs with Y → s·Y so that Y·Σ keeps its dispersion.
-        # IG(μ_IG, λ): Y → s·Y ⇒ μ_IG → s·μ_IG, λ → s·λ.
-        return FactorNormalInverseGaussian(
-            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
-            mu_ig=self.mu_ig * scale, lam=self.lam * scale,
-        )
-
-    def regularize_a_eq_b(self) -> "FactorNormalInverseGaussian":
-        r"""Rescale so :math:`a = b`. For NIG (:math:`a = \lambda/\mu_{IG}^2`,
-        :math:`b = \lambda`), this means :math:`\mu_{IG} \to 1`.
-        """
-        scale = 1.0 / self.mu_ig
-        return self._rescale(scale)
-
-    @classmethod
-    def _from_init_params(cls, mu, gamma, F, D):
-        return cls.from_classical(
-            mu=mu, gamma=gamma, F=F, D=D, mu_ig=1.0, lam=1.0)
-
-
-class FactorGeneralizedHyperbolic(FactorNormalMixture):
-    r"""Factor-analysis Generalized Hyperbolic:
-    :math:`Y \sim \mathrm{GIG}(p, a, b)`,
-    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
-
-    The GIG subordinator's M-step uses warm-started numerical
-    optimisation with the same sanity-check fall-back as the standard
-    :class:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`.
-    """
-
-    def __init__(self, mu, gamma, F, D, *, p, a, b):
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        mu, gamma, F, D = _check_factor_init_args(mu, gamma, F, D)
-        sub = GIG(
-            p=jnp.asarray(p, dtype=jnp.float64),
-            a=jnp.asarray(a, dtype=jnp.float64),
-            b=jnp.asarray(b, dtype=jnp.float64),
-        )
-        object.__setattr__(self, 'mu', mu)
-        object.__setattr__(self, 'gamma', gamma)
-        object.__setattr__(self, 'F', F)
-        object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
-
-    @classmethod
-    def from_classical(
-        cls, *, mu, gamma, F, D, p, a, b,
-    ) -> "FactorGeneralizedHyperbolic":
-        return cls(mu=mu, gamma=gamma, F=F, D=D, p=p, a=a, b=b)
-
-    @property
-    def p(self) -> jax.Array:
-        return self.subordinator.p
-
-    @property
-    def a(self) -> jax.Array:
-        return self.subordinator.a
-
-    @property
-    def b(self) -> jax.Array:
-        return self.subordinator.b
-
-    def log_prob(self, x: jax.Array) -> jax.Array:
-        x = jnp.asarray(x, dtype=jnp.float64)
-        d = self.d
-        p = self.p
-        a = self.a
-        b = self.b
-
-        z2, w2, zw = self._quad_forms(x)
-        Q = z2
-        A = a + w2
-        p_post = p - d / 2.0
-        log_det_sigma = self._log_det_sigma()
-
-        sqrt_ab = jnp.sqrt(a * b)
-        sqrt_A_Qb = jnp.sqrt(A * (Q + b))
-
-        return (-0.5 * d * jnp.log(2.0 * jnp.pi)
-                - 0.5 * log_det_sigma
-                + 0.5 * p * (jnp.log(a + LOG_EPS) - jnp.log(b + LOG_EPS))
-                - log_kv(p, sqrt_ab)
-                + 0.5 * (d / 2.0 - p) * jnp.log(A / (Q + b + LOG_EPS))
-                + log_kv(p_post, sqrt_A_Qb)
-                + zw)
-
-    def _posterior_gig_params(self, z2, w2):
-        return (self.p - self.d / 2.0,
-                self.a + w2,
-                self.b + z2)
-
-    def _subordinator_expectations(self):
-        eta = self.subordinator.expectation_params()
-        return eta[0], eta[1], eta[2]
-
-    @classmethod
-    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        return GIG.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y]),
-            theta0=theta0,
-            backend=kwargs.get('backend', 'jax'),
-            method=kwargs.get('method', 'newton'),
-            maxiter=kwargs.get('maxiter', 20),
-        )
-
-    def m_step(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
-        r"""Full M-step with warm-started, sanity-checked GIG solve.
-
-        Mirrors
-        :meth:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step`:
-        do the closed-form factor M-step first, then run the
-        subordinator update with warm-start and fall-back.
-        """
-        return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
-
-    def m_step_subordinator(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        backend = kwargs.get('backend', 'jax')
-        method = kwargs.get('method', 'newton')
-        maxiter = kwargs.get('maxiter', 20)
-
-        gig_eta = jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y])
-        current_gig = self.subordinator
-
-        if backend == 'cpu':
-            try:
-                gig_new = GIG.from_expectation(
-                    gig_eta,
-                    theta0=current_gig.natural_params(),
-                    backend='cpu', method=method, maxiter=maxiter,
-                )
-                p_new = float(gig_new.p)
-                a_new = float(gig_new.a)
-                b_new = float(gig_new.b)
-                if (abs(p_new) > GIG_P_MAX
-                        or a_new > GIG_CLAMP_HI or b_new > GIG_CLAMP_HI
-                        or a_new < GIG_CLAMP_LO or b_new < GIG_CLAMP_LO):
-                    gig_new = current_gig
-            except Exception:
-                gig_new = current_gig
-        else:
-            gig_new = GIG.from_expectation(
-                gig_eta,
-                theta0=current_gig.natural_params(),
-                backend=backend, method=method, maxiter=maxiter,
-            )
-            sane = (
-                (jnp.abs(gig_new.p) <= GIG_P_MAX)
-                & (gig_new.a >= GIG_CLAMP_LO) & (gig_new.a <= GIG_CLAMP_HI)
-                & (gig_new.b >= GIG_CLAMP_LO) & (gig_new.b <= GIG_CLAMP_HI)
-            )
-            gig_new = jax.tree.map(
-                lambda new, old: jnp.where(sane, new, old),
-                gig_new, current_gig,
-            )
-        return self._with_subordinator(gig_new)
-
-    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # Σ → Σ/s pairs with Y → s·Y. GIG(p, a, b): s·Y ~ GIG(p, a/s, b·s).
-        a_new = jnp.clip(self.a / scale, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        b_new = jnp.clip(self.b * scale, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        return FactorGeneralizedHyperbolic(
-            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
-            p=self.p, a=a_new, b=b_new,
-        )
-
-    def regularize_a_eq_b(self) -> "FactorGeneralizedHyperbolic":
-        r"""Rescale so :math:`a = b = \sqrt{ab}` (orbit invariant).
-
-        Mirrors :meth:`GeneralizedHyperbolic.regularize_a_eq_b`. Picks
-        :math:`s = \sqrt{a/b}`.
-        """
-        scale = jnp.sqrt(self.a / self.b)
-        return self._rescale(scale)
-
-    @classmethod
-    def _from_init_params(cls, mu, gamma, F, D):
-        return cls.from_classical(
-            mu=mu, gamma=gamma, F=F, D=D, p=1.0, a=1.0, b=1.0)
-
-    @classmethod
-    def default_init(
-        cls, X: jax.Array, *, r: int = 1,
-    ) -> "FactorGeneralizedHyperbolic":
-        r"""Warm-start from the best of FactorNIG / FactorVG / FactorNInvG fits.
-
-        Mirrors
-        :meth:`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init`:
-        runs a few EM iterations of each special-case factor family, converts
-        each subordinator to the GIG embedding, and selects the candidate
-        with the highest marginal log-likelihood. A moment-based fallback
-        (:math:`p = 1, a = 1, b = 1`) is included as a fourth candidate.
-
-        Fully JAX-native: no try/except, no Python branching on data values.
-        """
-        from normix.fitting.em import BatchEMFitter
-
-        X = jnp.asarray(X, dtype=jnp.float64)
-
-        fitter = BatchEMFitter(
-            max_iter=5, tol=1e-6, verbose=0,
-            e_step_backend='jax', m_step_backend='jax',
-            m_step_method='newton',
-        )
-
-        # NIG: p=-0.5, a=λ/μ_IG², b=λ
-        nig = fitter.fit(
-            FactorNormalInverseGaussian.default_init(X, r=r), X).model
-        p_nig = jnp.float64(-0.4999)
-        a_nig = jnp.clip(nig.lam / (nig.mu_ig ** 2),
-                         GIG_CLAMP_LO, GIG_CLAMP_HI)
-        b_nig = jnp.clip(nig.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_nig = nig.marginal_log_likelihood(X)
-
-        # VG: p=α, a=2β, b≈0
-        vg = fitter.fit(FactorVarianceGamma.default_init(X, r=r), X).model
-        p_vg = vg.alpha
-        a_vg = jnp.clip(2.0 * vg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        b_vg = jnp.float64(1e-4)
-        ll_vg = vg.marginal_log_likelihood(X)
-
-        # NInvG: p=-α, a≈0, b=2β
-        ninvg = fitter.fit(
-            FactorNormalInverseGamma.default_init(X, r=r), X).model
-        p_ninvg = -ninvg.alpha
-        a_ninvg = jnp.float64(1e-4)
-        b_ninvg = jnp.clip(2.0 * ninvg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_ninvg = ninvg.marginal_log_likelihood(X)
-
-        # Moment-based fallback (p=1, a=1, b=1)
-        fallback = super().default_init(X, r=r)
-        ll_fb = fallback.marginal_log_likelihood(X)
-
-        lls = jnp.array([ll_nig, ll_vg, ll_ninvg, ll_fb])
-        lls = jnp.where(jnp.isfinite(lls), lls, -jnp.inf)
-        best = jnp.argmax(lls)
-
-        mus    = jnp.stack([nig.mu, vg.mu, ninvg.mu, fallback.mu])
-        gammas = jnp.stack([nig.gamma, vg.gamma, ninvg.gamma, fallback.gamma])
-        Fs     = jnp.stack([nig.F, vg.F, ninvg.F, fallback.F])
-        Ds     = jnp.stack([nig.D, vg.D, ninvg.D, fallback.D])
-        ps     = jnp.array([p_nig, p_vg, p_ninvg, fallback.p])
-        a_s    = jnp.array([a_nig, a_vg, a_ninvg, fallback.a])
-        bs     = jnp.array([b_nig, b_vg, b_ninvg, fallback.b])
-
-        return cls.from_classical(
-            mu=mus[best], gamma=gammas[best],
-            F=Fs[best], D=Ds[best],
-            p=ps[best], a=a_s[best], b=bs[best],
         )

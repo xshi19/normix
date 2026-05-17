@@ -13,16 +13,16 @@ normix/                     # JAX implementation
 │   ├── inverse_gamma.py                  # InverseGamma(α, β)
 │   ├── inverse_gaussian.py               # InverseGaussian(μ, λ)
 │   ├── generalized_inverse_gaussian.py   # GeneralizedInverseGaussian (primary), GIG (alias)
-│   ├── _gig_rvs.py                      # GIG Devroye TDR sampler + PINV wrappers
+│   │                                     # + private Devroye TDR / PINV samplers
 │   ├── normal.py                         # MultivariateNormal(μ, L_Sigma)
-│   ├── variance_gamma.py                 # VarianceGamma / JointVarianceGamma
-│   ├── normal_inverse_gamma.py           # NormalInverseGamma / JointNormalInverseGamma
-│   ├── normal_inverse_gaussian.py        # NormalInverseGaussian / JointNormalInverseGaussian
-│   └── generalized_hyperbolic.py         # GeneralizedHyperbolic / JointGeneralizedHyperbolic
+│   ├── variance_gamma.py                 # Joint + Marginal + Factor VarianceGamma
+│   ├── normal_inverse_gamma.py           # Joint + Marginal + Factor NormalInverseGamma
+│   ├── normal_inverse_gaussian.py        # Joint + Marginal + Factor NormalInverseGaussian
+│   └── generalized_hyperbolic.py         # Joint + Marginal + Factor GeneralizedHyperbolic
 ├── mixtures/
-│   ├── joint.py            # JointNormalMixture(ExponentialFamily)
+│   ├── joint.py            # JointNormalMixture(ExponentialFamily) abstract
 │   ├── marginal.py         # MarginalMixture ABC + NormalMixture (owns a JointNormalMixture)
-│   └── factor.py           # FactorNormalMixture(MarginalMixture); Σ = F Fᵀ + diag(D)
+│   └── factor.py           # FactorNormalMixture(MarginalMixture) abstract; Σ = F Fᵀ + diag(D)
 ├── fitting/
 │   ├── em.py               # EMResult; BatchEMFitter, IncrementalEMFitter
 │   ├── eta.py              # NormalMixtureEta, FactorMixtureStats, affine_combine
@@ -212,17 +212,18 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 Any distribution that calls `log_kv` must override the Tier 3 CPU classmethods (`_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu`) so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. Distributions that do not call `log_kv` inherit the default CPU wrappers at no additional cost. See `docs/design/exponential_family.md` § 2.2 for rationale.
 
-## Random Variate Generation (`utils/rvs.py`, `distributions/_gig_rvs.py`)
+## Random Variate Generation (`utils/rvs.py`, `distributions/generalized_inverse_gaussian.py`)
 
 Generic PINV (Polynomial-Interpolation-based Numerical Inversion) in `utils/rvs.py`:
 
 - `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)` — builds a quantile table on CPU from any univariate log-kernel. No normalising constant needed.
 - `rvs_pinv(key, u_grid, x_grid, n)` — samples via `jnp.interp`. Fully vectorised, GPU-friendly.
 
-GIG-specific sampling in `distributions/_gig_rvs.py`:
+GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py` as private module-level helpers used by `GIG.rvs(method=...)`:
 
-- `gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
-- `gig_build_pinv_table(p, a, b)` — wraps generic PINV with GIG log-kernel.
+- `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
+- `_gig_build_pinv_table(p, a, b)` — wraps generic PINV with the GIG log-kernel.
+- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — thin alias of `rvs_pinv` for symmetry.
 
 Neither method evaluates the Bessel normalising constant. See `docs/tech_notes/gig_rvs.md`.
 

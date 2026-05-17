@@ -13,7 +13,8 @@ JIT-able and GPU-accelerated.
 
 ### 1. Devroye-style TDR (`method='devroye'`)
 
-**Module:** `normix/distributions/_gig_rvs.py`
+**Location:** private helpers in `normix/distributions/generalized_inverse_gaussian.py`
+(`_gig_rvs_devroye`, `_gig_tdr_setup`).
 
 Works in the log-transformed variable $w = \log x$ where the GIG log-kernel
 
@@ -38,7 +39,10 @@ accepted proposal per sample.
 
 ### 2. Numerical Inverse CDF — PINV (`method='pinv'`)
 
-**Module:** `normix/utils/rvs.py` (generic), `normix/distributions/_gig_rvs.py` (GIG wrapper)
+**Location:** `normix/utils/rvs.py` (generic PINV machinery);
+GIG-specific wrappers (`_gig_build_pinv_table`, `_gig_rvs_pinv`,
+`_gig_log_kernel_np`, `_gig_mode_w`) live in
+`normix/distributions/generalized_inverse_gaussian.py`.
 
 The PINV method builds $F^{-1}$ numerically:
 
@@ -99,7 +103,7 @@ Benchmark script: `scripts/benchmark_gig_rvs.py`.
 | Log-transform $w = \log x$ | Removes the singularity at $x = 0$ for $p < 1$; makes the GIG log-kernel bounded and strictly concave for all valid (p, a, b). |
 | Batch rejection (no `while_loop`) | `vmap(while_loop)` on GPU costs ~400 ms overhead per call.  Generating all M × n proposals in one batch reduces this to ~10 ms. |
 | Generic PINV in `utils/rvs.py` | The method is distribution-agnostic; only a `log_kernel` callable and a mode are needed.  Reusable for future distributions. |
-| GIG Devroye stays in `distributions/_gig_rvs.py` | The TDR envelope is GIG-specific (relies on the particular form of $g(w)$). |
+| GIG Devroye lives inside `distributions/generalized_inverse_gaussian.py` | The TDR envelope is GIG-specific (relies on the particular form of $g(w)$). Co-locating with the `GIG` class keeps the implementation surface contiguous. |
 | Default method = `'devroye'` | Pure JAX with no CPU setup step.  PINV is faster but requires an eager CPU table build. |
 
 ## References

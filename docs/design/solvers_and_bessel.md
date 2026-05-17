@@ -218,11 +218,12 @@ constant needed:
 - `rvs_pinv(key, u_grid, x_grid, n)` samples via `jnp.interp`
   (GPU-friendly, vectorised).
 
-GIG-specific sampling lives in `distributions/_gig_rvs.py`:
+GIG-specific sampling is inlined in `distributions/generalized_inverse_gaussian.py`
+as private module-level helpers (used by `GIG.rvs(method=...)`):
 
-- `gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$,
+- `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$,
   batch-parallel (no `while_loop`).
-- `gig_build_pinv_table(p, a, b)` wraps generic PINV with the GIG
+- `_gig_build_pinv_table(p, a, b)` wraps generic PINV with the GIG
   log-kernel.
 
 Neither method evaluates the Bessel normalising constant. See

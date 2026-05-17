@@ -17,10 +17,10 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
+from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture
-
-
+from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
 
 
@@ -185,8 +185,6 @@ class NormalInverseGamma(NormalMixture):
         :math:`b=2\beta+Q(x)`.
         The normalising integral is :math:`2(b/a)^{p/2} K_p(\sqrt{ab})`.
         """
-        from normix.utils.bessel import log_kv
-
         j = self._joint
         d = j.d
         alpha = j.alpha
@@ -272,3 +270,99 @@ class NormalInverseGamma(NormalMixture):
         from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
         return GeneralizedHyperbolic(
             self._joint.to_joint_generalized_hyperbolic(boundary_eps=boundary_eps))
+
+
+# ============================================================================
+# Factor-analysis Normal-Inverse Gamma (Σ = F Fᵀ + diag(D))
+# ============================================================================
+
+
+class FactorNormalInverseGamma(FactorNormalMixture):
+    r"""Factor-analysis Normal-Inverse-Gamma:
+    :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`,
+    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.
+
+    GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.
+    """
+
+    def __init__(self, mu, gamma, F, D, *, alpha, beta):
+        from normix.distributions.inverse_gamma import InverseGamma
+        mu, gamma, F, D = FactorNormalMixture._check_init_args(mu, gamma, F, D)
+        sub = InverseGamma(
+            alpha=jnp.asarray(alpha, dtype=jnp.float64),
+            beta=jnp.asarray(beta, dtype=jnp.float64),
+        )
+        object.__setattr__(self, 'mu', mu)
+        object.__setattr__(self, 'gamma', gamma)
+        object.__setattr__(self, 'F', F)
+        object.__setattr__(self, 'D', D)
+        object.__setattr__(self, 'subordinator', sub)
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, F, D, alpha, beta,
+    ) -> "FactorNormalInverseGamma":
+        return cls(mu=mu, gamma=gamma, F=F, D=D, alpha=alpha, beta=beta)
+
+    @property
+    def alpha(self) -> jax.Array:
+        return self.subordinator.alpha
+
+    @property
+    def beta(self) -> jax.Array:
+        return self.subordinator.beta
+
+    def log_prob(self, x: jax.Array) -> jax.Array:
+        x = jnp.asarray(x, dtype=jnp.float64)
+        d = self.d
+        alpha = self.alpha
+        beta = self.beta
+
+        z2, w2, zw = self._quad_forms(x)
+        a_gig = w2
+        b_gig = 2.0 * beta + z2
+        p_gig = -(alpha + d / 2.0)
+        log_det_sigma = self._log_det_sigma()
+
+        log_C = (-0.5 * d * jnp.log(2.0 * jnp.pi)
+                 - 0.5 * log_det_sigma
+                 - jax.scipy.special.gammaln(alpha)
+                 + alpha * jnp.log(beta))
+
+        sqrt_ab = jnp.sqrt(a_gig * b_gig)
+        log_bessel = log_kv(p_gig, sqrt_ab)
+        log_integral = (jnp.log(2.0)
+                        + 0.5 * p_gig * jnp.log(
+                            (b_gig + LOG_EPS) / (a_gig + LOG_EPS))
+                        + log_bessel)
+        return log_C + zw + log_integral
+
+    def _posterior_gig_params(self, z2, w2):
+        return (-self.alpha - self.d / 2.0,
+                w2,
+                2.0 * self.beta + z2)
+
+    def _subordinator_expectations(self):
+        E_log_Y = jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha)
+        E_inv_Y = self.alpha / self.beta
+        E_Y = self.beta / (self.alpha - 1.0)
+        return E_log_Y, E_inv_Y, E_Y
+
+    @classmethod
+    def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
+        from normix.distributions.inverse_gamma import InverseGamma
+        backend = kwargs.get('backend', 'jax')
+        return InverseGamma.from_expectation(
+            jnp.array([-eta.E_inv_Y, eta.E_log_Y]), backend=backend)
+
+    def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
+        # InverseGamma(α, β): Y → Y/s ⇒ β → β/s, α unchanged.
+        return FactorNormalInverseGamma(
+            mu=mu, gamma=gamma_new, F=F_new, D=D_new,
+            alpha=self.alpha, beta=self.beta * scale,
+        )
+
+    @classmethod
+    def _from_init_params(cls, mu, gamma, F, D):
+        return cls.from_classical(
+            mu=mu, gamma=gamma, F=F, D=D, alpha=3.0, beta=1.0)
