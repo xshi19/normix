@@ -215,11 +215,21 @@ engine.
 
 ## Recommended Roadmap
 
-### Phase D: Finance foundation
+### Phase D: Finance foundation — **Implemented (2026-05-17)**
 
-- add `normix.finance.projection`;
-- implement `CVaR` value and derivatives for portfolio projections;
-- add basic reporting objects and examples.
+- `normix.finance.projection.PortfolioProjection` / `project_portfolio` —
+  univariate-mixture projection of `wᵀ X`.
+- `normix.finance.risk.CVaR(alpha)` — value, scalar gradient and Hessian in
+  `(μ̃, γ̃, σ̃)`, and `gradient_w` / `hessian_w` via the portfolio chain
+  rule. All Monte Carlo is Rao-Blackwellised over the subordinator `Y`,
+  so the same `Y` samples can be reused across value and derivatives
+  (common random numbers).
+- Demo: [`notebooks/finance_phase_d_cvar_demo.ipynb`](../../notebooks/finance_phase_d_cvar_demo.ipynb)
+  compares calculated vs simulated CVaR, first/second derivatives, and the
+  portfolio chain rule on a synthetic 3-asset NIG model.
+- Data: [`scripts/download_dj30.py`](../../scripts/download_dj30.py) fetches
+  Dow Jones 30 daily log-returns (2005–2015) for the Phase E / F notebooks.
+- Tests: [`tests/finance/test_cvar.py`](../../tests/finance/test_cvar.py).
 
 ### Phase E: Portfolio optimization
 
