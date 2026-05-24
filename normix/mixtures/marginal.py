@@ -197,6 +197,23 @@ class NormalMixture(MarginalMixture):
         block (:attr:`_NORMAL_KEYS`) and the subordinator block.
         """
 
+    @classmethod
+    @abc.abstractmethod
+    def _univariate_class(cls) -> type:
+        """Return the ``Univariate*`` sibling class, e.g. ``UnivariateVarianceGamma``."""
+
+    def project(self, w: jax.Array) -> "_UnivariateNormalMixtureMixin":
+        r"""Return the univariate normal mixture :math:`w^\top X` as a ``Univariate*`` instance."""
+        j = self._joint
+        w = jnp.asarray(w, dtype=jnp.float64)
+        sub_kwargs = {k: getattr(self, k) for k in type(self)._subordinator_keys()}
+        return type(self)._univariate_class().from_classical(
+            mu=jnp.dot(w, j.mu),
+            gamma=jnp.dot(w, j.gamma),
+            sigma=jnp.dot(w, j.sigma() @ w),
+            **sub_kwargs,
+        )
+
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \mu + \gamma E[Y]`."""
         j = self._joint
@@ -629,6 +646,24 @@ class _UnivariateNormalMixtureMixin:
             raise ValueError(
                 f"{type(self).__name__} requires d=1, got d={int(joint.mu.shape[0])}")
         super().__init__(joint)
+
+    @property
+    def subordinator(self):
+        """Subordinator distribution :math:`Y` (forwarded from the joint)."""
+        return self._joint.subordinator()
+
+    @property
+    def _mu_scalar(self) -> jax.Array:
+        return self._joint.mu[0]
+
+    @property
+    def _gamma_scalar(self) -> jax.Array:
+        return self._joint.gamma[0]
+
+    @property
+    def _sigma_scalar(self) -> jax.Array:
+        r"""Scalar :math:`\sigma = \sqrt{\Sigma}` (Cholesky diagonal for :math:`d=1`)."""
+        return self._joint.L_Sigma[0, 0]
 
     def _pinv_grids(self) -> tuple[jax.Array, jax.Array]:
         log_kernel = lambda w: self.log_prob(jnp.atleast_1d(w))

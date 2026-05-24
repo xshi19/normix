@@ -31,7 +31,7 @@ normix/                     # JAX implementation
 │   ├── solvers.py          # solve_bregman*, BregmanResult, make_jit_newton_solver; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 ├── finance/
-│   ├── projection.py       # PortfolioProjection, project_portfolio (wᵀX → univariate mixture)
+│   ├── projection.py       # project_portfolio (wᵀX → Univariate*)
 │   ├── risk.py             # RiskMeasure ABC, CVaR(α) with value, gradient, Hessian in (μ̃,γ̃,σ̃) and w
 │   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over the subordinator Y
 └── utils/

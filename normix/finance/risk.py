@@ -1,5 +1,5 @@
 r"""
-Coherent risk measures for portfolio projections.
+Coherent risk measures for univariate normal-mixture portfolio returns.
 
 The current implementation provides Conditional Value at Risk (CVaR), with
 value, first derivatives, and second derivatives in both the projected
@@ -7,21 +7,20 @@ parameter space :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)` and the
 portfolio-weight space :math:`w \in \mathbb{R}^d`. Formulas follow
 ``docs/theory/cvar_derivatives.rst``.
 
-All Monte Carlo is Rao-Blackwellized over the subordinator :math:`Y`; the
-caller passes a pre-sampled array ``Y`` so that ``value``, ``gradient_*``,
-and ``hessian_*`` share common random numbers.
+Monte Carlo for CVaR value and derivatives is conditional over the
+subordinator :math:`Y` (common random numbers). Deterministic VaR uses
+the ``Univariate*`` PINV :meth:`~normix.mixtures.marginal._UnivariateNormalMixtureMixin.ppf`.
 """
 from __future__ import annotations
 
 import abc
-from typing import Optional
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.finance._mc import cdf_rb, sample_Y, solve_var
-from normix.finance.projection import PortfolioProjection
+from normix.finance._mc import quantile_cmc
+from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 
 
 def _phi(z: jax.Array) -> jax.Array:
@@ -32,8 +31,8 @@ class RiskMeasure(eqx.Module):
     """Abstract base for portfolio risk measures."""
 
     @abc.abstractmethod
-    def value(self, projection: PortfolioProjection, Y: jax.Array) -> jax.Array:
-        """Risk of the portfolio represented by ``projection``."""
+    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
+        """Risk of the univariate normal mixture represented by ``univariate``."""
 
 
 class CVaR(RiskMeasure):
@@ -51,7 +50,8 @@ class CVaR(RiskMeasure):
 
     where :math:`z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)
     / (\tilde\sigma \sqrt{Y})` and :math:`x_\alpha = -\operatorname{VaR}_\alpha`
-    is found by bisection on the Rao-Blackwellized CDF.
+    is found by bisection on the conditional Monte Carlo CDF (same ``Y`` as
+    the integral, for common random numbers).
     """
 
     alpha: float = eqx.field(static=True)
@@ -62,75 +62,76 @@ class CVaR(RiskMeasure):
         object.__setattr__(self, 'alpha', float(alpha))
 
     # ------------------------------------------------------------------
-    # Sample helper (for callers that want CRN with default size)
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def sample_Y(projection: PortfolioProjection, n_mc: int, seed: int = 0) -> jax.Array:
-        return sample_Y(projection.subordinator, n_mc, seed)
-
-    # ------------------------------------------------------------------
     # VaR
     # ------------------------------------------------------------------
 
-    def var(self, projection: PortfolioProjection, Y: jax.Array) -> jax.Array:
-        r""":math:`\operatorname{VaR}_\alpha` via Rao-Blackwellised bisection."""
-        return solve_var(projection.mu_p, projection.gamma_p, projection.sigma_p,
-                         Y, self.alpha)
+    def var(self, univariate: _UnivariateNormalMixtureMixin) -> jax.Array:
+        r""":math:`\operatorname{VaR}_\alpha` via deterministic PINV :meth:`ppf`."""
+        return -univariate.ppf(self.alpha)
+
+    def _var_cmc(
+        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+    ) -> jax.Array:
+        r""":math:`\operatorname{VaR}_\alpha` consistent with CMC ``Y`` samples."""
+        return -quantile_cmc(univariate, self.alpha, Y)
 
     # ------------------------------------------------------------------
     # Scalar-space value and derivatives
     # ------------------------------------------------------------------
 
-    def value(self, projection: PortfolioProjection, Y: jax.Array) -> jax.Array:
-        mu_p, gamma_p, sigma_p = projection.mu_p, projection.gamma_p, projection.sigma_p
-        v = solve_var(mu_p, gamma_p, sigma_p, Y, self.alpha)
+    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
+        mu = univariate._mu_scalar
+        gamma = univariate._gamma_scalar
+        sigma = univariate._sigma_scalar
+        v = self._var_cmc(univariate, Y)
         sqY = jnp.sqrt(Y)
-        z = (-v - mu_p - gamma_p * Y) / (sigma_p * sqY)
+        z = (-v - mu - gamma * Y) / (sigma * sqY)
         Phi = jax.scipy.stats.norm.cdf(z)
         phi = _phi(z)
-        # E[X · 1{X ≤ -v}] = E_Y[(μ + γY) Φ - σ√Y φ]
-        integral = jnp.mean((mu_p + gamma_p * Y) * Phi - sigma_p * sqY * phi)
+        integral = jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi)
         return -integral / self.alpha
 
-    def gradient_scalar(self, projection: PortfolioProjection,
-                        Y: jax.Array) -> jax.Array:
+    def gradient_scalar(
+        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+    ) -> jax.Array:
         r"""Return :math:`(\partial r / \partial \tilde\mu,
         \partial r / \partial \tilde\gamma, \partial r / \partial \tilde\sigma)`."""
-        mu_p, gamma_p, sigma_p = projection.mu_p, projection.gamma_p, projection.sigma_p
-        v = solve_var(mu_p, gamma_p, sigma_p, Y, self.alpha)
+        mu = univariate._mu_scalar
+        gamma = univariate._gamma_scalar
+        sigma = univariate._sigma_scalar
+        v = self._var_cmc(univariate, Y)
         sqY = jnp.sqrt(Y)
-        z = (-v - mu_p - gamma_p * Y) / (sigma_p * sqY)
+        z = (-v - mu - gamma * Y) / (sigma * sqY)
         Phi = jax.scipy.stats.norm.cdf(z)
         phi = _phi(z)
-        # value (recomputed cheap, reuse z for consistency)
-        rcvar = -jnp.mean((mu_p + gamma_p * Y) * Phi - sigma_p * sqY * phi) / self.alpha
+        rcvar = -jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi) / self.alpha
         d_mu = -1.0
         d_gamma = -jnp.mean(Y * Phi) / self.alpha
-        d_sigma = (rcvar + mu_p - gamma_p * d_gamma) / sigma_p
+        d_sigma = (rcvar + mu - gamma * d_gamma) / sigma
         return jnp.stack([jnp.asarray(d_mu, dtype=jnp.float64), d_gamma, d_sigma])
 
-    def hessian_scalar(self, projection: PortfolioProjection,
-                       Y: jax.Array) -> jax.Array:
+    def hessian_scalar(
+        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+    ) -> jax.Array:
         r"""Return the :math:`3 \times 3` Hessian in :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)`.
 
         :math:`\partial^2/\partial \tilde\mu \, \cdot = 0` exactly; the other
         non-trivial blocks follow ``docs/theory/cvar_derivatives.rst``
         :eq:`cvar-nm-hessian`.
         """
-        mu_p, gamma_p, sigma_p = projection.mu_p, projection.gamma_p, projection.sigma_p
-        v = solve_var(mu_p, gamma_p, sigma_p, Y, self.alpha)
+        mu = univariate._mu_scalar
+        gamma = univariate._gamma_scalar
+        sigma = univariate._sigma_scalar
+        v = self._var_cmc(univariate, Y)
         sqY = jnp.sqrt(Y)
-        z = (-v - mu_p - gamma_p * Y) / (sigma_p * sqY)
+        z = (-v - mu - gamma * Y) / (sigma * sqY)
         phi = _phi(z)
-        # ∂rVaR/∂γ = -E[√Y φ] / E[φ/√Y]
         num = jnp.mean(sqY * phi)
         den = jnp.mean(phi / sqY)
         dvar_dgamma = -num / den
-        # ∂²rCVaR/∂γ² = (1/(ασ)) E[√Y φ (∂rVaR/∂γ + Y)]
-        d2_gg = jnp.mean(sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma_p)
-        d2_gs = -(gamma_p / sigma_p) * d2_gg
-        d2_ss = -(gamma_p / sigma_p) * d2_gs
+        d2_gg = jnp.mean(sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma)
+        d2_gs = -(gamma / sigma) * d2_gg
+        d2_ss = -(gamma / sigma) * d2_gs
         H = jnp.zeros((3, 3), dtype=jnp.float64)
         H = H.at[1, 1].set(d2_gg)
         H = H.at[1, 2].set(d2_gs)
@@ -142,38 +143,40 @@ class CVaR(RiskMeasure):
     # Portfolio-space value, gradient, Hessian (chain rule)
     # ------------------------------------------------------------------
 
-    def value_w(self, model, w: jax.Array, Y: jax.Array) -> jax.Array:
-        return self.value(PortfolioProjection.from_model(model, w), Y)
+    @eqx.filter_jit
+    def value_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
+        return self.value(model.project(w), Y)
 
-    def gradient_w(self, model, w: jax.Array, Y: jax.Array) -> jax.Array:
+    @eqx.filter_jit
+    def gradient_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
         r"""Gradient :math:`\nabla_w r_{\operatorname{CVaR}_\alpha}(w)`."""
-        proj = PortfolioProjection.from_model(model, w)
-        g = self.gradient_scalar(proj, Y)
+        uni = model.project(w)
+        g = self.gradient_scalar(uni, Y)
         j = model._joint
         w = jnp.asarray(w, dtype=jnp.float64)
         Sigma_w = j.sigma() @ w
-        # g[0] = -1 (∂/∂μ̃); ∂(wᵀμ)/∂w = μ ⇒ contribution is g[0] · μ = -μ.
-        return g[0] * j.mu + g[1] * j.gamma + g[2] * Sigma_w / proj.sigma_p
+        return g[0] * j.mu + g[1] * j.gamma + g[2] * Sigma_w / uni._sigma_scalar
 
-    def hessian_w(self, model, w: jax.Array, Y: jax.Array) -> jax.Array:
+    @eqx.filter_jit
+    def hessian_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
         r"""Hessian :math:`H_{r_{\operatorname{CVaR}_\alpha}}(w)`."""
-        proj = PortfolioProjection.from_model(model, w)
-        g = self.gradient_scalar(proj, Y)
-        H_s = self.hessian_scalar(proj, Y)
+        uni = model.project(w)
+        g = self.gradient_scalar(uni, Y)
+        H_s = self.hessian_scalar(uni, Y)
         j = model._joint
         w = jnp.asarray(w, dtype=jnp.float64)
         Sigma = j.sigma()
         Sigma_w = Sigma @ w
-        sigma_p = proj.sigma_p
-        sigma_p2 = sigma_p ** 2
-        sigma_p3 = sigma_p ** 3
+        sigma = uni._sigma_scalar
+        sigma2 = sigma ** 2
+        sigma3 = sigma ** 3
 
         H = (
             jnp.outer(j.gamma, j.gamma) * H_s[1, 1]
             + (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma))
-              * H_s[1, 2] / sigma_p
-            + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma_p2
-            + (sigma_p2 * Sigma - jnp.outer(Sigma_w, Sigma_w))
-              * g[2] / sigma_p3
+              * H_s[1, 2] / sigma
+            + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma2
+            + (sigma2 * Sigma - jnp.outer(Sigma_w, Sigma_w))
+              * g[2] / sigma3
         )
         return H

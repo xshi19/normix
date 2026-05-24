@@ -215,15 +215,25 @@ engine.
 
 ## Recommended Roadmap
 
-### Phase D: Finance foundation — **Implemented (2026-05-17)**
+### Phase D: Finance foundation — **Implemented (2026-05-17, refactored 2026-05-24)**
 
-- `normix.finance.projection.PortfolioProjection` / `project_portfolio` —
-  univariate-mixture projection of `wᵀ X`.
+- `NormalMixture.project(w)` / `normix.finance.projection.project_portfolio` —
+  univariate-mixture projection of `wᵀ X` as a `Univariate*` instance
+  (`UnivariateVarianceGamma`, `UnivariateNormalInverseGamma`, etc.).
+- `Univariate*` classes expose scalar `mean`/`var`/`std`, `pdf`/`log_prob`,
+  `cdf`/`ppf` (deterministic PINV over the marginal Bessel density), and
+  `(n,)`-shaped `rvs`.
 - `normix.finance.risk.CVaR(alpha)` — value, scalar gradient and Hessian in
-  `(μ̃, γ̃, σ̃)`, and `gradient_w` / `hessian_w` via the portfolio chain
-  rule. All Monte Carlo is Rao-Blackwellised over the subordinator `Y`,
-  so the same `Y` samples can be reused across value and derivatives
-  (common random numbers).
+  `(μ̃, γ̃, σ̃)`, and JIT-able `gradient_w` / `hessian_w` via the portfolio
+  chain rule. **Deterministic VaR** uses `Univariate*.ppf(α)`. **CVaR value
+  and derivatives** use conditional Monte Carlo (CMC) over the subordinator
+  `Y` with a CMC bisection quantile (`quantile_cmc`) so the same `Y` samples
+  are reused across value and derivatives (common random numbers). See
+  Asmussen & Glynn (2007) §V.4 and Glasserman (2004) §4.2 for the CMC
+  framework; the CMC CDF estimator is Rao-Blackwellised over `Y`.
+- `normix.finance.functional.WeightFunctional` — bundles `CVaR`, model, and
+  fixed `Y` into JIT-able `w ↦ risk(w)` with `grad` and `hess` for Phase E
+  optimisation.
 - Demo: [`notebooks/finance_phase_d_cvar_demo.ipynb`](../../notebooks/finance_phase_d_cvar_demo.ipynb)
   compares calculated vs simulated CVaR, first/second derivatives, and the
   portfolio chain rule on a synthetic 3-asset NIG model.

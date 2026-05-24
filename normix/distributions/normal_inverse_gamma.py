@@ -228,6 +228,10 @@ class NormalInverseGamma(NormalMixture):
     def _subordinator_keys(cls):
         return ('alpha', 'beta')
 
+    @classmethod
+    def _univariate_class(cls):
+        return UnivariateNormalInverseGamma
+
     @property
     def alpha(self) -> jax.Array:
         r""":math:`\alpha` — InverseGamma shape (forwarded from the joint)."""
