@@ -25,20 +25,23 @@ Use this skill when the task is to build or publish the `normix` docs website.
 - Public URL `https://xshi19.github.io/normix/` is served from the **`normix` repo `gh-pages` branch**
 - It is **not** served from the `xshi19.github.io` repo
 
-## Recommended workflow
+## Normal publish path (CI)
+
+Docs are deployed automatically by `.github/workflows/docs.yml` on every push
+to `master`. **Do not run the local script unless CI is broken or you need to
+publish from a non-master branch.**
+
+To trigger a docs update: merge or push to `master` and let the workflow run.
+
+## Fallback: local build + publish
+
+Use only when the CI workflow is unavailable or broken.
 
 1. If the user asked for latest changes, pull the desired branch first.
 2. If the repo has local notebook/worktree changes, preserve them before pulling.
    - Stash if safe and clearly restore afterward.
    - Avoid clobbering notebook work.
-3. Build docs locally.
-4. Publish `docs/_build/html` to `gh-pages`.
-5. Ensure `.nojekyll` exists on `gh-pages`.
-6. Verify the live site after the Pages deploy completes.
-
-## Build
-
-From the repo root:
+3. Build docs locally:
 
 ```bash
 . .venv/bin/activate
@@ -51,11 +54,7 @@ Build warnings do not necessarily block publishing. If HTML is produced under
 `docs/_build/html`, the site can still be deployed unless the user asked to fix
 warnings first.
 
-## Publish target
-
-Publish to the `gh-pages` branch of **this repo**.
-
-Use the helper script:
+4. Publish to the `gh-pages` branch of **this repo**:
 
 ```bash
 .cursor/skills/docs-publish/scripts/publish_gh_pages.sh
