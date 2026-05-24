@@ -1,15 +1,10 @@
 """
-Generic random variate generation utilities for univariate distributions.
+Generic RVS utilities for univariate distributions.
 
-Currently provides **PINV** (Polynomial-Interpolation-based Numerical Inversion):
-build a quantile-function table on CPU, then sample via ``jnp.interp`` on GPU.
-
-The PINV method is distribution-agnostic — any univariate density whose
-(possibly unnormalized) log-kernel can be evaluated as a Python callable
-is supported.  No normalising constant is needed; the CDF is normalised
-numerically.
-
-Future methods (e.g. generic TDR for log-concave densities) may be added here.
+:func:`build_pinv_table` builds a quantile table from any univariate
+log-kernel in pure JAX (trapezoidal CDF on a :math:`w`-grid).  Distributions
+supply ``log_kernel(w)`` from their own ``log_prob`` (plus a Jacobian when
+working in :math:`w = \\log x`).  :func:`rvs_pinv` samples via inverse lookup.
 """
 from __future__ import annotations
 
@@ -17,100 +12,89 @@ from typing import Callable, Optional
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 
+def _bisect_w(
+    log_kernel: Callable[[jax.Array], jax.Array],
+    mode: jax.Array,
+    thresh: jax.Array,
+    *,
+    shrink_hi: bool,
+) -> jax.Array:
+    """Bisect in :math:`w`-space to find where ``log_kernel`` crosses ``thresh``."""
+    lo0 = jnp.where(shrink_hi, mode, mode - 200.0)
+    hi0 = jnp.where(shrink_hi, mode + 200.0, mode)
 
-# ---------------------------------------------------------------------------
-# PINV — Numerical Inverse CDF
-# ---------------------------------------------------------------------------
+    def body(_, carry):
+        lo, hi = carry
+        mid = 0.5 * (lo + hi)
+        below = log_kernel(mid) < thresh
+        lo = jnp.where(below, jnp.where(shrink_hi, lo, mid), jnp.where(shrink_hi, mid, lo))
+        hi = jnp.where(below, jnp.where(shrink_hi, mid, hi), jnp.where(shrink_hi, hi, mid))
+        return lo, hi
+
+    lo, hi = jax.lax.fori_loop(0, 200, body, (lo0, hi0))
+    return jnp.where(shrink_hi, hi, lo)
+
 
 def build_pinv_table(
-    log_kernel: Callable[[np.ndarray], np.ndarray],
-    mode: float,
+    log_kernel: Callable[[jax.Array], jax.Array],
+    mode: jax.Array,
     *,
-    x_of_w: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    x_of_w: Optional[Callable[[jax.Array], jax.Array]] = None,
     n_grid: int = 4000,
     tail_eps: float = 1e-14,
 ) -> tuple[jax.Array, jax.Array]:
-    """Build a PINV quantile table on CPU for any univariate density.
-
-    The density need not be normalised — the CDF is obtained by numerically
-    integrating ``exp(log_kernel(w))`` over a grid in *w*-space and dividing
-    by the total.  This avoids computing the normalising constant analytically
-    (e.g. no Bessel function for the GIG).
+    r"""Build a PINV quantile table in pure JAX.
 
     Parameters
     ----------
-    log_kernel : callable  (numpy float or 1-D array) → same shape
-        Log of the (possibly unnormalized) density evaluated on the
-        internal grid variable *w*.  Must be bounded above and integrable.
-        Will be called once with the full grid array.
-    mode : float
-        Approximate mode of *log_kernel* in w-space.  Used as the starting
-        point for the bisection that finds the effective support.
-    x_of_w : callable or None
-        Maps the grid variable *w* to the sample variable *x*.
-        Use ``np.exp`` for densities on (0, ∞) whose internal variable is
-        w = log(x).  ``None`` ≡ identity (x = w).
-    n_grid : int
-        Number of equi-spaced grid points in w-space.
-    tail_eps : float
-        Density-ratio threshold for truncating tails:
-        the grid extends to where ``log_kernel(w) < log_kernel(mode) + log(tail_eps)``.
+    log_kernel
+        Callable ``w -> log f(w)`` for a univariate density on the
+        *internal* :math:`w`-axis.  For support :math:`(0, \infty)` with
+        :math:`w = \log x`, pass ``log_kernel(w) = log_prob(exp(w)) + w``.
+        For support :math:`\mathbb{R}` with :math:`w = x`, pass
+        ``log_kernel(w) = log_prob(w)``.
+    mode
+        Mode of the density on the :math:`w`-axis (starting point for tail
+        bisection).
+    x_of_w
+        Map internal :math:`w` to the observation axis (default identity).
+        Use ``jnp.exp`` when :math:`w = \log x`.
+    n_grid
+        Number of grid points for the trapezoidal CDF.
+    tail_eps
+        Tail mass below which bisection stops.
 
     Returns
     -------
-    (u_grid, x_grid) : pair of JAX float64 arrays, each shape ``(n_grid,)``
-        ``u_grid`` are the CDF values; ``x_grid`` the corresponding sample values.
-        Pass both to :func:`rvs_pinv` for sampling.
+    u_grid, x_grid
+        JAX arrays of shape ``(n_grid,)`` — trapezoidal CDF values and
+        corresponding :math:`x` values for ``jnp.interp`` in ``ppf`` /
+        ``cdf``.
     """
-    mode = float(mode)
-    g0 = float(log_kernel(np.float64(mode)))
-    thresh = g0 + np.log(tail_eps)
+    if x_of_w is None:
+        x_of_w = lambda w: w
 
-    # left boundary
-    lo, hi = mode - 200.0, mode
-    for _ in range(200):
-        mid = (lo + hi) / 2.0
-        if float(log_kernel(np.float64(mid))) < thresh:
-            lo = mid
-        else:
-            hi = mid
-    w_min = lo
+    mode = jnp.asarray(mode, dtype=jnp.float64)
+    log_f_mode = log_kernel(mode)
+    thresh = log_f_mode + jnp.log(jnp.asarray(tail_eps, dtype=jnp.float64))
 
-    # right boundary
-    lo, hi = mode, mode + 200.0
-    for _ in range(200):
-        mid = (lo + hi) / 2.0
-        if float(log_kernel(np.float64(mid))) < thresh:
-            hi = mid
-        else:
-            lo = mid
-    w_max = hi
+    w_min = _bisect_w(log_kernel, mode, thresh, shrink_hi=False)
+    w_max = _bisect_w(log_kernel, mode, thresh, shrink_hi=True)
 
-    # evaluate on grid
-    w_grid = np.linspace(w_min, w_max, n_grid)
-    g_vals = log_kernel(w_grid)
-    h_vals = np.exp(g_vals - g0)
-
-    # trapezoidal CDF
-    dw = np.diff(w_grid)
-    avg_h = 0.5 * (h_vals[:-1] + h_vals[1:])
-    cdf = np.empty(n_grid)
-    cdf[0] = 0.0
-    cdf[1:] = np.cumsum(avg_h * dw)
-
-    u_grid = cdf / cdf[-1]
-    u_grid[0] = 0.0
-    u_grid[-1] = 1.0
-
-    x_grid = x_of_w(w_grid) if x_of_w is not None else w_grid
-
-    return (
-        jnp.asarray(u_grid, dtype=jnp.float64),
-        jnp.asarray(x_grid, dtype=jnp.float64),
-    )
+    w_grid = jnp.linspace(w_min, w_max, n_grid)
+    log_f = jax.vmap(log_kernel)(w_grid)
+    log_f0 = log_kernel(mode)
+    f = jnp.exp(log_f - log_f0)
+    dw = jnp.diff(w_grid)
+    avg_f = 0.5 * (f[:-1] + f[1:])
+    cdf_inner = jnp.cumsum(avg_f * dw)
+    cdf = jnp.concatenate([jnp.zeros(1, dtype=jnp.float64), cdf_inner])
+    cdf = cdf / cdf[-1]
+    cdf = cdf.at[0].set(0.0).at[-1].set(1.0)
+    x_grid = jax.vmap(x_of_w)(w_grid)
+    return cdf, x_grid
 
 
 def rvs_pinv(
@@ -119,16 +103,21 @@ def rvs_pinv(
     x_grid: jax.Array,
     n: int,
 ) -> jax.Array:
-    """Sample *n* variates from a precomputed PINV table.
-
-    Fully vectorised — a single ``jnp.interp`` call, no control flow.
-    JIT-able and GPU-friendly.
+    r"""Sample *n* observations via numerical inverse CDF.
 
     Parameters
     ----------
-    key : JAX PRNG key
-    u_grid, x_grid : arrays returned by :func:`build_pinv_table`
-    n : number of samples
+    key
+        JAX PRNG key.
+    u_grid, x_grid
+        Arrays returned by :func:`build_pinv_table`.
+    n
+        Sample size.
+
+    Returns
+    -------
+    samples
+        Array of shape ``(n,)``.
     """
-    u = jax.random.uniform(key, shape=(n,), dtype=jnp.float64)
+    u = jax.random.uniform(key, (n,), dtype=jnp.float64)
     return jnp.interp(u, u_grid, x_grid)

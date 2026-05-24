@@ -9,6 +9,7 @@ from importlib import import_module
 
 from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
+from normix.utils.gammainc import gammaincinv
 from normix.utils.rvs import build_pinv_table, rvs_pinv
 from normix.utils.validation import (
     validate_moments,
@@ -49,6 +50,7 @@ def __dir__() -> list[str]:
 __all__ = [
     "log_kv",
     "LOG_EPS",
+    "gammaincinv",
     "build_pinv_table",
     "rvs_pinv",
     "plot_pdf_cdf_comparison",

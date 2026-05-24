@@ -12,6 +12,10 @@ resolution-markers = [
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
+required-markers = [
+    "platform_machine == 'arm64' and sys_platform == 'darwin'",
+    "platform_machine == 'x86_64' and sys_platform == 'linux'",
+]
 
 [[package]]
 name = "alabaster"
@@ -1376,7 +1380,7 @@ dependencies = [
 
 [package.optional-dependencies]
 cuda12 = [
-    { name = "jax", extra = ["cuda12"] },
+    { name = "jax", extra = ["cuda12"], marker = "sys_platform == 'linux'" },
 ]
 dev = [
     { name = "ipykernel" },
@@ -1414,7 +1418,7 @@ requires-dist = [
     { name = "equinox", specifier = ">=0.13" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29" },
     { name = "jax", specifier = ">=0.4.38" },
-    { name = "jax", extras = ["cuda12"], marker = "extra == 'cuda12'", specifier = ">=0.4.38" },
+    { name = "jax", extras = ["cuda12"], marker = "sys_platform == 'linux' and extra == 'cuda12'", specifier = ">=0.4.38" },
     { name = "jaxopt", specifier = ">=0.8" },
     { name = "lxml", marker = "extra == 'scripts'", specifier = ">=6.0.2" },
     { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.9" },

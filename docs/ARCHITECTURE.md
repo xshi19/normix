@@ -37,7 +37,8 @@ normix/                     # JAX implementation
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
-    ├── rvs.py               # Generic RVS: build_pinv_table, rvs_pinv
+    ├── gammainc.py          # gammaincinv (JAX equivalent of scipy.special.gammaincinv)
+    ├── rvs.py               # Generic RVS: build_pinv_table (pure JAX), rvs_pinv
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
     └── validation.py        # moment validation, parameter printing (notebooks)
 ```
@@ -220,14 +221,15 @@ Any distribution that calls `log_kv` must override the Tier 3 CPU classmethods (
 
 Generic PINV (Polynomial-Interpolation-based Numerical Inversion) in `utils/rvs.py`:
 
-- `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)` — builds a quantile table on CPU from any univariate log-kernel. No normalising constant needed.
+- `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)` — pure-JAX quantile table from any univariate log-kernel. Tail bisection via `lax.fori_loop`, trapezoidal CDF via `jnp.cumsum`. No normalising constant needed.
 - `rvs_pinv(key, u_grid, x_grid, n)` — samples via `jnp.interp`. Fully vectorised, GPU-friendly.
 
-GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py` as private module-level helpers used by `GIG.rvs(method=...)`:
+Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and seed the table at `jnp.log(self.mode())`. Closed-form `mode()` methods live on `Gamma`, `InverseGamma`, `InverseGaussian`, and `GIG`. `InverseGaussian.ppf` and both `GIG.cdf`/`GIG.ppf` inline a single `build_pinv_table` call — no per-distribution wrapper.
+
+GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py`:
 
 - `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
-- `_gig_build_pinv_table(p, a, b)` — wraps generic PINV with the GIG log-kernel.
-- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — thin alias of `rvs_pinv` for symmetry.
+- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — thin alias of `rvs_pinv` for `GIG.rvs(method='pinv')`.
 
 Neither method evaluates the Bessel normalising constant. See `docs/tech_notes/gig_rvs.md`.
 

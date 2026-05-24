@@ -33,6 +33,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
+from normix.utils.gammainc import gammaincinv
 
 
 
@@ -109,9 +110,21 @@ class InverseGamma(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.beta**2 / ((self.alpha - 1.0)**2 * (self.alpha - 2.0))
 
+    def mode(self) -> jax.Array:
+        r"""Mode :math:`\beta / (\alpha + 1)` (closed form, valid for all :math:`\alpha > 0`)."""
+        return self.beta / (self.alpha + 1.0)
+
     def cdf(self, x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile function :math:`F^{-1}(q) = \beta / \mathrm{gammaincinv}(\alpha, 1-q)`.
+
+        Follows from :math:`F(x) = 1 - P(\alpha, \beta/x) = q`.
+        """
+        q = jnp.asarray(q, dtype=jnp.float64)
+        return self.beta / gammaincinv(self.alpha, 1.0 - q)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample *n* observations from :math:`\mathrm{InvGamma}(\alpha, \beta)` via JAX PRNG.

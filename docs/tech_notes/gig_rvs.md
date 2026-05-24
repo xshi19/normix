@@ -39,15 +39,19 @@ accepted proposal per sample.
 
 ### 2. Numerical Inverse CDF — PINV (`method='pinv'`)
 
-**Location:** `normix/utils/rvs.py` (generic PINV machinery);
-GIG-specific wrappers (`_gig_build_pinv_table`, `_gig_rvs_pinv`,
-`_gig_log_kernel_np`, `_gig_mode_w`) live in
-`normix/distributions/generalized_inverse_gaussian.py`.
+**Location:** `normix/utils/rvs.py` exposes the pure-JAX
+`build_pinv_table` + `rvs_pinv`; `GIG.rvs(method='pinv')` (and the
+shared `GIG.cdf` / `GIG.ppf`) call it inline with
+`log_kernel(w) = self.log_prob(exp(w)) + w` and seed it at
+`jnp.log(self.mode())`. The only GIG-specific helper that remains in
+`generalized_inverse_gaussian.py` is `_gig_rvs_pinv`, a thin alias of
+`rvs_pinv` kept for symmetry with `_gig_rvs_devroye`.
 
 The PINV method builds $F^{-1}$ numerically:
 
-1. **Setup (CPU, ~1.5 ms):** Evaluate the log-kernel on a 4 000-point grid in
-   $w$-space, integrate via the trapezoidal rule to obtain the CDF, and store
+1. **Setup (~1.5 ms):** Tail boundaries via JAX bisection (`lax.fori_loop`),
+   then evaluate the log-kernel on a 4 000-point grid in $w$-space and
+   integrate via the trapezoidal rule (`jnp.cumsum`). Returns
    $(u_{\text{grid}}, x_{\text{grid}})$ as JAX arrays.
 2. **Sampling (GPU, ~1–3 ms):** Draw $U \sim \text{Uniform}(0,1)$ and
    interpolate $X = F^{-1}(U)$ via `jnp.interp`.
@@ -56,8 +60,10 @@ The PINV method builds $F^{-1}$ numerically:
 total, so the Bessel normalising constant $K_p(\sqrt{ab})$ is never needed.
 
 **Generic:** the PINV infrastructure in `utils/rvs.py` accepts any univariate
-log-kernel callable.  Future distributions can reuse it by providing their own
-`log_kernel` and `mode`.
+log-kernel callable. `InverseGaussian.ppf` and the univariate Bessel-mixture
+marginals (`UnivariateVarianceGamma`, `UnivariateNormalInverseGamma`,
+`UnivariateNormalInverseGaussian`, `UnivariateGeneralizedHyperbolic`)
+reuse the same `build_pinv_table` call.
 
 ### 3. SciPy baseline (`method='scipy'`)
 
@@ -104,7 +110,7 @@ Benchmark script: `scripts/benchmark_gig_rvs.py`.
 | Batch rejection (no `while_loop`) | `vmap(while_loop)` on GPU costs ~400 ms overhead per call.  Generating all M × n proposals in one batch reduces this to ~10 ms. |
 | Generic PINV in `utils/rvs.py` | The method is distribution-agnostic; only a `log_kernel` callable and a mode are needed.  Reusable for future distributions. |
 | GIG Devroye lives inside `distributions/generalized_inverse_gaussian.py` | The TDR envelope is GIG-specific (relies on the particular form of $g(w)$). Co-locating with the `GIG` class keeps the implementation surface contiguous. |
-| Default method = `'devroye'` | Pure JAX with no CPU setup step.  PINV is faster but requires an eager CPU table build. |
+| Default method = `'devroye'` | Pure JAX with no setup step.  PINV is faster end-to-end but requires an eager table build before the first sample. |
 
 ## References
 
