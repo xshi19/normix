@@ -19,7 +19,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
-from normix.mixtures.marginal import NormalMixture
+from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
 
@@ -270,6 +270,32 @@ class NormalInverseGamma(NormalMixture):
         from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
         return GeneralizedHyperbolic(
             self._joint.to_joint_generalized_hyperbolic(boundary_eps=boundary_eps))
+
+
+# ============================================================================
+# Univariate Normal-Inverse Gamma (scalar API + cdf/ppf)
+# ============================================================================
+
+
+class UnivariateNormalInverseGamma(_UnivariateNormalMixtureMixin, NormalInverseGamma):
+    r"""Univariate (d=1) Normal-Inverse-Gamma distribution.
+
+    Sibling of :class:`NormalInverseGamma` for 1-D problems; see
+    :class:`~normix.distributions.variance_gamma.UnivariateVarianceGamma`
+    for the contract.
+    """
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, sigma, alpha, beta,
+    ) -> "UnivariateNormalInverseGamma":
+        joint = JointNormalInverseGamma.from_classical(
+            mu=jnp.atleast_1d(jnp.asarray(mu, dtype=jnp.float64)),
+            gamma=jnp.atleast_1d(jnp.asarray(gamma, dtype=jnp.float64)),
+            sigma=jnp.atleast_2d(jnp.asarray(sigma, dtype=jnp.float64)),
+            alpha=alpha, beta=beta,
+        )
+        return cls(joint)
 
 
 # ============================================================================

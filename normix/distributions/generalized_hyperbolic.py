@@ -35,7 +35,7 @@ from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
 from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
-from normix.mixtures.marginal import NormalMixture
+from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 
 
 from normix.utils.constants import LOG_EPS, GIG_CLAMP_LO, GIG_CLAMP_HI, GIG_P_MAX
@@ -547,6 +547,32 @@ class GeneralizedHyperbolic(NormalMixture):
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
             m_step_method=m_step_method)
+
+
+# ============================================================================
+# Univariate Generalized Hyperbolic (scalar API + cdf/ppf)
+# ============================================================================
+
+
+class UnivariateGeneralizedHyperbolic(_UnivariateNormalMixtureMixin, GeneralizedHyperbolic):
+    r"""Univariate (d=1) Generalized Hyperbolic distribution.
+
+    Sibling of :class:`GeneralizedHyperbolic` for 1-D problems; see
+    :class:`~normix.distributions.variance_gamma.UnivariateVarianceGamma`
+    for the contract.
+    """
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, sigma, p, a, b,
+    ) -> "UnivariateGeneralizedHyperbolic":
+        joint = JointGeneralizedHyperbolic.from_classical(
+            mu=jnp.atleast_1d(jnp.asarray(mu, dtype=jnp.float64)),
+            gamma=jnp.atleast_1d(jnp.asarray(gamma, dtype=jnp.float64)),
+            sigma=jnp.atleast_2d(jnp.asarray(sigma, dtype=jnp.float64)),
+            p=p, a=a, b=b,
+        )
+        return cls(joint)
 
 
 # ============================================================================

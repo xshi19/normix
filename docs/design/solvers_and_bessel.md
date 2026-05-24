@@ -210,24 +210,46 @@ See `docs/tech_notes/em_gpu_profiling.md`.
 ## 5. Random Variate Generation
 
 PINV (Polynomial-Interpolation-based Numerical Inversion) in
-`utils/rvs.py` works for any univariate log-kernel — no normalising
-constant needed:
+`utils/rvs.py` is pure JAX and works for any univariate log-kernel — no
+normalising constant needed:
 
 - `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)`
-  builds a quantile table on CPU.
+  builds a quantile table in JAX. Tail bisection via `lax.fori_loop`,
+  trapezoidal CDF via `jnp.cumsum`.
 - `rvs_pinv(key, u_grid, x_grid, n)` samples via `jnp.interp`
   (GPU-friendly, vectorised).
 
-GIG-specific sampling is inlined in `distributions/generalized_inverse_gaussian.py`
-as private module-level helpers (used by `GIG.rvs(method=...)`):
+Distributions on $(0,\infty)$ supply
+`log_kernel(w) = log_prob(exp(w)) + w` and seed the table at
+`jnp.log(self.mode())`. Closed-form `mode()` lives on the distribution
+itself (`Gamma`, `InverseGamma`, `InverseGaussian`, `GIG`).
+`InverseGaussian.ppf` and both `GIG.cdf` / `GIG.ppf` inline a single
+`build_pinv_table` call — `log_prob` is the only kernel.
+
+GIG-specific sampling is inlined in
+`distributions/generalized_inverse_gaussian.py`:
 
 - `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$,
   batch-parallel (no `while_loop`).
-- `_gig_build_pinv_table(p, a, b)` wraps generic PINV with the GIG
-  log-kernel.
+- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — alias of `rvs_pinv` used by
+  `GIG.rvs(method='pinv')`.
 
 Neither method evaluates the Bessel normalising constant. See
 `docs/tech_notes/gig_rvs.md`.
+
+### Quantile Functions (`cdf`, `ppf`)
+
+- `Gamma.ppf` and `InverseGamma.ppf` invert the regularised incomplete
+  gamma via `normix.utils.gammaincinv` — a pure-JAX Newton iteration on
+  `jax.scipy.special.gammainc` with a Wilson–Hilferty seed. This is the
+  JAX analogue of `scipy.special.gammaincinv`.
+- `InverseGaussian.ppf`, `GIG.cdf`, `GIG.ppf` build a PINV table from
+  `log_prob` (above).
+- Univariate `Normal`-mixture marginals (`UnivariateVarianceGamma`,
+  `UnivariateNormalInverseGamma`, `UnivariateNormalInverseGaussian`,
+  `UnivariateGeneralizedHyperbolic`) use the same generic PINV machinery
+  with `log_kernel(w) = self.log_prob(jnp.atleast_1d(w))`, seeded at
+  `self.mean()` (no closed-form mode for Bessel mixtures).
 
 ---
 
