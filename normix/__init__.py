@@ -50,15 +50,17 @@ from normix.distributions.inverse_gaussian import InverseGaussian
 from normix.distributions.generalized_inverse_gaussian import GIG, GeneralizedInverseGaussian
 from normix.distributions.normal import MultivariateNormal
 from normix.distributions.variance_gamma import (
-    VarianceGamma, JointVarianceGamma, FactorVarianceGamma)
+    VarianceGamma, JointVarianceGamma, FactorVarianceGamma,
+    UnivariateVarianceGamma)
 from normix.distributions.normal_inverse_gamma import (
-    NormalInverseGamma, JointNormalInverseGamma, FactorNormalInverseGamma)
+    NormalInverseGamma, JointNormalInverseGamma, FactorNormalInverseGamma,
+    UnivariateNormalInverseGamma)
 from normix.distributions.normal_inverse_gaussian import (
     NormalInverseGaussian, JointNormalInverseGaussian,
-    FactorNormalInverseGaussian)
+    FactorNormalInverseGaussian, UnivariateNormalInverseGaussian)
 from normix.distributions.generalized_hyperbolic import (
     GeneralizedHyperbolic, JointGeneralizedHyperbolic,
-    FactorGeneralizedHyperbolic)
+    FactorGeneralizedHyperbolic, UnivariateGeneralizedHyperbolic)
 
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import MarginalMixture, NormalMixture
@@ -110,6 +112,11 @@ __all__ = [
     "NormalInverseGamma",
     "NormalInverseGaussian",
     "GeneralizedHyperbolic",
+    # Univariate (d=1) marginal mixtures — scipy-style scalar API + cdf/ppf
+    "UnivariateVarianceGamma",
+    "UnivariateNormalInverseGamma",
+    "UnivariateNormalInverseGaussian",
+    "UnivariateGeneralizedHyperbolic",
     # Mixture distributions (joint)
     "JointVarianceGamma",
     "JointNormalInverseGamma",

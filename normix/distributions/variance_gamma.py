@@ -19,7 +19,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
-from normix.mixtures.marginal import NormalMixture
+from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 from normix.utils.bessel import log_kv
 from normix.utils.constants import LOG_EPS
 
@@ -277,6 +277,39 @@ class VarianceGamma(NormalMixture):
         from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
         return GeneralizedHyperbolic(
             self._joint.to_joint_generalized_hyperbolic(boundary_eps=boundary_eps))
+
+
+# ============================================================================
+# Univariate Variance Gamma (scalar API + cdf/ppf)
+# ============================================================================
+
+
+class UnivariateVarianceGamma(_UnivariateNormalMixtureMixin, VarianceGamma):
+    r"""Univariate (d=1) Variance Gamma distribution.
+
+    Sibling of :class:`VarianceGamma` for 1-D problems: exposes scalar
+    ``mean``/``var``/``std``, ``(n,)``-shaped ``rvs``, and ``cdf``/``ppf``
+    backed by a PINV table over the marginal log-density. EM, ``fit``,
+    ``replace``, and regularisation are inherited from
+    :class:`VarianceGamma`.
+    """
+
+    @classmethod
+    def from_classical(
+        cls, *, mu, gamma, sigma, alpha, beta,
+    ) -> "UnivariateVarianceGamma":
+        r"""Build from scalar or 1-D classical parameters.
+
+        ``mu``, ``gamma`` may be scalars or ``(1,)``; ``sigma`` may be a
+        scalar variance, ``(1,)``, or ``(1, 1)``.
+        """
+        joint = JointVarianceGamma.from_classical(
+            mu=jnp.atleast_1d(jnp.asarray(mu, dtype=jnp.float64)),
+            gamma=jnp.atleast_1d(jnp.asarray(gamma, dtype=jnp.float64)),
+            sigma=jnp.atleast_2d(jnp.asarray(sigma, dtype=jnp.float64)),
+            alpha=alpha, beta=beta,
+        )
+        return cls(joint)
 
 
 # ============================================================================

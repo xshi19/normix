@@ -24,11 +24,20 @@ import jax.numpy as jnp
 from scipy import stats
 
 from normix import GIG
+from normix.utils.rvs import build_pinv_table
 from normix.distributions.generalized_inverse_gaussian import (
     _gig_rvs_devroye as gig_rvs_devroye,
-    _gig_build_pinv_table as gig_build_pinv_table,
     _gig_rvs_pinv as gig_rvs_pinv,
 )
+
+
+def _gig_pinv_grids(p, a, b, *, n_grid=4000):
+    """Helper: build PINV table for GIG(p, a, b) seeded at the closed-form mode."""
+    gig = GIG(p=p, a=a, b=b)
+    log_kernel = lambda w: gig.log_prob(jnp.exp(w)) + w
+    return build_pinv_table(
+        log_kernel, jnp.log(gig.mode()), x_of_w=jnp.exp, n_grid=n_grid,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +84,7 @@ def time_pinv(p, a, b, n, seed=42):
     key = jax.random.PRNGKey(seed)
 
     t0 = time.perf_counter()
-    u_grid, x_grid = gig_build_pinv_table(p, a, b)
+    u_grid, x_grid = _gig_pinv_grids(p, a, b)
     t_setup = time.perf_counter() - t0
 
     # cold run
@@ -206,7 +215,7 @@ def main():
     key = jax.random.PRNGKey(999)
     _ = gig_rvs_devroye(key, 1.0, 1.0, 1.0, 10)
     _.block_until_ready()
-    u, x = gig_build_pinv_table(1.0, 1.0, 1.0, n_grid=100)
+    u, x = _gig_pinv_grids(1.0, 1.0, 1.0, n_grid=100)
     _ = gig_rvs_pinv(key, u, x, 10)
     _.block_until_ready()
     print(" done.", flush=True)

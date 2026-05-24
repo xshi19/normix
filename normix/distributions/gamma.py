@@ -32,6 +32,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
+from normix.utils.gammainc import gammaincinv
 
 
 
@@ -101,9 +102,23 @@ class Gamma(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.alpha / self.beta**2
 
+    def mode(self) -> jax.Array:
+        r"""Mode :math:`(\alpha - 1)/\beta` for :math:`\alpha \ge 1`.
+
+        For :math:`\alpha < 1` the density diverges at :math:`x=0` and the
+        formula returns a non-positive value; we clip to ``LOG_EPS`` so the
+        return value is always a valid positive sample location.
+        """
+        return jnp.maximum((self.alpha - 1.0) / self.beta, LOG_EPS)
+
     def cdf(self, x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
         return jax.scipy.special.gammainc(self.alpha, self.beta * x)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile function :math:`F^{-1}(q) = \mathrm{gammaincinv}(\alpha, q) / \beta`."""
+        q = jnp.asarray(q, dtype=jnp.float64)
+        return gammaincinv(self.alpha, q) / self.beta
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample *n* observations from :math:`\mathrm{Gamma}(\alpha, \beta)` via JAX PRNG."""

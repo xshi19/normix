@@ -27,6 +27,7 @@ import jax.numpy as jnp
 
 
 from normix.utils.constants import SIGMA_INIT_REG
+from normix.utils.rvs import build_pinv_table
 
 
 class MarginalMixture(eqx.Module):
@@ -595,3 +596,77 @@ class NormalMixture(MarginalMixture):
         cls, mu: jax.Array, gamma: jax.Array, sigma: jax.Array,
     ) -> "NormalMixture":
         """Construct a model with default subordinator parameters for initialisation."""
+
+
+# ============================================================================
+# Univariate marginal-mixture mixin (d=1 surface: scalar API + cdf/ppf)
+# ============================================================================
+
+
+class _UnivariateNormalMixtureMixin:
+    r"""Common 1-D surface for ``Univariate*`` marginal-mixture classes.
+
+    Subclasses use multiple inheritance with their multivariate parent
+    (e.g. ``class UnivariateVarianceGamma(_UnivariateNormalMixtureMixin,
+    VarianceGamma)``). Provides:
+
+    - d=1 validation in ``__init__``;
+    - ``cdf`` / ``ppf`` via :func:`build_pinv_table` seeded at the marginal mean;
+    - scalar ``mean``, ``var``, ``std``, ``log_prob``, ``pdf``;
+    - ``(n,)``-shaped ``rvs``.
+
+    EM machinery (``e_step``, ``m_step``, ``from_expectation``,
+    ``replace``, ``fit``, regularisation) is inherited unchanged because
+    the underlying joint is still a 1-D :class:`JointNormalMixture`.
+
+    The PINV table is seeded at :meth:`mean` (no closed-form mode for the
+    Bessel-mixture marginals).  The seed is only used as a bisection
+    starting point, so a rough estimate is sufficient.
+    """
+
+    def __init__(self, joint):
+        if int(joint.mu.shape[0]) != 1:
+            raise ValueError(
+                f"{type(self).__name__} requires d=1, got d={int(joint.mu.shape[0])}")
+        super().__init__(joint)
+
+    def _pinv_grids(self) -> tuple[jax.Array, jax.Array]:
+        log_kernel = lambda w: self.log_prob(jnp.atleast_1d(w))
+        return build_pinv_table(log_kernel, self.mean())
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        r"""CDF :math:`F(x)` via PINV lookup."""
+        u_grid, x_grid = self._pinv_grids()
+        x = jnp.asarray(x, dtype=jnp.float64)
+        return jnp.interp(x, x_grid, u_grid, left=0.0, right=1.0)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile function :math:`F^{-1}(q)` via PINV lookup."""
+        u_grid, x_grid = self._pinv_grids()
+        q = jnp.asarray(q, dtype=jnp.float64)
+        return jnp.interp(q, u_grid, x_grid)
+
+    def mean(self) -> jax.Array:
+        r"""Scalar :math:`E[X]` (unwraps the parent's ``(1,)`` return)."""
+        return super().mean()[0]
+
+    def var(self) -> jax.Array:
+        r"""Scalar :math:`\mathrm{Var}[X] = \mathrm{Cov}[X][0,0]`."""
+        return self.cov()[0, 0]
+
+    def std(self) -> jax.Array:
+        r"""Scalar standard deviation."""
+        return jnp.sqrt(self.var())
+
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        r"""Sample ``n`` scalars (shape ``(n,)``)."""
+        return super().rvs(n, seed)[:, 0]
+
+    def log_prob(self, x: jax.Array) -> jax.Array:
+        r"""Marginal :math:`\log f(x)` for a scalar (or ``(1,)``) input."""
+        x = jnp.asarray(x, dtype=jnp.float64)
+        return super().log_prob(jnp.atleast_1d(x))
+
+    def pdf(self, x: jax.Array) -> jax.Array:
+        r"""Marginal density :math:`f(x)`."""
+        return jnp.exp(self.log_prob(x))

@@ -37,6 +37,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
+from normix.utils.rvs import build_pinv_table
 
 
 
@@ -128,6 +129,16 @@ class InverseGaussian(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.mu**3 / self.lam
 
+    def mode(self) -> jax.Array:
+        r"""Mode :math:`\mu\bigl(\sqrt{1 + 9\mu^2/(4\lambda^2)} - 3\mu/(2\lambda)\bigr)`.
+
+        Closed-form maximiser of the IG density on :math:`(0, \infty)`.
+        """
+        return self.mu * (
+            jnp.sqrt(1.0 + 9.0 * self.mu ** 2 / (4.0 * self.lam ** 2))
+            - 3.0 * self.mu / (2.0 * self.lam)
+        )
+
     def cdf(self, x: jax.Array) -> jax.Array:
         r"""CDF of the Inverse Gaussian distribution (log-space stable).
 
@@ -145,6 +156,19 @@ class InverseGaussian(ExponentialFamily):
         t2 = sqrt_lam_over_x * (x / self.mu + 1.0)
         log_term2 = 2.0 * self.lam / self.mu + jax.scipy.special.log_ndtr(-t2)
         return jax.scipy.stats.norm.cdf(t1) + jnp.exp(log_term2)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile function via a PINV table built from :meth:`log_prob`.
+
+        Trapezoidal-CDF lookup on :math:`w = \log x`, seeded at
+        :math:`\log` :meth:`mode`.
+        """
+        q = jnp.asarray(q, dtype=jnp.float64)
+        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+        u_grid, x_grid = build_pinv_table(
+            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+        )
+        return jnp.interp(q, u_grid, x_grid)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.

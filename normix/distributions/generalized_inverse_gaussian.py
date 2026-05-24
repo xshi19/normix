@@ -84,9 +84,8 @@ from normix.fitting.solvers import (
 #    Three-piece tangent-line envelope, batch-parallel (no
 #    ``while_loop``), ~80–90% acceptance.
 #
-# 2. ``_gig_build_pinv_table`` / ``_gig_rvs_pinv`` — Numerical inverse
-#    CDF via the generic ``utils.rvs`` PINV machinery. CPU table build,
-#    GPU-friendly sampling via ``jnp.interp``.
+# 2. ``build_pinv_table`` + ``_gig_rvs_pinv`` — Numerical inverse CDF via
+#    :func:`normix.utils.rvs.build_pinv_table` seeded at :meth:`GIG.mode`.
 
 _GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
 _GIG_RVS_MAX_REJECT_ROUNDS = 20
@@ -170,30 +169,6 @@ def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
 
     first_idx = jnp.argmax(ok, axis=0)
     return ew[first_idx, jnp.arange(n)]
-
-
-def _gig_log_kernel_np(w, p, a, b):
-    """GIG log-kernel in w-space (numpy, vectorised)."""
-    w_c = np.clip(w, -500.0, 500.0)
-    ew = np.exp(w_c)
-    return p * w_c - 0.5 * (a * ew + b / ew)
-
-
-def _gig_mode_w(p, a, b):
-    """Mode of the GIG log-kernel in :math:`w = \\log x` space."""
-    t0 = (p + np.sqrt(p ** 2 + a * b)) / a
-    return np.log(t0)
-
-
-def _gig_build_pinv_table(p, a, b, **kwargs):
-    """Build a PINV table for :math:`\\mathrm{GIG}(p, a, b)`."""
-    pf, af, bf = float(p), float(a), float(b)
-    return build_pinv_table(
-        log_kernel=lambda w: _gig_log_kernel_np(w, pf, af, bf),
-        mode=_gig_mode_w(pf, af, bf),
-        x_of_w=np.exp,
-        **kwargs,
-    )
 
 
 def _gig_rvs_pinv(key, u_grid, x_grid, n):
@@ -522,6 +497,55 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         r""":math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2]."""
         return self.fisher_information()[2, 2]
 
+    def mode(self) -> jax.Array:
+        r"""Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.
+
+        Closed-form positive critical point of the log-density.  For
+        :math:`p \ge 1` this is the unique global maximum on
+        :math:`(0,\infty)`; for :math:`p < 1` the density diverges at 0
+        and this returns the interior local maximum.
+        """
+        pm1 = self.p - 1.0
+        return (pm1 + jnp.sqrt(pm1 ** 2 + self.a * self.b)) / self.a
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        r"""CDF :math:`F(x) = P(X \le x)`.
+
+        Trapezoidal CDF on a :math:`w = \log x` grid built from
+        :meth:`log_prob`; seeded at :math:`\log` :meth:`mode`.  In the
+        degenerate regimes (:math:`\sqrt{ab} <` ``GIG_DEGEN_THRESHOLD``)
+        delegates to the limiting Gamma / InverseGamma CDF for accuracy.
+        """
+        x = jnp.asarray(x, dtype=jnp.float64)
+        pf, af, bf = float(self.p), float(self.a), float(self.b)
+        if (af * bf) ** 0.5 < GIG_DEGEN_THRESHOLD:
+            from normix.distributions.gamma import Gamma
+            from normix.distributions.inverse_gamma import InverseGamma
+            if bf <= af and pf > 0:
+                return Gamma(alpha=pf, beta=af / 2.0).cdf(x)
+            return InverseGamma(alpha=-pf, beta=bf / 2.0).cdf(x)
+        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+        u_grid, x_grid = build_pinv_table(
+            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+        )
+        return jnp.interp(x, x_grid, u_grid, left=0.0, right=1.0)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile (inverse CDF) :math:`F^{-1}(q)` via the PINV table."""
+        q = jnp.asarray(q, dtype=jnp.float64)
+        pf, af, bf = float(self.p), float(self.a), float(self.b)
+        if (af * bf) ** 0.5 < GIG_DEGEN_THRESHOLD:
+            from normix.distributions.gamma import Gamma
+            from normix.distributions.inverse_gamma import InverseGamma
+            if bf <= af and pf > 0:
+                return Gamma(alpha=pf, beta=af / 2.0).ppf(q)
+            return InverseGamma(alpha=-pf, beta=bf / 2.0).ppf(q)
+        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+        u_grid, x_grid = build_pinv_table(
+            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+        )
+        return jnp.interp(q, u_grid, x_grid)
+
     def rvs(
         self, n: int, seed: int = 42, method: str = "devroye",
     ) -> jax.Array:
@@ -548,7 +572,10 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         if method == "pinv":
             key = jax.random.PRNGKey(seed)
-            u_grid, x_grid = _gig_build_pinv_table(self.p, self.a, self.b)
+            log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+            u_grid, x_grid = build_pinv_table(
+                log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+            )
             return _gig_rvs_pinv(key, u_grid, x_grid, n)
 
         if method == "scipy":
