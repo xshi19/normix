@@ -570,12 +570,40 @@ x^{\alpha-1} e^{-\beta x}, \quad x &gt; 0\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.mode" title="Link to this definition"></a></dt>
+<dd><p>Mode <span class="math notranslate nohighlight">\((\alpha - 1)/\beta\)</span> for <span class="math notranslate nohighlight">\(\alpha \ge 1\)</span>.</p>
+<p>For <span class="math notranslate nohighlight">\(\alpha &lt; 1\)</span> the density diverges at <span class="math notranslate nohighlight">\(x=0\)</span> and the
+formula returns a non-positive value; we clip to <code class="docutils literal notranslate"><span class="pre">LOG_EPS</span></code> so the
+return value is always a valid positive sample location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.cdf">
 <span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.cdf" title="Link to this definition"></a></dt>
 <dd><p>CDF F(x). Subclasses should override with analytical formulas.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.ppf">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.ppf" title="Link to this definition"></a></dt>
+<dd><p>Quantile function <span class="math notranslate nohighlight">\(F^{-1}(q) = \mathrm{gammaincinv}(\alpha, q) / \beta\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -758,12 +786,38 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.mode" title="Link to this definition"></a></dt>
+<dd><p>Mode <span class="math notranslate nohighlight">\(\beta / (\alpha + 1)\)</span> (closed form, valid for all <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.cdf">
 <span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.cdf" title="Link to this definition"></a></dt>
 <dd><p>CDF F(x). Subclasses should override with analytical formulas.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.ppf">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.ppf" title="Link to this definition"></a></dt>
+<dd><p>Quantile function <span class="math notranslate nohighlight">\(F^{-1}(q) = \beta / \mathrm{gammaincinv}(\alpha, 1-q)\)</span>.</p>
+<p>Follows from <span class="math notranslate nohighlight">\(F(x) = 1 - P(\alpha, \beta/x) = q\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -948,6 +1002,18 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode" title="Link to this definition"></a></dt>
+<dd><p>Mode <span class="math notranslate nohighlight">\(\mu\bigl(\sqrt{1 + 9\mu^2/(4\lambda^2)} - 3\mu/(2\lambda)\bigr)\)</span>.</p>
+<p>Closed-form maximiser of the IG density on <span class="math notranslate nohighlight">\((0, \infty)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.cdf">
 <span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.cdf" title="Link to this definition"></a></dt>
 <dd><p>CDF of the Inverse Gaussian distribution (log-space stable).</p>
@@ -959,6 +1025,22 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.ppf">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.ppf" title="Link to this definition"></a></dt>
+<dd><p>Quantile function via a PINV table built from <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>.</p>
+<p>Trapezoidal-CDF lookup on <span class="math notranslate nohighlight">\(w = \log x\)</span>, seeded at
+<span class="math notranslate nohighlight">\(\log\)</span> <a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode" title="normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mode()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1179,6 +1261,53 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode" title="Link to this definition"></a></dt>
+<dd><p>Interior mode <span class="math notranslate nohighlight">\(\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a\)</span>.</p>
+<p>Closed-form positive critical point of the log-density.  For
+<span class="math notranslate nohighlight">\(p \ge 1\)</span> this is the unique global maximum on
+<span class="math notranslate nohighlight">\((0,\infty)\)</span>; for <span class="math notranslate nohighlight">\(p &lt; 1\)</span> the density diverges at 0
+and this returns the interior local maximum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf">
+<span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf" title="Link to this definition"></a></dt>
+<dd><p>CDF <span class="math notranslate nohighlight">\(F(x) = P(X \le x)\)</span>.</p>
+<p>Trapezoidal CDF on a <span class="math notranslate nohighlight">\(w = \log x\)</span> grid built from
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>; seeded at <span class="math notranslate nohighlight">\(\log\)</span> <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mode()</span></code></a>.  In the
+degenerate regimes (<span class="math notranslate nohighlight">\(\sqrt{ab} &lt;\)</span> <code class="docutils literal notranslate"><span class="pre">GIG_DEGEN_THRESHOLD</span></code>)
+delegates to the limiting Gamma / InverseGamma CDF for accuracy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf" title="Link to this definition"></a></dt>
+<dd><p>Quantile (inverse CDF) <span class="math notranslate nohighlight">\(F^{-1}(q)\)</span> via the PINV table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2478,6 +2607,31 @@ vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.UnivariateVarianceGamma">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.variance_gamma.</span></span><span class="sig-name descname"><span class="pre">UnivariateVarianceGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#UnivariateVarianceGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_UnivariateNormalMixtureMixin</span></code>, <a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a></p>
+<p>Univariate (d=1) Variance Gamma distribution.</p>
+<p>Sibling of <a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a> for 1-D problems: exposes scalar
+<code class="docutils literal notranslate"><span class="pre">mean</span></code>/<code class="docutils literal notranslate"><span class="pre">var</span></code>/<code class="docutils literal notranslate"><span class="pre">std</span></code>, <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>-shaped <code class="docutils literal notranslate"><span class="pre">rvs</span></code>, and <code class="docutils literal notranslate"><span class="pre">cdf</span></code>/<code class="docutils literal notranslate"><span class="pre">ppf</span></code>
+backed by a PINV table over the marginal log-density. EM, <code class="docutils literal notranslate"><span class="pre">fit</span></code>,
+<code class="docutils literal notranslate"><span class="pre">replace</span></code>, and regularisation are inherited from
+<a class="reference internal" href="#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.UnivariateVarianceGamma.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#UnivariateVarianceGamma.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma.from_classical" title="Link to this definition"></a></dt>
+<dd><p>Build from scalar or 1-D classical parameters.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code> may be scalars or <code class="docutils literal notranslate"><span class="pre">(1,)</span></code>; <code class="docutils literal notranslate"><span class="pre">sigma</span></code> may be a
+scalar variance, <code class="docutils literal notranslate"><span class="pre">(1,)</span></code>, or <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">1)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma" title="normix.distributions.variance_gamma.UnivariateVarianceGamma"><em>UnivariateVarianceGamma</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.FactorVarianceGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.variance_gamma.</span></span><span class="sig-name descname"><span class="pre">FactorVarianceGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#FactorVarianceGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.FactorVarianceGamma" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p>
@@ -2689,6 +2843,26 @@ subordinator).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">UnivariateNormalInverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#UnivariateNormalInverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_UnivariateNormalMixtureMixin</span></code>, <a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></a></p>
+<p>Univariate (d=1) Normal-Inverse-Gamma distribution.</p>
+<p>Sibling of <a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></a> for 1-D problems; see
+<a class="reference internal" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma" title="normix.distributions.variance_gamma.UnivariateVarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnivariateVarianceGamma</span></code></a>
+for the contract.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#UnivariateNormalInverseGamma.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.UnivariateNormalInverseGamma"><em>UnivariateNormalInverseGamma</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2909,6 +3083,26 @@ leaving only one <span class="math notranslate nohighlight">\(\log K_\nu\)</span
 <dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
 <p>No boundary approximation: NIG sits in the strict interior of GH’s
 parameter space (<span class="math notranslate nohighlight">\(p = -1/2,\; a = \lambda/\mu_{IG}^2,\; b = \lambda\)</span>).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gaussian.</span></span><span class="sig-name descname"><span class="pre">UnivariateNormalInverseGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#UnivariateNormalInverseGaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_UnivariateNormalMixtureMixin</span></code>, <a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></a></p>
+<p>Univariate (d=1) Normal-Inverse-Gaussian distribution.</p>
+<p>Sibling of <a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></a> for 1-D problems; see
+<a class="reference internal" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma" title="normix.distributions.variance_gamma.UnivariateVarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnivariateVarianceGamma</span></code></a>
+for the contract.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_ig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#UnivariateNormalInverseGaussian.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian"><em>UnivariateNormalInverseGaussian</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -3285,6 +3479,26 @@ with the highest marginal log-likelihood.  A moment-based fallback
 <dd><p>Fit GH distribution using EM or MCECM.</p>
 <p>Defaults to CPU backends and det_sigma_one regularization
 (GH has scale non-identifiability requiring <a href="#id1"><span class="problematic" id="id2">|Sigma|</span></a> = 1).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.generalized_hyperbolic.</span></span><span class="sig-name descname"><span class="pre">UnivariateGeneralizedHyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#UnivariateGeneralizedHyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_UnivariateNormalMixtureMixin</span></code>, <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a></p>
+<p>Univariate (d=1) Generalized Hyperbolic distribution.</p>
+<p>Sibling of <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a> for 1-D problems; see
+<a class="reference internal" href="#normix.distributions.variance_gamma.UnivariateVarianceGamma" title="normix.distributions.variance_gamma.UnivariateVarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnivariateVarianceGamma</span></code></a>
+for the contract.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic.from_classical">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#UnivariateGeneralizedHyperbolic.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic.from_classical" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic"><em>UnivariateGeneralizedHyperbolic</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
