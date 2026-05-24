@@ -70,6 +70,31 @@ Before committing, verify:
 - [ ] If new distribution was added → update `.cursor/rules/project-overview.mdc`
 - [ ] If design decisions were made → update `docs/design/design.md`
 
+## Release workflow (release-please)
+
+Versioning and PyPI releases are automated via `googleapis/release-please-action`.
+**Never edit `version` in `pyproject.toml` or `__version__` in `normix/__init__.py` by hand.**
+
+How it works:
+
+1. Commits merged to `master` with `feat:` or `fix:` types cause release-please to open
+   (or update) a Release PR titled `chore: release X.Y.Z`.
+2. Merging the Release PR bumps `pyproject.toml` and `normix/__init__.py`, updates
+   `CHANGELOG.md`, and pushes a `vX.Y.Z` tag.
+3. The `vX.Y.Z` tag triggers `.github/workflows/publish.yml`, which builds and
+   publishes the package to PyPI via Trusted Publishing.
+
+**Version bump rules (pre-1.0):**
+
+| Commit type | Bump |
+|---|---|
+| `fix:` | patch (`0.2.0 → 0.2.1`) |
+| `feat:` | minor (`0.2.0 → 0.3.0`) |
+| `feat!:` / `BREAKING CHANGE:` footer | minor (not major until 1.0) |
+| `docs:`, `test:`, `refactor:`, `chore:`, `perf:` | no release |
+
+**Do not** push `vX.Y.Z` tags manually — release-please manages them.
+
 ## Gotchas
 
 - **Don't commit generated files** (`.pyc`, `__pycache__/`, `.ipynb_checkpoints/`).
