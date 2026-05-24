@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/xshi19/normix/compare/v0.2.1...v0.2.2) (2026-05-24)
+
+
+### Features
+
+* **distributions:** add cdf/ppf with pure-JAX PINV ([#31](https://github.com/xshi19/normix/issues/31)) ([d73c5fc](https://github.com/xshi19/normix/commit/d73c5fcfa7cdbd319e1d1119b8798606f6a163a2))
+
 ## [0.2.1](https://github.com/xshi19/normix/compare/v0.2.0...v0.2.1) (2026-05-17)
 
 
