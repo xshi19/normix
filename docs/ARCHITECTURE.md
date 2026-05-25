@@ -30,6 +30,10 @@ normix/                     # JAX implementation
 │   ├── shrinkage_targets.py # eta0_from_model, eta0_isotropic, eta0_diagonal, eta0_with_sigma
 │   ├── solvers.py          # solve_bregman*, BregmanResult, make_jit_newton_solver; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
+├── finance/
+│   ├── projection.py       # project_portfolio (wᵀX → Univariate*)
+│   ├── risk.py             # RiskMeasure ABC, CVaR(α) with value, gradient, Hessian in (μ̃,γ̃,σ̃) and w
+│   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over the subordinator Y
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
@@ -282,5 +286,5 @@ See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `docs/tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions |
 | `docs/theory/` | Mathematical derivations (`.rst`) |
 | `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
-| `docs/plans/finance_architecture.md` | Proposed `normix.finance` layer (not yet implemented) |
+| `docs/plans/finance_architecture.md` | `normix.finance` roadmap; Phase D implemented (projection + CVaR), Phases E and F still proposed |
 | `docs/archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

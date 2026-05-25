@@ -236,6 +236,10 @@ class VarianceGamma(NormalMixture):
     def _subordinator_keys(cls):
         return ('alpha', 'beta')
 
+    @classmethod
+    def _univariate_class(cls):
+        return UnivariateVarianceGamma
+
     @property
     def alpha(self) -> jax.Array:
         r""":math:`\alpha` — Gamma shape (forwarded from the joint)."""

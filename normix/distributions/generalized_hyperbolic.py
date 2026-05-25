@@ -343,6 +343,10 @@ class GeneralizedHyperbolic(NormalMixture):
     def _subordinator_keys(cls):
         return ('p', 'a', 'b')
 
+    @classmethod
+    def _univariate_class(cls):
+        return UnivariateGeneralizedHyperbolic
+
     @property
     def p(self) -> jax.Array:
         r""":math:`p` — GIG order (forwarded from the joint)."""

@@ -85,6 +85,8 @@ from normix.fitting.shrinkage_targets import (
     eta0_with_sigma,
 )
 
+from normix import finance
+
 from normix.divergences import (
     squared_hellinger,
     kl_divergence,
@@ -153,6 +155,8 @@ __all__ = [
     "eta0_isotropic",
     "eta0_diagonal",
     "eta0_with_sigma",
+    # Finance subpackage
+    "finance",
     # Divergences
     "squared_hellinger",
     "kl_divergence",

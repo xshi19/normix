@@ -242,6 +242,10 @@ class NormalInverseGaussian(NormalMixture):
     def _subordinator_keys(cls):
         return ('mu_ig', 'lam')
 
+    @classmethod
+    def _univariate_class(cls):
+        return UnivariateNormalInverseGaussian
+
     @property
     def mu_ig(self) -> jax.Array:
         r""":math:`\mu_{IG}` — InverseGaussian mean (forwarded from the joint)."""
