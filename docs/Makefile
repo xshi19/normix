@@ -1,27 +1,32 @@
 # Makefile for Sphinx documentation
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
-# Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile notebooks clean livehtml
+.PHONY: help Makefile clean clean-cache html html-strict linkcheck check-links
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+clean:
+	rm -rf $(BUILDDIR)/html $(BUILDDIR)/doctrees $(BUILDDIR)/linkcheck
+
+clean-cache:
+	rm -rf $(BUILDDIR)/.jupyter_cache
+
+check-links:
+	bash ../scripts/check_doc_links.sh
+
+html: check-links
+	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
+
+html-strict: check-links
+	NB_EXECUTION_MODE=force $(SPHINXBUILD) -W -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
+
+linkcheck:
+	$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" "$(BUILDDIR)/linkcheck" $(SPHINXOPTS) $(O)
+
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-# Convenience targets
-clean:
-	rm -rf $(BUILDDIR)/*
-	rm -rf notebooks/
-
-livehtml: notebooks
-	sphinx-autobuild "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)

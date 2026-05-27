@@ -1,0 +1,349 @@
+/*
+  normix.css — Kami-derived theme overrides for normix docs (sphinx-book-theme).
+  Design tokens: incerto-wiki/docs/design/VISUAL_STYLE.md
+*/
+
+:root,
+html[data-theme="light"] {
+  --normix-paper: #f5f4ed;
+  --normix-surface: #faf9f5;
+  --normix-sand: #e8e6dc;
+  --normix-ink: #141413;
+  --normix-muted: #6b6a64;
+  --normix-accent: #1b365d;
+  --normix-accent-light: #2d5a8a;
+  --normix-rule: #d8d4c8;
+  --normix-code-surface: #f0eee6;
+  --normix-link-visited: #4b506f;
+  --normix-measure: 74ch;
+
+  --pst-color-background: var(--normix-paper);
+  --pst-color-on-background: var(--normix-ink);
+  --pst-color-surface: var(--normix-surface);
+  --pst-color-on-surface: var(--normix-ink);
+  --pst-color-text-base: var(--normix-ink);
+  --pst-color-text-muted: var(--normix-muted);
+  --pst-color-primary: var(--normix-accent);
+  --pst-color-primary-highlight: var(--normix-accent-light);
+  --pst-color-border: var(--normix-rule);
+  --pst-color-inline-code: var(--normix-ink);
+  --pst-color-target: rgba(27, 54, 93, 0.12);
+  --pst-font-family-base: Charter, "Bitstream Charter", "Sitka Text", Georgia, serif;
+  --pst-font-family-heading: Charter, "Bitstream Charter", "Sitka Text", Georgia, serif;
+  --pst-font-family-monospace: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --pst-font-size-base: 17px;
+  --pst-font-size-h1: 2.2rem;
+  --pst-font-size-h2: 1.55rem;
+  --pst-font-size-h3: 1.25rem;
+}
+
+html[data-theme="dark"] {
+  --normix-paper: #1b1a17;
+  --normix-surface: #24221e;
+  --normix-sand: #343028;
+  --normix-ink: #f3efe4;
+  --normix-muted: #b8afa0;
+  --normix-accent: #9eb6d8;
+  --normix-accent-light: #c2d1e7;
+  --normix-rule: #4a453b;
+  --normix-code-surface: #2d2a24;
+  --normix-link-visited: #c3b6d7;
+}
+
+html {
+  scroll-padding-top: 76px;
+}
+
+body,
+.bd-page__body {
+  background: var(--normix-paper) !important;
+  color: var(--normix-ink) !important;
+  font-family: var(--pst-font-family-base);
+  font-size: 17px;
+  line-height: 1.58;
+  letter-spacing: normal;
+}
+
+a,
+a.reference {
+  color: var(--normix-accent);
+  text-decoration-color: rgba(27, 54, 93, 0.35);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--normix-accent-light) !important;
+  text-decoration-color: currentColor;
+}
+
+a:visited {
+  color: var(--normix-link-visited);
+}
+
+/* Top navbar */
+.bd-header,
+.bd-header .navbar,
+header.bd-header {
+  background: rgba(245, 244, 237, 0.94) !important;
+  border-bottom: 1px solid var(--normix-rule);
+  box-shadow: none !important;
+  backdrop-filter: blur(12px);
+}
+
+html[data-theme="dark"] .bd-header,
+html[data-theme="dark"] .bd-header .navbar {
+  background: rgba(27, 26, 23, 0.94) !important;
+}
+
+.navbar-brand,
+.navbar-nav .nav-link {
+  font-family: var(--pst-font-family-heading);
+  font-weight: 500;
+  color: var(--normix-ink) !important;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--normix-accent) !important;
+}
+
+/* Left sidebar */
+.bd-sidebar-primary {
+  background: var(--normix-paper);
+  border-right: 1px solid var(--normix-rule);
+}
+
+.bd-sidebar-primary .nav-link {
+  color: var(--normix-muted) !important;
+  font-family: var(--pst-font-family-base);
+  border-radius: 6px;
+}
+
+.bd-sidebar-primary .nav-link:hover {
+  background: rgba(27, 54, 93, 0.07);
+  color: var(--normix-accent) !important;
+}
+
+.bd-sidebar-primary .nav-link.active,
+.bd-sidebar-primary .current.reference.internal {
+  background: rgba(27, 54, 93, 0.1);
+  border-left: 2px solid var(--normix-accent);
+  color: var(--normix-accent) !important;
+  font-weight: 600;
+}
+
+/* Main content */
+.bd-main .bd-content,
+article.bd-article {
+  background: var(--normix-paper);
+  color: var(--normix-ink);
+}
+
+.bd-article-container {
+  max-width: 52rem;
+}
+
+.bd-content .section p,
+.bd-content .section li,
+.bd-content blockquote {
+  max-width: var(--normix-measure);
+}
+
+.bd-content h1,
+.bd-content h2,
+.bd-content h3,
+.bd-content h4,
+.bd-content h5,
+.bd-content h6 {
+  color: var(--normix-ink) !important;
+  font-family: var(--pst-font-family-heading);
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+}
+
+.bd-content h2 {
+  margin-top: 2.2rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--normix-rule);
+}
+
+.bd-content blockquote {
+  margin: 1.4rem 0;
+  padding: 0.1rem 0 0.1rem 1rem;
+  color: var(--normix-muted);
+  border-left: 3px solid var(--normix-accent);
+  background: transparent;
+}
+
+/* Right TOC */
+.bd-sidebar-secondary {
+  color: var(--normix-muted);
+  font-size: 0.9rem;
+}
+
+.bd-sidebar-secondary .nav-link {
+  color: var(--normix-muted);
+}
+
+.bd-sidebar-secondary .nav-link.active,
+.bd-sidebar-secondary .nav-link:hover {
+  color: var(--normix-accent) !important;
+}
+
+/* Tables */
+.bd-content table.docutils,
+.bd-content table.table {
+  width: 100%;
+  margin: 1.25rem 0 1.6rem;
+  border-collapse: collapse;
+  color: var(--normix-ink);
+  font-size: 0.94em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-content table.docutils th,
+.bd-content table.docutils td,
+.bd-content table.table th,
+.bd-content table.table td {
+  padding: 0.45rem 0.6rem;
+  vertical-align: top;
+  border: 0;
+  border-bottom: 1px solid var(--normix-rule);
+}
+
+.bd-content table.docutils th,
+.bd-content table.table th {
+  background: var(--normix-surface);
+  font-weight: 600;
+  border-bottom: 1.5px solid var(--normix-rule);
+}
+
+/* Inline and block code */
+.bd-content :not(pre) > code,
+.bd-content code.literal,
+.bd-content span.pre {
+  padding: 0.08em 0.28em;
+  color: var(--normix-ink);
+  background: var(--normix-code-surface);
+  border: 1px solid var(--normix-rule);
+  border-radius: 4px;
+  font-family: var(--pst-font-family-monospace) !important;
+}
+
+div.highlight,
+pre,
+.bd-content pre {
+  background: var(--normix-code-surface) !important;
+  border: 1px solid var(--normix-rule) !important;
+  border-left: 3px solid var(--normix-accent) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: var(--normix-ink) !important;
+  font-family: var(--pst-font-family-monospace) !important;
+}
+
+/* myst-nb code cells */
+div.cell_input div.highlight,
+div.cell_output div.highlight {
+  margin: 0.5rem 0;
+}
+
+div.cell_output img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  background: var(--normix-surface);
+  border: 1px solid var(--normix-rule);
+  border-radius: 6px;
+}
+
+div.cell_output pre {
+  color: var(--normix-muted) !important;
+}
+
+/* Admonitions */
+.admonition,
+div.admonition {
+  max-width: var(--normix-measure);
+  margin: 1.4rem 0;
+  padding: 0.8rem 1rem;
+  background: var(--normix-surface);
+  border: 1px solid var(--normix-rule);
+  border-left: 3px solid var(--normix-accent);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.admonition.warning,
+.admonition.caution,
+.admonition.danger {
+  border-left-color: #9b3a34;
+}
+
+.admonition.note,
+.admonition.tip,
+.admonition.important {
+  border-left-color: #28724f;
+}
+
+/* API reference (autodoc) */
+dl.class,
+dl.function,
+dl.method,
+dl.attribute {
+  margin-bottom: 1.5rem;
+}
+
+dl.class > dt,
+dl.function > dt,
+dl.method > dt {
+  background: var(--normix-surface);
+  border-left: 3px solid var(--normix-accent);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0 4px 4px 0;
+  font-family: var(--pst-font-family-monospace);
+  font-size: 0.92em;
+}
+
+/* Footer prev/next */
+.prev-next-area a {
+  background: var(--normix-surface) !important;
+  border: 1px solid var(--normix-rule) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: var(--normix-muted) !important;
+}
+
+.prev-next-area a:hover {
+  border-color: var(--normix-accent) !important;
+  color: var(--normix-accent) !important;
+}
+
+/* Print */
+@media print {
+  :root,
+  html[data-theme="light"],
+  html[data-theme="dark"] {
+    --normix-paper: #ffffff;
+    --normix-surface: #ffffff;
+    --normix-code-surface: #f7f7f4;
+    --normix-ink: #000000;
+    --normix-muted: #55524d;
+    --normix-rule: #c8c4b8;
+  }
+
+  .bd-header,
+  .bd-sidebar-primary,
+  .bd-sidebar-secondary,
+  .prev-next-area {
+    display: none !important;
+  }
+
+  .bd-content h2,
+  .bd-content table,
+  div.highlight,
+  .admonition {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

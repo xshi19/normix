@@ -42,6 +42,7 @@ Key Features
    architecture
    theory/index
    api/index
+   tutorials/em/01_em_vs_mcecm
 
 Indices and Tables
 ==================

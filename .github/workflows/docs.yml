@@ -3,6 +3,8 @@ name: Docs
 on:
   push:
     branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +17,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -37,17 +40,32 @@ jobs:
 
       - name: Install docs dependencies
         run: |
-          uv venv
-          . .venv/bin/activate
-          uv pip install -e ".[docs]" nbconvert matplotlib
+          uv sync --extra docs --extra plotting
+          uv pip install pandas ipykernel
+
+      - name: Cross-link invariants
+        run: bash scripts/check_doc_links.sh
+
+      - name: Restore myst-nb cache
+        uses: actions/cache@v4
+        with:
+          path: docs/_build/.jupyter_cache
+          key: myst-nb-${{ runner.os }}-${{ hashFiles('docs/tutorials/**', 'uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            myst-nb-${{ runner.os }}-
 
       - name: Build Sphinx HTML
         run: |
-          . .venv/bin/activate
-          make -C docs html
+          uv run sphinx-build -b html docs docs/_build/html
           touch docs/_build/html/.nojekyll
 
+      - name: Link check (report only)
+        if: always()
+        continue-on-error: true
+        run: uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
+
       - name: Deploy to gh-pages
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

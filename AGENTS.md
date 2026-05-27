@@ -10,6 +10,9 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only), `optax`
 - Full validation: `uv run pytest tests/ -m "slow or stress or integration"`
 - Single test: `uv run pytest tests/test_gamma.py -v`
 - Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
+- Docs (cached build): `uv run make -C docs html`
+- Docs (full re-execute): `uv run make -C docs html-strict`
+- Docs clean: `uv run make -C docs clean` / `uv run make -C docs clean-cache`
 - Notebooks: `uv run jupyter lab`
 - Add dependency: `uv add <package>` / `uv add --dev <package>`
 - This project uses **uv**, NOT conda.
