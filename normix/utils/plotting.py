@@ -9,8 +9,12 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 try:
+    from cycler import cycler
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as mgs
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 except ImportError as e:
     raise ImportError(
         "matplotlib is required for normix.utils.plotting. "
@@ -23,12 +27,168 @@ import jax
 import jax.numpy as jnp
 
 
-_COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+COLORS: dict[str, str] = {
+    "paper": "#F5F4ED",
+    "surface": "#FAF9F5",
+    "sand": "#E8E6DC",
+    "rule": "#D8D4C8",
+    "ink": "#141413",
+    "muted": "#6B6A64",
+    "accent": "#1B365D",
+    "accent_light": "#2D5A8A",
+    "green": "#28724F",
+    "umber": "#8F5A2A",
+    "brick": "#9B3A34",
+    "violet": "#6D597A",
+    "teal": "#2F6F73",
+    "gold": "#A98324",
+}
+
+COLOR_CYCLE: tuple[str, ...] = (
+    COLORS["accent"],
+    COLORS["green"],
+    COLORS["umber"],
+    COLORS["violet"],
+    COLORS["teal"],
+    COLORS["brick"],
+    COLORS["gold"],
+    COLORS["muted"],
+)
+
+_FONT_SERIF = [
+    "Charter",
+    "Bitstream Charter",
+    "Sitka Text",
+    "Georgia",
+    "DejaVu Serif",
+]
 
 # Golden ratio for figure proportions
 PHI = (1 + np.sqrt(5)) / 2
 FIG_W = 12
 FIG_H = FIG_W / PHI
+
+
+def set_theme(*, scale: float = 1.0) -> None:
+    """Apply the normix Matplotlib theme (Kami-derived visual tokens).
+
+    Matches ``incerto-wiki/docs/design/VISUAL_STYLE.md`` so tutorial figures
+    align with the documentation site aesthetic.
+    """
+    if scale <= 0:
+        raise ValueError("scale must be positive")
+
+    mpl.rcParams.update(
+        {
+            "figure.dpi": 110,
+            "figure.figsize": (FIG_W, FIG_H),
+            "figure.facecolor": COLORS["surface"],
+            "savefig.dpi": 200,
+            "savefig.bbox": "tight",
+            "savefig.facecolor": COLORS["surface"],
+            "savefig.edgecolor": COLORS["surface"],
+            "savefig.pad_inches": 0.08,
+            "font.family": "serif",
+            "font.serif": _FONT_SERIF,
+            "font.size": 10 * scale,
+            "mathtext.fontset": "dejavuserif",
+            "axes.facecolor": COLORS["surface"],
+            "axes.edgecolor": COLORS["muted"],
+            "axes.labelcolor": COLORS["ink"],
+            "axes.labelsize": 10.5 * scale,
+            "axes.linewidth": 1.0,
+            "axes.prop_cycle": cycler(color=COLOR_CYCLE),
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.titlecolor": COLORS["ink"],
+            "axes.titlesize": 12.5 * scale,
+            "axes.titleweight": "normal",
+            "axes.grid": True,
+            "axes.grid.axis": "y",
+            "axes.axisbelow": True,
+            "grid.color": COLORS["sand"],
+            "grid.linewidth": 0.8,
+            "grid.alpha": 1.0,
+            "lines.linewidth": 2.0,
+            "lines.markersize": 4.0 * scale,
+            "lines.markeredgewidth": 0.7,
+            "xtick.color": COLORS["muted"],
+            "ytick.color": COLORS["muted"],
+            "xtick.labelsize": 9 * scale,
+            "ytick.labelsize": 9 * scale,
+            "legend.frameon": False,
+            "legend.fontsize": 9 * scale,
+            "legend.handlelength": 1.8,
+            "legend.borderaxespad": 0.2,
+            "patch.edgecolor": COLORS["rule"],
+            "patch.linewidth": 0.8,
+        }
+    )
+
+
+def style_axes(
+    axes: Axes | list[Axes] | tuple[Axes, ...],
+    *,
+    grid_axis: str = "y",
+    legend: bool = True,
+) -> Axes | list[Axes]:
+    """Apply final styling to one or more Matplotlib axes."""
+    if grid_axis not in {"x", "y", "both", "none"}:
+        raise ValueError('grid_axis must be one of "x", "y", "both", or "none"')
+
+    single_axis = isinstance(axes, Axes)
+    axes_list = [axes] if single_axis else list(axes)
+
+    for ax in axes_list:
+        ax.set_facecolor(COLORS["surface"])
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            ax.spines[side].set_color(COLORS["muted"])
+            ax.spines[side].set_linewidth(1.0)
+
+        ax.tick_params(axis="both", colors=COLORS["muted"], length=3.0, width=0.8)
+        ax.title.set_color(COLORS["ink"])
+        ax.xaxis.label.set_color(COLORS["ink"])
+        ax.yaxis.label.set_color(COLORS["ink"])
+        ax.set_axisbelow(True)
+
+        ax.grid(False)
+        if grid_axis != "none":
+            ax.grid(
+                True,
+                which="major",
+                axis=grid_axis,
+                color=COLORS["sand"],
+                linewidth=0.8,
+            )
+
+        if legend:
+            axis_legend = ax.get_legend()
+            if axis_legend is not None:
+                axis_legend.set_frame_on(False)
+
+    return axes_list[0] if single_axis else axes_list
+
+
+def savefig(fig: Figure, path: str, **kwargs) -> str:
+    """Save a figure with normix theme defaults."""
+    for ax in fig.axes:
+        style_axes(ax)
+
+    save_kwargs = {
+        "dpi": 200,
+        "bbox_inches": "tight",
+        "facecolor": COLORS["surface"],
+        "edgecolor": COLORS["surface"],
+        "pad_inches": 0.08,
+    }
+    save_kwargs.update(kwargs)
+    fig.savefig(path, **save_kwargs)
+    return path
+
+
+_COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 
 def plot_pdf_cdf_comparison(

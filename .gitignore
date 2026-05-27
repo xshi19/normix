@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+/_build/
 develop-eggs/
 dist/
 downloads/
@@ -62,7 +63,6 @@ venv.bak/
 
 # Sphinx documentation
 docs/_build/
-docs/_static/
 docs/_templates/
 
 # mypy

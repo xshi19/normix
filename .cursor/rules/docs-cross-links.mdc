@@ -1,0 +1,47 @@
+---
+description: Cross-link conventions between docs/, dev-notes/, normix/ docstrings, and README
+globs:
+  - docs/**/*
+  - dev-notes/**/*
+  - normix/**/*.py
+  - README.md
+alwaysApply: false
+---
+
+# Cross-link conventions
+
+normix has two doc trees:
+
+- `docs/` — published Sphinx website (public-facing)
+- `dev-notes/` — agent/dev-internal, NOT built or published
+
+## In `docs/**` (published)
+
+- NEVER link to `dev-notes/`. The website cannot resolve those paths.
+- Cross-reference other `docs/` pages via MyST `{doc}` or `{ref}` roles, not
+  raw relative paths (so Sphinx can validate the link).
+- Cross-reference `normix.*` symbols via `{py:class}`, `{py:func}`, `{py:meth}`.
+- External URLs are fine; the linkcheck builder validates them in CI.
+
+## In `dev-notes/**` (internal)
+
+- May link freely to `docs/`, other `dev-notes/`, and source code paths.
+- Use relative paths (e.g. `../design/em_framework.md`) for IDE preview.
+- Do not direct end-users into `dev-notes/` from any public surface.
+
+## In `normix/**/*.py` (docstrings → autodoc → public website)
+
+- Reference public docs via Sphinx `:doc:` or `:ref:` roles, not relative paths.
+- NEVER reference `dev-notes/` paths — they are not in the autodoc output.
+- Do not link to internal-only locations (`plans/`, `tech_notes/`, etc.).
+
+## In `README.md` and `AGENTS.md`
+
+- `README.md` is for users: link to the published site or `docs/`, not
+  `dev-notes/`.
+- `AGENTS.md` is for agents: may link to `dev-notes/` freely.
+
+## When moving docs in Phase 2+
+
+After the `dev-notes/` split, run `scripts/check_doc_links.sh` and fix any
+broken references before merging.

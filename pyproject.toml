@@ -61,9 +61,15 @@ scripts = [
 ]
 docs = [
     "sphinx>=9.0",
+    "sphinx-book-theme>=1.1",
     "sphinx-rtd-theme>=3.0",
+    "myst-parser>=4.0",
+    "myst-nb>=1.1",
     "nbsphinx>=0.9",
     "pandoc>=2.4",
+    "jupytext>=1.16",
+    "pandas>=2.0",
+    "ipykernel>=6.29",
 ]
 
 [project.urls]
