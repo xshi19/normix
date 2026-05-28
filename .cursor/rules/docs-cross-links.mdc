@@ -41,7 +41,7 @@ normix has two doc trees:
   `dev-notes/`.
 - `AGENTS.md` is for agents: may link to `dev-notes/` freely.
 
-## When moving docs in Phase 2+
+## When moving docs
 
-After the `dev-notes/` split, run `scripts/check_doc_links.sh` and fix any
+After structural changes, run `scripts/check_doc_links.sh` and fix any
 broken references before merging.

@@ -27,6 +27,6 @@ alwaysApply: true
 | Commands, commits, design principles (1-line) | `AGENTS.md` |
 | Navigation to rules and docs | `AGENTS.md` |
 | Coding do's and don'ts for specific files | `.cursor/rules/*.mdc` |
-| Architecture, module hierarchy, algorithms | `docs/ARCHITECTURE.md` |
-| Design rationale, code examples | `docs/design/` |
-| Plans and migration status | `docs/plans/` |
+| Architecture, module hierarchy, algorithms | `dev-notes/ARCHITECTURE.md` |
+| Design rationale (internal) | `dev-notes/design/` |
+| Plans and migration status | `dev-notes/plans/` |

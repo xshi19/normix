@@ -38,8 +38,7 @@ Key Features
    :caption: Contents:
 
    quickstart
-   design
-   architecture
+   design/index
    theory/index
    api/index
    tutorials/em/01_em_vs_mcecm

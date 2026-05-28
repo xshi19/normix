@@ -1,8 +1,8 @@
 # Documentation Refactor: MyST + `myst-nb`, internal/external split
 
-> **PROPOSAL — Phase 1 implemented; Phases 2–6 pending.**
+> **PROPOSAL — Phase 1–2 implemented; Phases 3–6 pending.**
 > **Date:** 2026-05-25
-> **Status:** Phase 1 complete on branch `feat/docs-refactor-phase1`.
+> **Status:** Phase 2 complete on branch `feat/docs-refactor-phase2`.
 > **Scope:** `docs/`, `notebooks/`, `.github/workflows/docs.yml`, the docs-publish skill.
 > **Does not touch:** `normix/` source, `tests/`, `benchmarks/`, the EM / finance roadmaps.
 
@@ -17,10 +17,10 @@ toolchains:
 - **Sphinx + nbsphinx** for the (un-executed) Jupyter notebooks in
   `notebooks/`, currently with `nbsphinx_execute = 'never'`.
 - **`.rst` + `.md` mixed** for prose: `docs/index.rst`, `docs/design.rst`,
-  `docs/architecture.rst`, `docs/theory/*.rst` on the published side; and
-  `docs/design/*.md`, `docs/plans/*.md`, `docs/tech_notes/*.md`,
-  `docs/ARCHITECTURE.md`, `docs/investigations/*`, `docs/reviews/*`,
-  `docs/archive/*` on the internal side.
+  `docs/architecture.rst`, `../../docs/theory/*.rst` on the published side; and
+  `../design/*.md`, `../plans/*.md`, `../tech_notes/*.md`,
+  `../ARCHITECTURE.md`, `../investigations/*`, `../reviews/*`,
+  `../archive/*` on the internal side.
 
 Two problems follow:
 
@@ -54,7 +54,7 @@ Two problems follow:
 - A migration to Jupyter Book v1 (in maintenance) or to `mystmd` /
   Jupyter Book v2 (no mature Sphinx-autodoc parity yet). See `agent-transcripts`
   discussion 2026-05-25 for rationale.
-- A bulk rewrite of `docs/theory/*.rst` — they coexist with MyST cleanly.
+- A bulk rewrite of `../../docs/theory/*.rst` — they coexist with MyST cleanly.
   File-by-file migration when touched is fine; no big-bang.
 - Changes to `normix/` source or the EM / finance roadmaps.
 
@@ -107,16 +107,16 @@ docs/                                # PUBLISHED website source only
 
 dev-notes/                           # NOT published; agent + dev-internal
 ├── README.md                        # index for agents
-├── ARCHITECTURE.md                  # was docs/ARCHITECTURE.md
+├── ARCHITECTURE.md                  # was ../ARCHITECTURE.md
 ├── design/
 │   ├── agent_instructions_design.md
 │   └── design.md                    # philosophy + canonical decision table
-├── plans/                           # was docs/plans/
-├── tech_notes/                      # was docs/tech_notes/
-├── investigations/                  # was docs/investigations/
-├── reviews/                         # was docs/reviews/
-├── references/                      # was docs/references/
-└── archive/                         # was docs/archive/
+├── plans/                           # was ../plans/
+├── tech_notes/                      # was ../tech_notes/
+├── investigations/                  # was ../investigations/
+├── reviews/                         # was ../reviews/
+├── references/                      # was ../references/
+└── archive/                         # was ../archive/
 
 .github/workflows/
 ├── ci.yml                           # unchanged
@@ -134,13 +134,13 @@ Key structural decisions:
   map points there. Nothing in this tree is rendered.
 - **`notebooks/` disappears.** Source-of-truth tutorial files live at
   `docs/tutorials/**/*.md`. No `.ipynb` is checked in.
-- **`docs/ARCHITECTURE.md` moves to `dev-notes/ARCHITECTURE.md`.** It is an
+- **`../ARCHITECTURE.md` moves to `../ARCHITECTURE.md`.** It is an
   agent-facing blueprint, not a user-facing document. The user-facing
   architecture overview lives in `docs/user_guide/exponential_family.md` and
-  `docs/design/`.
+  `../design/`.
 - **The `design.rst` / `design/` and `architecture.rst` / `ARCHITECTURE.md`
   duals are resolved:**
-  - The external face is `docs/design/` (MyST `.md`).
+  - The external face is `../design/` (MyST `.md`).
   - The internal face is `dev-notes/design/design.md` (philosophy + decision table).
   - `docs/design.rst` and `docs/architecture.rst` are deleted.
 
@@ -200,7 +200,7 @@ same "clean mathematical notes on good paper" language gives a unified house
 style across both projects without locking the two repositories together
 technically.
 
-The visual contract is the one from `incerto-wiki/docs/design/VISUAL_STYLE.md`,
+The visual contract is the one from `incerto-wiki/../design/VISUAL_STYLE.md`,
 adapted for an API-heavy library:
 
 | Layer | Source | normix file |
@@ -378,7 +378,7 @@ normix has two doc trees:
 ## In `normix/**/*.py` (docstrings → autodoc → public website)
 - Reference public docs via Sphinx `:doc:` or `:ref:` roles, not relative paths.
 - NEVER reference `dev-notes/` paths — they are not in the autodoc output.
-- Do not link to `docs/plans/`, `docs/tech_notes/`, etc. (those moved to
+- Do not link to `../plans/`, `../tech_notes/`, etc. (those moved to
   `dev-notes/` anyway).
 
 ## In `README.md` and `AGENTS.md`
@@ -444,7 +444,7 @@ Top of `dev-notes/README.md` explicitly states:
 > Material in `dev-notes/` is **not published** to the docs website. Do not
 > link to it from `docs/`, from `normix/` docstrings, or from `README.md`.
 > If a doc here should be public, promote it to `docs/` (typically
-> `docs/design/`) first, then update incoming links.
+> `../design/`) first, then update incoming links.
 
 This keeps the policy discoverable to any human reading the dev-notes tree
 for the first time.
@@ -590,29 +590,22 @@ prototype tutorial; the Kami-derived visual style is live on the prototype.
 - [x] Site uses sphinx-book-theme + normix.css (warm paper, Charter serif, ink-blue accent).
 - [x] `scripts/check_doc_links.sh` passes locally and in CI.
 
-### Phase 2 — Structural split (1 PR, ~half day, source-only)
+### Phase 2 — Structural split (1 PR, ~half day, source-only) ✅
 
 **Goal:** Move internal material out of `docs/`; resolve naming duals.
 
-- `git mv docs/plans dev-notes/plans`
-- `git mv docs/tech_notes dev-notes/tech_notes`
-- `git mv docs/investigations dev-notes/investigations`
-- `git mv docs/reviews dev-notes/reviews`
-- `git mv docs/references dev-notes/references`
-- `git mv docs/archive dev-notes/archive`
-- `git mv docs/ARCHITECTURE.md dev-notes/ARCHITECTURE.md`
-- `git mv docs/design dev-notes/design` (internal subset)
-- Create `docs/design/` (public subset) with the four user-facing design docs.
-- Delete `docs/design.rst`, `docs/architecture.rst`.
-- Update `docs/conf.py:30` `exclude_patterns` to its minimal form.
-- Update `AGENTS.md` context map paths.
-- Update `.cursor/rules/maintain-architecture-md.mdc`, all cross-references
-  in design / theory / tech-note files, and skill files (`docs-publish`,
-  `agent-maintenance`).
-- Add the CI invariant check (`find docs -name plans -o ...` must return empty).
+- [x] Move plans, tech_notes, investigations, reviews, references, archive,
+  ARCHITECTURE.md, and internal design/ → `dev-notes/`
+- [x] Create public `docs/design/` (four topical docs + index.md)
+- [x] Delete `docs/design.rst`, `docs/architecture.rst`
+- [x] Minimal `exclude_patterns` in `docs/conf.py`
+- [x] Update `AGENTS.md`, rules, skills, and cross-references
+- [x] Structural CI invariant + updated `scripts/check_doc_links.sh`
+- [x] `dev-notes/README.md` editorial header
 
-**Exit:** `git grep -nE '^docs/(plans|investigations|reviews|tech_notes|archive|references)/'`
-returns no hits in any tracked file. Live site unchanged in content.
+**Exit:**
+- [x] No legacy `docs/(plans|…|references)/` paths in agent-facing files
+- [ ] Live site verified after merge (design pages via MyST; architecture.rst removed)
 
 ### Phase 3 — Author the new tutorial tree (3–4 PRs, 1–2 weeks)
 
@@ -665,7 +658,7 @@ publishes to `gh-pages`.
 
 ### Phase 6 — Polish (open-ended, optional)
 
-- Migrate `docs/theory/*.rst` to MyST `.md` opportunistically when touched.
+- Migrate `../../docs/theory/*.rst` to MyST `.md` opportunistically when touched.
 - Swap theme (`furo` or `pydata-sphinx-theme`) for better navigation.
 - Add PR-preview deploys (Netlify-style) if maintainer load justifies it.
 - Add a `docs/changelog.md` that includes `CHANGELOG.md` directly.
@@ -683,14 +676,14 @@ No exit criterion; tackled as time allows.
 | Non-deterministic outputs (random seeds, timing logs) thrash the cache | Each tutorial cell-1 sets seeds explicitly; timing prints suppressed via cell tags. Enforce in PR review. |
 | Live site goes dark during phases | Each phase is independently mergeable. Phase 1 keeps `nbsphinx` for backward compat; phases 2–3 don't touch the published toctree until ready. |
 | Internal docs accidentally leak to website | Structural invariant check in `docs.yml` (Phase 2 exit criterion). |
-| Cross-links break (e.g. `docs/design.md → docs/plans/...`) | One pass with `rg -l 'docs/(plans|tech_notes|investigations|reviews|archive|references)/'` at Phase 2 end. CI link-check via `sphinx-build -b linkcheck` added in Phase 5. |
+| Cross-links break (e.g. `docs/design.md → ../plans/...`) | One pass with `rg -l 'docs/(plans|tech_notes|investigations|reviews|archive|references)/'` at Phase 2 end. CI link-check via `sphinx-build -b linkcheck` added in Phase 5. |
 | Tutorials drift out of sync with API | Tutorials run in CI on every push. A renamed symbol breaks the build before the PR merges. |
 
 ## Resolved decisions (2026-05-25)
 
 - **Internal-tree name.** `dev-notes/`. Visible in `ls`, semantically clear.
 - **Base theme.** `sphinx-book-theme` + `docs/_static/normix.css` port of the
-  Kami-derived tokens from `incerto-wiki/docs/design/VISUAL_STYLE.md`.
+  Kami-derived tokens from `incerto-wiki/../design/VISUAL_STYLE.md`.
 - **Matplotlib helper.** Extend `normix/utils/plotting.set_theme()` to install
   the Incerto-token `rcParams` so tutorial plots match the site visually.
 - **Cross-link enforcement.** Four layers: agent rule, CI grep invariants,
@@ -714,9 +707,9 @@ No exit criterion; tackled as time allows.
 
 ## Related plans / docs (current state)
 
-- `docs/plans/migration_plan.md` — JAX migration, complete.
-- `docs/plans/package_improvement_roadmap.md` — review-driven cleanup, complete.
-- `docs/plans/finance_architecture.md` — Phase D done; E, F still proposed.
+- `../plans/migration_plan.md` — JAX migration, complete.
+- `../plans/package_improvement_roadmap.md` — review-driven cleanup, complete.
+- `../plans/finance_architecture.md` — Phase D done; E, F still proposed.
 - `.cursor/skills/docs-publish/SKILL.md` — current build/publish recipe; will
   be updated in Phase 1 and Phase 5.
 - `AGENTS.md` § Context Map — internal-doc index, updated in Phase 2.

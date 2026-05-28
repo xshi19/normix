@@ -1,6 +1,6 @@
 # Architecture
 
-> Quick reference: `AGENTS.md`. Full design rationale: `docs/design/design.md`.
+> Quick reference: `AGENTS.md`. Full design rationale: `design/design.md`.
 
 ## Module Hierarchy
 
@@ -158,7 +158,7 @@ MarginalMixture(eqx.Module)              abstract; fitter contract
 
 `NormalMixture` owns a `JointNormalMixture`. The joint is an exponential family; the marginal is not. Per `docs/theory/gh.rst`, both layers are parameterised by the same classical tuple `(μ, γ, Σ, subordinator)`, so the marginal exposes those parameters as forwarders on top of its joint storage.
 
-`FactorNormalMixture` is a sibling of `NormalMixture`: same `MarginalMixture` contract, but stores `(μ, γ, F, D, subordinator)` directly without a joint exponential-family layer (the FA complete-data structure is over `(X, Y, Z)` with ten sufficient statistics — `FactorMixtureStats` in `fitting/eta.py` — rather than the six of `NormalMixtureEta`). All Σ-related linear algebra (`_solve`, `_quad_form`, `_log_det_sigma`, `_beta`) goes through Woodbury at `O(d r² + r³)`, never forming a dense `d × d` solve. Convergence is measured on `Σ = F Fᵀ + diag(D)` to sidestep `F`'s rotational gauge. See `docs/theory/factor_analysis.rst` and `docs/design/mixtures.md` § 6.
+`FactorNormalMixture` is a sibling of `NormalMixture`: same `MarginalMixture` contract, but stores `(μ, γ, F, D, subordinator)` directly without a joint exponential-family layer (the FA complete-data structure is over `(X, Y, Z)` with ten sufficient statistics — `FactorMixtureStats` in `fitting/eta.py` — rather than the six of `NormalMixtureEta`). All Σ-related linear algebra (`_solve`, `_quad_form`, `_log_det_sigma`, `_beta`) goes through Woodbury at `O(d r² + r³)`, never forming a dense `d × d` solve. Convergence is measured on `Σ = F Fᵀ + diag(D)` to sidestep `F`'s rotational gauge. See `docs/theory/factor_analysis.rst` and `design/mixtures.md` § 6.
 
 Both `NormalMixtureEta` and `FactorMixtureStats` lay out their fields in **theory order** (`s_1 = E[Y⁻¹]`, `s_2 = E[Y]`, `s_3 = E[log Y]`, `s_4 = E[X]`, `s_5 = E[X/Y]`, `s_6 = E[X X^T/Y]`; factor stats add `s_7..s_10` for the latent `Z`). Sharing the first six fields means shrinkage targets and η-update rule weights port across the two families.
 
@@ -198,7 +198,7 @@ The model knows math; the fitter knows iteration (following GMMX).
   | `'det_sigma_x'` | `log det(Σ)` matches the **initial** model passed to `fit` (target captured once) | `regularize_det_sigma(target)` |
   | `'a_eq_b'` | rescale GIG so `a = b = sqrt(a·b)` (orbit invariant); NIG: `μ_IG = 1`; no-op for VG / NInvG / MVN | `regularize_a_eq_b()` |
 
-  Each marginal owns the Σ / γ side via `_rescale(s)`; per-subclass `_build_rescaled` handles the subordinator (e.g. for GIG: `a → a/s`, `b → b·s`). `FactorNormalMixture` follows the same pattern with `F → F/√s`, `D → D/s`. See `docs/design/em_framework.md` § 5.
+  Each marginal owns the Σ / γ side via `_rescale(s)`; per-subclass `_build_rescaled` handles the subordinator (e.g. for GIG: `a → a/s`, `b → b·s`). `FactorNormalMixture` follows the same pattern with `F → F/√s`, `D → D/s`. See `design/em_framework.md` § 5.
 - **Verbosity**: `verbose=0` silent, `1` summary, `2` per-iteration diagnostics.
 - **Convenience**: `NormalMixture.fit(X, **fitter_kwargs) → EMResult` delegates to `BatchEMFitter` using **`self` as initialization**. Cold start: `SomeMixture.default_init(X)` then `result = model.fit(X)`.
 
@@ -215,7 +215,7 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 ### CPU Versions for Bessel-Dependent Functions
 
-Any distribution that calls `log_kv` must override the Tier 3 CPU classmethods (`_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu`) so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. Distributions that do not call `log_kv` inherit the default CPU wrappers at no additional cost. See `docs/design/exponential_family.md` § 2.2 for rationale.
+Any distribution that calls `log_kv` must override the Tier 3 CPU classmethods (`_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu`) so that the CPU solver path (`solve_bregman(backend='cpu')`) avoids JAX dispatch entirely. Distributions that do not call `log_kv` inherit the default CPU wrappers at no additional cost. See `design/exponential_family.md` § 2.2 for rationale.
 
 ## Random Variate Generation (`utils/rvs.py`, `distributions/generalized_inverse_gaussian.py`)
 
@@ -231,7 +231,7 @@ GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussia
 - `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
 - `_gig_rvs_pinv(key, u_grid, x_grid, n)` — thin alias of `rvs_pinv` for `GIG.rvs(method='pinv')`.
 
-Neither method evaluates the Bessel normalising constant. See `docs/tech_notes/gig_rvs.md`.
+Neither method evaluates the Bessel normalising constant. See `tech_notes/gig_rvs.md`.
 
 ## Numerical Constants (`utils/constants.py`)
 
@@ -268,23 +268,23 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 
 The solver passes `grad_fn` and `hess_fn` (both in θ-space) from the triad. The solver applies the φ↔θ chain rule internally via `jax.jacobian(to_theta)`, so distributions never need to know about reparametrization.
 
-The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values. **`make_jit_newton_solver(f, grad_fn, hess_fn, bounds)`** builds a `@jax.jit`-decorated specialised Newton solve whose XLA cache survives across calls — used by the GIG warm-start hot path to avoid the per-call retrace that previously dominated GH JAX/JAX EM time (see `docs/tech_notes/jax_overhead_diagnosis.md` § Resolution).
+The general solver infrastructure lives in `fitting/solvers.py`: **`solve_bregman`**, **`solve_bregman_multistart`**, returning **`BregmanResult`** (`theta`, objective value, `grad_norm`, `num_steps`, `converged`, **`elapsed_time`**). Optional **`verbose`** prints solver progress. Scalar result fields use loose typing so results can be carried through **`lax.scan`** without forcing concrete Python `float`/`bool` on traced values. **`make_jit_newton_solver(f, grad_fn, hess_fn, bounds)`** builds a `@jax.jit`-decorated specialised Newton solve whose XLA cache survives across calls — used by the GIG warm-start hot path to avoid the per-call retrace that previously dominated GH JAX/JAX EM time (see `tech_notes/jax_overhead_diagnosis.md` § Resolution).
 
-See `docs/tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
+See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 
 ## Documentation Map
 
 | Document | Content |
 |---|---|
-| `docs/design/index.md` | TOC of all living design docs |
-| `docs/design/design.md` | Philosophy + canonical decision table |
-| `docs/design/exponential_family.md` | EF base class, log-partition triad, Bregman solver interface |
-| `docs/design/mixtures.md` | Joint vs Marginal, parameter facade, factor-analysis sibling family |
-| `docs/design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
-| `docs/design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
-| `docs/design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
-| `docs/tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions |
+| `design/index.md` | TOC of all living design docs (internal); public subset at `docs/design/` |
+| `design/design.md` | Philosophy + canonical decision table |
+| `design/exponential_family.md` | EF base class, log-partition triad, Bregman solver interface |
+| `design/mixtures.md` | Joint vs Marginal, parameter facade, factor-analysis sibling family |
+| `design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
+| `design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
+| `design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
+| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions |
 | `docs/theory/` | Mathematical derivations (`.rst`) |
-| `docs/references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
-| `docs/plans/finance_architecture.md` | `normix.finance` roadmap; Phase D implemented (projection + CVaR), Phases E and F still proposed |
-| `docs/archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |
+| `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
+| `plans/finance_architecture.md` | `normix.finance` roadmap; Phase D implemented (projection + CVaR), Phases E and F still proposed |
+| `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

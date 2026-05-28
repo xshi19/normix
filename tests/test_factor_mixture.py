@@ -2,7 +2,7 @@
 Tests for the factor-analysis mixture family.
 
 Covers the four guarantees required by Phase 4 of the EM-extension plan
-(``docs/archive/design/em_covariance_extensions.md`` §9):
+(``dev-notes/archive/design/em_covariance_extensions.md`` §9):
 
 1. Density agreement — :class:`FactorXxx` and :class:`Xxx` produce the
    same ``log_prob`` when constructed with matched

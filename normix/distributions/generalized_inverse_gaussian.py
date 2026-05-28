@@ -601,8 +601,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         :math:`q \in \mathrm{Gamma}` by matching the Gamma sufficient
         statistics under the source GIG:
         :math:`E_{q^*}[\log X] = \eta_1,\; E_{q^*}[X] = \eta_3`. Solved via
-        :meth:`Gamma.from_expectation`. See
-        ``docs/tech_notes/distribution_conversions.md`` for the derivation.
+        :meth:`Gamma.from_expectation`.
         """
         from normix.distributions.gamma import Gamma
         eta = self.expectation_params()

@@ -204,10 +204,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     # ``JointGH`` and any joint-mixture cousin reduces to the KL between
     # subordinators:
     #
-    #     D_KL(JointGH ‖ JointVG) = D_KL(GIG ‖ Gamma)
-    #
-    # because the X|Y conditional density is identical across families.
-    # See ``docs/tech_notes/distribution_conversions.md``.
+    # KL projection identity: D_KL(JointGH ‖ JointVG) = D_KL(GIG ‖ Gamma).
 
     def to_joint_variance_gamma(self) -> "JointVarianceGamma":
         r"""KL projection onto :class:`JointVarianceGamma` (Gamma subordinator)."""

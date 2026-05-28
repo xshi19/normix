@@ -1,8 +1,8 @@
 # EM Extensions: Shrinkage and Factor Analysis
 
 > **ARCHIVED — 2026-05-10.** All five phases implemented. The living
-> design rationale lives in `docs/design/em_framework.md` (EM framework
-> + regularisations) and `docs/design/mixtures.md` (factor-analysis
+> design rationale lives in `../design/em_framework.md` (EM framework
+> + regularisations) and `../design/mixtures.md` (factor-analysis
 > sibling family). This document is kept as a record of the original
 > proposal and phase plan.
 
@@ -11,8 +11,8 @@
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/em.py`, `normix/mixtures/marginal.py`,
 new `normix/mixtures/factor.py`
-**Theory:** `docs/theory/shrinkage.rst`, `docs/theory/factor_analysis.rst`
-**Companion docs:** `docs/archive/design/penalised_em.md`
+**Theory:** `../../docs/theory/shrinkage.rst`, `../../docs/theory/factor_analysis.rst`
+**Companion docs:** `../archive/design/penalised_em.md`
 
 ---
 
@@ -42,7 +42,7 @@ Out of scope:
 - A `DispersionModel` / `FullDispersion` / `FactorDispersion` abstraction.
 Deferred until at least three storage variants are needed (see §8).
 - SVD-based full covariance. Same reason.
-- A new finance layer. See `docs/plans/finance_architecture.md`.
+- A new finance layer. See `../plans/finance_architecture.md`.
 
 ---
 
@@ -63,7 +63,7 @@ drives the affine combination
 hard-coded to the three full-covariance fields.
 
 `ShrinkageUpdate(eta0, tau)` already implements the penalised-EM theory in
-`docs/theory/shrinkage.rst` for the special case of batch EM with uniform
+`../../docs/theory/shrinkage.rst` for the special case of batch EM with uniform
 `τ` over all six statistics.
 
 This design is good enough for the standard full-covariance models. The
@@ -86,8 +86,8 @@ on, only the concrete `NormalMixture` class.
 ### 3.1 Naming and ordering
 
 Both stats classes use **descriptive field names** in **theory order**
-(`s_1, s_2, …` from `docs/theory/shrinkage.rst` and
-`docs/theory/factor_analysis.rst`). The first six fields are identical
+(`s_1, s_2, …` from `../../docs/theory/shrinkage.rst` and
+`../../docs/theory/factor_analysis.rst`). The first six fields are identical
 between the two so that shrinkage targets, weights, and tests written for
 the standard family port directly to the factor family.
 
@@ -248,7 +248,7 @@ class Shrinkage(EtaUpdateRule):
     τ accepts:
       - scalar / 0-d jax.Array  — uniform shrinkage on all sufficient
         statistics (matches the penalised-MLE in
-        `docs/theory/shrinkage.rst`);
+        `../../docs/theory/shrinkage.rst`);
       - NormalMixtureEta with scalar leaves — per-field shrinkage, e.g.
         τ = NormalMixtureEta(0, 0, 0, 0, 0, τ_Σ) shrinks only s_6 = Σ.
     """
@@ -560,7 +560,7 @@ joint_recovered = JointVarianceGamma.from_expectation(eta0_iso)
 
 ### 6.4 Parameter facade on the marginal
 
-Per `docs/theory/gh.rst`, the marginal density is parameterised by the
+Per `../../docs/theory/gh.rst`, the marginal density is parameterised by the
 same classical tuple `(μ, γ, Σ, subordinator)` as the joint, so the
 marginal exposes those parameters as forwarders rather than hiding them
 behind `model._joint.*`:
@@ -823,14 +823,14 @@ starting point, not as committed code.
 
 ### Phase 3 — Penalised EM design doc ✅ Done
 
-1. `docs/archive/design/penalised_em.md` covers (now archived; living
-   rationale at `docs/design/em_framework.md` § 4):
-  - the η-affine derivation from `docs/theory/shrinkage.rst` (§2);
+1. `../archive/design/penalised_em.md` covers (now archived; living
+   rationale at `../design/em_framework.md` § 4):
+  - the η-affine derivation from `../../docs/theory/shrinkage.rst` (§2);
   - the per-field `tau` convention (§3.2);
   - the combinator API and target builders (§3.1, §3.3);
   - guidance on choosing `tau` and `Σ_0` (§4);
   - a worked Σ-only-shrinkage example (§5).
-2. Cross-linked from `docs/ARCHITECTURE.md` (companion-docs row) and
+2. Cross-linked from `../ARCHITECTURE.md` (companion-docs row) and
   from this doc's header (Companion docs).
 
 ### Phase 4 — Factor analysis model family ✅ Done
@@ -881,13 +881,13 @@ starting point, not as committed code.
 ### Phase 5 — Documentation ✅ Done (2026-05-10)
 
 The Phase 5 documentation work was completed during the
-`docs/design/` cleanup of 2026-05-10:
+`../design/` cleanup of 2026-05-10:
 
-1. `docs/ARCHITECTURE.md` — `mixtures/factor.py`,
+1. `../ARCHITECTURE.md` — `mixtures/factor.py`,
    `fitting/shrinkage_targets.py`, and the `D_FLOOR` constant were
    added; sufficient-statistics description references theory order;
    `MarginalMixture` ABC is on the mixture hierarchy diagram.
-2. `docs/design/design.md` — restructured: rationale split into
+2. `../design/design.md` — restructured: rationale split into
    topical files (`exponential_family.md`, `mixtures.md`,
    `em_framework.md`, `solvers_and_bessel.md`), with `design.md`
    reduced to philosophy + canonical decision table. The new EM
@@ -898,10 +898,10 @@ The Phase 5 documentation work was completed during the
 3. The four covariance regularisations (`'none'`,
    `'det_sigma_one'`, `'det_sigma_x'`, `'a_eq_b'`) — including
    the two added during Phase 4 — are documented in
-   `docs/design/em_framework.md` § 5.
+   `../design/em_framework.md` § 5.
 4. The penalised-EM material previously in
-   `docs/design/penalised_em.md` is integrated into
-   `docs/design/em_framework.md` § 4. The original
+   `../design/penalised_em.md` is integrated into
+   `../design/em_framework.md` § 4. The original
    `penalised_em.md` is archived alongside this document.
 
 ### Out of scope / explicitly deferred

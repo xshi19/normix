@@ -1,12 +1,12 @@
 ---
-description: Rules for maintaining docs/ARCHITECTURE.md
-globs: "**/docs/ARCHITECTURE.md"
+description: Rules for maintaining dev-notes/ARCHITECTURE.md
+globs: "**/dev-notes/ARCHITECTURE.md"
 alwaysApply: false
 ---
 
-# Maintaining docs/ARCHITECTURE.md
+# Maintaining dev-notes/ARCHITECTURE.md
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 ARCHITECTURE.md is the **blueprint** — a complete but concise map of the
 codebase structure. Target: **~200–250 lines**.
@@ -34,7 +34,7 @@ codebase structure. Target: **~200–250 lines**.
 ## Style
 
 - Code examples: **signature-level only**, not full implementations
-- Link to `docs/tech_notes/` for deep explanations — don't inline derivations
+- Link to `dev-notes/tech_notes/` for deep explanations — don't inline derivations
 - Keep the tree view and tables as the primary navigation aids
 
 ## Before Editing

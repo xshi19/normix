@@ -8,7 +8,7 @@ description: >-
 
 # Git Conventions
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 ## Commit Message Format
 
@@ -38,8 +38,8 @@ Use the most specific scope that applies:
 | `solver` | η→θ solvers |
 | `arch` | ARCHITECTURE.md updates |
 | `rules` | .cursor/rules/ updates |
-| `design` | docs/design/ updates |
-| `tech` | docs/tech_notes/ updates |
+| `design` | `docs/design/` or `dev-notes/design/` updates |
+| `tech` | `dev-notes/tech_notes/` updates |
 | `theory` | docs/theory/ updates |
 | `notebook` | Notebook changes |
 
@@ -65,10 +65,10 @@ Before committing, verify:
 - [ ] `uv run pytest tests/` passes
 - [ ] No debug `print` statements left in code
 - [ ] Type hints on all public methods
-- [ ] If changes advance a migration phase → update `docs/plans/migration_plan.md`
-- [ ] If new modules were added → update `docs/ARCHITECTURE.md`
+- [ ] If changes advance a migration phase → update `dev-notes/plans/migration_plan.md`
+- [ ] If new modules were added → update `dev-notes/ARCHITECTURE.md`
 - [ ] If new distribution was added → update `.cursor/rules/project-overview.mdc`
-- [ ] If design decisions were made → update `docs/design/design.md`
+- [ ] If design decisions were made → update `dev-notes/design/design.md`
 
 ## Release workflow (release-please)
 

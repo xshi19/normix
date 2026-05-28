@@ -7,52 +7,21 @@ cd "$ROOT"
 
 fail=0
 
-# Paths under docs/ that are not published (Phase 2 moves these to dev-notes/).
-INTERNAL_DOC_PREFIXES=(
-  "docs/plans/"
-  "docs/tech_notes/"
-  "docs/investigations/"
-  "docs/reviews/"
-  "docs/archive/"
-  "docs/references/"
-  "docs/design/"
-)
-
-is_internal_doc() {
-  local file="$1"
-  local prefix
-  for prefix in "${INTERNAL_DOC_PREFIXES[@]}"; do
-    if [[ "$file" == "$prefix"* ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
-
 check_absent_in_published_docs() {
   local pattern="$1"
   local message="$2"
   local hits=""
-  local file
 
   if [[ ! -d docs ]]; then
     return 0
   fi
 
-  while IFS= read -r file; do
-    if is_internal_doc "$file"; then
-      continue
+  if hits=$(rg -n "$pattern" docs/ --glob '*.md' --glob '*.rst' 2>/dev/null || true); then
+    if [[ -n "$hits" ]]; then
+      echo "ERROR: $message"
+      printf '%s\n' "$hits"
+      fail=1
     fi
-    if rg -n "$pattern" "$file" >/dev/null 2>&1; then
-      hits+=$(rg -n "$pattern" "$file" || true)
-      hits+=$'\n'
-    fi
-  done < <(find docs -type f \( -name '*.md' -o -name '*.rst' \))
-
-  if [[ -n "$hits" ]]; then
-    echo "ERROR: $message"
-    printf '%s\n' "$hits"
-    fail=1
   fi
 }
 
@@ -67,11 +36,33 @@ check_absent() {
   fi
 }
 
+# Structural invariant: internal folder names must not exist under docs/.
+if forbidden=$(find docs -type d \( \
+  -name plans -o -name investigations -o -name reviews \
+  -o -name tech_notes -o -name archive -o -name references \
+\) 2>/dev/null); then
+  if [[ -n "$forbidden" ]]; then
+    echo "ERROR: docs/ must not contain internal-only directories:"
+    printf '%s\n' "$forbidden"
+    fail=1
+  fi
+fi
+
 check_absent_in_published_docs 'dev-notes/' \
-  'published docs/ must not reference dev-notes/ (excluding internal-only folders until Phase 2)'
+  'published docs/ must not reference dev-notes/'
 
 check_absent 'dev-notes/' normix/ 'normix/ docstrings must not reference dev-notes/'
 check_absent 'dev-notes/' README.md 'README.md must not reference dev-notes/'
+
+# Legacy internal paths must not appear in tracked agent-facing files.
+LEGACY_PATTERN='docs/(plans|tech_notes|investigations|reviews|archive|references)/'
+for path in AGENTS.md .cursor/rules .cursor/skills; do
+  if [[ -e "$path" ]] && rg -n "$LEGACY_PATTERN" "$path" >/dev/null 2>&1; then
+    echo "ERROR: $path still references legacy docs/ internal paths"
+    rg -n "$LEGACY_PATTERN" "$path" || true
+    fail=1
+  fi
+done
 
 if [[ "$fail" -ne 0 ]]; then
   exit 1

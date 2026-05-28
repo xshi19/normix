@@ -6,7 +6,7 @@ Date: 2026-03-30
 
 This review covered:
 
-- architecture and design docs (`README.md`, `docs/ARCHITECTURE.md`, `docs/design/design.md`, `docs/theory/em_algorithm.rst`, `pyproject.toml`)
+- architecture and design docs (`README.md`, `../ARCHITECTURE.md`, `../design/design.md`, `../../docs/theory/em_algorithm.rst`, `pyproject.toml`)
 - core implementation under `normix/`
 - active and skipped tests under `tests/`
 - direct runtime probes for several mathematically delicate or user-facing paths
@@ -168,7 +168,7 @@ Files:
 - `README.md:94`
 - `README.md:101`
 - `normix/__init__.py:15`
-- `docs/theory/em_algorithm.rst:405`
+- `../../docs/theory/em_algorithm.rst:405`
 
 Concrete problems:
 
@@ -176,7 +176,7 @@ Concrete problems:
 - `README.md:94` uses `JointGeneralizedHyperbolic` without importing it
 - `README.md:102` refers to `m_step_solver`, but the implementation uses `m_step_backend` / `m_step_method`
 - `normix/__init__.py:15` shows `GeneralizedHyperbolic.fit(X, key=key, ...)`, but `fit` is an instance method; direct probe raises `TypeError`
-- `docs/theory/em_algorithm.rst:405-412` still describes old methods like `joint.set_expectation_params` and `_expectation_to_natural`
+- `../../docs/theory/em_algorithm.rst:405-412` still describes old methods like `joint.set_expectation_params` and `_expectation_to_natural`
 
 Impact:
 
@@ -193,7 +193,7 @@ Recommendation:
 
 Files:
 
-- `docs/ARCHITECTURE.md:39`
+- `../ARCHITECTURE.md:39`
 - `README.md:68`
 - `normix/distributions/variance_gamma.py:134`
 - `normix/distributions/normal_inverse_gamma.py:135`

@@ -1,7 +1,7 @@
 # Finance Architecture: `normix.finance`
 
-> **PROPOSAL — not yet implemented.** Moved to `docs/plans/` on
-> 2026-05-10 (previously in `docs/design/`). Cross-references to the
+> **PROPOSAL — not yet implemented.** Moved to `../plans/` on
+> 2026-05-10 (previously in `../design/`). Cross-references to the
 > EM / covariance work now point to the archived proposal.
 
 **Date:** 2026-04-17
@@ -9,12 +9,12 @@
 The EM / covariance prerequisites (Phases A–C / Phases 1–4 of the
 EM extensions plan) are now in `main`.
 **Scope:** new top-level subpackage `normix/finance/`
-**Theory:** `docs/theory/cvar_derivatives.rst`,
-`docs/theory/mean_risk_optimization.rst`,
-`docs/theory/transaction_costs.rst`,
-`docs/theory/diversification.rst` (where applicable)
-**Living EM design:** `docs/design/em_framework.md`,
-`docs/design/mixtures.md`.
+**Theory:** `../../docs/theory/cvar_derivatives.rst`,
+`../../docs/theory/mean_risk_optimization.rst`,
+`../../docs/theory/transaction_costs.rst`,
+`../../docs/theory/diversification.rst` (where applicable)
+**Living EM design:** `../design/em_framework.md`,
+`../design/mixtures.md`.
 
 ---
 
@@ -114,7 +114,7 @@ Then build:
 Why this interface works well:
 
 - it keeps the analytic formulas close to the univariate theory in
-  `docs/theory/cvar_derivatives.rst`;
+  `../../docs/theory/cvar_derivatives.rst`;
 - it separates univariate risk calculus from portfolio chain rules;
 - it allows exact formulas first, with Monte Carlo fallbacks later.
 
@@ -124,7 +124,7 @@ apply the chain rule from projection parameters back to weights using
 
 ## Mean-Risk Optimization
 
-The theory in `docs/theory/mean_risk_optimization.rst` suggests two
+The theory in `../../docs/theory/mean_risk_optimization.rst` suggests two
 layers:
 
 1. a general portfolio problem API;
@@ -157,7 +157,7 @@ Implementation advice:
 
 ## Transaction Costs
 
-The transaction-cost theory in `docs/theory/transaction_costs.rst` is
+The transaction-cost theory in `../../docs/theory/transaction_costs.rst` is
 best treated as an optimization layer, not as a risk-measure layer.
 
 Recommended design:
@@ -208,7 +208,7 @@ Required core ingredients:
 - portfolio projection into univariate normal-mixture form;
 - optional future access to covariance operators instead of dense
   matrices (only relevant once the deferred `DispersionModel` work in
-  `docs/design/mixtures.md` § 6.5 is undertaken).
+  `../design/mixtures.md` § 6.5 is undertaken).
 
 This keeps finance as a thin application layer over the distribution
 engine.
@@ -256,6 +256,6 @@ engine.
   variance-based ENB.
 
 (Phases A–C were the EM / covariance work, now done — see
-`docs/archive/design/em_covariance_extensions.md`. The finance layer
+`../archive/design/em_covariance_extensions.md`. The finance layer
 benefits from the unified `MarginalMixture` interface and the
 factor-analysis covariance family for high-dimensional portfolios.)

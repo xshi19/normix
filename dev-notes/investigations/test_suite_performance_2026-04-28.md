@@ -380,7 +380,7 @@ Status: implemented. Marker definitions and the default fast marker expression
 live in `pyproject.toml`; the contributor note lives in `README.md`.
 
 1. Add pytest marker definitions in `pyproject.toml`.
-2. Add a short `docs/investigations/` note or README section explaining:
+2. Add a short `../investigations/` note or README section explaining:
    - default test command
    - slow test command
    - GPU test command

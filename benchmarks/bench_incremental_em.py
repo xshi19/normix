@@ -1,7 +1,7 @@
 """
 Incremental EM benchmark — Phase-5 closeout.
 
-Phase-5 measurement (see ``docs/investigations/test_suite_performance_2026-04-28.md``).
+Phase-5 measurement (see ``dev-notes/investigations/test_suite_performance_2026-04-28.md``).
 Compares the legacy Python ``for`` loop in ``IncrementalEMFitter._fit_incremental_python``
 against the JIT-friendly ``jax.lax.scan`` body in ``_fit_incremental_scan`` for the same
 distribution, data, and pre-stacked PRNG keys.

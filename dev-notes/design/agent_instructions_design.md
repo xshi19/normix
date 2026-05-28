@@ -42,8 +42,8 @@ Context is injected in layers:
 ```
 Layer 0   AGENTS.md               Always in context. Map + pointers.
 Layer 1   .cursor/rules/*.mdc     Auto-injected by glob match (e.g. *.py triggers coding-conventions).
-Layer 2   docs/design/*.md        Read on demand when the agent is making design decisions.
-Layer 3   docs/tech_notes/*.md    Read on demand when the agent hits a specific numerical/algorithmic problem.
+Layer 2   *.md        Read on demand when the agent is making design decisions.
+Layer 3   ../tech_notes/*.md    Read on demand when the agent hits a specific numerical/algorithmic problem.
 Layer 4   skills/                 Invoked explicitly for specific workflows.
 ```
 
@@ -89,13 +89,13 @@ Every fact appears in exactly one place. Other documents **point** to it.
 
 | Fact | Canonical Location | Others Point To It |
 |---|---|---|
-| Module hierarchy | `docs/ARCHITECTURE.md` | `AGENTS.md`, `docs/design/design.md` |
+| Module hierarchy | `../ARCHITECTURE.md` | `AGENTS.md`, `design.md` |
 | Coding conventions | `.cursor/rules/coding-conventions.mdc` | `AGENTS.md` context map |
 | Distribution catalog | `.cursor/rules/project-overview.mdc` | `AGENTS.md` |
 | Numerical constants | `normix/utils/constants.py` | `.cursor/rules/coding-conventions.mdc` |
-| Design rationale | `docs/design/design.md` | `AGENTS.md` |
-| Mathematical derivations | `docs/theory/*.rst` | `AGENTS.md`, `docs/ARCHITECTURE.md` |
-| Bessel implementation | `docs/tech_notes/bessel_*.md` | `docs/ARCHITECTURE.md` |
+| Design rationale | `design.md` | `AGENTS.md` |
+| Mathematical derivations | `../../docs/theory/*.rst` | `AGENTS.md`, `../ARCHITECTURE.md` |
+| Bessel implementation | `../tech_notes/bessel_*.md` | `../ARCHITECTURE.md` |
 
 Duplicating facts across files leads to contradictions when one is updated
 and the other isn't.
@@ -111,9 +111,9 @@ when only one is relevant.
 | Document | Maintenance Rule |
 |---|---|
 | `AGENTS.md` | `.cursor/rules/maintain-agents-md.mdc` |
-| `docs/ARCHITECTURE.md` | `.cursor/rules/maintain-architecture-md.mdc` |
-| `docs/design/`, `docs/tech_notes/`, `docs/references/` | `.cursor/rules/maintain-design-docs.mdc` |
-| `docs/theory/` | `.cursor/rules/maintain-theory-docs.mdc` |
+| `../ARCHITECTURE.md` | `.cursor/rules/maintain-architecture-md.mdc` |
+| ``, `../tech_notes/`, `../references/` | `.cursor/rules/maintain-design-docs.mdc` |
+| `../../docs/theory/` | `.cursor/rules/maintain-theory-docs.mdc` |
 | `.cursor/rules/*.mdc` | `.cursor/rules/maintain-cursor-rules.mdc` |
 | `.cursor/skills/` | `.cursor/rules/maintain-skills.mdc` |
 
@@ -154,7 +154,7 @@ Git commit conventions for docs and all other changes are codified in the
 
 1. Agent starts → sees `AGENTS.md` (map) + `project-overview.mdc` (always applied)
 2. Opens a `.py` file → `coding-conventions.mdc` auto-injected
-3. Needs to understand GIG optimization → reads `docs/tech_notes/gig_eta_to_theta.md`
+3. Needs to understand GIG optimization → reads `../tech_notes/gig_eta_to_theta.md`
 4. Needs to add a new distribution → invokes `add-distribution` skill
 5. Commits → uses `git-conventions` skill
 

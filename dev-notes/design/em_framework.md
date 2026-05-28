@@ -4,9 +4,10 @@
 > abstraction buys, how the `Shrinkage` combinator generalises penalised
 > EM, and what the four covariance-regularisation modes do.
 >
-> **Where things live.** Public API is in the [API Reference](../api/index).
-> Parameter facade and `from_expectation` dispatch are in {doc}`mixtures`.
-> Solver internals are in {doc}`solvers_and_bessel`.
+> **Where things live.** Public API is in `../ARCHITECTURE.md` § *EM
+> Algorithm*. Parameter facade and `from_expectation` dispatch are in
+> `mixtures.md`. Solver internals are in
+> `solvers_and_bessel.md`.
 
 ---
 
@@ -52,7 +53,7 @@ em_convergence_params()                  -> pytree                # convergence 
 pytree, not raw per-observation dicts. The first six fields of
 `FactorMixtureStats` are identical to `NormalMixtureEta`, so shrinkage
 targets and rule weights port across the two families (see
-`docs/design/mixtures.md` §7).
+`mixtures.md` §7).
 
 ### 2.1 Convergence on a pytree
 
@@ -364,6 +365,10 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 
 ## 7. Cross-References
 
-- Solvers (η→θ): {doc}`solvers_and_bessel`.
-- Theory: [EM algorithm](../theory/em_algorithm), [Shrinkage](../theory/shrinkage),
-  [Factor analysis](../theory/factor_analysis).
+- Architecture surface: `../ARCHITECTURE.md` § *EM Algorithm*.
+- Solvers (η→θ): `solvers_and_bessel.md`.
+- Theory: `../../docs/theory/em_algorithm.rst`, `../../docs/theory/shrinkage.rst`,
+  `../../docs/theory/factor_analysis.rst`.
+- Companion notebook: `notebooks/em_shrinkage_demo.py`.
+- Historical / archived: `../archive/design/em_covariance_extensions.md`,
+  `../archive/design/penalised_em.md`.

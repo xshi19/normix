@@ -25,8 +25,8 @@ Before committing:
 - `uv run pytest tests/` passes
 - No debug print statements
 - Type hints on all public methods
-- Update `docs/plans/migration_plan.md` if changes advance a phase
-- Update `docs/ARCHITECTURE.md` if new modules were added
+- Update `dev-notes/plans/migration_plan.md` if changes advance a phase
+- Update `dev-notes/ARCHITECTURE.md` if new modules were added
 
 ## Core Design
 
@@ -45,31 +45,34 @@ Before committing:
 
 ## Context Map
 
-Architecture and module hierarchy → `docs/ARCHITECTURE.md`
+Published website source → `docs/` (built to https://xshi19.github.io/normix/)
+
+Agent/dev internal knowledge → `dev-notes/` (not published; index at `dev-notes/README.md`)
+
+Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 
 | Area | Rule / Doc |
 |---|---|
 | Distribution code (`normix/`) | `.cursor/rules/coding-conventions.mdc` |
 | Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
-| Design docs index | `docs/design/index.md` |
-| Design decisions table | `docs/design/design.md` |
-| Exponential family / triad / solver interface | `docs/design/exponential_family.md` |
-| Joint vs Marginal, factor mixtures | `docs/design/mixtures.md` |
-| EM framework, η-rules, Shrinkage, regularisations | `docs/design/em_framework.md` |
-| GIG η→θ, Bessel, CPU/GPU hybrid, RVS | `docs/design/solvers_and_bessel.md` |
-| Agent instructions design | `docs/design/agent_instructions_design.md` |
+| Published design rationale | `docs/design/` (exponential_family, mixtures, em_framework, solvers_and_bessel) |
+| Design decisions table (internal) | `dev-notes/design/design.md` |
+| Agent instructions design | `dev-notes/design/agent_instructions_design.md` |
+| Full design doc index (internal) | `dev-notes/design/index.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
-| Distribution conversions (`to_<name>`) | `docs/tech_notes/distribution_conversions.md` |
-| Migration status & roadmap | `docs/plans/` |
-| `normix.finance` roadmap (Phase D done; E, F proposed) | `docs/plans/finance_architecture.md` |
-| Archived design proposals (already implemented) | `docs/archive/design/` |
-| Package survey (TFP, FlowJAX, efax) | `docs/references/distribution_packages.md` |
-| Technical notes | `docs/tech_notes/` |
+| Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
+| Migration status & roadmap | `dev-notes/plans/` |
+| `normix.finance` roadmap (Phase D done; E, F proposed) | `dev-notes/plans/finance_architecture.md` |
+| Docs refactor plan | `dev-notes/plans/docs_refactor.md` |
+| Archived design proposals (already implemented) | `dev-notes/archive/design/` |
+| Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
+| Technical notes | `dev-notes/tech_notes/` |
 | Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers, JIT solvers, incremental EM, GH path comparison (`bench_gh_paths.py`); `run_all.py` orchestrator; `compare.py` diff tool |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
+| Cross-link conventions | `.cursor/rules/docs-cross-links.mdc` |
 
 ## Design Philosophy
 

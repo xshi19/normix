@@ -106,7 +106,7 @@ The README correctly says the joint classes are exponential families, but the su
 Relevant docs/code:
 
 - `README.md:64-83`
-- `docs/design/design.md:151-155`
+- `../design/design.md:151-155`
 - `normix/distributions/variance_gamma.py:127-129`
 - `normix/distributions/normal_inverse_gamma.py:126-128`
 - `normix/distributions/normal_inverse_gaussian.py:135-137`

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Maintaining docs/theory/
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 `docs/theory/` contains **mathematical derivations** in reStructuredText (`.rst`)
 format, based on [Shi2016]. These are the formal mathematical foundations for
@@ -49,7 +49,7 @@ the distributions and algorithms implemented in normix.
 ## Relationship to Other Docs
 
 - `docs/theory/` = **formal math** (definitions, theorems, proofs)
-- `docs/tech_notes/` = **implementation notes** (benchmarks, numerical issues, algorithm choices)
+- `dev-notes/tech_notes/` = **implementation notes** (benchmarks, numerical issues, algorithm choices)
 - `docs/design/` = **design rationale** (why we chose this approach)
 
 These three are complementary. A theory file derives the formula; a tech note
