@@ -2,7 +2,7 @@
 
 A marimo notebook companion to `docs/design/em_framework.md` (EM
 framework, η-rules, Shrinkage combinator) and the original phase plan
-in `docs/archive/design/em_covariance_extensions.md`. Run with::
+in `dev-notes/archive/design/em_covariance_extensions.md`. Run with::
 
     uv run marimo edit notebooks/em_shrinkage_demo.py
 
@@ -27,7 +27,7 @@ def _intro(mo):
 
     This notebook demonstrates the Phase-1 (EM API generalisation) and
     Phase-2 (shrinkage combinator) work originally planned in
-    `docs/archive/design/em_covariance_extensions.md` (now landed; see
+    `dev-notes/archive/design/em_covariance_extensions.md` (now landed; see
     the living `docs/design/em_framework.md`). We use a high-dimensional,
     small-$n$ slice of S&P 500 daily returns — exactly the regime where
     the sample covariance is ill-conditioned and shrinkage is meant to

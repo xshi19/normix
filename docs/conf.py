@@ -38,15 +38,6 @@ exclude_patterns = [
     'Thumbs.db',
     '.DS_Store',
     'pdfs',
-    'plans',
-    'references',
-    'tech_notes',
-    'design',
-    'notebooks',
-    'ARCHITECTURE.md',
-    'investigations',
-    'reviews',
-    'archive',
 ]
 
 # Enable after docstring cross-reference cleanup (post Phase 1).

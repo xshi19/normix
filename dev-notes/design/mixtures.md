@@ -5,8 +5,9 @@
 > and how the factor-analysis family slots in as a sibling without
 > forcing the joint hierarchy to lie about its EF signature.
 >
-> **Where things live.** Class diagram and storage table are in the
-> [API Reference](../api/index). EM details are in {doc}`em_framework`.
+> **Where things live.** Class diagram and storage table are in
+> `../ARCHITECTURE.md` § *Mixture Structure*. EM details are in
+> `em_framework.md`.
 
 ---
 
@@ -254,7 +255,7 @@ Until then, `JointNormalMixture._quad_forms` and
 ## 7. Sufficient Statistics in Theory Order
 
 Both stats classes use **descriptive field names** in **theory order**
-(matching `docs/theory/shrinkage.rst` and `docs/theory/factor_analysis.rst`):
+(matching `../../docs/theory/shrinkage.rst` and `../../docs/theory/factor_analysis.rst`):
 
 ```python
 class NormalMixtureEta(eqx.Module):
@@ -281,6 +282,8 @@ family.
 
 ## 8. Cross-References
 
-- EM machinery: {doc}`em_framework`.
-- Theory: [GH distribution](../theory/gh), [Factor analysis](../theory/factor_analysis),
-  [Shrinkage](../theory/shrinkage).
+- Architecture: `../ARCHITECTURE.md` § *Mixture Structure*.
+- EM machinery: `em_framework.md`.
+- Theory: `../../docs/theory/gh.rst`, `../../docs/theory/factor_analysis.rst`,
+  `../../docs/theory/shrinkage.rst`.
+- Historical / archived rationale: `../archive/design/em_covariance_extensions.md`.

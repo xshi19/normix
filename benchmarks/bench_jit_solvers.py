@@ -1,7 +1,7 @@
 """
 JIT-cache benchmark for the in-loop Newton solvers.
 
-Phase-4 measurement (see ``docs/investigations/test_suite_performance_2026-04-28.md``).
+Phase-4 measurement (see ``dev-notes/investigations/test_suite_performance_2026-04-28.md``).
 Compares first-call (compile + run) vs cached-call (run only) latency for the
 Newton solvers that drive the M-step. We focus on the JAX/JAX hot path because
 that is where a fresh Python closure on every call forced JAX to re-trace the

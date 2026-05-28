@@ -5,7 +5,8 @@
 > and why the EM hot path runs on a CPU/GPU hybrid.
 >
 > **Where things live.** The `backend × method` matrix is in
-> {doc}`exponential_family` § 3. This file owns the deeper rationale.
+> `exponential_family.md` § 3. ARCHITECTURE.md has the
+> compact runtime view. This file owns the deeper rationale.
 
 ---
 
@@ -61,7 +62,7 @@ stopping). For repeated warm-started solves on the same shape (the GIG
 EM hot path), `make_jit_newton_solver(f, grad_fn, hess_fn, bounds)`
 builds a `@jax.jit`-decorated specialised solve whose XLA cache survives
 across calls — critical, otherwise per-call retracing dominated GH
-EM time.
+EM time (see `../tech_notes/jax_overhead_diagnosis.md` § Resolution).
 
 ### 1.3 `BregmanResult` and `lax.scan`
 
@@ -119,6 +120,9 @@ When `theta0` is **not** provided, `GeneralizedInverseGaussian.from_expectation`
 runs `solve_bregman_multistart` on the η-rescaled problem, with seeds
 from the Gamma / InverseGamma / InverseGaussian special cases.
 
+See `../tech_notes/gig_eta_to_theta.md` for the derivation, the
+seven-Bessel analytical Hessian, and benchmark comparisons.
+
 ---
 
 ## 3. Bessel Functions
@@ -168,6 +172,8 @@ three classmethods are `_log_partition_cpu`, `_grad_log_partition_cpu`,
 Distributions that don't call `log_kv` (Gamma, InverseGamma,
 InverseGaussian) inherit the default wrappers. They pay nothing.
 
+See `../tech_notes/bessel_implementations_survey.md` for benchmarks.
+
 ---
 
 ## 4. CPU/GPU Hybrid Backend
@@ -196,6 +202,8 @@ EM timing on 468 stocks, 2552 observations (GH distribution):
 
 Default fitter settings reflect the hot path:
 `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`.
+
+See `../tech_notes/em_gpu_profiling.md`.
 
 ---
 
@@ -226,7 +234,8 @@ GIG-specific sampling is inlined in
 - `_gig_rvs_pinv(key, u_grid, x_grid, n)` — alias of `rvs_pinv` used by
   `GIG.rvs(method='pinv')`.
 
-Neither method evaluates the Bessel normalising constant.
+Neither method evaluates the Bessel normalising constant. See
+`../tech_notes/gig_rvs.md`.
 
 ### Quantile Functions (`cdf`, `ppf`)
 
@@ -246,5 +255,13 @@ Neither method evaluates the Bessel normalising constant.
 
 ## 6. Cross-References
 
-- Triad design: {doc}`exponential_family`.
-- Theory: [GIG distribution](../theory/gig), [EM algorithm](../theory/em_algorithm).
+- Architecture surface: `../ARCHITECTURE.md` § *Bessel Functions*,
+  § *GIG η→θ Optimization*.
+- Triad design: `exponential_family.md`.
+- Tech notes: `../tech_notes/bessel_implementations_survey.md`,
+  `../tech_notes/gig_eta_to_theta.md`,
+  `../tech_notes/em_gpu_profiling.md`,
+  `../tech_notes/jax_overhead_diagnosis.md`,
+  `../tech_notes/gig_rvs.md`.
+- Historical / archived: `../archive/design/solver_redesign.md`,
+  `../archive/design/log_partition_triad.md`.

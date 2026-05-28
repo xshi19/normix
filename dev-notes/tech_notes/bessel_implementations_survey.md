@@ -2,7 +2,7 @@
 
 **Date**: March 2026  
 **Status**: Research  
-**Related files**: `normix/utils/bessel.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
+**Related files**: `normix/utils/bessel.py`, `../tech_notes/tfp_bessel_crash_investigation.md`
 
 ## Motivation
 
@@ -99,7 +99,7 @@ This is a significant limitation for our use case, since the GIG log-partition f
 
 ### Known issues
 
-1. **Hard crashes on extreme parameters.** The Temme series and continued fraction code segfaults for certain (v, z) combinations that GIG optimization probes. See `docs/tech_notes/tfp_bessel_crash_investigation.md` for details.
+1. **Hard crashes on extreme parameters.** The Temme series and continued fraction code segfaults for certain (v, z) combinations that GIG optimization probes. See `../tech_notes/tfp_bessel_crash_investigation.md` for details.
 2. **No ∂/∂v gradient.** Would need to be added externally (as finite differences or analytical formula).
 3. **The v < 50 / v ≥ 50 threshold is somewhat arbitrary** — the Temme method can be slow to converge for v near 50.
 4. **While_loop iterations** (up to 1000 for series, up to 1000 for continued fraction) can be slow under JIT compilation.

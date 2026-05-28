@@ -4,8 +4,9 @@
 > how the triad pattern keeps gradient/Hessian and JAX/CPU evaluation
 > consistent, and how these primitives plug into the η→θ Bregman solver.
 >
-> **Where things live.** Module hierarchy and the full triad table are in the
-> [API Reference](../api/index). This file records the rationale.
+> **Where things live.** Module hierarchy and the full triad table are in
+> `../ARCHITECTURE.md` § *Exponential Family Core*. This file records
+> the rationale.
 
 ---
 
@@ -93,7 +94,7 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | Newton implementation | hand-rolled `lax.while_loop` | No JAX library provides a Newton **minimizer** that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton) |
 | Multi-start | `jax.vmap` for JAX, Python `for` for CPU | Orthogonal wrapper, not baked into solver name |
 | Result type | `BregmanResult` with `Any`-typed scalars | Survives `lax.scan` without `ConcretizationTypeError` |
-| Cached JIT | module-level `_gig_jax_newton_jit` via `make_jit_newton_solver` | The GIG warm-start hot path otherwise retraces per call |
+| Cached JIT | module-level `_gig_jax_newton_jit` via `make_jit_newton_solver` | The GIG warm-start hot path otherwise retraces per call (see `../tech_notes/jax_overhead_diagnosis.md`) |
 
 **`backend × method` matrix:**
 
@@ -107,7 +108,9 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | `cpu` | `bfgs`  | none   | `scipy.optimize.minimize(method='BFGS')` |
 
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
-+ `scipy.kve`) avoids GPU dispatch on this 3-D scalar problem.
++ `scipy.kve`) avoids GPU dispatch on this 3-D scalar problem. See
+`../tech_notes/gig_eta_to_theta.md` for the η-rescaling derivation and
+benchmarks.
 
 ---
 
@@ -166,5 +169,10 @@ and are hard to override.
 
 ## 5. Cross-References
 
-- η→θ optimization for GIG: {doc}`solvers_and_bessel`.
-- Theory: [GIG distribution](../theory/gig), [EM algorithm](../theory/em_algorithm).
+- Architecture surface: `../ARCHITECTURE.md` § *Exponential Family Core*.
+- η→θ optimization for GIG: `solvers_and_bessel.md`.
+- Tech notes: `../tech_notes/gig_eta_to_theta.md`,
+  `../tech_notes/bessel_implementations_survey.md`,
+  `../tech_notes/jax_overhead_diagnosis.md`.
+- Historical / archived rationale: `../archive/design/log_partition_triad.md`,
+  `../archive/design/solver_redesign.md`.

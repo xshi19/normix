@@ -46,6 +46,12 @@ jobs:
       - name: Cross-link invariants
         run: bash scripts/check_doc_links.sh
 
+      - name: Structural docs/ invariant
+        run: |
+          test -z "$(find docs -type d \( -name plans -o -name investigations \
+            -o -name reviews -o -name tech_notes -o -name archive \
+            -o -name references \) -print)"
+
       - name: Restore myst-nb cache
         uses: actions/cache@v4
         with:

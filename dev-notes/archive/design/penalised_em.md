@@ -2,15 +2,15 @@
 
 > **ARCHIVED — 2026-05-10.** The living rationale (theory recap,
 > combinator API, target builders, choosing $\tau$ and $\Sigma_0$) lives
-> in `docs/design/em_framework.md` § 4. This document is preserved for
+> in `../design/em_framework.md` § 4. This document is preserved for
 > historical context.
 
 **Date:** 2026-04-19 (revised 2026-05-08)
-**Status:** Implemented and integrated into `docs/design/em_framework.md`.
+**Status:** Implemented and integrated into `../design/em_framework.md`.
 **Scope:** `normix/fitting/eta.py`, `normix/fitting/eta_rules.py`,
 `normix/fitting/shrinkage_targets.py`, `normix/fitting/em.py`
-**Theory:** `docs/theory/shrinkage.rst`
-**Parent design:** `docs/archive/design/em_covariance_extensions.md` §4
+**Theory:** `../../docs/theory/shrinkage.rst`
+**Parent design:** `../archive/design/em_covariance_extensions.md` §4
 
 ---
 
@@ -30,7 +30,7 @@ $$
 
 inherits the same ill-conditioning as the sample covariance. Ill-conditioned
 $\Sigma$ ruins downstream Cholesky solves, log-density evaluation, and the
-GIG posterior in the next E-step (`docs/theory/shrinkage.rst` §1).
+GIG posterior in the next E-step (`../../docs/theory/shrinkage.rst` §1).
 
 ### 1.2 Statistical motivation
 
@@ -89,7 +89,7 @@ The justification for both extensions is mechanical: each leaf of $\eta$
 is updated by an independent affine map of the corresponding leaf of
 $\hat\eta$ and $\eta_0$, and `affine_combine` already handles
 `tree.map`-broadcast weights (see
-`docs/archive/design/em_covariance_extensions.md` §4.2).
+`../archive/design/em_covariance_extensions.md` §4.2).
 
 ---
 
@@ -164,7 +164,7 @@ from normix.fitting.shrinkage_targets import (
 
 All four read $(\mu,\gamma,p,a,b)$ from a `NormalMixture` and rebuild
 the six expectation fields via the closed-form expressions from
-`docs/theory/shrinkage.rst` (Shrunk Sufficient Statistics, last
+`../../docs/theory/shrinkage.rst` (Shrunk Sufficient Statistics, last
 display). The dispersion-substitution variants (`isotropic`,
 `diagonal`, `with_sigma`) override only the $E[XX^\top/Y]$ block.
 
@@ -207,7 +207,7 @@ A shrinkage target $\eta_0$ can be turned back into a concrete model via
 the η→model classmethod
 :meth:`~normix.mixtures.marginal.NormalMixture.from_expectation`. This
 is the cleanest way to verify what an `eta0_*` builder actually produces
-(see also `docs/archive/design/em_covariance_extensions.md` §6.3):
+(see also `../archive/design/em_covariance_extensions.md` §6.3):
 
 ```python
 prior_model = type(model).from_expectation(eta0_isotropic(model, sigma2))
@@ -226,7 +226,7 @@ numerical for GH).
 ## 4. Choosing $\tau$ and $\Sigma_0$
 
 These guidelines summarise practical experience and the relevant
-sections of `docs/theory/shrinkage.rst`. Concrete numerical demos live
+sections of `../../docs/theory/shrinkage.rst`. Concrete numerical demos live
 in `notebooks/em_shrinkage_demo.py` (marimo).
 
 ### 4.1 Choosing $\tau$
@@ -333,11 +333,11 @@ Expected effects vs unshrunk EM at $n\sim d$:
 
 ## 6. Cross-References
 
-- Theory: `docs/theory/shrinkage.rst`
-- Phase plan / decision log: `docs/archive/design/em_covariance_extensions.md`
+- Theory: `../../docs/theory/shrinkage.rst`
+- Phase plan / decision log: `../archive/design/em_covariance_extensions.md`
   §4 (rule abstraction, generalised `affine_combine`, combinator) and
   §6 (`MarginalMixture` ABC).
-- Living API surface: `docs/design/em_framework.md` § 4
+- Living API surface: `../design/em_framework.md` § 4
   (`Shrinkage` combinator, target builders, choosing $\tau$).
 - Companion demo: `notebooks/em_shrinkage_demo.py` (marimo).
 - Tests: `tests/test_incremental_em.py` covers the four guarantees

@@ -1,25 +1,29 @@
 ---
-description: Rules for maintaining docs/design/, docs/tech_notes/, and docs/references/
-globs: "**/docs/design/**/*.md,**/docs/tech_notes/**/*.md,**/docs/references/**/*.md"
+description: Rules for maintaining dev-notes/design/, dev-notes/tech_notes/, and dev-notes/references/
+globs: "**/dev-notes/design/**/*.md,**/dev-notes/tech_notes/**/*.md,**/dev-notes/references/**/*.md,**/docs/design/**/*.md"
 alwaysApply: false
 ---
 
 # Maintaining Design Docs, Tech Notes, and References
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
-## docs/design/ — Design Rationale
+## docs/design/ — Published subset
+
+Four user-facing rationale docs plus `index.md`. **No links to `dev-notes/`.**
+Cross-reference via MyST `{doc}` roles only.
+
+## dev-notes/design/ — Internal design rationale
 
 Design docs record **why** decisions were made, not just **what** was decided.
 
 - `design.md` is the **canonical decision table** — the quickest lookup for
   any architectural choice.
-- Topical files (`exponential_family.md`, `mixtures.md`, `em_framework.md`,
-  `solvers_and_bessel.md`) carry the rationale for each subsystem.
+- Topical files carry the rationale for each subsystem.
 - `agent_instructions_design.md` covers how AGENTS.md, rules, skills, and
   design docs work together.
 - `index.md` is the TOC.
-- Don't duplicate `docs/ARCHITECTURE.md`. ARCHITECTURE owns the **structure**
+- Don't duplicate `dev-notes/ARCHITECTURE.md`. ARCHITECTURE owns the **structure**
   (module tree, distribution storage, constants); design owns the **why**.
 - Link to tech notes for deep mathematical or algorithmic detail.
 
@@ -27,20 +31,20 @@ Design docs record **why** decisions were made, not just **what** was decided.
 - New design decision made → add row to `design.md` decision table; add
   rationale to the relevant topical file if non-trivial.
 - Significant subsystem redesign → write a fresh proposal under
-  `docs/plans/`. Once implemented, **archive** the proposal in
-  `docs/archive/design/` and fold the rationale into the relevant
-  topical file under `docs/design/`.
+  `dev-notes/plans/`. Once implemented, **archive** the proposal in
+  `dev-notes/archive/design/` and fold the rationale into the relevant
+  topical file. Promote user-facing rationale to `docs/design/` when appropriate.
 - Decision reversed or superseded → mark old decision in `design.md` and
   add the new one.
 
-**docs/archive/design/** — read-only history. Don't edit archived
+**dev-notes/archive/design/** — read-only history. Don't edit archived
 proposals except to mark them as archived or to fix dangling cross-refs.
 
-**docs/plans/** — work not yet started or in progress (migration plans,
+**dev-notes/plans/** — work not yet started or in progress (migration plans,
 unimplemented proposals). Move proposals here before implementation,
 archive them after.
 
-## docs/tech_notes/ — Deep Dives
+## dev-notes/tech_notes/ — Deep Dives
 
 Tech notes are deep-dive documents for specific numerical, algorithmic, or
 performance topics. Length is fine here — brevity is not required.
@@ -53,7 +57,7 @@ performance topics. Length is fine here — brevity is not required.
 
 **Rules:**
 - One note per topic — don't mix Bessel survey with EM profiling
-- Link from `docs/ARCHITECTURE.md` where relevant
+- Link from `dev-notes/ARCHITECTURE.md` where relevant
 - Include benchmark data and reproduction commands where applicable
 
 **When to create a new tech note:**
@@ -61,7 +65,7 @@ performance topics. Length is fine here — brevity is not required.
 - Evaluating alternative implementations with benchmarks
 - Documenting a non-obvious algorithmic choice
 
-## docs/references/ — External Surveys
+## dev-notes/references/ — External Surveys
 
 Reference docs survey external libraries, papers, or approaches.
 
@@ -71,7 +75,7 @@ Reference docs survey external libraries, papers, or approaches.
 ## Before Creating a New Document
 
 1. **Check existing docs** in the same directory — does a relevant doc already exist?
-2. **Check `docs/ARCHITECTURE.md`** documentation map — is this topic already covered elsewhere?
+2. **Check `dev-notes/ARCHITECTURE.md`** documentation map — is this topic already covered elsewhere?
 3. **Avoid duplicating** information from `.cursor/rules/` or `AGENTS.md`. If the content is about
    coding conventions or project structure, it belongs in a rule, not a design doc.
 
@@ -80,3 +84,4 @@ Reference docs survey external libraries, papers, or approaches.
 - **Design docs are not rules.** They explain *why*, not *how to write code*. Code conventions belong in `.cursor/rules/`.
 - **Tech notes can be long** but must have clear structure. An unstructured brain dump is hard for agents to navigate.
 - **Link, don't inline.** If a tech note is referenced from ARCHITECTURE.md, add a link — don't copy the content.
+- **Never link `dev-notes/` from `docs/`** — promote content first if it should be public.

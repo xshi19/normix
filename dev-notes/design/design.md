@@ -2,9 +2,9 @@
 
 > **What this file is.** Design philosophy + the canonical
 > decision table. Topical rationale lives in the sibling files listed
-> in `docs/design/index.md`.
+> in `index.md`.
 >
-> **What this file is not.** A duplicate of `docs/ARCHITECTURE.md`.
+> **What this file is not.** A duplicate of `../ARCHITECTURE.md`.
 > The module hierarchy, distribution storage table, and constants
 > table are in ARCHITECTURE; design decisions and their *why* are
 > here.
@@ -147,10 +147,10 @@ the class as `@classmethod` or `@staticmethod`.
 
 ## Cross-References
 
-- Topical detail: `docs/design/index.md` (TOC).
-- Architecture: `docs/ARCHITECTURE.md`.
+- Topical detail: `index.md` (TOC).
+- Architecture: `../ARCHITECTURE.md`.
 - Implementation surface: `AGENTS.md` and `.cursor/rules/coding-conventions.mdc`.
-- Theory: `docs/theory/`.
-- Tech notes: `docs/tech_notes/`.
-- Historical / archived design proposals: `docs/archive/design/`.
-- Unimplemented proposals: `docs/plans/finance_architecture.md`.
+- Theory: `../../docs/theory/`.
+- Tech notes: `../tech_notes/`.
+- Historical / archived design proposals: `../archive/design/`.
+- Unimplemented proposals: `../plans/finance_architecture.md`.

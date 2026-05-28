@@ -113,5 +113,5 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `scripts/check_doc_links.sh`
 - `.github/workflows/docs.yml`
 - `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`
-- `docs/plans/docs_refactor.md` — migration status
+- `dev-notes/plans/docs_refactor.md` — migration status
 - `AGENTS.md`

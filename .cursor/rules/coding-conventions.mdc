@@ -60,7 +60,7 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 - One-line summary first, then blank line, then details
 - No template boilerplate — keep it concise
 - Reference formulas only when non-obvious from the code
-- No long derivation comments inline — move math to `docs/theory/` or `docs/tech_notes/`
+- No long derivation comments inline — move math to `docs/theory/` or `dev-notes/tech_notes/`
 
 ## Module Structure
 
@@ -162,7 +162,7 @@ Backward-compatibility aliases: `GIG_EPS_V_HESS = BESSEL_EPS_V`, `GIG_EPS_NP = T
 - `@property` for expensive operations — compute explicitly
 - Deep class hierarchies — prefer composition (e.g. `NormalMixture` owns `JointNormalMixture`)
 - Global mutable state, `__dict__` manipulation, metaclasses
-- Long inline comments explaining derivations — move to `docs/tech_notes/` or `docs/theory/`
+- Long inline comments explaining derivations — move to `dev-notes/tech_notes/` or `docs/theory/`
 - Wrapper functions in utils that duplicate distribution API — methods belong on the class
 - isinstance-based dispatch over distribution types — add methods to the base/subclass instead
 - Putting all code in `__init__.py` — split into logical modules

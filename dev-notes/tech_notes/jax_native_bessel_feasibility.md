@@ -2,7 +2,7 @@
 
 **Date**: March 2026  
 **Status**: Implementation complete — zero scipy callbacks, all phases done  
-**Related files**: `normix/_bessel.py`, `scripts/compare_bessel_implementations.py`, `docs/tech_notes/tfp_bessel_crash_investigation.md`
+**Related files**: `normix/_bessel.py`, `scripts/compare_bessel_implementations.py`, `../tech_notes/tfp_bessel_crash_investigation.md`
 
 ## Motivation
 

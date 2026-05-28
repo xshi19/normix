@@ -8,7 +8,7 @@ from the active codebase.
 
 Tests: `uv run pytest tests/` (all passing).
 
-Reference: `docs/design/design.md` for architecture decisions.
+Reference: `../design/design.md` for architecture decisions.
 
 ## Phase 0: Foundation
 
@@ -175,7 +175,7 @@ All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate
 
 **Goal:** Clean up the ExponentialFamily–GIG interface via the "log-partition triad" design.
 **Branch:** `feat/jax-native-bessel-v2` → `cursor/log-partition-triad-architecture-a531`
-**Status:** Implemented (see `docs/archive/design/log_partition_triad.md`; living rationale in `docs/design/exponential_family.md` § 2)
+**Status:** Implemented (see `../archive/design/log_partition_triad.md`; living rationale in `../design/exponential_family.md` § 2)
 
 ### 8.1 What was implemented
 - Added triad classmethods to `ExponentialFamily`: `_grad_log_partition`, `_hessian_log_partition` (JAX), `_log_partition_cpu`, `_grad_log_partition_cpu`, `_hessian_log_partition_cpu` (CPU)
@@ -188,7 +188,7 @@ All distributions are immutable `eqx.Module`. No `_fitted` flag, no `_invalidate
 
 **Goal:** 15× EM speedup via hybrid JAX/CPU execution for Bessel-heavy hot paths.
 **Branch:** `feat/jax-native-bessel-v2` → `cursor/cpu-bessel-design-9a75`
-**Status:** Implemented (see `docs/design/cpu_bessel_design.md`)
+**Status:** Implemented (see `../design/cpu_bessel_design.md`)
 
 ### 7.1 `log_kv(v, z, backend='jax'|'cpu')` — Phase 1 ✓
 - `backend='jax'` (default): unchanged pure-JAX path with `@custom_jvp`, JIT-able

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Maintaining AGENTS.md
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 AGENTS.md is a **map**, not an encyclopedia. It tells the agent *where to look*,
 not *everything it needs to know*. Target: **~80–120 lines**.
@@ -23,7 +23,7 @@ not *everything it needs to know*. Target: **~80–120 lines**.
 ## What Does NOT Belong Here
 
 - Full API reference → belongs in code docstrings
-- Detailed derivations → `docs/tech_notes/`
+- Detailed derivations → `dev-notes/tech_notes/`
 - Implementation patterns → `.cursor/rules/`
 - Step-by-step workflows → `.cursor/skills/`
 - Mathematical theory → `docs/theory/`
@@ -41,7 +41,7 @@ itself needs a new entry or an existing pointer is stale.
 
 Read existing content first. Check that new additions don't duplicate
 information already in `.cursor/rules/project-overview.mdc` (distribution
-catalog) or `docs/ARCHITECTURE.md` (module hierarchy). Add a pointer instead.
+catalog) or `dev-notes/ARCHITECTURE.md` (module hierarchy). Add a pointer instead.
 
 ## Gotchas
 

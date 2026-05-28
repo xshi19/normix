@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Maintaining .cursor/rules/
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 Rules are auto-injected by Cursor when their glob pattern matches the files
 being edited. This is the primary mechanism for progressive disclosure.
@@ -20,8 +20,8 @@ being edited. This is the primary mechanism for progressive disclosure.
 | `testing-guidelines.mdc` | `**/tests/**/*.py` | Test structure and tolerances |
 | `notebook-guidelines.mdc` | `**/notebooks/**/*.ipynb` | Notebook section structure |
 | `maintain-agents-md.mdc` | `AGENTS.md` | AGENTS.md maintenance |
-| `maintain-architecture-md.mdc` | `**/docs/ARCHITECTURE.md` | ARCHITECTURE.md maintenance |
-| `maintain-design-docs.mdc` | `**/docs/design/**/*.md,...` | Design docs, tech notes, references |
+| `maintain-architecture-md.mdc` | `**/dev-notes/ARCHITECTURE.md` | ARCHITECTURE.md maintenance |
+| `maintain-design-docs.mdc` | `**/docs/design/**`, `**/dev-notes/design/**`, ... | Design docs, tech notes, references |
 | `maintain-theory-docs.mdc` | `**/docs/theory/**` | Mathematical derivations |
 | `maintain-cursor-rules.mdc` | `**/.cursor/rules/*.mdc` | This file — rules about rules |
 | `maintain-skills.mdc` | `**/.cursor/skills/**` | Skills maintenance |
@@ -56,7 +56,7 @@ being edited. This is the primary mechanism for progressive disclosure.
 ## Gotchas
 
 - **Don't duplicate facts across rules.** Each fact lives in one canonical location
-  (see Single Source of Truth table in `docs/design/agent_instructions_design.md`).
+  (see Single Source of Truth table in `dev-notes/design/agent_instructions_design.md`).
 - **Don't add implementation details.** Rules say *what* and *what not to do*.
   Implementation details belong in code, docstrings, or tech notes.
 - **`project-overview.mdc` is always loaded.** Keep it very concise.

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Maintaining .cursor/skills/
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 Skills are **folders** containing `SKILL.md` plus optional scripts, templates,
 and reference data. They encode multi-step workflows — recipes, not preferences.

@@ -24,5 +24,5 @@ All distributions provide: `pdf`, `cdf` (where analytical), `mean`, `var`, `std`
 Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`.
 
 Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `_bessel.py`.
-Architecture: `docs/ARCHITECTURE.md`. Design: `docs/design/jax_design.md`.
-Tech notes: `docs/tech_notes/`.
+Architecture: `dev-notes/ARCHITECTURE.md`. Published design: `docs/design/`.
+Tech notes: `dev-notes/tech_notes/`.

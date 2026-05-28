@@ -20,7 +20,7 @@ Performance notes:
 - JAX Newton (method='newton') is slow on GPU for the scalar 3D GIG problem
   because lax.cond/lax.while_loop dispatch many small GPU kernels (~1ms each).
   backend='cpu' avoids this via scipy L-BFGS-B + scipy.kve.
-- See docs/tech_notes/em_gpu_profiling.md for reference numbers.
+- See dev-notes/tech_notes/em_gpu_profiling.md for reference numbers.
 """
 
 import os
@@ -451,7 +451,7 @@ def bench_em_solver_comparison(n_stocks: int = 20, n_iter: int = 10) -> None:
     # very slow (~seconds per call) due to many small GPU kernel launches from
     # lax.scan/lax.cond dispatch.  The cpu solver (scipy + scipy.kve) avoids
     # this completely.  We still include newton_analytical as a reference.
-    # See docs/tech_notes/em_gpu_profiling.md for full analysis.
+    # See dev-notes/tech_notes/em_gpu_profiling.md for full analysis.
     configs = [
         # (label,                    e_backend, m_solver)
         ("jax E + cpu M  [FASTEST]", "jax",     "cpu"),

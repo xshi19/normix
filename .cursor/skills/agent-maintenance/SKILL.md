@@ -9,7 +9,7 @@ description: >-
 
 # Agent Maintenance
 
-> High-level principles: `docs/design/agent_instructions_design.md`
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
 
 This skill codifies **when and how** to update the agent-facing knowledge
 system. Each trigger below tells you what to update and where.
@@ -18,15 +18,15 @@ system. Each trigger below tells you what to update and where.
 
 ### New Module or File Added Under `normix/`
 
-1. `docs/ARCHITECTURE.md` — update module hierarchy tree
+1. `dev-notes/ARCHITECTURE.md` — update module hierarchy tree
 2. If it's a distribution → also follow "New Distribution Added" below
 3. If it adds a new area of work → add a row to the context map in `AGENTS.md`
 
 ### New Distribution Added
 
 1. `.cursor/rules/project-overview.mdc` — add to distribution catalog table
-2. `docs/ARCHITECTURE.md` — add to module hierarchy and distribution storage table
-3. `docs/design/design.md` — if new design decisions were made, add to decision table
+2. `dev-notes/ARCHITECTURE.md` — add to module hierarchy and distribution storage table
+3. `dev-notes/design/design.md` — if new design decisions were made, add to decision table
 4. Add tests under `tests/` (see `.cursor/rules/testing-guidelines.mdc`)
 5. Add notebook under `notebooks/` (see `.cursor/rules/notebook-guidelines.mdc`)
 6. Add theory derivation under `docs/theory/` if mathematical background is needed
@@ -34,14 +34,15 @@ system. Each trigger below tells you what to update and where.
 ### New Numerical Constant
 
 1. Define in `normix/utils/constants.py` (canonical location)
-2. `docs/ARCHITECTURE.md` — update numerical constants table
+2. `dev-notes/ARCHITECTURE.md` — update numerical constants table
 3. `.cursor/rules/coding-conventions.mdc` — update constants table if commonly used
 
 ### Design Decision Made
 
-1. `docs/design/design.md` — add row to the decision table
-2. If architecturally significant → update `docs/ARCHITECTURE.md`
-3. If it changes how code should be written → update relevant `.cursor/rules/` file
+1. `dev-notes/design/design.md` — add row to the decision table
+2. If architecturally significant → update `dev-notes/ARCHITECTURE.md`
+3. If user-facing rationale → also update the relevant file under `docs/design/`
+4. If it changes how code should be written → update relevant `.cursor/rules/` file
 
 ### Agent Makes a Recurring Mistake
 
@@ -50,8 +51,8 @@ system. Each trigger below tells you what to update and where.
 
 ### Completing a Migration Phase
 
-1. Update `docs/plans/migration_plan.md`
-2. If modules were restructured → update `docs/ARCHITECTURE.md`
+1. Update `dev-notes/plans/migration_plan.md`
+2. If modules were restructured → update `dev-notes/ARCHITECTURE.md`
 
 ### New Multi-Step Workflow Identified
 
@@ -61,7 +62,7 @@ system. Each trigger below tells you what to update and where.
 
 ### Rule Growing Beyond ~150 Lines
 
-1. Split into sub-rules or move detail to `docs/`
+1. Split into sub-rules or move detail to `dev-notes/`
 2. Update `.cursor/rules/maintain-cursor-rules.mdc` current rules table
 
 ### Rules May Be Contradicting
@@ -77,11 +78,12 @@ Before updating anything, check that you're updating the **canonical location**:
 
 | Fact | Canonical Location |
 |---|---|
-| Module hierarchy, distribution storage | `docs/ARCHITECTURE.md` |
+| Module hierarchy, distribution storage | `dev-notes/ARCHITECTURE.md` |
 | Distribution catalog | `.cursor/rules/project-overview.mdc` |
 | Coding conventions | `.cursor/rules/coding-conventions.mdc` |
 | Numerical constants (values) | `normix/utils/constants.py` |
-| Design rationale, decision table | `docs/design/design.md` |
+| Design rationale, decision table | `dev-notes/design/design.md` |
+| Published design rationale | `docs/design/` |
 | Commands, context map | `AGENTS.md` |
 | Mathematical derivations | `docs/theory/` |
 
@@ -102,3 +104,4 @@ Before making any documentation update:
 - **Don't add implementation details to rules.** Rules say *what* and *what not*.
 - **`project-overview.mdc` is always loaded.** Every line costs context in every conversation.
 - **Check before creating.** The most common maintenance mistake is adding something that already exists in a different file.
+- **Never link `dev-notes/` from `docs/` or normix docstrings** — promote content to `docs/` first.

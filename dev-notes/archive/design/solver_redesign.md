@@ -1,7 +1,7 @@
 # Solver Module Redesign
 
 > **ARCHIVED — 2026-05-10.** The living rationale lives in
-> `docs/design/solvers_and_bessel.md`. Kept here for historical
+> `../design/solvers_and_bessel.md`. Kept here for historical
 > context.
 
 **Date:** 2026-03-18  
