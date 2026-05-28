@@ -1,0 +1,767 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Exponential Family Core &#8212; normix 0.2.2 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=e88fd599" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'design/exponential_family';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mixture Architecture" href="mixtures.html" />
+    <link rel="prev" title="Design Rationale" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.2 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix Documentation
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fdesign/exponential_family.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/design/exponential_family.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Exponential Family Core</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-function-three-parametrizations">1. One Function, Three Parametrizations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-log-partition-triad">2. The Log-Partition Triad</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian">2.3 Why we don’t share Bessel calls between gradient and Hessian</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-1-0-decisions-recorded-here">4. Pre-1.0 Decisions Recorded Here</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d3-multivariatenormal-as-exponentialfamily">4.1 D3 — <code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> as <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d4-keep-jaxopt-for-now">4.2 D4 — Keep <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code> for now</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#constraints-handling">4.3 Constraints handling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-level-functions-are-forbidden">4.4 Module-level functions are forbidden</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">5. Cross-References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="exponential-family-core">
+<h1>Exponential Family Core<a class="headerlink" href="#exponential-family-core" title="Link to this heading">#</a></h1>
+<blockquote>
+<div><p><strong>Scope.</strong> Why every distribution lives behind one log-partition function,
+how the triad pattern keeps gradient/Hessian and JAX/CPU evaluation
+consistent, and how these primitives plug into the η→θ Bregman solver.</p>
+<p><strong>Where things live.</strong> Module hierarchy and the full triad table are in the
+<a class="reference internal" href="../api/index.html"><span class="doc std std-doc">API Reference</span></a>. This file records the rationale.</p>
+</div></blockquote>
+<hr class="docutils" />
+<section id="one-function-three-parametrizations">
+<h2>1. One Function, Three Parametrizations<a class="headerlink" href="#one-function-three-parametrizations" title="Link to this heading">#</a></h2>
+<p>Each distribution is described by a single convex log-partition
+<span class="math notranslate nohighlight">\(\psi(\theta)\)</span>. Everything else — densities, expectation parameters,
+Fisher information, Bregman inversion — is derived from it. Three
+parametrizations form a triangle:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>classical (μ, σ², α, β, …)   ←→   natural θ   ←→   expectation η = ∇ψ(θ)
+                  via from_classical / natural_params                ↑
+                                                                from_expectation
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">from_natural</span></code>, <code class="docutils literal notranslate"><span class="pre">natural_params</span></code>, and <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> are the only three
+constructors a user ever needs. <code class="docutils literal notranslate"><span class="pre">from_expectation(η)</span></code> runs the universal
+Bregman solver <code class="docutils literal notranslate"><span class="pre">min_θ</span> <span class="pre">[ψ(θ)</span> <span class="pre">−</span> <span class="pre">θ·η]</span></code> from <code class="docutils literal notranslate"><span class="pre">fitting/solvers.py</span></code>.</p>
+<p>Why it matters: distributions never need to know about parameter
+conversions other than their own classical mapping. The conversion graph
+collapses into derivatives and Bregman minimisation of a single function.</p>
+</section>
+<hr class="docutils" />
+<section id="the-log-partition-triad">
+<h2>2. The Log-Partition Triad<a class="headerlink" href="#the-log-partition-triad" title="Link to this heading">#</a></h2>
+<p>Three functions × two backends:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                     <span class="n">JAX</span> <span class="p">(</span><span class="n">JIT</span><span class="o">-</span><span class="n">able</span><span class="p">)</span>                  <span class="n">CPU</span> <span class="p">(</span><span class="n">numpy</span><span class="o">/</span><span class="n">scipy</span><span class="p">)</span>
+<span class="n">log</span><span class="o">-</span><span class="n">partition</span>        <span class="n">_log_partition_from_theta</span>        <span class="n">_log_partition_cpu</span>
+<span class="n">gradient</span>             <span class="n">_grad_log_partition</span>              <span class="n">_grad_log_partition_cpu</span>
+<span class="n">Hessian</span>              <span class="n">_hessian_log_partition</span>           <span class="n">_hessian_log_partition_cpu</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tier</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Override when</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1: <code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code></p></td>
+<td><p>abstract</p></td>
+<td><p>always (it <em>is</em> the distribution)</p></td>
+</tr>
+<tr class="row-odd"><td><p>2: <code class="docutils literal notranslate"><span class="pre">_grad_*</span></code>, <code class="docutils literal notranslate"><span class="pre">_hessian_*</span></code> (JAX)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code></p></td>
+<td><p>analytical formula avoids recompilation or saves Bessel calls</p></td>
+</tr>
+<tr class="row-even"><td><p>3: <code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code> etc.</p></td>
+<td><p>numpy wrappers around the JAX version</p></td>
+<td><p>distribution calls <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> (Bessel) and EM hot path needs CPU evaluation</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="why-classmethod-for-the-triad">
+<h3>2.1 Why <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code> for the triad<a class="headerlink" href="#why-classmethod-for-the-triad" title="Link to this heading">#</a></h3>
+<p>Tier 2 needs to differentiate the <strong>subclass</strong>’s <code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code>,
+not the parent’s. <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code> gives <code class="docutils literal notranslate"><span class="pre">cls</span></code>, which routes to the right
+implementation. <code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code> cannot — it would always call the parent.
+<code class="docutils literal notranslate"><span class="pre">cls</span></code> is not traced by JAX, so this is JIT-safe.</p>
+</section>
+<section id="why-the-cpu-tier-exists">
+<h3>2.2 Why the CPU tier exists<a class="headerlink" href="#why-the-cpu-tier-exists" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> is <strong>fast</strong> for vectorised Bessel evaluation in the
+EM hot path; a <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over JAX’s <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>-dispatched <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> triggers
+separate kernel launches per regime check and is much slower. Distributions
+that don’t call <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> (Gamma, InverseGamma, InverseGaussian) inherit
+the default <code class="docutils literal notranslate"><span class="pre">np.asarray(jax_version(...))</span></code> wrappers — they pay nothing for
+the CPU tier.</p>
+</section>
+<section id="why-we-don-t-share-bessel-calls-between-gradient-and-hessian">
+<h3>2.3 Why we don’t share Bessel calls between gradient and Hessian<a class="headerlink" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian" title="Link to this heading">#</a></h3>
+<p>A combined <code class="docutils literal notranslate"><span class="pre">_grad_hess</span></code> could share Bessel evaluations (≈ 7 calls vs
+12 for separate). We keep them separate anyway: the saving is small,
+and combining them re-introduces a phi-space chain rule the <em>distribution</em>
+must understand. Keeping <code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code> and <code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>
+as θ-space-only lets the solver (§3) own the chain rule generically.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="bregman-solver-interface">
+<h2>3. Bregman Solver Interface<a class="headerlink" href="#bregman-solver-interface" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">fitting/solvers.py</span></code> exposes <code class="docutils literal notranslate"><span class="pre">solve_bregman(f,</span> <span class="pre">η,</span> <span class="pre">θ₀,</span> <span class="pre">...)</span></code> for any convex
+<span class="math notranslate nohighlight">\(f\)</span> — not just log-partitions. The interface uses <strong>θ-space only</strong> for
+gradient/Hessian; bounds are handled by the solver via
+<code class="docutils literal notranslate"><span class="pre">_setup_reparam</span></code> (φ ↔ θ). Distributions never see the reparametrization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">solve_bregman</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span>
+              <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Decision</p></th>
+<th class="head"><p>Choice</p></th>
+<th class="head"><p>Why</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">grad_fn</span></code> + <code class="docutils literal notranslate"><span class="pre">hess_fn</span></code> (vs combined <code class="docutils literal notranslate"><span class="pre">grad_hess_fn</span></code>)</p></td>
+<td><p>separate</p></td>
+<td><p>Distributions don’t know about φ-space; solver applies chain rule via <code class="docutils literal notranslate"><span class="pre">jax.jacobian(to_theta)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Newton implementation</p></td>
+<td><p>hand-rolled <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code></p></td>
+<td><p>No JAX library provides a Newton <strong>minimizer</strong> that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton)</p></td>
+</tr>
+<tr class="row-even"><td><p>Multi-start</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> for JAX, Python <code class="docutils literal notranslate"><span class="pre">for</span></code> for CPU</p></td>
+<td><p>Orthogonal wrapper, not baked into solver name</p></td>
+</tr>
+<tr class="row-odd"><td><p>Result type</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code> with <code class="docutils literal notranslate"><span class="pre">Any</span></code>-typed scalars</p></td>
+<td><p>Survives <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> without <code class="docutils literal notranslate"><span class="pre">ConcretizationTypeError</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Cached JIT</p></td>
+<td><p>module-level <code class="docutils literal notranslate"><span class="pre">_gig_jax_newton_jit</span></code> via <code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver</span></code></p></td>
+<td><p>The GIG warm-start hot path otherwise retraces per call</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong><code class="docutils literal notranslate"><span class="pre">backend</span> <span class="pre">×</span> <span class="pre">method</span></code> matrix:</strong></p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>backend</p></th>
+<th class="head"><p>method</p></th>
+<th class="head"><p>bounds</p></th>
+<th class="head"><p>What runs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">newton</span></code></p></td>
+<td><p>reparam</p></td>
+<td><p>hand-rolled <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>, autodiff or supplied <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>/<code class="docutils literal notranslate"><span class="pre">hess_fn</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">lbfgs</span></code></p></td>
+<td><p>native (LBFGSB)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bfgs</span></code></p></td>
+<td><p>reparam</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jaxopt.BFGS</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">newton</span></code></p></td>
+<td><p>reparam</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='trust-exact')</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">lbfgs</span></code></p></td>
+<td><p>native</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='L-BFGS-B')</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bfgs</span></code></p></td>
+<td><p>none</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='BFGS')</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>GIG warm-start hot path: <code class="docutils literal notranslate"><span class="pre">backend='cpu',</span> <span class="pre">method='lbfgs'</span></code> (scipy’s L-BFGS-B</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scipy.kve</span></code>) avoids GPU dispatch on this 3-D scalar problem.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="pre-1-0-decisions-recorded-here">
+<h2>4. Pre-1.0 Decisions Recorded Here<a class="headerlink" href="#pre-1-0-decisions-recorded-here" title="Link to this heading">#</a></h2>
+<section id="d3-multivariatenormal-as-exponentialfamily">
+<h3>4.1 D3 — <code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> as <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code><a class="headerlink" href="#d3-multivariatenormal-as-exponentialfamily" title="Link to this heading">#</a></h3>
+<p>Promoted from a plain <code class="docutils literal notranslate"><span class="pre">eqx.Module</span></code> to a full <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>. EF
+structure:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Expression</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(t(x)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([x,\;\operatorname{vec}(xx^\top)]\)</span>, shape <span class="math notranslate nohighlight">\((d + d^2,)\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\theta\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\([\Sigma^{-1}\mu,\;-\tfrac12\operatorname{vec}(\Sigma^{-1})]\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\log h(x)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(0\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\psi(\theta)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tfrac12\theta_1^\top\Lambda^{-1}\theta_1 - \tfrac12\log|\Lambda| + \tfrac d2\log(2\pi)\)</span>, <span class="math notranslate nohighlight">\(\Lambda = -2\,\mathrm{reshape}(\theta_2)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">vec</span></code> uses row-major (<code class="docutils literal notranslate"><span class="pre">ravel()</span></code>) throughout. All conversions are
+analytical (Tier 2 override) — no Bregman solver is ever invoked for
+MVN. <code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> uses Cholesky of <span class="math notranslate nohighlight">\(\Lambda\)</span> for numerical
+stability; <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> overrides the inherited EF formula with a direct
+Cholesky path (more efficient).</p>
+</section>
+<section id="d4-keep-jaxopt-for-now">
+<h3>4.2 D4 — Keep <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code> for now<a class="headerlink" href="#d4-keep-jaxopt-for-now" title="Link to this heading">#</a></h3>
+<p>JAXopt is unmaintained (last release 0.8.3) and emits a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>
+on import. We keep it: it is the only pure-JAX library with a native box-
+constrained quasi-Newton (<code class="docutils literal notranslate"><span class="pre">LBFGSB</span></code>). Migrating to <code class="docutils literal notranslate"><span class="pre">optax.scale_by_lbfgs</span></code>
+loses the convergence loop; <code class="docutils literal notranslate"><span class="pre">optimistix.LBFGS</span></code> lacks box constraints.</p>
+<p>The deprecation warning is suppressed in <code class="docutils literal notranslate"><span class="pre">normix/__init__.py</span></code>. Migration
+recipe (when JAXopt breaks): wrap <code class="docutils literal notranslate"><span class="pre">optax.scale_by_lbfgs</span></code> in
+<code class="docutils literal notranslate"><span class="pre">jax.lax.while_loop</span></code> (~100 lines), then drop <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code>.</p>
+</section>
+<section id="constraints-handling">
+<h3>4.3 Constraints handling<a class="headerlink" href="#constraints-handling" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">jnp.maximum(x,</span> <span class="pre">LOG_EPS)</span></code> (clamp), not <code class="docutils literal notranslate"><span class="pre">paramax</span></code>. Reasons:</p>
+<ul class="simple">
+<li><p>The reparametrization we need is 8 lines, fully understandable.</p></li>
+<li><p>EM does not need gradients through the constraints (it parameterises θ
+in the constrained space, not log-space).</p></li>
+<li><p>No extra dependency.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">jnp.where</span></code> is preferred over <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> whenever possible: it is
+<code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible without changing the trace, and the clamping prevents
+NaN gradients without branch divergence.</p>
+</section>
+<section id="module-level-functions-are-forbidden">
+<h3>4.4 Module-level functions are forbidden<a class="headerlink" href="#module-level-functions-are-forbidden" title="Link to this heading">#</a></h3>
+<p>Distribution behaviour lives on the class as <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code>. No <code class="docutils literal notranslate"><span class="pre">_helper(self.alpha,</span> <span class="pre">...)</span></code> module-level functions
+that close over attributes — they leak the class API into module globals
+and are hard to override.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="cross-references">
+<h2>5. Cross-References<a class="headerlink" href="#cross-references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>η→θ optimization for GIG: <a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a>.</p></li>
+<li><p>Theory: <a class="reference internal" href="../theory/gig.html"><span class="doc std std-doc">GIG distribution</span></a>, <a class="reference internal" href="../theory/em_algorithm.html"><span class="doc std std-doc">EM algorithm</span></a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Design Rationale</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="mixtures.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Mixture Architecture</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-function-three-parametrizations">1. One Function, Three Parametrizations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-log-partition-triad">2. The Log-Partition Triad</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian">2.3 Why we don’t share Bessel calls between gradient and Hessian</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pre-1-0-decisions-recorded-here">4. Pre-1.0 Decisions Recorded Here</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d3-multivariatenormal-as-exponentialfamily">4.1 D3 — <code class="docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> as <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d4-keep-jaxopt-for-now">4.2 D4 — Keep <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code> for now</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#constraints-handling">4.3 Constraints handling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-level-functions-are-forbidden">4.4 Module-level functions are forbidden</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">5. Cross-References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,821 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mixture Architecture &#8212; normix 0.2.2 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=e88fd599" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'design/mixtures';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EM Framework" href="em_framework.html" />
+    <link rel="prev" title="Exponential Family Core" href="exponential_family.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.2 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix Documentation
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fdesign/mixtures.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/design/mixtures.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Mixture Architecture</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#two-classes-not-one">1. Two Classes, Not One</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d2-joint-classes-are-public">2. D2 — Joint Classes Are Public</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-vector-convention">2.1 Observation vector convention</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gig-sign-convention">2.2 GIG sign convention</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-natural-for-joints">2.3 <code class="docutils literal notranslate"><span class="pre">from_natural</span></code> for joints</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#marginal-mixture-api">3. Marginal Mixture API</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-facade-on-normalmixture">4. Parameter Facade on <code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-expectation-as-the-canonical-model-map">5. <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> as the Canonical η→Model Map</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#factor-analysis-family">6. Factor Analysis Family</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-no-shared-jointnormalmixture">6.1 Why no shared <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#woodbury-everywhere">6.2 Woodbury everywhere</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-positivity-and-f-gauge">6.3 <code class="docutils literal notranslate"><span class="pre">D</span></code> positivity and <code class="docutils literal notranslate"><span class="pre">F</span></code> gauge</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default-init-for-factorgh">6.4 <code class="docutils literal notranslate"><span class="pre">default_init</span></code> for FactorGH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-a-dispersionmodel-abc-yet">6.5 Why not a <code class="docutils literal notranslate"><span class="pre">DispersionModel</span></code> ABC yet</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sufficient-statistics-in-theory-order">7. Sufficient Statistics in Theory Order</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">8. Cross-References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="mixture-architecture">
+<h1>Mixture Architecture<a class="headerlink" href="#mixture-architecture" title="Link to this heading">#</a></h1>
+<blockquote>
+<div><p><strong>Scope.</strong> Why normal-mixture distributions are split into a Joint and
+a Marginal class, why the joint is itself an <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>,
+and how the factor-analysis family slots in as a sibling without
+forcing the joint hierarchy to lie about its EF signature.</p>
+<p><strong>Where things live.</strong> Class diagram and storage table are in the
+<a class="reference internal" href="../api/index.html"><span class="doc std std-doc">API Reference</span></a>. EM details are in <a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a>.</p>
+</div></blockquote>
+<hr class="docutils" />
+<section id="two-classes-not-one">
+<h2>1. Two Classes, Not One<a class="headerlink" href="#two-classes-not-one" title="Link to this heading">#</a></h2>
+<p>The Generalized Hyperbolic family is a normal variance–mean mixture:</p>
+<div class="math notranslate nohighlight">
+\[X \mid Y \sim \mathcal{N}(\mu + \gamma y,\; \Sigma y),\qquad Y \sim \text{subordinator}.\]</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>JointNormalMixture(ExponentialFamily)        f(x, y) — IS an exponential family
+    ↑                                         (closed-form natural / sufficient
+JointVarianceGamma, JointNIG, …               statistics; exact M-step)
+
+MarginalMixture(eqx.Module)                  abstract; fitter contract
+    ↑                                         (Bessel-required marginal density)
+NormalMixture, FactorNormalMixture           f(x) = ∫ f(x,y) dy — NOT an EF
+    ↑                                         on its own
+VarianceGamma, GH, FactorGH, …
+</pre></div>
+</div>
+<p>The joint is exponential — we exploit that for closed-form M-steps. The
+marginal needs numerical integration (Bessel functions) — it cannot be an
+EF. Mixing the two roles into one class breaks both stories.</p>
+</section>
+<hr class="docutils" />
+<section id="d2-joint-classes-are-public">
+<h2>2. D2 — Joint Classes Are Public<a class="headerlink" href="#d2-joint-classes-are-public" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code>, <code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code>,
+<code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code>, <code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code>, and the
+abstract <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> are first-class public <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>
+objects: exported from <code class="docutils literal notranslate"><span class="pre">normix</span></code>, documented alongside marginals, intended
+for direct use where the joint law <span class="math notranslate nohighlight">\(f(x,y)\)</span> matters (simulation,
+complete-data MLE, divergences, custom EM variants).</p>
+<section id="observation-vector-convention">
+<h3>2.1 Observation vector convention<a class="headerlink" href="#observation-vector-convention" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">sufficient_statistics</span></code>, <code class="docutils literal notranslate"><span class="pre">log_base_measure</span></code>, and inherited <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> /
+<code class="docutils literal notranslate"><span class="pre">pdf</span></code> take a <strong>single flat array</strong> <code class="docutils literal notranslate"><span class="pre">xy</span> <span class="pre">=</span> <span class="pre">jnp.concatenate([x,</span> <span class="pre">y])</span></code>, with
+<span class="math notranslate nohighlight">\(x\)</span> of shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> and scalar <span class="math notranslate nohighlight">\(y &gt; 0\)</span> last. This matches the
+sufficient-statistic block <span class="math notranslate nohighlight">\([\log y,\,1/y,\,y,\,\ldots]\)</span> used internally.
+For readability, <code class="docutils literal notranslate"><span class="pre">log_prob_joint(x,</span> <span class="pre">y)</span></code> and <code class="docutils literal notranslate"><span class="pre">rvs(n,</span> <span class="pre">seed)</span> <span class="pre">-&gt;</span> <span class="pre">(X,</span> <span class="pre">Y)</span></code>
+remain the preferred entry points when <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span> are already separate.</p>
+</section>
+<section id="gig-sign-convention">
+<h3>2.2 GIG sign convention<a class="headerlink" href="#gig-sign-convention" title="Link to this heading">#</a></h3>
+<p>For GIG-based joints, natural parameters <span class="math notranslate nohighlight">\(\theta_2,\theta_3\)</span> must align
+with the <strong>GIG</strong> convention
+<span class="math notranslate nohighlight">\(\theta_{\mathrm{GIG}} = [p-1,\,-b/2,\,-a/2]\)</span> on <span class="math notranslate nohighlight">\([\log y,\,1/y,\,y]\)</span>:
+scalar coefficients <span class="math notranslate nohighlight">\(-(b/2 + \cdots)\)</span> and <span class="math notranslate nohighlight">\(-(a/2 + \cdots)\)</span> on <span class="math notranslate nohighlight">\(1/y\)</span> and
+<span class="math notranslate nohighlight">\(y\)</span>, <strong>not</strong> <span class="math notranslate nohighlight">\(-b\)</span> and <span class="math notranslate nohighlight">\(-a\)</span>. Gamma and InverseGamma joints already match
+this limit; GH and NIG joints follow the same pattern.</p>
+</section>
+<section id="from-natural-for-joints">
+<h3>2.3 <code class="docutils literal notranslate"><span class="pre">from_natural</span></code> for joints<a class="headerlink" href="#from-natural-for-joints" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code> inverts the full joint family directly.
+<code class="docutils literal notranslate"><span class="pre">JointVarianceGamma</span></code>, <code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code> validate that <code class="docutils literal notranslate"><span class="pre">theta</span></code> lies on the
+constrained subfamily before reconstructing classical parameters.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="marginal-mixture-api">
+<h2>3. Marginal Mixture API<a class="headerlink" href="#marginal-mixture-api" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MarginalMixture</span></code> (in <code class="docutils literal notranslate"><span class="pre">normix/mixtures/marginal.py</span></code>) is the abstract
+contract that fitters and downstream code depend on:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MarginalMixture</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="c1"># distribution surface</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="c1"># EM hooks (stats type chosen by subclass)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+
+    <span class="c1"># convenience</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code> (full Σ) and <code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code> are the two
+implementations. Fitters depend only on this ABC.</p>
+</section>
+<hr class="docutils" />
+<section id="parameter-facade-on-normalmixture">
+<h2>4. Parameter Facade on <code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code><a class="headerlink" href="#parameter-facade-on-normalmixture" title="Link to this heading">#</a></h2>
+<p>The marginal density is parameterised by the same classical tuple
+<span class="math notranslate nohighlight">\((\mu,\gamma,\Sigma,\text{subordinator})\)</span> as the joint. Rather than
+exposing this through <code class="docutils literal notranslate"><span class="pre">model._joint.*</span></code>, the marginal forwards them:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Forwarded</p></th>
+<th class="head"><p>Read</p></th>
+<th class="head"><p>Write (via <code class="docutils literal notranslate"><span class="pre">replace</span></code>)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code></p></td>
+<td><p>property</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">replace(mu=...)</span></code>, <code class="docutils literal notranslate"><span class="pre">replace(L_Sigma=...)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sigma()</span></code></p></td>
+<td><p>method</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">replace(sigma=...)</span></code> (Cholesky internally)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log_det_sigma()</span></code></p></td>
+<td><p>method</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>Subordinator fields</p></td>
+<td><p>per-subclass property</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">replace(&lt;key&gt;=...)</span></code> (per <code class="docutils literal notranslate"><span class="pre">_subordinator_keys</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">replace(**updates)</span></code> validates keys against
+<code class="docutils literal notranslate"><span class="pre">_NORMAL_KEYS</span> <span class="pre">∪</span> <span class="pre">_subordinator_keys()</span></code>, treats <code class="docutils literal notranslate"><span class="pre">sigma</span></code> as a write-only
+alias for <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>, and uses <code class="docutils literal notranslate"><span class="pre">eqx.tree_at</span></code> for an immutable update. The
+storage stays in <code class="docutils literal notranslate"><span class="pre">_joint</span></code>; the facade is forwarders + immutable update —
+no duplicated state.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">vg2</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">new_mu</span><span class="p">)</span>
+<span class="n">vg3</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">vg4</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+<span class="n">gh2</span> <span class="o">=</span> <span class="n">gh</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The marginal <code class="docutils literal notranslate"><span class="pre">mean()</span></code> and <code class="docutils literal notranslate"><span class="pre">cov()</span></code> (=<span class="math notranslate nohighlight">\(E[Y]\Sigma + \mathrm{Var}[Y]\gamma\gamma^\top\)</span>)
+remain distinct from <code class="docutils literal notranslate"><span class="pre">mu</span></code> and <code class="docutils literal notranslate"><span class="pre">sigma()</span></code>: those are the <strong>conditional</strong>
+Gaussian’s parameters, not the marginal’s moments.</p>
+</section>
+<hr class="docutils" />
+<section id="from-expectation-as-the-canonical-model-map">
+<h2>5. <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> as the Canonical η→Model Map<a class="headerlink" href="#from-expectation-as-the-canonical-model-map" title="Link to this heading">#</a></h2>
+<p>The closed-form M-step is exactly the conjugate-dual map η → θ on the
+joint exponential family. Both layers expose it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">JointNormalMixture</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta</span><span class="p">:</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JointNormalMixture</span>
+<span class="n">NormalMixture</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta</span><span class="p">:</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>      <span class="o">-&gt;</span> <span class="n">NormalMixture</span>
+</pre></div>
+</div>
+<p>The joint method dispatches on <code class="docutils literal notranslate"><span class="pre">isinstance(eta,</span> <span class="pre">NormalMixtureEta)</span></code>:</p>
+<ul class="simple">
+<li><p><strong>pytree path</strong> — closed form (<code class="docutils literal notranslate"><span class="pre">_mstep_normal_params</span></code> for <span class="math notranslate nohighlight">\(\mu,\gamma,\Sigma\)</span>;
+<code class="docutils literal notranslate"><span class="pre">_subordinator_from_eta</span></code> for the subordinator).</p></li>
+<li><p><strong>flat <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code></strong> — falls back to the inherited Bregman solver.
+Kept for API symmetry; not the recommended route for high-dimensional
+joint EFs.</p></li>
+</ul>
+<p>Per-subclass plumbing collapses to two hooks:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_subordinator_from_eta(cls,</span> <span class="pre">eta,</span> <span class="pre">*,</span> <span class="pre">theta0=None,</span> <span class="pre">**kw)</span></code></p></td>
+<td><p>Fit the subordinator from <span class="math notranslate nohighlight">\((E[\log Y], E[1/Y], E[Y])\)</span>. <code class="docutils literal notranslate"><span class="pre">theta0</span></code> warm-starts GIG; closed-form subordinators ignore it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_from_normal_and_subordinator(cls,</span> <span class="pre">μ,</span> <span class="pre">γ,</span> <span class="pre">L,</span> <span class="pre">sub)</span></code></p></td>
+<td><p>One <code class="docutils literal notranslate"><span class="pre">cls(...)</span></code> call per joint subclass to bridge differing field names (<code class="docutils literal notranslate"><span class="pre">α/β</span></code>, <code class="docutils literal notranslate"><span class="pre">μ_ig/λ</span></code>, <code class="docutils literal notranslate"><span class="pre">p/a/b</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The instance <code class="docutils literal notranslate"><span class="pre">m_step</span></code> is a thin wrapper. Only <code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code>
+overrides <code class="docutils literal notranslate"><span class="pre">m_step</span></code> (and keeps a sanity-check <code class="docutils literal notranslate"><span class="pre">m_step_subordinator</span></code>):
+the GIG solver needs a warm-start <code class="docutils literal notranslate"><span class="pre">theta0</span></code> and a fall-back when it
+wanders out of the sane region. VG / NInvG / NIG drop their per-subclass
+<code class="docutils literal notranslate"><span class="pre">m_step_subordinator</span></code> overrides.</p>
+<p>Inverting any prior or shrinkage target back to a model is a one-liner:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sigma_recovered</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta0_iso</span><span class="p">)</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
+<span class="n">joint_recovered</span> <span class="o">=</span> <span class="n">JointVarianceGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">eta0_iso</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="factor-analysis-family">
+<h2>6. Factor Analysis Family<a class="headerlink" href="#factor-analysis-family" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code> is a <strong>sibling</strong> of <code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code>, <strong>not</strong> a
+subclass: it stores <code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">F,</span> <span class="pre">D,</span> <span class="pre">subordinator)</span></code> directly with
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>. <code class="docutils literal notranslate"><span class="pre">FactorVarianceGamma</span></code>,
+<code class="docutils literal notranslate"><span class="pre">FactorNormalInverseGamma</span></code>, <code class="docutils literal notranslate"><span class="pre">FactorNormalInverseGaussian</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code> follow.</p>
+<section id="why-no-shared-jointnormalmixture">
+<h3>6.1 Why no shared <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code><a class="headerlink" href="#why-no-shared-jointnormalmixture" title="Link to this heading">#</a></h3>
+<p>The factor-analysis complete-data structure is over <span class="math notranslate nohighlight">\((X, Y, Z)\)</span> with
+<strong>ten</strong> sufficient statistics (<code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code> in <code class="docutils literal notranslate"><span class="pre">fitting/eta.py</span></code>),
+not the six of <code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>. Reusing <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> would
+force the joint hierarchy to lie about its EF signature. A separate
+sibling family keeps each story clean.</p>
+</section>
+<section id="woodbury-everywhere">
+<h3>6.2 Woodbury everywhere<a class="headerlink" href="#woodbury-everywhere" title="Link to this heading">#</a></h3>
+<p>All Σ-related linear algebra goes through Woodbury at <span class="math notranslate nohighlight">\(O(d r^2 + r^3)\)</span>,
+never forming a dense <span class="math notranslate nohighlight">\(d \times d\)</span> solve:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_M</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>           <span class="k">return</span> <span class="n">I_r</span> <span class="o">+</span> <span class="n">Fᵀ</span> <span class="n">D</span><span class="err">⁻¹</span> <span class="n">F</span>                    <span class="c1"># (r, r)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>    <span class="k">return</span> <span class="n">D</span><span class="err">⁻¹</span> <span class="n">x</span> <span class="err">−</span> <span class="n">D</span><span class="err">⁻¹</span> <span class="n">F</span> <span class="err">·</span> <span class="n">M</span><span class="err">⁻¹</span> <span class="err">·</span> <span class="n">Fᵀ</span> <span class="n">D</span><span class="err">⁻¹</span> <span class="n">x</span>    <span class="c1"># Σ⁻¹ x</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_quad_form</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="n">x</span> <span class="err">·</span> <span class="n">_solve</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">Σ</span> <span class="n">log</span> <span class="n">D</span> <span class="o">+</span> <span class="n">slogdet</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_beta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>        <span class="c1"># β = Fᵀ Σ⁻¹, used per E-step pass</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">_beta</span></code> is computed once per E-step pass, not per observation.</p>
+</section>
+<section id="d-positivity-and-f-gauge">
+<h3>6.3 <code class="docutils literal notranslate"><span class="pre">D</span></code> positivity and <code class="docutils literal notranslate"><span class="pre">F</span></code> gauge<a class="headerlink" href="#d-positivity-and-f-gauge" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">D</span> <span class="pre">=</span> <span class="pre">jnp.maximum(D,</span> <span class="pre">D_FLOOR)</span></code> after each M-step
+(<code class="docutils literal notranslate"><span class="pre">D_FLOOR</span> <span class="pre">=</span> <span class="pre">1e-8</span></code> in <code class="docutils literal notranslate"><span class="pre">utils/constants.py</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to a right <span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal
+rotation, so <code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">F,</span> <span class="pre">D)</span></code> would never converge in norm. The
+convergence hook <code class="docutils literal notranslate"><span class="pre">em_convergence_params</span></code> returns
+<code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">Σ</span> <span class="pre">=</span> <span class="pre">F</span> <span class="pre">F^\top</span> <span class="pre">+</span> <span class="pre">\mathrm{diag}(D))</span></code> — invariant to the
+rotation.</p></li>
+</ul>
+</section>
+<section id="default-init-for-factorgh">
+<h3>6.4 <code class="docutils literal notranslate"><span class="pre">default_init</span></code> for FactorGH<a class="headerlink" href="#default-init-for-factorgh" title="Link to this heading">#</a></h3>
+<p>Mirrors the standard <code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.default_init</span></code>: short EM
+on <code class="docutils literal notranslate"><span class="pre">FactorNIG</span></code>, <code class="docutils literal notranslate"><span class="pre">FactorVG</span></code>, <code class="docutils literal notranslate"><span class="pre">FactorNInvG</span></code> (each converted into the
+GIG embedding), plus a moment-based fallback <code class="docutils literal notranslate"><span class="pre">(p=1,</span> <span class="pre">a=1,</span> <span class="pre">b=1)</span></code>. Picks
+the candidate with the highest marginal log-likelihood.
+JAX-native: no <code class="docutils literal notranslate"><span class="pre">try/except</span></code>, no Python branching on data values.</p>
+</section>
+<section id="why-not-a-dispersionmodel-abc-yet">
+<h3>6.5 Why not a <code class="docutils literal notranslate"><span class="pre">DispersionModel</span></code> ABC yet<a class="headerlink" href="#why-not-a-dispersionmodel-abc-yet" title="Link to this heading">#</a></h3>
+<p>A previous draft proposed <code class="docutils literal notranslate"><span class="pre">DispersionModel</span></code> with <code class="docutils literal notranslate"><span class="pre">FullDispersion(L_Σ)</span></code>
+and <code class="docutils literal notranslate"><span class="pre">FactorDispersion(F,</span> <span class="pre">D)</span></code> implementations. We defer this:</p>
+<ul class="simple">
+<li><p>Only two storage variants exist today.</p></li>
+<li><p>An interface designed for two implementations adds indirection without
+observable benefit.</p></li>
+<li><p>The third variant’s needs (SVD? banded? low-rank-plus-diagonal?) are
+unknown — committing to an interface now is the worst time.</p></li>
+</ul>
+<p>When at least three variants are needed, the starting sketch is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DispersionModel</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quad_form</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_det</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">()):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Until then, <code class="docutils literal notranslate"><span class="pre">JointNormalMixture._quad_forms</span></code> and
+<code class="docutils literal notranslate"><span class="pre">FactorNormalMixture._solve</span></code> carry the linear algebra inline.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="sufficient-statistics-in-theory-order">
+<h2>7. Sufficient Statistics in Theory Order<a class="headerlink" href="#sufficient-statistics-in-theory-order" title="Link to this heading">#</a></h2>
+<p>Both stats classes use <strong>descriptive field names</strong> in <strong>theory order</strong>
+(matching <code class="docutils literal notranslate"><span class="pre">docs/theory/shrinkage.rst</span></code> and <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.rst</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NormalMixtureEta</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="n">E_inv_Y</span><span class="p">:</span>     <span class="c1"># s_1 = E[Y⁻¹],    scalar</span>
+    <span class="n">E_Y</span><span class="p">:</span>         <span class="c1"># s_2 = E[Y],       scalar</span>
+    <span class="n">E_log_Y</span><span class="p">:</span>     <span class="c1"># s_3 = E[log Y],   scalar</span>
+    <span class="n">E_X</span><span class="p">:</span>         <span class="c1"># s_4 = E[X],       (d,)</span>
+    <span class="n">E_X_inv_Y</span><span class="p">:</span>   <span class="c1"># s_5 = E[X / Y],   (d,)</span>
+    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="c1"># s_6 = E[X X^T/Y], (d, d)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FactorMixtureStats</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="c1"># fields s_1 … s_6 identical to NormalMixtureEta</span>
+    <span class="n">E_XZT_inv_sqrtY</span><span class="p">:</span> <span class="c1"># s_7  = E[X Z^T Y^{-1/2}], (d, r)</span>
+    <span class="n">E_Z_inv_sqrtY</span><span class="p">:</span>   <span class="c1"># s_8  = E[Z Y^{-1/2}],     (r,)</span>
+    <span class="n">E_Z_sqrtY</span><span class="p">:</span>       <span class="c1"># s_9  = E[Z Y^{1/2}],      (r,)</span>
+    <span class="n">E_ZZT</span><span class="p">:</span>           <span class="c1"># s_10 = E[Z Z^T],          (r, r)</span>
+</pre></div>
+</div>
+<p>Sharing the first six fields means shrinkage targets, weights, and
+tests written for the standard family port directly to the factor
+family.</p>
+</section>
+<hr class="docutils" />
+<section id="cross-references">
+<h2>8. Cross-References<a class="headerlink" href="#cross-references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>EM machinery: <a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a>.</p></li>
+<li><p>Theory: <a class="reference internal" href="../theory/gh.html"><span class="doc std std-doc">GH distribution</span></a>, <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc std std-doc">Factor analysis</span></a>,
+<a class="reference internal" href="../theory/shrinkage.html"><span class="doc std std-doc">Shrinkage</span></a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="exponential_family.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Exponential Family Core</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="em_framework.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">EM Framework</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#two-classes-not-one">1. Two Classes, Not One</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#d2-joint-classes-are-public">2. D2 — Joint Classes Are Public</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-vector-convention">2.1 Observation vector convention</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gig-sign-convention">2.2 GIG sign convention</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-natural-for-joints">2.3 <code class="docutils literal notranslate"><span class="pre">from_natural</span></code> for joints</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#marginal-mixture-api">3. Marginal Mixture API</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-facade-on-normalmixture">4. Parameter Facade on <code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#from-expectation-as-the-canonical-model-map">5. <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> as the Canonical η→Model Map</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#factor-analysis-family">6. Factor Analysis Family</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-no-shared-jointnormalmixture">6.1 Why no shared <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#woodbury-everywhere">6.2 Woodbury everywhere</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#d-positivity-and-f-gauge">6.3 <code class="docutils literal notranslate"><span class="pre">D</span></code> positivity and <code class="docutils literal notranslate"><span class="pre">F</span></code> gauge</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default-init-for-factorgh">6.4 <code class="docutils literal notranslate"><span class="pre">default_init</span></code> for FactorGH</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-a-dispersionmodel-abc-yet">6.5 Why not a <code class="docutils literal notranslate"><span class="pre">DispersionModel</span></code> ABC yet</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sufficient-statistics-in-theory-order">7. Sufficient Statistics in Theory Order</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">8. Cross-References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -180,7 +180,7 @@ For more control, use ``BatchEMFitter`` directly:
 
 The ``e_step_backend='cpu'`` option routes Bessel function evaluations through
 ``scipy.special.kve`` instead of JAX, yielding a ~15× speedup for large datasets.
-See :doc:`design` for the rationale behind this hybrid approach.
+See :doc:`design/index` for the rationale behind this hybrid approach.
 
 
 Bessel Functions
