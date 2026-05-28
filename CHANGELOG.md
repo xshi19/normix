@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/xshi19/normix/compare/v0.2.3...v0.2.4) (2026-05-28)
+
+
+### Documentation
+
+* split internal knowledge into dev-notes/ (Phase 2) ([#36](https://github.com/xshi19/normix/issues/36)) ([7cbacbb](https://github.com/xshi19/normix/commit/7cbacbbf7624b9ab7eabfa2ddcf4a3cb46d0bf26))
+
 ## [0.2.3](https://github.com/xshi19/normix/compare/v0.2.2...v0.2.3) (2026-05-27)
 
 
