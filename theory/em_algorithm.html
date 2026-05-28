@@ -1,71 +1,164 @@
 
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="../">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EM Algorithm for Generalized Hyperbolic Distributions &mdash; normix 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>EM Algorithm for Generalized Hyperbolic Distributions &#8212; normix 0.2.2 documentation</title>
   
-      <script src="../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
-      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script src="../_static/js/theme.js"></script>
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=e88fd599" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'theory/em_algorithm';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Shrinkage with Penalized Likelihood" href="shrinkage.html" />
-    <link rel="prev" title="The Generalized Hyperbolic Distribution" href="gh.html" /> 
-</head>
+    <link rel="prev" title="The Generalized Hyperbolic Distribution" href="gh.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            normix
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.2 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix Documentation
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design Decisions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">EM Algorithm for Generalized Hyperbolic Distributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#conditional-distribution-of-y-given-x">Conditional Distribution of Y given X</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#conditional-expectations">Conditional Expectations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#the-em-algorithm">The EM Algorithm</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#parameter-regularization">Parameter Regularization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#mcecm-algorithm">MCECM Algorithm</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#special-cases">Special Cases</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#numerical-considerations">Numerical Considerations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#implementation-in-normix">Implementation in normix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
@@ -74,45 +167,245 @@
 <li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Ftheory/em_algorithm.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/theory/em_algorithm.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>EM Algorithm for Generalized Hyperbolic Distributions</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-distribution-of-y-given-x">Conditional Distribution of Y given X</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-expectations">Conditional Expectations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-em-algorithm">The EM Algorithm</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-Step</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#m-step">M-Step</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-regularization">Parameter Regularization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcecm-algorithm">MCECM Algorithm</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#variance-gamma-vg">Variance Gamma (VG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-inverse-gaussian-nig">Normal-Inverse Gaussian (NIG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-inverse-gamma-ninvg">Normal-Inverse Gamma (NInvG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-special-cases">Summary of Special Cases</a></li>
 </ul>
-
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-considerations">Numerical Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#high-dimensional-issues">High-Dimensional Issues</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#matrix-conditioning">Matrix Conditioning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-in-normix">Implementation in normix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+            </nav>
         </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">normix</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
-      <li class="breadcrumb-item active">EM Algorithm for Generalized Hyperbolic Distributions</li>
-      <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/em_algorithm.rst" class="fa fa-github"> Edit on GitHub</a>
-      </li>
-  </ul>
-  <hr/>
+    </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
   <section id="em-algorithm-for-generalized-hyperbolic-distributions">
-<h1>EM Algorithm for Generalized Hyperbolic Distributions<a class="headerlink" href="#em-algorithm-for-generalized-hyperbolic-distributions" title="Link to this heading"></a></h1>
+<h1>EM Algorithm for Generalized Hyperbolic Distributions<a class="headerlink" href="#em-algorithm-for-generalized-hyperbolic-distributions" title="Link to this heading">#</a></h1>
 <p>The Expectation-Maximization (EM) algorithm is a classical iterative method for
 fitting data with hidden (latent) variables <a class="reference internal" href="#dempster1977" id="id1"><span>[Dempster1977]</span></a>. This section
 describes the EM algorithm for the Generalized Hyperbolic (GH) distribution,
 following the framework in <a class="reference internal" href="gh.html#hu2005" id="id2"><span>[Hu2005]</span></a> with some modifications.</p>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>The key insight is that while the marginal GH distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is not
 an exponential family, the joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> of the observed
 variable <span class="math notranslate nohighlight">\(X\)</span> and the latent mixing variable <span class="math notranslate nohighlight">\(Y\)</span> <strong>is</strong> an exponential
@@ -129,7 +422,7 @@ convergence.</p></li>
 </ol>
 </section>
 <section id="conditional-distribution-of-y-given-x">
-<h2>Conditional Distribution of Y given X<a class="headerlink" href="#conditional-distribution-of-y-given-x" title="Link to this heading"></a></h2>
+<h2>Conditional Distribution of Y given X<a class="headerlink" href="#conditional-distribution-of-y-given-x" title="Link to this heading">#</a></h2>
 <p>Recall that a GH random vector <span class="math notranslate nohighlight">\(X\)</span> can be expressed as:</p>
 <div class="math notranslate nohighlight">
 \[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\]</div>
@@ -150,11 +443,11 @@ a + \gamma^\top \Sigma^{-1} \gamma, \,
 b + (x-\mu)^\top \Sigma^{-1}(x-\mu)\right)\]</div>
 </section>
 <section id="conditional-expectations">
-<h2>Conditional Expectations<a class="headerlink" href="#conditional-expectations" title="Link to this heading"></a></h2>
+<h2>Conditional Expectations<a class="headerlink" href="#conditional-expectations" title="Link to this heading">#</a></h2>
 <p>Using the GIG moment formula, we obtain the conditional expectations needed for
 the E-step:</p>
 <div class="math notranslate nohighlight" id="equation-gig-moment-cond">
-<span class="eqno">(1)<a class="headerlink" href="#equation-gig-moment-cond" title="Link to this equation"></a></span>\[E[Y^\alpha | X = x, \theta] = \left(\sqrt{\frac{b + (x-\mu)^\top \Sigma^{-1}(x-\mu)}
+<span class="eqno">(1)<a class="headerlink" href="#equation-gig-moment-cond" title="Link to this equation">#</a></span>\[E[Y^\alpha | X = x, \theta] = \left(\sqrt{\frac{b + (x-\mu)^\top \Sigma^{-1}(x-\mu)}
 {a + \gamma^\top \Sigma^{-1} \gamma}}\right)^\alpha
 \frac{K_{p - d/2 + \alpha}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}
 {K_{p - d/2}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}\]</div>
@@ -170,16 +463,16 @@ E[Y^\alpha | X = x, \theta]\right|_{\alpha=0}\]</div>
 <p>This derivative can be computed numerically.</p>
 </section>
 <section id="the-em-algorithm">
-<h2>The EM Algorithm<a class="headerlink" href="#the-em-algorithm" title="Link to this heading"></a></h2>
+<h2>The EM Algorithm<a class="headerlink" href="#the-em-algorithm" title="Link to this heading">#</a></h2>
 <p>Let <span class="math notranslate nohighlight">\(x_1, \ldots, x_n \in \mathbb{R}^d\)</span> be i.i.d. sample data. Given initial
 parameters <span class="math notranslate nohighlight">\(\theta_0 = (\mu_0, \gamma_0, \Sigma_0, p_0, a_0, b_0)\)</span>, the EM
 algorithm iterates between two steps.</p>
 <section id="e-step">
-<h3>E-Step<a class="headerlink" href="#e-step" title="Link to this heading"></a></h3>
+<h3>E-Step<a class="headerlink" href="#e-step" title="Link to this heading">#</a></h3>
 <p>The <span class="math notranslate nohighlight">\((k+1)\)</span>-th E-step computes the average conditional expectations of the
 sufficient statistics:</p>
 <div class="math notranslate nohighlight" id="equation-e-step">
-<span class="eqno">(2)<a class="headerlink" href="#equation-e-step" title="Link to this equation"></a></span>\[\begin{split}\hat{\eta}_1^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
+<span class="eqno">(2)<a class="headerlink" href="#equation-e-step" title="Link to this equation">#</a></span>\[\begin{split}\hat{\eta}_1^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
 \hat{\eta}_2^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \theta_k] \\
 \hat{\eta}_3^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \theta_k] \\
 \hat{\eta}_4^{(k)} &amp;= \frac{1}{n} \sum_{j=1}^n x_j \\
@@ -192,7 +485,7 @@ estimates of the GIG expectation parameters, and
 of the normal component expectation parameters.</p>
 </section>
 <section id="m-step">
-<h3>M-Step<a class="headerlink" href="#m-step" title="Link to this heading"></a></h3>
+<h3>M-Step<a class="headerlink" href="#m-step" title="Link to this heading">#</a></h3>
 <p>The M-step solves the optimization problem:</p>
 <div class="math notranslate nohighlight">
 \[\theta_{k+1} = \arg\max_\theta \sum_{j=1}^n E[\log f(X, Y | \theta) | X = x_j, \theta_k]\]</div>
@@ -204,7 +497,7 @@ expectation parameters:</p>
 \hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})\]</div>
 <p>The closed-form solutions are (see <a class="reference internal" href="gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a> for derivation):</p>
 <div class="math notranslate nohighlight" id="equation-m-step">
-<span class="eqno">(3)<a class="headerlink" href="#equation-m-step" title="Link to this equation"></a></span>\[\begin{split}\mu_{k+1} &amp;= \frac{\hat{\eta}_4^{(k)} - \hat{\eta}_2^{(k)} \hat{\eta}_5^{(k)}}
+<span class="eqno">(3)<a class="headerlink" href="#equation-m-step" title="Link to this equation">#</a></span>\[\begin{split}\mu_{k+1} &amp;= \frac{\hat{\eta}_4^{(k)} - \hat{\eta}_2^{(k)} \hat{\eta}_5^{(k)}}
 {1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
 \gamma_{k+1} &amp;= \frac{\hat{\eta}_5^{(k)} - \hat{\eta}_1^{(k)} \hat{\eta}_4^{(k)}}
 {1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
@@ -218,7 +511,7 @@ require numerical optimization.</p>
 </section>
 </section>
 <section id="parameter-regularization">
-<h2>Parameter Regularization<a class="headerlink" href="#parameter-regularization" title="Link to this heading"></a></h2>
+<h2>Parameter Regularization<a class="headerlink" href="#parameter-regularization" title="Link to this heading">#</a></h2>
 <p>The GH model is not identifiable since the parameter sets
 <span class="math notranslate nohighlight">\((\mu, \gamma/c, \Sigma/c, p, c \cdot b, a/c)\)</span> give the same distribution
 for any <span class="math notranslate nohighlight">\(c &gt; 0\)</span>. A good way to regularize is to fix <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>.</p>
@@ -251,7 +544,7 @@ corresponding outputs given <span class="math notranslate nohighlight">\(\tilde{
 applying these to <a class="reference internal" href="#equation-m-step">(3)</a>. ∎</p>
 </section>
 <section id="mcecm-algorithm">
-<h2>MCECM Algorithm<a class="headerlink" href="#mcecm-algorithm" title="Link to this heading"></a></h2>
+<h2>MCECM Algorithm<a class="headerlink" href="#mcecm-algorithm" title="Link to this heading">#</a></h2>
 <p>An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
 algorithm <a class="reference internal" href="gh.html#mcneil2010" id="id3"><span>[McNeil2010]</span></a>. Unlike the EM algorithm which updates all parameters
 via <a class="reference internal" href="#equation-m-step">(3)</a>, MCECM proceeds in two cycles:</p>
@@ -271,12 +564,12 @@ L_{\text{GIG}}(p, a, b | \tilde{\eta}_1^{(k+1)}, \tilde{\eta}_2^{(k+1)}, \tilde{
 <p>Both algorithms converge to the MLE and have similar computational efficiency.</p>
 </section>
 <section id="special-cases">
-<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading"></a></h2>
+<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading">#</a></h2>
 <p>For special cases of the GH distribution, the EM algorithm simplifies because
 the mixing distribution has fewer parameters and the M-step has closed-form
 solutions.</p>
 <section id="variance-gamma-vg">
-<h3>Variance Gamma (VG)<a class="headerlink" href="#variance-gamma-vg" title="Link to this heading"></a></h3>
+<h3>Variance Gamma (VG)<a class="headerlink" href="#variance-gamma-vg" title="Link to this heading">#</a></h3>
 <p>The Variance Gamma distribution uses a <strong>Gamma</strong> mixing distribution:
 <span class="math notranslate nohighlight">\(Y \sim \text{Gamma}(\alpha, \beta)\)</span>. The GIG reduces to Gamma when
 <span class="math notranslate nohighlight">\(b \to 0\)</span>.</p>
@@ -303,7 +596,7 @@ Newton’s method:</p>
 <p>Then <span class="math notranslate nohighlight">\(\beta = \alpha / \hat{\eta}_2\)</span>.</p>
 </section>
 <section id="normal-inverse-gaussian-nig">
-<h3>Normal-Inverse Gaussian (NIG)<a class="headerlink" href="#normal-inverse-gaussian-nig" title="Link to this heading"></a></h3>
+<h3>Normal-Inverse Gaussian (NIG)<a class="headerlink" href="#normal-inverse-gaussian-nig" title="Link to this heading">#</a></h3>
 <p>The Normal-Inverse Gaussian distribution uses an <strong>Inverse Gaussian</strong> mixing
 distribution: <span class="math notranslate nohighlight">\(Y \sim \text{IG}(\mu_Y, \lambda)\)</span>. This corresponds to
 GIG with <span class="math notranslate nohighlight">\(p = -1/2\)</span>.</p>
@@ -322,7 +615,7 @@ and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</spa
 <p>This is fully analytical with no optimization required.</p>
 </section>
 <section id="normal-inverse-gamma-ninvg">
-<h3>Normal-Inverse Gamma (NInvG)<a class="headerlink" href="#normal-inverse-gamma-ninvg" title="Link to this heading"></a></h3>
+<h3>Normal-Inverse Gamma (NInvG)<a class="headerlink" href="#normal-inverse-gamma-ninvg" title="Link to this heading">#</a></h3>
 <p>The Normal-Inverse Gamma distribution uses an <strong>Inverse Gamma</strong> mixing
 distribution: <span class="math notranslate nohighlight">\(Y \sim \text{InvGamma}(\alpha, \beta)\)</span>. This corresponds
 to GIG with <span class="math notranslate nohighlight">\(a \to 0\)</span> (or equivalently, <span class="math notranslate nohighlight">\(p &lt; 0\)</span> with <span class="math notranslate nohighlight">\(a = 0\)</span>).</p>
@@ -344,9 +637,9 @@ and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</spa
 <p>Then <span class="math notranslate nohighlight">\(\beta = \alpha / \hat{\eta}_2\)</span>.</p>
 </section>
 <section id="summary-of-special-cases">
-<h3>Summary of Special Cases<a class="headerlink" href="#summary-of-special-cases" title="Link to this heading"></a></h3>
-<table class="docutils align-default" id="id4">
-<caption><span class="caption-text">EM Algorithm Simplifications for Special Cases</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
+<h3>Summary of Special Cases<a class="headerlink" href="#summary-of-special-cases" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table" id="id4">
+<caption><span class="caption-text">EM Algorithm Simplifications for Special Cases</span><a class="headerlink" href="#id4" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 20.0%" />
 <col style="width: 25.0%" />
@@ -383,6 +676,7 @@ and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</spa
 </tr>
 </tbody>
 </table>
+</div>
 <p>The Normal-Inverse Gaussian case is particularly attractive because the M-step
 is fully analytical. The Variance Gamma and Normal-Inverse Gamma cases require
 only 1D optimization (Newton’s method), which is much faster and more stable
@@ -390,16 +684,16 @@ than the 3D optimization required for the general GH case.</p>
 </section>
 </section>
 <section id="numerical-considerations">
-<h2>Numerical Considerations<a class="headerlink" href="#numerical-considerations" title="Link to this heading"></a></h2>
+<h2>Numerical Considerations<a class="headerlink" href="#numerical-considerations" title="Link to this heading">#</a></h2>
 <section id="high-dimensional-issues">
-<h3>High-Dimensional Issues<a class="headerlink" href="#high-dimensional-issues" title="Link to this heading"></a></h3>
+<h3>High-Dimensional Issues<a class="headerlink" href="#high-dimensional-issues" title="Link to this heading">#</a></h3>
 <p>When the dimension <span class="math notranslate nohighlight">\(d\)</span> is large (e.g., 500), computing the modified Bessel
 functions in <a class="reference internal" href="#equation-gig-moment-cond">(1)</a> can be challenging. For large <span class="math notranslate nohighlight">\(d\)</span>,
 <span class="math notranslate nohighlight">\(K_{p + d/2 + \alpha}\)</span> may overflow or underflow. This is addressed using
 log-space computations in the <a class="reference internal" href="../api/index.html#module-normix.utils.bessel" title="normix.utils.bessel"><code class="xref py py-mod docutils literal notranslate"><span class="pre">normix.utils.bessel</span></code></a> module.</p>
 </section>
 <section id="matrix-conditioning">
-<h3>Matrix Conditioning<a class="headerlink" href="#matrix-conditioning" title="Link to this heading"></a></h3>
+<h3>Matrix Conditioning<a class="headerlink" href="#matrix-conditioning" title="Link to this heading">#</a></h3>
 <p>The formula for <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span> in <a class="reference internal" href="#equation-m-step">(3)</a> has the same numerical
 issues as the sample covariance: the condition number can be huge when the
 sample size is relatively small. Shrinkage estimators (such as penalized
@@ -407,7 +701,7 @@ likelihood methods) can help improve the conditioning of <span class="math notra
 </section>
 </section>
 <section id="implementation-in-normix">
-<h2>Implementation in normix<a class="headerlink" href="#implementation-in-normix" title="Link to this heading"></a></h2>
+<h2>Implementation in normix<a class="headerlink" href="#implementation-in-normix" title="Link to this heading">#</a></h2>
 <p>In <code class="docutils literal notranslate"><span class="pre">normix</span></code>, the EM algorithm is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> method of
 <a class="reference internal" href="../api/index.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> subclasses
 (e.g. <a class="reference internal" href="../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>,
@@ -439,7 +733,7 @@ for a single observation, used inside the E-step.</p></li>
 </ul>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <div role="list" class="citation-list">
 <div class="citation" id="dempster1977" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Dempster1977</a><span class="fn-bracket">]</span></span>
@@ -452,34 +746,128 @@ Maximum likelihood from incomplete data via the EM algorithm.
 </section>
 
 
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="gh.html" class="btn btn-neutral float-left" title="The Generalized Hyperbolic Distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="shrinkage.html" class="btn btn-neutral float-right" title="Shrinkage with Penalized Likelihood" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+                </article>
+              
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2024–2026, normix developers.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="gh.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">The Generalized Hyperbolic Distribution</p>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+    </a>
+    <a class="right-next"
+       href="shrinkage.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Shrinkage with Penalized Likelihood</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
-</body>
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-distribution-of-y-given-x">Conditional Distribution of Y given X</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-expectations">Conditional Expectations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-em-algorithm">The EM Algorithm</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-Step</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#m-step">M-Step</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameter-regularization">Parameter Regularization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcecm-algorithm">MCECM Algorithm</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#variance-gamma-vg">Variance Gamma (VG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-inverse-gaussian-nig">Normal-Inverse Gaussian (NIG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normal-inverse-gamma-ninvg">Normal-Inverse Gamma (NInvG)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-of-special-cases">Summary of Special Cases</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-considerations">Numerical Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#high-dimensional-issues">High-Dimensional Issues</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#matrix-conditioning">Matrix Conditioning</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementation-in-normix">Implementation in normix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
 </html>

@@ -1,115 +1,394 @@
 
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="../">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mean-Risk Optimization for Normal Mixture Distributions &mdash; normix 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mean-Risk Optimization for Normal Mixture Distributions &#8212; normix 0.2.2 documentation</title>
   
-      <script src="../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
-      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script src="../_static/js/theme.js"></script>
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=e88fd599" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'theory/mean_risk_optimization';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="CVaR Derivatives for Normal Mixture Distributions" href="cvar_derivatives.html" />
-    <link rel="prev" title="Online EM Algorithm" href="online_em.html" /> 
-</head>
+    <link rel="prev" title="Online EM Algorithm" href="online_em.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            normix
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.2 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix Documentation
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../design.html">Design Decisions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Mathematical Background</a><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Mean-Risk Optimization for Normal Mixture Distributions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#coherent-risk-measures">Coherent Risk Measures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#risk-monotonicity-for-normal-mixtures">Risk Monotonicity for Normal Mixtures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#references">References</a></li>
 </ul>
-</li>
+</details></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 </ul>
 
-        </div>
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
       </div>
-    </nav>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">normix</a>
-      </nav>
+<div class="sbt-scroll-pixel-helper"></div>
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">Mathematical Background</a></li>
-      <li class="breadcrumb-item active">Mean-Risk Optimization for Normal Mixture Distributions</li>
-      <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/xshi19/normix/blob/main/docs/theory/mean_risk_optimization.rst" class="fa fa-github"> Edit on GitHub</a>
-      </li>
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Ftheory/mean_risk_optimization.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
   </ul>
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/theory/mean_risk_optimization.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Mean-Risk Optimization for Normal Mixture Distributions</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coherent-risk-measures">Coherent Risk Measures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#risk-monotonicity-for-normal-mixtures">Risk Monotonicity for Normal Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
   <section id="mean-risk-optimization-for-normal-mixture-distributions">
-<h1>Mean-Risk Optimization for Normal Mixture Distributions<a class="headerlink" href="#mean-risk-optimization-for-normal-mixture-distributions" title="Link to this heading"></a></h1>
+<h1>Mean-Risk Optimization for Normal Mixture Distributions<a class="headerlink" href="#mean-risk-optimization-for-normal-mixture-distributions" title="Link to this heading">#</a></h1>
 <p>This section develops the mean-risk portfolio optimization framework for
 normal mixture distributions. The key insight is that the normal mixture
 structure <a class="reference internal" href="gh.html#equation-gh-def">(1)</a> enables a dimension reduction from <span class="math notranslate nohighlight">\(d\)</span> assets
 to a two-dimensional problem.</p>
 <section id="coherent-risk-measures">
-<h2>Coherent Risk Measures<a class="headerlink" href="#coherent-risk-measures" title="Link to this heading"></a></h2>
+<h2>Coherent Risk Measures<a class="headerlink" href="#coherent-risk-measures" title="Link to this heading">#</a></h2>
 <p><strong>Definition.</strong> Let <span class="math notranslate nohighlight">\((\Omega, \mathcal{F}, \mathbb{P})\)</span> be a
 probability space and <span class="math notranslate nohighlight">\(\mathcal{L}(\Omega, \mathcal{F})\)</span> the set of
 real-valued random variables. A <strong>coherent risk measure</strong> is a function
@@ -131,10 +410,10 @@ real-valued random variables. A <strong>coherent risk measure</strong> is a func
 is coherent.</p>
 </section>
 <section id="risk-monotonicity-for-normal-mixtures">
-<h2>Risk Monotonicity for Normal Mixtures<a class="headerlink" href="#risk-monotonicity-for-normal-mixtures" title="Link to this heading"></a></h2>
+<h2>Risk Monotonicity for Normal Mixtures<a class="headerlink" href="#risk-monotonicity-for-normal-mixtures" title="Link to this heading">#</a></h2>
 <p>Recall that a normal mixture random vector can be written as:</p>
 <div class="math notranslate nohighlight" id="equation-nm-def">
-<span class="eqno">(1)<a class="headerlink" href="#equation-nm-def" title="Link to this equation"></a></span>\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z,\]</div>
+<span class="eqno">(1)<a class="headerlink" href="#equation-nm-def" title="Link to this equation">#</a></span>\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z,\]</div>
 <p>where <span class="math notranslate nohighlight">\(\mu, \gamma \in \mathbb{R}^d\)</span>, <span class="math notranslate nohighlight">\(Y \geq 0\)</span> is a univariate
 random variable, and <span class="math notranslate nohighlight">\(Z \sim N(0, \Sigma)\)</span> is independent of <span class="math notranslate nohighlight">\(Y\)</span>.</p>
 <p>Consider the univariate case <span class="math notranslate nohighlight">\(d = 1\)</span> with <span class="math notranslate nohighlight">\(Z \sim N(0, \sigma^2)\)</span>,
@@ -176,27 +455,27 @@ and a risky asset with weight <span class="math notranslate nohighlight">\(\sigm
 prefers large <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\gamma\)</span> and small <span class="math notranslate nohighlight">\(\sigma\)</span>.</p>
 </section>
 <section id="portfolio-return-as-normal-mixture">
-<h2>Portfolio Return as Normal Mixture<a class="headerlink" href="#portfolio-return-as-normal-mixture" title="Link to this heading"></a></h2>
+<h2>Portfolio Return as Normal Mixture<a class="headerlink" href="#portfolio-return-as-normal-mixture" title="Link to this heading">#</a></h2>
 <p>In the <span class="math notranslate nohighlight">\(d\)</span>-dimensional case, a portfolio with weight
 <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span> (<span class="math notranslate nohighlight">\(w^\top \mathbf{e} = 1\)</span>) has return:</p>
 <div class="math notranslate nohighlight" id="equation-nm-portfolio">
-<span class="eqno">(2)<a class="headerlink" href="#equation-nm-portfolio" title="Link to this equation"></a></span>\[w^\top X \stackrel{d}{=} w^\top \mu
+<span class="eqno">(2)<a class="headerlink" href="#equation-nm-portfolio" title="Link to this equation">#</a></span>\[w^\top X \stackrel{d}{=} w^\top \mu
 + w^\top \gamma \, Y + \sqrt{w^\top \Sigma w \, Y} \, Z,\]</div>
 <p>where <span class="math notranslate nohighlight">\(Z \sim N(0, 1)\)</span>. The expected return is:</p>
 <div class="math notranslate nohighlight">
 \[E[w^\top X] = w^\top \mu + w^\top \gamma \, E[Y].\]</div>
 </section>
 <section id="mean-risk-optimization">
-<h2>Mean-Risk Optimization<a class="headerlink" href="#mean-risk-optimization" title="Link to this heading"></a></h2>
+<h2>Mean-Risk Optimization<a class="headerlink" href="#mean-risk-optimization" title="Link to this heading">#</a></h2>
 <p>The generalized mean-risk optimization problem is:</p>
 <div class="math notranslate nohighlight" id="equation-mean-risk-opt">
-<span class="eqno">(3)<a class="headerlink" href="#equation-mean-risk-opt" title="Link to this equation"></a></span>\[\min_w \; \rho(w^\top X) \quad
+<span class="eqno">(3)<a class="headerlink" href="#equation-mean-risk-opt" title="Link to this equation">#</a></span>\[\min_w \; \rho(w^\top X) \quad
 \text{s.t.} \quad w^\top \mathbf{e} = 1, \quad
 E[w^\top X] \geq m,\]</div>
 <p>where <span class="math notranslate nohighlight">\(m \in \mathbb{R}\)</span>.</p>
 </section>
 <section id="dimension-reduction-via-the-efficient-surface">
-<h2>Dimension Reduction via the Efficient Surface<a class="headerlink" href="#dimension-reduction-via-the-efficient-surface" title="Link to this heading"></a></h2>
+<h2>Dimension Reduction via the Efficient Surface<a class="headerlink" href="#dimension-reduction-via-the-efficient-surface" title="Link to this heading">#</a></h2>
 <p><strong>Proposition.</strong> The solution of <a class="reference internal" href="#equation-mean-risk-opt">(3)</a> is:</p>
 <div class="math notranslate nohighlight">
 \[w^* = \Sigma^{-1} [\mu \; \gamma \; \mathbf{e}] \, A^{-1}
@@ -217,7 +496,7 @@ A = [\mu \; \gamma \; \mathbf{e}]^\top \Sigma^{-1}
 [\mu \; \gamma \; \mathbf{e}].\]</div>
 <p><em>Proof.</em> Define <span class="math notranslate nohighlight">\(w^*(\tilde{\mu}, \tilde{\gamma})\)</span> as the solution of:</p>
 <div class="math notranslate nohighlight" id="equation-constrained-opt">
-<span class="eqno">(4)<a class="headerlink" href="#equation-constrained-opt" title="Link to this equation"></a></span>\[w^*(\tilde{\mu}, \tilde{\gamma}) := \arg\min_w \rho(w^\top X)
+<span class="eqno">(4)<a class="headerlink" href="#equation-constrained-opt" title="Link to this equation">#</a></span>\[w^*(\tilde{\mu}, \tilde{\gamma}) := \arg\min_w \rho(w^\top X)
 \quad \text{s.t.} \quad w^\top \mathbf{e} = 1, \;
 w^\top \mu = \tilde{\mu}, \; w^\top \gamma = \tilde{\gamma}.\]</div>
 <p>Then <a class="reference internal" href="#equation-mean-risk-opt">(3)</a> is equivalent to optimizing over
@@ -240,7 +519,7 @@ in <span class="math notranslate nohighlight">\(w^\top \Sigma w\)</span>. Theref
 generalizing the classical efficient frontier.</p>
 </section>
 <section id="worst-case-risk-measures">
-<h2>Worst-Case Risk Measures<a class="headerlink" href="#worst-case-risk-measures" title="Link to this heading"></a></h2>
+<h2>Worst-Case Risk Measures<a class="headerlink" href="#worst-case-risk-measures" title="Link to this heading">#</a></h2>
 <p><strong>Definition.</strong> Let <span class="math notranslate nohighlight">\(\mathcal{P}\)</span> be a set of probability distributions.
 The <strong>worst-case</strong> coherent risk measure is:</p>
 <div class="math notranslate nohighlight">
@@ -262,7 +541,7 @@ f_Y \text{ fixed}\},\]</div>
 <span class="math notranslate nohighlight">\(\mu\)</span>, smallest <span class="math notranslate nohighlight">\(\gamma\)</span>, and largest <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <div role="list" class="citation-list">
 <div class="citation" id="artzner1999" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Artzner1999</a><span class="fn-bracket">]</span></span>
@@ -274,34 +553,111 @@ Coherent measures of risk. <em>Mathematical Finance</em>, 9(3), 203-228.</p>
 </section>
 
 
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="online_em.html" class="btn btn-neutral float-left" title="Online EM Algorithm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="cvar_derivatives.html" class="btn btn-neutral float-right" title="CVaR Derivatives for Normal Mixture Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+                </article>
+              
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2024–2026, normix developers.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="online_em.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Online EM Algorithm</p>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+    </a>
+    <a class="right-next"
+       href="cvar_derivatives.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CVaR Derivatives for Normal Mixture Distributions</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
-</body>
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coherent-risk-measures">Coherent Risk Measures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#risk-monotonicity-for-normal-mixtures">Risk Monotonicity for Normal Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
 </html>
