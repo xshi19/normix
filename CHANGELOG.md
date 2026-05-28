@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.3](https://github.com/xshi19/normix/compare/v0.2.2...v0.2.3) (2026-05-27)
+
+
+### Features
+
+* **finance:** Phase D CVaR layer with Univariate* projection ([#33](https://github.com/xshi19/normix/issues/33)) ([c1ed422](https://github.com/xshi19/normix/commit/c1ed42247a82791c7bbf81eea697c5ba05d7aa59))
+
+
+### Documentation
+
+* bootstrap MyST-nb infrastructure and Kami theme (Phase 1) ([#35](https://github.com/xshi19/normix/issues/35)) ([1c3563d](https://github.com/xshi19/normix/commit/1c3563d08b39ab426ac742b10a4f1a2a1e791f17))
+
 ## [0.2.2](https://github.com/xshi19/normix/compare/v0.2.1...v0.2.2) (2026-05-24)
 
 
