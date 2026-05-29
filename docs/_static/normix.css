@@ -14,8 +14,12 @@ html[data-theme="light"] {
   --normix-accent-light: #2d5a8a;
   --normix-rule: #d8d4c8;
   --normix-code-surface: #f0eee6;
-  --normix-link-visited: #4b506f;
+  --normix-link-visited: #1b365d;
   --normix-measure: 74ch;
+  --normix-serif: Charter, Georgia, "TsangerJinKai02", "Source Han Serif SC",
+    "Noto Serif CJK SC", "Songti SC", "Palatino Linotype", Palatino, serif;
+  --normix-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, Monaco,
+    monospace;
 
   --pst-color-background: var(--normix-paper);
   --pst-color-on-background: var(--normix-ink);
@@ -28,9 +32,14 @@ html[data-theme="light"] {
   --pst-color-border: var(--normix-rule);
   --pst-color-inline-code: var(--normix-ink);
   --pst-color-target: rgba(27, 54, 93, 0.12);
-  --pst-font-family-base: Charter, "Bitstream Charter", "Sitka Text", Georgia, serif;
-  --pst-font-family-heading: Charter, "Bitstream Charter", "Sitka Text", Georgia, serif;
-  --pst-font-family-monospace: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --pst-color-table-heading-bg: var(--normix-surface);
+  --pst-color-table-row-zebra-low-bg: transparent;
+  --pst-color-table-row-zebra-high-bg: transparent;
+  --pst-color-table-outer-border: var(--normix-rule);
+  --pst-color-table-inner-border: transparent;
+  --pst-font-family-base: var(--normix-serif);
+  --pst-font-family-heading: var(--normix-serif);
+  --pst-font-family-monospace: var(--normix-mono);
   --pst-font-size-base: 17px;
   --pst-font-size-h1: 2.2rem;
   --pst-font-size-h2: 1.55rem;
@@ -47,7 +56,10 @@ html[data-theme="dark"] {
   --normix-accent-light: #c2d1e7;
   --normix-rule: #4a453b;
   --normix-code-surface: #2d2a24;
-  --normix-link-visited: #c3b6d7;
+  --normix-link-visited: #9eb6d8;
+
+  --pst-color-table-row-zebra-low-bg: transparent;
+  --pst-color-table-row-zebra-high-bg: transparent;
 }
 
 html {
@@ -58,10 +70,19 @@ body,
 .bd-page__body {
   background: var(--normix-paper) !important;
   color: var(--normix-ink) !important;
-  font-family: var(--pst-font-family-base);
+  font-family: var(--normix-serif);
   font-size: 17px;
-  line-height: 1.58;
-  letter-spacing: normal;
+  line-height: 1.55;
+  letter-spacing: 0;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="dark"] a,
+html[data-theme="dark"] a.reference {
+  text-decoration-color: rgba(158, 182, 216, 0.45);
 }
 
 a,
@@ -114,7 +135,8 @@ html[data-theme="dark"] .bd-header .navbar {
 
 .bd-sidebar-primary .nav-link {
   color: var(--normix-muted) !important;
-  font-family: var(--pst-font-family-base);
+  font-family: var(--normix-serif);
+  letter-spacing: 0;
   border-radius: 6px;
 }
 
@@ -128,7 +150,16 @@ html[data-theme="dark"] .bd-header .navbar {
   background: rgba(27, 54, 93, 0.1);
   border-left: 2px solid var(--normix-accent);
   color: var(--normix-accent) !important;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+html[data-theme="dark"] .bd-sidebar-primary .nav-link:hover {
+  background: rgba(158, 182, 216, 0.12) !important;
+}
+
+html[data-theme="dark"] .bd-sidebar-primary .nav-link.active,
+html[data-theme="dark"] .bd-sidebar-primary .current.reference.internal {
+  background: rgba(158, 182, 216, 0.15) !important;
 }
 
 /* Main content */
@@ -136,6 +167,7 @@ html[data-theme="dark"] .bd-header .navbar {
 article.bd-article {
   background: var(--normix-paper);
   color: var(--normix-ink);
+  font-family: var(--normix-serif);
 }
 
 .bd-article-container {
@@ -157,13 +189,17 @@ article.bd-article {
   color: var(--normix-ink) !important;
   font-family: var(--pst-font-family-heading);
   font-weight: 500 !important;
-  letter-spacing: normal !important;
+  letter-spacing: 0 !important;
 }
 
 .bd-content h2 {
   margin-top: 2.2rem;
   padding-top: 0.2rem;
   border-top: 1px solid var(--normix-rule);
+}
+
+.bd-content h3 {
+  margin-top: 1.7rem;
 }
 
 .bd-content blockquote {
@@ -189,15 +225,17 @@ article.bd-article {
   color: var(--normix-accent) !important;
 }
 
-/* Tables */
+/* Tables — incerto-style: horizontal rules only, no zebra striping */
 .bd-content table.docutils,
 .bd-content table.table {
   width: 100%;
+  max-width: 100%;
   margin: 1.25rem 0 1.6rem;
   border-collapse: collapse;
   color: var(--normix-ink);
   font-size: 0.94em;
   font-variant-numeric: tabular-nums;
+  border: 0;
 }
 
 .bd-content table.docutils th,
@@ -206,18 +244,91 @@ article.bd-article {
 .bd-content table.table td {
   padding: 0.45rem 0.6rem;
   vertical-align: top;
-  border: 0;
-  border-bottom: 1px solid var(--normix-rule);
+  border: 0 !important;
+  border-bottom: 1px solid var(--normix-rule) !important;
+  border-left: 0 !important;
+}
+
+.bd-content table.docutils td ~ td,
+.bd-content table.docutils th ~ th,
+.bd-content table.docutils td ~ th,
+.bd-content table.docutils th ~ td,
+.bd-content table.table td ~ td,
+.bd-content table.table th ~ th,
+.bd-content table.table td ~ th,
+.bd-content table.table th ~ td {
+  border-left: 0 !important;
+}
+
+.bd-content table.docutils thead tr,
+.bd-content table.table thead tr {
+  background: var(--normix-surface) !important;
+  border-bottom: 1.5px solid var(--normix-rule) !important;
 }
 
 .bd-content table.docutils th,
 .bd-content table.table th {
-  background: var(--normix-surface);
-  font-weight: 600;
-  border-bottom: 1.5px solid var(--normix-rule);
+  background: var(--normix-surface) !important;
+  color: var(--normix-ink);
+  font-weight: 500;
+}
+
+.bd-content table.docutils td,
+.bd-content table.table td {
+  background: transparent !important;
+}
+
+.bd-content table.docutils tbody tr,
+.bd-content table.table tbody tr {
+  background: transparent !important;
+}
+
+.bd-content table.docutils tbody tr:nth-child(odd),
+.bd-content table.docutils tbody tr:nth-child(even),
+.bd-content table.table tbody tr:nth-child(odd),
+.bd-content table.table tbody tr:nth-child(even),
+.bd-content table.table tbody tr.row-odd,
+.bd-content table.table tbody tr.row-even {
+  background: transparent !important;
+}
+
+/* Bootstrap/pydata apply bg on cells — override the striped palette */
+.bd-content table.table > :not(caption) > tbody > tr > *,
+.bd-content table.table > :not(caption) > tbody > tr:nth-of-type(odd) > *,
+.bd-content table.table > :not(caption) > tbody > tr:nth-of-type(even) > * {
+  background-color: transparent !important;
+  color: var(--normix-ink) !important;
+  box-shadow: none !important;
+}
+
+.bd-content table.table > :not(caption) > thead > tr > * {
+  background-color: var(--normix-surface) !important;
+  color: var(--normix-ink) !important;
+  box-shadow: none !important;
+}
+
+.bd-content table.docutils tbody tr:hover td,
+.bd-content table.table tbody tr:hover td {
+  background: rgba(232, 230, 220, 0.45) !important;
+}
+
+html[data-theme="dark"] .bd-content table.docutils tbody tr:hover td,
+html[data-theme="dark"] .bd-content table.table tbody tr:hover td {
+  background: rgba(52, 48, 40, 0.65) !important;
+}
+
+.pst-scrollable-table-container {
+  overflow-x: auto;
 }
 
 /* Inline and block code */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--normix-mono) !important;
+}
+
 .bd-content :not(pre) > code,
 .bd-content code.literal,
 .bd-content span.pre {
@@ -226,7 +337,6 @@ article.bd-article {
   background: var(--normix-code-surface);
   border: 1px solid var(--normix-rule);
   border-radius: 4px;
-  font-family: var(--pst-font-family-monospace) !important;
 }
 
 div.highlight,
@@ -238,7 +348,6 @@ pre,
   border-radius: 6px !important;
   box-shadow: none !important;
   color: var(--normix-ink) !important;
-  font-family: var(--pst-font-family-monospace) !important;
 }
 
 /* myst-nb code cells */
