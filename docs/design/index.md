@@ -26,4 +26,4 @@ solvers_and_bessel
 
 - [Mathematical Background](../theory/index) — formal derivations
 - [API Reference](../api/index) — module and class reference
-- [Quick Start](../quickstart) — install and first fit
+- [Quickstart](../getting_started/quickstart) — install and first fit

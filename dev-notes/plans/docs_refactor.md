@@ -1,8 +1,9 @@
 # Documentation Refactor: MyST + `myst-nb`, internal/external split
 
-> **PROPOSAL — Phase 1–2 implemented; Phases 3–6 pending.**
-> **Date:** 2026-05-25
-> **Status:** Phase 2 complete on branch `feat/docs-refactor-phase2`.
+> **PROPOSAL — Phases 1–3 implemented; Phases 4–6 pending.**
+> **Date:** 2026-05-25 (Phase 3 authored 2026-05-28)
+> **Status:** Phase 3 authored on branch `feat/docs-refactor-phase3` (18-tutorial
+> tree + getting_started + user_guide + index toctree; local cached build green).
 > **Scope:** `docs/`, `notebooks/`, `.github/workflows/docs.yml`, the docs-publish skill.
 > **Does not touch:** `normix/` source, `tests/`, `benchmarks/`, the EM / finance roadmaps.
 
@@ -607,25 +608,47 @@ prototype tutorial; the Kami-derived visual style is live on the prototype.
 - [x] No legacy `docs/(plans|…|references)/` paths in agent-facing files
 - [ ] Live site verified after merge (design pages via MyST; architecture.rst removed)
 
-### Phase 3 — Author the new tutorial tree (3–4 PRs, 1–2 weeks)
+### Phase 3 — Author the new tutorial tree (3–4 PRs, 1–2 weeks) ✅ (authored; live verify pending merge)
 
 **Goal:** Build the 18-tutorial demo from scratch, drawing material from
 current notebooks but not constrained by their boundaries.
 
 Cluster the work by section to keep PRs reviewable:
 
-- PR 3a: `tutorials/core/` (4 files) + `tutorials/distributions/` (5 files)
-- PR 3b: `tutorials/em/` (3 files) + `tutorials/stats/` (2 files)
-- PR 3c: `tutorials/finance/` (4 files) — depends on existing
-  `scripts/download_*.py` and `data/*.csv`
-- PR 3d: `getting_started/` (3 files) + `user_guide/` (5 files) + `index.md`
-  toctree
+- [x] PR 3a: `tutorials/core/` (4 files) + `tutorials/distributions/` (5 files)
+- [x] PR 3b: `tutorials/em/` (3 new files; existing prototype renumbered to
+  `em/04_em_vs_mcecm.md`) + `tutorials/stats/` (2 files)
+- [x] PR 3c: `tutorials/finance/` (4 files) — uses checked-in
+  `data/sp500_returns.csv`
+- [x] PR 3d: `getting_started/` (3 files) + `user_guide/` (5 files) +
+  `index.md` toctree (+ `tutorials/index.md` for grouped nav)
 
 Each PR runs the new section under `nb_execution_mode=cache` in CI; failures
 block merge.
 
-**Exit:** All 18 tutorials render with executed outputs at the live URL;
-toctree is complete.
+**Exit:**
+- [x] All 18 tutorials author-complete and render with executed outputs in a
+  local cached `make -C docs html`.
+- [x] Toctree is complete (`index.md` → getting_started / user_guide /
+  tutorials / theory / design / api).
+- [ ] Live site verified after merge.
+
+**Implementation notes (2026-05-28):**
+- Source-of-truth landing page moved from `index.rst` to `index.md`;
+  `quickstart.rst` content folded into `getting_started/` + `user_guide/`.
+- **Finance data:** DJ30 is *not* checked in (`scripts/download_dj30.py` needs
+  `yfinance` + network, unavailable in CI). Tutorials use the committed
+  `data/sp500_returns.csv` — an equal-weight index proxy for `01`, a 5-stock
+  basket for `02`/`04`, a 30-stock basket for `03`.
+- `VarianceGamma` dropped from the index model comparison in
+  `finance/01` (its light tails diverge to `nan` on the kurtosis≈20 series);
+  comparison is Normal vs NIG vs GH.
+- Cross-family Hellinger is *not* meaningful (different `psi`); cross-family
+  comparison uses out-of-sample log-likelihood, Hellinger only within a family.
+- `api/index.rst` kept in place (not renamed to `reference/`); that rename is
+  optional polish, out of Phase 3 scope.
+- Every code cell verified to execute against the live source; the EM prototype
+  (`em/04_em_vs_mcecm.md`) hits the existing myst-nb cache after rename.
 
 ### Phase 4 — Retire `nbsphinx` and `notebooks/` (1 PR, ~half day)
 
