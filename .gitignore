@@ -49,6 +49,9 @@ coverage.xml
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# marimo session/layout cache
+__marimo__/
+
 # pyenv
 .python-version
 
