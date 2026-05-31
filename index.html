@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>normix Documentation &#8212; normix 0.2.2 documentation</title>
+    <title>normix &#8212; normix 0.2.2 documentation</title>
   
   
   
@@ -51,7 +51,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quick Start" href="quickstart.html" />
+    <link rel="next" title="Installation" href="getting_started/install.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -147,20 +147,51 @@
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1 current active">
                 <a class="reference internal" href="#">
-                    normix Documentation
+                    normix
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="design/exponential_family.html">Exponential Family Core</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/mixtures.html">Mixture Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/em_framework.html">EM Framework</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a 30-asset portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 </ul>
 </details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
@@ -175,8 +206,14 @@
 <li class="toctree-l2"><a class="reference internal" href="theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 </ul>
 
     </div>
@@ -283,7 +320,7 @@
       
       
       
-      <li><a href="_sources/index.rst" target="_blank"
+      <li><a href="_sources/index.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -293,7 +330,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -359,7 +396,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>normix Documentation</h1>
+    <h1>normix</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -369,13 +406,12 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">normix Documentation</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#where-to-start">Where to start</a><ul class="nav section-nav flex-column">
 </ul>
 </li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#indices">Indices</a></li>
 </ul>
-
             </nav>
         </div>
     </div>
@@ -386,102 +422,68 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="normix-documentation">
-<h1>normix Documentation<a class="headerlink" href="#normix-documentation" title="Link to this heading">#</a></h1>
-<p><strong>normix</strong> is a JAX package for Generalized Hyperbolic distributions and related
-distributions, implemented as exponential families. Built on
-<a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> with Float64 precision throughout.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="normix">
+<h1>normix<a class="headerlink" href="#normix" title="Link to this heading">#</a></h1>
+<p><strong>normix</strong> is a JAX package for Generalized Hyperbolic distributions and their
+relatives, implemented as exponential families. It is built on
+<a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> with float64 precision throughout,
+and is JIT-compiled, differentiable, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible end to end.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedHyperbolic</span><span class="p">,</span> <span class="n">BatchEMFitter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedHyperbolic</span>
 
-<span class="c1"># Fit Generalized Hyperbolic to data via EM</span>
+<span class="c1"># Fit a Generalized Hyperbolic distribution to data via EM</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">GeneralizedHyperbolic</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
-<span class="c1"># Evaluate log-density (batched via vmap)</span>
+<span class="c1"># Evaluate the log-density (batched via vmap)</span>
 <span class="n">log_p</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="key-features">
-<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
+<h2>Key features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Exponential family structure</strong> — three parametrizations (classical, natural,
-expectation) with automatic conversion via <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code></p></li>
-<li><p><strong>Full GH distribution family</strong> — Gamma, Inverse Gamma, Inverse Gaussian, GIG,
-Variance Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, Generalized Hyperbolic</p></li>
-<li><p><strong>EM algorithm</strong> — batch, online, and mini-batch EM with CPU/GPU hybrid backend</p></li>
-<li><p><strong>JAX-native</strong> — JIT-compiled, differentiable, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible</p></li>
-<li><p><strong>Immutable</strong> — all distributions are <code class="docutils literal notranslate"><span class="pre">eqx.Module</span></code> pytrees; M-step returns a new model</p></li>
-<li><p><strong>Hybrid CPU/JAX backend</strong> — up to 15× faster EM via <code class="docutils literal notranslate"><span class="pre">scipy</span></code> Bessel evaluation on CPU</p></li>
+<li><p><strong>Exponential-family structure</strong> — three parametrizations (classical, natural
+<span class="math notranslate nohighlight">\(\theta\)</span>, expectation <span class="math notranslate nohighlight">\(\eta\)</span>) with automatic, lossless conversion.</p></li>
+<li><p><strong>The full GH family</strong> — Gamma, Inverse Gamma, Inverse Gaussian, GIG, Variance
+Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, and Generalized
+Hyperbolic, plus univariate and factor variants.</p></li>
+<li><p><strong>EM fitting</strong> — batch and incremental/mini-batch EM with a hybrid CPU/JAX
+backend (scipy Bessel on the hot path).</p></li>
+<li><p><strong>Closed-form divergences</strong> — squared Hellinger and KL with no Monte Carlo.</p></li>
+<li><p><strong>Finance toolkit</strong> — portfolio projection and differentiable CVaR.</p></li>
+<li><p><strong>Immutable</strong> — all distributions are <code class="docutils literal notranslate"><span class="pre">equinox.Module</span></code> pytrees.</p></li>
+</ul>
+</section>
+<section id="where-to-start">
+<h2>Where to start<a class="headerlink" href="#where-to-start" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>New here? Read <a class="reference internal" href="getting_started/install.html"><span class="doc">Installation</span></a> then the
+<a class="reference internal" href="getting_started/quickstart.html"><span class="doc">Quickstart</span></a>.</p></li>
+<li><p>Want the concepts? The <a class="reference internal" href="user_guide/exponential_family.html"><span class="doc">Exponential-family structure</span></a> guide explains the
+structure underneath everything.</p></li>
+<li><p>Prefer learning by example? The <a class="reference internal" href="tutorials/index.html"><span class="doc">Tutorials</span></a> run end to end.</p></li>
 </ul>
 <div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#core-dependencies">Core Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#univariate-distributions">Univariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#multivariate-normal">Multivariate Normal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#normal-variance-mean-mixtures">Normal Variance-Mean Mixtures</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#fitting-with-em">Fitting with EM</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#bessel-functions">Bessel Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#batching-with-vmap">Batching with vmap</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="design/index.html">Design Rationale</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="design/exponential_family.html">Exponential Family Core</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/mixtures.html">Mixture Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/em_framework.html">EM Framework</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/index.html#quick-lookups">Quick lookups</a></li>
-<li class="toctree-l2"><a class="reference internal" href="design/index.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="theory/index.html">Mathematical Background</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/online_em.html">Online EM Algorithm</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="theory/index.html#references">References</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.exponential_family">Base Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#univariate-distributions">Univariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-normix.distributions.normal">Multivariate Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#mixture-base-classes">Mixture Base Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#mixture-distributions">Mixture Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#fitting">Fitting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#utilities">Utilities</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/em/01_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/em/01_em_vs_mcecm.html#step-1-fit-base-model-to-real-data">Step 1: Fit base model to real data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/em/01_em_vs_mcecm.html#step-25-sweep-p-simulate-re-fit-via-em-and-mcecm">Step 2–5: Sweep <span class="math notranslate nohighlight">\(p\)</span>, simulate, re-fit via EM and MCECM</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorials/em/01_em_vs_mcecm.html#table-4-comparison-between-em-and-mcecm">Table 4: Comparison between EM and MCECM</a></li>
-</ul>
-</li>
-</ul>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
 </div>
 </section>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">#</a></h1>
+<section id="indices">
+<h2>Indices<a class="headerlink" href="#indices" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</section>
 </section>
 
 
@@ -496,11 +498,11 @@ Variance Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, Generalized Hyper
                   
 <div class="prev-next-area">
     <a class="right-next"
-       href="quickstart.html"
+       href="getting_started/install.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Quick Start</p>
+        <p class="prev-next-title">Installation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -522,13 +524,12 @@ Variance Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, Generalized Hyper
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">normix Documentation</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#where-to-start">Where to start</a><ul class="nav section-nav flex-column">
 </ul>
 </li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#indices">Indices</a></li>
 </ul>
-
   </nav></div>
 
 </div></div>
