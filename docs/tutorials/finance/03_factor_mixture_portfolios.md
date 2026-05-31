@@ -8,14 +8,14 @@ mystnb:
   execution_timeout: 900
 ---
 
-# Factor mixtures for a 30-asset portfolio
+# Factor mixtures for a Dow Jones 30 portfolio
 
 At portfolio scale — dozens of assets — a full covariance matrix has too many
 parameters to estimate reliably. The factor mixtures replace $\Sigma$ with
 $F F^\top + \operatorname{diag}(D)$, capturing the dominant co-movement with a
 handful of latent factors while keeping the heavy-tailed GH structure. This
-tutorial fits a `FactorGeneralizedHyperbolic` to 30 stocks and inspects the
-factors it discovers.
+tutorial fits a `FactorGeneralizedHyperbolic` to the Dow Jones Industrial
+Average constituents and inspects the factors it discovers.
 
 ```{code-cell} python
 import jax
@@ -32,18 +32,29 @@ set_theme()
 np.set_printoptions(precision=4, suppress=True)
 ```
 
-## Data: 30 large-cap stocks
+## Data: the Dow Jones 30
+
+We select the Dow Jones Industrial Average constituents from the S&P 500 return
+panel shipped with the repository. One ticker (WBA, removed from the index in
+2024) is absent from the panel, leaving 29 names:
 
 ```{code-cell} python
+DJ30 = [
+    "AAPL", "AMGN", "AXP", "BA", "CAT", "CRM", "CSCO", "CVX", "DIS", "GS",
+    "HD", "HON", "IBM", "INTC", "JNJ", "JPM", "KO", "MCD", "MMM", "MRK",
+    "MSFT", "NKE", "PG", "TRV", "UNH", "V", "VZ", "WBA", "WMT", "XOM",
+]
+
 data_path = Path("../../../data/sp500_returns.csv").resolve()
-panel = pd.read_csv(data_path, index_col="Date", parse_dates=True).dropna(axis=1, how="any")
-tickers = list(panel.columns[:30])
-R = panel[tickers].values.astype(np.float64)
+panel = pd.read_csv(data_path, index_col="Date", parse_dates=True)
+tickers = [t for t in DJ30 if t in panel.columns]
+R = panel[tickers].dropna(axis=0, how="any").values.astype(np.float64)
 
 n_train = len(R) // 2
 X_train, X_test = jnp.asarray(R[:n_train]), jnp.asarray(R[n_train:])
 d = len(tickers)
-print(f"d = {d} stocks, train {n_train}, test {R.shape[0] - n_train}")
+print(f"d = {d} DJ30 stocks ({len(DJ30) - d} missing), "
+      f"train {n_train}, test {R.shape[0] - n_train}")
 ```
 
 ## The parameter budget
@@ -105,7 +116,7 @@ print(f"factor 1 loadings all positive: {bool((F[:, 0] > 0).all() or (F[:, 0] < 
 
 The factor structure regularizes the covariance; the GH subordinator still
 captures the joint heavy tails. We compare the factor model's out-of-sample
-likelihood against a full-$\Sigma$ NIG fit to the same 30 assets:
+likelihood against a full-$\Sigma$ NIG fit to the same basket:
 
 ```{code-cell} python
 full_nig = NormalInverseGaussian.default_init(X_train).fit(
