@@ -606,7 +606,7 @@ prototype tutorial; the Kami-derived visual style is live on the prototype.
 
 **Exit:**
 - [x] No legacy `docs/(plans|…|references)/` paths in agent-facing files
-- [ ] Live site verified after merge (design pages via MyST; architecture.rst removed)
+- [x] Live site verified after merge (design pages via MyST; architecture.rst removed)
 
 ### Phase 3 — Author the new tutorial tree (3–4 PRs, 1–2 weeks) ✅ (authored; live verify pending merge)
 
@@ -636,19 +636,44 @@ block merge.
 **Implementation notes (2026-05-28):**
 - Source-of-truth landing page moved from `index.rst` to `index.md`;
   `quickstart.rst` content folded into `getting_started/` + `user_guide/`.
-- **Finance data:** DJ30 is *not* checked in (`scripts/download_dj30.py` needs
-  `yfinance` + network, unavailable in CI). Tutorials use the committed
-  `data/sp500_returns.csv` — an equal-weight index proxy for `01`, a 5-stock
-  basket for `02`/`04`, a 30-stock basket for `03`.
-- `VarianceGamma` dropped from the index model comparison in
-  `finance/01` (its light tails diverge to `nan` on the kurtosis≈20 series);
-  comparison is Normal vs NIG vs GH.
-- Cross-family Hellinger is *not* meaningful (different `psi`); cross-family
-  comparison uses out-of-sample log-likelihood, Hellinger only within a family.
+- **Finance data:** the standalone DJ30 CSV is *not* checked in
+  (`scripts/download_dj30.py` needs `yfinance` + network, unavailable in CI), but
+  the DJ30 constituents live inside the committed `data/sp500_returns.csv`.
+  Tutorials read from that panel: an equal-weight index proxy for `01`, a
+  5-stock basket for `02`/`04`, and the **DJ30 constituents** for `03` (29 of 30
+  present — WBA, removed from the index in 2024, is absent from the panel).
+- `VarianceGamma` is dropped from the `finance/01` index comparison (Normal vs
+  NIG vs GH), but **not** because of "light tails" — that earlier explanation was
+  wrong. The VG EM fits competitively (mll ≈ 3.21, improving monotonically) until
+  it drives the Gamma subordinator shape α below 1, where the inverse moment
+  E[1/Y] = β/(α−1) diverges; the covariance M-step's posterior 1/Y weights then
+  blow up to `nan` (~iteration 19). Independent of regularization / M-step
+  backend. Full repro + root cause:
+  `dev-notes/investigations/variance_gamma_em_nan.{py,md}` (marimo). Suggested
+  library fix (floor α > 1 or clamp the posterior 1/Y weights in the VG Σ update)
+  is noted there, not yet implemented.
+- **Cross-family divergences.** NIG, VG, NInvG *are* GH special cases, and
+  `to_generalized_hyperbolic()` re-expresses them in the GH parametrization
+  (shared `psi`), so a closed-form divergence between them is well-defined —
+  `stats/01` now demonstrates this. What is **not** implemented: a closed-form
+  *marginal* (over X) divergence. `squared_hellinger`/`kl_divergence` on mixtures
+  return the **joint** (X, Y) divergence — the joint is exponential-family, the
+  marginal is not — which is an upper bound on the marginal one. The bound is
+  tight when models nearly agree (estimate vs target) but loose when latent
+  subordinator parametrizations differ. For ranking *different* families as fits
+  to data, use out-of-sample log-likelihood (`finance/01`) or a Monte-Carlo
+  marginal Hellinger (`stats/01`).
 - `api/index.rst` kept in place (not renamed to `reference/`); that rename is
   optional polish, out of Phase 3 scope.
-- Every code cell verified to execute against the live source; the EM prototype
-  (`em/04_em_vs_mcecm.md`) hits the existing myst-nb cache after rename.
+- **myst-nb execution cache (not an error).** With `nb_execution_mode="cache"`,
+  myst-nb hashes each tutorial's code + kernel and stores executed outputs under
+  `docs/_build/.jupyter_cache`. On rebuild, a page whose hash is unchanged is
+  served from cache instead of being re-executed (`Using cached notebook: ID=…`).
+  The plan log noting `em/04_em_vs_mcecm.md` "hits the cache after rename" just
+  means the rename did not change cell contents, so its prior cached run was
+  reused — a feature (fast incremental builds), not a problem. Every code cell
+  was also independently verified to execute against the live source. A forced
+  full re-execution is `make -C docs html-strict` (`NB_EXECUTION_MODE=force`).
 
 ### Phase 4 — Retire `nbsphinx` and `notebooks/` (1 PR, ~half day)
 
