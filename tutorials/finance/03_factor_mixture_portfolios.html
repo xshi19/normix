@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Factor mixtures for a 30-asset portfolio &#8212; normix 0.2.2 documentation</title>
+    <title>Factor mixtures for a Dow Jones 30 portfolio &#8212; normix 0.2.2 documentation</title>
   
   
   
@@ -184,7 +184,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../stats/02_goodness_of_fit.html">Goodness of fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="02_multivariate_stocks.html">A multivariate stock basket</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Factor mixtures for a 30-asset portfolio</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 </ul>
 </details></li>
@@ -395,7 +395,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Factor mixtures for a 30-asset portfolio</h1>
+    <h1>Factor mixtures for a Dow Jones 30 portfolio</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -405,7 +405,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-30-large-cap-stocks">Data: 30 large-cap stocks</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-the-dow-jones-30">Data: the Dow Jones 30</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-parameter-budget">The parameter budget</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-factor-gh-at-several-ranks">Fitting factor GH at several ranks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inspecting-the-latent-factors">Inspecting the latent factors</a></li>
@@ -422,14 +422,14 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="factor-mixtures-for-a-30-asset-portfolio">
-<h1>Factor mixtures for a 30-asset portfolio<a class="headerlink" href="#factor-mixtures-for-a-30-asset-portfolio" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="factor-mixtures-for-a-dow-jones-30-portfolio">
+<h1>Factor mixtures for a Dow Jones 30 portfolio<a class="headerlink" href="#factor-mixtures-for-a-dow-jones-30-portfolio" title="Link to this heading">#</a></h1>
 <p>At portfolio scale — dozens of assets — a full covariance matrix has too many
 parameters to estimate reliably. The factor mixtures replace <span class="math notranslate nohighlight">\(\Sigma\)</span> with
 <span class="math notranslate nohighlight">\(F F^\top + \operatorname{diag}(D)\)</span>, capturing the dominant co-movement with a
 handful of latent factors while keeping the heavy-tailed GH structure. This
-tutorial fits a <code class="docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code> to 30 stocks and inspects the
-factors it discovers.</p>
+tutorial fits a <code class="docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code> to the Dow Jones Industrial
+Average constituents and inspects the factors it discovers.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -448,24 +448,34 @@ factors it discovers.</p>
 </div>
 </div>
 </div>
-<section id="data-30-large-cap-stocks">
-<h2>Data: 30 large-cap stocks<a class="headerlink" href="#data-30-large-cap-stocks" title="Link to this heading">#</a></h2>
+<section id="data-the-dow-jones-30">
+<h2>Data: the Dow Jones 30<a class="headerlink" href="#data-the-dow-jones-30" title="Link to this heading">#</a></h2>
+<p>We select the Dow Jones Industrial Average constituents from the S&amp;P 500 return
+panel shipped with the repository. One ticker (WBA, removed from the index in
+2024) is absent from the panel, leaving 29 names:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../../../data/sp500_returns.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-<span class="n">panel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;any&quot;</span><span class="p">)</span>
-<span class="n">tickers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">panel</span><span class="o">.</span><span class="n">columns</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
-<span class="n">R</span> <span class="o">=</span> <span class="n">panel</span><span class="p">[</span><span class="n">tickers</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">DJ30</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;AAPL&quot;</span><span class="p">,</span> <span class="s2">&quot;AMGN&quot;</span><span class="p">,</span> <span class="s2">&quot;AXP&quot;</span><span class="p">,</span> <span class="s2">&quot;BA&quot;</span><span class="p">,</span> <span class="s2">&quot;CAT&quot;</span><span class="p">,</span> <span class="s2">&quot;CRM&quot;</span><span class="p">,</span> <span class="s2">&quot;CSCO&quot;</span><span class="p">,</span> <span class="s2">&quot;CVX&quot;</span><span class="p">,</span> <span class="s2">&quot;DIS&quot;</span><span class="p">,</span> <span class="s2">&quot;GS&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD&quot;</span><span class="p">,</span> <span class="s2">&quot;HON&quot;</span><span class="p">,</span> <span class="s2">&quot;IBM&quot;</span><span class="p">,</span> <span class="s2">&quot;INTC&quot;</span><span class="p">,</span> <span class="s2">&quot;JNJ&quot;</span><span class="p">,</span> <span class="s2">&quot;JPM&quot;</span><span class="p">,</span> <span class="s2">&quot;KO&quot;</span><span class="p">,</span> <span class="s2">&quot;MCD&quot;</span><span class="p">,</span> <span class="s2">&quot;MMM&quot;</span><span class="p">,</span> <span class="s2">&quot;MRK&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MSFT&quot;</span><span class="p">,</span> <span class="s2">&quot;NKE&quot;</span><span class="p">,</span> <span class="s2">&quot;PG&quot;</span><span class="p">,</span> <span class="s2">&quot;TRV&quot;</span><span class="p">,</span> <span class="s2">&quot;UNH&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;VZ&quot;</span><span class="p">,</span> <span class="s2">&quot;WBA&quot;</span><span class="p">,</span> <span class="s2">&quot;WMT&quot;</span><span class="p">,</span> <span class="s2">&quot;XOM&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../../../data/sp500_returns.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">panel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">tickers</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">DJ30</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">panel</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">panel</span><span class="p">[</span><span class="n">tickers</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;any&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
 <span class="n">n_train</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">R</span><span class="p">[:</span><span class="n">n_train</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">R</span><span class="p">[</span><span class="n">n_train</span><span class="p">:])</span>
 <span class="n">d</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tickers</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d = </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> stocks, train </span><span class="si">{</span><span class="n">n_train</span><span class="si">}</span><span class="s2">, test </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n_train</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d = </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> DJ30 stocks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">DJ30</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d</span><span class="si">}</span><span class="s2"> missing), &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;train </span><span class="si">{</span><span class="n">n_train</span><span class="si">}</span><span class="s2">, test </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n_train</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>d = 30 stocks, train 1276, test 1276
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>d = 29 DJ30 stocks (1 missing), train 1276, test 1276
 </pre></div>
 </div>
 </div>
@@ -483,9 +493,9 @@ factors it discovers.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>factor r=1:   60 covariance params   (full Σ: 465)
-factor r=2:   90 covariance params   (full Σ: 465)
-factor r=3:  120 covariance params   (full Σ: 465)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>factor r=1:   58 covariance params   (full Σ: 435)
+factor r=2:   87 covariance params   (full Σ: 435)
+factor r=3:  116 covariance params   (full Σ: 435)
 </pre></div>
 </div>
 </div>
@@ -512,9 +522,9 @@ instead of 465.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>r=1:  60 iters,  15.3s, test LL = 84.5118
-r=2:  60 iters,  10.4s, test LL = 85.5139
-r=3:  60 iters,  10.5s, test LL = 86.1202
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>r=1:  60 iters,  15.1s, test LL = 84.4696
+r=2:  60 iters,   9.6s, test LL = 84.9422
+r=3:  60 iters,   9.7s, test LL = 85.4393
 </pre></div>
 </div>
 </div>
@@ -548,7 +558,7 @@ stock — it is the market:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/cbf87c6ccaa3e749edac2d37448828313fe94cd9eb4db795d387aa1742d4d31a.png" src="../../_images/cbf87c6ccaa3e749edac2d37448828313fe94cd9eb4db795d387aa1742d4d31a.png" />
+<img alt="../../_images/4882ec931dda57fef33e8ece49a08b44756e3dcc4c17fe7afc86e765650b2d8c.png" src="../../_images/4882ec931dda57fef33e8ece49a08b44756e3dcc4c17fe7afc86e765650b2d8c.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>factor 1 loadings all positive: True
 </pre></div>
 </div>
@@ -559,7 +569,7 @@ stock — it is the market:</p>
 <h2>Heavy tails survive at scale<a class="headerlink" href="#heavy-tails-survive-at-scale" title="Link to this heading">#</a></h2>
 <p>The factor structure regularizes the covariance; the GH subordinator still
 captures the joint heavy tails. We compare the factor model’s out-of-sample
-likelihood against a full-<span class="math notranslate nohighlight">\(\Sigma\)</span> NIG fit to the same 30 assets:</p>
+likelihood against a full-<span class="math notranslate nohighlight">\(\Sigma\)</span> NIG fit to the same basket:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">full_nig</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
@@ -573,8 +583,8 @@ likelihood against a full-<span class="math notranslate nohighlight">\(\Sigma\)<
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>FactorGH (r=2):   90 cov params, test LL 85.5139
-full-Σ NIG    :  465 cov params, test LL 86.5903
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>FactorGH (r=2):   87 cov params, test LL 84.9422
+full-Σ NIG    :  435 cov params, test LL 86.0742
 </pre></div>
 </div>
 </div>
@@ -646,7 +656,7 @@ differentiate portfolio tail risk.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-30-large-cap-stocks">Data: 30 large-cap stocks</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-the-dow-jones-30">Data: the Dow Jones 30</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-parameter-budget">The parameter budget</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-factor-gh-at-several-ranks">Fitting factor GH at several ranks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inspecting-the-latent-factors">Inspecting the latent factors</a></li>

@@ -184,7 +184,7 @@
 <li class="toctree-l2"><a class="reference internal" href="02_goodness_of_fit.html">Goodness of fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finance/01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../finance/03_factor_mixture_portfolios.html">Factor mixtures for a 30-asset portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 </ul>
 </details></li>
@@ -408,6 +408,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-and-kl-on-distributions">Hellinger and KL on distributions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-functional-from-psi-core">The functional <code class="docutils literal notranslate"><span class="pre">*_from_psi</span></code> core</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-as-estimation-error">Hellinger as estimation error</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-across-the-gh-family">Comparing across the GH family</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#takeaways">Takeaways</a></li>
 </ul>
             </nav>
@@ -435,7 +436,7 @@ and differentiable — no Monte Carlo.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Gamma</span><span class="p">,</span> <span class="n">NormalInverseGaussian</span><span class="p">,</span>
+    <span class="n">Gamma</span><span class="p">,</span> <span class="n">NormalInverseGaussian</span><span class="p">,</span> <span class="n">GeneralizedHyperbolic</span><span class="p">,</span>
     <span class="n">squared_hellinger</span><span class="p">,</span> <span class="n">kl_divergence</span><span class="p">,</span>
     <span class="n">squared_hellinger_from_psi</span><span class="p">,</span> <span class="n">kl_divergence_from_psi</span><span class="p">,</span>
 <span class="p">)</span>
@@ -581,6 +582,77 @@ n =  16000   H²(true, fit) = 0.00355
 </div>
 <p>The fitted-model error tracks the <span class="math notranslate nohighlight">\(1/n\)</span> reference line — the expected
 parametric rate.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For a mixture, <code class="docutils literal notranslate"><span class="pre">squared_hellinger(p,</span> <span class="pre">q)</span></code> returns the distance between the
+<strong>joint</strong> <span class="math notranslate nohighlight">\((X, Y)\)</span> distributions — which <em>are</em> exponential families with a
+closed-form <span class="math notranslate nohighlight">\(\psi\)</span> — not the marginal distance over <span class="math notranslate nohighlight">\(X\)</span> alone (the marginal is
+not an exponential family). The joint distance is an upper bound on the marginal
+one. Here <code class="docutils literal notranslate"><span class="pre">true</span></code> and <code class="docutils literal notranslate"><span class="pre">fit</span></code> are the same family with converging parameters, so
+both go to zero together; the trend is exactly what we want. But the gap matters
+when the latent parametrizations differ — see the next section.</p>
+</div>
+</section>
+<section id="comparing-across-the-gh-family">
+<h2>Comparing across the GH family<a class="headerlink" href="#comparing-across-the-gh-family" title="Link to this heading">#</a></h2>
+<p>The Variance Gamma, Normal-Inverse Gamma, and Normal-Inverse Gaussian are all
+special cases of the Generalized Hyperbolic — they sit <em>inside</em> the GH family.
+normix makes that embedding explicit with <code class="docutils literal notranslate"><span class="pre">to_generalized_hyperbolic</span></code>, which
+re-expresses any of them in the GH parametrization (and hence the GH
+log-partition <span class="math notranslate nohighlight">\(\psi\)</span>):</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">true</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">nig_fit</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+<span class="n">gh_fit</span> <span class="o">=</span> <span class="n">GeneralizedHyperbolic</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">nig_as_gh</span> <span class="o">=</span> <span class="n">nig_fit</span><span class="o">.</span><span class="n">to_generalized_hyperbolic</span><span class="p">()</span>   <span class="c1"># NIG → GH, shared ψ</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converted type:&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">nig_as_gh</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>converted type: GeneralizedHyperbolic
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now both fits live in the same parametric family, so the closed-form divergence
+is <em>defined</em>. Since the NIG and GH fits to this data nearly coincide, the joint
+<span class="math notranslate nohighlight">\((X, Y)\)</span> Hellinger is small — and a Monte-Carlo estimate of the <strong>marginal</strong>
+Hellinger over <span class="math notranslate nohighlight">\(X\)</span> agrees, sitting just below it (the joint distance is always
+an upper bound on the marginal):</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">marginal_h2_mc</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">200_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monte-Carlo squared Hellinger between the marginals of X.&quot;&quot;&quot;</span>
+    <span class="n">Xp</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">log_ratio</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">Xp</span><span class="p">)</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">Xp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_ratio</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;joint    H²(nig→gh, gh) = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">squared_hellinger</span><span class="p">(</span><span class="n">nig_as_gh</span><span class="p">,</span><span class="w"> </span><span class="n">gh_fit</span><span class="p">))</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;marginal H²(nig,    gh) = </span><span class="si">{</span><span class="n">marginal_h2_mc</span><span class="p">(</span><span class="n">nig_fit</span><span class="p">,</span><span class="w"> </span><span class="n">gh_fit</span><span class="p">)</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">  (Monte Carlo)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>joint    H²(nig→gh, gh) = 0.00139
+marginal H²(nig,    gh) = 0.00000  (Monte Carlo)
+</pre></div>
+</div>
+</div>
+</div>
+<p>The lesson: the closed-form <code class="docutils literal notranslate"><span class="pre">squared_hellinger</span></code> is the right tool for comparing
+models <strong>of the same parametric form</strong> — an estimate vs its target, or two
+members embedded in the GH family via <code class="docutils literal notranslate"><span class="pre">to_generalized_hyperbolic</span></code> — where it is
+exact and cheap. Just remember it measures the joint <span class="math notranslate nohighlight">\((X, Y)\)</span> law: the bound is
+tight when the models nearly agree (as here) but can be loose when their latent
+subordinator parametrizations differ markedly. For ranking <em>different</em> families
+purely as fits to data — where only the marginal law of <span class="math notranslate nohighlight">\(X\)</span> matters — prefer
+out-of-sample log-likelihood (see <a class="reference internal" href="../finance/01_univariate_index.html"><span class="doc">A heavy-tailed index series</span></a>) or the
+Monte-Carlo marginal Hellinger above.</p>
 </section>
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">#</a></h2>
@@ -589,8 +661,10 @@ parametric rate.</p>
 is an asymmetric divergence — both closed-form for exponential families.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">*_from_psi</span></code> functional core takes <span class="math notranslate nohighlight">\(\psi\)</span> and natural-parameter vectors,
 is differentiable, and underlies the convenience API.</p></li>
-<li><p><span class="math notranslate nohighlight">\(H^2\)</span> to a reference model is a clean diagnostic for estimation error and
-model comparison.</p></li>
+<li><p>For mixtures the convenience functions use the <strong>joint</strong> <span class="math notranslate nohighlight">\((X, Y)\)</span> law — an
+upper bound on the marginal distance. Use <code class="docutils literal notranslate"><span class="pre">to_generalized_hyperbolic</span></code> to place
+NIG/VG/NInvG in a shared family, and prefer out-of-sample log-likelihood (or a
+Monte-Carlo marginal Hellinger) when ranking different families on data.</p></li>
 </ul>
 <p>Next: <a class="reference internal" href="02_goodness_of_fit.html"><span class="doc">Goodness of fit</span></a> turns to per-sample diagnostics — QQ plots,
 CDF overlays, and KS tests — on synthetic and real data.</p>
@@ -647,6 +721,7 @@ CDF overlays, and KS tests — on synthetic and real data.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-and-kl-on-distributions">Hellinger and KL on distributions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-functional-from-psi-core">The functional <code class="docutils literal notranslate"><span class="pre">*_from_psi</span></code> core</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-as-estimation-error">Hellinger as estimation error</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparing-across-the-gh-family">Comparing across the GH family</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#takeaways">Takeaways</a></li>
 </ul>
   </nav></div>
