@@ -72,7 +72,7 @@ body,
   color: var(--normix-ink) !important;
   font-family: var(--normix-serif);
   font-size: 17px;
-  line-height: 1.55;
+  line-height: 1.58;
   letter-spacing: 0;
   font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
@@ -192,6 +192,42 @@ article.bd-article {
   letter-spacing: 0 !important;
 }
 
+.bd-content h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.12;
+  margin-bottom: 1.2rem;
+}
+
+/* Permalink anchors: hidden until hover (incerto / Kami reading surface) */
+.bd-content h1 a.headerlink,
+.bd-content h2 a.headerlink,
+.bd-content h3 a.headerlink,
+.bd-content h4 a.headerlink,
+.bd-content h5 a.headerlink,
+.bd-content h6 a.headerlink {
+  color: var(--normix-muted) !important;
+  opacity: 0;
+  visibility: hidden;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.bd-content h1:hover a.headerlink,
+.bd-content h2:hover a.headerlink,
+.bd-content h3:hover a.headerlink,
+.bd-content h4:hover a.headerlink,
+.bd-content h5:hover a.headerlink,
+.bd-content h6:hover a.headerlink,
+.bd-content h1 a.headerlink:focus-visible,
+.bd-content h2 a.headerlink:focus-visible,
+.bd-content h3 a.headerlink:focus-visible,
+.bd-content h4 a.headerlink:focus-visible,
+.bd-content h5 a.headerlink:focus-visible,
+.bd-content h6 a.headerlink:focus-visible {
+  opacity: 0.5;
+  visibility: visible;
+}
+
 .bd-content h2 {
   margin-top: 2.2rem;
   padding-top: 0.2rem;
@@ -213,11 +249,13 @@ article.bd-article {
 /* Right TOC */
 .bd-sidebar-secondary {
   color: var(--normix-muted);
+  font-family: var(--normix-serif);
   font-size: 0.9rem;
 }
 
 .bd-sidebar-secondary .nav-link {
   color: var(--normix-muted);
+  text-decoration: none;
 }
 
 .bd-sidebar-secondary .nav-link.active,
@@ -329,14 +367,28 @@ pre {
   font-family: var(--normix-mono) !important;
 }
 
+/* Inline code — Sphinx nests <code class="literal"><span class="pre">text</span></code>
+   and pydata-sphinx-theme also styles code.literal. Box only the outer <code>. */
 .bd-content :not(pre) > code,
 .bd-content code.literal,
-.bd-content span.pre {
+.bd-content a > code {
   padding: 0.08em 0.28em;
-  color: var(--normix-ink);
-  background: var(--normix-code-surface);
-  border: 1px solid var(--normix-rule);
+  color: var(--normix-ink) !important;
+  background: var(--normix-code-surface) !important;
+  border: 1px solid var(--normix-rule) !important;
   border-radius: 4px;
+  box-shadow: none !important;
+}
+
+.bd-content :not(pre) > code > span.pre,
+.bd-content code.literal > span.pre,
+.bd-content a > code > span.pre {
+  padding: 0;
+  color: inherit;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Static code blocks: box on the Pygments .highlight container. Inner <pre> stays
