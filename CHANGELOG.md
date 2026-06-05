@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.5](https://github.com/xshi19/normix/compare/v0.2.4...v0.2.5) (2026-06-03)
+
+
+### Bug Fixes
+
+* **docs:** remove nested box around code cells ([#42](https://github.com/xshi19/normix/issues/42)) ([6426e30](https://github.com/xshi19/normix/commit/6426e301c2125b6894c69125ef7de1e13c179a04))
+
+
+### Documentation
+
+* address Phase 3 review (DJ30, VG NaN repro, cross-family divergences) ([#41](https://github.com/xshi19/normix/issues/41)) ([a1c3779](https://github.com/xshi19/normix/commit/a1c37799f967312ebb6260ac68ed4e4055cc860d))
+* author Phase 3 tutorial tree and site navigation ([#39](https://github.com/xshi19/normix/issues/39)) ([d637e7a](https://github.com/xshi19/normix/commit/d637e7a3f31a1f37f2fae79ecef74cd5d245535a))
+
 ## [0.2.4](https://github.com/xshi19/normix/compare/v0.2.3...v0.2.4) (2026-05-28)
 
 
