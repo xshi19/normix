@@ -339,10 +339,9 @@ pre {
   border-radius: 4px;
 }
 
-/* The box lives on the Pygments .highlight container only. The inner <pre>
-   stays transparent/borderless so we never get a box-in-a-box. Bare <pre>
-   blocks (cell outputs, doctests) that have no .highlight wrapper get their
-   own single box via the :not() rule below. */
+/* Static code blocks: box on the Pygments .highlight container. Inner <pre> stays
+   flat so div.highlight > pre never doubles the frame. Bare <pre> (doctests,
+   outputs without Pygments) get their own box via :not(). */
 div.highlight,
 .bd-content pre:not(div.highlight pre) {
   background: var(--normix-code-surface) !important;
@@ -362,8 +361,32 @@ div.highlight > pre,
   color: var(--normix-ink) !important;
 }
 
-/* myst-nb code cells */
-div.cell_input div.highlight,
+/* myst-nb input cells: myst-nb wraps source in div.cell_input (border + margin).
+   Flatten the inner .highlight so we get one box, not two. */
+div.cell > div.cell_input {
+  background: var(--normix-code-surface) !important;
+  border: 1px solid var(--normix-rule) !important;
+  border-left: 3px solid var(--normix-accent) !important;
+  border-radius: 6px !important;
+}
+
+div.cell_input div.highlight {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+div.cell_input div.highlight > pre {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* myst-nb output cells: no outer wrapper box when .highlight is present, so keep
+   the .highlight frame from the rules above. */
 div.cell_output div.highlight {
   margin: 0.5rem 0;
 }
