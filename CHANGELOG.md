@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/xshi19/normix/compare/v0.2.5...v0.2.6) (2026-06-05)
+
+
+### Bug Fixes
+
+* **docs:** flatten myst-nb cell_input inner highlight box ([#43](https://github.com/xshi19/normix/issues/43)) ([8f522f1](https://github.com/xshi19/normix/commit/8f522f1613328c275bd1a6b16f20c3139d6ca501))
+
 ## [0.2.5](https://github.com/xshi19/normix/compare/v0.2.4...v0.2.5) (2026-06-03)
 
 
