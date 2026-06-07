@@ -3,6 +3,10 @@
 **Date:** 2026-05-31
 **Repro:** `variance_gamma_em_nan.py` (marimo) — run with
 `uv run marimo edit dev-notes/investigations/variance_gamma_em_nan.py`.
+**Full analysis & fix:** the math (VG vs GH E-step/M-step, exact thresholds, the
+`b_post` floor) is in
+[`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md).
+**Status: fixed** — the E-step now floors `b_post` at `B_POST_FLOOR` (see Mitigations).
 
 ## Problem statement
 
@@ -47,16 +51,27 @@ So this is **not** a "light tails" problem. If anything α < 1 makes the VG
 and reach a comparable log-likelihood (≈ 3.18–3.21); their subordinators
 (Inverse Gaussian / GIG) do not have the same α ≤ 1 inverse-moment singularity.
 
+> **Precise mechanism (see the tech note).** The failing object is the
+> *posterior* $E[1/Y\mid x]$ from the GIG E-step, not the prior moment
+> $\beta/(\alpha-1)$ quoted above. Its divergence threshold is
+> $\alpha \le d/2 + 1$ (i.e. $\alpha \le 1.5$ for $d=1$), reached before the
+> density itself becomes singular at $\alpha \le d/2$. The root cause is that VG
+> is the GH limit $b\to 0$: the posterior carries $b_{\text{post}} = q(x) =
+> (x-\mu)^\top\Sigma^{-1}(x-\mu)$, which $\to 0$ at the mode, whereas GH / NIG /
+> NInvG keep $b_{\text{post}} = b + q(x) \ge b > 0$.
+
 ## Mitigations
 
 - **Practical (today):** stop earlier — the likelihood is flat by iteration ~16,
   so a tighter `tol` or smaller `max_iter` returns the good finite iterate. Or
   use NIG/GH on strongly heavy-tailed data.
-- **Library fix (proposed):** guard the VG covariance M-step against the
-  degenerate mixing regime — floor the Gamma shape at α > 1 during the update, or
-  clamp the posterior $E[1/Y \mid x]$ weights — so the fit stalls at the
-  converged iterate instead of emitting `nan`. Owner: `em` / `variance_gamma`
-  path; not yet implemented.
+- **Library fix (implemented):** the shared E-step floors the posterior GIG
+  scale $b_{\text{post}} = b + q(x)$ at `B_POST_FLOOR` $= 10^{-6}$
+  (`normix/utils/constants.py`), which bounds $E[1/Y\mid x]$ near the mode. This
+  is applied uniformly for all families; it only binds for VG (prior $b=0$) and
+  is dormant for GH / NIG / NInvG (prior $b>0$). Rationale, the $\omega$-vs-$b$
+  trade-off, and why the classical single-E/single-M structure is kept (no extra
+  E-step) are in the tech note.
 
 ## Impact on docs
 

@@ -26,7 +26,7 @@ import jax
 import jax.numpy as jnp
 
 
-from normix.utils.constants import SIGMA_INIT_REG
+from normix.utils.constants import B_POST_FLOOR, SIGMA_INIT_REG
 from normix.utils.rvs import build_pinv_table
 
 
@@ -336,6 +336,7 @@ class NormalMixture(MarginalMixture):
         z2_all, w2_all = jax.vmap(_quad_scalars)(X)
 
         p_post, a_post, b_post = j._posterior_gig_params(z2_all, w2_all)
+        b_post = jnp.maximum(b_post, B_POST_FLOOR)
 
         eta = GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
 

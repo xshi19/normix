@@ -11,7 +11,7 @@ Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\S
 """
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Tuple
 
 import jax
 import jax.numpy as jnp
@@ -46,38 +46,23 @@ class JointVarianceGamma(JointNormalMixture):
         from normix.distributions.gamma import Gamma
         return Gamma(alpha=self.alpha, beta=self.beta)
 
-    def _compute_posterior_expectations(
-        self, x: jax.Array
-    ) -> Dict[str, jax.Array]:
-        r"""
-        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
+    def _posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array
+    ):
+        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
 
         .. math::
 
             p_{\mathrm{post}} = \alpha - d/2, \quad
             a_{\mathrm{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma, \quad
             b_{\mathrm{post}} = (x-\mu)^\top\Sigma^{-1}(x-\mu)
+
+        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
+        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The Gamma limit (:math:`b=0`)
+        leaves :math:`b_{\mathrm{post}} = z_2`, which the E-step floors at
+        :data:`~normix.utils.constants.B_POST_FLOOR` to bound :math:`E[1/Y\mid x]`
+        near the mode.
         """
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        d = self.d
-        z, w, z2, w2, zw = self._quad_forms(x)
-
-        p_post = self.alpha - d / 2.0
-        a_post = 2.0 * self.beta + w2
-        b_post = z2
-
-        gig = GIG(p=p_post, a=a_post, b=b_post)
-        eta = gig.expectation_params()
-        return {
-            'E_log_Y': eta[0],
-            'E_inv_Y': eta[1],
-            'E_Y': eta[2],
-        }
-
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        """Posterior GIG (p, a, b) given quad-form scalars."""
         return (self.alpha - self.d / 2.0,
                 2.0 * self.beta + w2,
                 z2)
