@@ -45,7 +45,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
 from normix.mixtures.marginal import MarginalMixture
-from normix.utils.constants import D_FLOOR, SIGMA_INIT_REG
+from normix.utils.constants import B_POST_FLOOR, D_FLOOR, SIGMA_INIT_REG
 
 
 # ============================================================================
@@ -262,6 +262,7 @@ class FactorNormalMixture(MarginalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
         z2, w2, _zw = self._quad_forms(x)
         p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
+        b_post = jnp.maximum(b_post, B_POST_FLOOR)
         gig = GIG(p=p_post, a=a_post, b=b_post)
         eta = gig.expectation_params()
         return eta[0], eta[1], eta[2]
@@ -309,7 +310,7 @@ class FactorNormalMixture(MarginalMixture):
         n = X.shape[0]
         p_post = jnp.broadcast_to(p_post, (n,))
         a_post = jnp.broadcast_to(a_post, (n,))
-        b_post = jnp.broadcast_to(b_post, (n,))
+        b_post = jnp.maximum(jnp.broadcast_to(b_post, (n,)), B_POST_FLOOR)
         eta = GIG.expectation_params_batch(
             p_post, a_post, b_post, backend='cpu')
         return eta[:, 0], eta[:, 1], eta[:, 2]

@@ -220,6 +220,64 @@ class TestConditionalExpectationsVG:
 
 
 # ============================================================
+# Inverse-moment singularity / overflow fix
+# ============================================================
+
+class TestInverseMomentSingularityVG:
+    r"""Regression tests for the E[1/Y|x] overflow.
+
+    For VG the posterior scale is b_post = (x-mu)^T Sigma^{-1} (x-mu), which
+    -> 0 for observations at the mode. When alpha <= d/2 + 1 the conditional
+    inverse moment E[1/Y|x] diverges there and the covariance M-step overflows
+    to nan. The E-step floors b_post at B_POST_FLOOR to keep it finite.
+    See dev-notes/tech_notes/vg_em_inverse_moment_singularity.md.
+    """
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_estep_finite_at_mode_small_alpha(self, backend):
+        # alpha = 0.7 < d/2 + 1 = 1.5 (d=1): without the floor, the exact-mode
+        # observation x = mu gives b_post = 0 and E[1/Y|x] = inf.
+        vg = VarianceGamma.from_classical(
+            mu=jnp.array([0.3]), gamma=jnp.array([0.5]),
+            sigma=jnp.array([[2.0]]), alpha=0.7, beta=1.0,
+        )
+        X = jnp.array([[0.3], [0.3 + 1e-9], [1.0], [-0.5]])  # first two near/at mode
+        eta = vg.e_step(X, backend=backend)
+        for leaf in jax.tree_util.tree_leaves(eta):
+            assert jnp.all(jnp.isfinite(leaf))
+
+    def test_conditional_expectations_finite_at_mode(self):
+        # x = mu exactly, symmetric, small alpha.
+        vg = VarianceGamma.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.0]),
+            sigma=jnp.array([[1.0]]), alpha=0.6, beta=1.0,
+        )
+        cond = vg._joint.conditional_expectations(jnp.array([0.0]))
+        assert np.isfinite(float(cond['E_inv_Y'])) and float(cond['E_inv_Y']) > 0
+        assert np.isfinite(float(cond['E_Y'])) and float(cond['E_Y']) > 0
+        assert np.isfinite(float(cond['E_log_Y']))
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_em_no_overflow_heavy_peaked(self, backend):
+        # Heavy-peaked data from a small-alpha VG drives the EM into the
+        # alpha < 1.5 regime where E[1/Y|x] previously overflowed to nan.
+        vg_true = VarianceGamma.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
+            sigma=jnp.array([[1.0]]), alpha=0.7, beta=1.0,
+        )
+        X = vg_true.rvs(3000, seed=0).reshape(-1, 1)
+        # Guarantee a near-mode observation is present throughout EM.
+        X = jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+        res = VarianceGamma.default_init(X).fit(
+            X, max_iter=100, tol=1e-4, e_step_backend=backend, verbose=1)
+        assert res.log_likelihoods is not None
+        assert jnp.all(jnp.isfinite(res.log_likelihoods))
+        j = res.model._joint
+        for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
+            assert jnp.all(jnp.isfinite(leaf))
+
+
+# ============================================================
 # Edge Cases
 # ============================================================
 

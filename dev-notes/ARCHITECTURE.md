@@ -184,7 +184,7 @@ The model knows math; the fitter knows iteration (following GMMX).
   - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
   - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
   - Returns a `NormalMixtureEta` pytree (6 aggregated expectation fields), not raw per-observation dicts.
-- **M-step**: `model.m_step(eta: NormalMixtureEta, **kwargs) -> NormalMixture` — full update from aggregated η. MCECM uses `m_step_normal(eta)` and `m_step_subordinator(eta, **kwargs)` separately.
+- **M-step**: `model.m_step(eta: NormalMixtureEta, **kwargs) -> NormalMixture` — full update from aggregated η. MCECM uses `m_step_normal(eta)` and `m_step_subordinator(eta, **kwargs)` separately. The closed-form `μ, γ, Σ` update uses `E[1/Y|x]`, which diverges for near-mode observations when the subordinator has `b=0` (VG only); the E-step floors `b_post` at `B_POST_FLOOR` to bound it. See `tech_notes/vg_em_inverse_moment_singularity.md`.
 - **`compute_eta_from_model() -> NormalMixtureEta`**: reconstruct η from model parameters (initialises incremental EM running average).
 - **Batch fitter**: `BatchEMFitter` is a plain Python class (not an `eqx.Module`). Its `fit(model, X)` returns **`EMResult`**: fitted `model`, optional per-iteration log-likelihoods, `param_changes` (max relative change in normal parameters μ, γ, `L_Sigma` — GIG/subordinator excluded), `n_iter`, `converged`, `elapsed_time`. Optional `eta_update` rule enables penalised / shrinkage batch EM.
 - **Incremental fitter**: `IncrementalEMFitter` processes data in random mini-batches with a pluggable `EtaUpdateRule` (Robbins-Monro, EWMA, sample-weighted, shrinkage, etc.). With both E- and M-step backends set to `'jax'` and `verbose==0`, the outer minibatch iterations run inside `jax.lax.scan` (nested `jax.lax.fori_loop` when `inner_iter>1`) so the algorithm body traces once; verbose output or CPU backends keep a Python loop using the same pre-stacked RNG keys per step as before.
@@ -246,6 +246,7 @@ from there. Never define magic numbers locally in distribution files.
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
+| `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step (bounds the conditional inverse moment near the mode; only binds for VG) |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
@@ -283,7 +284,7 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
 | `design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
 | `design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
-| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions |
+| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity |
 | `docs/theory/` | Mathematical derivations (`.rst`) |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `plans/finance_architecture.md` | `normix.finance` roadmap; Phase D implemented (projection + CVaR), Phases E and F still proposed |

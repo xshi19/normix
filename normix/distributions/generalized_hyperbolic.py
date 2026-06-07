@@ -25,7 +25,7 @@ b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 """
 from __future__ import annotations
 
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import equinox as eqx
 import jax
@@ -75,34 +75,22 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(p=self.p, a=self.a, b=self.b)
 
-    def _compute_posterior_expectations(
-        self, x: jax.Array
-    ) -> Dict[str, jax.Array]:
-        r"""
-        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p-d/2,\;
-        a+\gamma^\top\Sigma^{-1}\gamma,\;
-        b+(x-\mu)^\top\Sigma^{-1}(x-\mu))`.
-        """
-        from normix.distributions.generalized_inverse_gaussian import GIG
-
-        d = self.d
-        z, w, z2, w2, zw = self._quad_forms(x)
-        p_post = self.p - d / 2.0
-        a_post = self.a + w2
-        b_post = self.b + z2
-
-        gig = GIG(p=p_post, a=a_post, b=b_post)
-        eta = gig.expectation_params()
-        return {
-            'E_log_Y': eta[0],
-            'E_inv_Y': eta[1],
-            'E_Y': eta[2],
-        }
-
     def _posterior_gig_params(
         self, z2: jax.Array, w2: jax.Array
     ):
-        r"""Posterior GIG :math:`(p, a, b)` given quad-form scalars :math:`z_2=\|L^{-1}(x-\mu)\|^2`, :math:`w_2=\|L^{-1}\gamma\|^2`."""
+        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
+
+        .. math::
+
+            p_{\mathrm{post}} = p - d/2, \quad
+            a_{\mathrm{post}} = a + \gamma^\top\Sigma^{-1}\gamma, \quad
+            b_{\mathrm{post}} = b + (x-\mu)^\top\Sigma^{-1}(x-\mu)
+
+        from quad-form scalars :math:`z_2 = \|L^{-1}(x-\mu)\|^2`,
+        :math:`w_2 = \|L^{-1}\gamma\|^2`. With :math:`b > 0` the posterior scale
+        :math:`b_{\mathrm{post}} \ge b` is already bounded away from zero, so the
+        E-step's :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.
+        """
         return (self.p - self.d / 2.0,
                 self.a + w2,
                 self.b + z2)

@@ -80,7 +80,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily
 
 
-from normix.utils.constants import LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
+from normix.utils.constants import B_POST_FLOOR, LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
 
 
 class JointNormalMixture(ExponentialFamily):
@@ -195,26 +195,52 @@ class JointNormalMixture(ExponentialFamily):
 
     def conditional_expectations(self, x: jax.Array) -> Dict[str, jax.Array]:
         r"""
-        Compute :math:`E[g(Y)\mid X=x]` for EM E-step.
+        Compute :math:`E[g(Y)\mid X=x]` for the EM E-step.
 
-        The posterior :math:`Y\mid X` follows a GIG-like distribution:
+        The posterior :math:`Y\mid X=x` is
 
         .. math::
 
-            p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad
-            a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad
-            b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)
+            \mathrm{GIG}\!\left(p - \tfrac{d}{2},\;
+            a + \gamma^\top\Sigma^{-1}\gamma,\;
+            b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),
 
-        Returns dict with keys: ``E_log_Y``, ``E_inv_Y``, ``E_Y``.
+        with the family-specific prior :math:`(p, a, b)` resolved by
+        :meth:`_posterior_gig_params`. Returns a dict with keys
+        ``E_log_Y``, ``E_inv_Y``, ``E_Y``.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
         return self._compute_posterior_expectations(x)
 
-    @abc.abstractmethod
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        """Implemented by each concrete subclass."""
+        r"""Posterior :math:`(E[\log Y], E[1/Y], E[Y]\mid x)` via the GIG moments.
+
+        The posterior scale :math:`b_{\mathrm{post}} = b +
+        (x-\mu)^\top\Sigma^{-1}(x-\mu)` is floored at
+        :data:`~normix.utils.constants.B_POST_FLOOR`, which bounds
+        :math:`E[1/Y\mid x]` for observations near the mode. The floor only
+        binds for VG (prior :math:`b=0`); see
+        ``dev-notes/tech_notes/vg_em_inverse_moment_singularity.md``.
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        _z, _w, z2, w2, _zw = self._quad_forms(x)
+        p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
+        b_post = jnp.maximum(b_post, B_POST_FLOOR)
+        eta = GIG(p=p_post, a=a_post, b=b_post).expectation_params()
+        return {'E_log_Y': eta[0], 'E_inv_Y': eta[1], 'E_Y': eta[2]}
+
+    @abc.abstractmethod
+    def _posterior_gig_params(self, z2: jax.Array, w2: jax.Array):
+        r"""Family-specific prior-to-posterior GIG map.
+
+        Returns :math:`(p_{\mathrm{post}}, a_{\mathrm{post}},
+        b_{\mathrm{post}})` from quad-form scalars
+        :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)` and
+        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The :math:`b_{\mathrm{post}}`
+        floor is applied by the caller, not here.
+        """
 
     # ------------------------------------------------------------------
     # Helper: solve Cholesky-based quantities

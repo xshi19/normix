@@ -10,7 +10,7 @@ Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\S
 """
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Tuple
 
 import jax
 import jax.numpy as jnp
@@ -46,41 +46,21 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.inverse_gaussian import InverseGaussian
         return InverseGaussian(mu=self.mu_ig, lam=self.lam)
 
-    def _compute_posterior_expectations(
-        self, x: jax.Array
-    ) -> Dict[str, jax.Array]:
-        r"""
-        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
+    def _posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array
+    ):
+        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
 
         .. math::
 
             a_{\mathrm{post}} = \lambda/\mu_{IG}^2 + \gamma^\top\Sigma^{-1}\gamma, \quad
             b_{\mathrm{post}} = \lambda + (x-\mu)^\top\Sigma^{-1}(x-\mu)
+
+        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
+        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The IG limit keeps
+        :math:`b_{\mathrm{post}} \ge \lambda > 0`, so the E-step's
+        :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.
         """
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        d = self.d
-        z, w, z2, w2, zw = self._quad_forms(x)
-
-        # GIG params from IG subordinator
-        a_ig = self.lam / (self.mu_ig**2)
-        b_ig = self.lam
-
-        p_post = -0.5 - d / 2.0
-        a_post = a_ig + w2
-        b_post = b_ig + z2
-
-        gig = GIG(p=p_post, a=a_post, b=b_post)
-        eta = gig.expectation_params()
-        return {
-            'E_log_Y': eta[0],
-            'E_inv_Y': eta[1],
-            'E_Y': eta[2],
-        }
-
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        """Posterior GIG (p, a, b) given quad-form scalars."""
         a_ig = self.lam / (self.mu_ig ** 2)
         return (-0.5 - self.d / 2.0,
                 a_ig + w2,
