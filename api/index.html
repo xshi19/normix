@@ -2519,13 +2519,15 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.conditional_expectations">
 <span class="sig-name descname"><span class="pre">conditional_expectations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.conditional_expectations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="Link to this definition">#</a></dt>
-<dd><p>Compute <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x]\)</span> for EM E-step.</p>
-<p>The posterior <span class="math notranslate nohighlight">\(Y\mid X\)</span> follows a GIG-like distribution:</p>
+<dd><p>Compute <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x]\)</span> for the EM E-step.</p>
+<p>The posterior <span class="math notranslate nohighlight">\(Y\mid X=x\)</span> is</p>
 <div class="math notranslate nohighlight">
-\[p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad
-a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad
-b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)\]</div>
-<p>Returns dict with keys: <code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>.</p>
+\[\mathrm{GIG}\!\left(p - \tfrac{d}{2},\;
+a + \gamma^\top\Sigma^{-1}\gamma,\;
+b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),\]</div>
+<p>with the family-specific prior <span class="math notranslate nohighlight">\((p, a, b)\)</span> resolved by
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>. Returns a dict with keys
+<code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

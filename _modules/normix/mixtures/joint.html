@@ -439,7 +439,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">SAFE_DENOMINATOR</span><span class="p">,</span> <span class="n">SIGMA_REG</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">B_POST_FLOOR</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">SAFE_DENOMINATOR</span><span class="p">,</span> <span class="n">SIGMA_REG</span>
 
 
 <div class="viewcode-block" id="JointNormalMixture">
@@ -573,27 +573,53 @@
 <a class="viewcode-back" href="../../../api/index.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">conditional_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute :math:`E[g(Y)\mid X=x]` for EM E-step.</span>
+<span class="sd">        Compute :math:`E[g(Y)\mid X=x]` for the EM E-step.</span>
 
-<span class="sd">        The posterior :math:`Y\mid X` follows a GIG-like distribution:</span>
+<span class="sd">        The posterior :math:`Y\mid X=x` is</span>
 
 <span class="sd">        .. math::</span>
 
-<span class="sd">            p_{\mathrm{post}} = p_{\mathrm{eff}} - d/2, \quad</span>
-<span class="sd">            a_{\mathrm{post}} = a_{\mathrm{eff}} + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
-<span class="sd">            b_{\mathrm{post}} = b_{\mathrm{eff}} + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
+<span class="sd">            \mathrm{GIG}\!\left(p - \tfrac{d}{2},\;</span>
+<span class="sd">            a + \gamma^\top\Sigma^{-1}\gamma,\;</span>
+<span class="sd">            b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),</span>
 
-<span class="sd">        Returns dict with keys: ``E_log_Y``, ``E_inv_Y``, ``E_Y``.</span>
+<span class="sd">        with the family-specific prior :math:`(p, a, b)` resolved by</span>
+<span class="sd">        :meth:`_posterior_gig_params`. Returns a dict with keys</span>
+<span class="sd">        ``E_log_Y``, ``E_inv_Y``, ``E_Y``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_posterior_expectations</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
 
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Implemented by each concrete subclass.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Posterior :math:`(E[\log Y], E[1/Y], E[Y]\mid x)` via the GIG moments.</span>
+
+<span class="sd">        The posterior scale :math:`b_{\mathrm{post}} = b +</span>
+<span class="sd">        (x-\mu)^\top\Sigma^{-1}(x-\mu)` is floored at</span>
+<span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR`, which bounds</span>
+<span class="sd">        :math:`E[1/Y\mid x]` for observations near the mode. The floor only</span>
+<span class="sd">        binds for VG (prior :math:`b=0`); see</span>
+<span class="sd">        ``dev-notes/tech_notes/vg_em_inverse_moment_singularity.md``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="n">_z</span><span class="p">,</span> <span class="n">_w</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">_zw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior_gig_params</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+        <span class="n">b_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b_post</span><span class="p">,</span> <span class="n">B_POST_FLOOR</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_post</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_post</span><span class="p">)</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Family-specific prior-to-posterior GIG map.</span>
+
+<span class="sd">        Returns :math:`(p_{\mathrm{post}}, a_{\mathrm{post}},</span>
+<span class="sd">        b_{\mathrm{post}})` from quad-form scalars</span>
+<span class="sd">        :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)` and</span>
+<span class="sd">        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The :math:`b_{\mathrm{post}}`</span>
+<span class="sd">        floor is applied by the caller, not here.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Helper: solve Cholesky-based quantities</span>

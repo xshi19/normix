@@ -369,7 +369,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -410,41 +410,21 @@
         <span class="k">return</span> <span class="n">InverseGaussian</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_posterior_expectations</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
 
 <span class="sd">        .. math::</span>
 
 <span class="sd">            a_{\mathrm{post}} = \lambda/\mu_{IG}^2 + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
 <span class="sd">            b_{\mathrm{post}} = \lambda + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
+
+<span class="sd">        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,</span>
+<span class="sd">        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The IG limit keeps</span>
+<span class="sd">        :math:`b_{\mathrm{post}} \ge \lambda &gt; 0`, so the E-step&#39;s</span>
+<span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
-        <span class="n">z</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-
-        <span class="c1"># GIG params from IG subordinator</span>
-        <span class="n">a_ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">b_ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span>
-
-        <span class="n">p_post</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
-        <span class="n">a_post</span> <span class="o">=</span> <span class="n">a_ig</span> <span class="o">+</span> <span class="n">w2</span>
-        <span class="n">b_post</span> <span class="o">=</span> <span class="n">b_ig</span> <span class="o">+</span> <span class="n">z2</span>
-
-        <span class="n">gig</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_post</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_post</span><span class="p">)</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-        <span class="p">}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Posterior GIG (p, a, b) given quad-form scalars.&quot;&quot;&quot;</span>
         <span class="n">a_ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
                 <span class="n">a_ig</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span>
