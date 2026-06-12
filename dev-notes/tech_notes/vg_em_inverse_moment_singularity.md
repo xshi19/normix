@@ -201,9 +201,19 @@ an unbounded spike; the remedy must *regularize*, not "fix arithmetic".
 **Match to the observed failure** (`investigations/variance_gamma_em_nan.md`):
 the run blew up at $\alpha\approx 0.69$ ($d=1$), which is $<1.5$ (deep in the
 $E[Y^{-1}\mid x]$-unbounded regime, so $\Sigma$ overflows) yet $>0.5$ (so the
-density and log-likelihood are still finite and improving). Numerically, at the
-exact mode ($q(x)=0$) with $\alpha=0.7,\,\beta=1$: $E[Y^{-1}\mid x]\approx 4.4\times10^{23}$;
-flooring $b_{\text{post}}$ at $10^{-6}$ brings it to $\approx 3.0\times10^{4}$.
+density and log-likelihood are still finite and improving). Numerically, with
+$\alpha=0.7,\,\beta=1$ the repro reported $E[Y^{-1}\mid x]\approx 4.4\times10^{23}$
+at the exact mode; flooring $b_{\text{post}}$ at $10^{-6}$ brings it to
+$\approx 3.0\times10^{4}$.
+
+> **Footnote (the $4.4\times10^{23}$ is a clamp artifact).** At exactly
+> $q(x)=0$ the true conditional moment is $+\infty$ ($\nu_\star=0.2<1$), so no
+> finite value can follow from $q=0$ literally. The finite number measures an
+> internal clamp: the JAX expectation path floors the GIG scale at
+> `LOG_EPS` $=10^{-30}$ before the Bessel calls, and
+> $E[Y^{-1}\mid x]\big|_{b=10^{-30}} = C\,(10^{-30})^{\nu_\star-1} \approx 4.4\times10^{23}$
+> reproduces the anecdote exactly (the CPU path's `TINY` $=10^{-300}$ would
+> give $4.4\times10^{239}$). The number characterizes the clamp, not the model.
 
 ---
 
@@ -222,7 +232,7 @@ This bounds the prefactor $\sqrt{a_{\text{post}}/b_{\text{post}}}\le\sqrt{a_{\te
 and the argument $\omega\ge\sqrt{a_{\text{post}}\,b_{\min}}$ together, so all three
 conditional moments stay finite for every observation, including $x=\mu$.
 
-### Why floor $b$ rather than $\omega$ — and the trade-off
+### Why floor $b$ rather than $\omega$
 
 Nitithumbundit & Chan (2015) floor the **argument** $\omega$ at a constant
 $\Delta$ (their "delta region": when $\omega = \sqrt{a_{\text{post}}\,q(x)}<\Delta$,
@@ -245,7 +255,11 @@ families.** Rationale:
 
 - *Simplicity.* A constant `jnp.maximum(b_post, B_POST_FLOOR)` needs no
   per-observation $a_{\text{post}}$ coupling and reads identically in every E-step
-  path. The NC $\omega$-floor is sharper in principle but buys little here.
+  path.
+- *Uniformity of the cap.* In the singular regime the $b$-floor caps
+  $E[Y^{-1}\mid x]$ uniformly in $a_{\text{post}}$ and only linearly in $d$;
+  the NC $\omega$-floor's cap grows linearly in $a_{\text{post}}$ (next
+  subsection).
 - *It coincides with GH's existing guard.* GH already keeps its prior $b$ away
   from zero (the GIG solve reverts $a,b$ below `GIG_CLAMP_LO = 1e-6`), so flooring
   $b_{\text{post}}$ at the same $10^{-6}$ extends one consistent rule —
@@ -254,14 +268,79 @@ families.** Rationale:
   is $\omega\ge\sqrt{1\cdot10^{-6}} = 10^{-3}$, squarely inside NC's recommended
   $\Delta\in[10^{-5},10^{-3}]$.
 
-**Trade-off to be aware of.** A constant $b$-floor gives an $a_{\text{post}}$-dependent
-$\omega$-floor, so the regularization strength is not perfectly uniform. The
-capped value behaves like $E[Y^{-1}\mid x]\lesssim C\,a_{\text{post}}^{\,p_{\text{post}}}\,b_{\min}^{\,p_{\text{post}}-1}$;
-for very negative $p_{\text{post}}$ (high $d$ with small $\alpha$) the cap grows
-($\sim 10^9$ at $d=1$; larger at high $d$). It is comfortably finite for the
-documented $d=1$ regime; if high-dimensional VG with $\alpha\to 0$ ever matters,
-switch to the NC $\omega$-floor ($b_{\text{post}}\ge\Delta^2/a_{\text{post}}$),
-which caps $E[Y^{-1}\mid x]$ uniformly in $a_{\text{post}}$.
+### How large can the capped moment get?
+
+With $b_{\text{post}}$ pinned at $b_{\min}$ and
+$\nu := p_{\text{post}} = \alpha - \tfrac d2$, the small-$z$ Bessel
+asymptotics of §5 give, as $\omega = \sqrt{a_{\text{post}}\,b_{\min}} \to 0$,
+
+$$
+E[Y^{-1}\mid x]\Big|_{b=b_{\min}} \;\sim\;
+\begin{cases}
+\dfrac{\Gamma(1-\nu)}{\Gamma(\nu)}\, 2^{1-2\nu}\,
+a_{\text{post}}^{\,\nu}\, b_{\min}^{\,\nu-1}, & 0<\nu<1,\\[2ex]
+\dfrac{2|\nu|}{b_{\min}} \;=\; \dfrac{d-2\alpha}{b_{\min}}, & \nu<0,
+\end{cases}
+$$
+
+with logarithmic corrections at the borderlines $\nu\in\{0,1\}$. For large
+$\omega$ (huge $a_{\text{post}}$; the Bessel ratio $\to 1$) the cap is
+$E[Y^{-1}\mid x] \approx \sqrt{a_{\text{post}}/b_{\min}}$. The worst case is
+therefore
+
+$$
+E[Y^{-1}\mid x] \;\lesssim\; \max\!\Big(\frac{d-2\alpha}{b_{\min}},\;
+\sqrt{\frac{a_{\text{post}}}{b_{\min}}}\Big)
+$$
+
+— **linear in $d$ and uniform in $a_{\text{post}}$** in the singular regime
+$\nu<0$. Even at $d=100,\ \alpha=0.5$ the cap is only
+$99/b_{\min} \approx 10^8$, comfortably inside float64 range. (An earlier
+revision of this note extrapolated the $0<\nu<1$ formula to $\nu<0$, predicted
+caps exploding with $|\nu|$, and recommended switching to the NC $\omega$-floor
+for high-dimensional VG; the case split above corrects both claims.)
+
+By contrast, the $\omega$-floor's induced bound
+$b_{\text{post}}\ge\Delta^2/a_{\text{post}}$ caps the moment at
+$2|\nu|\,a_{\text{post}}/\Delta^2$ in the same regime — **growing linearly in
+$a_{\text{post}}$** (large $\beta$, strong skewness $\tilde q$). The constant
+$b$-floor is the *more* uniform of the two regularizers; no high-$d$ escape
+hatch is needed.
+
+**Numerical verification** (scipy `kve`, $b_{\min}=10^{-6}$, $\Delta=10^{-3}$):
+
+| Case | Asymptotic above | Exact |
+|---|---|---|
+| $\nu=0.2,\ a_{\text{post}}=2$ ($d=1,\ \alpha=0.7$) | $2.79\times10^4$ | $2.99\times10^4$ |
+| $\nu=-0.5,\ a_{\text{post}}=2$ ($d=1,\ \alpha\to0$) | $2\lvert\nu\rvert/b_{\min}=10^6$ | $1.0\times10^6$ |
+| $\nu=-49.5,\ a_{\text{post}}=2$ ($d=100,\ \alpha=0.5$) | $99/b_{\min}=9.9\times10^7$ | $9.9\times10^7$ |
+| $a$-scaling, $\nu=-0.5$, $a_{\text{post}}\in[0.1,100]$ | — | $b$-floor cap $\approx10^6$ (flat); $\omega$-floor cap $10^5\to10^8$ |
+
+Repro:
+
+```python
+import numpy as np
+from scipy.special import kve
+
+E_inv_Y = lambda p, a, b: np.sqrt(a/b) * kve(p-1, np.sqrt(a*b)) / kve(p, np.sqrt(a*b))
+E_inv_Y(0.2, 2.0, 1e-6)    # b-floor cap, 0<nu<1     -> 2.99e4
+E_inv_Y(-0.5, 2.0, 1e-6)   # b-floor cap, nu<0       -> 1.0e6
+E_inv_Y(-0.5, 100.0, 1e-6) # uniform in a_post       -> 1.0e6
+E_inv_Y(-0.5, 100.0, 1e-6/100.0)  # omega-floor cap  -> 1.0e8
+```
+
+### Gauge dependence of $b_{\min}$
+
+$b_{\text{post}} = q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu)$ is not invariant
+under the model's scale gauge $Y \to sY$, $\gamma \to \gamma/s$,
+$\Sigma \to \Sigma/s$ (which leaves the marginal law of $X$ unchanged): under
+it $q(x) \to s\,q(x)$, so a fixed $b_{\min} = 10^{-6}$ binds with different
+strength depending on how the gauge is pinned. In particular,
+`regularization='det_sigma_one'` ($|\Sigma|=1$ after each M-step) and
+`'none'` ($\Sigma$ at the empirical scale) place the same data at different
+distances from the floor. The floor is a numerical guard, not a
+gauge-invariant model statement; fits that actually sit near the floor should
+be compared under a common gauge.
 
 ---
 
