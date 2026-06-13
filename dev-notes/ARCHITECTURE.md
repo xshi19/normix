@@ -247,6 +247,7 @@ from there. Never define magic numbers locally in distribution files.
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
 | `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step (bounds the conditional inverse moment near the mode; only binds for VG) |
+| `ALPHA_MOMENT_MARGIN` | `0.1` | Floor on the `(α−1)` denominator of the VG/NInvG prior moment `β/(α−1)` in `compute_eta_from_model` (keeps it finite and positive when `α ≤ 1`) |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |

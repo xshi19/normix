@@ -21,7 +21,7 @@ from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 from normix.utils.bessel import log_kv
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import ALPHA_MOMENT_MARGIN, LOG_EPS
 
 
 class JointVarianceGamma(JointNormalMixture):
@@ -207,9 +207,20 @@ class VarianceGamma(NormalMixture):
         return log_f
 
     def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
+        r"""Prior Gamma moments :math:`(E[\log Y], E[1/Y], E[Y])`.
+
+        :math:`E[\log Y] = \psi(\alpha) - \log\beta` and :math:`E[Y] = \alpha/\beta`
+        are exact and finite for all :math:`\alpha > 0`. The inverse moment
+        :math:`E[1/Y] = \beta/(\alpha-1)` diverges as :math:`\alpha \downarrow 1`
+        (and is *negative* for :math:`\alpha < 1`), so its denominator is floored
+        at :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` — a
+        distribution-specific regularisation that keeps it finite, positive, and
+        continuous without routing the well-conditioned moments through the GIG
+        Bessel path.
+        """
         j = self._joint
         E_log_Y = jax.scipy.special.digamma(j.alpha) - jnp.log(j.beta)
-        E_inv_Y = j.beta / (j.alpha - 1.0)
+        E_inv_Y = j.beta / jnp.maximum(j.alpha - 1.0, ALPHA_MOMENT_MARGIN)
         E_Y = j.alpha / j.beta
         return E_log_Y, E_inv_Y, E_Y
 
@@ -372,8 +383,9 @@ class FactorVarianceGamma(FactorNormalMixture):
                 z2)
 
     def _subordinator_expectations(self):
+        r"""Prior Gamma moments; see :meth:`VarianceGamma._subordinator_expectations`."""
         E_log_Y = jax.scipy.special.digamma(self.alpha) - jnp.log(self.beta)
-        E_inv_Y = self.beta / (self.alpha - 1.0)
+        E_inv_Y = self.beta / jnp.maximum(self.alpha - 1.0, ALPHA_MOMENT_MARGIN)
         E_Y = self.alpha / self.beta
         return E_log_Y, E_inv_Y, E_Y
 
