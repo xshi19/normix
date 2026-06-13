@@ -50,7 +50,7 @@ B_POST_FLOOR: float = 1e-6
 # Regularisation added to Σ in the M-step Cholesky factorisation
 SIGMA_REG: float = 1e-8
 
-# Floor for the denominator D = 1 − E[1/Y]·E[Y] in the M-step
+# Magnitude floor for D = 1 − E[1/Y]·E[Y] in the M-step (applied as −max(|D|, floor))
 SAFE_DENOMINATOR: float = 1e-10
 
 # Positivity floor for the diagonal D in the factor-analysis M-step

@@ -434,7 +434,9 @@ class JointNormalMixture(ExponentialFamily):
 
         D = 1.0 - eta.E_inv_Y * eta.E_Y
 
-        safe_D = jnp.where(jnp.abs(D) > SAFE_DENOMINATOR, D, SAFE_DENOMINATOR)
+        # Cauchy–Schwarz gives D <= 0 always; floor at -SAFE_DENOMINATOR so a
+        # tiny |D| (or roundoff D > 0) never flips the sign of mu, gamma.
+        safe_D = -jnp.maximum(jnp.abs(D), SAFE_DENOMINATOR)
 
         mu_new = (eta.E_X - eta.E_Y * eta.E_X_inv_Y) / safe_D
         gamma_new = (eta.E_X_inv_Y - eta.E_inv_Y * eta.E_X) / safe_D
