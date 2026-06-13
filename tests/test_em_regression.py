@@ -16,6 +16,8 @@ from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
+from normix.fitting.eta import NormalMixtureEta
+from normix.mixtures.joint import JointNormalMixture
 
 
 class TestVGEMRegression:
@@ -47,7 +49,7 @@ class TestVGEMRegression:
         L = np.array(fitted._joint.L_Sigma)
         Sigma = L @ L.T
         eigvals = np.linalg.eigvalsh(Sigma)
-        assert np.all(eigvals > 0), "Sigma not PD"
+        assert np.all(eigvals > 0)
 
 
 class TestNInvGEMRegression:
@@ -146,3 +148,69 @@ class TestGHEMRegression:
         Sigma = L @ L.T
         eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
+
+
+def _consistent_eta(mu_t, gam_t, eta2, D):
+    """Build eta so the exact M-step returns (mu_t, gam_t) for this D."""
+    eta3 = (1.0 - D) / eta2
+    eta5 = gam_t + eta2 * mu_t
+    eta4 = mu_t * D + eta3 * eta5
+    d = mu_t.shape[0]
+    return NormalMixtureEta(
+        E_inv_Y=jnp.asarray(eta2),
+        E_Y=jnp.asarray(eta3),
+        E_log_Y=jnp.asarray(0.0),
+        E_X=eta4,
+        E_X_inv_Y=eta5,
+        E_XXT_inv_Y=jnp.eye(d),
+    )
+
+
+class TestMstepDenominatorSign:
+    """B1: sign-preserving M-step denominator D = 1 - eta2*eta3."""
+
+    @pytest.mark.parametrize("D", [-1e-12, -5e-11])
+    def test_tiny_D_preserves_mu_gamma_sign(self, D):
+        mu_t = jnp.array([0.5, -1.0])
+        gam_t = jnp.array([2.0, 0.3])
+        eta2 = 1.3
+        ref = JointNormalMixture._mstep_normal_params(
+            _consistent_eta(mu_t, gam_t, eta2, -1e-8))
+        got = JointNormalMixture._mstep_normal_params(
+            _consistent_eta(mu_t, gam_t, eta2, D))
+        for a, b in zip(ref[:2], got[:2]):
+            assert np.all(np.sign(np.array(a)) == np.sign(np.array(b)))
+
+    def test_positive_D_roundoff_uses_negative_floor(self):
+        """Real e_step near the Gaussian limit can yield D > 0 from cancellation."""
+        key = jax.random.PRNGKey(7)
+        d, n = 2, 5000
+        mu_true = jnp.array([1.5, -0.7])
+        A = jax.random.normal(key, (d, d)) * 0.5
+        Sigma = A @ A.T + jnp.eye(d)
+        X = jax.random.multivariate_normal(
+            jax.random.PRNGKey(8), mu_true, Sigma, (n,))
+        model = VarianceGamma.from_classical(
+            mu=mu_true, gamma=jnp.array([0.01, -0.01]),
+            sigma=Sigma, alpha=1e9, beta=1e9)
+        eta = model.e_step(X, backend="jax")
+        D = float(1.0 - eta.E_inv_Y * eta.E_Y)
+        assert D > 0.0
+        mu, _, _ = JointNormalMixture._mstep_normal_params(eta)
+        # Pre-B1: +D in the denominator flipped mu[0] to negative (~-3.56).
+        assert float(mu[0]) * float(mu_true[0]) > 0
+
+    @pytest.mark.parametrize(
+        "cls",
+        [VarianceGamma, NormalInverseGamma, NormalInverseGaussian,
+         GeneralizedHyperbolic],
+    )
+    def test_e_step_batch_D_nonpositive(self, cls):
+        key = jax.random.PRNGKey(0)
+        d, n = 3, 1500
+        X = jax.random.multivariate_normal(
+            key, jnp.zeros(d), jnp.eye(d), (n,)) * 1.2 + 0.3
+        model = cls.default_init(X)
+        eta = model.e_step(X, backend="jax")
+        D = float(1.0 - eta.E_inv_Y * eta.E_Y)
+        assert D <= 1e-9
