@@ -1,10 +1,21 @@
 # EM Robustness Follow-Ups (post `b_post`-floor review)
 
 **Date:** 2026-06-10
-**Status:** Proposed. **B2 implemented** (2026-06-13) with the revised
-distribution-specific denominator-floor design in §3.2 — the original
-lifted-GIG `expectation_params` sketch was rejected; see §3.2 for the
-rationale. Remaining items not yet implemented.
+**Status:** In progress. **Phase 1 (docs) and Phase 2 bug fixes done:**
+- **M1, M2, D1** — tech-note §6 corrected (`fab19be`, PR #49): case split at
+  $\nu=0$, cap $(d-2\alpha)/b_{\min}$ linear in $d$ and uniform in
+  $a_{\text{post}}$, verification table + `kve` repro, NC $\omega$-floor
+  recommendation deleted, $4.4\times10^{23}$ footnoted as clamp-dependent, and
+  the F5 gauge note added.
+- **B1** — sign-preserving M-step denominator (`0d5ea29`, PR #50): floor at
+  $-\max(|D|, \texttt{SAFE\_DENOMINATOR})$ in `JointNormalMixture._mstep_normal_params`.
+- **B2** — distribution-specific $(\alpha-1)$ denominator floor for VG/NInvG
+  prior moments (`5fa19f7`, PR #51) with the revised design in §3.2 — the
+  original lifted-GIG `expectation_params` sketch was rejected; see §3.2.
+- **D2** — `normix/` docstring/comment `dev-notes/` cross-link violations fixed;
+  `scripts/check_doc_links.sh` green.
+
+Remaining items (R1–R3, F1–F5, the bulk of T1–T7, D3, D4) not yet implemented.
 **Origin:** post-merge review of the `b_post` floor fix
 (`5a0ecfb`, PR #45). The review verified the math of
 [`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md)
@@ -28,22 +39,23 @@ work for each.
 
 ## 1. Findings summary
 
-| ID | Type | Finding | Priority | Effort |
-|----|------|---------|----------|--------|
-| M1 | Math/doc error | Tech note §6 mis-derives the capped moment for $p_{\text{post}}<0$ and reverses the $b$-floor vs $\omega$-floor comparison. The adopted $b$-floor is actually the *more* uniform regularizer. | P1 | doc only |
-| M2 | Doc nit | §5's "$E[Y^{-1}\mid x]\approx 4.4\times10^{23}$ at the exact mode ($q(x)=0$)" cannot follow from $q=0$ literally; it reflects internal `TINY` clamps / float spacing in the repro. | P3 | doc only |
-| B1 | Bug | `JointNormalMixture._mstep_normal_params`: `safe_D` floors $D = 1-\eta_2\eta_3$ at $+10^{-10}$, but $D \le 0$ always (Cauchy–Schwarz), so the floor flips the sign of $\mu, \gamma$ in the near-Gaussian limit. | P1 | ~5 LOC |
-| B2 | Bug | `VarianceGamma._subordinator_expectations` returns $E[1/Y]=\beta/(\alpha-1)$, which is **negative** for $\alpha<1$ (true moment is $+\infty$); same for NInvG's $E[Y]$. Feeds `compute_eta_from_model` → incremental-EM warm starts and shrinkage. Now *more* reachable because the floored batch EM produces finite models with $\alpha<1$. Fix: distribution-specific denominator floor on the single divergent moment (keep the other two exact); **not** via `to_gig().expectation_params()`, which corrupts the exact moments — see §3.2. | P1 | ~15 LOC |
-| R1 | Refactor | `B_POST_FLOOR` is applied at four call sites (`joint.py`, `marginal.py` CPU, `factor.py` ×2). Collapse to one floored helper per hierarchy. | P2 | ~15 LOC |
-| R2 | Refactor | All eight `_posterior_gig_params` overrides (4 joint + 4 factor) are the same map in GIG coordinates: $(p_{\text{gig}}-\tfrac d2,\ a_{\text{gig}}+w_2,\ b_{\text{gig}}+z_2)$ of `subordinator().to_gig()`. Replace with one base implementation per hierarchy. | P2 | −80 LOC net |
-| R3 | Cleanup | `_PARAM_EPS = 1e-10` defined locally in `em.py` (violates the constants rule); dead `hasattr(j, '_posterior_gig_params')` guard in `NormalMixture._e_step_subordinator_cpu` (method is abstract on the base, always present). | P3 | ~10 LOC |
-| F1 | Framework | `BatchEMFitter` has no finite guard: a NaN iterate silently runs to `max_iter` and returns a NaN model (the original failure mode). Add fail-fast / keep-last-finite. | P1 | ~40 LOC |
-| F2 | Framework | `EMResult.log_likelihoods` is `None` unless `verbose ≥ 1` — diagnostics coupled to printing. Add `track_ll`. | P2 | ~30 LOC |
-| F3 | Framework | `self._target_log_det` set inside `fit` makes the fitter stateful / non-reentrant. Thread it through as a local. | P2 | ~15 LOC |
-| F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC |
-| F5 | Doc note | `B_POST_FLOOR` is not gauge-invariant: under the $Y \to sY$ rescale ($\Sigma \to \Sigma/s$), $b_{\text{post}} = q(x)$ scales with $s$, so a fixed $10^{-6}$ binds with different strength under `det_sigma_one` vs `none`. Document. | P3 | doc only |
-| T1–T6 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC |
-| D1–D3 | Docs | Tech note §6 rewrite; `joint.py` docstring cross-link violation; post-implementation design/architecture rows — see §5. | P1–P3 | doc only |
+| ID | Type | Finding | Priority | Effort | Status |
+|----|------|---------|----------|--------|--------|
+| M1 | Math/doc error | Tech note §6 mis-derives the capped moment for $p_{\text{post}}<0$ and reverses the $b$-floor vs $\omega$-floor comparison. The adopted $b$-floor is actually the *more* uniform regularizer. | P1 | doc only | ✅ `fab19be` |
+| M2 | Doc nit | §5's "$E[Y^{-1}\mid x]\approx 4.4\times10^{23}$ at the exact mode ($q(x)=0$)" cannot follow from $q=0$ literally; it reflects internal `TINY` clamps / float spacing in the repro. | P3 | doc only | ✅ `fab19be` |
+| B1 | Bug | `JointNormalMixture._mstep_normal_params`: `safe_D` floors $D = 1-\eta_2\eta_3$ at $+10^{-10}$, but $D \le 0$ always (Cauchy–Schwarz), so the floor flips the sign of $\mu, \gamma$ in the near-Gaussian limit. | P1 | ~5 LOC | ✅ `0d5ea29` |
+| B2 | Bug | `VarianceGamma._subordinator_expectations` returns $E[1/Y]=\beta/(\alpha-1)$, which is **negative** for $\alpha<1$ (true moment is $+\infty$); same for NInvG's $E[Y]$. Feeds `compute_eta_from_model` → incremental-EM warm starts and shrinkage. Now *more* reachable because the floored batch EM produces finite models with $\alpha<1$. Fix: distribution-specific denominator floor on the single divergent moment (keep the other two exact); **not** via `to_gig().expectation_params()`, which corrupts the exact moments — see §3.2. | P1 | ~15 LOC | ✅ `5fa19f7` |
+| R1 | Refactor | `B_POST_FLOOR` is applied at four call sites (`joint.py`, `marginal.py` CPU, `factor.py` ×2). Collapse to one floored helper per hierarchy. | P2 | ~15 LOC | ☐ todo |
+| R2 | Refactor | All eight `_posterior_gig_params` overrides (4 joint + 4 factor) are the same map in GIG coordinates: $(p_{\text{gig}}-\tfrac d2,\ a_{\text{gig}}+w_2,\ b_{\text{gig}}+z_2)$ of `subordinator().to_gig()`. Replace with one base implementation per hierarchy. | P2 | −80 LOC net | ☐ todo |
+| R3 | Cleanup | `_PARAM_EPS = 1e-10` defined locally in `em.py` (violates the constants rule); dead `hasattr(j, '_posterior_gig_params')` guard in `NormalMixture._e_step_subordinator_cpu` (method is abstract on the base, always present). | P3 | ~10 LOC | ☐ todo |
+| F1 | Framework | `BatchEMFitter` has no finite guard: a NaN iterate silently runs to `max_iter` and returns a NaN model (the original failure mode). Add fail-fast / keep-last-finite. | P1 | ~40 LOC | ☐ todo |
+| F2 | Framework | `EMResult.log_likelihoods` is `None` unless `verbose ≥ 1` — diagnostics coupled to printing. Add `track_ll`. | P2 | ~30 LOC | ☐ todo |
+| F3 | Framework | `self._target_log_det` set inside `fit` makes the fitter stateful / non-reentrant. Thread it through as a local. | P2 | ~15 LOC | ☐ todo |
+| F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC | ☐ todo |
+| F5 | Doc note | `B_POST_FLOOR` is not gauge-invariant: under the $Y \to sY$ rescale ($\Sigma \to \Sigma/s$), $b_{\text{post}} = q(x)$ scales with $s$, so a fixed $10^{-6}$ binds with different strength under `det_sigma_one` vs `none`. Document. | P3 | doc only | ✅ `fab19be` |
+| T1–T6 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ◐ partial (B1/B2 regressions landed) |
+| D1, D2 | Docs | Tech note §6 rewrite (D1); `joint.py`/`constants.py` cross-link violations (D2) — see §5. | P1 | doc only | ✅ `fab19be` (D1), this PR (D2) |
+| D3, D4 | Docs | Post-implementation design/architecture rows (D3); optional public EM paragraph (D4) — see §5. | P2–P3 | doc only | ☐ todo |
 
 ---
 
@@ -308,8 +320,8 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 
 | ID | File | Change |
 |----|------|--------|
-| D1 | `../tech_notes/vg_em_inverse_moment_singularity.md` | Rewrite the §6 "trade-off" paragraph with the corrected asymptotics of §2 above (case split at $\nu=0$, cap $(d-2\alpha)/b_{\min}$ linear in $d$, uniform in $a_{\text{post}}$); **delete** the "switch to the NC $\omega$-floor at high $d$" recommendation (it is the weaker floor for large $a_{\text{post}}$); add the verification table + `kve` repro snippet (M1). Footnote the $4.4\times10^{23}$ anecdote as clamp-dependent (M2). Add the F5 gauge note: $b_{\text{post}}$ scales under the $Y \to sY$ regularization gauge, so the fixed $10^{-6}$ binds differently under `det_sigma_one` vs `none`. |
-| D2 | `normix/mixtures/joint.py`, `normix/utils/constants.py` | `scripts/check_doc_links.sh` **already fails on master** (introduced by `5a0ecfb`): `joint.py:225` (docstring) and `constants.py:45` (comment) reference `dev-notes/tech_notes/...`, violating `docs-cross-links.mdc`. The checker flags any `dev-notes/` mention under `normix/`, comments included. Fix: in `joint.py` replace with a `:doc:` reference to the public theory page (`docs/theory/em_algorithm.rst`); in `constants.py` drop the path (the tech-note pointer lives in `ARCHITECTURE.md`'s constants table). |
+| D1 ✅ `fab19be` | `../tech_notes/vg_em_inverse_moment_singularity.md` | **Done.** Rewrote the §6 "trade-off" paragraph with the corrected asymptotics of §2 above (case split at $\nu=0$, cap $(d-2\alpha)/b_{\min}$ linear in $d$, uniform in $a_{\text{post}}$); **deleted** the "switch to the NC $\omega$-floor at high $d$" recommendation (it is the weaker floor for large $a_{\text{post}}$); added the verification table + `kve` repro snippet (M1). Footnoted the $4.4\times10^{23}$ anecdote as clamp-dependent (M2). Added the F5 gauge note: $b_{\text{post}}$ scales under the $Y \to sY$ regularization gauge, so the fixed $10^{-6}$ binds differently under `det_sigma_one` vs `none`. |
+| D2 ✅ (this PR) | `normix/mixtures/joint.py`, `normix/utils/constants.py` | **Done.** `scripts/check_doc_links.sh` had failed on master (introduced by `5a0ecfb`): `joint.py` (docstring) and `constants.py` (comment) referenced `dev-notes/tech_notes/...`, violating `docs-cross-links.mdc`. Fix applied: in `joint.py` replaced with a `:doc:`../docs/theory/em_algorithm`` reference to the public theory page; in `constants.py` dropped the path (the tech-note pointer lives in `ARCHITECTURE.md`'s constants table). Checker now green. |
 | D3 | `../design/design.md`, `../ARCHITECTURE.md` | After implementation: decision rows for "posterior GIG map via `to_gig` embedding (R2)", "prior moments via distribution-specific $(\alpha-1)$ denominator floor at $\alpha \le 1$ (B2) — *not* the lifted-GIG `expectation_params`, which corrupts the exact $E[\log Y], E[Y]$ moments", and F4 if adopted; update the constants tables (`PARAM_CHANGE_EPS`, `ALPHA_MOMENT_MARGIN`) and the E-step paragraph in `ARCHITECTURE.md`; then archive this plan to `../archive/design/` per `maintain-design-docs.mdc`. |
 | D4 (optional) | `docs/theory/em_algorithm.rst` | Short public paragraph on the degenerate-subordinator regularization (the floor currently exists only in internal docs). Decide whether the rationale is user-facing enough to promote. |
 
@@ -318,11 +330,11 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 ## 6. Phasing
 
 ```
-Phase 1 (docs)        M1, M2, D1, D2            — no behavior change
-Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — B2 introduces ALPHA_MOMENT_MARGIN
-Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b
-Phase 4 (fitter)      F1, F2, F3, T5, T7        — EMResult gains `diverged`
-Phase 5 (design-gated) F4 (+ design.md row), D3, D4
+Phase 1 (docs)        M1, M2, D1, D2            — ✅ done (no behavior change)
+Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — ✅ B1, B2 done; quantitative-cap/MCECM tests (T2, partial T4/T6) still open
+Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b   — ☐ todo
+Phase 4 (fitter)      F1, F2, F3, T5, T7        — ☐ todo (EMResult gains `diverged`)
+Phase 5 (design-gated) F4 (+ design.md row), D3, D4         — ☐ todo
 ```
 
 - Phases are independently mergeable; Phase 3 depends on nothing in Phase 2

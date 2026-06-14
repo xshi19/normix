@@ -42,7 +42,6 @@ GIG_P_MAX: float = 50.0
 # E-step. Bounds the conditional inverse moment E[1/Y|x] for observations near
 # the mode (where (x-μ)ᵀΣ⁻¹(x-μ) → 0). Only binds for VG, whose prior b = 0;
 # for GH / NIG / NInvG the prior b > 0 already keeps b_post above this floor.
-# See dev-notes/tech_notes/vg_em_inverse_moment_singularity.md.
 B_POST_FLOOR: float = 1e-6
 
 # Lower floor on the (α−1) denominator of the VG/NInvG prior reconstruction
