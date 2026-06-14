@@ -21,7 +21,7 @@ from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 from normix.utils.bessel import log_kv
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import ALPHA_MOMENT_MARGIN, LOG_EPS
 
 
 class JointNormalInverseGamma(JointNormalMixture):
@@ -198,10 +198,20 @@ class NormalInverseGamma(NormalMixture):
         return log_f
 
     def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
+        r"""Prior InverseGamma moments :math:`(E[\log Y], E[1/Y], E[Y])`.
+
+        :math:`E[\log Y] = \log\beta - \psi(\alpha)` and
+        :math:`E[1/Y] = \alpha/\beta` are exact and finite for all
+        :math:`\alpha > 0`. The forward moment :math:`E[Y] = \beta/(\alpha-1)`
+        diverges as :math:`\alpha \downarrow 1` (and is *negative* for
+        :math:`\alpha < 1`), so its denominator is floored at
+        :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` — the symmetric
+        analogue of the VG inverse-moment floor.
+        """
         j = self._joint
         E_log_Y = jnp.log(j.beta) - jax.scipy.special.digamma(j.alpha)
         E_inv_Y = j.alpha / j.beta
-        E_Y = j.beta / (j.alpha - 1.0)
+        E_Y = j.beta / jnp.maximum(j.alpha - 1.0, ALPHA_MOMENT_MARGIN)
         return E_log_Y, E_inv_Y, E_Y
 
     @classmethod
@@ -357,9 +367,10 @@ class FactorNormalInverseGamma(FactorNormalMixture):
                 2.0 * self.beta + z2)
 
     def _subordinator_expectations(self):
+        r"""Prior InverseGamma moments; see :meth:`NormalInverseGamma._subordinator_expectations`."""
         E_log_Y = jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha)
         E_inv_Y = self.alpha / self.beta
-        E_Y = self.beta / (self.alpha - 1.0)
+        E_Y = self.beta / jnp.maximum(self.alpha - 1.0, ALPHA_MOMENT_MARGIN)
         return E_log_Y, E_inv_Y, E_Y
 
     @classmethod

@@ -1,7 +1,10 @@
 # EM Robustness Follow-Ups (post `b_post`-floor review)
 
 **Date:** 2026-06-10
-**Status:** Proposed — not yet implemented.
+**Status:** Proposed. **B2 implemented** (2026-06-13) with the revised
+distribution-specific denominator-floor design in §3.2 — the original
+lifted-GIG `expectation_params` sketch was rejected; see §3.2 for the
+rationale. Remaining items not yet implemented.
 **Origin:** post-merge review of the `b_post` floor fix
 (`5a0ecfb`, PR #45). The review verified the math of
 [`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md)
@@ -30,7 +33,7 @@ work for each.
 | M1 | Math/doc error | Tech note §6 mis-derives the capped moment for $p_{\text{post}}<0$ and reverses the $b$-floor vs $\omega$-floor comparison. The adopted $b$-floor is actually the *more* uniform regularizer. | P1 | doc only |
 | M2 | Doc nit | §5's "$E[Y^{-1}\mid x]\approx 4.4\times10^{23}$ at the exact mode ($q(x)=0$)" cannot follow from $q=0$ literally; it reflects internal `TINY` clamps / float spacing in the repro. | P3 | doc only |
 | B1 | Bug | `JointNormalMixture._mstep_normal_params`: `safe_D` floors $D = 1-\eta_2\eta_3$ at $+10^{-10}$, but $D \le 0$ always (Cauchy–Schwarz), so the floor flips the sign of $\mu, \gamma$ in the near-Gaussian limit. | P1 | ~5 LOC |
-| B2 | Bug | `VarianceGamma._subordinator_expectations` returns $E[1/Y]=\beta/(\alpha-1)$, which is **negative** for $\alpha<1$ (true moment is $+\infty$); same for NInvG's $E[Y]$. Feeds `compute_eta_from_model` → incremental-EM warm starts and shrinkage. Now *more* reachable because the floored batch EM produces finite models with $\alpha<1$. | P1 | ~30 LOC |
+| B2 | Bug | `VarianceGamma._subordinator_expectations` returns $E[1/Y]=\beta/(\alpha-1)$, which is **negative** for $\alpha<1$ (true moment is $+\infty$); same for NInvG's $E[Y]$. Feeds `compute_eta_from_model` → incremental-EM warm starts and shrinkage. Now *more* reachable because the floored batch EM produces finite models with $\alpha<1$. Fix: distribution-specific denominator floor on the single divergent moment (keep the other two exact); **not** via `to_gig().expectation_params()`, which corrupts the exact moments — see §3.2. | P1 | ~15 LOC |
 | R1 | Refactor | `B_POST_FLOOR` is applied at four call sites (`joint.py`, `marginal.py` CPU, `factor.py` ×2). Collapse to one floored helper per hierarchy. | P2 | ~15 LOC |
 | R2 | Refactor | All eight `_posterior_gig_params` overrides (4 joint + 4 factor) are the same map in GIG coordinates: $(p_{\text{gig}}-\tfrac d2,\ a_{\text{gig}}+w_2,\ b_{\text{gig}}+z_2)$ of `subordinator().to_gig()`. Replace with one base implementation per hierarchy. | P2 | −80 LOC net |
 | R3 | Cleanup | `_PARAM_EPS = 1e-10` defined locally in `em.py` (violates the constants rule); dead `hasattr(j, '_posterior_gig_params')` guard in `NormalMixture._e_step_subordinator_cpu` (method is abstract on the base, always present). | P3 | ~10 LOC |
@@ -124,32 +127,67 @@ closed form $\beta/(\alpha-1)$ silently returns a *negative* number (verified:
 $-5.0$ at $\alpha=0.8$). Symmetrically, NInvG's $E[Y] = \beta/(\alpha-1)$
 breaks for InverseGamma $\alpha \le 1$.
 
-**Design: extend the one floor rule from posterior to prior.** The package
-already has one consistent story — *"the GIG scale never sits below
-$10^{-6}$"* (prior clamp `GIG_CLAMP_LO`, posterior floor `B_POST_FLOOR`).
-Define the reconstructed prior expectations through the same rule:
+**Design (revised): regularize only the single divergent moment with a
+distribution-specific denominator floor — do *not* route through
+`to_gig().expectation_params()`.** This supersedes the earlier "floor the
+whole $\eta$ through the lifted GIG" sketch; that version was rejected for two
+reasons:
+
+1. **It corrupts the two moments that are already exact and finite.** Of the
+   three subordinator moments, only $\beta/(\alpha-1)$ is problematic. For VG
+   $E[\log Y] = \psi(\alpha) - \log\beta$ and $E[Y] = \alpha/\beta$ are exact
+   $\forall\,\alpha>0$; for NInvG $E[\log Y] = \log\beta - \psi(\alpha)$ and
+   $E[1/Y] = \alpha/\beta$ are exact $\forall\,\alpha>0$. Replacing *all three*
+   with the lifted-GIG `expectation_params()` (which uses 5 Bessel evaluations
+   and a finite-difference $\partial_p \log K_p$) injects avoidable error into
+   the exact moments. Measured at $b_{\min}=10^{-6}$:
+
+   | $\alpha$ | $E[\log Y]$ exact | GIG path | abs. err | $E[Y]$ exact | GIG path | abs. err |
+   |---|---|---|---|---|---|---|
+   | $0.5$ | $-3.0621$ | $-3.0339$ | $2.8\times10^{-2}$ | $0.1667$ | $0.1671$ | $4.1\times10^{-4}$ |
+   | $0.2$ | $-5.2890$ | $-4.2968$ | $\mathbf{9.9\times10^{-1}}$ | $0.2000$ | $0.2150$ | $1.5\times10^{-2}$ |
+
+   The $\sim 1.0$ absolute error in $E[\log Y]$ at $\alpha=0.2$ is unacceptable
+   for moments that have a one-line exact form.
+
+2. **It is more complex, not simpler.** Routing the special cases through the
+   general GIG Bessel machinery contradicts the design philosophy
+   (*"special-case distributions must use their own analytical formulas rather
+   than routing through the general computation"*). The b-floor consistency
+   argument does not require the *moment* to equal the lifted GIG moment — it
+   only requires a finite, positive, continuous surrogate.
+
+**Adopted fix.** Keep the exact closed forms for the two always-finite
+moments; floor only the $(\alpha-1)$ denominator of the divergent one:
 
 ```python
 # VarianceGamma._subordinator_expectations (and Factor sibling)
-exact = (digamma(alpha) - log(beta), beta / (alpha - 1.0), alpha / beta)
-floored = Gamma(alpha, beta).to_gig(boundary_eps=B_POST_FLOOR).expectation_params()
-return jax.tree.map(lambda e, f: jnp.where(alpha > 1.0 + ALPHA_MOMENT_MARGIN, e, f),
-                    exact, floored)
+E_log_Y = digamma(alpha) - log(beta)                          # exact
+E_inv_Y = beta / jnp.maximum(alpha - 1.0, ALPHA_MOMENT_MARGIN) # floored
+E_Y     = alpha / beta                                         # exact
+
+# NormalInverseGamma._subordinator_expectations (and Factor sibling)
+E_log_Y = log(beta) - digamma(alpha)                          # exact
+E_inv_Y = alpha / beta                                         # exact
+E_Y     = beta / jnp.maximum(alpha - 1.0, ALPHA_MOMENT_MARGIN) # floored
 ```
 
-- For $\alpha$ comfortably $>1$ the cheap exact digamma path is unchanged.
-- For $\alpha \le 1 + \varepsilon$ the floored-GIG Bessel path returns the
-  finite, positive moments of the regularized subordinator — exactly what the
-  floored E-step would converge to.
-- `jnp.where` keeps it JIT-safe (both branches finite everywhere).
-- Same pattern for `NormalInverseGamma` via
-  `InverseGamma.to_gig(boundary_eps=B_POST_FLOOR)`.
-- New constant `ALPHA_MOMENT_MARGIN` (suggested `0.1`) in
-  `normix/utils/constants.py` with a doc row (avoids evaluating the exact
-  formula in its ill-conditioned $\alpha \downarrow 1$ neighbourhood).
+- For $\alpha > 1 + \varepsilon$ the result equals the exact $\beta/(\alpha-1)$.
+- For $\alpha \le 1 + \varepsilon$ the moment is capped at $\beta/\varepsilon$:
+  finite, positive, and **continuous** at $\alpha = 1+\varepsilon$ (both sides
+  give $\beta/\varepsilon$). `jnp.maximum` is JIT-safe with no branch.
+- This caps the inverse moment at a modest value ($\beta/0.1 = 10\beta$),
+  which is *safer* downstream (no $\sim10^4$–$10^5$ blow-up in
+  $E[XX^\top/Y]$ that the lifted-GIG value would produce) while still being a
+  legitimate regularization in the divergent regime.
+- `NormalInverseGaussian` is unchanged: its InverseGaussian subordinator
+  ($\mathrm{GIG}(p{=}-\tfrac12)$) has finite positive moments for all
+  parameters, so it already routes through GIG correctly with no singularity.
+- New constant `ALPHA_MOMENT_MARGIN` (`0.1`) in `normix/utils/constants.py`
+  with doc rows in `ARCHITECTURE.md` and `coding-conventions.mdc`.
 
-Cost: 5 extra Bessel evaluations, only in `compute_eta_from_model` (once per
-incremental step / warm start — not in the hot E-step).
+Cost: zero Bessel evaluations — two `digamma` calls and a `jnp.maximum`, same
+as before the fix.
 
 ### 3.3 R1 + R2 — one posterior-GIG map per hierarchy
 
@@ -259,7 +297,7 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 | T1b | `test_factor_mixture.py` | factor variant: `FactorVarianceGamma`, $d=10$, $r=2$, near-mode observation | finiteness + LL improvement | — |
 | T2 | `test_variance_gamma.py` | quantitative cap: $E[1/Y \mid x{=}\mu]$ at the floor matches the §2 asymptotics — $\alpha=0.7$ ($\nu=0.2$ branch, expect $\approx 2.99\times10^4$ for $a_{\text{post}}=2$) and $\alpha=0.2$ ($\nu<0$ branch, expect $\approx(d-2\alpha)/b_{\min}$) | `rtol=0.05`. Guards the floor's *value*, not just `isfinite` (an `isfinite`-only test cannot catch a floor-constant regression). | — |
 | T3 | `test_em_regression.py` (or new `test_posterior_gig.py`) | dormancy + refactor regression: for GH/NIG/NInvG with typical priors ($b_{\text{prior}} \gg 10^{-6}$), `conditional_expectations(x=mu)` equals the unfloored GIG moments exactly; e_step outputs for all 4 families × {jax, cpu} match pre-R2 golden values on fixed seeds | `rtol=1e-12` dormancy; `rtol=1e-12` refactor parity | — |
-| T4 | `test_incremental_em.py`, `test_mcecm.py` | small-$\alpha$ coverage (all current EM-path tests use $\alpha \in [2.0, 2.5]$): `compute_eta_from_model` finite with $\eta_2 > 0$ at $\alpha=0.8$ (B2); `IncrementalEMFitter` and `algorithm='mcecm'` on heavy-peaked VG data ($\alpha_{\text{true}}=0.7$) stay finite | finiteness, positivity of $\eta_2, \eta_3$ | — |
+| T4 | `test_incremental_em.py`, `test_mcecm.py` | small-$\alpha$ coverage (all current EM-path tests use $\alpha \in [2.0, 2.5]$): `compute_eta_from_model` finite with $\eta_2, \eta_3 > 0$ at $\alpha \in \{1.0, 0.8, 0.2\}$ (B2), **and** the two always-finite moments stay bit-exact (VG: $E[\log Y]=\psi(\alpha)-\log\beta$, $E[Y]=\alpha/\beta$; NInvG: $E[\log Y]=\log\beta-\psi(\alpha)$, $E[1/Y]=\alpha/\beta$) — guards against a regression to the lossy GIG path; `IncrementalEMFitter` and `algorithm='mcecm'` on heavy-peaked VG data ($\alpha_{\text{true}}=0.7$) stay finite | finiteness, positivity of $\eta_2, \eta_3$, exactness of the closed-form moments (`rel=1e-12`) | — |
 | T5 | `test_em_regression.py` | monotone LL: heavy-peaked $d=1$ VG case with `track_ll=True` (F2) | $\Delta\text{LL} \ge -10^{-8}$ per iteration — the defining EM invariant; the original failure was "LL improving, then NaN" | — |
 | T6 | `test_jax_distributions.py` (or alongside M-step tests) | `safe_D` sign (B1): synthetic $\eta$ with $D = -10^{-12}$ recovers $\mu, \gamma$ with the correct sign (compare against $D=-10^{-8}$ reference); property check $1 - \eta_2\eta_3 \le 0$ for `e_step` output across all four families | sign correctness; Cauchy–Schwarz property | — |
 | T7 | `test_em_regression.py` | F1 guard: a fitter step forced to NaN (e.g. init with absurd params) returns `diverged=True` with all-finite model params | last-finite semantics | — |
@@ -272,7 +310,7 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 |----|------|--------|
 | D1 | `../tech_notes/vg_em_inverse_moment_singularity.md` | Rewrite the §6 "trade-off" paragraph with the corrected asymptotics of §2 above (case split at $\nu=0$, cap $(d-2\alpha)/b_{\min}$ linear in $d$, uniform in $a_{\text{post}}$); **delete** the "switch to the NC $\omega$-floor at high $d$" recommendation (it is the weaker floor for large $a_{\text{post}}$); add the verification table + `kve` repro snippet (M1). Footnote the $4.4\times10^{23}$ anecdote as clamp-dependent (M2). Add the F5 gauge note: $b_{\text{post}}$ scales under the $Y \to sY$ regularization gauge, so the fixed $10^{-6}$ binds differently under `det_sigma_one` vs `none`. |
 | D2 | `normix/mixtures/joint.py`, `normix/utils/constants.py` | `scripts/check_doc_links.sh` **already fails on master** (introduced by `5a0ecfb`): `joint.py:225` (docstring) and `constants.py:45` (comment) reference `dev-notes/tech_notes/...`, violating `docs-cross-links.mdc`. The checker flags any `dev-notes/` mention under `normix/`, comments included. Fix: in `joint.py` replace with a `:doc:` reference to the public theory page (`docs/theory/em_algorithm.rst`); in `constants.py` drop the path (the tech-note pointer lives in `ARCHITECTURE.md`'s constants table). |
-| D3 | `../design/design.md`, `../ARCHITECTURE.md` | After implementation: decision rows for "posterior GIG map via `to_gig` embedding (R2)", "prior moments via floored embedding at $\alpha \le 1$ (B2)", and F4 if adopted; update the constants tables (`PARAM_CHANGE_EPS`, `ALPHA_MOMENT_MARGIN`) and the E-step paragraph in `ARCHITECTURE.md`; then archive this plan to `../archive/design/` per `maintain-design-docs.mdc`. |
+| D3 | `../design/design.md`, `../ARCHITECTURE.md` | After implementation: decision rows for "posterior GIG map via `to_gig` embedding (R2)", "prior moments via distribution-specific $(\alpha-1)$ denominator floor at $\alpha \le 1$ (B2) — *not* the lifted-GIG `expectation_params`, which corrupts the exact $E[\log Y], E[Y]$ moments", and F4 if adopted; update the constants tables (`PARAM_CHANGE_EPS`, `ALPHA_MOMENT_MARGIN`) and the E-step paragraph in `ARCHITECTURE.md`; then archive this plan to `../archive/design/` per `maintain-design-docs.mdc`. |
 | D4 (optional) | `docs/theory/em_algorithm.rst` | Short public paragraph on the degenerate-subordinator regularization (the floor currently exists only in internal docs). Decide whether the rationale is user-facing enough to promote. |
 
 ---

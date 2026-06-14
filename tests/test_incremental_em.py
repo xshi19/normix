@@ -101,6 +101,43 @@ def test_compute_eta_round_trip(dist_name):
     )
 
 
+@pytest.mark.parametrize("alpha", [1.0, 0.8, 0.2])
+def test_compute_eta_from_model_small_alpha(alpha):
+    """B2: at α ≤ 1 the VG/NInvG prior moment β/(α−1) diverges (and the bare
+    closed form turns negative); the floored denominator keeps the
+    reconstructed η finite and positive without corrupting the exact moments.
+    """
+    from scipy.special import digamma
+
+    d = 3
+    mu = jnp.ones(d)
+    sigma = jnp.eye(d)
+    beta = 2.0
+    for dist_name, model in {
+        "VG": VarianceGamma.from_classical(
+            mu=mu, gamma=jnp.ones(d), sigma=sigma, alpha=alpha, beta=beta),
+        "NInvG": NormalInverseGamma.from_classical(
+            mu=mu, gamma=jnp.ones(d), sigma=sigma, alpha=alpha, beta=beta),
+    }.items():
+        eta = model.compute_eta_from_model()
+        for field in ("E_log_Y", "E_inv_Y", "E_Y", "E_X", "E_X_inv_Y", "E_XXT_inv_Y"):
+            val = getattr(eta, field)
+            assert jnp.all(jnp.isfinite(val)), f"{dist_name} {field} not finite"
+        assert float(eta.E_inv_Y) > 0.0, f"{dist_name} E_inv_Y not positive"
+        assert float(eta.E_Y) > 0.0, f"{dist_name} E_Y not positive"
+
+        # The two always-finite moments must stay exact (no GIG-Bessel detour):
+        # VG keeps E_log_Y=ψ(α)−log β and E_Y=α/β; NInvG keeps
+        # E_log_Y=log β−ψ(α) and E_inv_Y=α/β.
+        E_log_Y, E_inv_Y, E_Y = (float(v) for v in model._subordinator_expectations())
+        if dist_name == "VG":
+            assert E_log_Y == pytest.approx(float(digamma(alpha)) - np.log(beta), rel=1e-12)
+            assert E_Y == pytest.approx(alpha / beta, rel=1e-12)
+        else:
+            assert E_log_Y == pytest.approx(np.log(beta) - float(digamma(alpha)), rel=1e-12)
+            assert E_inv_Y == pytest.approx(alpha / beta, rel=1e-12)
+
+
 # ---------------------------------------------------------------------------
 # affine_combine
 # ---------------------------------------------------------------------------
