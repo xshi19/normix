@@ -221,8 +221,7 @@ class JointNormalMixture(ExponentialFamily):
         (x-\mu)^\top\Sigma^{-1}(x-\mu)` is floored at
         :data:`~normix.utils.constants.B_POST_FLOOR`, which bounds
         :math:`E[1/Y\mid x]` for observations near the mode. The floor only
-        binds for VG (prior :math:`b=0`); see
-        ``dev-notes/tech_notes/vg_em_inverse_moment_singularity.md``.
+        binds for VG (prior :math:`b=0`); see :doc:`../docs/theory/em_algorithm`.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         _z, _w, z2, w2, _zw = self._quad_forms(x)
