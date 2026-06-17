@@ -403,6 +403,129 @@ add this, because:
 
 ---
 
+## 9. Regression tests: the assertions and the numbers behind them
+
+The fix is guarded by three regression tests whose *values* — not just
+`isfinite` — pin down the math of §5–§6 and the B1/B2 floors. Each is described
+here with the formula it encodes and the numbers it checks.
+
+### 9.1 T2 — the capped inverse moment matches the §6 asymptotics
+
+`tests/test_variance_gamma.py::TestInverseMomentSingularityVG::test_inverse_moment_cap_value`.
+
+We instantiate a $d=1$ VG with $\gamma=0$, $\Sigma=1$, $\beta=1$, so that at
+$x=\mu$ the posterior is exactly
+$\mathrm{GIG}\big(p_{\text{post}}, a_{\text{post}}, b_{\text{post}}\big)$ with
+
+$$
+p_{\text{post}} = \alpha - \tfrac d2 = \alpha - \tfrac12,\qquad
+a_{\text{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma = 2,\qquad
+b_{\text{post}} = q(\mu) = 0 \;\xrightarrow{\text{floor}}\; b_{\min}=10^{-6}.
+$$
+
+The test asserts the model's $E[Y^{-1}\mid x{=}\mu]$ equals the exact GIG moment
+at the floored scale,
+
+$$
+E[Y^{-1}\mid x]\big|_{b=b_{\min}}
+= \sqrt{\tfrac{a_{\text{post}}}{b_{\min}}}\,
+\frac{K_{p_{\text{post}}-1}(\omega)}{K_{p_{\text{post}}}(\omega)},
+\qquad \omega=\sqrt{a_{\text{post}}\,b_{\min}}=\sqrt{2}\times10^{-3},
+$$
+
+evaluated independently with scipy's `kve` (`rel=1e-3`), **and** that it matches
+the §6 small-$\omega$ asymptotics (the value the floor is designed to cap at).
+Because $b_{\min}=10^{-6}$ is hard-coded in the test rather than imported, a
+regression in `B_POST_FLOOR` (e.g. to $10^{-5}$) shifts the model value by a
+factor $\sim (10)^{1-p_{\text{post}}}$ and breaks the test — which a pure
+`isfinite` check cannot detect.
+
+| Case | $\nu=p_{\text{post}}$ | branch | asymptotic | exact (`kve`) | model |
+|---|---|---|---|---|---|
+| $\alpha=0.7$ | $0.2$ | $0<\nu<1$: $\dfrac{\Gamma(1-\nu)}{\Gamma(\nu)}2^{1-2\nu}a_{\text{post}}^{\nu}b_{\min}^{\nu-1}$ | $2.79\times10^4$ | $2.99\times10^4$ | $2.99\times10^4$ |
+| $\alpha=0.2$ | $-0.3$ | $\nu<0$: $\dfrac{d-2\alpha}{b_{\min}}$ | $6.0\times10^5$ | $6.11\times10^5$ | $6.11\times10^5$ |
+
+The $0<\nu<1$ asymptotic is leading-order only (the next term is
+$O(\omega^{2(1-\nu)})$), so the test compares it at `rel=0.1`; the $\nu<0$ branch
+is tighter (`rel=0.05`). Both confirm the cap is **uniform in $a_{\text{post}}$
+and linear in $d$**, as §6 claims.
+
+### 9.2 T4 — small-$\alpha$ moments and EM-path finiteness (B2)
+
+`tests/test_incremental_em.py::test_compute_eta_from_model_small_alpha`,
+`::test_incremental_em_heavy_peaked_vg_finite`, and
+`tests/test_variance_gamma.py::...::test_mcecm_no_overflow_heavy_peaked`.
+
+These guard the prior-moment reconstruction `compute_eta_from_model` used by
+incremental-EM warm starts and MCECM. For the Gamma subordinator of VG the three
+prior moments are
+
+$$
+E[\log Y] = \psi(\alpha) - \log\beta,\qquad
+E[Y] = \frac{\alpha}{\beta},\qquad
+E[Y^{-1}] = \frac{\beta}{\alpha-1},
+$$
+
+and for the InverseGamma subordinator of NInvG the roles of $E[Y]$ and
+$E[Y^{-1}]$ swap (only $E[Y]=\beta/(\alpha-1)$ is the divergent one). The bare
+$\beta/(\alpha-1)$ is $+\infty$ as $\alpha\downarrow1$ and **negative** for
+$\alpha<1$ (e.g. $\beta/(\alpha-1)=-5$ at $\alpha=0.8,\beta=1$). The B2 fix
+floors only that denominator,
+
+$$
+E[Y^{-1}]\;\big(\text{VG}\big),\;\;E[Y]\;\big(\text{NInvG}\big)
+\;=\; \frac{\beta}{\max(\alpha-1,\ \texttt{ALPHA\_MOMENT\_MARGIN})},
+\qquad \texttt{ALPHA\_MOMENT\_MARGIN}=0.1,
+$$
+
+so the moment is finite and positive, capped at $\beta/0.1=10\beta$, and
+**continuous** at $\alpha=1.1$ (both sides give $10\beta$). The test asserts, at
+$\alpha\in\{1.0,0.8,0.2\}$:
+
+- finiteness and positivity of $\eta_2=E[Y^{-1}]$ and $\eta_3=E[Y]$;
+- **bit-exactness** (`rel=1e-12`) of the *non*-floored moments — VG keeps
+  $E[\log Y]=\psi(\alpha)-\log\beta$ and $E[Y]=\alpha/\beta$; NInvG keeps
+  $E[\log Y]=\log\beta-\psi(\alpha)$ and $E[Y^{-1}]=\alpha/\beta$ — which would
+  break if these were re-routed through the rejected lifted-GIG
+  `expectation_params()` path (§3.2 of the follow-up plan; that path injected a
+  $\sim1.0$ absolute error in $E[\log Y]$ at $\alpha=0.2$).
+
+The two heavy-peaked tests then run `IncrementalEMFitter` and
+`algorithm='mcecm'` on $\alpha_{\text{true}}=0.7$ data with the sample mean
+prepended as a near-mode observation, and assert all iterates and tracked
+log-likelihoods stay finite. MCECM is the relevant stress here because its extra
+E-step (§8) re-evaluates $E[Y^{-1}\mid x]$ on the updated normal block, so it
+exercises both the $b_{\text{post}}$ floor and the $(\alpha-1)$ floor in one run.
+
+### 9.3 T6 — the M-step denominator sign (B1)
+
+`tests/test_jax_distributions.py::TestMStepDenominatorSign`.
+
+The closed-form M-step (§4) divides $\mu,\gamma$ by $D = 1-\eta_2\eta_3$. Per
+observation $E[Y^{-1}\mid x_i]\,E[Y\mid x_i]\ge 1$ (Jensen); averaging and
+applying Cauchy–Schwarz to the batch means,
+
+$$
+\eta_2\,\eta_3 = \Big(\tfrac1n\textstyle\sum_i u_i\Big)\Big(\tfrac1n\sum_i v_i\Big)
+\;\ge\; \Big(\tfrac1n\sum_i \sqrt{u_i v_i}\Big)^2 \;\ge\; 1,
+\qquad u_i=E[Y^{-1}\mid x_i],\; v_i=E[Y\mid x_i],
+$$
+
+so $D\le 0$ **always**, with equality only in the degenerate Gaussian limit. The
+fix keeps the sign and floors the magnitude,
+$\texttt{safe\_D} = -\max(|D|,\ \texttt{SAFE\_DENOMINATOR})$, whereas the old
+guard clipped to $+\texttt{SAFE\_DENOMINATOR}$ and flipped $\mu,\gamma$ when
+$|D|<10^{-10}$. The test:
+
+- builds a synthetic $\eta$ ($d=1$) with $D=-10^{-12}$ (floored) and a reference
+  with $D=-10^{-8}$ (well-conditioned), and asserts the recovered $\mu,\gamma$
+  have the **same, nonzero sign** in both — the old $+$floor negated the floored
+  case;
+- checks the Cauchy–Schwarz property $1-\eta_2\eta_3\le 0$ on the `e_step`
+  output of all four families (VG, NInvG, NIG, GH).
+
+---
+
 ## References
 
 - T. Nitithumbundit, J. S. K. Chan (2015). *An ECM algorithm for Skewed
