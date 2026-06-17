@@ -14,8 +14,12 @@
   original lifted-GIG `expectation_params` sketch was rejected; see §3.2.
 - **D2** — `normix/` docstring/comment `dev-notes/` cross-link violations fixed;
   `scripts/check_doc_links.sh` green.
+- **T2, T4, T6** — value-level regression tests for the floors: the capped
+  $E[1/Y\mid x{=}\mu]$ vs the §6 asymptotics (T2), small-$\alpha$ B2 moments +
+  incremental/MCECM finiteness (T4), and the `safe_D` sign + Cauchy–Schwarz
+  property (T6). Documented in tech-note §9.
 
-Remaining items (R1–R3, F1–F5, the bulk of T1–T7, D3, D4) not yet implemented.
+Remaining items (R1–R3, F1–F5, T1/T1b/T3/T5/T7, D3, D4) not yet implemented.
 **Origin:** post-merge review of the `b_post` floor fix
 (`5a0ecfb`, PR #45). The review verified the math of
 [`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md)
@@ -53,7 +57,7 @@ work for each.
 | F3 | Framework | `self._target_log_det` set inside `fit` makes the fitter stateful / non-reentrant. Thread it through as a local. | P2 | ~15 LOC | ☐ todo |
 | F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC | ☐ todo |
 | F5 | Doc note | `B_POST_FLOOR` is not gauge-invariant: under the $Y \to sY$ rescale ($\Sigma \to \Sigma/s$), $b_{\text{post}} = q(x)$ scales with $s$, so a fixed $10^{-6}$ binds with different strength under `det_sigma_one` vs `none`. Document. | P3 | doc only | ✅ `fab19be` |
-| T1–T6 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ◐ partial (B1/B2 regressions landed) |
+| T1–T7 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ◐ partial — ✅ T2, T4, T6; ☐ T1, T1b, T3, T5, T7 |
 | D1, D2 | Docs | Tech note §6 rewrite (D1); `joint.py`/`constants.py` cross-link violations (D2) — see §5. | P1 | doc only | ✅ `fab19be` (D1), this PR (D2) |
 | D3, D4 | Docs | Post-implementation design/architecture rows (D3); optional public EM paragraph (D4) — see §5. | P2–P3 | doc only | ☐ todo |
 
@@ -303,16 +307,16 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 
 ## 4. Test plan
 
-| ID | File | Test | Asserts | Marker |
-|----|------|------|---------|--------|
-| T1 | `test_variance_gamma.py` | `TestInverseMomentSingularityVG::test_em_no_overflow_high_dim` — parametrize $d \in \{5, 10\}$ (and $d=50$ as `slow`), data from VG $\alpha=1.0$ with the sample mean appended as a near-mode observation, both E-step backends | all params finite, final LL $\ge$ init LL. Rationale: threshold $\alpha \le d/2+1$ means the default init $\alpha=2$ is *already* in the divergent regime for every $d \ge 2$; current coverage is $d=1$ only. | `slow` for $d=50$ |
-| T1b | `test_factor_mixture.py` | factor variant: `FactorVarianceGamma`, $d=10$, $r=2$, near-mode observation | finiteness + LL improvement | — |
-| T2 | `test_variance_gamma.py` | quantitative cap: $E[1/Y \mid x{=}\mu]$ at the floor matches the §2 asymptotics — $\alpha=0.7$ ($\nu=0.2$ branch, expect $\approx 2.99\times10^4$ for $a_{\text{post}}=2$) and $\alpha=0.2$ ($\nu<0$ branch, expect $\approx(d-2\alpha)/b_{\min}$) | `rtol=0.05`. Guards the floor's *value*, not just `isfinite` (an `isfinite`-only test cannot catch a floor-constant regression). | — |
-| T3 | `test_em_regression.py` (or new `test_posterior_gig.py`) | dormancy + refactor regression: for GH/NIG/NInvG with typical priors ($b_{\text{prior}} \gg 10^{-6}$), `conditional_expectations(x=mu)` equals the unfloored GIG moments exactly; e_step outputs for all 4 families × {jax, cpu} match pre-R2 golden values on fixed seeds | `rtol=1e-12` dormancy; `rtol=1e-12` refactor parity | — |
-| T4 | `test_incremental_em.py`, `test_mcecm.py` | small-$\alpha$ coverage (all current EM-path tests use $\alpha \in [2.0, 2.5]$): `compute_eta_from_model` finite with $\eta_2, \eta_3 > 0$ at $\alpha \in \{1.0, 0.8, 0.2\}$ (B2), **and** the two always-finite moments stay bit-exact (VG: $E[\log Y]=\psi(\alpha)-\log\beta$, $E[Y]=\alpha/\beta$; NInvG: $E[\log Y]=\log\beta-\psi(\alpha)$, $E[1/Y]=\alpha/\beta$) — guards against a regression to the lossy GIG path; `IncrementalEMFitter` and `algorithm='mcecm'` on heavy-peaked VG data ($\alpha_{\text{true}}=0.7$) stay finite | finiteness, positivity of $\eta_2, \eta_3$, exactness of the closed-form moments (`rel=1e-12`) | — |
-| T5 | `test_em_regression.py` | monotone LL: heavy-peaked $d=1$ VG case with `track_ll=True` (F2) | $\Delta\text{LL} \ge -10^{-8}$ per iteration — the defining EM invariant; the original failure was "LL improving, then NaN" | — |
-| T6 | `test_jax_distributions.py` (or alongside M-step tests) | `safe_D` sign (B1): synthetic $\eta$ with $D = -10^{-12}$ recovers $\mu, \gamma$ with the correct sign (compare against $D=-10^{-8}$ reference); property check $1 - \eta_2\eta_3 \le 0$ for `e_step` output across all four families | sign correctness; Cauchy–Schwarz property | — |
-| T7 | `test_em_regression.py` | F1 guard: a fitter step forced to NaN (e.g. init with absurd params) returns `diverged=True` with all-finite model params | last-finite semantics | — |
+| ID | File | Test | Asserts | Marker | Status |
+|----|------|------|---------|--------|--------|
+| T1 | `test_variance_gamma.py` | `TestInverseMomentSingularityVG::test_em_no_overflow_high_dim` — parametrize $d \in \{5, 10\}$ (and $d=50$ as `slow`), data from VG $\alpha=1.0$ with the sample mean appended as a near-mode observation, both E-step backends | all params finite, final LL $\ge$ init LL. Rationale: threshold $\alpha \le d/2+1$ means the default init $\alpha=2$ is *already* in the divergent regime for every $d \ge 2$; current coverage is $d=1$ only. | `slow` for $d=50$ | ☐ todo |
+| T1b | `test_factor_mixture.py` | factor variant: `FactorVarianceGamma`, $d=10$, $r=2$, near-mode observation | finiteness + LL improvement | — | ☐ todo |
+| T2 | `test_variance_gamma.py` | quantitative cap: $E[1/Y \mid x{=}\mu]$ at the floor matches the §2 asymptotics — $\alpha=0.7$ ($\nu=0.2$ branch, expect $\approx 2.99\times10^4$ for $a_{\text{post}}=2$) and $\alpha=0.2$ ($\nu<0$ branch, expect $\approx(d-2\alpha)/b_{\min}$) | `rtol=0.05`. Guards the floor's *value*, not just `isfinite` (an `isfinite`-only test cannot catch a floor-constant regression). | — | ✅ done — `test_inverse_moment_cap_value` (model vs `kve` `rel=1e-3`, vs §6 asymptotics `rel=0.05`–`0.1`; $b_{\min}$ hard-coded so a floor-constant regression breaks it) |
+| T3 | `test_em_regression.py` (or new `test_posterior_gig.py`) | dormancy + refactor regression: for GH/NIG/NInvG with typical priors ($b_{\text{prior}} \gg 10^{-6}$), `conditional_expectations(x=mu)` equals the unfloored GIG moments exactly; e_step outputs for all 4 families × {jax, cpu} match pre-R2 golden values on fixed seeds | `rtol=1e-12` dormancy; `rtol=1e-12` refactor parity | — | ☐ todo (R2 not yet landed) |
+| T4 | `test_incremental_em.py`, `test_variance_gamma.py` | small-$\alpha$ coverage (all current EM-path tests use $\alpha \in [2.0, 2.5]$): `compute_eta_from_model` finite with $\eta_2, \eta_3 > 0$ at $\alpha \in \{1.0, 0.8, 0.2\}$ (B2), **and** the two always-finite moments stay bit-exact (VG: $E[\log Y]=\psi(\alpha)-\log\beta$, $E[Y]=\alpha/\beta$; NInvG: $E[\log Y]=\log\beta-\psi(\alpha)$, $E[1/Y]=\alpha/\beta$) — guards against a regression to the lossy GIG path; `IncrementalEMFitter` and `algorithm='mcecm'` on heavy-peaked VG data ($\alpha_{\text{true}}=0.7$) stay finite | finiteness, positivity of $\eta_2, \eta_3$, exactness of the closed-form moments (`rel=1e-12`) | — | ✅ done — `test_compute_eta_from_model_small_alpha` (B2 moments) + `test_incremental_em_heavy_peaked_vg_finite` + `test_mcecm_no_overflow_heavy_peaked`. *MCECM finiteness placed in `test_variance_gamma.py` (fast suite) rather than `test_mcecm.py`, which is module-marked `slow`/`integration`.* |
+| T5 | `test_em_regression.py` | monotone LL: heavy-peaked $d=1$ VG case with `track_ll=True` (F2) | $\Delta\text{LL} \ge -10^{-8}$ per iteration — the defining EM invariant; the original failure was "LL improving, then NaN" | — | ☐ todo (needs F2 `track_ll`) |
+| T6 | `test_jax_distributions.py` (or alongside M-step tests) | `safe_D` sign (B1): synthetic $\eta$ with $D = -10^{-12}$ recovers $\mu, \gamma$ with the correct sign (compare against $D=-10^{-8}$ reference); property check $1 - \eta_2\eta_3 \le 0$ for `e_step` output across all four families | sign correctness; Cauchy–Schwarz property | — | ✅ done — `TestMStepDenominatorSign` (`test_safe_D_sign_preserved_near_gaussian`, `test_cauchy_schwarz_property_all_families`) |
+| T7 | `test_em_regression.py` | F1 guard: a fitter step forced to NaN (e.g. init with absurd params) returns `diverged=True` with all-finite model params | last-finite semantics | — | ☐ todo (needs F1) |
 
 ---
 
@@ -331,7 +335,7 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 
 ```
 Phase 1 (docs)        M1, M2, D1, D2            — ✅ done (no behavior change)
-Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — ✅ B1, B2 done; quantitative-cap/MCECM tests (T2, partial T4/T6) still open
+Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — ✅ done (B1, B2 fixes; T2/T4/T6 value-level regressions; tech-note §9)
 Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b   — ☐ todo
 Phase 4 (fitter)      F1, F2, F3, T5, T7        — ☐ todo (EMResult gains `diverged`)
 Phase 5 (design-gated) F4 (+ design.md row), D3, D4         — ☐ todo
