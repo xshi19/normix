@@ -17,6 +17,7 @@ jax.config.update("jax_enable_x64", True)
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
     GeneralizedHyperbolic, MultivariateNormal,
+    NormalInverseGamma, NormalInverseGaussian, VarianceGamma,
     JointGeneralizedHyperbolic,
     JointNormalInverseGamma,
     JointNormalInverseGaussian,
@@ -354,6 +355,70 @@ class TestGeneralizedHyperbolic:
         gh_new = gh_2d.m_step(eta)
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
+
+
+# ===========================================================================
+# M-step denominator sign (B1) — T6
+# ===========================================================================
+
+class TestMStepDenominatorSign:
+    r"""T6: the M-step denominator :math:`D = 1 - E[1/Y]\,E[Y]` is
+    :math:`\le 0` by Cauchy–Schwarz.
+
+    The closed-form :math:`\mu, \gamma` update divides by ``D``; the fix floors
+    :math:`|D|` at ``SAFE_DENOMINATOR`` but keeps the negative sign, so a tiny
+    :math:`|D|` in the near-Gaussian limit cannot flip the recovered sign. The
+    old guard clipped to :math:`+`\ ``SAFE_DENOMINATOR``, which negated both.
+    """
+
+    @staticmethod
+    def _eta_with_D(delta):
+        # d=1 synthetic eta with D = 1 - E_inv_Y*E_Y = -delta and nonzero,
+        # sign-stable mu/gamma numerators (E_X - E_Y E_X/Y, E_X/Y - E_inv_Y E_X).
+        from normix.fitting.eta import NormalMixtureEta
+        return NormalMixtureEta(
+            E_inv_Y=jnp.array(1.0),
+            E_Y=jnp.array(1.0 + delta),       # D = 1 - 1*(1+delta) = -delta
+            E_log_Y=jnp.array(0.0),
+            E_X=jnp.array([1.0]),
+            E_X_inv_Y=jnp.array([2.0]),
+            E_XXT_inv_Y=jnp.array([[5.0]]),
+        )
+
+    def test_safe_D_sign_preserved_near_gaussian(self):
+        from normix.mixtures.joint import JointNormalMixture
+        # SAFE_DENOMINATOR = 1e-10: |D|=1e-8 is well-conditioned (no floor);
+        # |D|=1e-12 triggers the floor, where the old +floor flipped the sign.
+        mu_ref, gamma_ref, _ = JointNormalMixture._mstep_normal_params(
+            self._eta_with_D(1e-8))
+        mu_flo, gamma_flo, _ = JointNormalMixture._mstep_normal_params(
+            self._eta_with_D(1e-12))
+
+        assert np.isfinite(float(mu_flo[0])) and np.isfinite(float(gamma_flo[0]))
+        assert np.sign(float(mu_flo[0])) == np.sign(float(mu_ref[0])) != 0.0
+        assert np.sign(float(gamma_flo[0])) == np.sign(float(gamma_ref[0])) != 0.0
+
+    def test_cauchy_schwarz_property_all_families(self):
+        # 1 - eta_2 eta_3 <= 0 must hold for the e_step output of every family.
+        models = {
+            "VG": VarianceGamma.from_classical(
+                mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
+                sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0),
+            "NInvG": NormalInverseGamma.from_classical(
+                mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
+                sigma=jnp.array([[1.0]]), alpha=3.0, beta=1.0),
+            "NIG": NormalInverseGaussian.from_classical(
+                mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
+                sigma=jnp.array([[1.0]]), mu_ig=1.0, lam=1.0),
+            "GH": GeneralizedHyperbolic.from_classical(
+                mu=jnp.array([0.0]), gamma=jnp.array([0.3]),
+                sigma=jnp.array([[1.0]]), p=-0.5, a=2.0, b=1.0),
+        }
+        for name, m in models.items():
+            X = m.rvs(200, seed=7)
+            eta = m.e_step(X)
+            D = 1.0 - float(eta.E_inv_Y) * float(eta.E_Y)
+            assert D <= 1e-9, f"{name}: D = 1 - eta2*eta3 = {D} should be <= 0"
 
 
 # ===========================================================================

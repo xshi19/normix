@@ -138,6 +138,39 @@ def test_compute_eta_from_model_small_alpha(alpha):
             assert E_inv_Y == pytest.approx(alpha / beta, rel=1e-12)
 
 
+def test_incremental_em_heavy_peaked_vg_finite():
+    """T4: IncrementalEMFitter on heavy-peaked VG (alpha_true=0.7) stays finite.
+
+    Small alpha drives the warm-start reconstruction `compute_eta_from_model`
+    into the alpha <= 1 regime, where the prior moment beta/(alpha-1) would
+    diverge (and turn negative) without the B2 denominator floor. Incremental
+    EM stitches per-minibatch estimates together with this reconstruction, so a
+    NaN/negative moment would propagate to every later step; the floored moment
+    keeps the running model finite with positive eta_2, eta_3.
+    """
+    vg_true = VarianceGamma.from_classical(
+        mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
+        sigma=jnp.array([[1.0]]), alpha=0.7, beta=1.0,
+    )
+    X = vg_true.rvs(2000, seed=0).reshape(-1, 1)
+    # Keep a near-mode observation in the stream throughout.
+    X = jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+    model = VarianceGamma.default_init(X)
+
+    fitter = IncrementalEMFitter(
+        eta_update=RobbinsMonroUpdate(tau0=10.0),
+        batch_size=200, max_steps=30,
+        e_step_backend='jax', m_step_backend='jax',
+    )
+    result = fitter.fit(model, X, key=KEY)
+
+    j = result.model._joint
+    for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
+        assert jnp.all(jnp.isfinite(leaf)), "incremental EM produced a non-finite param"
+    eta = result.model.compute_eta_from_model()
+    assert float(eta.E_inv_Y) > 0.0 and float(eta.E_Y) > 0.0
+
+
 # ---------------------------------------------------------------------------
 # affine_combine
 # ---------------------------------------------------------------------------
