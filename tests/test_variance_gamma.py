@@ -257,6 +257,56 @@ class TestInverseMomentSingularityVG:
         assert np.isfinite(float(cond['E_Y'])) and float(cond['E_Y']) > 0
         assert np.isfinite(float(cond['E_log_Y']))
 
+    @pytest.mark.parametrize(
+        "alpha, nu_branch, expected",
+        [
+            # 0 < nu < 1 branch: nu = alpha - d/2 = 0.2 at alpha=0.7, d=1.
+            # Asymptotic Gamma(1-nu)/Gamma(nu) * 2^(1-2nu) * a_post^nu * b_min^(nu-1).
+            (0.7, "0<nu<1", 2.99e4),
+            # nu < 0 branch: nu = -0.3 at alpha=0.2, d=1.
+            # Asymptotic 2|nu|/b_min = (d - 2 alpha)/b_min.
+            (0.2, "nu<0", 6.11e5),
+        ],
+    )
+    def test_inverse_moment_cap_value(self, alpha, nu_branch, expected):
+        r"""T2: the *value* of the capped E[1/Y|x=mu], not just isfinite.
+
+        With gamma=0, Sigma=1, beta=1 (d=1) the posterior at x=mu is
+        GIG(p_post = alpha - 1/2, a_post = 2, b_post = B_POST_FLOOR), so the
+        floored inverse moment must match the exact Bessel value at b_min=1e-6
+        and the section-2 small-omega asymptotics. An isfinite-only test cannot
+        catch a regression in the floor constant; this one can.
+        """
+        from scipy.special import kve, gamma as gamma_fn
+
+        b_min = 1e-6  # hardcoded: a floor regression must break this test
+        a_post = 2.0
+        p_post = alpha - 0.5
+
+        vg = VarianceGamma.from_classical(
+            mu=jnp.array([0.3]), gamma=jnp.array([0.0]),
+            sigma=jnp.array([[1.0]]), alpha=alpha, beta=1.0,
+        )
+        cond = vg._joint.conditional_expectations(jnp.array([0.3]))
+        e_inv_y = float(cond['E_inv_Y'])
+
+        # Exact GIG inverse moment at the floor (scipy reference).
+        omega = np.sqrt(a_post * b_min)
+        exact = np.sqrt(a_post / b_min) * kve(p_post - 1, omega) / kve(p_post, omega)
+        assert e_inv_y == pytest.approx(float(exact), rel=1e-3)
+        assert e_inv_y == pytest.approx(expected, rel=0.05)
+
+        # Section-2 asymptotics: the cap is uniform in a_post / linear in d.
+        if nu_branch == "0<nu<1":
+            nu = p_post
+            asymptotic = (gamma_fn(1 - nu) / gamma_fn(nu)
+                          * 2.0 ** (1 - 2 * nu)
+                          * a_post ** nu * b_min ** (nu - 1))
+            assert e_inv_y == pytest.approx(asymptotic, rel=0.1)
+        else:
+            asymptotic = (1.0 - 2.0 * alpha) / b_min  # (d - 2 alpha)/b_min, d=1
+            assert e_inv_y == pytest.approx(asymptotic, rel=0.05)
+
     @pytest.mark.parametrize("backend", ["jax", "cpu"])
     def test_em_no_overflow_heavy_peaked(self, backend):
         # Heavy-peaked data from a small-alpha VG drives the EM into the
@@ -270,6 +320,32 @@ class TestInverseMomentSingularityVG:
         X = jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
         res = VarianceGamma.default_init(X).fit(
             X, max_iter=100, tol=1e-4, e_step_backend=backend, verbose=1)
+        assert res.log_likelihoods is not None
+        assert jnp.all(jnp.isfinite(res.log_likelihoods))
+        j = res.model._joint
+        for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
+            assert jnp.all(jnp.isfinite(leaf))
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_mcecm_no_overflow_heavy_peaked(self, backend):
+        r"""T4: MCECM on heavy-peaked small-alpha VG stays finite.
+
+        MCECM (E -> M_normal -> E -> M_sub) runs a *second* E-step between the
+        normal and subordinator M-steps, so it re-evaluates E[1/Y|x] on the
+        updated normal block. Combined with the b_post floor (E-step) and the
+        B2 prior-moment floor (subordinator warm start), every iterate must
+        stay finite on alpha_true = 0.7 data with a near-mode observation.
+        """
+        vg_true = VarianceGamma.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
+            sigma=jnp.array([[1.0]]), alpha=0.7, beta=1.0,
+        )
+        X = vg_true.rvs(2000, seed=1).reshape(-1, 1)
+        X = jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+        res = VarianceGamma.default_init(X).fit(
+            X, algorithm='mcecm', max_iter=50, tol=1e-4,
+            e_step_backend=backend, m_step_backend=backend,
+            regularization='none', verbose=1)
         assert res.log_likelihoods is not None
         assert jnp.all(jnp.isfinite(res.log_likelihoods))
         j = res.model._joint
