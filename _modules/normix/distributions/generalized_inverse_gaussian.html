@@ -554,6 +554,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
+<div class="viewcode-block" id="GeneralizedInverseGaussian.to_gig">
+<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Identity embedding into the GIG family.</span>
+
+<span class="sd">        GIG is already in GIG coordinates, so this returns ``self``. It exists</span>
+<span class="sd">        so that every subordinator family exposes a uniform ``to_gig()`` for</span>
+<span class="sd">        the shared prior-to-posterior conjugacy map in the EM E-step (see</span>
+<span class="sd">        :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Tier 1: Exponential family interface</span>
     <span class="c1"># ------------------------------------------------------------------</span>

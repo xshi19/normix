@@ -410,25 +410,6 @@
         <span class="k">return</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-\alpha-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
-
-<span class="sd">        .. math::</span>
-
-<span class="sd">            a_{\mathrm{post}} = \gamma^\top\Sigma^{-1}\gamma, \quad</span>
-<span class="sd">            b_{\mathrm{post}} = 2\beta + (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
-
-<span class="sd">        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,</span>
-<span class="sd">        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The InvGamma limit keeps</span>
-<span class="sd">        :math:`b_{\mathrm{post}} \ge 2\beta &gt; 0`, so the E-step&#39;s</span>
-<span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-                <span class="n">w2</span><span class="p">,</span>
-                <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">z2</span><span class="p">)</span>
-
 <div class="viewcode-block" id="JointNormalInverseGamma.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -766,11 +747,6 @@
                         <span class="o">+</span> <span class="n">log_bessel</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">log_C</span> <span class="o">+</span> <span class="n">zw</span> <span class="o">+</span> <span class="n">log_integral</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-                <span class="n">w2</span><span class="p">,</span>
-                <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">z2</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Prior InverseGamma moments; see :meth:`NormalInverseGamma._subordinator_expectations`.&quot;&quot;&quot;</span>

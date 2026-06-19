@@ -410,27 +410,6 @@
         <span class="k">return</span> <span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:</span>
-
-<span class="sd">        .. math::</span>
-
-<span class="sd">            p_{\mathrm{post}} = \alpha - d/2, \quad</span>
-<span class="sd">            a_{\mathrm{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma, \quad</span>
-<span class="sd">            b_{\mathrm{post}} = (x-\mu)^\top\Sigma^{-1}(x-\mu)</span>
-
-<span class="sd">        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,</span>
-<span class="sd">        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The Gamma limit (:math:`b=0`)</span>
-<span class="sd">        leaves :math:`b_{\mathrm{post}} = z_2`, which the E-step floors at</span>
-<span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` to bound :math:`E[1/Y\mid x]`</span>
-<span class="sd">        near the mode.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-                <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span>
-                <span class="n">z2</span><span class="p">)</span>
-
 <div class="viewcode-block" id="JointVarianceGamma.natural_params">
 <a class="viewcode-back" href="../../../api/index.html#normix.distributions.variance_gamma.JointVarianceGamma.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -782,11 +761,6 @@
                 <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span>
                 <span class="o">+</span> <span class="n">log_K</span> <span class="o">+</span> <span class="n">zw</span><span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
-                <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span>
-                <span class="n">z2</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Prior Gamma moments; see :meth:`VarianceGamma._subordinator_expectations`.&quot;&quot;&quot;</span>

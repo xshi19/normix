@@ -497,6 +497,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.p"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.p</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.a"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.a</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.b</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gig()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
@@ -1889,6 +1890,21 @@ approximation: the embedding lands strictly inside GIG’s domain.</p>
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b">
 <span class="sig-name descname"><span class="pre">b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig">
+<span class="sig-name descname"><span class="pre">to_gig</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.to_gig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig" title="Link to this definition">#</a></dt>
+<dd><p>Identity embedding into the GIG family.</p>
+<p>GIG is already in GIG coordinates, so this returns <code class="docutils literal notranslate"><span class="pre">self</span></code>. It exists
+so that every subordinator family exposes a uniform <code class="docutils literal notranslate"><span class="pre">to_gig()</span></code> for
+the shared prior-to-posterior conjugacy map in the EM E-step (see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian"><em>GeneralizedInverseGaussian</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">
@@ -4962,6 +4978,7 @@ Not JIT-able. Fast for EM hot path.</p></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.p"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.p</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.a"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.a</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.b</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gig()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
