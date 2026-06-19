@@ -26,7 +26,7 @@ import jax
 import jax.numpy as jnp
 
 
-from normix.utils.constants import B_POST_FLOOR, SIGMA_INIT_REG
+from normix.utils.constants import SIGMA_INIT_REG
 from normix.utils.rvs import build_pinv_table
 
 
@@ -321,12 +321,6 @@ class NormalMixture(MarginalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
 
         j = self._joint
-        if not hasattr(j, '_posterior_gig_params'):
-            raise NotImplementedError(
-                f"{type(j).__name__} does not implement _posterior_gig_params. "
-                "backend='cpu' requires this method. Use backend='jax' instead."
-            )
-
         X = jnp.asarray(X, dtype=jnp.float64)
 
         def _quad_scalars(x):
@@ -335,8 +329,7 @@ class NormalMixture(MarginalMixture):
 
         z2_all, w2_all = jax.vmap(_quad_scalars)(X)
 
-        p_post, a_post, b_post = j._posterior_gig_params(z2_all, w2_all)
-        b_post = jnp.maximum(b_post, B_POST_FLOOR)
+        p_post, a_post, b_post = j._floored_posterior_gig_params(z2_all, w2_all)
 
         eta = GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
 

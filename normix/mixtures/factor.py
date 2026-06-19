@@ -73,10 +73,12 @@ class FactorNormalMixture(MarginalMixture):
         Fitted subordinator (Gamma / InverseGamma / InverseGaussian /
         GIG).
 
-    Subclasses define the subordinator family (via the type stored in
-    ``subordinator``) and implement :meth:`_posterior_gig_params`,
-    :meth:`log_prob`, :meth:`_subordinator_from_eta`, and a few
-    forwarders / initialisers. The linear algebra for
+    Subclasses define the subordinator family (via the instance stored in
+    ``subordinator``, which supplies the shared posterior map through
+    ``to_gig()``) and implement :meth:`log_prob`,
+    :meth:`_subordinator_from_eta`, and a few forwarders / initialisers.
+    The prior-to-posterior GIG conjugacy (:meth:`_posterior_gig_params`)
+    is uniform across families and lives on the base. The linear algebra for
     :math:`\Sigma^{-1}` and :math:`\log|\Sigma|` is shared via
     Woodbury helpers (:meth:`_M`, :meth:`_solve`, :meth:`_quad_form`,
     :meth:`_log_det_sigma`, :meth:`_beta`).
@@ -219,15 +221,40 @@ class FactorNormalMixture(MarginalMixture):
     # Subordinator hooks (subclass-specific)
     # ------------------------------------------------------------------
 
-    @abc.abstractmethod
     def _posterior_gig_params(
         self, z2: jax.Array, w2: jax.Array,
     ) -> Tuple[jax.Array, jax.Array, jax.Array]:
-        r"""Posterior :math:`\mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`
-        of :math:`Y \mid X = x` given quad-form scalars
+        r"""Prior-to-posterior GIG conjugacy map, uniform across families.
+
+        Posterior :math:`Y \mid X = x \sim \mathrm{GIG}(p_{\mathrm{post}},
+        a_{\mathrm{post}}, b_{\mathrm{post}})` given quad-form scalars
         :math:`z_2 = (x-\mu)^\top \Sigma^{-1} (x-\mu)`,
-        :math:`w_2 = \gamma^\top \Sigma^{-1} \gamma`.
+        :math:`w_2 = \gamma^\top \Sigma^{-1} \gamma`:
+
+        .. math::
+
+            p_{\mathrm{post}} = p_{\mathrm{gig}} - \tfrac{d}{2}, \quad
+            a_{\mathrm{post}} = a_{\mathrm{gig}} + w_2, \quad
+            b_{\mathrm{post}} = b_{\mathrm{gig}} + z_2,
+
+        where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`
+        are the subordinator's exact GIG coordinates (``subordinator.to_gig()``).
+        See :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`
+        for the per-family table. Stays **pure**; the :math:`b_{\mathrm{post}}`
+        floor lives in :meth:`_floored_posterior_gig_params`.
         """
+        gig = self.subordinator.to_gig()
+        return gig.p - self.d / 2.0, gig.a + w2, gig.b + z2
+
+    def _floored_posterior_gig_params(
+        self, z2: jax.Array, w2: jax.Array,
+    ) -> Tuple[jax.Array, jax.Array, jax.Array]:
+        r"""E-step entry point: :meth:`_posterior_gig_params` with
+        :math:`b_{\mathrm{post}}` floored at
+        :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;
+        only binds for VG, prior :math:`b=0`)."""
+        p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
+        return p_post, a_post, jnp.maximum(b_post, B_POST_FLOOR)
 
     @classmethod
     @abc.abstractmethod
@@ -261,8 +288,7 @@ class FactorNormalMixture(MarginalMixture):
         E[Y \mid x])` for a single observation."""
         from normix.distributions.generalized_inverse_gaussian import GIG
         z2, w2, _zw = self._quad_forms(x)
-        p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
-        b_post = jnp.maximum(b_post, B_POST_FLOOR)
+        p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
         gig = GIG(p=p_post, a=a_post, b=b_post)
         eta = gig.expectation_params()
         return eta[0], eta[1], eta[2]
@@ -304,13 +330,13 @@ class FactorNormalMixture(MarginalMixture):
 
         z2_all = jax.vmap(_z2)(X)
         w2 = self._quad_form(self.gamma)
-        # Each subclass's _posterior_gig_params returns scalars or arrays
-        # of the same shape as z2_all; broadcasting handles both.
-        p_post, a_post, b_post = self._posterior_gig_params(z2_all, w2)
+        # The posterior map returns scalars or arrays matching z2_all;
+        # broadcasting handles both.
+        p_post, a_post, b_post = self._floored_posterior_gig_params(z2_all, w2)
         n = X.shape[0]
         p_post = jnp.broadcast_to(p_post, (n,))
         a_post = jnp.broadcast_to(a_post, (n,))
-        b_post = jnp.maximum(jnp.broadcast_to(b_post, (n,)), B_POST_FLOOR)
+        b_post = jnp.broadcast_to(b_post, (n,))
         eta = GIG.expectation_params_batch(
             p_post, a_post, b_post, backend='cpu')
         return eta[:, 0], eta[:, 1], eta[:, 2]

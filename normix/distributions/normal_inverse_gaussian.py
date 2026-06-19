@@ -46,26 +46,6 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.inverse_gaussian import InverseGaussian
         return InverseGaussian(mu=self.mu_ig, lam=self.lam)
 
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-1/2-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
-
-        .. math::
-
-            a_{\mathrm{post}} = \lambda/\mu_{IG}^2 + \gamma^\top\Sigma^{-1}\gamma, \quad
-            b_{\mathrm{post}} = \lambda + (x-\mu)^\top\Sigma^{-1}(x-\mu)
-
-        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
-        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The IG limit keeps
-        :math:`b_{\mathrm{post}} \ge \lambda > 0`, so the E-step's
-        :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.
-        """
-        a_ig = self.lam / (self.mu_ig ** 2)
-        return (-0.5 - self.d / 2.0,
-                a_ig + w2,
-                self.lam + z2)
-
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
@@ -362,12 +342,6 @@ class FactorNormalInverseGaussian(FactorNormalMixture):
                 + 0.5 * (d / 2.0 - p) * jnp.log(A / (Q + b + LOG_EPS))
                 + log_kv(nu, sqrt_A_Qb)
                 + zw)
-
-    def _posterior_gig_params(self, z2, w2):
-        a_ig = self.lam / (self.mu_ig ** 2)
-        return (-0.5 - self.d / 2.0,
-                a_ig + w2,
-                self.lam + z2)
 
     def _subordinator_expectations(self):
         from normix.distributions.generalized_inverse_gaussian import GIG

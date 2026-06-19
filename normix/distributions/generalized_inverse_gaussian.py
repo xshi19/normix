@@ -193,6 +193,16 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self.a = jnp.asarray(a, dtype=jnp.float64)
         self.b = jnp.asarray(b, dtype=jnp.float64)
 
+    def to_gig(self) -> "GeneralizedInverseGaussian":
+        r"""Identity embedding into the GIG family.
+
+        GIG is already in GIG coordinates, so this returns ``self``. It exists
+        so that every subordinator family exposes a uniform ``to_gig()`` for
+        the shared prior-to-posterior conjugacy map in the EM E-step (see
+        :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`).
+        """
+        return self
+
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface
     # ------------------------------------------------------------------

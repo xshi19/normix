@@ -225,21 +225,54 @@ class JointNormalMixture(ExponentialFamily):
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         _z, _w, z2, w2, _zw = self._quad_forms(x)
-        p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
-        b_post = jnp.maximum(b_post, B_POST_FLOOR)
+        p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
         eta = GIG(p=p_post, a=a_post, b=b_post).expectation_params()
         return {'E_log_Y': eta[0], 'E_inv_Y': eta[1], 'E_Y': eta[2]}
 
-    @abc.abstractmethod
     def _posterior_gig_params(self, z2: jax.Array, w2: jax.Array):
-        r"""Family-specific prior-to-posterior GIG map.
+        r"""Prior-to-posterior GIG conjugacy map, uniform across families.
 
         Returns :math:`(p_{\mathrm{post}}, a_{\mathrm{post}},
         b_{\mathrm{post}})` from quad-form scalars
         :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)` and
-        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The :math:`b_{\mathrm{post}}`
-        floor is applied by the caller, not here.
+        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`:
+
+        .. math::
+
+            p_{\mathrm{post}} = p_{\mathrm{gig}} - \tfrac{d}{2}, \quad
+            a_{\mathrm{post}} = a_{\mathrm{gig}} + w_2, \quad
+            b_{\mathrm{post}} = b_{\mathrm{gig}} + z_2,
+
+        where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`
+        are the subordinator's exact GIG coordinates (``subordinator().to_gig()``).
+        Per family:
+
+        ============= ============================================ ===================================
+        Subordinator  :math:`(p_{\mathrm{gig}}, a, b)`              :math:`(p_{\mathrm{post}}, a, b)`
+        ============= ============================================ ===================================
+        Gamma (VG)    :math:`(\alpha,\ 2\beta,\ 0)`                :math:`(\alpha-\tfrac d2,\ 2\beta+w_2,\ z_2)`
+        InvGamma      :math:`(-\alpha,\ 0,\ 2\beta)`               :math:`(-\alpha-\tfrac d2,\ w_2,\ 2\beta+z_2)`
+        InvGaussian   :math:`(-\tfrac12,\ \lambda/\mu_{IG}^2,\ \lambda)` :math:`(-\tfrac12-\tfrac d2,\ \lambda/\mu_{IG}^2+w_2,\ \lambda+z_2)`
+        GIG (GH)      :math:`(p,\ a,\ b)`                          :math:`(p-\tfrac d2,\ a+w_2,\ b+z_2)`
+        ============= ============================================ ===================================
+
+        This map stays **pure** (no floor); the :math:`b_{\mathrm{post}}` floor
+        is applied by :meth:`_floored_posterior_gig_params`.
         """
+        gig = self.subordinator().to_gig()
+        return gig.p - self.d / 2.0, gig.a + w2, gig.b + z2
+
+    def _floored_posterior_gig_params(self, z2: jax.Array, w2: jax.Array):
+        r"""E-step entry point: :meth:`_posterior_gig_params` with
+        :math:`b_{\mathrm{post}}` floored at
+        :data:`~normix.utils.constants.B_POST_FLOOR`.
+
+        The floor bounds :math:`E[1/Y\mid x]` for observations near the mode;
+        it only binds for VG (prior :math:`b=0`). This is the single
+        chokepoint through which all E-step paths obtain the posterior GIG.
+        """
+        p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
+        return p_post, a_post, jnp.maximum(b_post, B_POST_FLOOR)
 
     # ------------------------------------------------------------------
     # Helper: solve Cholesky-based quantities
