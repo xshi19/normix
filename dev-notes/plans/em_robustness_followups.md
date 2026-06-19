@@ -24,10 +24,17 @@
   deleted; `GeneralizedInverseGaussian.to_gig()` added; all four E-step paths
   call the floored chokepoint. Bit-exact e_step parity verified across four
   families × {marginal, factor} × {jax, cpu} on fixed seeds (`rtol=1e-12`).
-- **R3 (partial)** — dead `hasattr(j, '_posterior_gig_params')` guard removed
-  from `NormalMixture._e_step_subordinator_cpu` (enabled by R2).
+- **R3** — dead `hasattr(j, '_posterior_gig_params')` guard removed from
+  `NormalMixture._e_step_subordinator_cpu` (enabled by R2); `_PARAM_EPS` moved
+  from `em.py` to `normix/utils/constants.py` as `PARAM_CHANGE_EPS` (constants
+  tables in `ARCHITECTURE.md` and `coding-conventions.mdc` updated).
+- **T1, T1b, T3** — Phase 3 tests: high-d VG EM no-overflow ($d\in\{5,10\}$,
+  $d=50$ `slow`; T1), `FactorVarianceGamma` $d=10,r=2$ near-mode finiteness +
+  LL improvement (T1b), and the posterior-GIG consolidation regression
+  (`tests/test_posterior_gig.py`: per-family map equivalence, floor dormancy,
+  jax/cpu backend parity across all four families × {joint, factor}; T3).
 
-Remaining items (R3 `_PARAM_EPS`, F1–F5, T1/T1b/T3/T5/T7, D3, D4) not yet
+**Phase 3 complete.** Remaining items (F1–F5, T5/T7, D3, D4) not yet
 implemented.
 **Origin:** post-merge review of the `b_post` floor fix
 (`5a0ecfb`, PR #45). The review verified the math of
@@ -60,13 +67,13 @@ work for each.
 | B2 | Bug | `VarianceGamma._subordinator_expectations` returns $E[1/Y]=\beta/(\alpha-1)$, which is **negative** for $\alpha<1$ (true moment is $+\infty$); same for NInvG's $E[Y]$. Feeds `compute_eta_from_model` → incremental-EM warm starts and shrinkage. Now *more* reachable because the floored batch EM produces finite models with $\alpha<1$. Fix: distribution-specific denominator floor on the single divergent moment (keep the other two exact); **not** via `to_gig().expectation_params()`, which corrupts the exact moments — see §3.2. | P1 | ~15 LOC | ✅ `5fa19f7` |
 | R1 | Refactor | `B_POST_FLOOR` is applied at four call sites (`joint.py`, `marginal.py` CPU, `factor.py` ×2). Collapse to one floored helper per hierarchy. | P2 | ~15 LOC | ✅ done |
 | R2 | Refactor | All eight `_posterior_gig_params` overrides (4 joint + 4 factor) are the same map in GIG coordinates: $(p_{\text{gig}}-\tfrac d2,\ a_{\text{gig}}+w_2,\ b_{\text{gig}}+z_2)$ of `subordinator().to_gig()`. Replace with one base implementation per hierarchy. | P2 | −80 LOC net | ✅ done |
-| R3 | Cleanup | `_PARAM_EPS = 1e-10` defined locally in `em.py` (violates the constants rule); dead `hasattr(j, '_posterior_gig_params')` guard in `NormalMixture._e_step_subordinator_cpu` (method is abstract on the base, always present). | P3 | ~10 LOC | ◐ partial — ✅ guard removed; ☐ `_PARAM_EPS` → `PARAM_CHANGE_EPS` |
+| R3 | Cleanup | `_PARAM_EPS = 1e-10` defined locally in `em.py` (violates the constants rule); dead `hasattr(j, '_posterior_gig_params')` guard in `NormalMixture._e_step_subordinator_cpu` (method is abstract on the base, always present). | P3 | ~10 LOC | ✅ done — guard removed; `_PARAM_EPS` → `PARAM_CHANGE_EPS` in constants |
 | F1 | Framework | `BatchEMFitter` has no finite guard: a NaN iterate silently runs to `max_iter` and returns a NaN model (the original failure mode). Add fail-fast / keep-last-finite. | P1 | ~40 LOC | ☐ todo |
 | F2 | Framework | `EMResult.log_likelihoods` is `None` unless `verbose ≥ 1` — diagnostics coupled to printing. Add `track_ll`. | P2 | ~30 LOC | ☐ todo |
 | F3 | Framework | `self._target_log_det` set inside `fit` makes the fitter stateful / non-reentrant. Thread it through as a local. | P2 | ~15 LOC | ☐ todo |
 | F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC | ☐ todo |
 | F5 | Doc note | `B_POST_FLOOR` is not gauge-invariant: under the $Y \to sY$ rescale ($\Sigma \to \Sigma/s$), $b_{\text{post}} = q(x)$ scales with $s$, so a fixed $10^{-6}$ binds with different strength under `det_sigma_one` vs `none`. Document. | P3 | doc only | ✅ `fab19be` |
-| T1–T7 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ◐ partial — ✅ T2, T4, T6; ☐ T1, T1b, T3, T5, T7 |
+| T1–T7 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ◐ partial — ✅ T1, T1b, T2, T3, T4, T6; ☐ T5, T7 |
 | D1, D2 | Docs | Tech note §6 rewrite (D1); `joint.py`/`constants.py` cross-link violations (D2) — see §5. | P1 | doc only | ✅ `fab19be` (D1), this PR (D2) |
 | D3, D4 | Docs | Post-implementation design/architecture rows (D3); optional public EM paragraph (D4) — see §5. | P2–P3 | doc only | ☐ todo |
 
@@ -309,11 +316,11 @@ option as an *opt-in* estimand control:
 Requires a short design discussion before implementation (API surface:
 kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 
-### 3.6 R3 — cleanups
+### 3.6 R3 — cleanups ✅
 
-- Move `_PARAM_EPS` to `normix/utils/constants.py` as `PARAM_CHANGE_EPS`
+- ~~Move `_PARAM_EPS` to `normix/utils/constants.py` as `PARAM_CHANGE_EPS`
   (update the constants tables in `ARCHITECTURE.md` and
-  `coding-conventions.mdc` per the agent-maintenance skill). ☐ todo
+  `coding-conventions.mdc` per the agent-maintenance skill).~~ ✅ done.
 - ~~Delete the `hasattr(j, '_posterior_gig_params')` guard in
   `NormalMixture._e_step_subordinator_cpu`~~ ✅ done (with R2).
 
@@ -323,10 +330,10 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 
 | ID | File | Test | Asserts | Marker | Status |
 |----|------|------|---------|--------|--------|
-| T1 | `test_variance_gamma.py` | `TestInverseMomentSingularityVG::test_em_no_overflow_high_dim` — parametrize $d \in \{5, 10\}$ (and $d=50$ as `slow`), data from VG $\alpha=1.0$ with the sample mean appended as a near-mode observation, both E-step backends | all params finite, final LL $\ge$ init LL. Rationale: threshold $\alpha \le d/2+1$ means the default init $\alpha=2$ is *already* in the divergent regime for every $d \ge 2$; current coverage is $d=1$ only. | `slow` for $d=50$ | ☐ todo |
-| T1b | `test_factor_mixture.py` | factor variant: `FactorVarianceGamma`, $d=10$, $r=2$, near-mode observation | finiteness + LL improvement | — | ☐ todo |
+| T1 | `test_variance_gamma.py` | `TestInverseMomentSingularityVG::test_em_no_overflow_high_dim` — parametrize $d \in \{5, 10\}$ (and $d=50$ as `slow`), data from VG $\alpha=1.0$ with the sample mean appended as a near-mode observation, both E-step backends | all params finite, final LL $\ge$ init LL. Rationale: threshold $\alpha \le d/2+1$ means the default init $\alpha=2$ is *already* in the divergent regime for every $d \ge 2$; current coverage is $d=1$ only. | `slow` for $d=50$ | ✅ done — `test_em_no_overflow_high_dim` ($d\in\{5,10\}$) + `test_em_no_overflow_high_dim_d50` (`slow`) |
+| T1b | `test_factor_mixture.py` | factor variant: `FactorVarianceGamma`, $d=10$, $r=2$, near-mode observation | finiteness + LL improvement | — | ✅ done — `test_factor_vg_high_dim_no_overflow` (both backends) |
 | T2 | `test_variance_gamma.py` | quantitative cap: $E[1/Y \mid x{=}\mu]$ at the floor matches the §2 asymptotics — $\alpha=0.7$ ($\nu=0.2$ branch, expect $\approx 2.99\times10^4$ for $a_{\text{post}}=2$) and $\alpha=0.2$ ($\nu<0$ branch, expect $\approx(d-2\alpha)/b_{\min}$) | `rtol=0.05`. Guards the floor's *value*, not just `isfinite` (an `isfinite`-only test cannot catch a floor-constant regression). | — | ✅ done — `test_inverse_moment_cap_value` (model vs `kve` `rel=1e-3`, vs §6 asymptotics `rel=0.05`–`0.1`; $b_{\min}$ hard-coded so a floor-constant regression breaks it) |
-| T3 | `test_em_regression.py` (or new `test_posterior_gig.py`) | dormancy + refactor regression: for GH/NIG/NInvG with typical priors ($b_{\text{prior}} \gg 10^{-6}$), `conditional_expectations(x=mu)` equals the unfloored GIG moments exactly; e_step outputs for all 4 families × {jax, cpu} match pre-R2 golden values on fixed seeds | `rtol=1e-12` dormancy; `rtol=1e-12` refactor parity | — | ☐ todo (R2 landed; parity verified manually pre-merge — codify as T3) |
+| T3 | `test_posterior_gig.py` (new) | dormancy + refactor regression: for GH/NIG/NInvG with typical priors ($b_{\text{prior}} \gg 10^{-6}$), `conditional_expectations(x=mu)` equals the unfloored GIG moments exactly; the consolidated map equals the per-family analytic formula for all 4 families × {joint, factor}; e_step jax/cpu backend parity on fixed seeds | `rtol=1e-12` dormancy + map parity; `rtol=1e-7` cross-backend (GIG-Bessel paths differ by $O(10^{-9})$ near the VG floor) | — | ✅ done — `test_posterior_gig_map_matches_analytic_formula`, `test_floor_binds_only_for_vg`, `test_conditional_expectations_at_mode_unfloored`, `test_estep_{marginal,factor}_backend_parity` |
 | T4 | `test_incremental_em.py`, `test_variance_gamma.py` | small-$\alpha$ coverage (all current EM-path tests use $\alpha \in [2.0, 2.5]$): `compute_eta_from_model` finite with $\eta_2, \eta_3 > 0$ at $\alpha \in \{1.0, 0.8, 0.2\}$ (B2), **and** the two always-finite moments stay bit-exact (VG: $E[\log Y]=\psi(\alpha)-\log\beta$, $E[Y]=\alpha/\beta$; NInvG: $E[\log Y]=\log\beta-\psi(\alpha)$, $E[1/Y]=\alpha/\beta$) — guards against a regression to the lossy GIG path; `IncrementalEMFitter` and `algorithm='mcecm'` on heavy-peaked VG data ($\alpha_{\text{true}}=0.7$) stay finite | finiteness, positivity of $\eta_2, \eta_3$, exactness of the closed-form moments (`rel=1e-12`) | — | ✅ done — `test_compute_eta_from_model_small_alpha` (B2 moments) + `test_incremental_em_heavy_peaked_vg_finite` + `test_mcecm_no_overflow_heavy_peaked`. *MCECM finiteness placed in `test_variance_gamma.py` (fast suite) rather than `test_mcecm.py`, which is module-marked `slow`/`integration`.* |
 | T5 | `test_em_regression.py` | monotone LL: heavy-peaked $d=1$ VG case with `track_ll=True` (F2) | $\Delta\text{LL} \ge -10^{-8}$ per iteration — the defining EM invariant; the original failure was "LL improving, then NaN" | — | ☐ todo (needs F2 `track_ll`) |
 | T6 | `test_jax_distributions.py` (or alongside M-step tests) | `safe_D` sign (B1): synthetic $\eta$ with $D = -10^{-12}$ recovers $\mu, \gamma$ with the correct sign (compare against $D=-10^{-8}$ reference); property check $1 - \eta_2\eta_3 \le 0$ for `e_step` output across all four families | sign correctness; Cauchy–Schwarz property | — | ✅ done — `TestMStepDenominatorSign` (`test_safe_D_sign_preserved_near_gaussian`, `test_cauchy_schwarz_property_all_families`) |
@@ -350,14 +357,14 @@ kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
 ```
 Phase 1 (docs)        M1, M2, D1, D2            — ✅ done (no behavior change)
 Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — ✅ done (B1, B2 fixes; T2/T4/T6 value-level regressions; tech-note §9)
-Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b   — ◐ partial — ✅ R1, R2, GIG.to_gig, R3 guard; ☐ T3, T1, T1b, `_PARAM_EPS`
+Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b   — ✅ done
 Phase 4 (fitter)      F1, F2, F3, T5, T7        — ☐ todo (EMResult gains `diverged`)
 Phase 5 (design-gated) F4 (+ design.md row), D3, D4         — ☐ todo
 ```
 
 - Phases are independently mergeable; Phase 3 depends on nothing in Phase 2.
-  R2 refactor parity was verified on fixed seeds before merge; T3 should still
-  codify those golden values in the test suite.
+  R2 refactor parity is codified by T3 (`tests/test_posterior_gig.py`):
+  per-family map equivalence, floor dormancy, and jax/cpu backend parity.
 - T1/T2 only need the existing floor — they can land any time after Phase 1.
 - Phase 5 requires explicit design sign-off (API surface for `alpha_min`,
   whether D4 is promoted).
