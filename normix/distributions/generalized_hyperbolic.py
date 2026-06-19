@@ -75,26 +75,6 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(p=self.p, a=self.a, b=self.b)
 
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
-
-        .. math::
-
-            p_{\mathrm{post}} = p - d/2, \quad
-            a_{\mathrm{post}} = a + \gamma^\top\Sigma^{-1}\gamma, \quad
-            b_{\mathrm{post}} = b + (x-\mu)^\top\Sigma^{-1}(x-\mu)
-
-        from quad-form scalars :math:`z_2 = \|L^{-1}(x-\mu)\|^2`,
-        :math:`w_2 = \|L^{-1}\gamma\|^2`. With :math:`b > 0` the posterior scale
-        :math:`b_{\mathrm{post}} \ge b` is already bounded away from zero, so the
-        E-step's :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.
-        """
-        return (self.p - self.d / 2.0,
-                self.a + w2,
-                self.b + z2)
-
     # ------------------------------------------------------------------
     # ExponentialFamily: natural params / log partition
     # ------------------------------------------------------------------
@@ -634,11 +614,6 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                 + 0.5 * (d / 2.0 - p) * jnp.log(A / (Q + b + LOG_EPS))
                 + log_kv(p_post, sqrt_A_Qb)
                 + zw)
-
-    def _posterior_gig_params(self, z2, w2):
-        return (self.p - self.d / 2.0,
-                self.a + w2,
-                self.b + z2)
 
     def _subordinator_expectations(self):
         eta = self.subordinator.expectation_params()

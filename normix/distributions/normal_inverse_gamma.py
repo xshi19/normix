@@ -46,25 +46,6 @@ class JointNormalInverseGamma(JointNormalMixture):
         from normix.distributions.inverse_gamma import InverseGamma
         return InverseGamma(alpha=self.alpha, beta=self.beta)
 
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(-\alpha-d/2, a_{\mathrm{post}}, b_{\mathrm{post}})`:
-
-        .. math::
-
-            a_{\mathrm{post}} = \gamma^\top\Sigma^{-1}\gamma, \quad
-            b_{\mathrm{post}} = 2\beta + (x-\mu)^\top\Sigma^{-1}(x-\mu)
-
-        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
-        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The InvGamma limit keeps
-        :math:`b_{\mathrm{post}} \ge 2\beta > 0`, so the E-step's
-        :data:`~normix.utils.constants.B_POST_FLOOR` is dormant here.
-        """
-        return (-self.alpha - self.d / 2.0,
-                w2,
-                2.0 * self.beta + z2)
-
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [-(\alpha+1)-d/2,\; -(\beta+\tfrac{1}{2}\mu^\top\Lambda\mu),\;
@@ -360,11 +341,6 @@ class FactorNormalInverseGamma(FactorNormalMixture):
                             (b_gig + LOG_EPS) / (a_gig + LOG_EPS))
                         + log_bessel)
         return log_C + zw + log_integral
-
-    def _posterior_gig_params(self, z2, w2):
-        return (-self.alpha - self.d / 2.0,
-                w2,
-                2.0 * self.beta + z2)
 
     def _subordinator_expectations(self):
         r"""Prior InverseGamma moments; see :meth:`NormalInverseGamma._subordinator_expectations`."""

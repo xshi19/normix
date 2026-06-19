@@ -46,27 +46,6 @@ class JointVarianceGamma(JointNormalMixture):
         from normix.distributions.gamma import Gamma
         return Gamma(alpha=self.alpha, beta=self.beta)
 
-    def _posterior_gig_params(
-        self, z2: jax.Array, w2: jax.Array
-    ):
-        r"""Posterior :math:`Y\mid X=x \sim \mathrm{GIG}(p_{\mathrm{post}}, a_{\mathrm{post}}, b_{\mathrm{post}})`:
-
-        .. math::
-
-            p_{\mathrm{post}} = \alpha - d/2, \quad
-            a_{\mathrm{post}} = 2\beta + \gamma^\top\Sigma^{-1}\gamma, \quad
-            b_{\mathrm{post}} = (x-\mu)^\top\Sigma^{-1}(x-\mu)
-
-        from quad-form scalars :math:`z_2 = (x-\mu)^\top\Sigma^{-1}(x-\mu)`,
-        :math:`w_2 = \gamma^\top\Sigma^{-1}\gamma`. The Gamma limit (:math:`b=0`)
-        leaves :math:`b_{\mathrm{post}} = z_2`, which the E-step floors at
-        :data:`~normix.utils.constants.B_POST_FLOOR` to bound :math:`E[1/Y\mid x]`
-        near the mode.
-        """
-        return (self.alpha - self.d / 2.0,
-                2.0 * self.beta + w2,
-                z2)
-
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [\alpha-1-d/2,\; -\tfrac{1}{2}\mu^\top\Lambda\mu,\;
@@ -376,11 +355,6 @@ class FactorVarianceGamma(FactorNormalMixture):
         return (log_C
                 + 0.5 * nu * jnp.log(z2 / (2.0 * c + LOG_EPS) + LOG_EPS)
                 + log_K + zw)
-
-    def _posterior_gig_params(self, z2, w2):
-        return (self.alpha - self.d / 2.0,
-                2.0 * self.beta + w2,
-                z2)
 
     def _subordinator_expectations(self):
         r"""Prior Gamma moments; see :meth:`VarianceGamma._subordinator_expectations`."""
