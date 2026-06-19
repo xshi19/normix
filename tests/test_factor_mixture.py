@@ -244,6 +244,46 @@ def test_em_recovers_sigma_and_subordinator():
 
 
 # ============================================================================
+# 3b. Inverse-moment singularity (T1b): high-d factor VG stays finite
+# ============================================================================
+
+
+@pytest.mark.parametrize("backend", ["jax", "cpu"])
+def test_factor_vg_high_dim_no_overflow(backend):
+    r"""T1b: FactorVarianceGamma (d=10, r=2) EM stays finite and improves LL.
+
+    Factor analogue of the joint VG inverse-moment singularity test. With
+    α=1 data and a sample-mean (near-mode) observation, the posterior scale
+    b_post = (x-μ)ᵀΣ⁻¹(x-μ) → 0 there; without the b_post floor the
+    covariance/factor M-step would overflow to nan in the α ≤ d/2+1 regime.
+    """
+    d, r, n = 10, 2, 1500
+    rng = np.random.default_rng(10)
+    mu = jnp.asarray(rng.normal(size=d))
+    gamma = jnp.asarray(rng.normal(size=d) * 0.2)
+    F = jnp.asarray(rng.normal(size=(d, r)) * 0.5)
+    D = jnp.asarray(np.abs(rng.normal(size=d)) + 0.5)
+    true_model = FactorVarianceGamma.from_classical(
+        mu=mu, gamma=gamma, F=F, D=D, alpha=1.0, beta=1.0)
+    X = true_model.rvs(n, seed=10)
+    X = jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+
+    init = FactorVarianceGamma.default_init(X, r=r)
+    ll_init = float(init.marginal_log_likelihood(X))
+    fitter = BatchEMFitter(max_iter=80, tol=1e-4, verbose=1,
+                           e_step_backend=backend, m_step_backend=backend)
+    result = fitter.fit(init, X)
+
+    assert result.log_likelihoods is not None
+    assert jnp.all(jnp.isfinite(result.log_likelihoods))
+    fitted = result.model
+    for leaf in (fitted.mu, fitted.gamma, fitted.F, fitted.D,
+                 fitted.alpha, fitted.beta):
+        assert jnp.all(jnp.isfinite(leaf))
+    assert float(fitted.marginal_log_likelihood(X)) >= ll_init - 1e-6
+
+
+# ============================================================================
 # 4. Match against full-cov fit when r = d - 1
 # ============================================================================
 

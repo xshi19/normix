@@ -326,6 +326,58 @@ class TestInverseMomentSingularityVG:
         for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
             assert jnp.all(jnp.isfinite(leaf))
 
+    @staticmethod
+    def _high_dim_vg_data(d, n=1500, seed=0):
+        """VG(α=1) data in d dimensions with the sample mean appended as a
+        near-mode observation (drives EM into the α ≤ d/2+1 divergent regime)."""
+        rng = np.random.default_rng(seed)
+        mu = jnp.asarray(rng.normal(size=d))
+        gamma = jnp.asarray(rng.normal(size=d) * 0.2)
+        A = rng.normal(size=(d, d))
+        sigma = jnp.asarray(A @ A.T + d * np.eye(d))
+        vg = VarianceGamma.from_classical(
+            mu=mu, gamma=gamma, sigma=sigma, alpha=1.0, beta=1.0)
+        X = vg.rvs(n, seed=seed)
+        return jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    @pytest.mark.parametrize("d", [5, 10])
+    def test_em_no_overflow_high_dim(self, d, backend):
+        r"""T1: high-d VG EM stays finite and non-decreasing in LL.
+
+        With the default init α≈2 and threshold α ≤ d/2+1, every d ≥ 2 starts
+        in the divergent regime, so the near-mode observation would overflow
+        E[1/Y|x] without the b_post floor. Existing coverage was d=1 only.
+        """
+        X = self._high_dim_vg_data(d, seed=d)
+        init = VarianceGamma.default_init(X)
+        ll_init = float(init.marginal_log_likelihood(X))
+        res = init.fit(X, max_iter=80, tol=1e-4,
+                       e_step_backend=backend, verbose=1)
+        assert res.log_likelihoods is not None
+        assert jnp.all(jnp.isfinite(res.log_likelihoods))
+        j = res.model._joint
+        for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
+            assert jnp.all(jnp.isfinite(leaf))
+        ll_final = float(res.model.marginal_log_likelihood(X))
+        assert ll_final >= ll_init - 1e-6
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_em_no_overflow_high_dim_d50(self, backend):
+        """T1 (slow): the same guarantee at d=50, deep in the divergent regime."""
+        X = self._high_dim_vg_data(50, n=2000, seed=50)
+        init = VarianceGamma.default_init(X)
+        ll_init = float(init.marginal_log_likelihood(X))
+        res = init.fit(X, max_iter=60, tol=1e-4,
+                       e_step_backend=backend, verbose=1)
+        assert res.log_likelihoods is not None
+        assert jnp.all(jnp.isfinite(res.log_likelihoods))
+        j = res.model._joint
+        for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
+            assert jnp.all(jnp.isfinite(leaf))
+        assert float(res.model.marginal_log_likelihood(X)) >= ll_init - 1e-6
+
     @pytest.mark.parametrize("backend", ["jax", "cpu"])
     def test_mcecm_no_overflow_heavy_peaked(self, backend):
         r"""T4: MCECM on heavy-peaked small-alpha VG stays finite.
