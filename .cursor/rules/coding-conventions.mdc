@@ -145,6 +145,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | `SIGMA_REG` | `1e-8` | Regularisation for covariance matrix in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for denominator D = 1 − E[1/Y]·E[Y] in M-step |
 | `ALPHA_MOMENT_MARGIN` | `0.1` | Floor on the `(α−1)` denominator of the VG/NInvG prior moment `β/(α−1)` in `compute_eta_from_model` |
+| `PARAM_CHANGE_EPS` | `1e-10` | Floor on ‖old‖ in the EM relative parameter-change convergence measure |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information (second-order) |
 
 Backward-compatibility aliases: `GIG_EPS_V_HESS = BESSEL_EPS_V`, `GIG_EPS_NP = TINY`.

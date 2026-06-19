@@ -66,6 +66,13 @@ SAFE_DENOMINATOR: float = 1e-10
 # (Σ = F Fᵀ + diag(D)). See `docs/theory/factor_analysis.rst`.
 D_FLOOR: float = 1e-8
 
+# ── Convergence constants ─────────────────────────────────────────────
+
+# Floor on ‖old‖ in the EM relative parameter-change convergence measure
+# ‖new − old‖ / max(‖old‖, PARAM_CHANGE_EPS). Prevents a divide-by-zero when a
+# convergence leaf is exactly zero.
+PARAM_CHANGE_EPS: float = 1e-10
+
 # ── Initialisation constants ──────────────────────────────────────────
 
 # Regularisation added to empirical Σ during moment-based initialisation

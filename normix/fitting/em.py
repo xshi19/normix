@@ -16,8 +16,7 @@ from typing import Any, Optional
 import jax
 import jax.numpy as jnp
 
-
-_PARAM_EPS = 1e-10
+from normix.utils.constants import PARAM_CHANGE_EPS
 
 
 def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Array:
@@ -694,7 +693,7 @@ def _param_change(new_params, old_params) -> jax.Array:
     leaves_new = jax.tree.leaves(new_params)
     leaves_old = jax.tree.leaves(old_params)
     rels = jnp.stack([
-        jnp.linalg.norm(n - o) / jnp.maximum(jnp.linalg.norm(o), _PARAM_EPS)
+        jnp.linalg.norm(n - o) / jnp.maximum(jnp.linalg.norm(o), PARAM_CHANGE_EPS)
         for n, o in zip(leaves_new, leaves_old)
     ])
     return jnp.max(rels)

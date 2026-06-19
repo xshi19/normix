@@ -251,6 +251,7 @@ from there. Never define magic numbers locally in distribution files.
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
+| `PARAM_CHANGE_EPS` | `1e-10` | Floor on ‖old‖ in the EM relative parameter-change convergence measure |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
 
 ## GIG η→θ Optimization
