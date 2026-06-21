@@ -600,6 +600,7 @@ def test_incremental_em_scan_matches_python_loop():
         int(X.shape[0]),
         int(bs),
         step_keys,
+        None,
     )
     r_py = fitter._fit_incremental_python(
         clone_leaves(model_basis),
@@ -608,6 +609,7 @@ def test_incremental_em_scan_matches_python_loop():
         int(bs),
         step_keys,
         type(model_basis).__name__,
+        None,
     )
 
     np.testing.assert_allclose(
