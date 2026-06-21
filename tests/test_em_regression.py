@@ -16,6 +16,7 @@ from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
+from normix.fitting.em import BatchEMFitter
 from normix.fitting.eta import NormalMixtureEta
 from normix.mixtures.joint import JointNormalMixture
 
@@ -214,3 +215,76 @@ class TestMstepDenominatorSign:
         eta = model.e_step(X, backend="jax")
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
         assert D <= 1e-9
+
+
+def _heavy_peaked_vg_1d():
+    """Heavy-peaked d=1 VG data with a near-mode observation (T5 setup)."""
+    vg_true = VarianceGamma.from_classical(
+        mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
+        sigma=jnp.array([[1.0]]), alpha=0.7, beta=1.0,
+    )
+    X = vg_true.rvs(3000, seed=0).reshape(-1, 1)
+    return jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+
+
+def _assert_model_finite(model) -> None:
+    for leaf in jax.tree.leaves(model):
+        assert jnp.all(jnp.isfinite(leaf))
+
+
+class TestEMMonotoneLL:
+    """T5: per-iteration LL is non-decreasing (EM invariant) with track_ll."""
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_heavy_peaked_vg_monotone_ll(self, loop):
+        X = _heavy_peaked_vg_1d()
+        if loop == "scan":
+            fitter = BatchEMFitter(
+                max_iter=100, tol=1e-4, verbose=0, track_ll=True,
+                e_step_backend="jax", m_step_backend="jax",
+            )
+        else:
+            fitter = BatchEMFitter(
+                max_iter=100, tol=1e-4, verbose=0, track_ll=True,
+                e_step_backend="cpu", m_step_backend="cpu",
+            )
+        result = fitter.fit(VarianceGamma.default_init(X), X)
+        assert result.log_likelihoods is not None
+        assert not result.diverged
+        changes = result.param_changes
+        dll = jnp.diff(result.log_likelihoods)
+        # Only check iterations that actually updated the model (scan freezes
+        # post-convergence with change=0). Allow float64 slack in floored VG EM.
+        active = changes[:-1] > 0
+        assert jnp.all(dll[active] >= -1e-5)
+
+
+class TestEMDivergenceGuard:
+    """T7: non-finite iterate triggers diverged=True and keep-last-finite."""
+
+    @staticmethod
+    def _fit_with_forced_divergence(fitter, model, X, *, at_step: int):
+        fitter._force_nonfinite_at_step = at_step
+        return fitter.fit(model, X)
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_diverged_keeps_last_finite(self, loop):
+        X = _heavy_peaked_vg_1d()
+        init = VarianceGamma.default_init(X)
+        if loop == "scan":
+            fitter = BatchEMFitter(
+                max_iter=20, tol=1e-8, verbose=0,
+                e_step_backend="jax", m_step_backend="jax",
+            )
+        else:
+            fitter = BatchEMFitter(
+                max_iter=20, tol=1e-8, verbose=0,
+                e_step_backend="cpu", m_step_backend="cpu",
+            )
+        result = self._fit_with_forced_divergence(
+            fitter, init, X, at_step=2)
+        assert result.diverged is True
+        assert not result.converged
+        _assert_model_finite(result.model)
+        assert int(result.n_iter) >= 1
+        assert jnp.any(~jnp.isfinite(result.param_changes))

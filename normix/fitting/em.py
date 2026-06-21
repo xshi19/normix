@@ -41,13 +41,21 @@ def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Arra
 
 @dataclass(frozen=True)
 class EMResult:
-    """Result of an EM fitting procedure."""
+    """Result of an EM fitting procedure.
+
+    ``converged`` and ``diverged`` are separate because batch EM has three
+    outcomes: tolerance met (``converged=True``), a non-finite iterate was
+    reverted (``diverged=True``), or ``max_iter`` was exhausted with neither
+    (both ``False``). They are not opposites — ``converged=False`` covers both
+    divergence and a finite but not-yet-converged stop.
+    """
     model: Any                              # fitted distribution (eqx.Module)
     log_likelihoods: Optional[jax.Array]    # (n_iter,) or None when not computed
     param_changes: jax.Array                # (n_iter,) max relative param change
     n_iter: int
     converged: Optional[bool]               # None for IncrementalEMFitter (no convergence criterion)
     elapsed_time: float                     # wall-clock seconds
+    diverged: bool = False                  # True when a non-finite iterate was reverted
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +114,9 @@ class BatchEMFitter:
         Optional eta combination rule (e.g. ``Shrinkage(IdentityUpdate(),
         eta0, tau)``). When set, the E-step output is transformed before
         the M-step.
+    track_ll : bool
+        When ``True``, record per-iteration marginal log-likelihood in
+        :attr:`EMResult.log_likelihoods` without requiring ``verbose >= 1``.
     """
 
     _REGULARIZATIONS = ('none', 'det_sigma_one', 'det_sigma_x', 'a_eq_b')
@@ -122,6 +133,7 @@ class BatchEMFitter:
         m_step_backend: str = 'cpu',
         m_step_method: str = 'newton',
         eta_update=None,
+        track_ll: bool = False,
     ):
         if algorithm not in ('em', 'mcecm'):
             raise ValueError(f"algorithm must be 'em' or 'mcecm', got {algorithm!r}")
@@ -138,9 +150,9 @@ class BatchEMFitter:
         self.m_step_backend = m_step_backend
         self.m_step_method = m_step_method
         self.eta_update = eta_update
-        # Set by ``fit`` for ``regularization='det_sigma_x'``: the
-        # log-determinant of the initial model's Σ, captured once.
-        self._target_log_det: jax.Array | None = None
+        self.track_ll = track_ll
+        # Optional test hook: force a non-finite max_change at this 1-based step.
+        self._force_nonfinite_at_step: int | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -162,10 +174,9 @@ class BatchEMFitter:
         X = jnp.asarray(X, dtype=jnp.float64)
         dist_name = type(model).__name__
 
-        # Capture initial log|Σ| once so 'det_sigma_x' targets the
-        # initial reference scale throughout EM.
+        target_log_det = None
         if self.regularization == 'det_sigma_x':
-            self._target_log_det = jnp.asarray(
+            target_log_det = jnp.asarray(
                 model.log_det_sigma(), dtype=jnp.float64)
 
         use_scan = (
@@ -183,23 +194,23 @@ class BatchEMFitter:
                     f"backend=jax, tol={self.tol:.0e}, "
                     f"max_iter={self.max_iter}"
                 )
-            return self._fit_scan(model, X)
+            return self._fit_scan(model, X, target_log_det)
         else:
             if self.verbose >= 1:
                 self._print_header(dist_name)
-            return self._fit_loop(model, X)
+            return self._fit_loop(model, X, target_log_det)
 
     # ------------------------------------------------------------------
     # Pure EM / MCECM step (no prints, no float(), no list.append())
     # ------------------------------------------------------------------
 
-    def _step(self, model, X, eta_state=None):
+    def _step(self, model, X, eta_state=None, *, target_log_det=None):
         """One iteration (EM or MCECM). Returns (new_model, max_change, eta_state)."""
         if self.algorithm == 'mcecm':
-            return self._mcecm_step(model, X, eta_state)
-        return self._em_step(model, X, eta_state)
+            return self._mcecm_step(model, X, eta_state, target_log_det=target_log_det)
+        return self._em_step(model, X, eta_state, target_log_det=target_log_det)
 
-    def _em_step(self, model, X, eta_state=None):
+    def _em_step(self, model, X, eta_state=None, *, target_log_det=None):
         """One EM iteration: E → (eta_update) → M(all) → regularize.
 
         Returns ``(model, max_change, eta_state)``.
@@ -216,12 +227,12 @@ class BatchEMFitter:
 
         model = model.m_step(
             eta, backend=self.m_step_backend, method=self.m_step_method)
-        model = self._regularize(model)
+        model = self._regularize(model, target_log_det)
 
         max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state
 
-    def _mcecm_step(self, model, X, eta_state=None):
+    def _mcecm_step(self, model, X, eta_state=None, *, target_log_det=None):
         """One MCECM iteration: E → M_normal → regularize → E → M_subordinator.
 
         Returns ``(model, max_change, eta_state)``.
@@ -237,7 +248,7 @@ class BatchEMFitter:
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step_normal(eta)
-        model = self._regularize(model)
+        model = self._regularize(model, target_log_det)
 
         eta = model.e_step(X, backend=self.e_step_backend)
         model = model.m_step_subordinator(
@@ -250,33 +261,69 @@ class BatchEMFitter:
     # lax.scan path (JIT-able, requires backend='jax')
     # ------------------------------------------------------------------
 
-    def _fit_scan(self, model, X) -> EMResult:
+    def _fit_scan(self, model, X, target_log_det) -> EMResult:
+        """JIT-able EM loop via :func:`~jax.lax.scan`.
+
+        The scan carry keeps ``converged`` and ``diverged`` as separate booleans
+        rather than a single status code: convergence accepts the new model,
+        divergence reverts to the previous one, and ``done = converged | diverged``
+        freezes both paths. Two flags also map directly onto :class:`EMResult`
+        and compose cleanly with ``jnp.where`` / ``|`` inside the scanned body.
+        """
         t0 = time.perf_counter()
+        track_ll = self.track_ll
 
         def body(carry, _):
-            mdl, converged, n = carry
-            mdl_new, max_change, _ = self._step(mdl, X)
-            conv_new = max_change < self.tol
+            mdl, converged, diverged, n = carry
+            mdl_new, max_change, _ = self._step(
+                mdl, X, target_log_det=target_log_det)
+            step_no = n + 1
+            force_at = self._force_nonfinite_at_step
+            if force_at is not None:
+                max_change = jnp.where(step_no == force_at, jnp.nan, max_change)
+            finite = jnp.isfinite(max_change)
+            done = converged | diverged
+            conv_new = finite & (max_change < self.tol)
+            diverged_new = diverged | ~finite
+            keep_old = done | ~finite
             mdl_out = jax.tree.map(
-                lambda n, o: jnp.where(converged, o, n), mdl_new, mdl)
-            change_out = jnp.where(converged, 0.0, max_change)
-            n_out = n + jnp.where(converged, 0, 1)
-            return (mdl_out, converged | conv_new, n_out), change_out
+                lambda new, old: jnp.where(keep_old, old, new), mdl_new, mdl)
+            change_out = jnp.where(done, 0.0, max_change)
+            n_out = n + jnp.where(done, 0, 1)
+            carry_out = (mdl_out, converged | conv_new, diverged_new, n_out)
+            if track_ll:
+                ll = mdl_out.marginal_log_likelihood(X)
+                return carry_out, (change_out, ll)
+            return carry_out, change_out
 
-        init = (model, jnp.bool_(False), jnp.int32(0))
-        (final_model, converged, n_iter), param_changes = jax.lax.scan(
-            body, init, None, length=self.max_iter)
+        init = (model, jnp.bool_(False), jnp.bool_(False), jnp.int32(0))
+        if track_ll:
+            (final_model, converged, diverged, n_iter), (param_changes, lls) = (
+                jax.lax.scan(body, init, None, length=self.max_iter))
+            log_likelihoods = lls
+        else:
+            (final_model, converged, diverged, n_iter), param_changes = (
+                jax.lax.scan(body, init, None, length=self.max_iter))
+            log_likelihoods = None
 
         elapsed = time.perf_counter() - t0
 
-        log_likelihoods = None
+        if self.verbose >= 1 or self.track_ll:
+            if log_likelihoods is None:
+                log_likelihoods = jnp.array([
+                    final_model.marginal_log_likelihood(X)])
         if self.verbose >= 1:
-            ll = final_model.marginal_log_likelihood(X)
-            log_likelihoods = jnp.array([ll])
-            status = "Converged" if bool(converged) else "NOT converged"
+            ll = float(log_likelihoods[-1]) if log_likelihoods is not None else float(
+                final_model.marginal_log_likelihood(X))
+            if diverged:
+                status = "Diverged (non-finite iterate; kept last finite model)"
+            elif converged:
+                status = "Converged"
+            else:
+                status = "NOT converged"
             print(
                 f"  {status} after {int(n_iter)} iterations "
-                f"({elapsed:.2f}s), final LL={float(ll):.6f}"
+                f"({elapsed:.2f}s), final LL={ll:.6f}"
             )
 
         return EMResult(
@@ -286,18 +333,21 @@ class BatchEMFitter:
             n_iter=n_iter,
             converged=converged,
             elapsed_time=elapsed,
+            diverged=bool(diverged),
         )
 
     # ------------------------------------------------------------------
     # Python loop path (works with any backend, supports verbose >= 2)
     # ------------------------------------------------------------------
 
-    def _fit_loop(self, model, X) -> EMResult:
+    def _fit_loop(self, model, X, target_log_det) -> EMResult:
         t_total = time.perf_counter()
         lls = []
         changes = []
         prev_ll = None
         n_iter = 0
+        diverged = False
+        max_change = jnp.array(jnp.inf)
 
         eta_state = None
         if self.eta_update is not None:
@@ -310,13 +360,28 @@ class BatchEMFitter:
 
         for i in range(self.max_iter):
             t_iter = time.perf_counter()
-            model, max_change, eta_state = self._step(model, X, eta_state)
+            prev_model = model
+            model, max_change, eta_state = self._step(
+                model, X, eta_state, target_log_det=target_log_det)
+            force_at = self._force_nonfinite_at_step
+            if force_at is not None and (i + 1) == force_at:
+                max_change = jnp.array(jnp.nan)
             dt = time.perf_counter() - t_iter
             changes.append(max_change)
             n_iter = i + 1
 
+            if not bool(jnp.isfinite(max_change)):
+                model = prev_model
+                diverged = True
+                if self.verbose >= 1:
+                    print(
+                        "  EM diverged (non-finite parameter change); "
+                        "keeping last finite iterate."
+                    )
+                break
+
             ll = None
-            if self.verbose >= 1:
+            if self.track_ll or self.verbose >= 1:
                 ll = model.marginal_log_likelihood(X)
                 lls.append(ll)
 
@@ -336,14 +401,21 @@ class BatchEMFitter:
                 break
 
         elapsed = time.perf_counter() - t_total
-        converged = bool(max_change < self.tol) and n_iter > 1
+        converged = (
+            not diverged
+            and bool(max_change < self.tol)
+            and n_iter > 1
+        )
 
         if self.verbose >= 2:
             self._print_footer(n_iter, converged, elapsed,
                                float(lls[-1]) if lls else None,
                                float(changes[-1]))
         elif self.verbose == 1:
-            status = "Converged" if converged else "NOT converged"
+            if diverged:
+                status = "Diverged (non-finite iterate; kept last finite model)"
+            else:
+                status = "Converged" if converged else "NOT converged"
             ll_str = f", final LL={float(lls[-1]):.6f}" if lls else ""
             print(f"  {status} after {n_iter} iterations ({elapsed:.2f}s){ll_str}")
 
@@ -354,13 +426,14 @@ class BatchEMFitter:
             n_iter=n_iter,
             converged=converged,
             elapsed_time=elapsed,
+            diverged=diverged,
         )
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
-    def _regularize(self, model):
+    def _regularize(self, model, target_log_det=None):
         if self.regularization == 'none':
             return model
         if self.regularization == 'det_sigma_one':
@@ -369,7 +442,7 @@ class BatchEMFitter:
             return model
         if self.regularization == 'det_sigma_x':
             if hasattr(model, 'regularize_det_sigma'):
-                return model.regularize_det_sigma(self._target_log_det)
+                return model.regularize_det_sigma(target_log_det)
             return model
         if self.regularization == 'a_eq_b':
             if hasattr(model, 'regularize_a_eq_b'):
@@ -482,7 +555,6 @@ class IncrementalEMFitter:
         self.e_step_backend = e_step_backend
         self.m_step_backend = m_step_backend
         self.m_step_method = m_step_method
-        self._target_log_det: jax.Array | None = None
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
         """Run incremental EM. Returns :class:`EMResult`."""
@@ -491,8 +563,9 @@ class IncrementalEMFitter:
         bs = min(self.batch_size, n)
         dist_name = type(model).__name__
 
+        target_log_det = None
         if self.regularization == 'det_sigma_x':
-            self._target_log_det = jnp.asarray(
+            target_log_det = jnp.asarray(
                 model.log_det_sigma(), dtype=jnp.float64)
 
         step_keys = _materialize_incremental_subkeys(key, self.max_steps)
@@ -503,10 +576,11 @@ class IncrementalEMFitter:
         )
 
         if use_scan:
-            return self._fit_incremental_scan(model, X, n, bs, step_keys)
+            return self._fit_incremental_scan(
+                model, X, n, bs, step_keys, target_log_det)
 
         return self._fit_incremental_python(
-            model, X, n, bs, step_keys, dist_name)
+            model, X, n, bs, step_keys, dist_name, target_log_det)
 
     def _fit_incremental_scan(
         self,
@@ -515,6 +589,7 @@ class IncrementalEMFitter:
         n_obs: int,
         batch_sz: int,
         step_keys: jax.Array,
+        target_log_det,
     ) -> EMResult:
         t_total = time.perf_counter()
 
@@ -552,7 +627,7 @@ class IncrementalEMFitter:
                     0,
                     self.inner_iter,
                     lambda _, mj: self._incremental_inner_step_jax(
-                        mj, X_batch, mb, mm),
+                        mj, X_batch, mb, mm, target_log_det),
                     model_c,
                 )
                 eta_new = model_mid.compute_eta_from_model()
@@ -564,7 +639,7 @@ class IncrementalEMFitter:
                 eta_run, eta_new, step, bs_i, rule_state)
             model_next = model_mid.m_step(
                 eta_run, backend=mb, method=mm)
-            model_next = self._regularize(model_next)
+            model_next = self._regularize(model_next, target_log_det)
 
             max_change = _param_change(
                 model_next.em_convergence_params(), prev_params)
@@ -598,6 +673,7 @@ class IncrementalEMFitter:
         bs: int,
         step_keys: jax.Array,
         dist_name: str,
+        target_log_det,
     ) -> EMResult:
         t_total = time.perf_counter()
         changes = []
@@ -630,7 +706,7 @@ class IncrementalEMFitter:
                     eta = model.e_step(X_batch, backend=eb)
                     model = model.m_step(
                         eta, backend=mb, method=mm)
-                    model = self._regularize(model)
+                    model = self._regularize(model, target_log_det)
                 eta_new = model.compute_eta_from_model()
             else:
                 eta_new = model.e_step(X_batch, backend=eb)
@@ -639,7 +715,7 @@ class IncrementalEMFitter:
                 eta_prev, eta_new, step, bs, rule_state)
             model = model.m_step(
                 eta_prev, backend=mb, method=mm)
-            model = self._regularize(model)
+            model = self._regularize(model, target_log_det)
 
             max_change = _param_change(
                 model.em_convergence_params(), prev_params)
@@ -671,12 +747,17 @@ class IncrementalEMFitter:
         )
 
     def _incremental_inner_step_jax(
-        self, model_inner, X_batch: jax.Array, mb: str, mm: str,
+        self,
+        model_inner,
+        X_batch: jax.Array,
+        mb: str,
+        mm: str,
+        target_log_det,
     ):
         eta_inner = model_inner.e_step(X_batch, backend=self.e_step_backend)
         mi2 = model_inner.m_step(
             eta_inner, backend=mb, method=mm)
-        return self._regularize(mi2)
+        return self._regularize(mi2, target_log_det)
 
     # Reuse the dispatch from BatchEMFitter so behaviour stays in sync.
     _regularize = BatchEMFitter._regularize
