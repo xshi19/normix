@@ -405,6 +405,78 @@ class TestInverseMomentSingularityVG:
             assert jnp.all(jnp.isfinite(leaf))
 
 
+class TestAlphaMinBound:
+    r"""F4: the opt-in ``alpha_min`` shape bound (VG likelihood-boundedness).
+
+    The b_post floor keeps EM finite but does not stop α drifting below the
+    degeneracy threshold (density unbounded at α ≤ d/2). ``alpha_min`` is the
+    ghyp "fix-λ" analogue: it restricts the estimand so that cannot happen.
+    """
+
+    @staticmethod
+    def _heavy_peaked_data(d, n=2000, seed=0):
+        rng = np.random.default_rng(seed)
+        mu = jnp.asarray(rng.normal(size=d))
+        gamma = jnp.asarray(rng.normal(size=d) * 0.2)
+        A = rng.normal(size=(d, d))
+        sigma = jnp.asarray(A @ A.T + d * np.eye(d))
+        vg = VarianceGamma.from_classical(
+            mu=mu, gamma=gamma, sigma=sigma, alpha=0.7, beta=1.0)
+        X = vg.rvs(n, seed=seed)
+        return jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
+
+    def test_default_none_is_no_op(self):
+        """alpha_min=None must leave the fitted α bit-identical to the
+        unspecified default (no behavior change)."""
+        X = self._heavy_peaked_data(2, seed=2)
+        res_default = VarianceGamma.default_init(X).fit(X, max_iter=40, tol=1e-4)
+        res_none = VarianceGamma.default_init(X).fit(
+            X, max_iter=40, tol=1e-4, alpha_min=None)
+        assert float(res_default.model.alpha) == float(res_none.model.alpha)
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_density_sentinel_keeps_alpha_above_half_d(self, backend):
+        r"""``alpha_min='density'`` clamps α ≥ d/2 + ε, so the fitted VG
+        density is bounded at x=μ (α > d/2)."""
+        from normix.utils.constants import ALPHA_MIN_MARGIN
+        d = 2
+        X = self._heavy_peaked_data(d, seed=3)
+        # Unconstrained: α drifts into the unbounded-density regime α ≤ d/2.
+        res_free = VarianceGamma.default_init(X).fit(
+            X, max_iter=60, tol=1e-4, e_step_backend=backend)
+        assert float(res_free.model.alpha) < d / 2.0
+        # Constrained: α pinned at the density-boundedness floor.
+        res_bnd = VarianceGamma.default_init(X).fit(
+            X, max_iter=60, tol=1e-4, e_step_backend=backend,
+            alpha_min='density')
+        floor = d / 2.0 + ALPHA_MIN_MARGIN
+        assert float(res_bnd.model.alpha) >= floor - 1e-9
+        # Density finite at the fitted mode.
+        f_mode = float(res_bnd.model.pdf(res_bnd.model._joint.mu))
+        assert np.isfinite(f_mode)
+
+    def test_absolute_float_bound(self):
+        """An absolute float alpha_min is honored directly."""
+        X = self._heavy_peaked_data(2, seed=4)
+        res = VarianceGamma.default_init(X).fit(
+            X, max_iter=60, tol=1e-4, alpha_min=3.0)
+        assert float(res.model.alpha) >= 3.0 - 1e-9
+
+    def test_inverse_moment_sentinel(self):
+        r"""``alpha_min='inverse_moment'`` clamps α ≥ d/2 + 1 + ε."""
+        from normix.utils.constants import ALPHA_MIN_MARGIN
+        d = 2
+        X = self._heavy_peaked_data(d, seed=5)
+        res = VarianceGamma.default_init(X).fit(
+            X, max_iter=60, tol=1e-4, alpha_min='inverse_moment')
+        assert float(res.model.alpha) >= d / 2.0 + 1.0 + ALPHA_MIN_MARGIN - 1e-9
+
+    def test_invalid_sentinel_raises(self):
+        X = self._heavy_peaked_data(1, seed=6)
+        with pytest.raises(ValueError, match="alpha_min"):
+            VarianceGamma.default_init(X).fit(X, max_iter=2, alpha_min='nonsense')
+
+
 # ============================================================
 # Edge Cases
 # ============================================================

@@ -159,6 +159,7 @@ class Gamma(ExponentialFamily):
         maxiter: int = 100,
         tol: float = 1e-12,
         backend: str = "jax",
+        alpha_min: float | None = None,
         **kwargs,
     ) -> "Gamma":
         r"""
@@ -173,6 +174,15 @@ class Gamma(ExponentialFamily):
         backend : str
             ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
             ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
+        alpha_min : float, optional
+            Lower bound on the fitted shape :math:`\alpha`. When set, the
+            digamma-inversion result is clamped to ``jnp.maximum(alpha,
+            alpha_min)`` *before* :math:`\beta = \alpha/\eta_2` is formed, so
+            the projected estimate stays self-consistent. This is the opt-in
+            VG estimand control (the ``ghyp`` "fix-:math:`\lambda`" analogue):
+            it restricts the estimator to a region where the VG marginal
+            likelihood is bounded. ``None`` (default) leaves the estimate
+            unconstrained. JIT-safe (no Python branch on traced values).
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
@@ -184,6 +194,8 @@ class Gamma(ExponentialFamily):
             alpha = _newton_digamma(target)
 
         alpha = jnp.maximum(jnp.asarray(alpha, dtype=jnp.float64), LOG_EPS)
+        if alpha_min is not None:
+            alpha = jnp.maximum(alpha, alpha_min)
         beta = jnp.maximum(alpha / eta2, LOG_EPS)
         return cls(alpha=alpha, beta=beta)
 

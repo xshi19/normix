@@ -103,12 +103,14 @@ class JointVarianceGamma(JointNormalMixture):
 
         ``theta0`` is accepted for API uniformity and ignored — Gamma's
         :meth:`~normix.distributions.gamma.Gamma.from_expectation` is
-        closed-form (Newton on digamma).
+        closed-form (Newton on digamma). An optional ``alpha_min`` (the VG
+        likelihood-boundedness control) is forwarded to clamp the shape.
         """
         from normix.distributions.gamma import Gamma
         backend = kwargs.get('backend', 'jax')
         return Gamma.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
+            jnp.array([eta.E_log_Y, eta.E_Y]),
+            backend=backend, alpha_min=kwargs.get('alpha_min'))
 
     @classmethod
     def _from_normal_and_subordinator(cls, mu, gamma, L_Sigma, subordinator):
@@ -236,15 +238,21 @@ class VarianceGamma(NormalMixture):
     def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
             regularization='none',
             e_step_backend='cpu', m_step_backend='cpu',
-            m_step_method='newton'):
-        """Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
-        vmap for the degenerate-GIG posterior arising from the Gamma subordinator)."""
+            m_step_method='newton', alpha_min=None):
+        r"""Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
+        vmap for the degenerate-GIG posterior arising from the Gamma subordinator).
+
+        ``alpha_min`` (float or ``'density'`` / ``'inverse_moment'``) is the
+        opt-in lower bound on the Gamma shape :math:`\alpha` that keeps the VG
+        marginal likelihood bounded; see
+        :meth:`~normix.mixtures.marginal.MarginalMixture.fit`.
+        """
         return super().fit(
             X, algorithm=algorithm,
             verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
-            m_step_method=m_step_method)
+            m_step_method=m_step_method, alpha_min=alpha_min)
 
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):
@@ -368,7 +376,8 @@ class FactorVarianceGamma(FactorNormalMixture):
         from normix.distributions.gamma import Gamma
         backend = kwargs.get('backend', 'jax')
         return Gamma.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_Y]), backend=backend)
+            jnp.array([eta.E_log_Y, eta.E_Y]),
+            backend=backend, alpha_min=kwargs.get('alpha_min'))
 
     def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
         # Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the

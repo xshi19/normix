@@ -54,6 +54,14 @@ B_POST_FLOOR: float = 1e-6
 # other finite moment keep their exact closed forms.
 ALPHA_MOMENT_MARGIN: float = 0.1
 
+# Margin ε used by the opt-in VG α-lower-bound sentinels in `fit(alpha_min=...)`.
+# The VG marginal density is unbounded at x=μ for α ≤ d/2, and E[1/Y|x] is
+# unbounded for α ≤ d/2 + 1; the floored b_post keeps EM finite but cannot stop
+# it parking near that spike. When `alpha_min='density'` the M-step clamps the
+# Gamma shape at d/2 + ε (density bounded); `alpha_min='inverse_moment'` clamps
+# at d/2 + 1 + ε (E[1/Y|x] also bounded). Opt-in only — default is no clamp.
+ALPHA_MIN_MARGIN: float = 0.1
+
 # ── M-step constants ──────────────────────────────────────────────────
 
 # Regularisation added to Σ in the M-step Cholesky factorisation

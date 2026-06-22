@@ -7,7 +7,7 @@ The closed-form normal-parameter M-step divides by ``D = 1 - E[1/Y]*E[Y]``
 quantity is always ``D <= 0`` (equality only in the degenerate / Gaussian
 limit where the subordinator Y is constant). The guard floors at
 ``-SAFE_DENOMINATOR`` (sign-preserving; see finding B1 in
-``dev-notes/plans/em_robustness_followups.md``).
+``dev-notes/archive/design/em_robustness_followups.md``).
 
 This script replicates the notebook fit configuration and records D at every
 EM iteration, reporting when |D| hits the floor or D > 0 from roundoff.
