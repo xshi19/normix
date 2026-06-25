@@ -500,19 +500,64 @@
         <span class="n">e_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
         <span class="n">m_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
         <span class="n">m_step_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;newton&#39;</span><span class="p">,</span>
+        <span class="n">alpha_min</span><span class="p">:</span> <span class="s2">&quot;float | str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit using ``self`` as initialisation. Returns</span>
-<span class="sd">        :class:`~normix.fitting.em.EMResult`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit using ``self`` as initialisation. Returns</span>
+<span class="sd">        :class:`~normix.fitting.em.EMResult`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        alpha_min : float or {&#39;density&#39;, &#39;inverse_moment&#39;}, optional</span>
+<span class="sd">            Opt-in lower bound on the Gamma subordinator shape :math:`\alpha`</span>
+<span class="sd">            (Variance Gamma only — the unique family whose marginal</span>
+<span class="sd">            likelihood is unbounded at :math:`x=\mu`). Restricts the</span>
+<span class="sd">            estimator to a region where that degeneracy cannot occur; the</span>
+<span class="sd">            ``ghyp`` &quot;fix-:math:`\lambda`&quot; analogue. ``None`` (default) leaves</span>
+<span class="sd">            :math:`\alpha` unconstrained. A float is used directly; the</span>
+<span class="sd">            :math:`d`-aware sentinels resolve to</span>
+<span class="sd">            :math:`d/2 + \varepsilon` (``&#39;density&#39;`` — marginal density</span>
+<span class="sd">            bounded) or :math:`d/2 + 1 + \varepsilon`</span>
+<span class="sd">            (``&#39;inverse_moment&#39;`` — :math:`E[1/Y\mid x]` also bounded), with</span>
+<span class="sd">            :math:`\varepsilon=` :data:`~normix.utils.constants.ALPHA_MIN_MARGIN`.</span>
+<span class="sd">            Has no effect on NInvG / NIG / GH (their prior :math:`b&gt;0` keeps</span>
+<span class="sd">            the likelihood bounded for every :math:`\alpha`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
+        <span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_alpha_min</span><span class="p">(</span><span class="n">alpha_min</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;alpha_min&#39;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">}</span>
         <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
             <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
             <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">,</span>
+            <span class="n">m_step_kwargs</span><span class="o">=</span><span class="n">m_step_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
-</div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_alpha_min</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">alpha_min</span><span class="p">:</span> <span class="s2">&quot;float | str | None&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;float | None&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Resolve an ``alpha_min`` argument to a concrete float (or ``None``).</span>
+
+<span class="sd">        Accepts the :math:`d`-aware sentinels ``&#39;density&#39;``</span>
+<span class="sd">        (:math:`d/2+\varepsilon`) and ``&#39;inverse_moment&#39;``</span>
+<span class="sd">        (:math:`d/2+1+\varepsilon`), an absolute float, or ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">alpha_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">alpha_min</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">alpha_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">alpha_min</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">ALPHA_MIN_MARGIN</span>
+        <span class="n">half_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="k">if</span> <span class="n">alpha_min</span> <span class="o">==</span> <span class="s1">&#39;density&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">half_d</span> <span class="o">+</span> <span class="n">ALPHA_MIN_MARGIN</span>
+        <span class="k">if</span> <span class="n">alpha_min</span> <span class="o">==</span> <span class="s1">&#39;inverse_moment&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">half_d</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">ALPHA_MIN_MARGIN</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;alpha_min must be a float, None, &#39;density&#39;, or &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;inverse_moment&#39;, got </span><span class="si">{</span><span class="n">alpha_min</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 

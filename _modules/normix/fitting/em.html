@@ -481,6 +481,13 @@
 <span class="sd">    track_ll : bool</span>
 <span class="sd">        When ``True``, record per-iteration marginal log-likelihood in</span>
 <span class="sd">        :attr:`EMResult.log_likelihoods` without requiring ``verbose &gt;= 1``.</span>
+<span class="sd">    m_step_kwargs : dict or None</span>
+<span class="sd">        Extra keyword arguments forwarded verbatim to every ``m_step`` /</span>
+<span class="sd">        ``m_step_subordinator`` call (in addition to ``backend`` and</span>
+<span class="sd">        ``method``). Used to thread estimand controls such as the VG</span>
+<span class="sd">        ``alpha_min`` shape bound down to the subordinator&#39;s</span>
+<span class="sd">        ``from_expectation``. Values must be static (e.g. Python floats) to</span>
+<span class="sd">        stay compatible with the ``lax.scan`` path. ``None`` = no extras.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_REGULARIZATIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;det_sigma_one&#39;</span><span class="p">,</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">,</span> <span class="s1">&#39;a_eq_b&#39;</span><span class="p">)</span>
@@ -498,6 +505,7 @@
         <span class="n">m_step_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;newton&#39;</span><span class="p">,</span>
         <span class="n">eta_update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">track_ll</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">m_step_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="s1">&#39;mcecm&#39;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm must be &#39;em&#39; or &#39;mcecm&#39;, got </span><span class="si">{</span><span class="n">algorithm</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -515,6 +523,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span> <span class="o">=</span> <span class="n">m_step_method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">eta_update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">track_ll</span> <span class="o">=</span> <span class="n">track_ll</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">m_step_kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">m_step_kwargs</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="c1"># Optional test hook: force a non-finite max_change at this 1-based step.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_force_nonfinite_at_step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -593,7 +602,8 @@
             <span class="n">eta_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">rule_state</span><span class="p">,</span> <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step</span><span class="p">(</span>
-            <span class="n">eta</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span><span class="p">)</span>
+            <span class="n">eta</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_kwargs</span><span class="p">)</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regularize</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
 
         <span class="n">max_change</span> <span class="o">=</span> <span class="n">_param_change</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">em_convergence_params</span><span class="p">(),</span> <span class="n">prev_params</span><span class="p">)</span>
@@ -619,7 +629,8 @@
 
         <span class="n">eta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span><span class="p">)</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">m_step_subordinator</span><span class="p">(</span>
-            <span class="n">eta</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span><span class="p">)</span>
+            <span class="n">eta</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_method</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">m_step_kwargs</span><span class="p">)</span>
 
         <span class="n">max_change</span> <span class="o">=</span> <span class="n">_param_change</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">em_convergence_params</span><span class="p">(),</span> <span class="n">prev_params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">max_change</span><span class="p">,</span> <span class="n">eta_state</span>

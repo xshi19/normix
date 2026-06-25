@@ -476,12 +476,14 @@
 
 <span class="sd">        ``theta0`` is accepted for API uniformity and ignored — Gamma&#39;s</span>
 <span class="sd">        :meth:`~normix.distributions.gamma.Gamma.from_expectation` is</span>
-<span class="sd">        closed-form (Newton on digamma).</span>
+<span class="sd">        closed-form (Newton on digamma). An optional ``alpha_min`` (the VG</span>
+<span class="sd">        likelihood-boundedness control) is forwarded to clamp the shape.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span>
+            <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">alpha_min</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alpha_min&#39;</span><span class="p">))</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_from_normal_and_subordinator</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">):</span>
@@ -623,15 +625,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
-            <span class="n">m_step_method</span><span class="o">=</span><span class="s1">&#39;newton&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX</span>
-<span class="sd">        vmap for the degenerate-GIG posterior arising from the Gamma subordinator).&quot;&quot;&quot;</span>
+            <span class="n">m_step_method</span><span class="o">=</span><span class="s1">&#39;newton&#39;</span><span class="p">,</span> <span class="n">alpha_min</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX</span>
+<span class="sd">        vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</span>
+
+<span class="sd">        ``alpha_min`` (float or ``&#39;density&#39;`` / ``&#39;inverse_moment&#39;``) is the</span>
+<span class="sd">        opt-in lower bound on the Gamma shape :math:`\alpha` that keeps the VG</span>
+<span class="sd">        marginal likelihood bounded; see</span>
+<span class="sd">        :meth:`~normix.mixtures.marginal.MarginalMixture.fit`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
             <span class="n">X</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
-            <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">)</span></div>
+            <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">,</span> <span class="n">alpha_min</span><span class="o">=</span><span class="n">alpha_min</span><span class="p">)</span></div>
 
 
     <span class="nd">@classmethod</span>
@@ -774,7 +782,8 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span><span class="p">]),</span>
+            <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">alpha_min</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alpha_min&#39;</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
         <span class="c1"># Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the</span>
