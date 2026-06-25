@@ -1,6 +1,9 @@
 # Package Improvement Roadmap
 
-Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
+> **ARCHIVED — 2026-06-25.** All 27 review items resolved across Phases 0–7;
+> the review-driven cleanup is complete. Kept for historical context.
+
+Based on [package_review_2026-03-30](../../reviews/package_review_2026-03-30.md).
 
 ## Issues and Recommendations
 
@@ -14,9 +17,9 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | B4 | Bug | ~~`JointNormalInverseGamma._subordinator_log_partition` passes wrong sign convention, returns NaN.~~ **Fixed:** deleted along with all four `_subordinator_log_partition` implementations (Phase 4 — method was never called). | ✅ | Low | ~10 | Done. | None | No |
 | B5 | Bug | ~~`InverseGaussian` module docstring has wrong sign for the log-partition formula.~~ **Fixed:** corrected ψ sign (`02d2a8e`). | ✅ | Trivial | ~2 | Done. | None | No |
 | D1 | Design | ~~Decide the fate of `OnlineEMFitter` / `MiniBatchEMFitter`.~~ **Resolved:** replaced by `IncrementalEMFitter` + `EtaUpdateRule`. | ✅ | — | 0 | Done. | None | No |
-| D2 | Design | ~~Decide public status of joint distribution classes~~ **Resolved:** public `ExponentialFamily` joints; `log_prob` / `sufficient_statistics` use flat `concat(x,[y])`; concrete joints now implement `from_natural`, with constrained-family validation for VG/NInvG/NIG. GIG-based joints use the same `-b/2`, `-a/2` scaling on `1/y`, `y` as standalone GIG. Documented in `../design/design.md`. | ✅ | — | 0 | Done. | None | No |
+| D2 | Design | ~~Decide public status of joint distribution classes~~ **Resolved:** public `ExponentialFamily` joints; `log_prob` / `sufficient_statistics` use flat `concat(x,[y])`; concrete joints now implement `from_natural`, with constrained-family validation for VG/NInvG/NIG. GIG-based joints use the same `-b/2`, `-a/2` scaling on `1/y`, `y` as standalone GIG. Documented in `../../design/design.md`. | ✅ | — | 0 | Done. | None | No |
 | D3 | Design | ~~Rationalize `MultivariateNormal` relative to the rest of the package.~~ **Done:** Made full `ExponentialFamily` subclass; added `_log_partition_from_theta`, `natural_params`, `sufficient_statistics`, `log_base_measure`, `from_natural`, `mean`, `cov`, `rvs`; full EF round-trip tests added (Phase 7). | ✅ | High | ~80–150 | Done. | D2. | Yes |
-| D4 | Design | ~~Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings.~~ **Resolved:** jaxopt kept for LBFGS/BFGS (only JAX-native quasi-Newton with reparameterization); `DeprecationWarning` suppressed at import; migration path to optax/optimistix documented in `../design/design.md` § jaxopt migration (Phase 7). | ✅ | High | ~100–200 | Done. | None | Yes |
+| D4 | Design | ~~Evaluate `jaxopt` dependency risk — upstream is unmaintained and emitting warnings.~~ **Resolved:** jaxopt kept for LBFGS/BFGS (only JAX-native quasi-Newton with reparameterization); `DeprecationWarning` suppressed at import; migration path to optax/optimistix documented in `../../design/design.md` § jaxopt migration (Phase 7). | ✅ | High | ~100–200 | Done. | None | Yes |
 | C1 | Code style | ~~Public type annotations incomplete: missing return types on `log_kv`, several GH/VG/NIG methods, `NormalMixture.joint`.~~ **Fixed:** return types added to `log_kv`, `NormalMixture.joint`, `_subordinator_expectations`, `m_step_subordinator`, `_build_rescaled` (all four mixture families), `_quad_forms`, `_precision_quantities` (Phase 5). | ✅ | Low | ~30 | Done. | None | No |
 | C2 | Code style | ~~`jax.config.update("jax_enable_x64", True)` repeated across many modules.~~ **Fixed:** removed from all 19 submodules; `normix/__init__.py` is now the single entry point (Phase 5). | ✅ | Low | ~20 | Done. | None | No |
 | C3 | Code style | ~~Dead / drifted code pockets: unused `_subordinator_log_partition` implementations, stale compatibility leftovers.~~ **Fixed:** all four `_subordinator_log_partition` implementations and the abstract declaration removed (Phase 4). | ✅ | Low–Med | ~30–60 | Done. | D2. | No |
@@ -29,7 +32,7 @@ Based on [package_review_2026-03-30](../reviews/package_review_2026-03-30.md).
 | T6 | Testing | ~~Add more property-based and edge-case tests for GIG.~~ **Done:** `test_gig_properties.py` covers K_v symmetry, log_prob finiteness, EF contract (∇ψ=η, Hessian SPD), natural round-trip, Cauchy-Schwarz moments, rvs positivity, extreme-parameter edge cases, and scale invariance across 11-parameter grid (Phase 5). | ✅ | Medium | ~60–80 | Done. | None | No |
 | DOC1 | Docs | ~~Fix broken `README.md` examples~~ **Fixed:** imports, EM kwargs, layout (`e8db92a`). | ✅ | Low | ~30 | Done. | None | No |
 | DOC2 | Docs | ~~Fix `normix/__init__.py` docstring~~ **Fixed:** `default_init` + instance `model.fit(X)` pattern (`e8db92a`). | ✅ | Low | ~10 | Done. | None | No |
-| DOC3 | Docs | ~~Update `../../docs/theory/em_algorithm.rst` — still references old methods.~~ **Fixed:** "Implementation in normix" section rewritten to current `e_step`/`m_step`/`conditional_expectations`/`solve_bregman` API (Phase 4). | ✅ | Medium | ~30–50 | Done. | None | No |
+| DOC3 | Docs | ~~Update `../../../docs/theory/em_algorithm.rst` — still references old methods.~~ **Fixed:** "Implementation in normix" section rewritten to current `e_step`/`m_step`/`conditional_expectations`/`solve_bregman` API (Phase 4). | ✅ | Medium | ~30–50 | Done. | None | No |
 | DOC4 | Docs | ~~Add executable doc checks in CI: README code blocks, module doctest snippets, notebook smoke checks.~~ **Done:** `.github/workflows/ci.yml` runs tests, README code-block extraction, and module docstring smoke check (Phase 6). | ✅ | Medium | ~50–80 | Done. | DOC1, DOC2. | Yes |
 | DOC5 | Docs | ~~Mark historical design notes and investigations as historical.~~ **Done:** `solver_redesign.md` status updated from "Proposal (v2)" to "Implemented" (Phase 4). | ✅ | Low | ~20 | Done. | None | No |
 | DOC6 | Docs | ~~Add executable documentation examples for `log_kv`.~~ **Done:** docstring in `normix/utils/bessel.py` now has four executable `doctest` examples: single-point evaluation (JAX and CPU backends), K_v symmetry check, and differentiability via `jax.grad` (Phase 5). | ✅ | Low | ~15 | Done. | None | No |
@@ -71,9 +74,9 @@ All other items are independent.
 | Item | Action | Status |
 |------|--------|--------|
 | **D1** | Decide: implement real stochastic EM, or deprecate `OnlineEMFitter`/`MiniBatchEMFitter`. | ✅ Replaced by `IncrementalEMFitter` + `EtaUpdateRule` |
-| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. | ✅ Public `ExponentialFamily`; see `../design/design.md` § Joint classes as public exponential families (D2). |
+| **D2** | Decide: joint classes are full public exponential-family objects, or internal helpers. | ✅ Public `ExponentialFamily`; see `../../design/design.md` § Joint classes as public exponential families (D2). |
 
-**Exit criteria:** Each decision documented in `../design/design.md` with rationale. (D1, D2 satisfied.)
+**Exit criteria:** Each decision documented in `../../design/design.md` with rationale. (D1, D2 satisfied.)
 
 ---
 
@@ -106,7 +109,7 @@ All other items are independent.
 |------|-------------|--------|
 | **B2** | `IncrementalEMFitter` replaces old fitters; `BatchEMFitter` gains optional `eta_update`. `NormalMixtureEta` pytree + `affine_combine` + 6 concrete rules (Identity, RobbinsMonro, SampleWeighted, EWMA, Shrinkage, Affine). | ✅ Done |
 | **T5** | `tests/test_incremental_em.py`: 29 tests covering `compute_eta_from_model`, `affine_combine`, rule contracts, all fitter variants, shrinkage batch EM, pytree leaves. | ✅ Done |
-| **D1** | Documented in `../design/design.md` § EM Framework. | ✅ Done |
+| **D1** | Documented in `../../design/design.md` § EM Framework. | ✅ Done |
 
 ---
 
@@ -139,8 +142,8 @@ covers T4 extreme-parameter regimes across all distributions.
 | **B4** | Deleted `JointNormalInverseGamma._subordinator_log_partition` (wrong sign convention, never called). | ✅ Done |
 | **C3** | Removed `_subordinator_log_partition` from all four joint subclasses and the abstract declaration from `JointNormalMixture`; method was never called anywhere. | ✅ Done |
 | **T3** | Added `TestJointExponentialFamilyRoundTrip` to `test_jax_distributions.py`: EF contract (log_partition self-consistency, expectation_params = ∇ψ), `rvs` finiteness, and `conditional_expectations` sign correctness for all four joints. | ✅ Done |
-| **DOC3** | Updated `../../docs/theory/em_algorithm.rst` "Implementation in normix" section: replaced stale `_conditional_expectation_y_given_x`, `joint.set_expectation_params`, `joint._expectation_to_natural` with current `e_step`, `m_step`, `conditional_expectations`, `solve_bregman`. | ✅ Done |
-| **DOC5** | Updated `../archive/design/solver_redesign.md` (was `../design/solver_redesign.md`; archived 2026-05-10) status from "Proposal (v2)" to "Implemented". | ✅ Done |
+| **DOC3** | Updated `../../../docs/theory/em_algorithm.rst` "Implementation in normix" section: replaced stale `_conditional_expectation_y_given_x`, `joint.set_expectation_params`, `joint._expectation_to_natural` with current `e_step`, `m_step`, `conditional_expectations`, `solve_bregman`. | ✅ Done |
+| **DOC5** | Updated `../design/solver_redesign.md` (was `../../design/solver_redesign.md`; archived 2026-05-10) status from "Proposal (v2)" to "Implemented". | ✅ Done |
 
 **Exit criteria (met):** No dead `_subordinator_log_partition` code; theory docs match current API; new T3 tests pass.
 
@@ -189,7 +192,7 @@ covers T4 extreme-parameter regimes across all distributions.
 | Item | Description | Status |
 |------|-------------|--------|
 | **D3** | `MultivariateNormal` promoted to full `ExponentialFamily` subclass: `_log_partition_from_theta` (analytic via Cholesky of Λ), `natural_params`, `sufficient_statistics`, `log_base_measure`, `from_natural`, `mean`, `cov`, `rvs`. `log_prob` keeps efficient Cholesky override. EF round-trip tests added to `test_jax_distributions.py`. | ✅ Done |
-| **D4** | jaxopt risk evaluated: currently the only JAX-native quasi-Newton optimizer compatible with reparameterized LBFGS/BFGS; migration plan (optax `scale_by_lbfgs` loop or Optimistix once box-constraint support matures) documented in `../design/design.md` § jaxopt migration. `DeprecationWarning` suppressed in `normix/__init__.py`. | ✅ Done |
+| **D4** | jaxopt risk evaluated: currently the only JAX-native quasi-Newton optimizer compatible with reparameterized LBFGS/BFGS; migration plan (optax `scale_by_lbfgs` loop or Optimistix once box-constraint support matures) documented in `../../design/design.md` § jaxopt migration. `DeprecationWarning` suppressed in `normix/__init__.py`. | ✅ Done |
 
 **Exit criteria (met):** `MultivariateNormal` passes EF round-trip tests; jaxopt warning absent at import; migration plan documented.
 
