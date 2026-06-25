@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.2.7](https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7) (2026-06-25)
+
+
+### Features
+
+* **em:** EM fitter hardening + VG alpha_min bound (Phases 4–5) ([#58](https://github.com/xshi19/normix/issues/58)) ([8e98499](https://github.com/xshi19/normix/commit/8e9849983ace636768e7b8212121395ecc3f59c2))
+* **em:** Phase 4 fitter hardening — diverged guard, track_ll, stateless det target ([#57](https://github.com/xshi19/normix/issues/57)) ([dd32481](https://github.com/xshi19/normix/commit/dd32481bb74dfe977bc480fe9a3063722930dc41))
+
+
+### Bug Fixes
+
+* **em:** distribution-specific floor for VG/NInvG prior moments (B2) ([#51](https://github.com/xshi19/normix/issues/51)) ([5fa19f7](https://github.com/xshi19/normix/commit/5fa19f7739e90e9a075446f4ab2019ed8aa25487))
+* **em:** floor posterior b_post to prevent VG EM overflow ([#45](https://github.com/xshi19/normix/issues/45)) ([5a0ecfb](https://github.com/xshi19/normix/commit/5a0ecfb54e9927d12db654084af218ebc8df1d32))
+* **em:** floor posterior b_post to prevent VG EM overflow ([#47](https://github.com/xshi19/normix/issues/47)) ([b9b2167](https://github.com/xshi19/normix/commit/b9b2167da85089336090fb86ef58765c17843fb3))
+* **em:** preserve sign of M-step denominator near Gaussian limit ([#50](https://github.com/xshi19/normix/issues/50)) ([0d5ea29](https://github.com/xshi19/normix/commit/0d5ea29a0a11f9911d87ba223559ba3250fb2279))
+
+
+### Refactoring
+
+* **em:** complete Phase 3 — posterior-GIG consolidation + hardening tests (R1-R3, T1/T1b/T3) ([#56](https://github.com/xshi19/normix/issues/56)) ([ff1f462](https://github.com/xshi19/normix/commit/ff1f46232ffad22bd14cfe99693b7855a94ca389))
+* **em:** consolidate posterior GIG map and b_post floor (R1, R2) ([#55](https://github.com/xshi19/normix/issues/55)) ([e014151](https://github.com/xshi19/normix/commit/e0141514e71e38b6b48aa16bcae7c9fbd66545f9))
+
+
+### Documentation
+
+* **em:** complete D2 cross-link fix and mark M1/M2/B1/B2/D1 done ([#52](https://github.com/xshi19/normix/issues/52)) ([ef2e2a8](https://github.com/xshi19/normix/commit/ef2e2a861724d5b965eaf29518d463d603752473))
+* **plans:** add EM robustness follow-ups plan from b_post-floor review ([#48](https://github.com/xshi19/normix/issues/48)) ([fbb0ad0](https://github.com/xshi19/normix/commit/fbb0ad0ecfab6ddd75475243c3097806ad62f924))
+* **tech:** correct b_post floor asymptotics in VG EM tech note ([#49](https://github.com/xshi19/normix/issues/49)) ([fab19be](https://github.com/xshi19/normix/commit/fab19be10a16213d5a97d9301e63b636bad65ea4))
+
 ## [0.2.6](https://github.com/xshi19/normix/compare/v0.2.5...v0.2.6) (2026-06-05)
 
 

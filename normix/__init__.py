@@ -94,7 +94,7 @@ from normix.divergences import (
     kl_divergence_from_psi,
 )
 
-__version__ = "0.2.6"  # x-release-please-version
+__version__ = "0.2.7"  # x-release-please-version
 
 __all__ = [
     # Exponential family base
