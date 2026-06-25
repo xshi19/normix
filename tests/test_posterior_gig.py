@@ -18,7 +18,7 @@ These tests pin the refactor:
 3. **Backend parity** — ``e_step`` outputs match between the ``jax`` and
    ``cpu`` backends for every family and both hierarchies on fixed seeds.
 
-See ``dev-notes/plans/em_robustness_followups.md`` §3.3.
+See ``dev-notes/archive/design/em_robustness_followups.md`` §3.3.
 """
 
 import jax

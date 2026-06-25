@@ -1,7 +1,11 @@
 # EM Robustness Follow-Ups (post `b_post`-floor review)
 
-**Date:** 2026-06-10
-**Status:** In progress. **Phase 1 (docs) and Phase 2 bug fixes done:**
+> **Archived 2026-06-21** — all phases complete. Rationale folded into
+> `../../design/design.md` (E12–E14) and
+> `../../tech_notes/vg_em_inverse_moment_singularity.md`. Kept for history.
+
+**Date:** 2026-06-10 (Phase 5 completed 2026-06-21)
+**Status:** ✅ All phases complete (D4 deferred). **Phase 1 (docs) and Phase 2 bug fixes done:**
 - **M1, M2, D1** — tech-note §6 corrected (`fab19be`, PR #49): case split at
   $\nu=0$, cap $(d-2\alpha)/b_{\min}$ linear in $d$ and uniform in
   $a_{\text{post}}$, verification table + `kve` repro, NC $\omega$-floor
@@ -37,7 +41,9 @@
 **Phase 3 complete.** **Phase 4 (fitter hardening) done:** F1 fail-fast /
 keep-last-finite (`EMResult.diverged`), F2 `track_ll`, F3 stateless
 `target_log_det` threading; T5 monotone-LL and T7 divergence-guard regression
-tests (scan + Python loop). Remaining items (F4, D3, D4) not yet implemented.
+tests (scan + Python loop). **Phase 5 (design-gated) done:** F4 opt-in VG
+`fit(alpha_min=…)` shape bound + D3 design/architecture rows (§3.5, §6 of the
+tech note); D4 (public theory paragraph) deferred.
 **Origin:** post-merge review of the `b_post` floor fix
 (`5a0ecfb`, PR #45). The review verified the math of
 [`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md)
@@ -73,11 +79,12 @@ work for each.
 | F1 | Framework | `BatchEMFitter` has no finite guard: a NaN iterate silently runs to `max_iter` and returns a NaN model (the original failure mode). Add fail-fast / keep-last-finite. | P1 | ~40 LOC | ✅ done |
 | F2 | Framework | `EMResult.log_likelihoods` is `None` unless `verbose ≥ 1` — diagnostics coupled to printing. Add `track_ll`. | P2 | ~30 LOC | ✅ done |
 | F3 | Framework | `self._target_log_det` set inside `fit` makes the fitter stateful / non-reentrant. Thread it through as a local. | P2 | ~15 LOC | ✅ done |
-| F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC | ☐ todo |
+| F4 | Framework (design-gated) | The likelihood is still unbounded after the floor; EM can park near the spike ($\alpha < d/2$, $\mu$ on a data point). Expose an optional $\alpha$ lower bound (ghyp "fix-$\lambda$" analogue) as a user-facing estimand control. | P3 | ~40 LOC | ✅ done — VG-only `fit(alpha_min=…)`; see §3.5 |
 | F5 | Doc note | `B_POST_FLOOR` is not gauge-invariant: under the $Y \to sY$ rescale ($\Sigma \to \Sigma/s$), $b_{\text{post}} = q(x)$ scales with $s$, so a fixed $10^{-6}$ binds with different strength under `det_sigma_one` vs `none`. Document. | P3 | doc only | ✅ `fab19be` |
 | T1–T7 | Testing | High-d EM, quantitative cap, dormancy, small-$\alpha$ MCECM/incremental, monotone LL, `safe_D` sign — see §4. | P1–P2 | ~250 LOC | ✅ done |
 | D1, D2 | Docs | Tech note §6 rewrite (D1); `joint.py`/`constants.py` cross-link violations (D2) — see §5. | P1 | doc only | ✅ `fab19be` (D1), this PR (D2) |
-| D3, D4 | Docs | Post-implementation design/architecture rows (D3); optional public EM paragraph (D4) — see §5. | P2–P3 | doc only | ☐ todo |
+| D3 | Docs | Post-implementation design/architecture rows. | P2 | doc only | ✅ done — `design.md` E12–E14, `ARCHITECTURE.md` constants + E-step note, tech-note §6 `alpha_min` subsection |
+| D4 | Docs | Optional public EM paragraph in `em_algorithm.rst`. | P3 | doc only | ☐ deferred (kept internal) |
 
 ---
 
@@ -301,22 +308,36 @@ a local computed in `fit` and passed to `_regularize(model, target_log_det)`
 (and through the step helpers). `BatchEMFitter` becomes reentrant; behavior
 identical.
 
-### 3.5 F4 — optional $\alpha$ lower bound (design-gated)
+### 3.5 F4 — optional $\alpha$ lower bound ✅
 
-The floor makes iterates finite but the VG likelihood is still unbounded
-($\alpha < d/2$ with $\mu$ on a data point). Mirror the `ghyp` fix-$\lambda$
-option as an *opt-in* estimand control:
+**Done (VG-only, opt-in).** The floor makes iterates finite but the VG
+likelihood is still unbounded ($\alpha < d/2$ with $\mu$ on a data point).
+Mirror the `ghyp` fix-$\lambda$ option as an *opt-in* estimand control.
+
+**Scope decision: VG only.** The unbounded-likelihood degeneracy is intrinsic
+to VG, the unique `normix` family with prior $b=0$: $f(\mu)<\infty \iff
+E[Y^{-d/2}]<\infty$, governed by the small-$y$ behaviour of $f_Y$. Gamma has
+no $e^{-b/2y}$ cutoff (diverges as $y^{\alpha-1}$); NInvG/NIG/GH all carry one
+and stay bounded for every $\alpha$ (GH is additionally protected by
+`GIG_CLAMP_LO`). So `alpha_min` lives on the Gamma subordinator alone. The
+separate `ALPHA_MOMENT_MARGIN` (B2) is a *prior-moment* guard with a different
+purpose and already covers both VG and NInvG.
+
+**API decision (Option 1 — fit-time kwarg).**
 
 - `Gamma.from_expectation(..., alpha_min: float | None = None)` clamps the
-  digamma-Newton result (`jnp` path and CPU path).
-- `VarianceGamma.fit(..., alpha_min=None)` forwards through
-  `m_step → _subordinator_from_eta`. Default `None` = no behavior change.
-- Document the recommended choice $\alpha_{\min} = d/2 + 1 + \varepsilon$
-  (keeps $E[Y^{-1}\mid x]$ classically bounded) vs. $d/2$ (keeps the density
-  bounded) in the tech note.
-
-Requires a short design discussion before implementation (API surface:
-kwarg vs. fitter config) — add a row to `../design/design.md` when decided.
+  digamma-Newton result *before* $\beta=\alpha/\eta_2$ (both `jax` and `cpu`).
+- `MarginalMixture.fit(..., alpha_min=None)` (and the `VarianceGamma.fit`
+  override) resolves the $d$-aware sentinels via `_resolve_alpha_min` and
+  passes a static `BatchEMFitter(m_step_kwargs={'alpha_min': float})`, which
+  the fitter spreads into every `m_step` / `m_step_subordinator`. VG's
+  `_subordinator_from_eta` reads `kwargs.get('alpha_min')`; other families
+  ignore it. Default `None` = bit-identical to prior behavior.
+- Sentinels: `'density'` → $d/2+\varepsilon$ (density bounded),
+  `'inverse_moment'` → $d/2+1+\varepsilon$ ($E[Y^{-1}\mid x]$ also bounded),
+  $\varepsilon=$ `ALPHA_MIN_MARGIN` $=0.1$; an absolute float is accepted too.
+- New tests: `TestAlphaMinBound` (no-op default, density/inverse_moment
+  sentinels, absolute float, invalid-sentinel `ValueError`).
 
 ### 3.6 R3 — cleanups ✅
 
@@ -361,8 +382,13 @@ Phase 1 (docs)        M1, M2, D1, D2            — ✅ done (no behavior change
 Phase 2 (bug fixes)   B1, B2, T2, T4, T6        — ✅ done (B1, B2 fixes; T2/T4/T6 value-level regressions; tech-note §9)
 Phase 3 (consolidate) R2, R1, R3, GIG.to_gig, T3, T1, T1b   — ✅ done
 Phase 4 (fitter)      F1, F2, F3, T5, T7        — ✅ done (EMResult gains `diverged`, `track_ll`)
-Phase 5 (design-gated) F4 (+ design.md row), D3, D4         — ☐ todo
+Phase 5 (design-gated) F4 (+ design.md E14), D3  — ✅ done (D4 deferred / kept internal)
 ```
+
+**All phases complete** (D4 optionally deferred). Per
+`maintain-design-docs.mdc` this plan is ready to archive to
+`../archive/design/` — the rationale now lives in `design.md` (E12–E14) and
+`tech_notes/vg_em_inverse_moment_singularity.md`.
 
 - Phases are independently mergeable; Phase 3 depends on nothing in Phase 2.
   R2 refactor parity is codified by T3 (`tests/test_posterior_gig.py`):

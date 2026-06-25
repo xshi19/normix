@@ -117,6 +117,13 @@ class BatchEMFitter:
     track_ll : bool
         When ``True``, record per-iteration marginal log-likelihood in
         :attr:`EMResult.log_likelihoods` without requiring ``verbose >= 1``.
+    m_step_kwargs : dict or None
+        Extra keyword arguments forwarded verbatim to every ``m_step`` /
+        ``m_step_subordinator`` call (in addition to ``backend`` and
+        ``method``). Used to thread estimand controls such as the VG
+        ``alpha_min`` shape bound down to the subordinator's
+        ``from_expectation``. Values must be static (e.g. Python floats) to
+        stay compatible with the ``lax.scan`` path. ``None`` = no extras.
     """
 
     _REGULARIZATIONS = ('none', 'det_sigma_one', 'det_sigma_x', 'a_eq_b')
@@ -134,6 +141,7 @@ class BatchEMFitter:
         m_step_method: str = 'newton',
         eta_update=None,
         track_ll: bool = False,
+        m_step_kwargs: Optional[dict] = None,
     ):
         if algorithm not in ('em', 'mcecm'):
             raise ValueError(f"algorithm must be 'em' or 'mcecm', got {algorithm!r}")
@@ -151,6 +159,7 @@ class BatchEMFitter:
         self.m_step_method = m_step_method
         self.eta_update = eta_update
         self.track_ll = track_ll
+        self.m_step_kwargs = dict(m_step_kwargs) if m_step_kwargs else {}
         # Optional test hook: force a non-finite max_change at this 1-based step.
         self._force_nonfinite_at_step: int | None = None
 
@@ -226,7 +235,8 @@ class BatchEMFitter:
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step(
-            eta, backend=self.m_step_backend, method=self.m_step_method)
+            eta, backend=self.m_step_backend, method=self.m_step_method,
+            **self.m_step_kwargs)
         model = self._regularize(model, target_log_det)
 
         max_change = _param_change(model.em_convergence_params(), prev_params)
@@ -252,7 +262,8 @@ class BatchEMFitter:
 
         eta = model.e_step(X, backend=self.e_step_backend)
         model = model.m_step_subordinator(
-            eta, backend=self.m_step_backend, method=self.m_step_method)
+            eta, backend=self.m_step_backend, method=self.m_step_method,
+            **self.m_step_kwargs)
 
         max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state

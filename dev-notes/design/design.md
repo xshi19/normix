@@ -111,6 +111,14 @@ the class as `@classmethod` or `@staticmethod`.
 | E10 | `lax.scan` EM | Both backends JAX, low verbosity, no `eta_update` | JIT-friendly; otherwise Python loop |
 | E11 | Cold vs warm η→θ | `from_expectation(theta0=None)` defaults to `jnp.zeros_like(eta)`; instance `fit` uses `natural_params()` | GIG overrides cold start with multistart |
 
+### EM numerical robustness (VG inverse-moment / unbounded-likelihood)
+
+| # | Decision | Choice | Why / Detail |
+|---|---|---|---|
+| E12 | Posterior-GIG map | One `_posterior_gig_params` / `_floored_posterior_gig_params` pair per hierarchy via `subordinator().to_gig()`; 8 subclass overrides deleted (R2) | Same conjugacy in GIG coordinates for all four families; single `B_POST_FLOOR` chokepoint. `tech_notes/vg_em_inverse_moment_singularity.md` § 7 |
+| E13 | Prior moment at `α ≤ 1` | Distribution-specific floor on the `(α−1)` denominator of `β/(α−1)` (`ALPHA_MOMENT_MARGIN`); keep the two finite moments exact (B2) | **Not** the lifted-GIG `expectation_params()` — that injects ~1.0 abs error in `E[log Y]` at `α=0.2` and routes a closed-form special case through general Bessel machinery |
+| E14 | VG unbounded likelihood | Opt-in `fit(alpha_min=…)` clamps the Gamma shape (`ghyp` fix-λ analogue); VG-only, default `None` = no change (F4) | The b_post floor keeps EM *finite* but not *bounded*: for `α ≤ d/2` the VG density diverges at `x=μ`. `alpha_min` restricts the estimand. Threaded as a static `m_step_kwargs` entry; resolves `'density'`→`d/2+ε`, `'inverse_moment'`→`d/2+1+ε`. VG alone needs it (unique `b=0` family); NInvG/NIG/GH have prior `b>0`. `tech_notes/vg_em_inverse_moment_singularity.md` § 5 |
+
 ### Covariance regularisations (after each M-step)
 
 | # | Decision | Choice | Why / Detail |

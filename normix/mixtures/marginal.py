@@ -110,18 +110,63 @@ class MarginalMixture(eqx.Module):
         e_step_backend: str = 'jax',
         m_step_backend: str = 'cpu',
         m_step_method: str = 'newton',
+        alpha_min: "float | str | None" = None,
     ) -> "EMResult":
-        """Fit using ``self`` as initialisation. Returns
-        :class:`~normix.fitting.em.EMResult`."""
+        r"""Fit using ``self`` as initialisation. Returns
+        :class:`~normix.fitting.em.EMResult`.
+
+        Parameters
+        ----------
+        alpha_min : float or {'density', 'inverse_moment'}, optional
+            Opt-in lower bound on the Gamma subordinator shape :math:`\alpha`
+            (Variance Gamma only — the unique family whose marginal
+            likelihood is unbounded at :math:`x=\mu`). Restricts the
+            estimator to a region where that degeneracy cannot occur; the
+            ``ghyp`` "fix-:math:`\lambda`" analogue. ``None`` (default) leaves
+            :math:`\alpha` unconstrained. A float is used directly; the
+            :math:`d`-aware sentinels resolve to
+            :math:`d/2 + \varepsilon` (``'density'`` — marginal density
+            bounded) or :math:`d/2 + 1 + \varepsilon`
+            (``'inverse_moment'`` — :math:`E[1/Y\mid x]` also bounded), with
+            :math:`\varepsilon=` :data:`~normix.utils.constants.ALPHA_MIN_MARGIN`.
+            Has no effect on NInvG / NIG / GH (their prior :math:`b>0` keeps
+            the likelihood bounded for every :math:`\alpha`).
+        """
         from normix.fitting.em import BatchEMFitter
+        m_step_kwargs = None
+        resolved = self._resolve_alpha_min(alpha_min)
+        if resolved is not None:
+            m_step_kwargs = {'alpha_min': resolved}
         fitter = BatchEMFitter(
             algorithm=algorithm,
             verbose=verbose, max_iter=max_iter, tol=tol,
             regularization=regularization,
             e_step_backend=e_step_backend, m_step_backend=m_step_backend,
             m_step_method=m_step_method,
+            m_step_kwargs=m_step_kwargs,
         )
         return fitter.fit(self, X)
+
+    def _resolve_alpha_min(
+        self, alpha_min: "float | str | None",
+    ) -> "float | None":
+        r"""Resolve an ``alpha_min`` argument to a concrete float (or ``None``).
+
+        Accepts the :math:`d`-aware sentinels ``'density'``
+        (:math:`d/2+\varepsilon`) and ``'inverse_moment'``
+        (:math:`d/2+1+\varepsilon`), an absolute float, or ``None``.
+        """
+        if alpha_min is None or isinstance(alpha_min, (int, float)):
+            return None if alpha_min is None else float(alpha_min)
+        from normix.utils.constants import ALPHA_MIN_MARGIN
+        half_d = self.d / 2.0
+        if alpha_min == 'density':
+            return half_d + ALPHA_MIN_MARGIN
+        if alpha_min == 'inverse_moment':
+            return half_d + 1.0 + ALPHA_MIN_MARGIN
+        raise ValueError(
+            "alpha_min must be a float, None, 'density', or "
+            f"'inverse_moment', got {alpha_min!r}")
 
 
 class NormalMixture(MarginalMixture):

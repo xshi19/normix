@@ -329,6 +329,33 @@ E_inv_Y(-0.5, 100.0, 1e-6) # uniform in a_post       -> 1.0e6
 E_inv_Y(-0.5, 100.0, 1e-6/100.0)  # omega-floor cap  -> 1.0e8
 ```
 
+### Optional $\alpha$ lower bound (`fit(alpha_min=…)`)
+
+The floor bounds every *conditional* moment but leaves the *likelihood*
+unbounded: for $\alpha\le d/2$ the marginal density diverges at $x=\mu$
+($f(x)\propto q(x)^{\alpha-d/2}\to\infty$, §5), so EM can still park near a
+degenerate one-observation spike. This is intrinsic to VG — the unique
+`normix` family with prior $b=0$. Every other family carries an
+$e^{-b/2y}$ small-$y$ cutoff in $f_Y(y)$ (Gamma has none), so $E[Y^{-d/2}]$
+and hence $f(\mu)$ stay finite for all parameters; NInvG/NIG/GH need no such
+bound, and GH is additionally protected by its `GIG_CLAMP_LO` prior-$b$ clamp.
+
+`VarianceGamma.fit(alpha_min=…)` (default `None` = no change) restricts the
+estimand, mirroring the `ghyp` fix-$\lambda$ option. It clamps the Gamma shape
+in the M-step (`Gamma.from_expectation(alpha_min=…)`, before $\beta=\alpha/\eta_2$
+is formed), threaded down as a static `BatchEMFitter(m_step_kwargs={'alpha_min':…})`
+entry so the `lax.scan` path stays JIT-able. Two $d$-aware sentinels:
+
+| `alpha_min` | Resolves to | Guarantees | Note |
+|---|---|---|---|
+| `'density'` | $d/2 + \varepsilon$ | marginal density bounded ($\alpha>d/2$) | `B_POST_FLOOR` still active for $\alpha\in(d/2,\,d/2{+}1]$ |
+| `'inverse_moment'` | $d/2 + 1 + \varepsilon$ | density **and** $E[Y^{-1}\mid x]$ classically bounded | makes the $b$-floor dormant for VG |
+
+with $\varepsilon=$ `ALPHA_MIN_MARGIN` $=0.1$; an absolute float is also accepted.
+Recommended default for a robust fit is `'density'` (the minimal restriction
+that removes the degeneracy); use `'inverse_moment'` when even the floored
+$E[Y^{-1}\mid x]$ cap is undesirable.
+
 ### Gauge dependence of $b_{\min}$
 
 $b_{\text{post}} = q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu)$ is not invariant
