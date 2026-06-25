@@ -1,9 +1,17 @@
 # Documentation Refactor: MyST + `myst-nb`, internal/external split
 
-> **PROPOSAL — Phases 1–3 implemented; Phases 4–6 pending.**
-> **Date:** 2026-05-25 (Phase 3 authored 2026-05-28)
-> **Status:** Phase 3 authored on branch `feat/docs-refactor-phase3` (18-tutorial
-> tree + getting_started + user_guide + index toctree; local cached build green).
+> **IN PROGRESS — Phases 1–3 done and live; Phases 4–5 pending; Phase 6 optional.**
+> **Date:** 2026-05-25 (Phase 3 authored 2026-05-28; status refreshed 2026-06-25)
+> **Status:** The MyST + `myst-nb` site is **built and published** to
+> https://xshi19.github.io/normix/ via `.github/workflows/docs.yml` (gh-pages
+> deploy on push to `master`). All 18 tutorials + getting_started + user_guide +
+> design pages render with executed outputs. **What remains:**
+> - **Phase 4** — retire `nbsphinx` and delete `notebooks/` (both still present:
+>   `nbsphinx` is in `docs/conf.py`, `pyproject.toml`, and the docs-publish skill;
+>   `notebooks/` still holds 16 `.ipynb` + 1 `.py`).
+> - **Phase 5** — add the release-tier `docs-full.yml` (force full re-execution on
+>   `v*` tags / `workflow_dispatch`); not yet created.
+> - **Phase 6** — optional polish (theory `.rst` → MyST, theme swap, PR previews).
 > **Scope:** `docs/`, `notebooks/`, `.github/workflows/docs.yml`, the docs-publish skill.
 > **Does not touch:** `normix/` source, `tests/`, `benchmarks/`, the EM / finance roadmaps.
 
@@ -584,7 +592,8 @@ prototype tutorial; the Kami-derived visual style is live on the prototype.
 - [x] Wire myst-nb cache into `docs.yml` (`actions/cache@v4`).
 - [x] Keep `nbsphinx` enabled so existing `.ipynb` references still render.
 - [x] Update `docs-publish` skill and `AGENTS.md` docs commands.
-- [ ] Verify gh-pages publishes after merge (CI deploy step).
+- [x] Verify gh-pages publishes after merge (CI deploy step) — `docs.yml`
+  deploys `docs/_build/html` to `gh-pages` on push to `master`; site is live.
 
 **Exit:**
 - [x] Prototype tutorial renders with executed outputs locally (~132 s first run).
@@ -606,9 +615,9 @@ prototype tutorial; the Kami-derived visual style is live on the prototype.
 
 **Exit:**
 - [x] No legacy `docs/(plans|…|references)/` paths in agent-facing files
-- [x] Live site verified after merge (design pages via MyST; architecture.rst removed)
+- [x] Live site verified after merge (design pages via MyST; architecture.rst removed) — published
 
-### Phase 3 — Author the new tutorial tree (3–4 PRs, 1–2 weeks) ✅ (authored; live verify pending merge)
+### Phase 3 — Author the new tutorial tree (3–4 PRs) ✅ (authored and live)
 
 **Goal:** Build the 18-tutorial demo from scratch, drawing material from
 current notebooks but not constrained by their boundaries.
@@ -631,7 +640,7 @@ block merge.
   local cached `make -C docs html`.
 - [x] Toctree is complete (`index.md` → getting_started / user_guide /
   tutorials / theory / design / api).
-- [ ] Live site verified after merge.
+- [x] Live site verified after merge — published to https://xshi19.github.io/normix/.
 
 **Implementation notes (2026-05-28):**
 - Source-of-truth landing page moved from `index.rst` to `index.md`;
@@ -675,9 +684,15 @@ block merge.
   was also independently verified to execute against the live source. A forced
   full re-execution is `make -C docs html-strict` (`NB_EXECUTION_MODE=force`).
 
-### Phase 4 — Retire `nbsphinx` and `notebooks/` (1 PR, ~half day)
+### Phase 4 — Retire `nbsphinx` and `notebooks/` (1 PR) ⬜ PENDING
 
 **Goal:** Drop the old toolchain; the new tutorials are the only ones.
+
+> **Not started.** `nbsphinx` is still listed in `docs/conf.py` (extensions +
+> `nbsphinx_*` settings), in `pyproject.toml`'s docs extra, and in the
+> docs-publish skill. `notebooks/` still holds the 16 legacy `.ipynb` (plus
+> `em_shrinkage_demo.py`). `finance_phase_d_cvar_demo.ipynb` is superseded by
+> `docs/tutorials/finance/04_cvar_optimization.md` and can be dropped here.
 
 - Remove `nbsphinx` from extensions and from `[project.optional-dependencies].docs`.
 - Delete `docs/conf.py` `nbsphinx_*` settings.
@@ -690,10 +705,15 @@ block merge.
 **Exit:** `rg -l '\.ipynb' docs/ AGENTS.md README.md .cursor/` returns no hits;
 `docs.yml` builds without `nbsphinx`.
 
-### Phase 5 — Add the release tier (1 PR, ~quarter day)
+### Phase 5 — Add the release tier (1 PR) ⬜ PENDING
 
 **Goal:** A second workflow that forces full re-execution on release tags
 and `workflow_dispatch`.
+
+> **Not started.** `.github/workflows/docs-full.yml` does not exist yet. The
+> existing `docs.yml` already supports `workflow_dispatch` and respects the
+> `NB_EXECUTION_MODE` env var (`docs/conf.py` reads it), so the release tier is
+> mostly a copy with `NB_EXECUTION_MODE=force` and a longer `timeout-minutes`.
 
 - Add `.github/workflows/docs-full.yml` (copy `docs.yml`, set
   `NB_EXECUTION_MODE=force`, longer `timeout-minutes`).
@@ -704,7 +724,7 @@ and `workflow_dispatch`.
 **Exit:** Dispatching the new workflow runs every tutorial fresh and
 publishes to `gh-pages`.
 
-### Phase 6 — Polish (open-ended, optional)
+### Phase 6 — Polish (open-ended, optional) ⬜ OPTIONAL
 
 - Migrate `../../docs/theory/*.rst` to MyST `.md` opportunistically when touched.
 - Swap theme (`furo` or `pydata-sphinx-theme`) for better navigation.
@@ -755,9 +775,10 @@ No exit criterion; tackled as time allows.
 
 ## Related plans / docs (current state)
 
-- `../plans/migration_plan.md` — JAX migration, complete.
-- `../plans/package_improvement_roadmap.md` — review-driven cleanup, complete.
-- `../plans/finance_architecture.md` — Phase D done; E, F still proposed.
+- `../archive/plans/migration_plan.md` — JAX migration, complete (archived).
+- `../archive/plans/package_improvement_roadmap.md` — review-driven cleanup,
+  complete (archived).
+- `finance_architecture.md` — Phase D done; E, F still proposed.
 - `.cursor/skills/docs-publish/SKILL.md` — current build/publish recipe; will
   be updated in Phase 1 and Phase 5.
 - `AGENTS.md` § Context Map — internal-doc index, updated in Phase 2.

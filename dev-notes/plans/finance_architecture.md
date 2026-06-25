@@ -1,13 +1,17 @@
 # Finance Architecture: `normix.finance`
 
-> **PROPOSAL — not yet implemented.** Moved to `../plans/` on
-> 2026-05-10 (previously in `../design/`). Cross-references to the
-> EM / covariance work now point to the archived proposal.
+> **IN PROGRESS — Phase D implemented; Phases E, F proposed.**
+> Moved to `../plans/` on 2026-05-10 (previously in `../design/`).
+> Cross-references to the EM / covariance work now point to the archived proposal.
 
-**Date:** 2026-04-17
-**Status:** Proposed — design sketch, implementation has not started.
-The EM / covariance prerequisites (Phases A–C / Phases 1–4 of the
-EM extensions plan) are now in `main`.
+**Date:** 2026-04-17 (status refreshed 2026-06-25)
+**Status:** Phase D (finance foundation: portfolio projection + CVaR) is
+implemented and shipped; see the Phase D record below. Phases E (optimization)
+and F (diversification) remain design sketches. The EM / covariance
+prerequisites (Phases A–C / Phases 1–4 of the EM extensions plan) are in
+`master`, and the EM fitter the finance layer builds on has since been hardened
+(VG/NInvG prior-moment floors, posterior `b_post` floor, diverged guard — see
+`../archive/design/em_robustness_followups.md`).
 **Scope:** new top-level subpackage `normix/finance/`
 **Theory:** `../../docs/theory/cvar_derivatives.rst`,
 `../../docs/theory/mean_risk_optimization.rst`,
@@ -234,11 +238,17 @@ engine.
 - `normix.finance.functional.WeightFunctional` — bundles `CVaR`, model, and
   fixed `Y` into JIT-able `w ↦ risk(w)` with `grad` and `hess` for Phase E
   optimisation.
-- Demo: [`notebooks/finance_phase_d_cvar_demo.ipynb`](../../notebooks/finance_phase_d_cvar_demo.ipynb)
-  compares calculated vs simulated CVaR, first/second derivatives, and the
-  portfolio chain rule on a synthetic 3-asset NIG model.
-- Data: [`scripts/download_dj30.py`](../../scripts/download_dj30.py) fetches
-  Dow Jones 30 daily log-returns (2005–2015) for the Phase E / F notebooks.
+- Demo: the published tutorial
+  [`docs/tutorials/finance/04_cvar_optimization.md`](../../docs/tutorials/finance/04_cvar_optimization.md)
+  fits a mixture, computes CVaR, verifies the analytic gradient/Hessian against
+  finite differences, and takes a few gradient steps to reduce risk. (The older
+  `notebooks/finance_phase_d_cvar_demo.ipynb` is superseded by this tutorial and
+  is slated for deletion in docs-refactor Phase 4.)
+- Data: the finance tutorials read from the committed panel
+  [`data/sp500_returns.csv`](../../data/sp500_returns.csv) (which includes the
+  DJ30 constituents — 29 of 30; WBA, dropped from the index in 2024, is absent).
+  [`scripts/download_dj30.py`](../../scripts/download_dj30.py) remains an
+  optional offline refresh but is not used in CI (needs `yfinance` + network).
 - Tests: [`tests/finance/test_cvar.py`](../../tests/finance/test_cvar.py).
 
 ### Phase E: Portfolio optimization
