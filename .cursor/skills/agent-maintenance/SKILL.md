@@ -49,9 +49,10 @@ system. Each trigger below tells you what to update and where.
 1. Add to the "Things to Avoid" / "Gotchas" section of the relevant rule
 2. If no relevant rule exists, consider whether the mistake warrants a new rule
 
-### Completing a Migration Phase
+### Advancing a Plan Phase
 
-1. Update `dev-notes/plans/migration_plan.md`
+1. Update the relevant plan under `dev-notes/plans/` (e.g. `docs_refactor.md`,
+   `finance_architecture.md`). Completed plans live in `dev-notes/archive/plans/`.
 2. If modules were restructured → update `dev-notes/ARCHITECTURE.md`
 
 ### New Multi-Step Workflow Identified
