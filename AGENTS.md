@@ -25,7 +25,7 @@ Before committing:
 - `uv run pytest tests/` passes
 - No debug print statements
 - Type hints on all public methods
-- Update `dev-notes/plans/migration_plan.md` if changes advance a phase
+- Update the relevant plan in `dev-notes/plans/` if changes advance a phase
 - Update `dev-notes/ARCHITECTURE.md` if new modules were added
 
 ## Core Design
@@ -62,9 +62,10 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Full design doc index (internal) | `dev-notes/design/index.md` |
 | Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Migration status & roadmap | `dev-notes/plans/` |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`) |
 | `normix.finance` roadmap (Phase D done; E, F proposed) | `dev-notes/plans/finance_architecture.md` |
-| Docs refactor plan | `dev-notes/plans/docs_refactor.md` |
+| Docs refactor plan (Phases 1–3 done; 4–6 pending) | `dev-notes/plans/docs_refactor.md` |
+| Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
 | Technical notes | `dev-notes/tech_notes/` |

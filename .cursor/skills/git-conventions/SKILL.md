@@ -65,7 +65,7 @@ Before committing, verify:
 - [ ] `uv run pytest tests/` passes
 - [ ] No debug `print` statements left in code
 - [ ] Type hints on all public methods
-- [ ] If changes advance a migration phase → update `dev-notes/plans/migration_plan.md`
+- [ ] If changes advance a plan phase → update the relevant plan in `dev-notes/plans/`
 - [ ] If new modules were added → update `dev-notes/ARCHITECTURE.md`
 - [ ] If new distribution was added → update `.cursor/rules/project-overview.mdc`
 - [ ] If design decisions were made → update `dev-notes/design/design.md`
