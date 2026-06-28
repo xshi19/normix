@@ -166,5 +166,5 @@ constrained optimizer; the analytic Hessian enables second-order methods.
   precision.
 - Those weight-space derivatives drive gradient-based CVaR optimization.
 
-This concludes the finance section. See the {doc}`../../user_guide/finance`
-overview for how these pieces fit together.
+Next: {doc}`05_mean_risk_optimization` turns this into a full mean-risk
+optimizer, reducing the problem to a two-dimensional efficient surface.

@@ -24,22 +24,63 @@ import jax.numpy as jnp
 from normix.mixtures.marginal import _UnivariateNormalMixtureMixin
 
 
+def cdf_cmc_raw(
+    x: jax.Array,
+    mu: jax.Array,
+    gamma: jax.Array,
+    sigma: jax.Array,
+    Y: jax.Array,
+) -> jax.Array:
+    r"""Conditional Monte Carlo CDF from raw scalar parameters.
+
+    :math:`\hat F(x) = \mathbb{E}_Y[\Phi(z_Y)]` with
+    :math:`z_Y = (x - \mu - \gamma Y)/(\sigma\sqrt{Y})`. Bessel- and
+    PINV-free, so it is cheap to :func:`jax.vmap` across many
+    :math:`(\mu, \gamma, \sigma)` triples that share the same draws ``Y``.
+    """
+    sqY = jnp.sqrt(Y)
+    z = (x - mu - gamma * Y) / (sigma * sqY)
+    return jnp.mean(jax.scipy.stats.norm.cdf(z))
+
+
+def quantile_cmc_raw(
+    q: float | jax.Array,
+    mu: jax.Array,
+    gamma: jax.Array,
+    sigma: jax.Array,
+    Y: jax.Array,
+    lo: jax.Array,
+    hi: jax.Array,
+    n_bisect: int = 60,
+) -> jax.Array:
+    r"""Solve :math:`\hat F(x_q) = q` by bisection on the CMC CDF.
+
+    Bisects within the explicit bracket ``[lo, hi]`` (which the caller must
+    choose to contain the root). Operates on raw scalar parameters and is
+    Bessel-/PINV-free, hence :func:`jax.vmap`-friendly.
+    """
+    def body(_, bracket):
+        lo_, hi_ = bracket
+        mid = 0.5 * (lo_ + hi_)
+        F_mid = cdf_cmc_raw(mid, mu, gamma, sigma, Y)
+        lo_new = jnp.where(F_mid < q, mid, lo_)
+        hi_new = jnp.where(F_mid < q, hi_, mid)
+        return (lo_new, hi_new)
+
+    lo, hi = jax.lax.fori_loop(0, n_bisect, body, (lo, hi))
+    return 0.5 * (lo + hi)
+
+
 def cdf_cmc(
     univariate: _UnivariateNormalMixtureMixin,
     x: jax.Array,
     Y: jax.Array,
 ) -> jax.Array:
-    r"""Conditional Monte Carlo CDF :math:`\hat F(x) = \mathbb{E}_Y[\Phi(z_Y)]`.
-
-    Rao-Blackwellised estimator with
-    :math:`z_Y = (x - \mu - \gamma Y)/(\sigma\sqrt{Y})`.
-    """
-    mu = univariate._mu_scalar
-    gamma = univariate._gamma_scalar
-    sigma = univariate._sigma_scalar
-    sqY = jnp.sqrt(Y)
-    z = (x - mu - gamma * Y) / (sigma * sqY)
-    return jnp.mean(jax.scipy.stats.norm.cdf(z))
+    r"""Conditional Monte Carlo CDF :math:`\hat F(x) = \mathbb{E}_Y[\Phi(z_Y)]`."""
+    return cdf_cmc_raw(
+        x, univariate._mu_scalar, univariate._gamma_scalar,
+        univariate._sigma_scalar, Y,
+    )
 
 
 def quantile_cmc(
@@ -56,16 +97,8 @@ def quantile_cmc(
     """
     x_seed = univariate.ppf(q)
     half_width = 5.0 * univariate.std()
-    lo = x_seed - half_width
-    hi = x_seed + half_width
-
-    def body(_, bracket):
-        lo_, hi_ = bracket
-        mid = 0.5 * (lo_ + hi_)
-        F_mid = cdf_cmc(univariate, mid, Y)
-        lo_new = jnp.where(F_mid < q, mid, lo_)
-        hi_new = jnp.where(F_mid < q, hi_, mid)
-        return (lo_new, hi_new)
-
-    lo, hi = jax.lax.fori_loop(0, n_bisect, body, (lo, hi))
-    return 0.5 * (lo + hi)
+    return quantile_cmc_raw(
+        q, univariate._mu_scalar, univariate._gamma_scalar,
+        univariate._sigma_scalar, Y,
+        x_seed - half_width, x_seed + half_width, n_bisect,
+    )

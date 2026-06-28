@@ -19,8 +19,12 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.finance._mc import quantile_cmc
+from normix.finance._mc import quantile_cmc, quantile_cmc_raw
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
+
+# Bracket half-width (in mixture std units) for the reduced-coordinate CMC
+# quantile. Generous because bisection cost is independent of the width.
+_BRACKET_STD = 20.0
 
 
 def _phi(z: jax.Array) -> jax.Array:
@@ -33,6 +37,20 @@ class RiskMeasure(eqx.Module):
     @abc.abstractmethod
     def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
         """Risk of the univariate normal mixture represented by ``univariate``."""
+
+    @abc.abstractmethod
+    def value_reduced(
+        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, Y: jax.Array,
+    ) -> jax.Array:
+        r"""Risk from raw scalar parameters :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)`.
+
+        The univariate normal mixture is
+        :math:`\tilde\mu + \tilde\gamma Y + \tilde\sigma\sqrt{Y}Z`. Unlike
+        :meth:`value`, this signature takes plain scalars (no distribution
+        object) and must be Bessel-/PINV-free so it can be
+        :func:`jax.vmap`-ed across an efficient-surface grid that shares the
+        subordinator draws ``Y``.
+        """
 
 
 class CVaR(RiskMeasure):
@@ -79,17 +97,49 @@ class CVaR(RiskMeasure):
     # Scalar-space value and derivatives
     # ------------------------------------------------------------------
 
-    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
-        mu = univariate._mu_scalar
-        gamma = univariate._gamma_scalar
-        sigma = univariate._sigma_scalar
-        v = self._var_cmc(univariate, Y)
+    def _cvar_from_quantile(
+        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array,
+        x_alpha: jax.Array, Y: jax.Array,
+    ) -> jax.Array:
+        r"""CVaR integral given the conditional-MC quantile :math:`x_\alpha`.
+
+        :math:`\operatorname{CVaR}_\alpha = -\frac{1}{\alpha} E_Y[(\tilde\mu
+        + \tilde\gamma Y)\Phi(z_Y) - \tilde\sigma\sqrt{Y}\varphi(z_Y)]` with
+        :math:`z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)/(\tilde\sigma
+        \sqrt{Y})`. Shared by :meth:`value` and :meth:`value_reduced`.
+        """
         sqY = jnp.sqrt(Y)
-        z = (-v - mu - gamma * Y) / (sigma * sqY)
+        z = (x_alpha - mu - gamma * Y) / (sigma * sqY)
         Phi = jax.scipy.stats.norm.cdf(z)
         phi = _phi(z)
         integral = jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi)
         return -integral / self.alpha
+
+    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
+        x_alpha = -self._var_cmc(univariate, Y)
+        return self._cvar_from_quantile(
+            univariate._mu_scalar, univariate._gamma_scalar,
+            univariate._sigma_scalar, x_alpha, Y,
+        )
+
+    def value_reduced(
+        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, Y: jax.Array,
+    ) -> jax.Array:
+        r"""CVaR from raw scalar parameters, vectorizable over a surface grid.
+
+        Inverts the conditional-MC CDF for :math:`x_\alpha` within an
+        analytic bracket :math:`E[X] \pm 20\,\mathrm{std}[X]` derived from
+        the subordinator sample moments of ``Y`` — no PINV table, no Bessel
+        evaluation — then reuses :meth:`_cvar_from_quantile`.
+        """
+        E_Y = jnp.mean(Y)
+        Var_Y = jnp.var(Y)
+        mean = mu + gamma * E_Y
+        half = _BRACKET_STD * jnp.sqrt(E_Y * sigma ** 2 + Var_Y * gamma ** 2)
+        x_alpha = quantile_cmc_raw(
+            self.alpha, mu, gamma, sigma, Y, mean - half, mean + half,
+        )
+        return self._cvar_from_quantile(mu, gamma, sigma, x_alpha, Y)
 
     def gradient_scalar(
         self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
