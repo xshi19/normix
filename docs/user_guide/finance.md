@@ -57,6 +57,32 @@ bundles a risk measure, model, and `Y` into a callable with `.grad` and `.hess`.
 See {doc}`../tutorials/finance/04_cvar_optimization` for verification and a
 worked CVaR-reduction loop.
 
+## Mean-risk optimization
+
+`MeanRiskProblem` solves the mean-risk problem
+$\min_w \rho(w^\top X)$ s.t. $w^\top e = 1,\, E[w^\top X] \ge m$ by exploiting
+the normal-mixture reduction to two coordinates
+$(\tilde\mu, \tilde\gamma) = (w^\top\mu, w^\top\gamma)$:
+
+```python
+from normix.finance import MeanRiskProblem, CVaR
+
+prob = MeanRiskProblem(model, CVaR(0.05))
+Y = model.joint.subordinator().rvs(20_000, seed=0)
+
+prob.weights(mu_t, gamma_t)        # min-dispersion weights for a target (μ̃, γ̃)
+prob.min_variance_point()          # reduced coords of the global min-variance portfolio
+
+surface = prob.efficient_surface(mu_grid, gamma_grid, Y)   # CVaR over a (μ̃, γ̃) grid
+frontier = prob.efficient_frontier(targets, Y, gamma_bounds=(lo, hi))  # min risk per return
+frontier.weights                   # realised portfolio weights along the frontier
+```
+
+The `efficient_surface` is the convex surface of [Shi2016, Fig. 8]; the
+`efficient_frontier` is the classical risk–return frontier of Fig. 9. See
+{doc}`../tutorials/finance/05_mean_risk_optimization` for a worked replication
+across all four mixture families.
+
 ## Scaling to many assets
 
 At portfolio scale the factor mixtures replace a dense covariance with

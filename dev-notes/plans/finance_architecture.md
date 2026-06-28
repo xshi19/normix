@@ -1,13 +1,14 @@
 # Finance Architecture: `normix.finance`
 
-> **IN PROGRESS — Phase D implemented; Phases E, F proposed.**
+> **IN PROGRESS — Phase D done; Phase E mean-risk done (transaction costs pending); Phase F proposed.**
 > Moved to `../plans/` on 2026-05-10 (previously in `../design/`).
 > Cross-references to the EM / covariance work now point to the archived proposal.
 
-**Date:** 2026-04-17 (status refreshed 2026-06-25)
-**Status:** Phase D (finance foundation: portfolio projection + CVaR) is
-implemented and shipped; see the Phase D record below. Phases E (optimization)
-and F (diversification) remain design sketches. The EM / covariance
+**Date:** 2026-04-17 (status refreshed 2026-06-26)
+**Status:** Phase D (portfolio projection + CVaR) and the **mean-risk** half of
+Phase E (efficient surface + frontier reduction) are implemented and shipped;
+see the records below. Phase E transaction costs and Phase F (diversification)
+remain design sketches. The EM / covariance
 prerequisites (Phases A–C / Phases 1–4 of the EM extensions plan) are in
 `master`, and the EM fitter the finance layer builds on has since been hardened
 (VG/NInvG prior-moment floors, posterior `b_post` floor, diverged guard — see
@@ -253,10 +254,27 @@ engine.
 
 ### Phase E: Portfolio optimization
 
-- implement mean-risk optimization with the efficient-surface reduction;
-- add transaction-cost QP builders;
-- keep external solver dependencies optional until usage patterns
-  settle.
+- **Mean-risk optimization — Implemented (2026-06-26).**
+  `normix.finance.optimization.MeanRiskProblem(model, risk)` implements the
+  efficient-surface reduction from `../../docs/theory/mean_risk_optimization.rst`:
+  the 3×3 matrix `A = [μ γ e]ᵀ Σ⁻¹ [μ γ e]` (Cholesky solves), minimum-dispersion
+  `weights(μ̃, γ̃) = Σ⁻¹[μ γ e] A⁻¹ [μ̃ γ̃ 1]ᵀ`, `dispersion`/`expected_return`/
+  `min_variance_point`, the convex `efficient_surface` (Fig. 8), and the
+  `efficient_frontier` (Fig. 9) via a vectorized golden-section minimisation
+  along each return-constraint line. Result pytrees `EfficientSurface` /
+  `EfficientFrontier`.
+  - The surface grid needs a fast risk evaluation: `CVaR.value_reduced(μ̃, γ̃, σ̃, Y)`
+    inverts the conditional-MC CDF inside an analytic bracket (no PINV/Bessel),
+    so it is `jax.vmap`-able across the grid. `_mc.py` gained raw cores
+    (`cdf_cmc_raw`, `quantile_cmc_raw`); the object-based `value`/`quantile_cmc`
+    now delegate to them (behaviour unchanged).
+  - Tutorial: [`docs/tutorials/finance/05_mean_risk_optimization.md`](../../docs/tutorials/finance/05_mean_risk_optimization.md)
+    replicates [Shi2016] Figs. 8–9 (efficient surface + geometry) for GH and
+    overlays the gauge-invariant efficient frontiers of VG / NIG / NInvG / GH.
+  - Tests: [`tests/finance/test_optimization.py`](../../tests/finance/test_optimization.py).
+- **Transaction costs — still proposed.** Add the local-quadratic / QP builders
+  from `../../docs/theory/transaction_costs.rst`; keep external solver
+  dependencies optional until usage patterns settle.
 
 ### Phase F: Diversification analytics
 
