@@ -13,6 +13,8 @@ See ``docs/theory/cvar_derivatives.rst`` for the CVaR derivative formulas.
 from __future__ import annotations
 
 from normix.finance.functional import WeightFunctional
+from normix.finance.optimization import (
+    EfficientFrontier, EfficientSurface, MeanRiskProblem)
 from normix.finance.projection import project_portfolio
 from normix.finance.risk import RiskMeasure, CVaR
 
@@ -21,4 +23,7 @@ __all__ = [
     "RiskMeasure",
     "CVaR",
     "WeightFunctional",
+    "MeanRiskProblem",
+    "EfficientSurface",
+    "EfficientFrontier",
 ]
