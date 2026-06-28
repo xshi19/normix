@@ -186,6 +186,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 </ul>
 </details></li>
 </ul>
@@ -408,6 +409,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-projection">Portfolio projection</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-risk-var-and-cvar">Tail risk: VaR and CVaR</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differentiable-risk">Differentiable risk</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-risk optimization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scaling-to-many-assets">Scaling to many assets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#further-reading">Further reading</a></li>
 </ul>
@@ -472,6 +474,30 @@ gradient- or Newton-based portfolio optimizers. The <code class="docutils litera
 bundles a risk measure, model, and <code class="docutils literal notranslate"><span class="pre">Y</span></code> into a callable with <code class="docutils literal notranslate"><span class="pre">.grad</span></code> and <code class="docutils literal notranslate"><span class="pre">.hess</span></code>.
 See <a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html"><span class="doc">Portfolio CVaR and its derivatives</span></a> for verification and a
 worked CVaR-reduction loop.</p>
+</section>
+<section id="mean-risk-optimization">
+<h2>Mean-risk optimization<a class="headerlink" href="#mean-risk-optimization" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code> solves the mean-risk problem
+<span class="math notranslate nohighlight">\(\min_w \rho(w^\top X)\)</span> s.t. <span class="math notranslate nohighlight">\(w^\top e = 1,\, E[w^\top X] \ge m\)</span> by exploiting
+the normal-mixture reduction to two coordinates
+<span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) = (w^\top\mu, w^\top\gamma)\)</span>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanRiskProblem</span><span class="p">,</span> <span class="n">CVaR</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">MeanRiskProblem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">))</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">20_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">prob</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">mu_t</span><span class="p">,</span> <span class="n">gamma_t</span><span class="p">)</span>        <span class="c1"># min-dispersion weights for a target (μ̃, γ̃)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">min_variance_point</span><span class="p">()</span>          <span class="c1"># reduced coords of the global min-variance portfolio</span>
+
+<span class="n">surface</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_surface</span><span class="p">(</span><span class="n">mu_grid</span><span class="p">,</span> <span class="n">gamma_grid</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>   <span class="c1"># CVaR over a (μ̃, γ̃) grid</span>
+<span class="n">frontier</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">))</span>  <span class="c1"># min risk per return</span>
+<span class="n">frontier</span><span class="o">.</span><span class="n">weights</span>                   <span class="c1"># realised portfolio weights along the frontier</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">efficient_surface</span></code> is the convex surface of [Shi2016, Fig. 8]; the
+<code class="docutils literal notranslate"><span class="pre">efficient_frontier</span></code> is the classical risk–return frontier of Fig. 9. See
+<a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html"><span class="doc">Mean-risk optimization and the efficient surface</span></a> for a worked replication
+across all four mixture families.</p>
 </section>
 <section id="scaling-to-many-assets">
 <h2>Scaling to many assets<a class="headerlink" href="#scaling-to-many-assets" title="Link to this heading">#</a></h2>
@@ -539,6 +565,7 @@ transaction costs, and factor analysis — is developed in the
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-projection">Portfolio projection</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-risk-var-and-cvar">Tail risk: VaR and CVaR</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differentiable-risk">Differentiable risk</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-risk optimization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scaling-to-many-assets">Scaling to many assets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#further-reading">Further reading</a></li>
 </ul>

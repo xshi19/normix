@@ -56,4 +56,5 @@ finance/01_univariate_index
 finance/02_multivariate_stocks
 finance/03_factor_mixture_portfolios
 finance/04_cvar_optimization
+finance/05_mean_risk_optimization
 ```
