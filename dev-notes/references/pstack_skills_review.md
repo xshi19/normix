@@ -1,8 +1,16 @@
 # pstack Skills: Survey and Fit Assessment for normix
 
-**Date:** 2026-05-25
+**Date:** 2026-05-25 · **Revised:** 2026-06-28 (Part II added)
 **Plugin source:** [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)
-**Author of pstack:** poteto (React Compiler core team, ex-Meta/Netflix/Cursor)
+**Author of pstack:** poteto (lauren / @poteto — React Compiler core team, ex-Meta/Netflix/Cursor)
+
+> **Part I (§1–8)** is the original skill-by-skill fit survey.
+> **Part II (§9–15)** adds learnings from poteto's *Loops You Can Trust*
+> article, the new pstack skills / principles / playbooks / `benny` automation
+> pack, and **how Cursor implements the Slack "control room" and the
+> screenshot/video verification** poteto relies on — with concrete
+> recommendations for loops, multi-agent, and human-reviewer efficiency on
+> normix. If you only read one part, read Part II.
 
 ---
 
@@ -38,10 +46,10 @@ with no such MCPs. That mismatch drives several of the "skip" /
 
 | Verdict | Meaning | Skills |
 |---|---|---|
-| **Adopt** | Use as shipped | `principle-laziness-protocol`, `principle-foundational-thinking`, `principle-redesign-from-first-principles`, `principle-subtract-before-you-add`, `principle-minimize-reader-load`, `principle-type-system-discipline`, `principle-prove-it-works`, `principle-fix-root-causes`, `principle-guard-the-context-window`, `principle-never-block-on-the-human`, `principle-encode-lessons-in-structure`, `principle-exhaust-the-design-space`, `principle-boundary-discipline`, `unslop` (with two carve-outs) |
-| **Adopt with adaptation** | Useful but needs a normix-specific wrapper or trimmed scope | `architect`, `arena`, `how`, `tdd`, `interrogate`, `reflect`, `principle-outcome-oriented-execution`, `principle-migrate-callers-then-delete-legacy-apis` |
-| **Use rarely / on demand** | Right tool for a narrow class of problem | `figure-it-out`, `show-me-your-work`, `principle-make-operations-idempotent`, `principle-separate-before-serializing-shared-state` |
-| **Skip** | Wrong target audience or relies on missing infrastructure | `poteto-mode` as default router, `automate-me`, `why`, `typescript-best-practices`, `principle-experience-first`, `poteto-agent` subagent |
+| **Adopt** | Use as shipped | `principle-laziness-protocol`, `principle-foundational-thinking`, `principle-redesign-from-first-principles`, `principle-subtract-before-you-add`, `principle-minimize-reader-load`, `principle-type-system-discipline`, `principle-prove-it-works`, `principle-fix-root-causes`, `principle-guard-the-context-window`, `principle-never-block-on-the-human`, `principle-encode-lessons-in-structure`, `principle-exhaust-the-design-space`, `principle-boundary-discipline`, `unslop` (with two carve-outs), `principle-build-the-lever` (new — §10), `principle-sequence-verifiable-units` (new — §10) |
+| **Adopt with adaptation** | Useful but needs a normix-specific wrapper or trimmed scope | `architect`, `arena`, `how`, `tdd`, `interrogate`, `reflect`, `principle-outcome-oriented-execution`, `principle-migrate-callers-then-delete-legacy-apis`, `blast-radius` (new — §10) |
+| **Use rarely / on demand** | Right tool for a narrow class of problem | `figure-it-out`, `show-me-your-work` (now the backbone of any loop — §12–13), `recall` (new — §10), `principle-make-operations-idempotent`, `principle-separate-before-serializing-shared-state` |
+| **Skip / config-only** | Wrong target audience, relies on missing infrastructure, or one-time setup | `poteto-mode` as default router, `automate-me`, `why`, `typescript-best-practices`, `principle-experience-first`, `poteto-agent` subagent; `setup-pstack` (one-time model config — §10) |
 
 ---
 
@@ -424,10 +432,250 @@ If yes, the new skill belongs in `.cursor/skills/` and follows
 
 ---
 
-## 8. References
+## Part II — "Loops You Can Trust": new learnings (revised 2026-06-28)
+
+Added after poteto published [*Loops You Can Trust*](https://x.com/poteto/article/2069824386283319343)
+(local copy: `../../docs/pdfs/lauren on X_ _Loops You Can Trust_ _ X.pdf`) and
+pstack grew new skills, principles, playbooks, and the `benny` automation pack.
+Part I surveyed *which skills fit*. Part II answers *how to run them as loops*,
+*whether multi-agent helps normix*, *how the human reviewer stays efficient*,
+and the two mechanisms you asked about — the **Slack control room** and
+**screenshot/video verification** — in concrete Cursor terms.
+
+---
+
+## 9. The thesis: verification is the limiting step
+
+poteto frames agent management with Andy Grove's *High Output Management*
+"breakfast factory" (the egg is the slow step that paces the whole plate):
+
+- **Verification is the long pole.** Reproduction and checking take the most
+  time and usually need a human. Until an agent can *verify its own work*,
+  running loops "just creates compounding slop and more work for humans." Build
+  verification **before** you build the loop.
+- **Managerial leverage / build the lever.** A human authors a reusable
+  tool or skill once; every future run inherits it. "Give me a lever long
+  enough …" Now a first-class pstack principle (§10).
+- **Trust, but verify → "show me your work."** "I fixed it" is not enough.
+  An *artifact* you can inspect (failing + passing test, before/after plot,
+  trace, screenshot) "beats a plausible sounding explanation which may be
+  wrong," and means you don't replay the whole run to trust the result.
+- **Catch defects at the lowest-value stage.** A failed check on one small unit
+  is cheap; a regression found after a giant change is expensive. (His StyleX
+  migration went from a 400K-line PR to *one leaf component per day*, each PR
+  small with before/after evidence.)
+- **Every stage can stop the line.** Triage may say "not a bug," repro may say
+  "can't reproduce," the fixer may say "too risky." Those are *useful* outcomes:
+  they keep bad work from flowing downstream where it is costlier to fix.
+- **Decide whether a step needs an agent at all.** "If a script can do it
+  deterministically, use the script. Agents are for the fuzzy parts: choosing
+  hypotheses, interpreting evidence, deciding when something needs judgment."
+
+His five closing rules:
+
+1. Do the work by hand first, so you know what good looks like.
+2. Give agents the same tools and signals you use.
+3. Make every stage prove its work and stop when it doesn't meet the bar.
+4. Read the transcripts; turn recurring failures into tools, skills, or evals.
+5. Make loops autonomous only after they earn your trust.
+
+This maps cleanly onto normix's priority order (Elegance > Numerical efficiency
+& robustness > Mathematical clarity > Simplicity): "prove it works" *is* the
+numerical-robustness discipline, pointed at agents instead of code.
+
+## 10. What's new in pstack since this survey
+
+Five skills/principles and five playbooks were added, plus the automations pack.
+
+| New item | Kind | normix verdict |
+|---|---|---|
+| `principle-build-the-lever` | principle | **Adopt.** normix already half-does this: `benchmarks/utils.py::save_result` (JSON + git hash) and `benchmarks/compare.py` (before/after delta table) *are* the lever. Make "build the rerunnable tool, don't hand-do it" the explicit default for any non-trivial sweep. |
+| `principle-sequence-verifiable-units` | principle | **Adopt.** "Red→green per unit, never batch the check to the end." Maps to: keep EM/solver tests green between refactor phases; stack PRs failing-test-first. |
+| `blast-radius` | skill | **Adopt for narrow triggers.** Companion to `interrogate`. Its rule — *prove the one safety fact by running code, not by a convincing writeup* — matches normix's "benchmarks decide" culture. Use when a change touches the `ExponentialFamily` base, `log_kv`, or a shared solver. |
+| `recall` | skill | **Use rarely / adapt.** Its shared-record sweep needs MCPs normix lacks (same gap as `why`). The chat-history mining over `agent-transcripts/` + `git`/`gh` verification is still useful for a returning solo maintainer. |
+| `setup-pstack` | skill | **One-time config.** Writes `~/.cursor/rules/pstack-models.mdc` mapping each role (code, judgment, the arena/architect/interrogate panels) to a model. Run once if you adopt pstack, otherwise every panel collapses to one model and the cross-model value is lost. |
+| Playbooks `hillclimb`, `trace-forensics`, `refactoring`, `session-pickup`, `pause-safely` | poteto-mode | `hillclimb` is the high-value one for normix (§12). `session-pickup` / `pause-safely` pair with `agent-transcripts/` for resuming work. |
+| `benny` automation pack | automations | A reference Slack triage→repro→fix loop. Not directly usable (normix has no Slack issue stream), but its *contract* — control-adapter, stop-the-line gates, fail-closed, draft-PR-only — is the template for any normix automation (§11, §14). |
+
+`/poteto-mode` now also advertises that it "works extremely well with Cursor's
+`/loop`" for multi-hour autonomous runs.
+
+## 11. The two mechanisms you asked about, in Cursor terms
+
+### 11.1 Slack as the "control room" → Cursor Automations
+
+poteto's self-running loops are **Cursor Automations**: cloud agents that fire
+on a trigger, do work, and report. Slack is simply where he *watches the line
+and jumps in when something looks wrong*. You configure these at
+[cursor.com/automations](https://cursor.com/automations) or with the
+`/automate` skill. Key facts ([docs](https://cursor.com/docs/cloud-agent/automations)):
+
+- **Triggers:** schedule/cron, GitHub/GitLab PR events (opened, pushed, merged,
+  commented, CI completed), **Slack** (new message, emoji reaction), webhook,
+  Linear, Sentry, PagerDuty. The run fires when *any* trigger matches.
+- **Tools:** open / comment-on PR, request reviewers, **Send to / Read Slack**,
+  MCP servers, **Memories** (notes persisted across runs), and **Computer use**
+  (browser + screenshots/recordings — see 11.2).
+- **Execution:** always cloud agents, always Max Mode, billed as cloud-agent
+  usage. Identity: Slack posts as the Cursor bot; a *private* automation opens
+  PRs as *your* GitHub account.
+- **Repository scope:** none / single / multi-repo.
+
+The `benny` pack shows the discipline that makes a Slack loop *trustworthy*:
+freeze the source thread coordinates; the coordinator is the **only** Slack
+poster; subagents are read-only and never receive Slack credentials; every
+stage can **fail closed**; **draft PRs only**. (See
+`automations/benny/skills/*/SKILL.md` and `references/control-adapter.md`.)
+
+**normix fit (honest).** normix is a solo library with **no inbound Slack issue
+stream**, so the *Slack-triaged* benny shape does not apply. Your real "control
+room" is the **Cursor Agents Window + chat** (optionally GitHub PR comments).
+The automations that pay off for normix are **schedule- or GitHub-triggered,
+not Slack** — see §14.
+
+### 11.2 Screenshots / videos to verify → Computer use + the browser MCP
+
+poteto's `/control-glass` launched a dev build with the **Chrome DevTools
+Protocol (CDP)** enabled, so the agent could click, screenshot, record video,
+throttle CPU/network, capture CPU profiles and heap snapshots — "agents need to
+see what I see, and use the tools I use." Cursor exposes the same capability two
+ways:
+
+- **In cloud Automations:** the **Computer use** tool (on by default) lets the
+  agent "operate a browser, produce screenshots or recordings." `benny`
+  abstracts this behind a **control-adapter contract**
+  (`bring up → drive real UI → inspect state read-only → screenshot → record →
+  cleanup`), requires the discriminating broken state to appear **twice**, then
+  has *another* agent confirm the media actually shows it.
+- **Locally, in the IDE:** the **`cursor-ide-browser` MCP** (available in this
+  workspace) is normix's accessible `/control-glass`: `browser_navigate`,
+  `browser_take_screenshot`, `browser_click/type`, and `browser_cdp` for
+  `Profiler.*`, `Performance.getMetrics`, and DOM/CSS inspection. The
+  **`browser-use` subagent** wraps it for longer interaction sequences.
+
+**normix analog — what "show me the artifact" means for a numerical library.**
+normix has no UI, so the verifiable artifact is a **plot or a numeric table**,
+not a web-page screenshot:
+
+- **matplotlib PNGs** via the existing `normix.utils.plotting` harness
+  (`plot_pdf_cdf_comparison`, `plot_mle_fit`, `plot_em_convergence`, `savefig`
+  at dpi 200). The agent saves the figure and **embeds it inline in chat** with
+  `![](path)` — you see the convergence curve / PDF overlay directly, exactly
+  like a before/after screenshot.
+- **Benchmark JSON + `compare.py`** before/after delta tables — already a
+  deterministic, rerunnable lever.
+- Reach for the browser MCP only to screenshot the **built Sphinx site** or a
+  rendered notebook, i.e. when the artifact genuinely is a web page.
+
+So poteto's rule — *hand back an inspectable artifact, not a claim* —
+translates for normix to: **an EM-fit reply should carry the convergence plot
+and the `compare.py` delta, not the sentence "it converged."**
+
+## 12. Do loops and multi-agent help normix?
+
+Yes, for a specific shape of work — and the project is already half-built for it.
+
+**Loops (`/loop` + the `autonomous-run` / `hillclimb` playbooks).**
+
+- **High value:** numeric *hillclimbing* — drive a benchmark metric toward a
+  target (GIG/GH solver iterations or wall-time, Bessel accuracy vs speed, EM
+  iterations-to-converge). The discipline is exactly normix's own: *one change,
+  one measurement against the frozen `compare.py` harness, keep or revert; the
+  data decides, never code inspection.* Also good for overnight benchmark sweeps
+  and doc link/build-fixing loops.
+- **Requirement:** a **checkable predicate** ("≥ X% faster *and* ≥ N iterations,
+  with `slow`/`stress` tests still green"). A vague goal makes a loop spin.
+- Pair every loop with `show-me-your-work`: an append-only decision log plus an
+  end-of-run **cross-model audit** (a subagent from a *different* model family
+  reviews the trail and flags weak evidence / skipped checks).
+
+**Multi-agent.**
+
+- **`best-of-n-runner` (git worktrees)** is the normix-native version of
+  poteto's worktree parallelism. Use it for solver/algorithm bake-offs (e.g. the
+  GIG η→θ candidates in §3.3) where each attempt needs an isolated checkout.
+- **`arena` / `architect`** — one-way-door *design* only (Part I verdicts hold).
+- **`interrogate` / `blast-radius`** — adversarial review of Bessel/solver/EM
+  diffs.
+- **Not** for routine work: normix is small enough that `Grep`+`Read` beats
+  spawning explorers, and numerical choices are settled by benchmarks, not by
+  model vote. Every fan-out spawns N subagents (real token cost) — gate by an
+  explicit trigger, don't reach for it reflexively.
+
+## 13. Making *you* (the human reviewer) more efficient
+
+The highest-leverage part of the article for a solo maintainer. Concrete habits:
+
+1. **Demand artifacts, not prose.** Make your standard ask: *"show me the
+   failing test and the passing test; the EM convergence plot; the `compare.py`
+   delta vs the last result."* You inspect the artifact in seconds instead of
+   re-deriving the claim. Bake the recurring asks into a skill so agents produce
+   them unprompted.
+2. **Front-load a predicate, then review the predicate — not the transcript.**
+   State "done = …" as a number or a test before the agent starts. A
+   self-terminating loop hands you pass/fail, not a wall of text.
+3. **Let reversible work run; reserve attention for one-way doors.** normix
+   changes are reversible (PR + tests + release-please), so
+   `never-block-on-the-human` applies — stop interrupting for permission. Spend
+   the saved attention on design forks (use **Plan mode** to discuss, or
+   `architect`/`arena` for genuine one-way doors).
+4. **Read thinking blocks to find failure modes, then codify them.** poteto:
+   that is how he decides *whether a step needs an agent at all*. When you see a
+   mistake twice, route it through `reflect` → `agent-maintenance` into a rule, a
+   constant, or a lint — not a one-off correction.
+5. **"Do it by hand once, then build the lever."** For repetitive work (adding a
+   distribution, a parameter sweep) do the first unit yourself to learn the
+   recipe, then have the agent write the script/checker and review *that*. The
+   lever reruns for free; a hand-done change can only be re-checked by redoing it.
+6. **Stop-the-line, honestly.** Wire normix loops so a stage *refuses* rather
+   than fudges: a benchmark regression beyond tolerance **stops and reports** —
+   it must never "fix" the metric by relaxing the predicate or weakening a test.
+7. **For overnight runs, commit the decision log.** `show-me-your-work` gives a
+   one-row-per-decision TSV you skim instead of replaying the session, plus a
+   cross-model "Attention" section.
+
+Cursor skills already on this machine that support the above: **`/automate`**
+(create an Automation), **`/loop`** (run a prompt on an interval or until a
+condition), **`babysit`** (keep a PR merge-ready).
+
+## 14. Concrete next steps for normix
+
+Prioritized, lowest-effort first:
+
+1. **Adopt three principles by citation** (no new infra): `build-the-lever`,
+   `sequence-verifiable-units`, `prove-it-works`. Cite them in review/PRs;
+   normix already embodies the first via `compare.py`.
+2. **Add a "verification artifact" convention** to a rule or a small
+   `verify-results` skill: *any EM/solver/benchmark change reply embeds the
+   relevant `normix.utils.plotting` figure and/or the `compare.py` delta.* This
+   is the single highest-leverage change for *your* review time.
+3. **One scheduled Automation — the normix-shaped `benny`:** nightly cron runs
+   `benchmarks/run_all.py`, then `compare.py` against the last committed result;
+   if any metric regresses beyond a threshold, it **opens a GitHub issue / PR
+   comment** with the delta table (and a plot). Schedule + GitHub triggered,
+   reported to GitHub, no Slack needed — fail-closed and draft-only, per benny.
+4. **One GitHub-triggered Automation (optional):** on a PR touching
+   `normix/utils/bessel.py`, the GIG/GH solvers, or the EM fitter, run
+   `interrogate` and post the synthesis as a PR comment (the §3.4 trigger).
+5. **`/loop` a hillclimb** next time a solver/Bessel path is too slow or
+   imprecise: frozen `compare.py` harness, a numeric predicate, a decision log.
+6. **Run `setup-pstack` once** if you adopt pstack, so the review panels use
+   distinct model families (the cross-model value depends on it).
+7. **Revisit the §7.4 umbrella-skill question with a loop lens:** the candidate
+   "New numerical method → benchmark-first" playbook is now concretely
+   `hillclimb` + `build-the-lever` + `show-me-your-work`.
+
+---
+
+## 15. References
 
 - pstack source: [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)
 - pstack marketplace page: [cursor.com/marketplace/cursor/pstack](https://cursor.com/marketplace/cursor/pstack)
+- poteto, *Loops You Can Trust* (2026-06-24): [x.com/poteto/article/2069824386283319343](https://x.com/poteto/article/2069824386283319343); local copy `../../docs/pdfs/lauren on X_ _Loops You Can Trust_ _ X.pdf`.
+- Cursor Automations docs: [cursor.com/docs/cloud-agent/automations](https://cursor.com/docs/cloud-agent/automations).
+- `benny` automation pack: [`cursor/plugins/pstack/automations/benny`](https://github.com/cursor/plugins/tree/main/pstack/automations/benny) and its [`FOR_AGENTS.md`](https://github.com/cursor/plugins/blob/main/pstack/automations/benny/FOR_AGENTS.md).
+- New pstack skills referenced in Part II: `blast-radius`, `recall`, `setup-pstack`, `principle-build-the-lever`, `principle-sequence-verifiable-units`, playbook `hillclimb`.
+- normix verification surfaces: `benchmarks/utils.py`, `benchmarks/compare.py`, `normix/utils/plotting.py`.
 - normix philosophy: `../design/design.md` §Philosophy.
 - normix agent-instruction design: `../design/agent_instructions_design.md`.
 - Existing normix skills: `.cursor/skills/`.
