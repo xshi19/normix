@@ -272,6 +272,37 @@ class NormalMixture(MarginalMixture):
         Var_Y = j.subordinator().var()
         return E_Y * j.sigma() + Var_Y * jnp.outer(j.gamma, j.gamma)
 
+    # ------------------------------------------------------------------
+    # Information-theoretic quantities of the joint (X, Y)
+    # ------------------------------------------------------------------
+    # The marginal information measures of X involve
+    # -log ∫ f(x,y) dy and have no closed form. The joint (X, Y) is a
+    # constant-base-measure exponential family, so its entropy, varentropy,
+    # and Rényi entropy are tractable and delegated to self._joint.
+
+    def joint_entropy(self) -> jax.Array:
+        r"""Entropy of the joint :math:`(X, Y)`,
+        :math:`H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}`.
+        """
+        return self._joint.entropy()
+
+    def joint_varentropy(self) -> jax.Array:
+        r"""Varentropy of the joint :math:`(X, Y)`.
+
+        .. math::
+
+            V_H(X, Y) = \tfrac{d}{2}
+            + \mathrm{Var}\!\big[-\log g(Y) + \tfrac{d}{2}\log Y\big].
+
+        The marginal varentropy :math:`\mathrm{Var}[-\log f(X)]` has no closed
+        form; this tractable joint quantity is the natural surrogate.
+        """
+        return self._joint.varentropy()
+
+    def joint_renyi(self, alpha: jax.Array) -> jax.Array:
+        r"""Rényi entropy of order :math:`\alpha` of the joint :math:`(X, Y)`."""
+        return self._joint.renyi(alpha)
+
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         """Sample X from the marginal distribution."""
         X, _ = self._joint.rvs(n, seed)

@@ -38,6 +38,7 @@ Before committing:
 - **Immutable**: all distributions are `eqx.Module` pytrees; M-step returns a new model
 - **Unbatched core**: `log_prob`, `pdf`, `cdf` operate on single observations; batch via `jax.vmap`
 - **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`
+- **Information measures**: exponential families provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)` (autodiff of $R(\alpha)=\log\int p^\alpha$); marginal mixtures expose `joint_entropy/varentropy/renyi` (marginal-of-X versions are intractable)
 
 ## Design Philosophy
 

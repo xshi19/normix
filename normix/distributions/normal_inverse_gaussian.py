@@ -123,6 +123,25 @@ class JointNormalInverseGaussian(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
                    mu_ig=subordinator.mu, lam=subordinator.lam)
 
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log density-power integral via the exact :class:`JointGeneralizedHyperbolic` embedding.
+
+        Unlike the VG / NInvG joints (whose shape :math:`p` is a free
+        coordinate read back from :math:`\theta_1`), this class fixes
+        :math:`p=-1/2` and drops :math:`\theta_1` from
+        :meth:`_log_partition_from_theta` (using :math:`K_{-1/2}`). The
+        density-power scaling :math:`\theta\mapsto\alpha\theta` moves
+        :math:`\theta_1` (i.e. the GIG order) off :math:`-1/2`, so the
+        constant-base-measure formula in
+        :class:`~normix.exponential_family.ExponentialFamily` must be
+        evaluated on the GH embedding, where :math:`p` is carried faithfully
+        through ``log_kv``. This drives
+        :meth:`~normix.exponential_family.ExponentialFamily.entropy`,
+        :meth:`~normix.exponential_family.ExponentialFamily.varentropy`, and
+        :meth:`~normix.exponential_family.ExponentialFamily.renyi`.
+        """
+        return self.to_joint_generalized_hyperbolic().log_density_power(alpha)
+
     def to_joint_generalized_hyperbolic(self):
         r"""Exact embedding into :class:`JointGeneralizedHyperbolic`.
 

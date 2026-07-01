@@ -160,6 +160,91 @@ class ExponentialFamily(eqx.Module):
         """p(x|θ), single observation. Batch via jax.vmap."""
         return jnp.exp(self.log_prob(x))
 
+    # ------------------------------------------------------------------
+    # Information-theoretic quantities (entropy, varentropy, Rényi)
+    # ------------------------------------------------------------------
+
+    def _log_base_measure_constant(self) -> jax.Array:
+        r"""Constant value of :math:`\log h(x)` on the support.
+
+        :meth:`log_density_power`, :meth:`entropy`, :meth:`varentropy`, and
+        :meth:`renyi` assume the base measure :math:`h(x)` is **constant on
+        the support** — true for :class:`~normix.distributions.gamma.Gamma`,
+        :class:`~normix.distributions.inverse_gamma.InverseGamma`,
+        :class:`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian`,
+        :class:`~normix.distributions.normal.MultivariateNormal` (all
+        :math:`0`), and every
+        :class:`~normix.mixtures.joint.JointNormalMixture`
+        (:math:`-\tfrac{d}{2}\log 2\pi`). Distributions whose
+        :math:`\log h(x)` varies with :math:`x` (e.g.
+        :class:`~normix.distributions.inverse_gaussian.InverseGaussian`)
+        override the information-theoretic methods instead. Returns
+        :math:`0` by default.
+        """
+        return jnp.asarray(0.0, dtype=jnp.float64)
+
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log density-power integral :math:`R(\alpha) = \log\int p(x)^\alpha\,\mu(dx)`.
+
+        For an exponential family whose base measure is constant on the support,
+
+        .. math::
+
+            R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta),
+            \qquad b_0 = \log h,
+
+        because :math:`p_\theta(x)^\alpha \propto \exp\{\alpha\theta^\top t(x)\}`
+        stays in the family with natural parameter :math:`\alpha\theta`. This is
+        the cumulant generator of the information content
+        :math:`-\log p(X)`: entropy is :math:`H = -R'(1)`, varentropy is
+        :math:`V_H = R''(1)`, and the Rényi entropy of order :math:`\alpha` is
+        :math:`R(\alpha)/(1-\alpha)`.
+        """
+        cls = type(self)
+        alpha = jnp.asarray(alpha, dtype=jnp.float64)
+        theta = self.natural_params()
+        b0 = self._log_base_measure_constant()
+        return ((alpha - 1.0) * b0
+                + cls._log_partition_from_theta(alpha * theta)
+                - alpha * cls._log_partition_from_theta(theta))
+
+    def entropy(self) -> jax.Array:
+        r"""Differential entropy :math:`H = \mathbb{E}[-\log p(X)] = -R'(1)`.
+
+        Obtained by differentiating :meth:`log_density_power`; for constant
+        base measure this equals :math:`\psi(\theta) - \theta^\top\eta - b_0`.
+        """
+        one = jnp.asarray(1.0, dtype=jnp.float64)
+        return -jax.grad(self.log_density_power)(one)
+
+    def varentropy(self) -> jax.Array:
+        r"""Varentropy :math:`V_H = \mathrm{Var}[-\log p(X)] = R''(1)`.
+
+        Obtained by differentiating :meth:`log_density_power` twice. For
+        constant base measure this is the Fisher quadratic form
+        :math:`\theta^\top I(\theta)\,\theta`. The autodiff route is used
+        deliberately: it flows through the accurate ``log_kv`` custom JVP,
+        whereas the analytical GIG Hessian carries a coarser
+        mixed-derivative approximation tuned for the Newton solver.
+        """
+        one = jnp.asarray(1.0, dtype=jnp.float64)
+        return jax.grad(jax.grad(self.log_density_power))(one)
+
+    def renyi(self, alpha: jax.Array) -> jax.Array:
+        r"""Rényi entropy :math:`H_\alpha = (1-\alpha)^{-1}\log\int p(x)^\alpha\,\mu(dx)`.
+
+        Defined for order :math:`\alpha > 0`. At :math:`\alpha = 1` the value
+        is the removable-singularity limit, the Shannon :meth:`entropy`; the
+        first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
+        + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.
+        """
+        alpha = jnp.asarray(alpha, dtype=jnp.float64)
+        one_minus = 1.0 - alpha
+        safe = jnp.where(one_minus == 0.0, 1.0, one_minus)
+        return jnp.where(one_minus == 0.0,
+                         self.entropy(),
+                         self.log_density_power(alpha) / safe)
+
     def mean(self) -> jax.Array:
         """E[X]. Subclasses should override with analytical formulas."""
         raise NotImplementedError(f"{type(self).__name__}.mean not implemented")

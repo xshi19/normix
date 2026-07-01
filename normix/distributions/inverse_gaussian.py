@@ -123,6 +123,24 @@ class InverseGaussian(ExponentialFamily):
     # Moments and sampling
     # ------------------------------------------------------------------
 
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log density-power integral via the exact GIG embedding.
+
+        InverseGaussian has a *non-constant* base measure,
+        :math:`\log h(x) = -\tfrac{1}{2}\log(2\pi) - \tfrac{3}{2}\log x`, so
+        the constant-base-measure formula in
+        :class:`~normix.exponential_family.ExponentialFamily` does not apply.
+        The distribution is exactly
+        :math:`\mathrm{GIG}(p=-\tfrac12,\, a=\lambda/\mu^2,\, b=\lambda)`,
+        where :math:`\log h \equiv 0` and the :math:`\log x` term is promoted
+        to a sufficient statistic — so the density-power integral (and hence
+        :meth:`~normix.exponential_family.ExponentialFamily.entropy`,
+        :meth:`~normix.exponential_family.ExponentialFamily.varentropy`, and
+        :meth:`~normix.exponential_family.ExponentialFamily.renyi`, which all
+        route through this method) are evaluated on the GIG embedding.
+        """
+        return self.to_gig().log_density_power(alpha)
+
     def mean(self) -> jax.Array:
         return self.mu
 
