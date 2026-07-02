@@ -329,14 +329,24 @@ pre {
   font-family: var(--normix-mono) !important;
 }
 
+/* Docutils renders inline code roles as <code class="literal"><span class="pre">
+   which nests two elements for one token. Box only the outer <code>; the inner
+   <span class="pre"> must stay unstyled or the box appears doubled/nested. */
 .bd-content :not(pre) > code,
-.bd-content code.literal,
-.bd-content span.pre {
+.bd-content code.literal {
   padding: 0.08em 0.28em;
   color: var(--normix-ink);
   background: var(--normix-code-surface);
   border: 1px solid var(--normix-rule);
   border-radius: 4px;
+}
+
+.bd-content code.literal > span.pre,
+.bd-content :not(pre) > code > span.pre {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 /* Static code blocks: box on the Pygments .highlight container. Inner <pre> stays
