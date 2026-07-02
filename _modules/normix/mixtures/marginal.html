@@ -179,6 +179,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/01_divergences.html">Divergences between models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
@@ -192,6 +193,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
@@ -680,6 +682,46 @@
         <span class="n">E_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
         <span class="n">Var_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">var</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Information-theoretic quantities of the joint (X, Y)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># The marginal information measures of X involve</span>
+    <span class="c1"># -log ∫ f(x,y) dy and have no closed form. The joint (X, Y) is a</span>
+    <span class="c1"># constant-base-measure exponential family, so its entropy, varentropy,</span>
+    <span class="c1"># and Rényi entropy are tractable and delegated to self._joint.</span>
+
+<div class="viewcode-block" id="NormalMixture.joint_entropy">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Entropy of the joint :math:`(X, Y)`,</span>
+<span class="sd">        :math:`H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.joint_varentropy">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_varentropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint_varentropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Varentropy of the joint :math:`(X, Y)`.</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            V_H(X, Y) = \tfrac{d}{2}</span>
+<span class="sd">            + \mathrm{Var}\!\big[-\log g(Y) + \tfrac{d}{2}\log Y\big].</span>
+
+<span class="sd">        The marginal varentropy :math:`\mathrm{Var}[-\log f(X)]` has no closed</span>
+<span class="sd">        form; this tractable joint quantity is the natural surrogate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.joint_renyi">
+<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_renyi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint_renyi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rényi entropy of order :math:`\alpha` of the joint :math:`(X, Y)`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.rvs">

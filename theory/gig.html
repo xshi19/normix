@@ -182,6 +182,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
@@ -195,6 +196,7 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
@@ -410,6 +412,8 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moment-generating-function">Moment Generating Function</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments">Moments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-behavior">Tail Behavior</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#skewness-and-kurtosis">Skewness and Kurtosis</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>
@@ -476,6 +480,62 @@ density function can be written as:</p>
 = \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.\]</div>
 <p>This formula is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">moment_alpha()</span></code> method.</p>
 </section>
+<section id="tail-behavior">
+<h2>Tail Behavior<a class="headerlink" href="#tail-behavior" title="Link to this heading">#</a></h2>
+<p>The GIG density combines the power-law factor <span class="math notranslate nohighlight">\(x^{p-1}\)</span> with a two-sided
+exponential factor. For <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span> the tail asymptotics are</p>
+<div class="math notranslate nohighlight" id="equation-gig-tails">
+<span class="eqno">(4)<a class="headerlink" href="#equation-gig-tails" title="Link to this equation">#</a></span>\[\begin{split}f(x) &amp;\sim C\, x^{p-1}\, e^{-a x / 2}, \qquad x \to \infty, \\
+f(x) &amp;\sim C\, x^{p-1}\, e^{-b / (2x)}, \qquad x \to 0^+,\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C\)</span> collects the normalising constants. The right tail decays
+<strong>exponentially</strong> (a <em>semi-heavy</em> tail), while the left tail is suppressed
+<em>super-exponentially</em> by the factor <span class="math notranslate nohighlight">\(e^{-b/(2x)}\)</span>. Consequently, whenever
+<span class="math notranslate nohighlight">\(a, b &gt; 0\)</span>, <strong>every moment is finite</strong>,</p>
+<div class="math notranslate nohighlight">
+\[E[X^\alpha] &lt; \infty \quad \text{for all } \alpha \in \mathbb{R},\]</div>
+<p>in agreement with the closed form <a class="reference internal" href="#equation-gig-moments">(3)</a>, which is well defined for
+every real order <span class="math notranslate nohighlight">\(\alpha\)</span>.</p>
+<p>The order <span class="math notranslate nohighlight">\(p\)</span> controls only the polynomial prefactor; the exponential
+factors dominate both tails. Genuine power-law (Pareto-type) heaviness therefore
+appears only at the boundary of the parameter space, where one of the two
+exponential factors degenerates:</p>
+<ul class="simple">
+<li><p><strong>Inverse-gamma limit</strong> (<span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(p &lt; 0\)</span>): the right cutoff
+<span class="math notranslate nohighlight">\(e^{-a x / 2}\)</span> vanishes and <span class="math notranslate nohighlight">\(f(x) \sim C\, x^{p-1}\)</span>, a power law
+with tail index <span class="math notranslate nohighlight">\(-p\)</span>. Positive moments then satisfy
+<span class="math notranslate nohighlight">\(E[X^\alpha] &lt; \infty\)</span> if and only if <span class="math notranslate nohighlight">\(\alpha &lt; -p\)</span>.</p></li>
+<li><p><strong>Gamma limit</strong> (<span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(p &gt; 0\)</span>): the origin factor
+<span class="math notranslate nohighlight">\(e^{-b / (2x)}\)</span> vanishes, <span class="math notranslate nohighlight">\(f(x) \sim C\, x^{p-1}\)</span> as
+<span class="math notranslate nohighlight">\(x \to 0^+\)</span>, and the right tail stays exponential. All positive moments
+remain finite, while inverse moments <span class="math notranslate nohighlight">\(E[X^{-\alpha}]\)</span> are finite if and
+only if <span class="math notranslate nohighlight">\(\alpha &lt; p\)</span>.</p></li>
+</ul>
+</section>
+<section id="skewness-and-kurtosis">
+<h2>Skewness and Kurtosis<a class="headerlink" href="#skewness-and-kurtosis" title="Link to this heading">#</a></h2>
+<p>Because <a class="reference internal" href="#equation-gig-moments">(3)</a> supplies every raw moment <span class="math notranslate nohighlight">\(m_k = E[X^k]\)</span> in
+closed form, the standardised moments follow directly. With <span class="math notranslate nohighlight">\(\mu = m_1\)</span>
+and <span class="math notranslate nohighlight">\(\sigma^2 = m_2 - m_1^2\)</span>, the third and fourth central moments are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mu_3 &amp;= m_3 - 3 m_1 m_2 + 2 m_1^3, \\
+\mu_4 &amp;= m_4 - 4 m_1 m_3 + 6 m_1^2 m_2 - 3 m_1^4,\end{split}\]</div>
+<p>and the skewness and excess kurtosis are</p>
+<div class="math notranslate nohighlight" id="equation-gig-kurtosis">
+<span class="eqno">(5)<a class="headerlink" href="#equation-gig-kurtosis" title="Link to this equation">#</a></span>\[\gamma_1 = \frac{\mu_3}{\sigma^3}, \qquad
+\gamma_2 = \frac{\mu_4}{\sigma^4} - 3 .\]</div>
+<p>For <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> both are finite (all four moments exist), and the GIG is
+right-skewed and leptokurtic over the usual parameter range.</p>
+<p>The kurtosis, however, requires a finite fourth moment, so it becomes unbounded
+precisely in the heavy-tailed inverse-gamma limit. As <span class="math notranslate nohighlight">\(a \to 0\)</span> one has
+<span class="math notranslate nohighlight">\(X \to \text{InvGamma}(\alpha, b/2)\)</span> with <span class="math notranslate nohighlight">\(\alpha = -p\)</span>, and</p>
+<div class="math notranslate nohighlight">
+\[\gamma_2 = \frac{6(5\alpha - 11)}{(\alpha - 3)(\alpha - 4)}, \qquad \alpha &gt; 4,\]</div>
+<p>which diverges as <span class="math notranslate nohighlight">\(\alpha \to 4^+\)</span> and is undefined for
+<span class="math notranslate nohighlight">\(\alpha \le 4\)</span>. The kurtosis therefore fails exactly where the right tail
+is heaviest, which motivates tail diagnostics that remain finite without a
+fourth moment (for example the <em>varentropy</em> <span class="math notranslate nohighlight">\(\operatorname{Var}[-\log f(X)]\)</span>,
+which stays finite throughout this limit).</p>
+</section>
 <section id="exponential-family-form">
 <h2>Exponential Family Form<a class="headerlink" href="#exponential-family-form" title="Link to this heading">#</a></h2>
 <p>The GIG distribution belongs to the exponential family with density:</p>
@@ -488,7 +548,7 @@ density function can be written as:</p>
 <p>The natural parameters <span class="math notranslate nohighlight">\(\theta = (\theta_1, \theta_2, \theta_3)\)</span> are derived from
 the classical parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span>:</p>
 <div class="math notranslate nohighlight" id="equation-gig-natural-params">
-<span class="eqno">(4)<a class="headerlink" href="#equation-gig-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1 \quad \text{(unbounded)} \\
+<span class="eqno">(6)<a class="headerlink" href="#equation-gig-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1 \quad \text{(unbounded)} \\
 \theta_2 &amp;= -\frac{b}{2} &lt; 0 \\
 \theta_3 &amp;= -\frac{a}{2} &lt; 0\end{split}\]</div>
 <p>The inverse transformation is:</p>
@@ -499,12 +559,12 @@ the classical parameters <span class="math notranslate nohighlight">\((p, a, b)\
 \[h(x) = \mathbf{1}_{x &gt; 0}\]</div>
 <p><strong>Log Partition Function:</strong></p>
 <div class="math notranslate nohighlight" id="equation-gig-log-partition">
-<span class="eqno">(5)<a class="headerlink" href="#equation-gig-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right)\]</div>
+<span class="eqno">(7)<a class="headerlink" href="#equation-gig-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right)\]</div>
 <p>where <span class="math notranslate nohighlight">\(p = \theta_1 + 1\)</span>, <span class="math notranslate nohighlight">\(a = -2\theta_3\)</span>, and <span class="math notranslate nohighlight">\(b = -2\theta_2\)</span>.</p>
 <p><strong>Expectation Parameters:</strong></p>
 <p>The expectation parameters <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X)]\)</span> are:</p>
 <div class="math notranslate nohighlight" id="equation-gig-expectation-params">
-<span class="eqno">(6)<a class="headerlink" href="#equation-gig-expectation-params" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;= E[\log X] = \frac{\partial \psi}{\partial \theta_1} \\
+<span class="eqno">(8)<a class="headerlink" href="#equation-gig-expectation-params" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;= E[\log X] = \frac{\partial \psi}{\partial \theta_1} \\
 \eta_2 &amp;= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
 \eta_3 &amp;= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}\end{split}\]</div>
 <p>Unfortunately we do not have an analytical formula for <span class="math notranslate nohighlight">\(\eta_1 = E[\log X]\)</span>.
@@ -517,10 +577,10 @@ natural parameters <span class="math notranslate nohighlight">\((p, a, b)\)</spa
 problem. Let <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_n\)</span> be a sequence of sample data, then the
 maximum likelihood estimator (MLE) of GIG is given by:</p>
 <div class="math notranslate nohighlight" id="equation-gig-mle">
-<span class="eqno">(7)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation">#</a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
+<span class="eqno">(9)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation">#</a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
 <p>where <span class="math notranslate nohighlight">\(L_{GIG}\)</span> is the log-likelihood function (excluding constants):</p>
 <div class="math notranslate nohighlight" id="equation-gig-loglik">
-<span class="eqno">(8)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \eta_1, \eta_2, \eta_3) =
+<span class="eqno">(10)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \eta_1, \eta_2, \eta_3) =
 -\frac{1}{2} b \hat{\eta}_1 - \frac{1}{2} a \hat{\eta}_2 + p \hat{\eta}_3
 + \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),\]</div>
 <p>and the sufficient statistics are:</p>
@@ -530,7 +590,7 @@ maximum likelihood estimator (MLE) of GIG is given by:</p>
 <li><p><span class="math notranslate nohighlight">\(\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n \log(x_k)\)</span></p></li>
 </ul>
 <p>One can verify that the optimal solution <span class="math notranslate nohighlight">\((\hat{p}, \hat{a}, \hat{b})\)</span> must
-satisfy <a class="reference internal" href="#equation-gig-expectation-params">(6)</a> where <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> are
+satisfy <a class="reference internal" href="#equation-gig-expectation-params">(8)</a> where <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> are
 replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3)\)</span>.</p>
 </section>
 <section id="numerical-challenges">
@@ -540,7 +600,7 @@ replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\et
 <span class="math notranslate nohighlight">\(p\)</span> when maximizing the log-likelihood function.</p>
 <p>Even when <span class="math notranslate nohighlight">\(p\)</span> is fixed, <a class="reference internal" href="gh.html#hu2005" id="id2"><span>[Hu2005]</span></a> reports that when <span class="math notranslate nohighlight">\(|p|\)</span> is large
 (say, above 10), there might be no solution for the first two equations in
-<a class="reference internal" href="#equation-gig-expectation-params">(6)</a>.</p>
+<a class="reference internal" href="#equation-gig-expectation-params">(8)</a>.</p>
 </section>
 <section id="hellinger-distance">
 <h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading">#</a></h2>
@@ -634,6 +694,8 @@ two distributions is given by:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moment-generating-function">Moment Generating Function</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments">Moments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-behavior">Tail Behavior</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#skewness-and-kurtosis">Skewness and Kurtosis</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>

@@ -70,6 +70,82 @@ The moments of the GIG distribution have a particularly elegant form:
 
 This formula is implemented in the :meth:`~normix.distributions.univariate.GeneralizedInverseGaussian.moment_alpha` method.
 
+Tail Behavior
+-------------
+
+The GIG density combines the power-law factor :math:`x^{p-1}` with a two-sided
+exponential factor. For :math:`a > 0` and :math:`b > 0` the tail asymptotics are
+
+.. math::
+   :label: gig-tails
+
+   f(x) &\sim C\, x^{p-1}\, e^{-a x / 2}, \qquad x \to \infty, \\
+   f(x) &\sim C\, x^{p-1}\, e^{-b / (2x)}, \qquad x \to 0^+,
+
+where :math:`C` collects the normalising constants. The right tail decays
+**exponentially** (a *semi-heavy* tail), while the left tail is suppressed
+*super-exponentially* by the factor :math:`e^{-b/(2x)}`. Consequently, whenever
+:math:`a, b > 0`, **every moment is finite**,
+
+.. math::
+
+   E[X^\alpha] < \infty \quad \text{for all } \alpha \in \mathbb{R},
+
+in agreement with the closed form :eq:`gig-moments`, which is well defined for
+every real order :math:`\alpha`.
+
+The order :math:`p` controls only the polynomial prefactor; the exponential
+factors dominate both tails. Genuine power-law (Pareto-type) heaviness therefore
+appears only at the boundary of the parameter space, where one of the two
+exponential factors degenerates:
+
+- **Inverse-gamma limit** (:math:`a \to 0`, :math:`p < 0`): the right cutoff
+  :math:`e^{-a x / 2}` vanishes and :math:`f(x) \sim C\, x^{p-1}`, a power law
+  with tail index :math:`-p`. Positive moments then satisfy
+  :math:`E[X^\alpha] < \infty` if and only if :math:`\alpha < -p`.
+- **Gamma limit** (:math:`b \to 0`, :math:`p > 0`): the origin factor
+  :math:`e^{-b / (2x)}` vanishes, :math:`f(x) \sim C\, x^{p-1}` as
+  :math:`x \to 0^+`, and the right tail stays exponential. All positive moments
+  remain finite, while inverse moments :math:`E[X^{-\alpha}]` are finite if and
+  only if :math:`\alpha < p`.
+
+Skewness and Kurtosis
+---------------------
+
+Because :eq:`gig-moments` supplies every raw moment :math:`m_k = E[X^k]` in
+closed form, the standardised moments follow directly. With :math:`\mu = m_1`
+and :math:`\sigma^2 = m_2 - m_1^2`, the third and fourth central moments are
+
+.. math::
+
+   \mu_3 &= m_3 - 3 m_1 m_2 + 2 m_1^3, \\
+   \mu_4 &= m_4 - 4 m_1 m_3 + 6 m_1^2 m_2 - 3 m_1^4,
+
+and the skewness and excess kurtosis are
+
+.. math::
+   :label: gig-kurtosis
+
+   \gamma_1 = \frac{\mu_3}{\sigma^3}, \qquad
+   \gamma_2 = \frac{\mu_4}{\sigma^4} - 3 .
+
+For :math:`a, b > 0` both are finite (all four moments exist), and the GIG is
+right-skewed and leptokurtic over the usual parameter range.
+
+The kurtosis, however, requires a finite fourth moment, so it becomes unbounded
+precisely in the heavy-tailed inverse-gamma limit. As :math:`a \to 0` one has
+:math:`X \to \text{InvGamma}(\alpha, b/2)` with :math:`\alpha = -p`, and
+
+.. math::
+
+   \gamma_2 = \frac{6(5\alpha - 11)}{(\alpha - 3)(\alpha - 4)}, \qquad \alpha > 4,
+
+which diverges as :math:`\alpha \to 4^+` and is undefined for
+:math:`\alpha \le 4`. The kurtosis therefore fails exactly where the right tail
+is heaviest, which motivates tail diagnostics that remain finite without a
+fourth moment (for example the *varentropy* :math:`\operatorname{Var}[-\log f(X)]`,
+which stays finite throughout this limit).
+
 Exponential Family Form
 -----------------------
 

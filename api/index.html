@@ -181,6 +181,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
@@ -194,6 +195,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
@@ -415,6 +417,10 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.fisher_information"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.fisher_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.log_prob"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.log_prob()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.pdf"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.pdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.log_density_power"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.log_density_power()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.entropy"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.entropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.varentropy"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.varentropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.renyi"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.renyi()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.mean"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.var"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.var()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.std"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.std()</span></code></a></li>
@@ -480,6 +486,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_base_measure()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
@@ -589,6 +596,9 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">NormalMixture.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">NormalMixture.squared_hellinger()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kl_divergence"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kl_divergence()</span></code></a></li>
@@ -685,6 +695,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_classical"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.from_natural()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.to_joint_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>
@@ -950,6 +961,78 @@ sufficient_statistics, log_base_measure</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log density-power integral <span class="math notranslate nohighlight">\(R(\alpha) = \log\int p(x)^\alpha\,\mu(dx)\)</span>.</p>
+<p>For an exponential family whose base measure is constant on the support,</p>
+<div class="math notranslate nohighlight">
+\[R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta),
+\qquad b_0 = \log h,\]</div>
+<p>because <span class="math notranslate nohighlight">\(p_\theta(x)^\alpha \propto \exp\{\alpha\theta^\top t(x)\}\)</span>
+stays in the family with natural parameter <span class="math notranslate nohighlight">\(\alpha\theta\)</span>. This is
+the cumulant generator of the information content
+<span class="math notranslate nohighlight">\(-\log p(X)\)</span>: entropy is <span class="math notranslate nohighlight">\(H = -R'(1)\)</span>, varentropy is
+<span class="math notranslate nohighlight">\(V_H = R''(1)\)</span>, and the Rényi entropy of order <span class="math notranslate nohighlight">\(\alpha\)</span> is
+<span class="math notranslate nohighlight">\(R(\alpha)/(1-\alpha)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.entropy">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.entropy" title="Link to this definition">#</a></dt>
+<dd><p>Differential entropy <span class="math notranslate nohighlight">\(H = \mathbb{E}[-\log p(X)] = -R'(1)\)</span>.</p>
+<p>Obtained by differentiating <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.log_density_power" title="normix.exponential_family.ExponentialFamily.log_density_power"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_density_power()</span></code></a>; for constant
+base measure this equals <span class="math notranslate nohighlight">\(\psi(\theta) - \theta^\top\eta - b_0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.varentropy">
+<span class="sig-name descname"><span class="pre">varentropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.varentropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.varentropy" title="Link to this definition">#</a></dt>
+<dd><p>Varentropy <span class="math notranslate nohighlight">\(V_H = \mathrm{Var}[-\log p(X)] = R''(1)\)</span>.</p>
+<p>Obtained by differentiating <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.log_density_power" title="normix.exponential_family.ExponentialFamily.log_density_power"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_density_power()</span></code></a> twice. For
+constant base measure this is the Fisher quadratic form
+<span class="math notranslate nohighlight">\(\theta^\top I(\theta)\,\theta\)</span>. The autodiff route is used
+deliberately: it flows through the accurate <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> custom JVP,
+whereas the analytical GIG Hessian carries a coarser
+mixed-derivative approximation tuned for the Newton solver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.renyi">
+<span class="sig-name descname"><span class="pre">renyi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.renyi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.renyi" title="Link to this definition">#</a></dt>
+<dd><p>Rényi entropy <span class="math notranslate nohighlight">\(H_\alpha = (1-\alpha)^{-1}\log\int p(x)^\alpha\,\mu(dx)\)</span>.</p>
+<p>Defined for order <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>. At <span class="math notranslate nohighlight">\(\alpha = 1\)</span> the value
+is the removable-singularity limit, the Shannon <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>; the
+first-order expansion <span class="math notranslate nohighlight">\(H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
++ \mathcal{O}((\alpha-1)^2)\)</span> links it to the varentropy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1686,6 +1769,32 @@ x^{-3/2} \exp\!\left(-\frac{\lambda(x-\mu)^2}{2\mu^2 x}\right),
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log density-power integral via the exact GIG embedding.</p>
+<p>InverseGaussian has a <em>non-constant</em> base measure,
+<span class="math notranslate nohighlight">\(\log h(x) = -\tfrac{1}{2}\log(2\pi) - \tfrac{3}{2}\log x\)</span>, so
+the constant-base-measure formula in
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a> does not apply.
+The distribution is exactly
+<span class="math notranslate nohighlight">\(\mathrm{GIG}(p=-\tfrac12,\, a=\lambda/\mu^2,\, b=\lambda)\)</span>,
+where <span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and the <span class="math notranslate nohighlight">\(\log x\)</span> term is promoted
+to a sufficient statistic — so the density-power integral (and hence
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>,
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.varentropy" title="normix.exponential_family.ExponentialFamily.varentropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">varentropy()</span></code></a>, and
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a>, which all
+route through this method) are evaluated on the GIG embedding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -2926,6 +3035,48 @@ a new model with updated parameters (modules are immutable).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_entropy">
+<span class="sig-name descname"><span class="pre">joint_entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_entropy" title="Link to this definition">#</a></dt>
+<dd><p>Entropy of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>,
+<span class="math notranslate nohighlight">\(H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_varentropy">
+<span class="sig-name descname"><span class="pre">joint_varentropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_varentropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy" title="Link to this definition">#</a></dt>
+<dd><p>Varentropy of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[V_H(X, Y) = \tfrac{d}{2}
++ \mathrm{Var}\!\big[-\log g(Y) + \tfrac{d}{2}\log Y\big].\]</div>
+<p>The marginal varentropy <span class="math notranslate nohighlight">\(\mathrm{Var}[-\log f(X)]\)</span> has no closed
+form; this tractable joint quantity is the natural surrogate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_renyi">
+<span class="sig-name descname"><span class="pre">joint_renyi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_renyi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_renyi" title="Link to this definition">#</a></dt>
+<dd><p>Rényi entropy of order <span class="math notranslate nohighlight">\(\alpha\)</span> of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.rvs" title="Link to this definition">#</a></dt>
 <dd><p>Sample X from the marginal distribution.</p>
@@ -3766,6 +3917,33 @@ so <span class="math notranslate nohighlight">\(\mu_{IG} = \sqrt{b/a}\)</span>.<
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian"><em>JointNormalInverseGaussian</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gaussian.html#JointNormalInverseGaussian.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log density-power integral via the exact <code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code> embedding.</p>
+<p>Unlike the VG / NInvG joints (whose shape <span class="math notranslate nohighlight">\(p\)</span> is a free
+coordinate read back from <span class="math notranslate nohighlight">\(\theta_1\)</span>), this class fixes
+<span class="math notranslate nohighlight">\(p=-1/2\)</span> and drops <span class="math notranslate nohighlight">\(\theta_1\)</span> from
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_partition_from_theta()</span></code> (using <span class="math notranslate nohighlight">\(K_{-1/2}\)</span>). The
+density-power scaling <span class="math notranslate nohighlight">\(\theta\mapsto\alpha\theta\)</span> moves
+<span class="math notranslate nohighlight">\(\theta_1\)</span> (i.e. the GIG order) off <span class="math notranslate nohighlight">\(-1/2\)</span>, so the
+constant-base-measure formula in
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a> must be
+evaluated on the GH embedding, where <span class="math notranslate nohighlight">\(p\)</span> is carried faithfully
+through <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>. This drives
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>,
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.varentropy" title="normix.exponential_family.ExponentialFamily.varentropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">varentropy()</span></code></a>, and
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -4941,6 +5119,10 @@ Not JIT-able. Fast for EM hot path.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.fisher_information"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.fisher_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.log_prob"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.log_prob()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.pdf"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.pdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.log_density_power"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.log_density_power()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.entropy"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.entropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.varentropy"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.varentropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.renyi"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.renyi()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.mean"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.var"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.var()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.exponential_family.ExponentialFamily.std"><code class="docutils literal notranslate"><span class="pre">ExponentialFamily.std()</span></code></a></li>
@@ -5006,6 +5188,7 @@ Not JIT-able. Fast for EM hot path.</p></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_base_measure()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
@@ -5115,6 +5298,9 @@ Not JIT-able. Fast for EM hot path.</p></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">NormalMixture.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">NormalMixture.squared_hellinger()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kl_divergence"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kl_divergence()</span></code></a></li>
@@ -5211,6 +5397,7 @@ Not JIT-able. Fast for EM hot path.</p></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.natural_params()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_classical"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.from_natural()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian.to_joint_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>

@@ -179,6 +179,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/stats/01_divergences.html">Divergences between models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
@@ -192,6 +193,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
@@ -544,6 +546,103 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;p(x|θ), single observation. Batch via jax.vmap.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Information-theoretic quantities (entropy, varentropy, Rényi)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_base_measure_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Constant value of :math:`\log h(x)` on the support.</span>
+
+<span class="sd">        :meth:`log_density_power`, :meth:`entropy`, :meth:`varentropy`, and</span>
+<span class="sd">        :meth:`renyi` assume the base measure :math:`h(x)` is **constant on</span>
+<span class="sd">        the support** — true for :class:`~normix.distributions.gamma.Gamma`,</span>
+<span class="sd">        :class:`~normix.distributions.inverse_gamma.InverseGamma`,</span>
+<span class="sd">        :class:`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian`,</span>
+<span class="sd">        :class:`~normix.distributions.normal.MultivariateNormal` (all</span>
+<span class="sd">        :math:`0`), and every</span>
+<span class="sd">        :class:`~normix.mixtures.joint.JointNormalMixture`</span>
+<span class="sd">        (:math:`-\tfrac{d}{2}\log 2\pi`). Distributions whose</span>
+<span class="sd">        :math:`\log h(x)` varies with :math:`x` (e.g.</span>
+<span class="sd">        :class:`~normix.distributions.inverse_gaussian.InverseGaussian`)</span>
+<span class="sd">        override the information-theoretic methods instead. Returns</span>
+<span class="sd">        :math:`0` by default.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExponentialFamily.log_density_power">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.log_density_power">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_density_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log density-power integral :math:`R(\alpha) = \log\int p(x)^\alpha\,\mu(dx)`.</span>
+
+<span class="sd">        For an exponential family whose base measure is constant on the support,</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta),</span>
+<span class="sd">            \qquad b_0 = \log h,</span>
+
+<span class="sd">        because :math:`p_\theta(x)^\alpha \propto \exp\{\alpha\theta^\top t(x)\}`</span>
+<span class="sd">        stays in the family with natural parameter :math:`\alpha\theta`. This is</span>
+<span class="sd">        the cumulant generator of the information content</span>
+<span class="sd">        :math:`-\log p(X)`: entropy is :math:`H = -R&#39;(1)`, varentropy is</span>
+<span class="sd">        :math:`V_H = R&#39;&#39;(1)`, and the Rényi entropy of order :math:`\alpha` is</span>
+<span class="sd">        :math:`R(\alpha)/(1-\alpha)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_base_measure_constant</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b0</span>
+                <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+                <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.entropy">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Differential entropy :math:`H = \mathbb{E}[-\log p(X)] = -R&#39;(1)`.</span>
+
+<span class="sd">        Obtained by differentiating :meth:`log_density_power`; for constant</span>
+<span class="sd">        base measure this equals :math:`\psi(\theta) - \theta^\top\eta - b_0`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">)(</span><span class="n">one</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.varentropy">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.varentropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">varentropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Varentropy :math:`V_H = \mathrm{Var}[-\log p(X)] = R&#39;&#39;(1)`.</span>
+
+<span class="sd">        Obtained by differentiating :meth:`log_density_power` twice. For</span>
+<span class="sd">        constant base measure this is the Fisher quadratic form</span>
+<span class="sd">        :math:`\theta^\top I(\theta)\,\theta`. The autodiff route is used</span>
+<span class="sd">        deliberately: it flows through the accurate ``log_kv`` custom JVP,</span>
+<span class="sd">        whereas the analytical GIG Hessian carries a coarser</span>
+<span class="sd">        mixed-derivative approximation tuned for the Newton solver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">))(</span><span class="n">one</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExponentialFamily.renyi">
+<a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.renyi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">renyi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rényi entropy :math:`H_\alpha = (1-\alpha)^{-1}\log\int p(x)^\alpha\,\mu(dx)`.</span>
+
+<span class="sd">        Defined for order :math:`\alpha &gt; 0`. At :math:`\alpha = 1` the value</span>
+<span class="sd">        is the removable-singularity limit, the Shannon :meth:`entropy`; the</span>
+<span class="sd">        first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)</span>
+<span class="sd">        + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">one_minus</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span>
+        <span class="n">safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">one_minus</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">one_minus</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">one_minus</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">entropy</span><span class="p">(),</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.mean">

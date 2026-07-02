@@ -1,0 +1,720 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Entropy, Varentropy, and Rényi Entropy &#8212; normix 0.2.2 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=73b3edcc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'theory/varentropy';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EM Algorithm for Generalized Hyperbolic Distributions" href="em_algorithm.html" />
+    <link rel="prev" title="The Generalized Hyperbolic Distribution" href="gh.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.2 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Ftheory/varentropy.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/theory/varentropy.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Entropy, Varentropy, and Rényi Entropy</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definitions">Definitions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power-route">Density-Power Route</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="entropy-varentropy-and-renyi-entropy">
+<h1>Entropy, Varentropy, and Rényi Entropy<a class="headerlink" href="#entropy-varentropy-and-renyi-entropy" title="Link to this heading">#</a></h1>
+<p>This section derives the key information-theoretic quantities implemented in
+<code class="docutils literal notranslate"><span class="pre">normix</span></code> — the differential entropy, the <strong>varentropy</strong>, and the Rényi
+entropy — for the exponential-family components and for the joint normal
+variance-mean mixtures. We derive only the formulas used by the code; for the
+general structural decomposition of varentropy and its properties we refer to
+<a class="reference internal" href="#stankyavichyus2026" id="id1"><span>[Stankyavichyus2026]</span></a>.</p>
+<section id="definitions">
+<h2>Definitions<a class="headerlink" href="#definitions" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(X\)</span> have density <span class="math notranslate nohighlight">\(p(x)\)</span> with respect to a reference measure
+<span class="math notranslate nohighlight">\(\mu(dx)\)</span>. The <strong>information content</strong> (surprisal) is
+<span class="math notranslate nohighlight">\(\mathcal{I}(X) = -\log p(X)\)</span>. Its mean is the <strong>differential entropy</strong>
+and its variance is the <strong>varentropy</strong>:</p>
+<div class="math notranslate nohighlight" id="equation-ve-defs">
+<span class="eqno">(1)<a class="headerlink" href="#equation-ve-defs" title="Link to this equation">#</a></span>\[H = \mathbb{E}[-\log p(X)], \qquad
+V_H = \operatorname{Var}[-\log p(X)].\]</div>
+<p>Entropy measures the average surprisal; varentropy measures how much the
+surprisal fluctuates around that average. Unlike the kurtosis, the varentropy
+requires only <span class="math notranslate nohighlight">\(\mathcal{I}(X) \in L^2\)</span>, so it stays finite for many
+heavy-tailed laws whose fourth moment diverges.</p>
+<p>The <strong>Rényi entropy</strong> of order <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>, <span class="math notranslate nohighlight">\(\alpha \neq 1\)</span>, is</p>
+<div class="math notranslate nohighlight" id="equation-ve-renyi">
+<span class="eqno">(2)<a class="headerlink" href="#equation-ve-renyi" title="Link to this equation">#</a></span>\[H_\alpha = \frac{1}{1-\alpha} \log \int p(x)^\alpha \, \mu(dx),\]</div>
+<p>and <span class="math notranslate nohighlight">\(H_\alpha \to H\)</span> as <span class="math notranslate nohighlight">\(\alpha \to 1\)</span>.</p>
+</section>
+<section id="density-power-route">
+<h2>Density-Power Route<a class="headerlink" href="#density-power-route" title="Link to this heading">#</a></h2>
+<p>All three quantities are governed by the <strong>log density-power integral</strong></p>
+<div class="math notranslate nohighlight" id="equation-ve-r">
+<span class="eqno">(3)<a class="headerlink" href="#equation-ve-r" title="Link to this equation">#</a></span>\[R(\alpha) = \log \int p(x)^\alpha \, \mu(dx), \qquad R(1) = 0.\]</div>
+<p>Writing <span class="math notranslate nohighlight">\(\mathcal{I} = -\log p(X)\)</span>, the function <span class="math notranslate nohighlight">\(R(1-s)\)</span> is the
+cumulant-generating function of <span class="math notranslate nohighlight">\(\mathcal{I}\)</span>, so differentiating at
+<span class="math notranslate nohighlight">\(\alpha = 1\)</span> gives</p>
+<div class="math notranslate nohighlight" id="equation-ve-cumulants">
+<span class="eqno">(4)<a class="headerlink" href="#equation-ve-cumulants" title="Link to this equation">#</a></span>\[H = -R'(1), \qquad V_H = R''(1),\]</div>
+<p>while the Rényi entropy is <span class="math notranslate nohighlight">\(H_\alpha = R(\alpha)/(1-\alpha)\)</span>. The
+first-order expansion</p>
+<div class="math notranslate nohighlight">
+\[H_\alpha = H - \tfrac{1}{2} V_H\,(\alpha - 1) + \mathcal{O}\!\left((\alpha-1)^2\right)\]</div>
+<p>shows that the varentropy is (twice the negative of) the slope of the Rényi
+spectrum at <span class="math notranslate nohighlight">\(\alpha = 1\)</span>.</p>
+</section>
+<section id="exponential-family">
+<h2>Exponential Family<a class="headerlink" href="#exponential-family" title="Link to this heading">#</a></h2>
+<p>For a <code class="docutils literal notranslate"><span class="pre">normix</span></code> exponential family
+<span class="math notranslate nohighlight">\(p(x\mid\theta) = h(x)\exp\{\theta^\top t(x) - \psi(\theta)\}\)</span>
+whose base measure is <strong>constant on its support</strong>, <span class="math notranslate nohighlight">\(\log h(x) \equiv b_0\)</span>,
+the density power stays in the family with natural parameter
+<span class="math notranslate nohighlight">\(\alpha\theta\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-ve-r-ef">
+<span class="eqno">(5)<a class="headerlink" href="#equation-ve-r-ef" title="Link to this equation">#</a></span>\[R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta).\]</div>
+<p>Substituting into <a class="reference internal" href="#equation-ve-cumulants">(4)</a> and using <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>
+and the Fisher information <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span> gives closed
+forms in terms of the log-partition triad:</p>
+<div class="math notranslate nohighlight" id="equation-ve-ef-formulas">
+<span class="eqno">(6)<a class="headerlink" href="#equation-ve-ef-formulas" title="Link to this equation">#</a></span>\[H = \psi(\theta) - \theta^\top \eta - b_0, \qquad
+V_H = \theta^\top I(\theta)\,\theta, \qquad
+H_\alpha = \frac{(\alpha-1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta)}{1-\alpha}.\]</div>
+<p>The varentropy identity <span class="math notranslate nohighlight">\(V_H = \theta^\top I(\theta)\,\theta\)</span> holds because
+the centered information content
+<span class="math notranslate nohighlight">\(\mathcal{I}(X) - H = -\theta^\top\{t(X) - \eta\}\)</span> lies exactly in the
+span of the score. This covers <a class="reference internal" href="../api/index.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a>,
+<a class="reference internal" href="../api/index.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a>,
+<a class="reference internal" href="../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></a>
+(all with <span class="math notranslate nohighlight">\(b_0 = 0\)</span>) and
+<a class="reference internal" href="../api/index.html#normix.distributions.normal.MultivariateNormal" title="normix.distributions.normal.MultivariateNormal"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></a> (with
+<span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and <span class="math notranslate nohighlight">\(V_H = d/2\)</span>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When <span class="math notranslate nohighlight">\(\log h(x)\)</span> is <strong>not</strong> constant on the support — as for
+<a class="reference internal" href="../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a>, whose
+<span class="math notranslate nohighlight">\(\log h(x) = -\tfrac12\log(2\pi) - \tfrac32\log x\)</span> — formula
+<a class="reference internal" href="#equation-ve-ef-formulas">(6)</a> acquires base-measure covariance terms (see
+<a class="reference internal" href="#stankyavichyus2026" id="id2"><span>[Stankyavichyus2026]</span></a>). <code class="docutils literal notranslate"><span class="pre">normix</span></code> avoids them by evaluating the quantities
+on the exact GIG embedding <span class="math notranslate nohighlight">\(\mathrm{GIG}(-\tfrac12, \lambda/\mu^2,
+\lambda)\)</span>, where <span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and the <span class="math notranslate nohighlight">\(\log x\)</span> term becomes
+a sufficient statistic.</p>
+</div>
+</section>
+<section id="varentropy-of-the-gig-distribution">
+<h2>Varentropy of the GIG Distribution<a class="headerlink" href="#varentropy-of-the-gig-distribution" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span> with density <a class="reference internal" href="gig.html#equation-gig-pdf">(1)</a> and natural
+parameters <span class="math notranslate nohighlight">\(\theta = [p-1,\,-b/2,\,-a/2]\)</span>. Raising the density to the
+power <span class="math notranslate nohighlight">\(\alpha\)</span> keeps it proportional to a GIG density with parameters
+<span class="math notranslate nohighlight">\((1 + \alpha(p-1),\, \alpha a,\, \alpha b)\)</span> — the escort-closure property.
+Using the Bessel integral
+<span class="math notranslate nohighlight">\(\int_0^\infty y^{q-1} e^{-(uy + v/y)/2}\,dy = 2\,(v/u)^{q/2} K_q(\sqrt{uv})\)</span>
+gives, with <span class="math notranslate nohighlight">\(z = \sqrt{ab}\)</span>,</p>
+<div class="math notranslate nohighlight" id="equation-ve-gig-r">
+<span class="eqno">(7)<a class="headerlink" href="#equation-ve-gig-r" title="Link to this equation">#</a></span>\[R(\alpha) = (1-\alpha)\log 2 + \frac{1-\alpha}{2}\log\!\frac{b}{a}
++ \log K_{1 + \alpha(p-1)}(\alpha z) - \alpha \log K_p(z).\]</div>
+<p>Define <span class="math notranslate nohighlight">\(F(p, z) = \log K_p(z)\)</span> and the first-order differential operator</p>
+<div class="math notranslate nohighlight" id="equation-ve-l">
+<span class="eqno">(8)<a class="headerlink" href="#equation-ve-l" title="Link to this equation">#</a></span>\[L = (p-1)\,\partial_p + z\,\partial_z.\]</div>
+<p>Along the escort path <span class="math notranslate nohighlight">\(\alpha \mapsto (1 + \alpha(p-1),\, \alpha z)\)</span> we have
+<span class="math notranslate nohighlight">\(\frac{d}{d\alpha}F = LF\)</span> and, because <span class="math notranslate nohighlight">\(L\)</span> has variable coefficients,
+<span class="math notranslate nohighlight">\(\frac{d^2}{d\alpha^2}F = (L^2 - L)F\)</span> at <span class="math notranslate nohighlight">\(\alpha = 1\)</span>. All remaining
+terms of <a class="reference internal" href="#equation-ve-gig-r">(7)</a> are linear in <span class="math notranslate nohighlight">\(\alpha\)</span>, so from
+<a class="reference internal" href="#equation-ve-cumulants">(4)</a>,</p>
+<div class="math notranslate nohighlight" id="equation-ve-gig">
+<span class="eqno">(9)<a class="headerlink" href="#equation-ve-gig" title="Link to this equation">#</a></span>\[\boxed{\;
+V_H\{\mathrm{GIG}(p,a,b)\} = (L^2 - L)\log K_p(z),
+\qquad z = \sqrt{ab}.
+\;}\]</div>
+<p>Expanded, this is the pure second-order form</p>
+<div class="math notranslate nohighlight">
+\[V_H = (p-1)^2 F_{pp} + 2(p-1)\,z\,F_{pz} + z^2 F_{zz},\]</div>
+<p>which coincides with the Fisher quadratic form
+<span class="math notranslate nohighlight">\(\theta^\top I(\theta)\,\theta\)</span> of <a class="reference internal" href="#equation-ve-ef-formulas">(6)</a>. The entropy
+follows from <span class="math notranslate nohighlight">\(H = -R'(1)\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-ve-gig-entropy">
+<span class="eqno">(10)<a class="headerlink" href="#equation-ve-gig-entropy" title="Link to this equation">#</a></span>\[H\{\mathrm{GIG}(p,a,b)\} = \log\{2 K_p(z)\} + \tfrac12\log\!\frac{b}{a}
+- L\log K_p(z).\]</div>
+<p>Because the fixed argument of <span class="math notranslate nohighlight">\(K_p\)</span> is exponentially thin in both tails
+whenever <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> (see <a class="reference internal" href="gig.html"><span class="doc">The Generalized Inverse Gaussian Distribution</span></a>), <span class="math notranslate nohighlight">\(V_H\)</span> remains finite over the
+entire parameter range, including the inverse-gamma limit <span class="math notranslate nohighlight">\(a \to 0\)</span> where
+the kurtosis diverges.</p>
+</section>
+<section id="joint-varentropy-of-normal-variance-mean-mixtures">
+<h2>Joint Varentropy of Normal Variance-Mean Mixtures<a class="headerlink" href="#joint-varentropy-of-normal-variance-mean-mixtures" title="Link to this heading">#</a></h2>
+<p>Consider the joint law of <a class="reference internal" href="gh.html#equation-gh-joint">(2)</a> for a general subordinator,</p>
+<div class="math notranslate nohighlight">
+\[X \mid Y = y \sim \mathcal{N}_d(\mu + \gamma y,\ \Sigma y), \qquad
+Y \sim g_\vartheta.\]</div>
+<p>Conditionally on <span class="math notranslate nohighlight">\(Y\)</span>, the quadratic form
+<span class="math notranslate nohighlight">\(Q = (X - \mu - \gamma Y)^\top \Sigma^{-1}(X - \mu - \gamma Y)/Y\)</span> is
+<span class="math notranslate nohighlight">\(\chi^2_d\)</span> and independent of <span class="math notranslate nohighlight">\(Y\)</span>, so</p>
+<div class="math notranslate nohighlight">
+\[-\log p(X \mid Y) = C_\Sigma + \tfrac{d}{2}\log Y + \tfrac12 Q, \qquad
+C_\Sigma = \tfrac{d}{2}\log(2\pi) + \tfrac12\log|\Sigma|.\]</div>
+<p>Writing <span class="math notranslate nohighlight">\(\mathcal{I}_Y = -\log g_\vartheta(Y)\)</span> for the subordinator
+surprisal, the joint information content is
+<span class="math notranslate nohighlight">\(\mathcal{I}_{X,Y} = C_\Sigma + \mathcal{I}_Y + \tfrac{d}{2}\log Y +
+\tfrac12 Q\)</span>. Since <span class="math notranslate nohighlight">\(\operatorname{Var}(\tfrac12 Q) = d/2\)</span> and
+<span class="math notranslate nohighlight">\(Q \perp Y\)</span>,</p>
+<div class="math notranslate nohighlight" id="equation-ve-joint">
+<span class="eqno">(11)<a class="headerlink" href="#equation-ve-joint" title="Link to this equation">#</a></span>\[\boxed{\;
+V_H(X, Y) = \frac{d}{2}
++ \operatorname{Var}\!\left[\mathcal{I}_Y + \frac{d}{2}\log Y\right].
+\;}\]</div>
+<p>The Gaussian layer contributes exactly <span class="math notranslate nohighlight">\(d/2\)</span>; the parameters
+<span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span> enter the joint entropy only through constants and
+means, and drop out of the varentropy entirely (they affect it only through the
+dimension <span class="math notranslate nohighlight">\(d\)</span>).</p>
+<p>For a GIG subordinator, <span class="math notranslate nohighlight">\(\mathcal{I}_Y = \psi_{\mathrm{GIG}}(\theta) -
+\theta^\top t(Y)\)</span> with <span class="math notranslate nohighlight">\(t(Y) = [\log Y,\, Y^{-1},\, Y]\)</span>, so adding
+<span class="math notranslate nohighlight">\(\tfrac{d}{2}\log Y\)</span> shifts only the coefficient of <span class="math notranslate nohighlight">\(\log Y\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{I}_Y + \tfrac{d}{2}\log Y
+= \psi_{\mathrm{GIG}}(\theta) - (\theta - \delta_d)^\top t(Y),
+\qquad \delta_d = (\tfrac{d}{2},\, 0,\, 0)^\top.\]</div>
+<p>Its variance is the shifted Fisher quadratic form, and translating to classical
+coordinates gives the operator <span class="math notranslate nohighlight">\(L_d\)</span> of <a class="reference internal" href="#equation-ve-l">(8)</a> with the order
+shifted by <span class="math notranslate nohighlight">\(-d/2\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-ve-joint-gig">
+<span class="eqno">(12)<a class="headerlink" href="#equation-ve-joint-gig" title="Link to this equation">#</a></span>\[\boxed{\;
+V_H(X, Y) = \frac{d}{2} + (L_d^2 - L_d)\log K_p(z),
+\qquad
+L_d = \left(p - 1 - \tfrac{d}{2}\right)\partial_p + z\,\partial_z.
+\;}\]</div>
+<p>For <span class="math notranslate nohighlight">\(d = 0\)</span> this reduces to the GIG varentropy <a class="reference internal" href="#equation-ve-gig">(9)</a>. The
+operator shift <span class="math notranslate nohighlight">\(p - 1 \mapsto p - 1 - d/2\)</span> is exactly the effect of the
+conditional Gaussian volume factor <span class="math notranslate nohighlight">\(Y^{-d/2}\)</span>, and mirrors the natural
+parameter <span class="math notranslate nohighlight">\(\theta_1 = p - 1 - d/2\)</span> of the joint exponential family
+<a class="reference internal" href="gh.html#equation-gh-natural-params">(4)</a>. The Variance-Gamma, Normal-Inverse Gamma, and
+Normal-Inverse Gaussian joints are the <span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, and
+<span class="math notranslate nohighlight">\(p = -1/2\)</span> cases; each is computed on its own subordinator’s
+log-partition, with the Normal-Inverse Gaussian evaluated through its GH
+embedding so that the order <span class="math notranslate nohighlight">\(p\)</span> varies faithfully along the density-power
+path.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<div role="list" class="citation-list">
+<div class="citation" id="stankyavichyus2026" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Stankyavichyus2026<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p>Stankyavichyus, A. V. (2026). <em>Varentropy: Overview,
+Computational Routes, and Structural Decomposition</em>. Preprint.</p>
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="gh.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">The Generalized Hyperbolic Distribution</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="em_algorithm.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">EM Algorithm for Generalized Hyperbolic Distributions</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definitions">Definitions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power-route">Density-Power Route</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
