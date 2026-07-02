@@ -277,6 +277,124 @@ plt.tight_layout()
 plt.show()
 ```
 
+## Is there an entropy–varentropy frontier?
+
+Mean–variance portfolio theory plots expected return against variance and hunts
+for an *efficient frontier* — the smallest variance attainable at each level of
+return. It is tempting to ask the same of the entropy–varentropy plane: is there
+a curve bounding the smallest varentropy at each entropy? For the GIG the answer
+is **no**, and the reason is structural. Compare the closed forms
+{eq}`ve-gig-entropy` and {eq}`ve-gig`:
+
+$$
+H = \log\{2 K_p(z)\} + \tfrac12\log\tfrac{b}{a} - L\log K_p(z),
+\qquad V_H = (L^2 - L)\log K_p(z), \qquad z = \sqrt{ab}.
+$$
+
+The varentropy depends only on the **shape** $(p, z)$; the scale ratio $b/a$
+enters the entropy through the additive $\tfrac12\log(b/a)$ term and is invisible
+to the varentropy. So we can slide the entropy anywhere along the real line while
+holding the varentropy fixed — the achievable region is a horizontal *band*, not
+a region with a sloping efficient boundary:
+
+```{code-cell} python
+def gig_entropy(p, a, b):
+    return GIG(p=p, a=a, b=b).entropy()
+
+def gig_varentropy(p, a, b):
+    return GIG(p=p, a=a, b=b).varentropy()
+
+rng = np.random.default_rng(0)
+n = 600
+p_s = rng.uniform(-5.0, 5.0, n)
+z_s = rng.uniform(0.2, 5.0, n)                              # shape z = √(ab)
+ratio_s = np.exp(rng.uniform(np.log(0.1), np.log(10.0), n))  # scale b/a
+a_s, b_s = z_s / np.sqrt(ratio_s), z_s * np.sqrt(ratio_s)
+H = np.asarray(jax.vmap(gig_entropy)(jnp.array(p_s), jnp.array(a_s), jnp.array(b_s)))
+V = np.asarray(jax.vmap(gig_varentropy)(jnp.array(p_s), jnp.array(a_s), jnp.array(b_s)))
+
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(FIG_W, FIG_H))
+sc = axL.scatter(H, V, c=p_s, cmap="viridis", s=14, alpha=0.75)
+fig.colorbar(sc, ax=axL, label="order $p$")
+axL.axhline(0.5, color="0.5", ls="--", lw=1.2)
+axL.text(0.02, 0.5, "  Gaussian floor $V_H=1/2$",
+         transform=axL.get_yaxis_transform(),
+         va="bottom", ha="left", fontsize=8, color="0.4")
+axL.set(xlabel="entropy $H$", ylabel="varentropy $V_H$",
+        title="GIG cloud over random $(p, a, b)$")
+
+ratios = np.linspace(0.1, 10.0, 40)
+for i, (p0, z0) in enumerate([(-2.0, 2.0), (1.0, 1.0), (3.0, 0.6)]):
+    aa, bb = z0 / np.sqrt(ratios), z0 * np.sqrt(ratios)
+    hh = np.asarray(jax.vmap(gig_entropy)(jnp.full(40, p0), jnp.array(aa), jnp.array(bb)))
+    vv = np.asarray(jax.vmap(gig_varentropy)(jnp.full(40, p0), jnp.array(aa), jnp.array(bb)))
+    axR.plot(hh, vv, "-", color=colors[i], lw=2.5, label=f"$p={p0}$, $z={z0}$")
+axR.set(xlabel="entropy $H$", ylabel="varentropy $V_H$",
+        title="Sweeping the scale $b/a$ at fixed shape $(p, z)$")
+axR.legend(fontsize=8)
+plt.tight_layout()
+plt.show()
+```
+
+The only genuine boundary is a **horizontal floor**: as $z = \sqrt{ab}\to\infty$
+the GIG concentrates and becomes asymptotically Gaussian, so $V_H\to\tfrac12$ —
+the same $d/2$ value the multivariate normal attains for every $\mu,\Sigma$.
+Removing the scale degree of freedom (fixing $a = b$) exposes the real object: a
+**shape locus** in which the order $p$ traces one curve per scale $z$.
+
+```{code-cell} python
+p_grid = jnp.linspace(-6.0, 6.0, 120)
+fig, ax = plt.subplots(figsize=(FIG_W * 0.62, FIG_H))
+for i, z0 in enumerate([0.3, 0.7, 1.5, 3.0]):
+    hh = np.asarray(jax.vmap(lambda p: gig_entropy(p, z0, z0))(p_grid))
+    vv = np.asarray(jax.vmap(lambda p: gig_varentropy(p, z0, z0))(p_grid))
+    ax.plot(hh, vv, color=colors[i], lw=2, label=f"$z=\\sqrt{{ab}}={z0}$")
+ax.axhline(0.5, color="0.5", ls="--", lw=1.2, label="Gaussian floor $1/2$")
+ax.set(xlabel="entropy $H$   (unit scale $a = b$)", ylabel="varentropy $V_H$",
+       title="GIG shape locus at fixed scale\n(each curve sweeps the order $p$)")
+ax.legend(fontsize=8)
+plt.tight_layout()
+plt.show()
+```
+
+Each curve peaks at a moderate $|p|$ and descends toward the Gaussian floor as
+the distribution either concentrates (large $z$) or degenerates toward its
+Gamma/inverse-Gamma boundaries (large $|p|$). Smaller scales $z$ admit
+substantially larger varentropy — the tail is thinner in the argument of $K_p$,
+so the surprisal fluctuates more.
+
+The same picture carries over to the **GH joint** $(X, Y)$, where the Gaussian
+block contributes a rigid $d/2$ (formula {eq}`ve-joint-gig`). The location and
+scale parameters $\mu,\gamma,\Sigma$ translate the joint entropy but leave the
+joint varentropy untouched, so raising the dimension $d$ simply lifts an entire
+band by $d/2$ — again with no sloping frontier, only stacked floors:
+
+```{code-cell} python
+def gh_joint_HV(p, a, b, d, gamma=0.3):
+    gh = GeneralizedHyperbolic.from_classical(
+        mu=jnp.zeros(d), gamma=gamma * jnp.ones(d), sigma=jnp.eye(d), p=p, a=a, b=b)
+    return gh.joint_entropy(), gh.joint_varentropy()
+
+fig, ax = plt.subplots(figsize=(FIG_W * 0.62, FIG_H))
+m = 150
+for d in [1, 2, 3]:
+    p_s = rng.uniform(-4.0, 4.0, m)
+    z_s = rng.uniform(0.3, 4.0, m)
+    ratio_s = np.exp(rng.uniform(np.log(0.2), np.log(5.0), m))
+    a_s, b_s = z_s / np.sqrt(ratio_s), z_s * np.sqrt(ratio_s)
+    Hd, Vd = jax.vmap(lambda p, a, b: gh_joint_HV(p, a, b, d))(
+        jnp.array(p_s), jnp.array(a_s), jnp.array(b_s))
+    ax.scatter(np.asarray(Hd), np.asarray(Vd), s=12, alpha=0.5,
+               color=colors[d - 1], label=f"$d={d}$")
+    ax.axhline(d / 2.0, color=colors[d - 1], ls=":", lw=1.0)
+ax.set(xlabel="joint entropy $H(X, Y)$", ylabel="joint varentropy $V_H(X, Y)$",
+       title="GH joint $(X, Y)$: bands separated by dimension $d$\n"
+             "(dotted: Gaussian floor $d/2$)")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
 ## Takeaways
 
 - `entropy()`, `varentropy()`, `renyi(alpha)`, and `log_density_power(alpha)` are
@@ -290,6 +408,10 @@ plt.show()
 - Varentropy is a fat-tailedness diagnostic that survives where kurtosis fails:
   in the heavy-tailed inverse-gamma limit it remains finite long after the fourth
   moment — and even the mean — has ceased to exist.
+- There is **no entropy–varentropy frontier**: varentropy is a location/scale
+  invariant that depends only on the shape $(p, z)$, so the achievable region is
+  a horizontal band floored at the Gaussian value $d/2$ ($1/2$ for the GIG). The
+  informative object is the shape locus obtained by fixing the scale.
 ```
 
 Next: the {doc}`../../theory/varentropy` derivations, or revisit
