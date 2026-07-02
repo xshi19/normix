@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.8](https://github.com/xshi19/normix/compare/v0.2.7...v0.2.8) (2026-07-02)
+
+
+### Features
+
+* add entropy, varentropy, and Renyi entropy to exponential families ([#63](https://github.com/xshi19/normix/issues/63)) ([559feae](https://github.com/xshi19/normix/commit/559feaeac179dfdacab230341860faab43701cd0))
+* **finance:** mean-risk optimization — efficient surface & frontier (Phase E) ([#61](https://github.com/xshi19/normix/issues/61)) ([63e0a9b](https://github.com/xshi19/normix/commit/63e0a9bd9d6915ce28e601d8f0c4724cebe5bf71))
+
+
+### Documentation
+
+* **plans:** archive completed plans and refresh active-plan status ([#59](https://github.com/xshi19/normix/issues/59)) ([fe6703a](https://github.com/xshi19/normix/commit/fe6703a81a00fcf3ba2364150d20648e10d55617))
+
 ## [0.2.7](https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7) (2026-06-25)
 
 
