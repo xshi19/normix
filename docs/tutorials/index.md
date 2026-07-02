@@ -46,6 +46,7 @@ em/04_em_vs_mcecm
 
 stats/01_divergences
 stats/02_goodness_of_fit
+stats/03_varentropy
 ```
 
 ```{toctree}

@@ -21,7 +21,9 @@ Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
 | GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
 
 All distributions provide: `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`.
-Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`.
+Exponential families also provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)`.
+Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`,
+`joint_entropy`, `joint_varentropy`, `joint_renyi(alpha)`.
 
 Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `_bessel.py`.
 Architecture: `dev-notes/ARCHITECTURE.md`. Published design: `docs/design/`.

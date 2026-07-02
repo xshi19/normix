@@ -119,6 +119,20 @@ class JointNormalMixture(ExponentialFamily):
         r""":math:`\log|\Sigma| = 2\sum_i \log L_{ii}`, via Cholesky diagonal."""
         return 2.0 * jnp.sum(jnp.log(jnp.diag(self.L_Sigma)))
 
+    def _log_base_measure_constant(self) -> jax.Array:
+        r""":math:`\log h(x,y) = -\tfrac{d}{2}\log(2\pi)`, constant on :math:`y>0`.
+
+        Feeds the constant-base-measure information-theoretic formulas in
+        :class:`~normix.exponential_family.ExponentialFamily`. Scaling the
+        joint natural parameter by :math:`\alpha` maps the GIG subordinator to
+        :math:`(p_\alpha, \alpha a, \alpha b)` with
+        :math:`p_\alpha = 1 + d/2 + \alpha(p - 1 - d/2)` and :math:`\Sigma \to
+        \Sigma/\alpha`, so :meth:`~normix.exponential_family.ExponentialFamily.varentropy`
+        reproduces :math:`V_H(X,Y) = d/2 + (L_d^2 - L_d)\log K_p(\sqrt{ab})`.
+        """
+        return jnp.asarray(-0.5 * self.d * jnp.log(2.0 * jnp.pi),
+                           dtype=jnp.float64)
+
     def _mu_Lambda_gamma(self) -> jax.Array:
         r""":math:`\mu^\top \Sigma^{-1} \gamma` via Cholesky."""
         z = jax.scipy.linalg.solve_triangular(self.L_Sigma, self.mu, lower=True)

@@ -10,6 +10,7 @@ in ``normix``, based on [Shi2016]_.
 
    gig
    gh
+   varentropy
    em_algorithm
    shrinkage
    factor_analysis
