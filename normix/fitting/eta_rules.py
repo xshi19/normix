@@ -187,7 +187,7 @@ class Shrinkage(EtaUpdateRule):
 
         * **scalar** — uniform shrinkage on every sufficient statistic;
           matches the penalised-MLE in
-          :doc:`../docs/theory/shrinkage`.
+          :doc:`/theory/shrinkage`.
         * **stats pytree** (e.g. :class:`NormalMixtureEta` with scalar
           leaves) — per-field shrinkage. Setting all but one leaf to
           ``0`` shrinks only that statistic (e.g. ``Σ`` alone via the

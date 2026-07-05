@@ -1,21 +1,43 @@
 ---
-description: Guidelines for Jupyter notebooks
-globs: "**/notebooks/**/*.ipynb"
+description: Guidelines for the notebooks/ research workspace
+globs: "**/notebooks/**"
 alwaysApply: false
 ---
 
 # Notebook Guidelines
 
-## Structure
+`notebooks/` is a personal research workspace, not published content — the
+published, executable demo surface is `docs/tutorials/`. Full policy:
+`notebooks/README.md`.
 
-Each distribution notebook follows eight sections:
+## Two-tier policy
+
+- **Tier 1 — scratch (default).** `*.ipynb` is `.gitignore`d. Work freely;
+  nothing is committed.
+- **Tier 2 — preserved.** Commit a jupytext percent-format `.py` pair
+  instead of the `.ipynb`:
+
+  ```bash
+  uv run jupytext --set-formats ipynb,py:percent notebooks/my_study.ipynb
+  uv run jupytext --sync notebooks/my_study.ipynb   # after edits
+  ```
+
+- Never commit a bare `.ipynb` — it is gitignored and skews GitHub language
+  stats even with `linguist-vendored` as a backstop.
+- marimo notebooks (e.g. `em_shrinkage_demo.py`) are already plain Python —
+  no jupytext pairing needed.
+
+## Content, if writing a distribution study
+
+If a Tier 2 notebook explores a single distribution, follow this structure
+(not required for other research notebooks):
 
 1. **Title + LaTeX formulas** — PDF, parameters, properties
 2. **Imports + setup**
 3. **Parameter exploration** — vary each parameter, plot PDF
 4. **Scipy comparison** — PDF/CDF overlay plots
 5. **Sampling validation** — histogram vs theoretical PDF, sample moments
-6. **Exponential family** — show three parametrizations, verify E[t(X)] ≈ η
+6. **Exponential family** — show three parametrizations, verify $E[t(X)] \approx \eta$
 7. **MLE fitting** — generate data, fit, compare true vs fitted
 8. **Special cases** — relationships to other distributions (if applicable)
 
@@ -23,8 +45,3 @@ Each distribution notebook follows eight sections:
 
 - Block: `$$...$$`
 - Inline: `$...$`
-- Always show PDF, sufficient statistics, natural parameters, log partition
-
-## Naming
-
-`{distribution_name}_distribution.ipynb`

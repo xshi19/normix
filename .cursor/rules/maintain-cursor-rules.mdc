@@ -18,7 +18,7 @@ being edited. This is the primary mechanism for progressive disclosure.
 | `project-overview.mdc` | `alwaysApply: true` | Project identity, distribution catalog |
 | `coding-conventions.mdc` | `**/*.py` | Python coding patterns |
 | `testing-guidelines.mdc` | `**/tests/**/*.py` | Test structure and tolerances |
-| `notebook-guidelines.mdc` | `**/notebooks/**/*.ipynb` | Notebook section structure |
+| `notebook-guidelines.mdc` | `**/notebooks/**` | Two-tier notebook policy |
 | `maintain-agents-md.mdc` | `AGENTS.md` | AGENTS.md maintenance |
 | `maintain-architecture-md.mdc` | `**/dev-notes/ARCHITECTURE.md` | ARCHITECTURE.md maintenance |
 | `maintain-design-docs.mdc` | `**/docs/design/**`, `**/dev-notes/design/**`, ... | Design docs, tech notes, references |

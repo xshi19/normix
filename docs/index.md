@@ -80,6 +80,7 @@ tutorials/index
 theory/index
 design/index
 api/index
+changelog
 ```
 
 ## Indices

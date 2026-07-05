@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Notebook JSON is data, not source; don't let it skew language stats.
+*.ipynb linguist-vendored

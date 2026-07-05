@@ -7,7 +7,7 @@ below construct that prior from a fitted (or moment-initialised)
 :class:`~normix.mixtures.marginal.NormalMixture`, optionally substituting
 a custom dispersion :math:`\Sigma_0`.
 
-Per :doc:`../docs/theory/shrinkage` (Shrunk Sufficient Statistics), the
+Per :doc:`/theory/shrinkage` (Shrunk Sufficient Statistics), the
 prior expectation parameters are
 
 .. math::
@@ -85,9 +85,9 @@ def eta0_with_sigma(
     ----------
     model : NormalMixture
         Source model; provides :math:`(\mu, \gamma, p, a, b)`.
-    Sigma0 : (d, d) jax.Array
-        Prior dispersion to embed in :math:`s_6`. Must be positive
-        semi-definite (not checked).
+    Sigma0 : jax.Array
+        Prior dispersion to embed in :math:`s_6`, shape :math:`(d, d)`.
+        Must be positive semi-definite (not checked).
 
     Returns
     -------
@@ -148,8 +148,9 @@ def eta0_diagonal(
     ----------
     model : NormalMixture
         Source model; provides :math:`(\mu, \gamma, p, a, b)`.
-    diag : (d,) jax.Array
-        Diagonal entries of :math:`\Sigma_0`. Must be positive.
+    diag : jax.Array
+        Diagonal entries of :math:`\Sigma_0`, shape :math:`(d,)`. Must be
+        positive.
 
     Returns
     -------

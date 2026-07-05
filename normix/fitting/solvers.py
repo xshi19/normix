@@ -112,8 +112,8 @@ def solve_bregman(
     theta0 : initial guess
     backend : 'jax' (JIT-able) or 'cpu' (scipy, not JIT-able)
     method : 'lbfgs', 'bfgs', or 'newton'
-    bounds : ``(lower, upper)`` pair of JAX arrays, each shape ``(d,)``;
-        ``None`` → unconstrained.
+    bounds : tuple of jax.Array, or None
+        ``(lower, upper)`` pair, each shape ``(d,)``; ``None`` → unconstrained.
         For backend='jax': enforced via reparameterization.
         For backend='cpu': converted to scipy format internally.
     max_steps : iteration budget
@@ -259,7 +259,8 @@ def _setup_reparam(
 
     Parameters
     ----------
-    bounds : (lower, upper) pair of JAX arrays, each shape ``(d,)``, or None.
+    bounds : tuple of jax.Array, or None
+        ``(lower, upper)`` pair, each shape ``(d,)``.
     """
     if bounds is None:
         return theta0, lambda phi: phi, lambda theta: theta
@@ -399,9 +400,12 @@ def make_jit_newton_solver(
     Parameters
     ----------
     f : convex objective ψ(θ) → scalar (must be JAX-traceable).
-    grad_fn : ∇ψ(θ) → (d,).
-    hess_fn : ∇²ψ(θ) → (d, d).
-    bounds : ``(lower, upper)`` of shape ``(d,)`` each, or ``None``.
+    grad_fn : Callable
+        :math:`\nabla\psi(\theta) \to \mathbb{R}^d`.
+    hess_fn : Callable
+        :math:`\nabla^2\psi(\theta) \to \mathbb{R}^{d\times d}`.
+    bounds : tuple or None
+        ``(lower, upper)``, each shape :math:`(d,)`, or ``None``.
 
     Returns
     -------
