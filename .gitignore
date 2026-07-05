@@ -49,6 +49,10 @@ coverage.xml
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Tier 1 (scratch) notebooks — see notebooks/README.md for the two-tier policy.
+# Tier 2 (preserved) notebooks are jupytext-paired .py files and ARE committed.
+notebooks/*.ipynb
+
 # marimo session/layout cache
 __marimo__/
 

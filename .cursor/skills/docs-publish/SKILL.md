@@ -104,7 +104,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - **Worktree trap**: If using a temporary worktree for `gh-pages`, do not delete the worktree's `.git` pointer file while clearing content.
 - **Notebook trap**: Pull/build requests may happen while local notebooks are dirty. Preserve and restore them.
 - **Tutorial runtime**: the full tutorial tree (`docs/tutorials/**`, 18 executable pages) runs in a few minutes on a fresh build; `em/04_em_vs_mcecm` is the long pole (~2 min, sweeps 21 values of $p$ with EM + MCECM). CI restores the myst-nb cache from prior master builds.
-- **Legacy notebooks**: `notebooks/*.ipynb` still render via `nbsphinx` until Phase 4 retires them.
+- **`notebooks/` is not published**: it's a personal research workspace (two-tier `.ipynb`-scratch / jupytext-`.py`-preserved policy, see `notebooks/README.md`), not built by Sphinx.
 
 ## Related files
 

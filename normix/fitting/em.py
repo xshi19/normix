@@ -174,7 +174,8 @@ class BatchEMFitter:
         Parameters
         ----------
         model : NormalMixture subclass (used as initial parameters)
-        X     : (n, d) data array
+        X : jax.Array
+            Data array, shape ``(n, d)``.
 
         Returns
         -------

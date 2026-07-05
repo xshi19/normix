@@ -65,7 +65,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
 | Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`) |
 | `normix.finance` roadmap (Phase D + Phase E mean-risk done; txn costs & F proposed) | `dev-notes/plans/finance_architecture.md` |
-| Docs refactor plan (Phases 1–3 done; 4–6 pending) | `dev-notes/plans/docs_refactor.md` |
+| Docs refactor plan (Phases 1–5 done; 6–8 pending) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |

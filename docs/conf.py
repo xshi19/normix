@@ -4,6 +4,7 @@ Sphinx configuration file for normix documentation.
 
 import os
 import sys
+from importlib.metadata import version as _pkg_version
 
 DOCS_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(DOCS_DIR, '..')))
@@ -13,7 +14,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(DOCS_DIR, '..')))
 project = 'normix'
 copyright = '2024–2026, normix developers'
 author = 'normix developers'
-release = '0.2.2'
+# Derived from package metadata so the site header can never drift from the
+# installed version (docs.yml runs `uv sync`, so normix is always installed).
+release = _pkg_version('normix')
+version = '.'.join(release.split('.')[:2])
 
 # -- General configuration ---------------------------------------------------
 
@@ -23,7 +27,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'nbsphinx',
 ]
 
 templates_path = ['_templates']
@@ -99,7 +102,7 @@ html_context = {
     'display_github': True,
     'github_user': 'xshi19',
     'github_repo': 'normix',
-    'github_version': 'main',
+    'github_version': 'master',
     'conf_py_path': '/docs/',
 }
 
@@ -122,19 +125,3 @@ intersphinx_mapping = {
     'jax': ('https://jax.readthedocs.io/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
 }
-
-# -- nbsphinx settings (legacy notebooks; removed in Phase 4) ----------------
-
-nbsphinx_execute = 'never'
-
-nbsphinx_prolog = r"""
-{% set docname = env.doc2path(env.docname, base=None) %}
-
-.. raw:: html
-
-    <div class="admonition note">
-    <p>This page was generated from a Jupyter notebook. You can
-    <a href="https://github.com/xshi19/normix/blob/main/{{ docname }}">
-    view it on GitHub</a> or download and run it locally.</p>
-    </div>
-"""
