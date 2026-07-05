@@ -1,0 +1,905 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Changelog &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'changelog';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Utilities" href="api/utils.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fchangelog.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/changelog.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Changelog</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#refactoring">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bug Fixes</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Documentation</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading">#</a></h1>
+<section id="id1">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7">0.2.7</a> (2026-06-25)<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="features">
+<h3>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> EM fitter hardening + VG alpha_min bound (Phases 4–5) (<a class="reference external" href="https://github.com/xshi19/normix/issues/58">#58</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/8e9849983ace636768e7b8212121395ecc3f59c2">8e98499</a>)</p></li>
+<li><p><strong>em:</strong> Phase 4 fitter hardening — diverged guard, track_ll, stateless det target (<a class="reference external" href="https://github.com/xshi19/normix/issues/57">#57</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/dd32481bb74dfe977bc480fe9a3063722930dc41">dd32481</a>)</p></li>
+</ul>
+</section>
+<section id="bug-fixes">
+<h3>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> distribution-specific floor for VG/NInvG prior moments (B2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/51">#51</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/5fa19f7739e90e9a075446f4ab2019ed8aa25487">5fa19f7</a>)</p></li>
+<li><p><strong>em:</strong> floor posterior b_post to prevent VG EM overflow (<a class="reference external" href="https://github.com/xshi19/normix/issues/45">#45</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/5a0ecfb54e9927d12db654084af218ebc8df1d32">5a0ecfb</a>)</p></li>
+<li><p><strong>em:</strong> floor posterior b_post to prevent VG EM overflow (<a class="reference external" href="https://github.com/xshi19/normix/issues/47">#47</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/b9b2167da85089336090fb86ef58765c17843fb3">b9b2167</a>)</p></li>
+<li><p><strong>em:</strong> preserve sign of M-step denominator near Gaussian limit (<a class="reference external" href="https://github.com/xshi19/normix/issues/50">#50</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/0d5ea29a0a11f9911d87ba223559ba3250fb2279">0d5ea29</a>)</p></li>
+</ul>
+</section>
+<section id="refactoring">
+<h3>Refactoring<a class="headerlink" href="#refactoring" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> complete Phase 3 — posterior-GIG consolidation + hardening tests (R1-R3, T1/T1b/T3) (<a class="reference external" href="https://github.com/xshi19/normix/issues/56">#56</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/ff1f46232ffad22bd14cfe99693b7855a94ca389">ff1f462</a>)</p></li>
+<li><p><strong>em:</strong> consolidate posterior GIG map and b_post floor (R1, R2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/55">#55</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/e0141514e71e38b6b48aa16bcae7c9fbd66545f9">e014151</a>)</p></li>
+</ul>
+</section>
+<section id="documentation">
+<h3>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> complete D2 cross-link fix and mark M1/M2/B1/B2/D1 done (<a class="reference external" href="https://github.com/xshi19/normix/issues/52">#52</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/ef2e2a861724d5b965eaf29518d463d603752473">ef2e2a8</a>)</p></li>
+<li><p><strong>plans:</strong> add EM robustness follow-ups plan from b_post-floor review (<a class="reference external" href="https://github.com/xshi19/normix/issues/48">#48</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fbb0ad0ecfab6ddd75475243c3097806ad62f924">fbb0ad0</a>)</p></li>
+<li><p><strong>tech:</strong> correct b_post floor asymptotics in VG EM tech note (<a class="reference external" href="https://github.com/xshi19/normix/issues/49">#49</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fab19be10a16213d5a97d9301e63b636bad65ea4">fab19be</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id2">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.5...v0.2.6">0.2.6</a> (2026-06-05)<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h3>Bug Fixes<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>docs:</strong> flatten myst-nb cell_input inner highlight box (<a class="reference external" href="https://github.com/xshi19/normix/issues/43">#43</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/8f522f1613328c275bd1a6b16f20c3139d6ca501">8f522f1</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id4">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.4...v0.2.5">0.2.5</a> (2026-06-03)<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h3>Bug Fixes<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>docs:</strong> remove nested box around code cells (<a class="reference external" href="https://github.com/xshi19/normix/issues/42">#42</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/6426e301c2125b6894c69125ef7de1e13c179a04">6426e30</a>)</p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>Documentation<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>address Phase 3 review (DJ30, VG NaN repro, cross-family divergences) (<a class="reference external" href="https://github.com/xshi19/normix/issues/41">#41</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/a1c37799f967312ebb6260ac68ed4e4055cc860d">a1c3779</a>)</p></li>
+<li><p>author Phase 3 tutorial tree and site navigation (<a class="reference external" href="https://github.com/xshi19/normix/issues/39">#39</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d637e7a3f31a1f37f2fae79ecef74cd5d245535a">d637e7a</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id7">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.3...v0.2.4">0.2.4</a> (2026-05-28)<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h3>Documentation<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>split internal knowledge into dev-notes/ (Phase 2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/36">#36</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/7cbacbbf7624b9ab7eabfa2ddcf4a3cb46d0bf26">7cbacbb</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id9">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.2...v0.2.3">0.2.3</a> (2026-05-27)<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h3>Features<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>finance:</strong> Phase D CVaR layer with Univariate* projection (<a class="reference external" href="https://github.com/xshi19/normix/issues/33">#33</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/c1ed42247a82791c7bbf81eea697c5ba05d7aa59">c1ed422</a>)</p></li>
+</ul>
+</section>
+<section id="id11">
+<h3>Documentation<a class="headerlink" href="#id11" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>bootstrap MyST-nb infrastructure and Kami theme (Phase 1) (<a class="reference external" href="https://github.com/xshi19/normix/issues/35">#35</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/1c3563d08b39ab426ac742b10a4f1a2a1e791f17">1c3563d</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id12">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.1...v0.2.2">0.2.2</a> (2026-05-24)<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<section id="id13">
+<h3>Features<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>distributions:</strong> add cdf/ppf with pure-JAX PINV (<a class="reference external" href="https://github.com/xshi19/normix/issues/31">#31</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d73c5fcfa7cdbd319e1d1119b8798606f6a163a2">d73c5fc</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id14">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.0...v0.2.1">0.2.1</a> (2026-05-17)<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<section id="id15">
+<h3>Features<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>add data for testing (<a class="reference external" href="https://github.com/xshi19/normix/commit/5e2a0a8b06597810474c8f69e40517790ca41409">5e2a0a8</a>)</p></li>
+<li><p>add SP500 return sample for testing (<a class="reference external" href="https://github.com/xshi19/normix/commit/9a44bcbd705b81cf61c97facf68667e851cced7c">9a44bcb</a>)</p></li>
+<li><p><strong>base:</strong> add NormalMixture and JointNormalMixture base classes (<a class="reference external" href="https://github.com/xshi19/normix/commit/68b35be5489f6914fe9607fbd94a2e8cb366c68b">68b35be</a>)</p></li>
+<li><p><strong>bench:</strong> add GH EM path comparison for Phase 6 (<a class="reference external" href="https://github.com/xshi19/normix/commit/796880c937ede27fef5295fdfd6a98438e69bad7">796880c</a>)</p></li>
+<li><p><strong>benchmarks:</strong> add EM/Bessel/GIG suite with JSON results and compare (<a class="reference external" href="https://github.com/xshi19/normix/commit/f51f06a7b0179d35e607a3d38ab22f2b31509e78">f51f06a</a>)</p></li>
+<li><p><strong>bessel:</strong> Phase 1 — Hankel large-z asymptotic in pure JAX (<a class="reference external" href="https://github.com/xshi19/normix/commit/ca70328b9e9fce51ceba7e2a9c1ce253602f765e">ca70328</a>)</p></li>
+<li><p><strong>bessel:</strong> Phase 2 — numerical quadrature replaces scipy callback (<a class="reference external" href="https://github.com/xshi19/normix/commit/5fc7a27a5a6d8762112594950a0807f37ca49b93">5fc7a27</a>)</p></li>
+<li><p><strong>bessel:</strong> Phase 3 — Olver uniform expansion, zero scipy callbacks (<a class="reference external" href="https://github.com/xshi19/normix/commit/3fd13856a4d948b0e64a69ce08ab72ca48fd42a7">3fd1385</a>)</p></li>
+<li><p>CPU Bessel backend for EM hot path (cpu_bessel_design.md) (<a class="reference external" href="https://github.com/xshi19/normix/issues/16">#16</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d620007350e1dbe45ed2101a7b7e4117f8cc5a87">d620007</a>)</p></li>
+<li><p><strong>dependencies:</strong> add development dependencies and update package configurations (<a class="reference external" href="https://github.com/xshi19/normix/commit/e5c26b9eb15c3756c072f8c41cabbfd7aab837a6">e5c26b9</a>)</p></li>
+<li><p><strong>dependencies:</strong> add yfinance and new packages to project (<a class="reference external" href="https://github.com/xshi19/normix/commit/f8459c5a3fe724f9f1af64a205d07d73a2fe5236">f8459c5</a>)</p></li>
+<li><p><strong>distributions:</strong> add Generalized Hyperbolic distribution (<a class="reference external" href="https://github.com/xshi19/normix/commit/9afb12149fa37ba32f7a95715f6f6a3dbe0c72af">9afb121</a>)</p></li>
+<li><p><strong>distributions:</strong> add KL projections and embeddings for GIG and GH families (<a class="reference external" href="https://github.com/xshi19/normix/commit/34635daf43ccc41463b6123f969d99a8259e4fa3">34635da</a>)</p></li>
+<li><p><strong>distributions:</strong> add Normal-Inverse Gamma and Normal-Inverse Gaussian distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/6dd5c07dab27504cb5df98ba241fe5e80870aba7">6dd5c07</a>)</p></li>
+<li><p><strong>distributions:</strong> add pdf, cdf, mean, var, std, rvs to all distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/89f34812e9bf776b87893d4a39a04e20811d503d">89f3481</a>)</p></li>
+<li><p><strong>divergences:</strong> add Hellinger and KL for exponential families (<a class="reference external" href="https://github.com/xshi19/normix/commit/e8704418e0b33bf6873b84b5bee0422b46b232e7">e870441</a>)</p></li>
+<li><p><strong>download:</strong> add script to download S&amp;P 500 stock data (<a class="reference external" href="https://github.com/xshi19/normix/commit/02382af160179bb5003806f37a9f5645fa7ee820">02382af</a>)</p></li>
+<li><p><strong>em:</strong> add comprehensive mixture model EM benchmark script (<a class="reference external" href="https://github.com/xshi19/normix/commit/fc59cc8a5e2341349d5b462275bdfc0d809eea5c">fc59cc8</a>)</p></li>
+<li><p><strong>em:</strong> add MCECM and split M-step via _m_step_subordinator (<a class="reference external" href="https://github.com/xshi19/normix/commit/d9b09b85265afa58efd5b2cf98ad72595ba47fd1">d9b09b8</a>)</p></li>
+<li><p><strong>em:</strong> add NormalMixtureEta and refactor E/M-step API (<a class="reference external" href="https://github.com/xshi19/normix/commit/764a8c4519f0de3f03415c2ee0a4eb58ce0c062d">764a8c4</a>)</p></li>
+<li><p><strong>em:</strong> add Shrinkage combinator and shrinkage target builders (<a class="reference external" href="https://github.com/xshi19/normix/commit/321a983edb8e591d1b3bd8a25e6d4ce1c9792559">321a983</a>)</p></li>
+<li><p><strong>em:</strong> EMResult, verbose dual-loop fitter, default_init API (<a class="reference external" href="https://github.com/xshi19/normix/commit/2119acbc29faa9883e522777863878b187fdea4e">2119acb</a>)</p></li>
+<li><p><strong>em:</strong> factor analysis mixtures, orbit regularizations, SP500 study (<a class="reference external" href="https://github.com/xshi19/normix/commit/257bd3f2049f827409aec348da38e654fc558b06">257bd3f</a>)</p></li>
+<li><p><strong>em:</strong> incremental EM, eta rules, and compute_eta_from_model (<a class="reference external" href="https://github.com/xshi19/normix/commit/5b6e21a14c129b040c467e0dd7a2f816b907a5ac">5b6e21a</a>)</p></li>
+<li><p><strong>em:</strong> NormalMixtureEta from_expectation and marginal replace facade (<a class="reference external" href="https://github.com/xshi19/normix/commit/c79e24bc59c926e7756e750100280ca821e9b93c">c79e24b</a>)</p></li>
+<li><p><strong>em:</strong> Phase 1 EM API generalisation (eta order, AffineRule, MarginalMixture) (<a class="reference external" href="https://github.com/xshi19/normix/commit/128229bfe29ef3066e769656f53d4006b0b164b0">128229b</a>)</p></li>
+<li><p><strong>expectation-to-natural:</strong> enhance expectation-to-natural conversion across distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/4ff70f7dc4d300dd33a3fc9df57ad61a21fae9db">4ff70f7</a>)</p></li>
+<li><p><strong>gamma,inverse_gamma,inverse_gaussian:</strong> convert rvs methods from scipy/numpy to JAX (<a class="reference external" href="https://github.com/xshi19/normix/commit/b0e9c2716d19a7d50aa7578b53604dc109433673">b0e9c27</a>)</p></li>
+<li><p><strong>gh:</strong> add warm-start, pure-JAX Newton for GIG; profiling scripts and tech notes (<a class="reference external" href="https://github.com/xshi19/normix/commit/1f951bd06cb969523e54c58a3964ac7961d432ac">1f951bd</a>)</p></li>
+<li><p><strong>gig:</strong> add cpu_legacy solver — normix_numpy scipy.kve on CPU, warm-start (<a class="reference external" href="https://github.com/xshi19/normix/commit/cd32363a69532252ff3017a94b6e0ff8f45aa3c7">cd32363</a>)</p></li>
+<li><p><strong>gig:</strong> add JAX-based GIG sampling — Devroye TDR and PINV (<a class="reference external" href="https://github.com/xshi19/normix/commit/d12a08350221016571c8c3e920066d9afc3b9097">d12a083</a>)</p></li>
+<li><p><strong>gig:</strong> add projection to special-case distributions via expectation parameters (<a class="reference external" href="https://github.com/xshi19/normix/commit/c54043f781dd970e710bfea940957f9a82675f0a">c54043f</a>)</p></li>
+<li><p><strong>gig:</strong> analytical Hessian Newton + JAXopt LBFGS solver variants (<a class="reference external" href="https://github.com/xshi19/normix/commit/706c6817bf775dc449aca3fb49944ad402b0d239">706c681</a>)</p></li>
+<li><p><strong>gig:</strong> enhance initialization and conversion methods for special cases (<a class="reference external" href="https://github.com/xshi19/normix/commit/b8a3a6bc2aa2aa85d471bfca5e827807e78cc8ac">b8a3a6b</a>)</p></li>
+<li><p><strong>migration:</strong> implement JAX-based normix package (Phases 0-5) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fe788467b45f0080ea413d6e24aa4b3fe865f0af">fe78846</a>)</p></li>
+<li><p><strong>mixture:</strong> enhance JointNormalMixture with parameter extraction methods (<a class="reference external" href="https://github.com/xshi19/normix/commit/11c575323054e3aa6fb20ddadb51ced2fa834f50">11c5753</a>)</p></li>
+<li><p><strong>mixtures:</strong> implement caching for Cholesky factor of Sigma in JointNormalMixture (<a class="reference external" href="https://github.com/xshi19/normix/commit/1375fa67bed60faa7e02631fc4fee3a01efda5e1">1375fa6</a>)</p></li>
+<li><p><strong>mixtures:</strong> joint from_natural, incremental EM converged, optional x64 (<a class="reference external" href="https://github.com/xshi19/normix/commit/06fe1272113680236c3e3548cc43dd9fc1b7dd08">06fe127</a>)</p></li>
+<li><p><strong>normal:</strong> Phase 7 — MultivariateNormal as ExponentialFamily, jaxopt plan (<a class="reference external" href="https://github.com/xshi19/normix/commit/34b0921fce6659a8a1ecc7c870f1784fe1827e8d">34b0921</a>)</p></li>
+<li><p><strong>notebook:</strong> replicate thesis tables on Hellinger vs parameter error (<a class="reference external" href="https://github.com/xshi19/normix/commit/018a0f68462a3b1d2678d405d65abc08fa866a95">018a0f6</a>)</p></li>
+<li><p><strong>notebooks:</strong> add Bessel function comparison notebook (<a class="reference external" href="https://github.com/xshi19/normix/commit/b39154314c5a873e07def487e35098c5587e6f1b">b391543</a>)</p></li>
+<li><p><strong>notebooks:</strong> add TFP/logbesselk overflow comparison to Bessel notebook (<a class="reference external" href="https://github.com/xshi19/normix/commit/99c0f5d0aa8b3bbe096c9fce37c554db0fe344af">99c0f5d</a>)</p></li>
+<li><p><strong>notebooks:</strong> migrate and standardise 9 distribution notebooks (<a class="reference external" href="https://github.com/xshi19/normix/commit/00e853eb84a6fe7b6d69bde18086daf4c9c199ed">00e853e</a>)</p></li>
+<li><p><strong>notebooks:</strong> revise mixture distribution notebooks with unified visualization (<a class="reference external" href="https://github.com/xshi19/normix/commit/d6a15f18e4809a0fd6bcd0fd7237f129eb7cb46a">d6a15f1</a>)</p></li>
+<li><p><strong>params:</strong> add frozen dataclass parameter containers (<a class="reference external" href="https://github.com/xshi19/normix/commit/62b4a48fc5625968a623f46f2a321acd1e32f820">62b4a48</a>)</p></li>
+<li><p><strong>scripts:</strong> add EM convergence comparison script (<a class="reference external" href="https://github.com/xshi19/normix/commit/d203f3809c7e3e255a4c1d6100fe77b1e9cec03c">d203f38</a>)</p></li>
+<li><p><strong>scripts:</strong> support jax input in GH profiler (<a class="reference external" href="https://github.com/xshi19/normix/commit/88d1f8659114ffcfabf0dc0f6879e5b9d897a447">88d1f86</a>)</p></li>
+<li><p><strong>solvers:</strong> introduce solve_bregman and solve_bregman_multistart for Bregman divergence minimization (<a class="reference external" href="https://github.com/xshi19/normix/commit/450424900db7fa56a3c2ead44ca6fb51d026e8ae">4504249</a>)</p></li>
+<li><p><strong>utils:</strong> lazy-load plotting helpers so matplotlib is optional (<a class="reference external" href="https://github.com/xshi19/normix/commit/776bc7089bb8b0772b0dfa0ef9cc76cfc9083659">776bc70</a>)</p></li>
+</ul>
+</section>
+<section id="id16">
+<h3>Bug Fixes<a class="headerlink" href="#id16" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> default m_step_backend to cpu, set cpu e_step for GH fit (<a class="reference external" href="https://github.com/xshi19/normix/commit/6e1429d0dd66bb1e5406a4b7def9215918fcc2b9">6e1429d</a>)</p></li>
+<li><p><strong>gh:</strong> stabilize EM and warm-start; perf(em) CPU E-step for VG/NInvG (<a class="reference external" href="https://github.com/xshi19/normix/commit/77d984198dd787a190432f324c2422642fa820b8">77d9841</a>)</p></li>
+<li><p><strong>gig:</strong> analytical grad for log-partition to avoid jax.where NaN at a→0 (<a class="reference external" href="https://github.com/xshi19/normix/commit/ee8cf8b7219d1a32f2800983c40b26fea48cd53b">ee8cf8b</a>)</p></li>
+<li><p>handle scalar observations correctly in JointNormalMixture (<a class="reference external" href="https://github.com/xshi19/normix/commit/ec72c0acc6ef1c211ce6dec705f8d1ad16cd33bf">ec72c0a</a>)</p></li>
+<li><p><strong>ig,em:</strong> rewrite IG CDF in log-space and fix scan iteration count (<a class="reference external" href="https://github.com/xshi19/normix/commit/02d2a8e307bbf6667ef1a8824706e5d2e6fb53b5">02d2a8e</a>)</p></li>
+<li><p><strong>joint:</strong> align GIG natural parameters for JGH and JNIG (<a class="reference external" href="https://github.com/xshi19/normix/commit/a5b1550f84f3e5b2233165b5343088eed74e7a3d">a5b1550</a>)</p></li>
+<li><p>resolve docstring formatting issues (<a class="reference external" href="https://github.com/xshi19/normix/commit/68b35be5489f6914fe9607fbd94a2e8cb366c68b">68b35be</a>)</p></li>
+<li><p><strong>scripts:</strong> add repo root to profiling harness path (<a class="reference external" href="https://github.com/xshi19/normix/commit/56281c87661e6d2209a95fa0b090002c61b70bfa">56281c8</a>)</p></li>
+<li><p><strong>variance_gamma:</strong> handle PDF at x=μ (q=0) correctly (<a class="reference external" href="https://github.com/xshi19/normix/commit/0712d00f83faeb356dfef7c8fc494a68e505db04">0712d00</a>)</p></li>
+</ul>
+</section>
+<section id="performance">
+<h3>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>em:</strong> CPU digamma Newton for Gamma/InvGamma from_expectation (<a class="reference external" href="https://github.com/xshi19/normix/commit/56f079a2b24bd516f08e3508208f5265f62f39b5">56f079a</a>)</p></li>
+<li><p><strong>em:</strong> scan-based IncrementalEMFitter and Phase 5 benchmarks (<a class="reference external" href="https://github.com/xshi19/normix/commit/a9bf108b850a6f59611e179646c895a7df79a586">a9bf108</a>)</p></li>
+<li><p><strong>solver:</strong> stable jitted Newton for GIG warm-start and Gamma digamma (<a class="reference external" href="https://github.com/xshi19/normix/commit/1a9c5d5ea5ef6571bd553ea25fc1fb90a503a2ee">1a9c5d5</a>)</p></li>
+</ul>
+</section>
+<section id="id17">
+<h3>Refactoring<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>add theta0/maxiter/tol to fit_mle; remove long inline derivation comments (<a class="reference external" href="https://github.com/xshi19/normix/commit/db780acc980c3a6be840a46a43f298c66c766229">db780ac</a>)</p></li>
+<li><p><strong>AGENTS.md:</strong> streamline content and enhance design philosophy section; remove ROADMAP.md and project-overview.mdc (<a class="reference external" href="https://github.com/xshi19/normix/commit/cd16009b6b61204ecb16569f51eb44815dad1c54">cd16009</a>)</p></li>
+<li><p><strong>base:</strong> add cache infrastructure to Distribution (<a class="reference external" href="https://github.com/xshi19/normix/commit/4251900a1120bcb35f429cf1115104415e6f8fb8">4251900</a>)</p></li>
+<li><p><strong>base:</strong> ExponentialFamily with cached_property and backward compat (<a class="reference external" href="https://github.com/xshi19/normix/commit/de314374d17504c53559d69bce61e0b93c8add6e">de31437</a>)</p></li>
+<li><p><strong>bessel:</strong> clean up code formatting and fix test (<a class="reference external" href="https://github.com/xshi19/normix/commit/3cd737bfb55fa9e113ca67fd33cad383c9f6bf90">3cd737b</a>)</p></li>
+<li><p><strong>bessel:</strong> lax.cond for single-branch dispatch; JIT-wrap GIG gradient (<a class="reference external" href="https://github.com/xshi19/normix/commit/9346ad64f40b75e29e9b162a7c84a36187feaf3b">9346ad6</a>)</p></li>
+<li><p>centralize _EPS constant, rename L→L_Sigma and _conditional_expectations_impl (<a class="reference external" href="https://github.com/xshi19/normix/commit/f54b93dc188751759e363b5fd326d7b18c1d34a7">f54b93d</a>)</p></li>
+<li><p><strong>constants:</strong> add GIG_THETA_PERTURB, GIG_CLAMP_*, GIG_P_MAX (<a class="reference external" href="https://github.com/xshi19/normix/commit/d9d53e5b7af5b6d6772378556850b646a9f90298">d9d53e5</a>)</p></li>
+<li><p>delete legacy doc files before migration (<a class="reference external" href="https://github.com/xshi19/normix/commit/099a74333a85de29c4827cdc3df27baa39bddd68">099a743</a>)</p></li>
+<li><p><strong>distributions:</strong> colocate factor mixtures and inline GIG RVS (<a class="reference external" href="https://github.com/xshi19/normix/commit/a3e6022afb7e6749e6b34724764e0d05dc2aee1b">a3e6022</a>)</p></li>
+<li><p><strong>distributions:</strong> remove legacy CPU solver and update documentation (<a class="reference external" href="https://github.com/xshi19/normix/commit/6e650ae3673f36f47810b4f959a4c2b8fc6f03ff">6e650ae</a>)</p></li>
+<li><p><strong>distributions:</strong> rename GIG→GeneralizedInverseGaussian, centralize constants, add Bregman solvers (<a class="reference external" href="https://github.com/xshi19/normix/commit/274565176f64510ff48e48380afc1972f03f6d3e">2745651</a>)</p></li>
+<li><p><strong>em_shrinkage_demo:</strong> simplify slice controls and enhance documentation (<a class="reference external" href="https://github.com/xshi19/normix/commit/f56efe788e0b37feb5fcd7cef62c36710c53df9e">f56efe7</a>)</p></li>
+<li><p><strong>em:</strong> m_step_subordinator naming; JIT-safe GH on jax backend (<a class="reference external" href="https://github.com/xshi19/normix/commit/6a4af9f4d039ff6e1c05c2034f86ad31f0a2dd98">6a4af9f</a>)</p></li>
+<li><p><strong>em:</strong> use parameter change for convergence, NIG warm start for GH (<a class="reference external" href="https://github.com/xshi19/normix/commit/e516372ff1a342e1d569cbf0a8ab2aebe7bc9fcd">e516372</a>)</p></li>
+<li><p><strong>exponential_family:</strong> implement log-partition triad architecture (<a class="reference external" href="https://github.com/xshi19/normix/commit/4052d4bb4c97471479ce5264410d7be682848f60">4052d4b</a>)</p></li>
+<li><p>foundational cleanups across codebase (<a class="reference external" href="https://github.com/xshi19/normix/commit/f5e1245d7f466344fb642b7f2ad8e2e2d5fd5870">f5e1245</a>)</p></li>
+<li><p><strong>gamma,inverse_gamma,inverse_gaussian:</strong> add analytical triad methods (<a class="reference external" href="https://github.com/xshi19/normix/commit/4052d4bb4c97471479ce5264410d7be682848f60">4052d4b</a>)</p></li>
+<li><p><strong>gh:</strong> JAX-native default_init for GeneralizedHyperbolic (<a class="reference external" href="https://github.com/xshi19/normix/issues/26">#26</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/ac4510720ba152a05eea61d3225dc6c25b4b431a">ac45107</a>)</p></li>
+<li><p><strong>gig:</strong> migrate to triad architecture, clean up module-level functions (<a class="reference external" href="https://github.com/xshi19/normix/commit/4052d4bb4c97471479ce5264410d7be682848f60">4052d4b</a>)</p></li>
+<li><p><strong>gig:</strong> use from_expectation_params in special-case projections (<a class="reference external" href="https://github.com/xshi19/normix/commit/f1b345ec98075fb5d1e4d825d4179fa87fb91b87">f1b345e</a>)</p></li>
+<li><p><strong>hygiene:</strong> Phase 5 — centralize x64 config, add return types, GIG tests, log_kv examples (<a class="reference external" href="https://github.com/xshi19/normix/commit/992d063e1e3b4004f775eb9dee54b637a7ab032f">992d063</a>)</p></li>
+<li><p><strong>joint-mixtures:</strong> migrate Joint{VG,NInvG,NIG,GH} to internal attrs (<a class="reference external" href="https://github.com/xshi19/normix/commit/f90aab192a7c15f18207558e77249a1de00e1f23">f90aab1</a>)</p></li>
+<li><p><strong>joint:</strong> lift shared natural_params and theta-parsing into JointNormalMixture (<a class="reference external" href="https://github.com/xshi19/normix/commit/9ef80b131115857854e9fcae88397637558ae2cb">9ef80b1</a>)</p></li>
+<li><p><strong>joint:</strong> Phase 4 — remove dead code, add joint EF tests, update docs (<a class="reference external" href="https://github.com/xshi19/normix/commit/12c2270668561cb71b9cbbd4f78bc2dee6029ca9">12c2270</a>)</p></li>
+<li><p><strong>marginal-mixtures:</strong> migrate VG, NInvG, NIG, GH to direct attr access (<a class="reference external" href="https://github.com/xshi19/normix/commit/80b7eba4b621a9d57a4680c911b9794d2fe2367c">80b7eba</a>)</p></li>
+<li><p><strong>marginal:</strong> lift fit, _initialize, m_step, regularize into NormalMixture (<a class="reference external" href="https://github.com/xshi19/normix/commit/e3ea5a9d46245c0cd5570c71dd94dcd796975dd1">e3ea5a9</a>)</p></li>
+<li><p><strong>mixture-base:</strong> JointNormalMixture with cached Cholesky properties (<a class="reference external" href="https://github.com/xshi19/normix/commit/f11bc2849f2458b7efae897e1767aaed45934c44">f11bc28</a>)</p></li>
+<li><p><strong>mixture-base:</strong> NormalMixture using cached_property from Distribution (<a class="reference external" href="https://github.com/xshi19/normix/commit/c2f34b8f69941ebfd377857fbaee2b16e1ad253f">c2f34b8</a>)</p></li>
+<li><p><strong>mixtures:</strong> clean up JointGH expectation-to-natural to clearly use GIG method (<a class="reference external" href="https://github.com/xshi19/normix/commit/eb3e6a50a6c61dcf45ead8008ab882ce2875b2a2">eb3e6a5</a>)</p></li>
+<li><p><strong>mixtures:</strong> joint natural params via from_natural (<a class="reference external" href="https://github.com/xshi19/normix/commit/1ccbecf08917d7151a6cd1491ff4ab9c5390768b">1ccbecf</a>)</p></li>
+<li><p><strong>mixture:</strong> update Cholesky factor handling in JointNormalMixture and related distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/6a18ba2cd5b6751e8764723bf4f3553bd2ddf9dd">6a18ba2</a>)</p></li>
+<li><p>move _bessel.py → utils/bessel.py, rename gig.py → generalized_inverse_gaussian.py (<a class="reference external" href="https://github.com/xshi19/normix/commit/85af01e9c012ecf8cf20f364ef0f1d40cb7ff655">85af01e</a>)</p></li>
+<li><p><strong>mvn:</strong> Cholesky-first storage, eliminate np.linalg.inv from logpdf (<a class="reference external" href="https://github.com/xshi19/normix/commit/2e5f4aa0e0abc3e77f2685f0d3c569bfc23f7193">2e5f4aa</a>)</p></li>
+<li><p><strong>params:</strong> enhance parameter access with _ParamsBase mixin (<a class="reference external" href="https://github.com/xshi19/normix/commit/748c16fe0f1606fbd6cf2c455e27637e2dedb046">748c16f</a>)</p></li>
+<li><p>redesign parameter storage architecture (<a class="reference external" href="https://github.com/xshi19/normix/commit/9103e667259123b2e020a2b23c2b6a0732685b2e">9103e66</a>)</p></li>
+<li><p>remove _natural_params tuple from univariate distributions and fix docstrings (<a class="reference external" href="https://github.com/xshi19/normix/commit/8583446032246a44f11611626737df49e1c65071">8583446</a>)</p></li>
+<li><p>remove deprecated wrappers, dummy instances, and simplify internal structure (<a class="reference external" href="https://github.com/xshi19/normix/commit/170d43b0474757aba72c6c6a50fa54af1a72f9cc">170d43b</a>)</p></li>
+<li><p>remove normix_numpy and clean up numpy-version references (<a class="reference external" href="https://github.com/xshi19/normix/commit/b2b8f595277c16be76461ac83965a9b738ef4eee">b2b8f59</a>)</p></li>
+<li><p>rename package from pygh to normix (<a class="reference external" href="https://github.com/xshi19/normix/commit/1f251e7e12adbc6a595f3c9e344d0db3848dc445">1f251e7</a>)</p></li>
+<li><p>replace ‘mixing distribution’ terminology with ‘subordinator distribution’ (<a class="reference external" href="https://github.com/xshi19/normix/commit/c28612e5e7e2dac06295c059fe1153d1c3e3d2e9">c28612e</a>)</p></li>
+<li><p>replace numerical derivatives with log_kv_derivative_v in mixture distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/5af6a9e4ebc90788c86a70d97dc93fc0c56422c3">5af6a9e</a>)</p></li>
+<li><p><strong>rules:</strong> update best practices and coding style for JAX-based development (<a class="reference external" href="https://github.com/xshi19/normix/commit/162a1bafa682f10cc9d3b50ddd78e011af7d0c71">162a1ba</a>)</p></li>
+<li><p><strong>solver:</strong> JAX (lower, upper) bounds and vectorized _setup_reparam (<a class="reference external" href="https://github.com/xshi19/normix/commit/a240c3f1ee1763c43c91714429159fad8fdf84b2">a240c3f</a>)</p></li>
+<li><p><strong>solvers,exponential_family:</strong> remove deprecated wrappers, dummy instances, and simplify _cpu_solve (<a class="reference external" href="https://github.com/xshi19/normix/commit/28f56bb3a6f2a215a4f974fcc1e5beb7511a7044">28f56bb</a>)</p></li>
+<li><p><strong>solvers:</strong> replace grad_hess_fn with separate grad_fn + hess_fn (<a class="reference external" href="https://github.com/xshi19/normix/commit/4052d4bb4c97471479ce5264410d7be682848f60">4052d4b</a>)</p></li>
+<li><p>streamline initialization in mixture distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/0e7f7d80d0de21a28c3d13baf91c2f4554c579d3">0e7f7d8</a>)</p></li>
+<li><p>unify Greek-letter naming, add Cholesky logpdf, optimize expectation params (<a class="reference external" href="https://github.com/xshi19/normix/commit/8b9bb5b95b3929f9088ea1f492dffd4b1151d131">8b9bb5b</a>)</p></li>
+<li><p><strong>univariate:</strong> migrate to internal attributes + dataclass params (<a class="reference external" href="https://github.com/xshi19/normix/commit/1e245b076e14712d0b07738c2a74c20e7d8e8948">1e245b0</a>)</p></li>
+<li><p>update EM M-steps to use _set_internal fast path (<a class="reference external" href="https://github.com/xshi19/normix/commit/670ee9fe9c5d344fc5754f85ee209957d6732a06">670ee9f</a>)</p></li>
+<li><p>update GIG and BatchEMFitter to use backend and method parameters (<a class="reference external" href="https://github.com/xshi19/normix/commit/9ebb09e3f83f35dd7e34355421cb81f7719996da">9ebb09e</a>)</p></li>
+<li><p>update InverseGaussian and related distributions to use delta and eta parameters (<a class="reference external" href="https://github.com/xshi19/normix/commit/e3e8a31320dcfbe8b9fd5783cf2460841574e281">e3e8a31</a>)</p></li>
+<li><p><strong>utils:</strong> split into plotting.py and validation.py (<a class="reference external" href="https://github.com/xshi19/normix/commit/c20543d9fc51af38a4acc66f52b8875ad9f0bcfc">c20543d</a>)</p></li>
+<li><p><strong>vg,nig,ninvg:</strong> replace GH delegation with analytical formulas (<a class="reference external" href="https://github.com/xshi19/normix/commit/836a214c58890f685732f7687c4191892f88258d">836a214</a>)</p></li>
+</ul>
+</section>
+<section id="id18">
+<h3>Documentation<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>add AGENTS.md and update project documentation (<a class="reference external" href="https://github.com/xshi19/normix/commit/448a311c4266ea316fb345590d6dbce1c0f853a3">448a311</a>)</p></li>
+<li><p>add Appendix D — porting bessel.py to JAX without logbesselk (<a class="reference external" href="https://github.com/xshi19/normix/commit/2938d3185880cd9408e1ac0296358fd2356c4fa4">2938d31</a>)</p></li>
+<li><p>add architecture reference page and clean up leftover _natural_params (<a class="reference external" href="https://github.com/xshi19/normix/commit/3f4b5edaa2eff732629b3ab44a39bd1760d854e3">3f4b5ed</a>)</p></li>
+<li><p>add comprehensive efax architecture analysis (<a class="reference external" href="https://github.com/xshi19/normix/commit/0e680f16c51e814d49f06d69779f27cebe408d6e">0e680f1</a>)</p></li>
+<li><p>add comprehensive JAX distribution ecosystem survey (<a class="reference external" href="https://github.com/xshi19/normix/commit/0eeaefb7456bee769d54fcc33e940f091245966c">0eeaefb</a>)</p></li>
+<li><p>add JAX design exploration (Equinox, FlowJAX analysis) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d16d7c7b4f77d8dd284ce7f6cb072729b7fcc38f">d16d7c7</a>)</p></li>
+<li><p>add JAX ecosystem research for EM algorithm design (<a class="reference external" href="https://github.com/xshi19/normix/commit/1c04370ec229dac7a09b5e3407fc28f6d3157b97">1c04370</a>)</p></li>
+<li><p>add JAX EM algorithm design research (<a class="reference external" href="https://github.com/xshi19/normix/commit/2f517773fff20b63bac7be52242ae56abbe9ba6d">2f51777</a>)</p></li>
+<li><p>add new sections for CVaR derivatives, effective number of bets, factor analysis, generalized ENB, mean-risk optimization, online EM, shrinkage, and transaction costs (<a class="reference external" href="https://github.com/xshi19/normix/commit/6ff608d4c40d78ddef4af6f065e32f309c7708af">6ff608d</a>)</p></li>
+<li><p>add parameter storage redesign plan (<a class="reference external" href="https://github.com/xshi19/normix/commit/17ac3584ddeb291d8e47c62b2dfaef645e5e75c2">17ac358</a>)</p></li>
+<li><p>add tech note on TFP log_bessel_kve crash investigation (<a class="reference external" href="https://github.com/xshi19/normix/commit/9ebfe3b534848795cd97dad3fb06765200a5d44b">9ebfe3b</a>)</p></li>
+<li><p><strong>agent:</strong> add docs publish skill (<a class="reference external" href="https://github.com/xshi19/normix/commit/2eb9ac9868432632630671e921bf8d6b55ffc326">2eb9ac9</a>)</p></li>
+<li><p><strong>agents:</strong> mention bench_gh_paths in benchmarks context map (<a class="reference external" href="https://github.com/xshi19/normix/commit/e4422d28904268d2c4ace514235bfa0b438d8925">e4422d2</a>)</p></li>
+<li><p><strong>api:</strong> format exponential-family docstrings for Sphinx math (<a class="reference external" href="https://github.com/xshi19/normix/commit/726dc018aa937e59657a354c005f9e8a4a5d3201">726dc01</a>)</p></li>
+<li><p><strong>arch:</strong> add shrinkage_targets to fitting module tree (<a class="reference external" href="https://github.com/xshi19/normix/commit/5be0005f7f070e7ce5f67c36e8f111620ce88572">5be0005</a>)</p></li>
+<li><p><strong>arch:</strong> document divergences module and three-tier design (<a class="reference external" href="https://github.com/xshi19/normix/commit/b4623e4c7b89e0faa98768c56af5e1befffd9098">b4623e4</a>)</p></li>
+<li><p><strong>architecture:</strong> clarify terminology for MultivariateNormal and JointGeneralizedHyperbolic (<a class="reference external" href="https://github.com/xshi19/normix/commit/5bda42d8bafa12c48258aa0fe536e59f9cc34665">5bda42d</a>)</p></li>
+<li><p><strong>arch:</strong> link distribution conversions tech note from navigation (<a class="reference external" href="https://github.com/xshi19/normix/commit/a82b2e18e9a6d1c6e88093a08643aadca61a29d5">a82b2e1</a>)</p></li>
+<li><p><strong>arch:</strong> Phase 4 JIT Newton cache and investigation status (<a class="reference external" href="https://github.com/xshi19/normix/commit/cf48b7d7152044574c651ac6facbf62a0a14a514">cf48b7d</a>)</p></li>
+<li><p><strong>bessel:</strong> add comparison script and accuracy figures (<a class="reference external" href="https://github.com/xshi19/normix/commit/12a3294ad2e9131fbce84f03695d381d48eb366c">12a3294</a>)</p></li>
+<li><p>create Sphinx documentation for JAX version (<a class="reference external" href="https://github.com/xshi19/normix/commit/d74a15f99454db18e1cb02b3484b301dc677fe81">d74a15f</a>)</p></li>
+<li><p><strong>design:</strong> add CPU-based Bessel design report for EM hot path (<a class="reference external" href="https://github.com/xshi19/normix/commit/638554aeb5f751859011725c3913f3283df88aeb">638554a</a>)</p></li>
+<li><p><strong>design:</strong> add fitters redesign document and update EM fitter descriptions (<a class="reference external" href="https://github.com/xshi19/normix/commit/94df0085cfd7b1ae761b5c9efd774ce3e0e760d0">94df008</a>)</p></li>
+<li><p><strong>design:</strong> add log-partition triad redesign proposal (<a class="reference external" href="https://github.com/xshi19/normix/commit/6fc96f58ec21be49e99ff5ee17f518cd5802c0e4">6fc96f5</a>)</p></li>
+<li><p><strong>design:</strong> clarify simplicity criterion for special-case distributions (<a class="reference external" href="https://github.com/xshi19/normix/commit/cf062396ca4c80eacd11acff0f4acaee177bd4cd">cf06239</a>)</p></li>
+<li><p><strong>design:</strong> expand fitters_redesign for E/M decomposition and efax (<a class="reference external" href="https://github.com/xshi19/normix/commit/ae11c6efe5a1dd22851c5270928ee4d90a56fdac">ae11c6e</a>)</p></li>
+<li><p><strong>design:</strong> layer EtaUpdateRule predictor over AffineRule (<a class="reference external" href="https://github.com/xshi19/normix/commit/a52ce6032cfe1b576a04b4fadd521ee87757cc11">a52ce60</a>)</p></li>
+<li><p><strong>design:</strong> mark EM covariance Phases 1-2.5 complete (<a class="reference external" href="https://github.com/xshi19/normix/commit/5be1d12970e81438d6dbf9b9fd62e8929a386f75">5be1d12</a>)</p></li>
+<li><p><strong>design:</strong> refine Design Philosophy with four prioritised principles (<a class="reference external" href="https://github.com/xshi19/normix/commit/f89ef5f81520585b8a571d6d1ef5b45fd08a5167">f89ef5f</a>)</p></li>
+<li><p><strong>design:</strong> reorganise docs/design into topical files; archive implemented proposals (<a class="reference external" href="https://github.com/xshi19/normix/commit/ed69b3513cfed46bdc540d5c9181c42b5fc8a0d3">ed69b35</a>)</p></li>
+<li><p><strong>design:</strong> revise CPU Bessel design — backend parameter, class methods only (<a class="reference external" href="https://github.com/xshi19/normix/commit/13167ee5bbea8f8d12f3727ff1181a74ad87f107">13167ee</a>)</p></li>
+<li><p><strong>design:</strong> split EM covariance and finance architecture docs (<a class="reference external" href="https://github.com/xshi19/normix/commit/70bca874813f5202ae9eba07e96749edd61d95d5">70bca87</a>)</p></li>
+<li><p>detailed design — Equinox, FlowJAX, GMMX EM, and batch/online fitting (<a class="reference external" href="https://github.com/xshi19/normix/commit/14e92ba5a76e77b5d08e579df81d5dd6f9c48dc4">14e92ba</a>)</p></li>
+<li><p><strong>em:</strong> sync ARCHITECTURE and design docs with fitter/solver API (<a class="reference external" href="https://github.com/xshi19/normix/commit/0ea57b414b38da8b20f6c420c51616cb820d9bdc">0ea57b4</a>)</p></li>
+<li><p><strong>em:</strong> update all references to new e_step/m_step/fitter API (<a class="reference external" href="https://github.com/xshi19/normix/commit/06bd40bc23410197d0361ca7fb1e5228c90016f2">06bd40b</a>)</p></li>
+<li><p><strong>em:</strong> η→model API, penalised EM, shrinkage demo (<a class="reference external" href="https://github.com/xshi19/normix/commit/e1f582db82ebd9a82d8ac7c79928d5a987b0e30e">e1f582d</a>)</p></li>
+<li><p>fix README examples and <strong>init</strong> docstring (<a class="reference external" href="https://github.com/xshi19/normix/commit/e8db92a429dc7222311ee37b82813d8c612dcaad">e8db92a</a>)</p></li>
+<li><p>improve Sphinx documentation (<a class="reference external" href="https://github.com/xshi19/normix/commit/68b35be5489f6914fe9607fbd94a2e8cb366c68b">68b35be</a>)</p></li>
+<li><p><strong>investigations:</strong> add test suite performance investigation (<a class="reference external" href="https://github.com/xshi19/normix/commit/15d8f944fe1019ef40e99b762c42c9c03ade96e6">15d8f94</a>)</p></li>
+<li><p><strong>investigations:</strong> close Phase 6 benchmark policy with GH path results (<a class="reference external" href="https://github.com/xshi19/normix/commit/36889b73441460b199ebc7797d8ac6ac070c3eca">36889b7</a>)</p></li>
+<li><p><strong>investigations:</strong> record Phase 3 EM consolidation status (<a class="reference external" href="https://github.com/xshi19/normix/commit/8cf4c58d296bc5bd731cf6630563d86990ee9832">8cf4c58</a>)</p></li>
+<li><p><strong>investigation:</strong> summarize GH GPU slowdown analysis (<a class="reference external" href="https://github.com/xshi19/normix/commit/69815e0a5b01b779aaf65fff3c38b2331801a883">69815e0</a>)</p></li>
+<li><p>JAX Bessel function &amp; optimization ecosystem research (<a class="reference external" href="https://github.com/xshi19/normix/commit/bdbde2e2c9d57a5a6129d9a026c50cc91bf1b914">bdbde2e</a>)</p></li>
+<li><p>JAX distribution packages survey and design recommendation (<a class="reference external" href="https://github.com/xshi19/normix/commit/9e7e6e3fc5a5a883a85d868d1fe8e1fa89b3acd1">9e7e6e3</a>)</p></li>
+<li><p>JAX migration feasibility report (<a class="reference external" href="https://github.com/xshi19/normix/commit/07b577b5f08ed354a1d091b174a9990a5e51c128">07b577b</a>)</p></li>
+<li><p>joint from_natural, EMResult fields, review follow-up (<a class="reference external" href="https://github.com/xshi19/normix/commit/425c82634742613d56e159967d2f89ca7a040173">425c826</a>)</p></li>
+<li><p>merge design docs → design.md; update ARCHITECTURE.md and README (<a class="reference external" href="https://github.com/xshi19/normix/commit/ff38f01798e057406db6f3642a8b0dbb4cb07ac7">ff38f01</a>)</p></li>
+<li><p><strong>notebook:</strong> add distribution_conversions demo (<a class="reference external" href="https://github.com/xshi19/normix/commit/7545af9441bfa97ec39bed8b893987943df2bdb2">7545af9</a>)</p></li>
+<li><p><strong>notebook:</strong> add S&amp;P 500 index empirical study (<a class="reference external" href="https://github.com/xshi19/normix/commit/9c4b3525552b6154ec519c9955f40054fb5ed888">9c4b352</a>)</p></li>
+<li><p><strong>notebook:</strong> re-execute all 9 notebooks with refactored codebase (<a class="reference external" href="https://github.com/xshi19/normix/commit/da424530e3bcfc36898c25bca937bc25b0468cbf">da42453</a>)</p></li>
+<li><p><strong>notebook:</strong> refresh GH and GIG distribution notebooks (<a class="reference external" href="https://github.com/xshi19/normix/commit/d009cb1ca83e05279622a3ea7183623370a54b20">d009cb1</a>)</p></li>
+<li><p><strong>notebook:</strong> refresh GIG, NInvGam, and SP500 study notebooks (<a class="reference external" href="https://github.com/xshi19/normix/commit/6134ef8b6f200c4e325ebbf583b62fac3ba9ac4c">6134ef8</a>)</p></li>
+<li><p><strong>notebook:</strong> use default_init for EM examples (<a class="reference external" href="https://github.com/xshi19/normix/commit/386546d1616d917402892ea4cabbad9c06e2990b">386546d</a>)</p></li>
+<li><p><strong>plans:</strong> add package improvement roadmap from review analysis (<a class="reference external" href="https://github.com/xshi19/normix/commit/c3c1c748bee5db962e7c4c09ebc983757262ed9b">c3c1c74</a>)</p></li>
+<li><p><strong>plans:</strong> mark Phase 2 fitter repair as done in roadmap (<a class="reference external" href="https://github.com/xshi19/normix/commit/95872d5867c10638bb6ab3aae4b135618e3602e6">95872d5</a>)</p></li>
+<li><p><strong>plans:</strong> mark Phase 3 complete in package improvement roadmap (<a class="reference external" href="https://github.com/xshi19/normix/commit/dfeaa54be1aab3df1cadbb51821566e6e1c1ad16">dfeaa54</a>)</p></li>
+<li><p><strong>readme:</strong> document PyPI install and plotting extra (<a class="reference external" href="https://github.com/xshi19/normix/commit/ae18f843750a29d8646f39e81bda69e7ffa49223">ae18f84</a>)</p></li>
+<li><p><strong>readme:</strong> enable JAX float64 support and update code examples (<a class="reference external" href="https://github.com/xshi19/normix/commit/74caee3b7ca5f899fdd302af7367b5dd5316878c">74caee3</a>)</p></li>
+<li><p><strong>review:</strong> add comprehensive package review for normix (<a class="reference external" href="https://github.com/xshi19/normix/commit/5dfc2a6f530e8503c47c611f0e07ef5e3c701cec">5dfc2a6</a>)</p></li>
+<li><p><strong>rules:</strong> split maintain-* rules, add agent design doc and skills (<a class="reference external" href="https://github.com/xshi19/normix/commit/f373195cc7df4f98b556d8bd0a362be85f1f58eb">f373195</a>)</p></li>
+<li><p><strong>rules:</strong> update coding conventions, ARCHITECTURE, design.md, benchmark script (<a class="reference external" href="https://github.com/xshi19/normix/commit/543b86eb796cae8503f2ce063b8d84cb8cc83d5b">543b86e</a>)</p></li>
+<li><p><strong>tech_notes:</strong> diagnose JAX vs NumPy overhead for GIG solver (<a class="reference external" href="https://github.com/xshi19/normix/commit/e7a88c1b6f451ae1c7a00d3142aac70f320ba1c3">e7a88c1</a>)</p></li>
+<li><p><strong>tech_notes:</strong> rerun EM profiling with pure-JAX Bessel architecture (<a class="reference external" href="https://github.com/xshi19/normix/commit/627a483a4fa0f828ec00219881f603adaf3cab9c">627a483</a>)</p></li>
+<li><p><strong>tech,arch:</strong> add GIG RVS tech note, update architecture (<a class="reference external" href="https://github.com/xshi19/normix/commit/01c6b124f3209d2797ea7bf06f0a7b77a22e2044">01c6b12</a>)</p></li>
+<li><p><strong>tech:</strong> add distribution conversions note (KL projection and bridges) (<a class="reference external" href="https://github.com/xshi19/normix/commit/c558e322a908c59fdf3f5b19567349e312774127">c558e32</a>)</p></li>
+<li><p><strong>theory:</strong> add GIG random variate generation algorithm review (<a class="reference external" href="https://github.com/xshi19/normix/commit/3d9008f905daa4133f3d4a59abf9413448b02ed5">3d9008f</a>)</p></li>
+<li><p><strong>theory:</strong> add R GeneralizedHyperbolic package analysis and PINV m… (<a class="reference external" href="https://github.com/xshi19/normix/commit/75d0f83cfffd4c9c2ef47d11553c8e3a3a4fc0e4">75d0f83</a>)</p></li>
+<li><p><strong>theory:</strong> add R GeneralizedHyperbolic package analysis and PINV method review (<a class="reference external" href="https://github.com/xshi19/normix/commit/1eb103ceb8e51945ad020c746f5935ac290d3692">1eb103c</a>)</p></li>
+<li><p>update architecture docs, add tech_notes, tighten coding rules (<a class="reference external" href="https://github.com/xshi19/normix/commit/6059f9292750d35a2e74db1b4fd73a407df140ef">6059f92</a>)</p></li>
+<li><p>update ARCHITECTURE, design, AGENTS, rules, migration plan for triad architecture (<a class="reference external" href="https://github.com/xshi19/normix/commit/728c0cd1418975ddddf8e0cbf7843971dca6a01b">728c0cd</a>)</p></li>
+<li><p>update ARCHITECTURE.md to reflect new solver API names (<a class="reference external" href="https://github.com/xshi19/normix/commit/935d3e55a38dd377b7077e662f6a75ef5c8ef807">935d3e5</a>)</p></li>
+<li><p>update docstrings with proper LaTeX formatting (<a class="reference external" href="https://github.com/xshi19/normix/commit/49c31e347ad51d53cf90e8ac074a7d2f5c7a06e4">49c31e3</a>)</p></li>
+<li><p>update em_gpu_profiling.md for CPU backend; minor notebook update (<a class="reference external" href="https://github.com/xshi19/normix/commit/781a4aeb7a25fab8553dec3b36abd9a538716fe4">781a4ae</a>)</p></li>
+<li><p>update ROADMAP.md and project-overview.mdc for parameter storage redesign (<a class="reference external" href="https://github.com/xshi19/normix/commit/848b0568e201f0d42a7e997a7daac12457f9074e">848b056</a>)</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="api/utils.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Utilities</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#refactoring">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bug Fixes</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Documentation</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

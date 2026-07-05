@@ -1,0 +1,1945 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mixtures &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/mixtures';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Fitting" href="fitting.html" />
+    <link rel="prev" title="Distributions" href="distributions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fapi/mixtures.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/mixtures.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Mixtures</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.joint">JointNormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_prob_joint"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_prob_joint()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.conditional_expectations"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.conditional_expectations()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sufficient_statistics()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_base_measure"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_base_measure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.from_expectation"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.marginal">NormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture"><code class="docutils literal notranslate"><span class="pre">MarginalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.log_prob"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.log_prob()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.pdf"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.pdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.marginal_log_likelihood()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.fit"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.fit()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture"><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.d"><code class="docutils literal notranslate"><span class="pre">NormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.L_Sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">NormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">NormalMixture.squared_hellinger()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kl_divergence"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kl_divergence()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">NormalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">NormalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.from_expectation"><code class="docutils literal notranslate"><span class="pre">NormalMixture.from_expectation()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.replace"><code class="docutils literal notranslate"><span class="pre">NormalMixture.replace()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_det_sigma_one()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_a_eq_b()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">NormalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.default_init"><code class="docutils literal notranslate"><span class="pre">NormalMixture.default_init()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.factor">FactorNormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.F"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.F</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.D"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.D</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.subordinator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.r"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.r</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma_one"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_det_sigma_one()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_a_eq_b"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_a_eq_b()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.default_init"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.default_init()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.replace"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.replace()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="mixtures">
+<h1>Mixtures<a class="headerlink" href="#mixtures" title="Link to this heading">#</a></h1>
+<p>Base classes shared by every mixture distribution in <a class="reference internal" href="distributions.html"><span class="doc">Distributions</span></a>.</p>
+<nav class="contents local" id="modules">
+<p class="topic-title">Modules</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-normix.mixtures.joint" id="id1">JointNormalMixture</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.mixtures.marginal" id="id2">NormalMixture</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.mixtures.factor" id="id3">FactorNormalMixture</a></p></li>
+</ul>
+</nav>
+<section id="module-normix.mixtures.joint">
+<span id="jointnormalmixture"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">JointNormalMixture</a><a class="headerlink" href="#module-normix.mixtures.joint" title="Link to this heading">#</a></h2>
+<p>JointNormalMixture — abstract exponential family for normal variance-mean mixtures.</p>
+<p>Joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[X \mid Y \sim \mathcal{N}(\mu + \gamma y,\; \Sigma y), \quad
+Y \sim \text{subordinator (GIG, Gamma, InvGamma, InvGaussian)}\]</div>
+<p><strong>Sufficient statistics:</strong></p>
+<div class="math notranslate nohighlight">
+\[t(x, y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]\]</div>
+<p><strong>Natural parameters:</strong></p>
+<div class="math notranslate nohighlight">
+\[\theta_1 = p_{\mathrm{sub}} - 1 - d/2, \quad
+\theta_2 = -(b_{\mathrm{sub}}/2 + \tfrac{1}{2}\mu^\top\Sigma^{-1}\mu) &lt; 0\]</div>
+<div class="math notranslate nohighlight">
+\[\theta_3 = -(a_{\mathrm{sub}}/2 + \tfrac{1}{2}\gamma^\top\Sigma^{-1}\gamma) &lt; 0, \quad
+\theta_4 = \Sigma^{-1}\gamma, \quad
+\theta_5 = \Sigma^{-1}\mu, \quad
+\theta_6 = -\tfrac{1}{2}\mathrm{vec}(\Sigma^{-1})\]</div>
+<p>For a GIG subordinator, <span class="math notranslate nohighlight">\(\theta_2,\theta_3\)</span> combine <span class="math notranslate nohighlight">\(-b/2,-a/2\)</span> with the
+normal quadratic forms so that <span class="math notranslate nohighlight">\(\theta^{\top} t\)</span> matches
+<span class="math notranslate nohighlight">\(-(a y + b/y)/2\)</span> from <span class="math notranslate nohighlight">\(f_Y\)</span> plus the <span class="math notranslate nohighlight">\(y\)</span>-dependent terms from
+<span class="math notranslate nohighlight">\(f_{X\mid Y}\)</span>.</p>
+<p><strong>Log-partition:</strong></p>
+<div class="math notranslate nohighlight">
+\[\psi = \psi_{\mathrm{sub}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma\]</div>
+<p><strong>Expectation parameters (EM E-step quantities):</strong></p>
+<div class="math notranslate nohighlight">
+\[\eta_1 = E[\log Y], \quad \eta_2 = E[1/Y], \quad \eta_3 = E[Y]\]</div>
+<div class="math notranslate nohighlight">
+\[\eta_4 = E[X] = \mu + \gamma E[Y], \quad
+\eta_5 = E[X/Y] = \mu E[1/Y] + \gamma\]</div>
+<div class="math notranslate nohighlight">
+\[\eta_6 = E[XX^\top/Y] = \Sigma + \mu\mu^\top E[1/Y]
++ \gamma\gamma^\top E[Y] + \mu\gamma^\top + \gamma\mu^\top\]</div>
+<p><strong>EM M-step closed-form</strong> (let <span class="math notranslate nohighlight">\(D = 1 - E[1/Y] \cdot E[Y]\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\mu = \frac{E[X] - E[Y] E[X/Y]}{D}, \quad
+\gamma = \frac{E[X/Y] - E[1/Y] E[X]}{D}\]</div>
+<div class="math notranslate nohighlight">
+\[\Sigma = E[XX^\top/Y] - E[X/Y]\mu^\top - \mu E[X/Y]^\top
++ E[1/Y]\mu\mu^\top - E[Y]\gamma\gamma^\top\]</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.joint.</span></span><span class="sig-name descname"><span class="pre">JointNormalMixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_Sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a></p>
+<p>Abstract joint distribution <span class="math notranslate nohighlight">\(f(x, y)\)</span> for normal variance-mean mixtures.</p>
+<p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">gamma</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (d×d lower Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>).
+Subordinator parameters defined by concrete subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>L_Sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.mu">
+<span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.mu" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.gamma" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.L_Sigma">
+<span class="sig-name descname"><span class="pre">L_Sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.subordinator">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subordinator</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.subordinator" title="Link to this definition">#</a></dt>
+<dd><p>Return the fitted subordinator distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.d">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.d" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.sigma">
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.sigma" title="Link to this definition">#</a></dt>
+<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_det_sigma">
+<span class="sig-name descname"><span class="pre">log_det_sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log|\Sigma| = 2\sum_i \log L_{ii}\)</span>, via Cholesky diagonal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.rvs" title="Link to this definition">#</a></dt>
+<dd><p>Sample <span class="math notranslate nohighlight">\((X, Y)\)</span> from the joint distribution via JAX PRNG.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>X</strong> (<em>jax.Array</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>Y</strong> (<em>jax.Array</em>) – Shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_prob_joint">
+<span class="sig-name descname"><span class="pre">log_prob_joint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_prob_joint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_prob_joint" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log f(x, y) = \log f(x\mid y) + \log f_Y(y)\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\log f(x\mid y) = -\tfrac{d}{2}\log(2\pi) - \tfrac{1}{2}\log|\Sigma|
+- \tfrac{d}{2}\log y - \frac{1}{2y}\|L^{-1}(x-\mu)\|^2
++ \gamma^\top\Sigma^{-1}(x-\mu) - \tfrac{y}{2}\gamma^\top\Sigma^{-1}\gamma\]</div>
+<p><span class="math notranslate nohighlight">\(\log f_Y(y)\)</span> from subordinator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.conditional_expectations">
+<span class="sig-name descname"><span class="pre">conditional_expectations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.conditional_expectations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="Link to this definition">#</a></dt>
+<dd><p>Compute <span class="math notranslate nohighlight">\(E[g(Y)\mid X=x]\)</span> for the EM E-step.</p>
+<p>The posterior <span class="math notranslate nohighlight">\(Y\mid X=x\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{GIG}\!\left(p - \tfrac{d}{2},\;
+a + \gamma^\top\Sigma^{-1}\gamma,\;
+b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),\]</div>
+<p>with the family-specific prior <span class="math notranslate nohighlight">\((p, a, b)\)</span> resolved by
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>. Returns a dict with keys
+<code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.sufficient_statistics">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sufficient_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.sufficient_statistics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.sufficient_statistics" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(t(x,y) = [\log y,\; 1/y,\; y,\; x,\; x/y,\; \mathrm{vec}(xx^\top/y)]\)</span>.</p>
+<p>Input: flat vector <span class="math notranslate nohighlight">\([x_1,\ldots,x_d, y]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>xy</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.log_base_measure">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_base_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.log_base_measure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.log_base_measure" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log h(x)\)</span> for a <em>single</em> unbatched observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>xy</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.from_expectation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.from_expectation" title="Link to this definition">#</a></dt>
+<dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Two input forms are supported:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> — the natural η
+pytree of the joint normal-variance-mean mixture; uses the
+closed-form M-step (<span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span> analytical;
+subordinator via <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code>).</p></li>
+<li><p>flat <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code> — the generic Bregman solver inherited from
+<a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a>.</p></li>
+</ul>
+<p>The pytree path is the canonical η→θ map for these distributions:
+it is exact (no Bregman iterations on the normal block) and uses
+the subordinator’s own <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> (closed-form for
+Gamma / InverseGamma / InverseGaussian; numerical for GIG).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Expectation parameters.</p></li>
+<li><p><strong>**kwargs</strong> – For the pytree path: forwarded to
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">maxiter</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code> for warm-starting GIG).
+For the flat-array path: forwarded to the parent solver.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><em>JointNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.mixtures.marginal">
+<span id="normalmixture"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">NormalMixture</a><a class="headerlink" href="#module-normix.mixtures.marginal" title="Link to this heading">#</a></h2>
+<p>Marginal mixture base classes.</p>
+<p><a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalMixture</span></code></a> is the abstract interface fitters and the
+divergences module depend on. <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> is the
+full-covariance implementation, owning a
+<a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>. A factor-analysis
+implementation lives in the sibling class <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code>
+(see <code class="docutils literal notranslate"><span class="pre">docs/design/mixtures.md</span></code> § 6).</p>
+<p>NormalMixture provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">log_prob(x)</span></code> — closed-form marginal log-density</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e_step(X)</span></code> — <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vmap.html#jax.vmap" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.vmap()</span></code></a> over conditional expectations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m_step(X,</span> <span class="pre">expectations)</span></code> — returns new <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit(X,</span> <span class="pre">...)</span></code> — convenience EM fitting with multi-start</p></li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.marginal.</span></span><span class="sig-name descname"><span class="pre">MarginalMixture</span></span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Abstract interface for marginal mixtures used by the EM fitters.</p>
+<p>Concrete subclasses pick the storage of the Gaussian dispersion (full
+Cholesky in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, low-rank-plus-diagonal in
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code>) and the type of the EM expectation
+pytree (<code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code> vs. <code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code>).</p>
+<p>The fitter depends only on this contract; it does not know which
+storage form a model uses.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.log_prob">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.log_prob" title="Link to this definition">#</a></dt>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(\log f(x)\)</span> for a single observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.pdf">
+<span class="sig-name descname"><span class="pre">pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.pdf" title="Link to this definition">#</a></dt>
+<dd><p>Marginal <span class="math notranslate nohighlight">\(f(x)\)</span> for a single observation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">
+<span class="sig-name descname"><span class="pre">marginal_log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.marginal_log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood" title="Link to this definition">#</a></dt>
+<dd><p>Mean log-likelihood over a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.e_step">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.e_step" title="Link to this definition">#</a></dt>
+<dd><p>E-step: aggregated expectation parameters for the batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.m_step">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.m_step" title="Link to this definition">#</a></dt>
+<dd><p>Full M-step: updates all parameters; returns a new model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><em>MarginalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.m_step_normal">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">m_step_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.m_step_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.m_step_normal" title="Link to this definition">#</a></dt>
+<dd><p>M-step for normal parameters only (MCECM cycle 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><em>MarginalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.m_step_subordinator">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.m_step_subordinator" title="Link to this definition">#</a></dt>
+<dd><p>M-step for subordinator parameters only (MCECM cycle 2).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><em>MarginalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.compute_eta_from_model">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">compute_eta_from_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.compute_eta_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model" title="Link to this definition">#</a></dt>
+<dd><p>Reconstruct the expectation pytree from the model’s own parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.em_convergence_params">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
+<dd><p>Pytree whose leaf-wise change measures EM convergence.</p>
+<p>Subordinator parameters are intentionally excluded (their solver
+has its own tolerance, and including them inflates iteration
+counts). For full-covariance models this is
+<code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code>; for factor-analysis models it is
+<code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">F</span> <span class="pre">F^T</span> <span class="pre">+</span> <span class="pre">D)</span></code> to sidestep the rotational gauge.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.fit" title="Link to this definition">#</a></dt>
+<dd><p>Fit using <code class="docutils literal notranslate"><span class="pre">self</span></code> as initialisation. Returns
+<a class="reference internal" href="fitting.html#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EMResult</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> or </em><em>{'density'</em><em>, </em><em>'inverse_moment'}</em><em>, </em><em>optional</em>) – Opt-in lower bound on the Gamma subordinator shape <span class="math notranslate nohighlight">\(\alpha\)</span>
+(Variance Gamma only — the unique family whose marginal
+likelihood is unbounded at <span class="math notranslate nohighlight">\(x=\mu\)</span>). Restricts the
+estimator to a region where that degeneracy cannot occur; the
+<code class="docutils literal notranslate"><span class="pre">ghyp</span></code> “fix-<span class="math notranslate nohighlight">\(\lambda\)</span>” analogue. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) leaves
+<span class="math notranslate nohighlight">\(\alpha\)</span> unconstrained. A float is used directly; the
+<span class="math notranslate nohighlight">\(d\)</span>-aware sentinels resolve to
+<span class="math notranslate nohighlight">\(d/2 + \varepsilon\)</span> (<code class="docutils literal notranslate"><span class="pre">'density'</span></code> — marginal density
+bounded) or <span class="math notranslate nohighlight">\(d/2 + 1 + \varepsilon\)</span>
+(<code class="docutils literal notranslate"><span class="pre">'inverse_moment'</span></code> — <span class="math notranslate nohighlight">\(E[1/Y\mid x]\)</span> also bounded), with
+<span class="math notranslate nohighlight">\(\varepsilon=\)</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">ALPHA_MIN_MARGIN</span></code>.
+Has no effect on NInvG / NIG / GH (their prior <span class="math notranslate nohighlight">\(b&gt;0\)</span> keeps
+the likelihood bounded for every <span class="math notranslate nohighlight">\(\alpha\)</span>).</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>)</p></li>
+<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult">EMResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.marginal.</span></span><span class="sig-name descname"><span class="pre">NormalMixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalMixture</span></code></a></p>
+<p>Marginal <span class="math notranslate nohighlight">\(f(x) = \int_0^\infty f(x,y)\,dy\)</span> for a normal
+variance-mean mixture.</p>
+<p>Not an exponential family. Owns a
+<a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a> (which is). The
+classical parameters <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma, \text{subordinator})\)</span>
+are forwarded as read-only properties; use <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.replace" title="normix.mixtures.marginal.NormalMixture.replace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">replace()</span></code></a> to obtain
+a new model with updated parameters (modules are immutable).</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">joint</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><span class="pre">JointNormalMixture</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.d">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.d" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mu">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.mu" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mu\)</span> — location parameter (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.gamma">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">gamma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.gamma" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\gamma\)</span> — skewness parameter (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.L_Sigma">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">L_Sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.L_Sigma" title="Link to this definition">#</a></dt>
+<dd><p>Lower Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span> (forwarded from the joint).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.sigma">
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.sigma" title="Link to this definition">#</a></dt>
+<dd><p>Dispersion <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span> (forwarded from the joint).</p>
+<p>Distinct from <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.cov" title="normix.mixtures.marginal.NormalMixture.cov"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cov()</span></code></a>, which returns the <em>marginal</em> covariance
+<span class="math notranslate nohighlight">\(E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.log_det_sigma">
+<span class="sig-name descname"><span class="pre">log_det_sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.log_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.log_det_sigma" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log|\Sigma|\)</span> (forwarded from the joint).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.project">
+<span class="sig-name descname"><span class="pre">project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.project" title="Link to this definition">#</a></dt>
+<dd><p>Return the univariate normal mixture <span class="math notranslate nohighlight">\(w^\top X\)</span> as a <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>_UnivariateNormalMixtureMixin</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.mean" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma E[Y]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.cov">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.cov" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_entropy">
+<span class="sig-name descname"><span class="pre">joint_entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_entropy" title="Link to this definition">#</a></dt>
+<dd><p>Entropy of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>,
+<span class="math notranslate nohighlight">\(H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_varentropy">
+<span class="sig-name descname"><span class="pre">joint_varentropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_varentropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy" title="Link to this definition">#</a></dt>
+<dd><p>Varentropy of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[V_H(X, Y) = \tfrac{d}{2}
++ \mathrm{Var}\!\big[-\log g(Y) + \tfrac{d}{2}\log Y\big].\]</div>
+<p>The marginal varentropy <span class="math notranslate nohighlight">\(\mathrm{Var}[-\log f(X)]\)</span> has no closed
+form; this tractable joint quantity is the natural surrogate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_renyi">
+<span class="sig-name descname"><span class="pre">joint_renyi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_renyi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_renyi" title="Link to this definition">#</a></dt>
+<dd><p>Rényi entropy of order <span class="math notranslate nohighlight">\(\alpha\)</span> of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.rvs" title="Link to this definition">#</a></dt>
+<dd><p>Sample X from the marginal distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.squared_hellinger">
+<span class="sig-name descname"><span class="pre">squared_hellinger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.squared_hellinger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger" title="Link to this definition">#</a></dt>
+<dd><p>Squared Hellinger distance via joint distributions (upper bound on marginal).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.kl_divergence">
+<span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.kl_divergence" title="Link to this definition">#</a></dt>
+<dd><p>KL divergence via joint distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.compute_eta_from_model">
+<span class="sig-name descname"><span class="pre">compute_eta_from_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.compute_eta_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.compute_eta_from_model" title="Link to this definition">#</a></dt>
+<dd><p>Reconstruct <span class="math notranslate nohighlight">\(\eta\)</span> from the model’s own parameters.</p>
+<p>Uses the <em>marginal</em> expectations of the joint sufficient statistics:</p>
+<div class="math notranslate nohighlight">
+\[\eta_4 = \mu + \gamma\,E[Y], \quad
+\eta_5 = \mu\,E[1/Y] + \gamma, \quad
+\eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
+         + \mu\gamma^\top + \gamma\mu^\top\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.e_step">
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition">#</a></dt>
+<dd><p>Full E-step: subordinator conditionals + batch aggregation.</p>
+<p>Returns a <a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> with the
+six aggregated expectation parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.d" title="normix.mixtures.marginal.NormalMixture.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over <code class="docutils literal notranslate"><span class="pre">conditional_expectations</span></code>.
+<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: quad forms in JAX + GIG Bessel on CPU.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.from_expectation">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.from_expectation" title="Link to this definition">#</a></dt>
+<dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Wraps <code class="xref py py-meth docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code>, which performs
+the exact closed-form M-step on the normal block and the
+subordinator’s <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> on the subordinator block.</p>
+<p>This is the canonical η→model map: any prior or shrinkage target
+<span class="math notranslate nohighlight">\(\eta_0\)</span> can be inspected as a concrete model via
+<code class="docutils literal notranslate"><span class="pre">cls.from_expectation(eta_0).sigma()</span></code> etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>) – Aggregated expectation parameters.</p></li>
+<li><p><strong>**kwargs</strong> – Forwarded to <code class="xref py py-meth docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code>
+(e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>, <code class="docutils literal notranslate"><span class="pre">maxiter</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step">
+<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step" title="Link to this definition">#</a></dt>
+<dd><p>Full M-step: update normal params + subordinator from <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<p>Equivalent to <code class="docutils literal notranslate"><span class="pre">type(self).from_expectation(eta,</span> <span class="pre">**kwargs)</span></code>;
+<code class="docutils literal notranslate"><span class="pre">self</span></code> is only used to dispatch on the subclass. Subclasses
+with iterative subordinator solvers (e.g.
+<a class="reference internal" href="distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>)
+may override to inject a warm-start <span class="math notranslate nohighlight">\(\theta_0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step_normal">
+<span class="sig-name descname"><span class="pre">m_step_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_normal" title="Link to this definition">#</a></dt>
+<dd><p>M-step for normal parameters only (MCECM Cycle 1).</p>
+<p>Updates <span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span>; subordinator unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator" title="Link to this definition">#</a></dt>
+<dd><p>M-step for the subordinator only (MCECM Cycle 2).</p>
+<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>; normal
+parameters are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code> and copied unchanged.
+Subclasses with iterative solvers may override to add warm-start
+or sanity-check fallbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.replace">
+<span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.replace" title="Link to this definition">#</a></dt>
+<dd><p>Return a new model with selected parameters replaced.</p>
+<p>Accepts any subset of:</p>
+<ul class="simple">
+<li><p>normal parameters: <code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>;</p></li>
+<li><p>dispersion alias <code class="docutils literal notranslate"><span class="pre">sigma</span></code> — converted to <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> via
+Cholesky (mutually exclusive with <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>);</p></li>
+<li><p>subordinator parameters declared by <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_keys()</span></code>
+(e.g. <code class="docutils literal notranslate"><span class="pre">alpha,</span> <span class="pre">beta</span></code> for VG / NInvG, <code class="docutils literal notranslate"><span class="pre">mu_ig,</span> <span class="pre">lam</span></code> for NIG,
+<code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code> for GH).</p></li>
+</ul>
+<p>The actual storage lives in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.joint" title="normix.mixtures.marginal.NormalMixture.joint"><code class="xref py py-attr docutils literal notranslate"><span class="pre">joint</span></code></a>; this method does an
+immutable update via <code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code>.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vg2</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">new_mu</span><span class="p">)</span>                    <span class="c1"># change μ</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vg3</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>          <span class="c1"># change subordinator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vg4</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>    <span class="c1"># set Σ via covariance</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_det_sigma">
+<span class="sig-name descname"><span class="pre">regularize_det_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_log_det</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma" title="Link to this definition">#</a></dt>
+<dd><p>Rescale to enforce <span class="math notranslate nohighlight">\(\log|\Sigma| = \mathrm{target\_log\_det}\)</span>.</p>
+<p>Picks <span class="math notranslate nohighlight">\(s = \exp((\log|\Sigma| - \tau)/d)\)</span> and applies
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_rescale()</span></code>. The default <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code> recovers the
+<span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> convention; passing the log-determinant of
+an initial reference Σ implements the <code class="docutils literal notranslate"><span class="pre">det_sigma_x</span></code> family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>target_log_det</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">
+<span class="sig-name descname"><span class="pre">regularize_det_sigma_one</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one" title="Link to this definition">#</a></dt>
+<dd><p>Enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>. Alias for
+<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma" title="normix.mixtures.marginal.NormalMixture.regularize_det_sigma"><code class="xref py py-meth docutils literal notranslate"><span class="pre">regularize_det_sigma()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b" title="Link to this definition">#</a></dt>
+<dd><p>Rescale subordinator so that <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span> for
+GIG-parameterised families.</p>
+<p>Default implementation is a no-op; override in subclasses with
+both <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> (currently GH and NIG; VG and NInvG have
+a degenerate <code class="docutils literal notranslate"><span class="pre">a=0</span></code> or <code class="docutils literal notranslate"><span class="pre">b=0</span></code> and the default no-op is the
+right behaviour).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.em_convergence_params">
+<span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
+<dd><p>Pytree whose leaf-wise change measures EM convergence.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code>. Subordinator parameters
+(<code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code>) are excluded — their solver has its own tolerance
+and including them inflates iteration counts.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.default_init">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.default_init" title="Link to this definition">#</a></dt>
+<dd><p>Moment-based initialisation from data.</p>
+<dl class="simple">
+<dt>Returns a model with:</dt><dd><p>mu    = sample mean
+gamma = zeros
+Sigma = empirical covariance (regularized)
+subordinator = distribution-specific defaults</p>
+</dd>
+</dl>
+<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.mixtures.factor">
+<span id="factornormalmixture"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">FactorNormalMixture</a><a class="headerlink" href="#module-normix.mixtures.factor" title="Link to this heading">#</a></h2>
+<p>Factor-analysis mixture base class: <span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span> storage.</p>
+<p>A factor-analysis Generalized-Hyperbolic random vector</p>
+<div class="math notranslate nohighlight">
+\[X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,(F Z + \varepsilon),
+\qquad Z \sim N(0, I_r),\;
+\varepsilon \sim N(0, \mathrm{diag}(D)),\]</div>
+<p>where <span class="math notranslate nohighlight">\(Y\)</span> is a GH subordinator (Gamma, InverseGamma,
+InverseGaussian or GIG). The marginal <span class="math notranslate nohighlight">\(X\)</span> is a normal
+variance-mean mixture with dispersion <span class="math notranslate nohighlight">\(\Sigma = F F^\top +
+\mathrm{diag}(D)\)</span>. Storing <span class="math notranslate nohighlight">\((F, D)\)</span> instead of a full Cholesky of
+<span class="math notranslate nohighlight">\(\Sigma\)</span> keeps quadratic forms and log-determinants in
+<span class="math notranslate nohighlight">\(\mathcal{O}(d r^2 + r^3)\)</span> via Woodbury and makes the rotation
+gauge of <span class="math notranslate nohighlight">\(F\)</span> irrelevant for convergence (we measure on
+<span class="math notranslate nohighlight">\(\Sigma\)</span>).</p>
+<p>This module hosts only the abstract <a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a> base.
+The four concrete subordinator families
+(<a class="reference internal" href="distributions.html#normix.distributions.variance_gamma.FactorVarianceGamma" title="normix.distributions.variance_gamma.FactorVarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorVarianceGamma</span></code></a>,
+<a class="reference internal" href="distributions.html#normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalInverseGamma</span></code></a>,
+<a class="reference internal" href="distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalInverseGaussian</span></code></a>,
+<a class="reference internal" href="distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code></a>)
+live next to their full-<span class="math notranslate nohighlight">\(\Sigma\)</span> siblings in
+<code class="docutils literal notranslate"><span class="pre">normix/distributions/</span></code>.</p>
+<p>The FA complete-data structure is over <span class="math notranslate nohighlight">\((X, Y, Z)\)</span> with ten
+sufficient statistics (see <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.rst</span></code>), so this
+family does not share the joint’s six-statistic exponential-family
+signature — that is why <a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a> is a sibling of
+<a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, not a subclass.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.factor.</span></span><span class="sig-name descname"><span class="pre">FactorNormalMixture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subordinator</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.mixtures.marginal.MarginalMixture" title="normix.mixtures.marginal.MarginalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalMixture</span></code></a></p>
+<p>Abstract marginal <span class="math notranslate nohighlight">\(f(x)\)</span> for a factor-analysis normal
+variance-mean mixture with dispersion
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>.</p>
+<section id="stored-fields">
+<h3>Stored fields<a class="headerlink" href="#stored-fields" title="Link to this heading">#</a></h3>
+<dl class="simple">
+<dt>mu<span class="classifier">(d,)</span></dt><dd><p>Location <span class="math notranslate nohighlight">\(\mu\)</span>.</p>
+</dd>
+<dt>gamma<span class="classifier">(d,)</span></dt><dd><p>Skewness <span class="math notranslate nohighlight">\(\gamma\)</span>.</p>
+</dd>
+<dt>F<span class="classifier">(d, r)</span></dt><dd><p>Factor loadings; <code class="docutils literal notranslate"><span class="pre">r</span></code> is the latent factor dimension.</p>
+</dd>
+<dt>D<span class="classifier">(d,)</span></dt><dd><p>Diagonal entries of the residual covariance (positive).</p>
+</dd>
+<dt>subordinator<span class="classifier">ExponentialFamily</span></dt><dd><p>Fitted subordinator (Gamma / InverseGamma / InverseGaussian /
+GIG).</p>
+</dd>
+</dl>
+<p>Subclasses define the subordinator family (via the instance stored in
+<code class="docutils literal notranslate"><span class="pre">subordinator</span></code>, which supplies the shared posterior map through
+<code class="docutils literal notranslate"><span class="pre">to_gig()</span></code>) and implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code>, and a few forwarders / initialisers.
+The prior-to-posterior GIG conjugacy (<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>)
+is uniform across families and lives on the base. The linear algebra for
+<span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> and <span class="math notranslate nohighlight">\(\log|\Sigma|\)</span> is shared via
+Woodbury helpers (<code class="xref py py-meth docutils literal notranslate"><span class="pre">_M()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_solve()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_quad_form()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_det_sigma()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_beta()</span></code>).</p>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to a right <span class="math notranslate nohighlight">\(r \times r\)</span>
+orthogonal rotation, so convergence is measured on
+<span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>
+(<a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params" title="normix.mixtures.factor.FactorNormalMixture.em_convergence_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">em_convergence_params()</span></code></a>) rather than on <code class="docutils literal notranslate"><span class="pre">F</span></code> directly.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.mu">
+<span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.mu" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.gamma" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.F">
+<span class="sig-name descname"><span class="pre">F</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.F" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.D">
+<span class="sig-name descname"><span class="pre">D</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.D" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.subordinator">
+<span class="sig-name descname"><span class="pre">subordinator</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><span class="pre">ExponentialFamily</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.subordinator" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.d">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.d" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.r">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">r</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.r" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.sigma">
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.sigma" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span> (dense).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.log_det_sigma">
+<span class="sig-name descname"><span class="pre">log_det_sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.log_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.log_det_sigma" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log|\Sigma|\)</span>, computed via Woodbury.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.mean" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma\,E[Y]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.cov">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.cov" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.rvs" title="Link to this definition">#</a></dt>
+<dd><p>Sample <code class="docutils literal notranslate"><span class="pre">n</span></code> observations from the marginal <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
+<p>Uses <span class="math notranslate nohighlight">\(X = \mu + \gamma Y + \sqrt{Y}(F Z + \varepsilon)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.e_step">
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.e_step" title="Link to this definition">#</a></dt>
+<dd><p>Full E-step: posterior <span class="math notranslate nohighlight">\(Y\)</span> expectations + deterministic
+<span class="math notranslate nohighlight">\(Z\)</span> reductions.</p>
+<p>Returns a <a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a>
+whose first six fields are batch averages of the standard normal
+variance-mean mixture sufficient statistics, and whose four
+<span class="math notranslate nohighlight">\(Z\)</span>-fields are computed from the first six via the
+deterministic relations in
+<code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.rst</span></code> §E-Step (no extra Bessel
+evaluations).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.m_step">
+<span class="sig-name descname"><span class="pre">m_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.m_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.m_step" title="Link to this definition">#</a></dt>
+<dd><p>Full M-step: update <span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span> and the
+subordinator from <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code>.</p>
+<p>Equivalent to <code class="docutils literal notranslate"><span class="pre">self.m_step_normal(eta).m_step_subordinator(eta,</span>
+<span class="pre">**kwargs)</span></code>. Subclasses with iterative subordinator solvers (e.g.
+<a class="reference internal" href="distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code></a>)
+may override to inject a warm-start.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.m_step_normal">
+<span class="sig-name descname"><span class="pre">m_step_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.m_step_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.m_step_normal" title="Link to this definition">#</a></dt>
+<dd><p>M-step for <span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span> only (MCECM cycle 1).</p>
+<p>Subordinator unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.m_step_subordinator">
+<span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.m_step_subordinator" title="Link to this definition">#</a></dt>
+<dd><p>M-step for the subordinator only (MCECM cycle 2).</p>
+<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>;
+<span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span> are read from <code class="docutils literal notranslate"><span class="pre">self</span></code> and copied
+unchanged. Subclasses with iterative solvers may override to
+add a warm-start or sanity-check fallback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model">
+<span class="sig-name descname"><span class="pre">compute_eta_from_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.compute_eta_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model" title="Link to this definition">#</a></dt>
+<dd><p>Reconstruct <code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code> from the model’s own
+parameters.</p>
+<p>The first six fields use the marginal expectations of the joint
+sufficient statistics under the current <span class="math notranslate nohighlight">\(\Sigma = F F^\top
++ \mathrm{diag}(D)\)</span>; the four <span class="math notranslate nohighlight">\(Z\)</span>-fields use the same
+deterministic relations as <a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture.e_step" title="normix.mixtures.factor.FactorNormalMixture.e_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">e_step()</span></code></a> (§E-Step of the
+theory doc).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.em_convergence_params">
+<span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
+<dd><p>Return <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span> for the convergence
+check.</p>
+<p><span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span> rather than <code class="docutils literal notranslate"><span class="pre">F</span></code>
+directly, because <code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to an
+<span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal rotation and would never converge
+in norm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma">
+<span class="sig-name descname"><span class="pre">regularize_det_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_log_det</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.regularize_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma" title="Link to this definition">#</a></dt>
+<dd><p>Rescale to enforce <span class="math notranslate nohighlight">\(\log|\Sigma| = \mathrm{target\_log\_det}\)</span>.</p>
+<p>Same family as the full-Σ implementation but the
+log-determinant is computed via the Woodbury identity
+<span class="math notranslate nohighlight">\(\log|\Sigma| = \log|D| + \log|I_r + F^\top D^{-1} F|\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>target_log_det</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma_one">
+<span class="sig-name descname"><span class="pre">regularize_det_sigma_one</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.regularize_det_sigma_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma_one" title="Link to this definition">#</a></dt>
+<dd><p>Enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span>. Alias for
+<a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma" title="normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma"><code class="xref py py-meth docutils literal notranslate"><span class="pre">regularize_det_sigma()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.regularize_a_eq_b">
+<span class="sig-name descname"><span class="pre">regularize_a_eq_b</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.regularize_a_eq_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.regularize_a_eq_b" title="Link to this definition">#</a></dt>
+<dd><p>Rescale subordinator so that <span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span>.</p>
+<p>Default no-op; overridden in
+<a class="reference internal" href="distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorGeneralizedHyperbolic</span></code></a>
+and
+<a class="reference internal" href="distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalInverseGaussian</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.default_init">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.default_init" title="Link to this definition">#</a></dt>
+<dd><p>Moment-based initialisation from data with <code class="docutils literal notranslate"><span class="pre">r</span></code> factors.</p>
+<p>Sets <span class="math notranslate nohighlight">\(\mu = \bar X\)</span>, <span class="math notranslate nohighlight">\(\gamma = 0\)</span>, and splits the
+empirical covariance into a rank-<code class="docutils literal notranslate"><span class="pre">r</span></code> factor block (top-<code class="docutils literal notranslate"><span class="pre">r</span></code>
+eigenvectors scaled by <span class="math notranslate nohighlight">\(\sqrt{\lambda - \bar\lambda}\)</span>)
+plus a positive diagonal residual.</p>
+<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.replace">
+<span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.replace" title="Link to this definition">#</a></dt>
+<dd><p>Return a new model with selected top-level fields replaced.</p>
+<p>Accepts any subset of <code class="xref py py-attr docutils literal notranslate"><span class="pre">_NORMAL_KEYS</span></code>. Subclass-specific
+subordinator parameter shortcuts (e.g. <code class="docutils literal notranslate"><span class="pre">alpha=...</span></code>) are not
+supported on the FA family — use <code class="docutils literal notranslate"><span class="pre">replace(subordinator=</span>
+<span class="pre">Gamma(alpha=...,</span> <span class="pre">beta=...))</span></code> instead. This keeps the contract
+narrow (one storage form per family).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><em>FactorNormalMixture</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>F</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>subordinator</strong> (<a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="distributions.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Distributions</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="fitting.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Fitting</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.joint">JointNormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_prob_joint"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_prob_joint()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.conditional_expectations"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.conditional_expectations()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sufficient_statistics()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_base_measure"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_base_measure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.from_expectation"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.from_expectation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.marginal">NormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture"><code class="docutils literal notranslate"><span class="pre">MarginalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.log_prob"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.log_prob()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.pdf"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.pdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.marginal_log_likelihood()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.MarginalMixture.fit"><code class="docutils literal notranslate"><span class="pre">MarginalMixture.fit()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture"><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.d"><code class="docutils literal notranslate"><span class="pre">NormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.L_Sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">NormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">NormalMixture.squared_hellinger()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kl_divergence"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kl_divergence()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">NormalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">NormalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.from_expectation"><code class="docutils literal notranslate"><span class="pre">NormalMixture.from_expectation()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">NormalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.replace"><code class="docutils literal notranslate"><span class="pre">NormalMixture.replace()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_det_sigma_one()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b"><code class="docutils literal notranslate"><span class="pre">NormalMixture.regularize_a_eq_b()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">NormalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.default_init"><code class="docutils literal notranslate"><span class="pre">NormalMixture.default_init()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.mixtures.factor">FactorNormalMixture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mu"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mu</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.F"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.F</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.D"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.D</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.subordinator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.r"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.r</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.log_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.rvs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.e_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step_normal"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step_normal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step_subordinator"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step_subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.compute_eta_from_model()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.em_convergence_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_det_sigma()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma_one"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_det_sigma_one()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.regularize_a_eq_b"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.regularize_a_eq_b()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.default_init"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.default_init()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.replace"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.replace()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

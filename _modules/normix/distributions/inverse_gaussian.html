@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.distributions.inverse_gaussian &#8212; normix 0.2.2 documentation</title>
+    <title>normix.distributions.inverse_gaussian &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/distributions/inverse_gaussian';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -404,7 +411,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;InverseGaussian(:math:`\mu`, :math:`\lambda`) — mean :math:`\mu &gt; 0`, shape :math:`\lambda &gt; 0`.&quot;&quot;&quot;</span>
 
@@ -428,14 +435,14 @@
         <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">sqrt_ab</span>
 
 <div class="viewcode-block" id="InverseGaussian.natural_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.natural_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="c1"># θ₁ = -λ/(2μ²), θ₂ = -λ/2</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="InverseGaussian.sufficient_statistics">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.sufficient_statistics">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -443,7 +450,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.log_base_measure">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.log_base_measure">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -497,7 +504,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="InverseGaussian.log_density_power">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_density_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log density-power integral via the exact GIG embedding.</span>
 
@@ -518,19 +525,19 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.mean">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.mean">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span></div>
 
 
 <div class="viewcode-block" id="InverseGaussian.var">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.var">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span></div>
 
 
 <div class="viewcode-block" id="InverseGaussian.mode">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.mode">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mode :math:`\mu\bigl(\sqrt{1 + 9\mu^2/(4\lambda^2)} - 3\mu/(2\lambda)\bigr)`.</span>
 
@@ -543,7 +550,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.cdf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.cdf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CDF of the Inverse Gaussian distribution (log-space stable).</span>
 
@@ -564,7 +571,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.ppf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.ppf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Quantile function via a PINV table built from :meth:`log_prob`.</span>
 
@@ -580,7 +587,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.rvs">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.</span>
 
@@ -613,7 +620,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="InverseGaussian.from_natural">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.from_natural">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InverseGaussian&quot;</span><span class="p">:</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -624,7 +631,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.to_gig">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.to_gig">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.to_gig">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the GIG family.</span>
 
@@ -641,7 +648,7 @@
 
 
 <div class="viewcode-block" id="InverseGaussian.from_expectation">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>

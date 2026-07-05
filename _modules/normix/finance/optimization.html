@@ -1,0 +1,712 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>normix.finance.optimization &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/finance/optimization';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2F_modules/normix/finance/optimization.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for normix.finance.optimization</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Mean-risk portfolio optimization for normal-mixture models.</span>
+
+<span class="sd">For a multivariate normal mixture :math:`X \stackrel{d}{=} \mu + \gamma Y</span>
+<span class="sd">+ \sqrt{Y} Z` with :math:`Z \sim \mathcal{N}(0, \Sigma)`, the mean-risk</span>
+<span class="sd">problem</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \min_w \rho(w^\top X) \quad \text{s.t.} \quad</span>
+<span class="sd">    w^\top e = 1, \quad E[w^\top X] \ge m</span>
+
+<span class="sd">reduces — for any coherent risk measure :math:`\rho` — to a two-dimensional</span>
+<span class="sd">problem in the *reduced coordinates* :math:`\tilde\mu = w^\top\mu` and</span>
+<span class="sd">:math:`\tilde\gamma = w^\top\gamma`. The minimum-dispersion weights that</span>
+<span class="sd">realise a given :math:`(\tilde\mu, \tilde\gamma)` are</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    w^*(\tilde\mu, \tilde\gamma) = \Sigma^{-1}[\mu\;\gamma\;e]\,A^{-1}</span>
+<span class="sd">    [\tilde\mu\;\tilde\gamma\;1]^\top, \qquad</span>
+<span class="sd">    A = [\mu\;\gamma\;e]^\top \Sigma^{-1} [\mu\;\gamma\;e],</span>
+
+<span class="sd">and the realised dispersion is</span>
+<span class="sd">:math:`g(\tilde\mu, \tilde\gamma) = [\tilde\mu\;\tilde\gamma\;1] A^{-1}</span>
+<span class="sd">[\tilde\mu\;\tilde\gamma\;1]^\top`. The map</span>
+<span class="sd">:math:`(\tilde\mu, \tilde\gamma) \mapsto \rho` is the **efficient surface**;</span>
+<span class="sd">its lower envelope under the return constraint is the **efficient frontier**.</span>
+
+<span class="sd">See :doc:`../theory/mean_risk_optimization` for the derivation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance.risk</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
+
+<span class="c1"># Reciprocal golden ratio for golden-section search.</span>
+<span class="n">_INV_PHI</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5.0</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+
+<div class="viewcode-block" id="EfficientSurface">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.EfficientSurface">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EfficientSurface</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Efficient surface :math:`(\tilde\mu, \tilde\gamma) \mapsto \rho` on a grid.</span>
+
+<span class="sd">    ``risk[i, j]`` is the risk of the minimum-dispersion portfolio with</span>
+<span class="sd">    reduced coordinates ``(mu_tilde[i], gamma_tilde[j])``;</span>
+<span class="sd">    ``expected_return[i, j] = mu_tilde[i] + gamma_tilde[j] * E[Y]``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">risk</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">expected_return</span><span class="p">:</span> <span class="n">Array</span></div>
+
+
+
+<div class="viewcode-block" id="EfficientFrontier">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.EfficientFrontier">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EfficientFrontier</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mean-risk efficient frontier: minimum risk per target expected return.</span>
+
+<span class="sd">    Each entry is the solution of the reduced problem on the constraint line</span>
+<span class="sd">    :math:`\tilde\mu + \tilde\gamma E[Y] = m`, including the realised</span>
+<span class="sd">    portfolio ``weights`` of shape ``(K, d)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">expected_return</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">risk</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_golden_section_min</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">lo</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">hi</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Vectorized golden-section minimiser of a unimodal ``f: (K,) -&gt; (K,)``.</span>
+
+<span class="sd">    Shrinks each bracket ``[lo_k, hi_k]`` independently; returns the</span>
+<span class="sd">    per-component minimiser. Used to minimise risk along return-constraint</span>
+<span class="sd">    lines (the risk is convex in the reduced coordinates).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">bracket</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">bracket</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">_INV_PHI</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">width</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">width</span>
+        <span class="n">take_left</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">f</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">take_left</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">take_left</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MeanRiskProblem">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeanRiskProblem</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mean-risk optimization in reduced :math:`(\tilde\mu, \tilde\gamma)` coordinates.</span>
+
+<span class="sd">    Bundles a fitted :class:`~normix.mixtures.marginal.NormalMixture` and a</span>
+<span class="sd">    :class:`~normix.finance.risk.RiskMeasure`. All heavy evaluations share a</span>
+<span class="sd">    fixed subordinator sample ``Y`` (common random numbers); draw it once via</span>
+<span class="sd">    ``model.joint.subordinator().rvs(n, seed)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span>
+    <span class="n">risk</span><span class="p">:</span> <span class="n">RiskMeasure</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Reduced-coordinate algebra</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reduced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return ``(A, A_inv, Sinv_M)`` with :math:`M = [\mu\;\gamma\;e]`.</span>
+
+<span class="sd">        :math:`A = M^\top \Sigma^{-1} M` (3×3 SPD),</span>
+<span class="sd">        :math:`\Sigma^{-1} M` (d×3), via Cholesky solves on</span>
+<span class="sd">        :math:`\Sigma = L L^\top`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">e</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                  <span class="c1"># (d, 3)</span>
+        <span class="n">Sinv_M</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">M</span><span class="p">)</span>      <span class="c1"># (d, 3)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Sinv_M</span>                                       <span class="c1"># (3, 3)</span>
+        <span class="n">A_inv</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">(</span><span class="n">cho_factor</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">Sinv_M</span>
+
+<div class="viewcode-block" id="MeanRiskProblem.E_Y">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.E_Y">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">E_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[Y]` — subordinator mean.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.weights">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.weights">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Minimum-dispersion weights realising :math:`(\tilde\mu, \tilde\gamma)`.&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">Sinv_M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduced</span><span class="p">()</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                       <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                       <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">Sinv_M</span> <span class="o">@</span> <span class="p">(</span><span class="n">A_inv</span> <span class="o">@</span> <span class="n">c</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.dispersion">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.dispersion">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dispersion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Realised dispersion :math:`g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*`.&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduced</span><span class="p">()</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                       <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                       <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">c</span> <span class="o">@</span> <span class="n">A_inv</span> <span class="o">@</span> <span class="n">c</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.expected_return">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.expected_return">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expected_return</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`m = \tilde\mu + \tilde\gamma\,E[Y]`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">mu_tilde</span> <span class="o">+</span> <span class="n">gamma_tilde</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.min_variance_point">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.min_variance_point">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_variance_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reduced coordinates :math:`(\tilde\mu, \tilde\gamma)` of the global</span>
+<span class="sd">        minimum-variance portfolio :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.</span>
+
+<span class="sd">        A convenient anchor for choosing efficient-surface grid ranges.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduced</span><span class="p">()</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">denom</span><span class="p">,</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">denom</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.projection_at">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.projection_at">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">projection_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Univariate portfolio return at :math:`(\tilde\mu, \tilde\gamma)`.</span>
+
+<span class="sd">        Projects the minimum-dispersion :meth:`weights`; the result is a</span>
+<span class="sd">        ``Univariate*`` instance with location :math:`\tilde\mu`, skewness</span>
+<span class="sd">        :math:`\tilde\gamma`, variance :math:`g(\tilde\mu, \tilde\gamma)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Risk on the efficient surface</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_surface_risk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Risk over flattened reduced coordinates (vectorized, JIT-able).&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduced</span><span class="p">()</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu_flat</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mu_flat</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;pi,ij,pj-&gt;p&#39;</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_reduced</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))(</span>
+            <span class="n">mu_flat</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MeanRiskProblem.risk_at">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.risk_at">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">risk_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Efficient-surface risk at a single :math:`(\tilde\mu, \tilde\gamma)`.&quot;&quot;&quot;</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispersion</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_reduced</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.efficient_surface">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.efficient_surface">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">efficient_surface</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EfficientSurface</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evaluate the efficient surface over the grid ``mu_tilde × gamma_tilde``.</span>
+
+<span class="sd">        ``mu_tilde`` and ``gamma_tilde`` are 1-D arrays; the returned</span>
+<span class="sd">        ``risk`` has shape ``(len(mu_tilde), len(gamma_tilde))``. Memory</span>
+<span class="sd">        scales as ``len(mu_tilde) * len(gamma_tilde) * len(Y)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">gamma_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">MU</span><span class="p">,</span> <span class="n">GA</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+        <span class="n">risk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">MU</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">GA</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">MU</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EfficientSurface</span><span class="p">(</span>
+            <span class="n">mu_tilde</span><span class="o">=</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="o">=</span><span class="n">gamma_tilde</span><span class="p">,</span>
+            <span class="n">risk</span><span class="o">=</span><span class="n">risk</span><span class="p">,</span> <span class="n">expected_return</span><span class="o">=</span><span class="n">MU</span> <span class="o">+</span> <span class="n">GA</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">(),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeanRiskProblem.efficient_frontier">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.efficient_frontier">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">efficient_frontier</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">returns</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">gamma_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EfficientFrontier</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Minimum risk for each target expected return in ``returns``.</span>
+
+<span class="sd">        For every target :math:`m`, minimises the risk along the constraint</span>
+<span class="sd">        line :math:`\tilde\mu = m - \tilde\gamma E[Y]` over</span>
+<span class="sd">        :math:`\tilde\gamma \in` ``gamma_bounds`` by golden-section search</span>
+<span class="sd">        (the surface is convex, so the restriction is unimodal).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">()</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">risk_of_gamma</span><span class="p">(</span><span class="n">gamma_vec</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_vec</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">gamma_vec</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+        <span class="n">gamma_star</span> <span class="o">=</span> <span class="n">_golden_section_min</span><span class="p">(</span><span class="n">risk_of_gamma</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+        <span class="n">mu_star</span> <span class="o">=</span> <span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_star</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="n">risk_star</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)(</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EfficientFrontier</span><span class="p">(</span>
+            <span class="n">expected_return</span><span class="o">=</span><span class="n">returns</span><span class="p">,</span> <span class="n">risk</span><span class="o">=</span><span class="n">risk_star</span><span class="p">,</span>
+            <span class="n">mu_tilde</span><span class="o">=</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="o">=</span><span class="n">gamma_star</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.mixtures.marginal &#8212; normix 0.2.2 documentation</title>
+    <title>normix.mixtures.marginal &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/mixtures/marginal';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -393,7 +400,7 @@
 
 
 <div class="viewcode-block" id="MarginalMixture">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MarginalMixture</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Abstract interface for marginal mixtures used by the EM fitters.</span>
 
@@ -411,21 +418,21 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="MarginalMixture.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.log_prob">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal :math:`\\log f(x)` for a single observation.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.pdf">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.pdf">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.pdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Marginal :math:`f(x)` for a single observation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.marginal_log_likelihood">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Mean log-likelihood over a dataset.&quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -437,42 +444,42 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="MarginalMixture.e_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.e_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.e_step">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;E-step: aggregated expectation parameters for the batch.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.m_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.m_step">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Full M-step: updates all parameters; returns a new model.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.m_step_normal">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step_normal">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.m_step_normal">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;M-step for normal parameters only (MCECM cycle 1).&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.m_step_subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.m_step_subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.m_step_subordinator">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;M-step for subordinator parameters only (MCECM cycle 2).&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.compute_eta_from_model">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.compute_eta_from_model">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct the expectation pytree from the model&#39;s own parameters.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.em_convergence_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.em_convergence_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.em_convergence_params">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
@@ -490,7 +497,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="MarginalMixture.fit">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.MarginalMixture.fit">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -565,7 +572,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalMixture</span><span class="p">(</span><span class="n">MarginalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Marginal :math:`f(x) = \int_0^\infty f(x,y)\,dy` for a normal</span>
@@ -614,7 +621,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">L_Sigma</span>
 
 <div class="viewcode-block" id="NormalMixture.sigma">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.sigma">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Dispersion :math:`\Sigma = L_\Sigma L_\Sigma^\top` (forwarded from the joint).</span>
 
@@ -625,7 +632,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.log_det_sigma">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.log_det_sigma">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.log_det_sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma|` (forwarded from the joint).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span></div>
@@ -651,7 +658,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``Univariate*`` sibling class, e.g. ``UnivariateVarianceGamma``.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NormalMixture.project">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.project">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.project">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_UnivariateNormalMixtureMixin&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the univariate normal mixture :math:`w^\top X` as a ``Univariate*`` instance.&quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -666,7 +673,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.mean">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.mean">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma E[Y]`.&quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -675,7 +682,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.cov">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.cov">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.cov">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.&quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -693,7 +700,7 @@
     <span class="c1"># and Rényi entropy are tractable and delegated to self._joint.</span>
 
 <div class="viewcode-block" id="NormalMixture.joint_entropy">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_entropy">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.joint_entropy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">joint_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Entropy of the joint :math:`(X, Y)`,</span>
 <span class="sd">        :math:`H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}`.</span>
@@ -702,7 +709,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.joint_varentropy">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_varentropy">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.joint_varentropy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">joint_varentropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Varentropy of the joint :math:`(X, Y)`.</span>
 
@@ -718,14 +725,14 @@
 
 
 <div class="viewcode-block" id="NormalMixture.joint_renyi">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.joint_renyi">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.joint_renyi">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">joint_renyi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rényi entropy of order :math:`\alpha` of the joint :math:`(X, Y)`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.rvs">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample X from the marginal distribution.&quot;&quot;&quot;</span>
         <span class="n">X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
@@ -737,14 +744,14 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.squared_hellinger">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.squared_hellinger">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.squared_hellinger">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">squared_hellinger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Squared Hellinger distance via joint distributions (upper bound on marginal).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">squared_hellinger</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_joint</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.kl_divergence">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.kl_divergence">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.kl_divergence">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL divergence via joint distributions.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">kl_divergence</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_joint</span><span class="p">)</span></div>
@@ -755,7 +762,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.compute_eta_from_model">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.compute_eta_from_model">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.compute_eta_from_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reconstruct :math:`\eta` from the model&#39;s own parameters.</span>
 
@@ -798,7 +805,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.e_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.e_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.e_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Full E-step: subordinator conditionals + batch aggregation.</span>
@@ -874,7 +881,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.from_expectation">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.from_expectation">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -905,7 +912,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.m_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.m_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
@@ -923,7 +930,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.m_step_normal">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_normal">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.m_step_normal">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
@@ -939,7 +946,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.m_step_subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span>
@@ -979,7 +986,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.replace">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.replace">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.replace">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">updates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a new model with selected parameters replaced.</span>
 
@@ -1050,7 +1057,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_rescaled</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">L_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NormalMixture.regularize_det_sigma">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
@@ -1067,7 +1074,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.regularize_det_sigma_one">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma_one</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enforce :math:`|\Sigma| = 1`. Alias for</span>
 <span class="sd">        :meth:`regularize_det_sigma` with ``target_log_det = 0``.</span>
@@ -1076,7 +1083,7 @@
 
 
 <div class="viewcode-block" id="NormalMixture.regularize_a_eq_b">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.regularize_a_eq_b">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale subordinator so that :math:`a = b = \sqrt{ab}` for</span>
 <span class="sd">        GIG-parameterised families.</span>
@@ -1104,7 +1111,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.em_convergence_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.em_convergence_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.em_convergence_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
 
@@ -1121,7 +1128,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="NormalMixture.default_init">
-<a class="viewcode-back" href="../../../api/index.html#normix.mixtures.marginal.NormalMixture.default_init">[docs]</a>
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Moment-based initialisation from data.</span>

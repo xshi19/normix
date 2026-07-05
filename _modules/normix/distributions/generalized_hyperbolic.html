@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.distributions.generalized_hyperbolic &#8212; normix 0.2.2 documentation</title>
+    <title>normix.distributions.generalized_hyperbolic &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/distributions/generalized_hyperbolic';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -408,7 +415,7 @@
 <span class="c1"># ============================================================================</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointGeneralizedHyperbolic</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
@@ -436,7 +443,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="k">return</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
@@ -447,7 +454,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.natural_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :math:`\theta = [p-1-d/2,\; -(b/2+\tfrac{1}{2}\mu^\top\Sigma^{-1}\mu),\;</span>
@@ -483,7 +490,7 @@
         <span class="k">return</span> <span class="n">psi_gig</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">()</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct from classical parameters.&quot;&quot;&quot;</span>
@@ -495,7 +502,7 @@
 
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.from_natural">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointGeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover classical parameters from :math:`\theta`.</span>
@@ -551,7 +558,7 @@
     <span class="c1"># KL projection identity: D_KL(JointGH ‖ JointVG) = D_KL(GIG ‖ Gamma).</span>
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_variance_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_variance_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointVarianceGamma&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointVarianceGamma` (Gamma subordinator).&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointVarianceGamma</span>
@@ -563,7 +570,7 @@
 
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_normal_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGamma&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointNormalInverseGamma`.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalInverseGamma</span>
@@ -575,7 +582,7 @@
 
 
 <div class="viewcode-block" id="JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_normal_inverse_gaussian">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_normal_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto :class:`JointNormalInverseGaussian`.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalInverseGaussian</span>
@@ -594,7 +601,7 @@
 <span class="c1"># ============================================================================</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">NormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Marginal Generalized Hyperbolic distribution :math:`f(x)`.</span>
@@ -610,7 +617,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_joint&#39;</span><span class="p">,</span> <span class="n">joint</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
         <span class="n">joint</span> <span class="o">=</span> <span class="n">JointGeneralizedHyperbolic</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
@@ -623,7 +630,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Marginal :math:`\log f(x)`.</span>
@@ -722,7 +729,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">b</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.m_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Full M-step with warm-started + sanity-checked subordinator solve.</span>
 
@@ -736,7 +743,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.m_step_subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -797,7 +804,7 @@
         <span class="k">return</span> <span class="n">GeneralizedHyperbolic</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.regularize_a_eq_b">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale so :math:`a = b = \sqrt{ab}` (orbit invariant).</span>
 
@@ -814,7 +821,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.to_variance_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_variance_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;VarianceGamma&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`VarianceGamma` family.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.variance_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
@@ -822,7 +829,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGamma&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`NormalInverseGamma` family.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGamma</span>
@@ -830,7 +837,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.to_normal_inverse_gaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_normal_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`NormalInverseGaussian` family.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.normal_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
@@ -843,7 +850,7 @@
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.default_init">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Warm-start from the best of NIG / VG / NInvG sub-model fits.</span>
@@ -917,7 +924,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedHyperbolic.fit">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;em&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
             <span class="n">regularization</span><span class="o">=</span><span class="s1">&#39;det_sigma_one&#39;</span><span class="p">,</span>
             <span class="n">e_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
@@ -943,7 +950,7 @@
 
 
 <div class="viewcode-block" id="UnivariateGeneralizedHyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UnivariateGeneralizedHyperbolic</span><span class="p">(</span><span class="n">_UnivariateNormalMixtureMixin</span><span class="p">,</span> <span class="n">GeneralizedHyperbolic</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Univariate (d=1) Generalized Hyperbolic distribution.</span>
 
@@ -953,7 +960,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="UnivariateGeneralizedHyperbolic.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
@@ -975,7 +982,7 @@
 
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FactorGeneralizedHyperbolic</span><span class="p">(</span><span class="n">FactorNormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Factor-analysis Generalized Hyperbolic:</span>
 <span class="sd">    :math:`Y \sim \mathrm{GIG}(p, a, b)`,</span>
@@ -1001,7 +1008,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
@@ -1022,7 +1029,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">b</span>
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
@@ -1064,7 +1071,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.m_step">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Full M-step with warm-started, sanity-checked GIG solve.</span>
 
@@ -1076,7 +1083,7 @@
 
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.m_step_subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
@@ -1130,7 +1137,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.regularize_a_eq_b">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.regularize_a_eq_b">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.regularize_a_eq_b">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale so :math:`a = b = \sqrt{ab}` (orbit invariant).</span>
 
@@ -1147,7 +1154,7 @@
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.default_init">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>

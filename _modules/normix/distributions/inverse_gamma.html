@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.distributions.inverse_gamma &#8212; normix 0.2.2 documentation</title>
+    <title>normix.distributions.inverse_gamma &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/distributions/inverse_gamma';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -400,7 +407,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGamma</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;InverseGamma(:math:`\alpha`, :math:`\beta`) — shape :math:`\alpha &gt; 0`, rate :math:`\beta &gt; 0`.&quot;&quot;&quot;</span>
 
@@ -423,14 +430,14 @@
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span>
 
 <div class="viewcode-block" id="InverseGamma.natural_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.natural_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="c1"># θ = [β, -(α+1)]</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)])</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.sufficient_statistics">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.sufficient_statistics">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.sufficient_statistics">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -438,7 +445,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma.log_base_measure">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.log_base_measure">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.log_base_measure">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span></div>
@@ -478,33 +485,33 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="InverseGamma.mean">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.mean">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.var">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.var">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.mode">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.mode">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mode :math:`\beta / (\alpha + 1)` (closed form, valid for all :math:`\alpha &gt; 0`).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.cdf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.cdf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.ppf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.ppf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Quantile function :math:`F^{-1}(q) = \beta / \mathrm{gammaincinv}(\alpha, 1-q)`.</span>
 
@@ -515,7 +522,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma.rvs">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample *n* observations from :math:`\mathrm{InvGamma}(\alpha, \beta)` via JAX PRNG.</span>
 
@@ -532,7 +539,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="InverseGamma.from_natural">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.from_natural">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InverseGamma&quot;</span><span class="p">:</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -542,7 +549,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma.to_gig">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.to_gig">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.to_gig">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">boundary_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the GIG family.</span>
 
@@ -560,7 +567,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma.from_expectation">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.inverse_gamma.InverseGamma.from_expectation">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>

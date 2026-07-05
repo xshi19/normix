@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.distributions.normal_inverse_gaussian &#8212; normix 0.2.2 documentation</title>
+    <title>normix.distributions.normal_inverse_gaussian &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/distributions/normal_inverse_gaussian';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -386,7 +393,7 @@
 
 
 <div class="viewcode-block" id="JointNormalInverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JointNormalInverseGaussian</span><span class="p">(</span><span class="n">JointNormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Joint :math:`f(x,y)`: :math:`X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)`,</span>
@@ -407,14 +414,14 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;lam&#39;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.subordinator">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.subordinator">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
         <span class="k">return</span> <span class="n">InverseGaussian</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.natural_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :math:`\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;</span>
@@ -451,7 +458,7 @@
                 <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">())</span>
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="p">):</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -462,7 +469,7 @@
 
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.from_natural">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Recover classical parameters from :math:`\theta`.</span>
@@ -500,7 +507,7 @@
                    <span class="n">mu_ig</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">subordinator</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.log_density_power">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.log_density_power">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_density_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log density-power integral via the exact :class:`JointGeneralizedHyperbolic` embedding.</span>
 
@@ -522,7 +529,7 @@
 
 
 <div class="viewcode-block" id="JointNormalInverseGaussian.to_joint_generalized_hyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.to_joint_generalized_hyperbolic">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_generalized_hyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into :class:`JointGeneralizedHyperbolic`.</span>
 
@@ -542,7 +549,7 @@
 
 
 <div class="viewcode-block" id="NormalInverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalInverseGaussian</span><span class="p">(</span><span class="n">NormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Marginal Normal-Inverse Gaussian distribution f(x).&quot;&quot;&quot;</span>
 
@@ -550,7 +557,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_joint&#39;</span><span class="p">,</span> <span class="n">joint</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NormalInverseGaussian.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="p">):</span>
         <span class="n">joint</span> <span class="o">=</span> <span class="n">JointNormalInverseGaussian</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
@@ -559,7 +566,7 @@
 
 
 <div class="viewcode-block" id="NormalInverseGaussian.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Marginal NIG log-density.</span>
@@ -637,7 +644,7 @@
         <span class="k">return</span> <span class="n">NormalInverseGaussian</span><span class="p">(</span><span class="n">joint_new</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NormalInverseGaussian.regularize_a_eq_b">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.regularize_a_eq_b">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.regularize_a_eq_b">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale so :math:`a = b = \sqrt{ab}`.</span>
 
@@ -655,7 +662,7 @@
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NormalInverseGaussian.to_generalized_hyperbolic">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.to_generalized_hyperbolic">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian.to_generalized_hyperbolic">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_generalized_hyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into the :class:`GeneralizedHyperbolic` family.</span>
 
@@ -674,7 +681,7 @@
 
 
 <div class="viewcode-block" id="UnivariateNormalInverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UnivariateNormalInverseGaussian</span><span class="p">(</span><span class="n">_UnivariateNormalMixtureMixin</span><span class="p">,</span> <span class="n">NormalInverseGaussian</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Univariate (d=1) Normal-Inverse-Gaussian distribution.</span>
 
@@ -684,7 +691,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="UnivariateNormalInverseGaussian.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span>
@@ -706,7 +713,7 @@
 
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FactorNormalInverseGaussian</span><span class="p">(</span><span class="n">FactorNormalMixture</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Factor-analysis Normal-Inverse-Gaussian:</span>
 <span class="sd">    :math:`Y \sim \mathrm{InvGaussian}(\mu_{IG}, \lambda)`,</span>
@@ -730,7 +737,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian.from_classical">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.from_classical">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_classical</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span>
@@ -747,7 +754,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">lam</span>
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian.log_prob">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
@@ -798,7 +805,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian.regularize_a_eq_b">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.regularize_a_eq_b">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.regularize_a_eq_b">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale so :math:`a = b`. For NIG (:math:`a = \lambda/\mu_{IG}^2`,</span>
 <span class="sd">        :math:`b = \lambda`), this means :math:`\mu_{IG} \to 1`.</span>

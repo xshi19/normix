@@ -1,0 +1,1778 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fitting &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/fitting';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Finance" href="finance.html" />
+    <link rel="prev" title="Mixtures" href="mixtures.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixtures.html">Mixtures</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fapi/fitting.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/fitting.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Fitting</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.em">EM Fitters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult"><code class="docutils literal notranslate"><span class="pre">EMResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.model"><code class="docutils literal notranslate"><span class="pre">EMResult.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.log_likelihoods"><code class="docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.param_changes"><code class="docutils literal notranslate"><span class="pre">EMResult.param_changes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.n_iter"><code class="docutils literal notranslate"><span class="pre">EMResult.n_iter</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.converged"><code class="docutils literal notranslate"><span class="pre">EMResult.converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">EMResult.elapsed_time</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.diverged"><code class="docutils literal notranslate"><span class="pre">EMResult.diverged</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter.fit"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter.fit()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.IncrementalEMFitter"><code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.IncrementalEMFitter.fit"><code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.solvers">Solvers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#public-api">Public API</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backends-methods">Backends × methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gradient-hessian-sources">Gradient / Hessian sources</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult"><code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.theta"><code class="docutils literal notranslate"><span class="pre">BregmanResult.theta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.fun"><code class="docutils literal notranslate"><span class="pre">BregmanResult.fun</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.grad_norm"><code class="docutils literal notranslate"><span class="pre">BregmanResult.grad_norm</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.num_steps"><code class="docutils literal notranslate"><span class="pre">BregmanResult.num_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.converged"><code class="docutils literal notranslate"><span class="pre">BregmanResult.converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">BregmanResult.elapsed_time</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.bregman_objective"><code class="docutils literal notranslate"><span class="pre">bregman_objective()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman"><code class="docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman_multistart"><code class="docutils literal notranslate"><span class="pre">solve_bregman_multistart()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.make_jit_newton_solver"><code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta">Eta Parametrization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_log_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_log_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_XXT_inv_Y</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_log_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XXT_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XZT_inv_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_inv_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_ZZT"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_ZZT</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.affine_combine"><code class="docutils literal notranslate"><span class="pre">affine_combine()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta_rules">Eta Update Rules</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-layer-abstraction">Two-layer abstraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EtaUpdateRule"><code class="docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EtaUpdateRule.initial_state"><code class="docutils literal notranslate"><span class="pre">EtaUpdateRule.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineRule"><code class="docutils literal notranslate"><span class="pre">AffineRule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineRule.weights"><code class="docutils literal notranslate"><span class="pre">AffineRule.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.IdentityUpdate"><code class="docutils literal notranslate"><span class="pre">IdentityUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.IdentityUpdate.weights"><code class="docutils literal notranslate"><span class="pre">IdentityUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.tau0"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate.tau0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.weights"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate.weights"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate.weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate.initial_state"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate.w"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate.w</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate.weights"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage"><code class="docutils literal notranslate"><span class="pre">Shrinkage</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.base"><code class="docutils literal notranslate"><span class="pre">Shrinkage.base</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.eta0"><code class="docutils literal notranslate"><span class="pre">Shrinkage.eta0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.tau"><code class="docutils literal notranslate"><span class="pre">Shrinkage.tau</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.initial_state"><code class="docutils literal notranslate"><span class="pre">Shrinkage.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate"><code class="docutils literal notranslate"><span class="pre">AffineUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.a"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.b"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.c"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.c</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.weights"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.shrinkage_targets">Shrinkage Targets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_from_model"><code class="docutils literal notranslate"><span class="pre">eta0_from_model()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_isotropic"><code class="docutils literal notranslate"><span class="pre">eta0_isotropic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_diagonal"><code class="docutils literal notranslate"><span class="pre">eta0_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_with_sigma"><code class="docutils literal notranslate"><span class="pre">eta0_with_sigma()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="fitting">
+<h1>Fitting<a class="headerlink" href="#fitting" title="Link to this heading">#</a></h1>
+<nav class="contents local" id="modules">
+<p class="topic-title">Modules</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-normix.fitting.em" id="id1">EM Fitters</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.fitting.solvers" id="id2">Solvers</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.fitting.eta" id="id3">Eta Parametrization</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.fitting.eta_rules" id="id4">Eta Update Rules</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.fitting.shrinkage_targets" id="id5">Shrinkage Targets</a></p></li>
+</ul>
+</nav>
+<section id="module-normix.fitting.em">
+<span id="em-fitters"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">EM Fitters</a><a class="headerlink" href="#module-normix.fitting.em" title="Link to this heading">#</a></h2>
+<p>EM fitters for normix distributions.</p>
+<p>Model knows math, fitter knows iteration.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>BatchEMFitter        — standard batch EM with dual-loop architecture:</dt><dd><p>lax.scan (JIT-able) or Python for-loop (CPU-compatible)</p>
+</dd>
+</dl>
+<p>IncrementalEMFitter  — online / mini-batch EM with pluggable eta update rules</p>
+</div></blockquote>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">EMResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diverged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#EMResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.EMResult" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Result of an EM fitting procedure.</p>
+<p><code class="docutils literal notranslate"><span class="pre">converged</span></code> and <code class="docutils literal notranslate"><span class="pre">diverged</span></code> are separate because batch EM has three
+outcomes: tolerance met (<code class="docutils literal notranslate"><span class="pre">converged=True</span></code>), a non-finite iterate was
+reverted (<code class="docutils literal notranslate"><span class="pre">diverged=True</span></code>), or <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> was exhausted with neither
+(both <code class="docutils literal notranslate"><span class="pre">False</span></code>). They are not opposites — <code class="docutils literal notranslate"><span class="pre">converged=False</span></code> covers both
+divergence and a finite but not-yet-converged stop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>log_likelihoods</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>param_changes</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>diverged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.model" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.log_likelihoods">
+<span class="sig-name descname"><span class="pre">log_likelihoods</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.log_likelihoods" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.param_changes">
+<span class="sig-name descname"><span class="pre">param_changes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.param_changes" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.n_iter">
+<span class="sig-name descname"><span class="pre">n_iter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.n_iter" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.converged">
+<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.converged" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.elapsed_time">
+<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.elapsed_time" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.diverged">
+<span class="sig-name descname"><span class="pre">diverged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#normix.fitting.em.EMResult.diverged" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.em.BatchEMFitter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">BatchEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_ll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Batch EM / MCECM algorithm with dual-loop architecture.</p>
+<p><strong>EM</strong> (default): E-step → M-step (all params) → regularize.</p>
+<p><strong>MCECM</strong>: E-step → M-step (normal params only) → regularize →
+E-step → M-step (subordinator only).</p>
+<p>Convergence is measured by relative parameter change in the normal
+parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.</p>
+<dl class="simple">
+<dt>Loop selection is automatic:</dt><dd><ul class="simple">
+<li><p>lax.scan when both backends are ‘jax’, verbose &lt;= 1, algorithm=’em’,
+and no eta_update rule</p></li>
+<li><p>Python for-loop otherwise</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max relative parameter change.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code> — no regularization.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> — enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> (the
+original GH convention; equivalent to
+<code class="docutils literal notranslate"><span class="pre">regularize_det_sigma(target_log_det=0)</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> — enforce <span class="math notranslate nohighlight">\(|\Sigma| = |\Sigma_0|\)</span>
+where <span class="math notranslate nohighlight">\(\Sigma_0\)</span> is the dispersion of the <em>initial</em>
+model passed to <a class="reference internal" href="#normix.fitting.em.BatchEMFitter.fit" title="normix.fitting.em.BatchEMFitter.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>. Useful when comparing GH /
+FactorGH parameters against VG / NIG / NInvG, which leave
+<span class="math notranslate nohighlight">\(|\Sigma|\)</span> at the empirical scale.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> — rescale the GIG subordinator so
+<span class="math notranslate nohighlight">\(a = b = \sqrt{ab}\)</span>. Trivial no-op for VG / NInvG /
+MultivariateNormal.</p></li>
+</ul>
+</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ (default) or ‘cpu’.</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ or ‘cpu’ (default, faster for GIG).</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘newton’ (default), ‘lbfgs’, or ‘bfgs’.</p></li>
+<li><p><strong>eta_update</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a><em> or </em><em>None</em>) – Optional eta combination rule (e.g. <code class="docutils literal notranslate"><span class="pre">Shrinkage(IdentityUpdate(),</span>
+<span class="pre">eta0,</span> <span class="pre">tau)</span></code>). When set, the E-step output is transformed before
+the M-step.</p></li>
+<li><p><strong>track_ll</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, record per-iteration marginal log-likelihood in
+<a class="reference internal" href="#normix.fitting.em.EMResult.log_likelihoods" title="normix.fitting.em.EMResult.log_likelihoods"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a> without requiring <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p></li>
+<li><p><strong>m_step_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>None</em>) – Extra keyword arguments forwarded verbatim to every <code class="docutils literal notranslate"><span class="pre">m_step</span></code> /
+<code class="docutils literal notranslate"><span class="pre">m_step_subordinator</span></code> call (in addition to <code class="docutils literal notranslate"><span class="pre">backend</span></code> and
+<code class="docutils literal notranslate"><span class="pre">method</span></code>). Used to thread estimand controls such as the VG
+<code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> shape bound down to the subordinator’s
+<code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>. Values must be static (e.g. Python floats) to
+stay compatible with the <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> path. <code class="docutils literal notranslate"><span class="pre">None</span></code> = no extras.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.em.BatchEMFitter.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter.fit" title="Link to this definition">#</a></dt>
+<dd><p>Run batch EM or MCECM. Auto-selects lax.scan or Python loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>NormalMixture subclass</em><em> (</em><em>used as initial parameters</em><em>)</em>)</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Data array, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>EMResult with fitted model, convergence diagnostics, and timing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">IncrementalEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Incremental EM with pluggable eta update rules.</p>
+<p>Replaces <code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code> and <code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code>.  Processes data
+in random mini-batches, applies an <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a>
+to combine the running <span class="math notranslate nohighlight">\(\eta\)</span> with each batch estimate, then
+M-steps on the combined <span class="math notranslate nohighlight">\(\eta\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta_update</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a>) – How to combine running η with each batch estimate.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Observations per batch.</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of batches to process (total budget).</p></li>
+<li><p><strong>inner_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 1 = online (default); &gt;1 = fine-tuning on each batch.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – <p>0 = silent; 1 = periodic summary.</p>
+<p>Scan path (<strong>JAX backends only</strong>):</p>
+<p><code class="docutils literal notranslate"><span class="pre">verbose</span></code> must be <code class="docutils literal notranslate"><span class="pre">0</span></code> so diagnostics do not rely on Python
+side effects each step.</p>
+</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Same options as <a class="reference internal" href="#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> —
+<code class="docutils literal notranslate"><span class="pre">'none'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> |
+<code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>.</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter.fit" title="Link to this definition">#</a></dt>
+<dd><p>Run incremental EM. Returns <a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EMResult</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><em>EMResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.fitting.solvers">
+<span id="solvers"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Solvers</a><a class="headerlink" href="#module-normix.fitting.solvers" title="Link to this heading">#</a></h2>
+<p>Bregman divergence solvers.</p>
+<p>Minimises  f(θ) − θ·η  over θ, where f is any convex function
+(e.g. the log-partition ψ for an exponential family).
+At the minimum ∇f(θ*) = η.</p>
+<section id="public-api">
+<h3>Public API<a class="headerlink" href="#public-api" title="Link to this heading">#</a></h3>
+<p>solve_bregman             single starting point
+solve_bregman_multistart  multiple starting points (vmap for JAX Newton;</p>
+<blockquote>
+<div><p>for-loop for quasi-Newton and CPU)</p>
+</div></blockquote>
+<p>bregman_objective         utility: f(θ) − θ·η
+make_jit_newton_solver    build a stable <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code> Newton solve specialised</p>
+<blockquote>
+<div><p>to a fixed <code class="docutils literal notranslate"><span class="pre">(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code> —
+repeated calls with matching shapes/dtypes hit the
+XLA cache, avoiding the per-call re-tracing that
+<code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> incurs from fresh closures.</p>
+</div></blockquote>
+</section>
+<section id="backends-methods">
+<h3>Backends × methods<a class="headerlink" href="#backends-methods" title="Link to this heading">#</a></h3>
+<p>backend=’jax’, method=’newton’  custom lax.scan Newton, autodiff or analytical Hessian
+backend=’jax’, method=’lbfgs’   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
+backend=’jax’, method=’bfgs’    jaxopt BFGS with reparameterization for bounds
+backend=’cpu’, method=’lbfgs’   scipy L-BFGS-B
+backend=’cpu’, method=’bfgs’    scipy BFGS
+backend=’cpu’, method=’newton’  scipy trust-exact with Hessian</p>
+</section>
+<section id="gradient-hessian-sources">
+<h3>Gradient / Hessian sources<a class="headerlink" href="#gradient-hessian-sources" title="Link to this heading">#</a></h3>
+<dl class="simple">
+<dt>grad_fn<span class="classifier">θ → ∇f(θ).  For backend=’cpu’: pure CPU (numpy) gradient.</span></dt><dd><p>For backend=’jax’, method=’newton’: JAX-traceable ∇ψ(θ).
+If None with backend=’cpu’: hybrid — jax.grad compiled → NumPy callbacks.</p>
+</dd>
+<dt>hess_fn<span class="classifier">θ → ∇²f(θ).  Required for method=’newton’.</span></dt><dd><p>For backend=’cpu’: pure CPU (numpy) Hessian.
+For backend=’jax’, method=’newton’: JAX-traceable ∇²ψ(θ).
+If None with method=’newton’: jax.hessian of the full objective.</p>
+</dd>
+</dl>
+<p>Both grad_fn and hess_fn operate in theta-space only.
+The solver handles all reparameterization internally via the chain rule.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">BregmanResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#BregmanResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.BregmanResult" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Result of a Bregman divergence minimization.</p>
+<p>Scalar fields accept both Python and JAX types so the result
+can live inside a lax.scan carry without concretization errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>fun</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.theta">
+<span class="sig-name descname"><span class="pre">theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.theta" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.fun">
+<span class="sig-name descname"><span class="pre">fun</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.fun" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.grad_norm">
+<span class="sig-name descname"><span class="pre">grad_norm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.grad_norm" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.num_steps">
+<span class="sig-name descname"><span class="pre">num_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.num_steps" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.converged">
+<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.converged" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.elapsed_time">
+<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.elapsed_time" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.solvers.bregman_objective">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">bregman_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#bregman_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.bregman_objective" title="Link to this definition">#</a></dt>
+<dd><p>f(θ) − θ·η — convex dual whose minimum gives ∇f(θ*) = η.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.solvers.solve_bregman">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">solve_bregman</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lbfgs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#solve_bregman"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.solve_bregman" title="Link to this definition">#</a></dt>
+<dd><p>Minimise f(θ) − θ·η over θ.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>convex function θ → scalar</em><em>  (</em><em>e.g. log-partition ψ</em><em>)</em>)</p></li>
+<li><p><strong>eta</strong> (<em>target vector</em><em>  (</em><em>e.g. expectation parameters η</em><em>)</em>)</p></li>
+<li><p><strong>theta0</strong> (<em>initial guess</em>)</p></li>
+<li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>not JIT-able</em><em>)</em>)</p></li>
+<li><p><strong>method</strong> (<em>'lbfgs'</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
+For backend=’jax’: enforced via reparameterization.
+For backend=’cpu’: converted to scipy format internally.</p></li>
+<li><p><strong>max_steps</strong> (<em>iteration budget</em>)</p></li>
+<li><p><strong>tol</strong> (<em>convergence tolerance on ‖∇f</em><em>(</em><em>θ</em><em>) </em><em>− η‖∞</em>)</p></li>
+<li><p><strong>grad_fn</strong> (<em>θ → ∇f</em><em>(</em><em>θ</em><em>)</em><em>.</em>) – For backend=’cpu’: must accept and return numpy arrays.
+For backend=’jax’, method=’newton’: must be JAX-traceable.
+If None with backend=’cpu’: falls back to jax.grad (hybrid mode).</p></li>
+<li><p><strong>hess_fn</strong> (<em>θ → ∇²f</em><em>(</em><em>θ</em><em>)</em><em>.</em>) – Required for method=’newton’.
+For backend=’cpu’: must accept numpy arrays and return numpy array.
+For backend=’jax’, method=’newton’: must be JAX-traceable.
+If None with method=’newton’: jax.hessian of the full objective is used.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary after solve.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.solvers.BregmanResult" title="normix.fitting.solvers.BregmanResult">BregmanResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.solvers.solve_bregman_multistart">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">solve_bregman_multistart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0_batch</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lbfgs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#solve_bregman_multistart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.solve_bregman_multistart" title="Link to this definition">#</a></dt>
+<dd><p>Run solve_bregman from multiple starting points; return the best result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta0_batch</strong> (<em>(</em><em>K</em><em>, </em><a class="reference internal" href="distributions.html#normix.distributions.normal.MultivariateNormal.dim" title="normix.distributions.normal.MultivariateNormal.dim"><em>dim</em></a><em>) </em><em>jax.Array for backend='jax'</em><em>, </em><em>method='newton'</em>) – (parallel via vmap); list of arrays otherwise
+(sequential for-loop).</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.</p></li>
+<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>grad_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hess_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.solvers.BregmanResult" title="normix.fitting.solvers.BregmanResult"><em>BregmanResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.solvers.make_jit_newton_solver">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">make_jit_newton_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#make_jit_newton_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.make_jit_newton_solver" title="Link to this definition">#</a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated Newton solver specialised to one problem.</p>
+<p>The returned callable has signature
+<code class="docutils literal notranslate"><span class="pre">solve(eta,</span> <span class="pre">theta0,</span> <span class="pre">max_steps=20,</span> <span class="pre">tol=1e-10)</span> <span class="pre">-&gt;</span> <span class="pre">(theta_opt,</span> <span class="pre">fun,</span> <span class="pre">grad_norm,</span> <span class="pre">converged)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">max_steps</span></code> is a static argument (required by <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>).</p>
+<p>All distribution-level inputs (<code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">hess_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">bounds</span></code>)
+are baked into the closure at construction time. Repeated calls with the
+same array shapes and dtypes therefore reuse the compiled XLA executable.</p>
+<p>Use this in EM hot paths where <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> would otherwise build a
+fresh Python closure on every call and force JAX to re-trace the same
+Newton kernel on each iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>convex objective ψ</em><em>(</em><em>θ</em><em>) </em><em>→ scalar</em><em> (</em><em>must be JAX-traceable</em><em>)</em><em>.</em>)</p></li>
+<li><p><strong>grad_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla\psi(\theta) \to \mathbb{R}^d\)</span>.</p></li>
+<li><p><strong>hess_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla^2\psi(\theta) \to \mathbb{R}^{d\times d}\)</span>.</p></li>
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code>, each shape <span class="math notranslate nohighlight">\((d,)\)</span>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Jit-compiled Newton solver. Returns a 4-tuple of JAX arrays
+<code class="docutils literal notranslate"><span class="pre">(theta,</span> <span class="pre">fun,</span> <span class="pre">grad_norm,</span> <span class="pre">converged)</span></code>; wrap in <code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code>
+externally if needed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-normix.fitting.eta">
+<span id="eta-parametrization"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Eta Parametrization</a><a class="headerlink" href="#module-normix.fitting.eta" title="Link to this heading">#</a></h2>
+<p>NormalMixtureEta — expectation parametrization for normal variance-mean mixtures.</p>
+<p>The six fields are the batch-averaged sufficient statistics
+<span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i E[t(X_i, Y_i) \mid X_i]\)</span>,
+in the <em>theory order</em> used in <a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a> and
+<a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>:</p>
+<div class="math notranslate nohighlight">
+\[s_1 = E[Y^{-1}], \;\;
+s_2 = E[Y], \;\;
+s_3 = E[\log Y], \;\;
+s_4 = E[X], \;\;
+s_5 = E[X / Y], \;\;
+s_6 = E[X X^\top / Y].\]</div>
+<p>This is the expectation parametrization of
+<a class="reference internal" href="mixtures.html#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">NormalMixtureEta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Aggregated expectation parameters for normal variance-mean mixtures.</p>
+<p>Fields are stored in <strong>theory order</strong> <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_6)</span></code>: the first six
+statistics are shared with <a class="reference internal" href="#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a> so that
+shrinkage targets, weights, and tests written for the standard family
+transfer unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>E_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_log_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_X_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_XXT_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_inv_Y">
+<span class="sig-name descname"><span class="pre">E_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_Y">
+<span class="sig-name descname"><span class="pre">E_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_2 = \frac{1}{n}\sum_i E[Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_log_Y">
+<span class="sig-name descname"><span class="pre">E_log_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_log_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_X">
+<span class="sig-name descname"><span class="pre">E_X</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_X" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_4 = \frac{1}{n}\sum_i X_i\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_X_inv_Y">
+<span class="sig-name descname"><span class="pre">E_X_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y">
+<span class="sig-name descname"><span class="pre">E_XXT_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d, d)\)</span>; <span class="math notranslate nohighlight">\(s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">FactorMixtureStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XZT_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_ZZT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#FactorMixtureStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Aggregated expectation parameters for factor-analysis mixtures.</p>
+<p>Fields are stored in theory order <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_{10})</span></code> from
+<a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>. The first six are identical to
+<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> (so shrinkage targets, η-update rules, and
+weight pytrees designed for the standard family broadcast onto the
+factor family without modification). The four extra fields involve
+the latent factor <span class="math notranslate nohighlight">\(Z\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>E_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_log_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_X_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_XXT_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_XZT_inv_sqrtY</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_Z_inv_sqrtY</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_Z_sqrtY</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>E_ZZT</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_inv_Y">
+<span class="sig-name descname"><span class="pre">E_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_Y">
+<span class="sig-name descname"><span class="pre">E_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_2 = \frac{1}{n}\sum_i E[Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_log_Y">
+<span class="sig-name descname"><span class="pre">E_log_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y" title="Link to this definition">#</a></dt>
+<dd><p>scalar; <span class="math notranslate nohighlight">\(s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_X">
+<span class="sig-name descname"><span class="pre">E_X</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_X" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_4 = \frac{1}{n}\sum_i X_i\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_X_inv_Y">
+<span class="sig-name descname"><span class="pre">E_X_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y">
+<span class="sig-name descname"><span class="pre">E_XXT_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d, d)\)</span>; <span class="math notranslate nohighlight">\(s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY">
+<span class="sig-name descname"><span class="pre">E_XZT_inv_sqrtY</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((d, r)\)</span>; <span class="math notranslate nohighlight">\(s_7 = \frac{1}{n}\sum_i E[X_i Z_i^\top Y_i^{-1/2} \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY">
+<span class="sig-name descname"><span class="pre">E_Z_inv_sqrtY</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((r,)\)</span>; <span class="math notranslate nohighlight">\(s_8 = \frac{1}{n}\sum_i E[Z_i Y_i^{-1/2} \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY">
+<span class="sig-name descname"><span class="pre">E_Z_sqrtY</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((r,)\)</span>; <span class="math notranslate nohighlight">\(s_9 = \frac{1}{n}\sum_i E[Z_i Y_i^{1/2} \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_ZZT">
+<span class="sig-name descname"><span class="pre">E_ZZT</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_ZZT" title="Link to this definition">#</a></dt>
+<dd><p>shape <span class="math notranslate nohighlight">\((r, r)\)</span>; <span class="math notranslate nohighlight">\(s_{10} = \frac{1}{n}\sum_i E[Z_i Z_i^\top \mid X_i]\)</span></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.eta.affine_combine">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">affine_combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta_prev</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#affine_combine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.affine_combine" title="Link to this definition">#</a></dt>
+<dd><p>Affine combination <span class="math notranslate nohighlight">\(\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta\)</span>.</p>
+<p>The weights <code class="docutils literal notranslate"><span class="pre">b</span></code> and <code class="docutils literal notranslate"><span class="pre">c</span></code> may be:</p>
+<ul class="simple">
+<li><p><strong>scalar</strong> (Python number or 0-d <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code>) — broadcast to every
+leaf of <code class="docutils literal notranslate"><span class="pre">eta</span></code>;</p></li>
+<li><p><strong>stats-shape pytree</strong> (same type as <code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> / <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>) —
+block-diagonal weighting; leaf-wise multiply;</p></li>
+<li><p><strong>callable</strong> <code class="docutils literal notranslate"><span class="pre">η</span> <span class="pre">→</span> <span class="pre">η</span></code> — arbitrary linear operator on η (e.g. an
+<code class="docutils literal notranslate"><span class="pre">eqx.nn.Linear</span></code> wrapped to operate on a flattened pytree).</p></li>
+</ul>
+<p>The shift <code class="docutils literal notranslate"><span class="pre">a</span></code> is either <code class="docutils literal notranslate"><span class="pre">None</span></code> (zero) or a stats-shape pytree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta_prev</strong> – Running state <span class="math notranslate nohighlight">\(\eta_{t-1}\)</span>.</p></li>
+<li><p><strong>eta_new</strong> – New batch estimate <span class="math notranslate nohighlight">\(\hat\eta\)</span>.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on previous state.</p></li>
+<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on new estimate.</p></li>
+<li><p><strong>a</strong> – Additive shift (e.g. shrinkage prior). <code class="docutils literal notranslate"><span class="pre">None</span></code> means zero.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-normix.fitting.eta_rules">
+<span id="eta-update-rules"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink">Eta Update Rules</a><a class="headerlink" href="#module-normix.fitting.eta_rules" title="Link to this heading">#</a></h2>
+<p>Eta update rules for incremental and penalised EM.</p>
+<section id="two-layer-abstraction">
+<h3>Two-layer abstraction<a class="headerlink" href="#two-layer-abstraction" title="Link to this heading">#</a></h3>
+<p>The most general rule is</p>
+<div class="math notranslate nohighlight">
+\[\eta_t = \mathrm{rule}(\eta_{t-1},\, \hat\eta_{\text{batch}}),\]</div>
+<p>implemented by <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a> via <code class="docutils literal notranslate"><span class="pre">__call__</span></code>. This leaves room
+for non-affine predictors (e.g. an MLP that maps
+<code class="docutils literal notranslate"><span class="pre">(η_{t-1},</span> <span class="pre">η̂)</span> <span class="pre">→</span> <span class="pre">η_t</span></code>) without another API revision.</p>
+<p>Most rules in this module are <strong>affine</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta_{\text{batch}},\]</div>
+<p>implemented by <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a>, which delegates to
+<a class="reference internal" href="#normix.fitting.eta_rules.AffineRule.weights" title="normix.fitting.eta_rules.AffineRule.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AffineRule.weights()</span></code></a> returning <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">state)</span></code> and combines
+via <a class="reference internal" href="#normix.fitting.eta.affine_combine" title="normix.fitting.eta.affine_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">affine_combine()</span></code></a>.</p>
+<p>All rules are <code class="xref py py-class docutils literal notranslate"><span class="pre">equinox.Module</span></code> pytrees so their hyperparameters
+(e.g. <code class="docutils literal notranslate"><span class="pre">tau0</span></code>, <code class="docutils literal notranslate"><span class="pre">w</span></code>, <code class="docutils literal notranslate"><span class="pre">tau</span></code>) are JAX array leaves — JIT-compatible
+and differentiable for future meta-learning of step-size schedules.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.EtaUpdateRule">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">EtaUpdateRule</span></span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#EtaUpdateRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.EtaUpdateRule" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Abstract base for eta update rules.</p>
+<p>The fitter only knows <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>; whether a concrete rule is
+affine, a combinator, or an ML-style predictor is invisible at the
+call site.</p>
+<p>Subclasses override <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>. Rules with no per-step memory
+inherit <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule.initial_state" title="normix.fitting.eta_rules.EtaUpdateRule.initial_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">initial_state()</span></code></a> returning an empty <code class="docutils literal notranslate"><span class="pre">dict</span></code>.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.EtaUpdateRule.initial_state">
+<span class="sig-name descname"><span class="pre">initial_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#EtaUpdateRule.initial_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.EtaUpdateRule.initial_state" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineRule">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">AffineRule</span></span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#AffineRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.AffineRule" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a></p>
+<p>Specialisation: <span class="math notranslate nohighlight">\(\eta_t = a + b\,\eta_{t-1} + c\,\hat\eta\)</span>.</p>
+<p>Subclasses implement <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule.weights" title="normix.fitting.eta_rules.AffineRule.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">weights()</span></code></a> instead of <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>. The
+base class provides a single <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> that delegates to
+<a class="reference internal" href="#normix.fitting.eta_rules.AffineRule.weights" title="normix.fitting.eta_rules.AffineRule.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">weights()</span></code></a> and runs the combination through
+<a class="reference internal" href="#normix.fitting.eta.affine_combine" title="normix.fitting.eta.affine_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">affine_combine()</span></code></a>.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineRule.weights">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#AffineRule.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.AffineRule.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a>[<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a> | None, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.IdentityUpdate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">IdentityUpdate</span></span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#IdentityUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.IdentityUpdate" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a></p>
+<p>Pass-through: <span class="math notranslate nohighlight">\(\eta_t = \hat\eta\)</span> (standard batch EM).</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.IdentityUpdate.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#IdentityUpdate.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.IdentityUpdate.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.RobbinsMonroUpdate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">RobbinsMonroUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tau0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#RobbinsMonroUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.RobbinsMonroUpdate" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a></p>
+<p>Robbins–Monro: <span class="math notranslate nohighlight">\(c = 1/(\tau_0 + t)\)</span>, <span class="math notranslate nohighlight">\(b = 1 - c\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tau0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Initial step-size denominator (higher → slower adaptation).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.RobbinsMonroUpdate.tau0">
+<span class="sig-name descname"><span class="pre">tau0</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.tau0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.RobbinsMonroUpdate.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#RobbinsMonroUpdate.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.SampleWeightedUpdate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">SampleWeightedUpdate</span></span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#SampleWeightedUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.SampleWeightedUpdate" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a></p>
+<p>Incremental mean: <span class="math notranslate nohighlight">\(b = n/(n+m)\)</span>, <span class="math notranslate nohighlight">\(c = m/(n+m)\)</span>.</p>
+<p>Tracks cumulative sample count <em>n</em>; each batch contributes <em>m</em>.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.SampleWeightedUpdate.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#SampleWeightedUpdate.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.SampleWeightedUpdate.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.SampleWeightedUpdate.initial_state">
+<span class="sig-name descname"><span class="pre">initial_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#SampleWeightedUpdate.initial_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.SampleWeightedUpdate.initial_state" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.EWMAUpdate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">EWMAUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#EWMAUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.EWMAUpdate" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a></p>
+<p>Exponentially weighted moving average: <span class="math notranslate nohighlight">\(b = 1-w\)</span>, <span class="math notranslate nohighlight">\(c = w\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on the new batch (0 &lt; w ≤ 1).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.EWMAUpdate.w">
+<span class="sig-name descname"><span class="pre">w</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.EWMAUpdate.w" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.EWMAUpdate.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#EWMAUpdate.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.EWMAUpdate.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.Shrinkage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">Shrinkage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#Shrinkage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.Shrinkage" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a></p>
+<p>Shrinkage combinator: pull the running η toward a prior on top of any base rule.</p>
+<div class="math notranslate nohighlight">
+\[\eta_t = \frac{\tau}{1+\tau} \odot \eta_0
+         + \frac{1}{1+\tau} \odot \mathrm{base}(\eta_{t-1}, \hat\eta),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\odot\)</span> is per-field multiplication (broadcast for scalar
+<span class="math notranslate nohighlight">\(\tau\)</span>).</p>
+<p>The combinator composes with <strong>any</strong> base rule — affine
+(<a class="reference internal" href="#normix.fitting.eta_rules.IdentityUpdate" title="normix.fitting.eta_rules.IdentityUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">IdentityUpdate</span></code></a>, <a class="reference internal" href="#normix.fitting.eta_rules.RobbinsMonroUpdate" title="normix.fitting.eta_rules.RobbinsMonroUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobbinsMonroUpdate</span></code></a>,
+<a class="reference internal" href="#normix.fitting.eta_rules.EWMAUpdate" title="normix.fitting.eta_rules.EWMAUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">EWMAUpdate</span></code></a>, <a class="reference internal" href="#normix.fitting.eta_rules.SampleWeightedUpdate" title="normix.fitting.eta_rules.SampleWeightedUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleWeightedUpdate</span></code></a>) or non-affine
+(e.g. an MLP-based predictor) — without losing the base rule’s state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a>) – Base rule that produces the unshrunk update
+<span class="math notranslate nohighlight">\(\mathrm{base}(\eta_{t-1}, \hat\eta)\)</span>.</p></li>
+<li><p><strong>eta0</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>) – Prior expectation parameters (shrinkage target). Must be a complete
+stats pytree of the same type as <code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> / <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>.</p></li>
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>stats pytree</em>) – <p>Shrinkage strength.</p>
+<ul>
+<li><p><strong>scalar</strong> — uniform shrinkage on every sufficient statistic;
+matches the penalised-MLE in
+<a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a>.</p></li>
+<li><p><strong>stats pytree</strong> (e.g. <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code> with scalar
+leaves) — per-field shrinkage. Setting all but one leaf to
+<code class="docutils literal notranslate"><span class="pre">0</span></code> shrinks only that statistic (e.g. <code class="docutils literal notranslate"><span class="pre">Σ</span></code> alone via the
+<code class="docutils literal notranslate"><span class="pre">E_XXT_inv_Y</span></code> field).</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Batch EM with uniform shrinkage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rule</span> <span class="o">=</span> <span class="n">Shrinkage</span><span class="p">(</span><span class="n">IdentityUpdate</span><span class="p">(),</span> <span class="n">eta0</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Batch EM with Σ-only shrinkage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tau_pytree</span> <span class="o">=</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
+    <span class="n">E_inv_Y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">E_X</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
+    <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">rule</span> <span class="o">=</span> <span class="n">Shrinkage</span><span class="p">(</span><span class="n">IdentityUpdate</span><span class="p">(),</span> <span class="n">eta0</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau_pytree</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Robbins–Monro online + shrinkage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rule</span> <span class="o">=</span> <span class="n">Shrinkage</span><span class="p">(</span><span class="n">RobbinsMonroUpdate</span><span class="p">(</span><span class="n">tau0</span><span class="o">=</span><span class="mf">10.0</span><span class="p">),</span> <span class="n">eta0</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>The state pytree is owned by <code class="docutils literal notranslate"><span class="pre">base</span></code>: <a class="reference internal" href="#normix.fitting.eta_rules.Shrinkage.initial_state" title="normix.fitting.eta_rules.Shrinkage.initial_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">initial_state()</span></code></a> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code> thread the base rule’s state unchanged through the
+shrinkage step.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#module-normix.fitting.shrinkage_targets" title="normix.fitting.shrinkage_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normix.fitting.shrinkage_targets</span></code></a></dt><dd><p>helpers for building <code class="docutils literal notranslate"><span class="pre">eta0</span></code>.</p>
+</dd>
+</dl>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.Shrinkage.base">
+<span class="sig-name descname"><span class="pre">base</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><span class="pre">EtaUpdateRule</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.Shrinkage.base" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.Shrinkage.eta0">
+<span class="sig-name descname"><span class="pre">eta0</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.Shrinkage.eta0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.Shrinkage.tau">
+<span class="sig-name descname"><span class="pre">tau</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.Shrinkage.tau" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.Shrinkage.initial_state">
+<span class="sig-name descname"><span class="pre">initial_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#Shrinkage.initial_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.Shrinkage.initial_state" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">AffineUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#AffineUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a></p>
+<p>User-defined constant <span class="math notranslate nohighlight">\((a, b, c)\)</span>.</p>
+<p>All three coefficients are pytree values — <code class="docutils literal notranslate"><span class="pre">b</span></code> and <code class="docutils literal notranslate"><span class="pre">c</span></code> are scalar
+<code class="docutils literal notranslate"><span class="pre">jax.Array</span></code> leaves, <code class="docutils literal notranslate"><span class="pre">a</span></code> is an optional <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>.
+For time-varying schedules, subclass <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a> directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><em>None</em>) – Additive shift (e.g. scaled prior).</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on previous state.</p></li>
+<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on new batch.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate.a">
+<span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><span class="pre">NormalMixtureEta</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.a" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate.b">
+<span class="sig-name descname"><span class="pre">b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.b" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate.c">
+<span class="sig-name descname"><span class="pre">c</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.c" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#AffineUpdate.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.weights" title="Link to this definition">#</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">updated_state)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.fitting.shrinkage_targets">
+<span id="shrinkage-targets"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Shrinkage Targets</a><a class="headerlink" href="#module-normix.fitting.shrinkage_targets" title="Link to this heading">#</a></h2>
+<p>Shrinkage target builders for penalised EM.</p>
+<p>The <a class="reference internal" href="#normix.fitting.eta_rules.Shrinkage" title="normix.fitting.eta_rules.Shrinkage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shrinkage</span></code></a> combinator pulls the
+running expectation parameters toward a prior <span class="math notranslate nohighlight">\(\eta_0\)</span>. The helpers
+below construct that prior from a fitted (or moment-initialised)
+<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, optionally substituting
+a custom dispersion <span class="math notranslate nohighlight">\(\Sigma_0\)</span>.</p>
+<p>Per <a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a> (Shrunk Sufficient Statistics), the
+prior expectation parameters are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}s_1 &amp;= E[Y^{-1}\mid\theta_0],\quad
+s_2  = E[Y\mid\theta_0],\quad
+s_3  = E[\log Y\mid\theta_0] \\
+s_4 &amp;= \mu_0 + \gamma_0\,E[Y\mid\theta_0] \\
+s_5 &amp;= \mu_0\,E[Y^{-1}\mid\theta_0] + \gamma_0 \\
+s_6 &amp;= \Sigma_0
+       + \mu_0\mu_0^\top E[Y^{-1}\mid\theta_0]
+       + \gamma_0\gamma_0^\top E[Y\mid\theta_0]
+       + \mu_0\gamma_0^\top + \gamma_0\mu_0^\top.\end{split}\]</div>
+<p>All four constructors return a complete six-field
+<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a>. The Σ-only variants reuse
+the model’s own <span class="math notranslate nohighlight">\((\mu, \gamma, p, a, b)\)</span> to fill the other five
+fields, keeping the public contract simple (”<code class="docutils literal notranslate"><span class="pre">eta0</span></code> is always a full
+prior”) while the user’s per-field <code class="docutils literal notranslate"><span class="pre">tau</span></code> selects which fields are
+actually shrunk.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.shrinkage_targets.eta0_from_model">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.shrinkage_targets.</span></span><span class="sig-name descname"><span class="pre">eta0_from_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/shrinkage_targets.html#eta0_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.shrinkage_targets.eta0_from_model" title="Link to this definition">#</a></dt>
+<dd><p>Prior <span class="math notranslate nohighlight">\(\eta_0\)</span> equal to the model’s current expectation parameters.</p>
+<p>Equivalent to <code class="docutils literal notranslate"><span class="pre">model.compute_eta_from_model()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Source model; the prior reuses its <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span>
+and subordinator parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Six-field expectation pytree.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.shrinkage_targets.eta0_isotropic">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.shrinkage_targets.</span></span><span class="sig-name descname"><span class="pre">eta0_isotropic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/shrinkage_targets.html#eta0_isotropic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.shrinkage_targets.eta0_isotropic" title="Link to this definition">#</a></dt>
+<dd><p>Prior with an isotropic dispersion <span class="math notranslate nohighlight">\(\Sigma_0 = \sigma^2 I_d\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Source model; provides <span class="math notranslate nohighlight">\((\mu, \gamma, p, a, b)\)</span>.</p></li>
+<li><p><strong>sigma2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Common variance for the isotropic prior. Must be positive.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Six-field expectation pytree.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.shrinkage_targets.eta0_diagonal">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.shrinkage_targets.</span></span><span class="sig-name descname"><span class="pre">eta0_diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/shrinkage_targets.html#eta0_diagonal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.shrinkage_targets.eta0_diagonal" title="Link to this definition">#</a></dt>
+<dd><p>Prior with a diagonal dispersion <span class="math notranslate nohighlight">\(\Sigma_0 = \mathrm{diag}(\text{diag})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Source model; provides <span class="math notranslate nohighlight">\((\mu, \gamma, p, a, b)\)</span>.</p></li>
+<li><p><strong>diag</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Diagonal entries of <span class="math notranslate nohighlight">\(\Sigma_0\)</span>, shape <span class="math notranslate nohighlight">\((d,)\)</span>. Must be
+positive.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Six-field expectation pytree.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.fitting.shrinkage_targets.eta0_with_sigma">
+<span class="sig-prename descclassname"><span class="pre">normix.fitting.shrinkage_targets.</span></span><span class="sig-name descname"><span class="pre">eta0_with_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Sigma0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/shrinkage_targets.html#eta0_with_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.shrinkage_targets.eta0_with_sigma" title="Link to this definition">#</a></dt>
+<dd><p>Prior <span class="math notranslate nohighlight">\(\eta_0\)</span> reusing model parameters with a custom <span class="math notranslate nohighlight">\(\Sigma_0\)</span>.</p>
+<p>Substitutes <code class="docutils literal notranslate"><span class="pre">Sigma0</span></code> for the model’s covariance in the
+<span class="math notranslate nohighlight">\(s_6\)</span> term while keeping <span class="math notranslate nohighlight">\(\mu, \gamma\)</span> and the
+subordinator expectations from <code class="docutils literal notranslate"><span class="pre">model</span></code>. This is the building block
+for “shrink Σ only” workflows: combine with a per-field <code class="docutils literal notranslate"><span class="pre">tau</span></code> that
+is non-zero only on <code class="docutils literal notranslate"><span class="pre">E_XXT_inv_Y</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Source model; provides <span class="math notranslate nohighlight">\((\mu, \gamma, p, a, b)\)</span>.</p></li>
+<li><p><strong>Sigma0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Prior dispersion to embed in <span class="math notranslate nohighlight">\(s_6\)</span>, shape <span class="math notranslate nohighlight">\((d, d)\)</span>.
+Must be positive semi-definite (not checked).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Six-field expectation pytree with <code class="docutils literal notranslate"><span class="pre">E_XXT_inv_Y</span></code> rebuilt from
+<code class="docutils literal notranslate"><span class="pre">Sigma0</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mixtures.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Mixtures</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="finance.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Finance</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.em">EM Fitters</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult"><code class="docutils literal notranslate"><span class="pre">EMResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.model"><code class="docutils literal notranslate"><span class="pre">EMResult.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.log_likelihoods"><code class="docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.param_changes"><code class="docutils literal notranslate"><span class="pre">EMResult.param_changes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.n_iter"><code class="docutils literal notranslate"><span class="pre">EMResult.n_iter</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.converged"><code class="docutils literal notranslate"><span class="pre">EMResult.converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">EMResult.elapsed_time</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.diverged"><code class="docutils literal notranslate"><span class="pre">EMResult.diverged</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter.fit"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter.fit()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.IncrementalEMFitter"><code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.IncrementalEMFitter.fit"><code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.solvers">Solvers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#public-api">Public API</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backends-methods">Backends × methods</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gradient-hessian-sources">Gradient / Hessian sources</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult"><code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.theta"><code class="docutils literal notranslate"><span class="pre">BregmanResult.theta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.fun"><code class="docutils literal notranslate"><span class="pre">BregmanResult.fun</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.grad_norm"><code class="docutils literal notranslate"><span class="pre">BregmanResult.grad_norm</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.num_steps"><code class="docutils literal notranslate"><span class="pre">BregmanResult.num_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.converged"><code class="docutils literal notranslate"><span class="pre">BregmanResult.converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">BregmanResult.elapsed_time</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.bregman_objective"><code class="docutils literal notranslate"><span class="pre">bregman_objective()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman"><code class="docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman_multistart"><code class="docutils literal notranslate"><span class="pre">solve_bregman_multistart()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.make_jit_newton_solver"><code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta">Eta Parametrization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_log_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_log_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_XXT_inv_Y</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_log_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XXT_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XZT_inv_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_inv_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_sqrtY</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_ZZT"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_ZZT</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.affine_combine"><code class="docutils literal notranslate"><span class="pre">affine_combine()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta_rules">Eta Update Rules</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-layer-abstraction">Two-layer abstraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EtaUpdateRule"><code class="docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EtaUpdateRule.initial_state"><code class="docutils literal notranslate"><span class="pre">EtaUpdateRule.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineRule"><code class="docutils literal notranslate"><span class="pre">AffineRule</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineRule.weights"><code class="docutils literal notranslate"><span class="pre">AffineRule.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.IdentityUpdate"><code class="docutils literal notranslate"><span class="pre">IdentityUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.IdentityUpdate.weights"><code class="docutils literal notranslate"><span class="pre">IdentityUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.tau0"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate.tau0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.RobbinsMonroUpdate.weights"><code class="docutils literal notranslate"><span class="pre">RobbinsMonroUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate.weights"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate.weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.SampleWeightedUpdate.initial_state"><code class="docutils literal notranslate"><span class="pre">SampleWeightedUpdate.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate.w"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate.w</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.EWMAUpdate.weights"><code class="docutils literal notranslate"><span class="pre">EWMAUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage"><code class="docutils literal notranslate"><span class="pre">Shrinkage</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.base"><code class="docutils literal notranslate"><span class="pre">Shrinkage.base</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.eta0"><code class="docutils literal notranslate"><span class="pre">Shrinkage.eta0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.tau"><code class="docutils literal notranslate"><span class="pre">Shrinkage.tau</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.Shrinkage.initial_state"><code class="docutils literal notranslate"><span class="pre">Shrinkage.initial_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate"><code class="docutils literal notranslate"><span class="pre">AffineUpdate</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.a"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.a</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.b"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.b</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.c"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.c</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta_rules.AffineUpdate.weights"><code class="docutils literal notranslate"><span class="pre">AffineUpdate.weights()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.shrinkage_targets">Shrinkage Targets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_from_model"><code class="docutils literal notranslate"><span class="pre">eta0_from_model()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_isotropic"><code class="docutils literal notranslate"><span class="pre">eta0_isotropic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_diagonal"><code class="docutils literal notranslate"><span class="pre">eta0_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.shrinkage_targets.eta0_with_sigma"><code class="docutils literal notranslate"><span class="pre">eta0_with_sigma()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

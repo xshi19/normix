@@ -1,0 +1,1304 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Finance &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/finance';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Utilities" href="utils.html" />
+    <link rel="prev" title="Fitting" href="fitting.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fapi/finance.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/finance.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Finance</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.projection">Portfolio Projection</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.projection.project_portfolio"><code class="docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.risk">Risk Measures</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure"><code class="docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value_reduced"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value_reduced()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR"><code class="docutils literal notranslate"><span class="pre">CVaR</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.alpha"><code class="docutils literal notranslate"><span class="pre">CVaR.alpha</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.var"><code class="docutils literal notranslate"><span class="pre">CVaR.var()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value"><code class="docutils literal notranslate"><span class="pre">CVaR.value()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_reduced"><code class="docutils literal notranslate"><span class="pre">CVaR.value_reduced()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_scalar"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_scalar()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_scalar"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_scalar()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.optimization">Mean-Risk Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface"><code class="docutils literal notranslate"><span class="pre">EfficientSurface</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.mu_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.mu_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.gamma_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.gamma_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.risk"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.expected_return"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.expected_return</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.expected_return"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.expected_return</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.risk"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.mu_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.mu_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.gamma_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.gamma_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.weights"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.weights</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.expected_return"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.expected_return()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_variance_point()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.projection_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.projection_at()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk_at()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_surface()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_frontier()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.functional">Weight Functional</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional"><code class="docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.risk"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.model"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.Y"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.grad"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.grad()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.hess"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.hess()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="finance">
+<h1>Finance<a class="headerlink" href="#finance" title="Link to this heading">#</a></h1>
+<nav class="contents local" id="modules">
+<p class="topic-title">Modules</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-normix.finance.projection" id="id1">Portfolio Projection</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.risk" id="id2">Risk Measures</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.optimization" id="id3">Mean-Risk Optimization</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.functional" id="id4">Weight Functional</a></p></li>
+</ul>
+</nav>
+<section id="module-normix.finance.projection">
+<span id="portfolio-projection"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">Portfolio Projection</a><a class="headerlink" href="#module-normix.finance.projection" title="Link to this heading">#</a></h2>
+<p>Portfolio projection: bridge from multivariate normal mixtures to univariate.</p>
+<p>For a normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\)</span> with
+<span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span> and weights <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>,
+the portfolio return is itself a univariate normal mixture:</p>
+<div class="math notranslate nohighlight">
+\[w^\top X \stackrel{d}{=} w^\top \mu
+    + w^\top \gamma \, Y + \sqrt{w^\top \Sigma w} \, \sqrt{Y} \, Z_1,\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z_1 \sim \mathcal{N}(0, 1)\)</span>. <a class="reference internal" href="#normix.finance.projection.project_portfolio" title="normix.finance.projection.project_portfolio"><code class="xref py py-func docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a> returns
+the corresponding <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> distribution instance.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.finance.projection.project_portfolio">
+<span class="sig-prename descclassname"><span class="pre">normix.finance.projection.</span></span><span class="sig-name descname"><span class="pre">project_portfolio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/projection.html#project_portfolio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.projection.project_portfolio" title="Link to this definition">#</a></dt>
+<dd><p>Project a multivariate normal mixture onto portfolio weights <code class="docutils literal notranslate"><span class="pre">w</span></code>.</p>
+<p>Returns a <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> instance (e.g. <code class="xref py py-class docutils literal notranslate"><span class="pre">UnivariateNormalInverseGaussian</span></code>)
+representing the distribution of <span class="math notranslate nohighlight">\(w^\top X\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>_UnivariateNormalMixtureMixin</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-normix.finance.risk">
+<span id="risk-measures"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Risk Measures</a><a class="headerlink" href="#module-normix.finance.risk" title="Link to this heading">#</a></h2>
+<p>Coherent risk measures for univariate normal-mixture portfolio returns.</p>
+<p>The current implementation provides Conditional Value at Risk (CVaR), with
+value, first derivatives, and second derivatives in both the projected
+parameter space <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span> and the
+portfolio-weight space <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>. Formulas follow
+<code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.rst</span></code>.</p>
+<p>Monte Carlo for CVaR value and derivatives is conditional over the
+subordinator <span class="math notranslate nohighlight">\(Y\)</span> (common random numbers). Deterministic VaR uses
+the <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> PINV <code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.risk.</span></span><span class="sig-name descname"><span class="pre">RiskMeasure</span></span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Abstract base for portfolio risk measures.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure.value">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value" title="Link to this definition">#</a></dt>
+<dd><p>Risk of the univariate normal mixture represented by <code class="docutils literal notranslate"><span class="pre">univariate</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure.value_reduced">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value_reduced" title="Link to this definition">#</a></dt>
+<dd><p>Risk from raw scalar parameters <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>.</p>
+<p>The univariate normal mixture is
+<span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma Y + \tilde\sigma\sqrt{Y}Z\)</span>. Unlike
+<a class="reference internal" href="#normix.finance.risk.RiskMeasure.value" title="normix.finance.risk.RiskMeasure.value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value()</span></code></a>, this signature takes plain scalars (no distribution
+object) and must be Bessel-/PINV-free so it can be
+<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vmap.html#jax.vmap" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.vmap()</span></code></a>-ed across an efficient-surface grid that shares the
+subordinator draws <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.risk.</span></span><span class="sig-name descname"><span class="pre">CVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a></p>
+<p>Conditional Value at Risk at confidence <span class="math notranslate nohighlight">\(\alpha \in (0, 1)\)</span>.</p>
+<p>For a univariate normal mixture <span class="math notranslate nohighlight">\(X = \tilde\mu + \tilde\gamma Y
++ \tilde\sigma \sqrt{Y} Z\)</span>, the value is computed in closed form
+conditional on <span class="math notranslate nohighlight">\(Y\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\operatorname{CVaR}_\alpha(X) = \frac{1}{\alpha} E_Y\!\left[
+\tilde\sigma \sqrt{Y} \, \varphi(z_Y)
+- (\tilde\mu + \tilde\gamma Y) \Phi(z_Y) \right],\]</div>
+<p>where <span class="math notranslate nohighlight">\(z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)
+/ (\tilde\sigma \sqrt{Y})\)</span> and <span class="math notranslate nohighlight">\(x_\alpha = -\operatorname{VaR}_\alpha\)</span>
+is found by bisection on the conditional Monte Carlo CDF (same <code class="docutils literal notranslate"><span class="pre">Y</span></code> as
+the integral, for common random numbers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.finance.risk.CVaR.alpha" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.var">
+<span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.var" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\operatorname{VaR}_\alpha\)</span> via deterministic PINV <code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.value">
+<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value" title="Link to this definition">#</a></dt>
+<dd><p>Risk of the univariate normal mixture represented by <code class="docutils literal notranslate"><span class="pre">univariate</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_reduced">
+<span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_reduced" title="Link to this definition">#</a></dt>
+<dd><p>CVaR from raw scalar parameters, vectorizable over a surface grid.</p>
+<p>Inverts the conditional-MC CDF for <span class="math notranslate nohighlight">\(x_\alpha\)</span> within an
+analytic bracket <span class="math notranslate nohighlight">\(E[X] \pm 20\,\mathrm{std}[X]\)</span> derived from
+the subordinator sample moments of <code class="docutils literal notranslate"><span class="pre">Y</span></code> — no PINV table, no Bessel
+evaluation — then reuses <code class="xref py py-meth docutils literal notranslate"><span class="pre">_cvar_from_quantile()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.gradient_scalar">
+<span class="sig-name descname"><span class="pre">gradient_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_scalar" title="Link to this definition">#</a></dt>
+<dd><p>Return <span class="math notranslate nohighlight">\((\partial r / \partial \tilde\mu,
+\partial r / \partial \tilde\gamma, \partial r / \partial \tilde\sigma)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.hessian_scalar">
+<span class="sig-name descname"><span class="pre">hessian_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_scalar" title="Link to this definition">#</a></dt>
+<dd><p>Return the <span class="math notranslate nohighlight">\(3 \times 3\)</span> Hessian in <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\partial^2/\partial \tilde\mu \, \cdot = 0\)</span> exactly; the other
+non-trivial blocks follow <code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.rst</span></code>
+<a class="reference internal" href="../theory/cvar_derivatives.html#equation-cvar-nm-hessian">(4)</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_w">
+<span class="sig-name descname"><span class="pre">value_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_w" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.gradient_w">
+<span class="sig-name descname"><span class="pre">gradient_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_w" title="Link to this definition">#</a></dt>
+<dd><p>Gradient <span class="math notranslate nohighlight">\(\nabla_w r_{\operatorname{CVaR}_\alpha}(w)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.hessian_w">
+<span class="sig-name descname"><span class="pre">hessian_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_w" title="Link to this definition">#</a></dt>
+<dd><p>Hessian <span class="math notranslate nohighlight">\(H_{r_{\operatorname{CVaR}_\alpha}}(w)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.finance.optimization">
+<span id="mean-risk-optimization"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Mean-Risk Optimization</a><a class="headerlink" href="#module-normix.finance.optimization" title="Link to this heading">#</a></h2>
+<p>Mean-risk portfolio optimization for normal-mixture models.</p>
+<p>For a multivariate normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y
++ \sqrt{Y} Z\)</span> with <span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span>, the mean-risk
+problem</p>
+<div class="math notranslate nohighlight">
+\[\min_w \rho(w^\top X) \quad \text{s.t.} \quad
+w^\top e = 1, \quad E[w^\top X] \ge m\]</div>
+<p>reduces — for any coherent risk measure <span class="math notranslate nohighlight">\(\rho\)</span> — to a two-dimensional
+problem in the <em>reduced coordinates</em> <span class="math notranslate nohighlight">\(\tilde\mu = w^\top\mu\)</span> and
+<span class="math notranslate nohighlight">\(\tilde\gamma = w^\top\gamma\)</span>. The minimum-dispersion weights that
+realise a given <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> are</p>
+<div class="math notranslate nohighlight">
+\[w^*(\tilde\mu, \tilde\gamma) = \Sigma^{-1}[\mu\;\gamma\;e]\,A^{-1}
+[\tilde\mu\;\tilde\gamma\;1]^\top, \qquad
+A = [\mu\;\gamma\;e]^\top \Sigma^{-1} [\mu\;\gamma\;e],\]</div>
+<p>and the realised dispersion is
+<span class="math notranslate nohighlight">\(g(\tilde\mu, \tilde\gamma) = [\tilde\mu\;\tilde\gamma\;1] A^{-1}
+[\tilde\mu\;\tilde\gamma\;1]^\top\)</span>. The map
+<span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) \mapsto \rho\)</span> is the <strong>efficient surface</strong>;
+its lower envelope under the return constraint is the <strong>efficient frontier</strong>.</p>
+<p>See <a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a> for the derivation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">EfficientSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_return</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#EfficientSurface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.EfficientSurface" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Efficient surface <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) \mapsto \rho\)</span> on a grid.</p>
+<p><code class="docutils literal notranslate"><span class="pre">risk[i,</span> <span class="pre">j]</span></code> is the risk of the minimum-dispersion portfolio with
+reduced coordinates <code class="docutils literal notranslate"><span class="pre">(mu_tilde[i],</span> <span class="pre">gamma_tilde[j])</span></code>;
+<code class="docutils literal notranslate"><span class="pre">expected_return[i,</span> <span class="pre">j]</span> <span class="pre">=</span> <span class="pre">mu_tilde[i]</span> <span class="pre">+</span> <span class="pre">gamma_tilde[j]</span> <span class="pre">*</span> <span class="pre">E[Y]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>risk</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>expected_return</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface.mu_tilde">
+<span class="sig-name descname"><span class="pre">mu_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientSurface.mu_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface.gamma_tilde">
+<span class="sig-name descname"><span class="pre">gamma_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientSurface.gamma_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface.risk">
+<span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientSurface.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface.expected_return">
+<span class="sig-name descname"><span class="pre">expected_return</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientSurface.expected_return" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">EfficientFrontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_return</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#EfficientFrontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Mean-risk efficient frontier: minimum risk per target expected return.</p>
+<p>Each entry is the solution of the reduced problem on the constraint line
+<span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma E[Y] = m\)</span>, including the realised
+portfolio <code class="docutils literal notranslate"><span class="pre">weights</span></code> of shape <code class="docutils literal notranslate"><span class="pre">(K,</span> <span class="pre">d)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expected_return</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>risk</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier.expected_return">
+<span class="sig-name descname"><span class="pre">expected_return</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier.expected_return" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier.risk">
+<span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier.mu_tilde">
+<span class="sig-name descname"><span class="pre">mu_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier.mu_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier.gamma_tilde">
+<span class="sig-name descname"><span class="pre">gamma_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier.gamma_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier.weights" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">MeanRiskProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Mean-risk optimization in reduced <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> coordinates.</p>
+<p>Bundles a fitted <a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> and a
+<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>. All heavy evaluations share a
+fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> (common random numbers); draw it once via
+<code class="docutils literal notranslate"><span class="pre">model.joint.subordinator().rvs(n,</span> <span class="pre">seed)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><span class="pre">NormalMixture</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.model" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.risk">
+<span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><span class="pre">RiskMeasure</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.E_Y">
+<span class="sig-name descname"><span class="pre">E_Y</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.E_Y"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.E_Y" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(E[Y]\)</span> — subordinator mean.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.weights" title="Link to this definition">#</a></dt>
+<dd><p>Minimum-dispersion weights realising <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.dispersion">
+<span class="sig-name descname"><span class="pre">dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.dispersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.dispersion" title="Link to this definition">#</a></dt>
+<dd><p>Realised dispersion <span class="math notranslate nohighlight">\(g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.expected_return">
+<span class="sig-name descname"><span class="pre">expected_return</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.expected_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.expected_return" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(m = \tilde\mu + \tilde\gamma\,E[Y]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.min_variance_point">
+<span class="sig-name descname"><span class="pre">min_variance_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.min_variance_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point" title="Link to this definition">#</a></dt>
+<dd><p>Reduced coordinates <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> of the global
+minimum-variance portfolio <span class="math notranslate nohighlight">\(w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)\)</span>.</p>
+<p>A convenient anchor for choosing efficient-surface grid ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.projection_at">
+<span class="sig-name descname"><span class="pre">projection_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.projection_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.projection_at" title="Link to this definition">#</a></dt>
+<dd><p>Univariate portfolio return at <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>.</p>
+<p>Projects the minimum-dispersion <a class="reference internal" href="#normix.finance.optimization.MeanRiskProblem.weights" title="normix.finance.optimization.MeanRiskProblem.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">weights()</span></code></a>; the result is a
+<code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> instance with location <span class="math notranslate nohighlight">\(\tilde\mu\)</span>, skewness
+<span class="math notranslate nohighlight">\(\tilde\gamma\)</span>, variance <span class="math notranslate nohighlight">\(g(\tilde\mu, \tilde\gamma)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.risk_at">
+<span class="sig-name descname"><span class="pre">risk_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.risk_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.risk_at" title="Link to this definition">#</a></dt>
+<dd><p>Efficient-surface risk at a single <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.efficient_surface">
+<span class="sig-name descname"><span class="pre">efficient_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface" title="Link to this definition">#</a></dt>
+<dd><p>Evaluate the efficient surface over the grid <code class="docutils literal notranslate"><span class="pre">mu_tilde</span> <span class="pre">×</span> <span class="pre">gamma_tilde</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mu_tilde</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_tilde</span></code> are 1-D arrays; the returned
+<code class="docutils literal notranslate"><span class="pre">risk</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(len(mu_tilde),</span> <span class="pre">len(gamma_tilde))</span></code>. Memory
+scales as <code class="docutils literal notranslate"><span class="pre">len(mu_tilde)</span> <span class="pre">*</span> <span class="pre">len(gamma_tilde)</span> <span class="pre">*</span> <span class="pre">len(Y)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.optimization.EfficientSurface" title="normix.finance.optimization.EfficientSurface"><em>EfficientSurface</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.efficient_frontier">
+<span class="sig-name descname"><span class="pre">efficient_frontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_frontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier" title="Link to this definition">#</a></dt>
+<dd><p>Minimum risk for each target expected return in <code class="docutils literal notranslate"><span class="pre">returns</span></code>.</p>
+<p>For every target <span class="math notranslate nohighlight">\(m\)</span>, minimises the risk along the constraint
+line <span class="math notranslate nohighlight">\(\tilde\mu = m - \tilde\gamma E[Y]\)</span> over
+<span class="math notranslate nohighlight">\(\tilde\gamma \in\)</span> <code class="docutils literal notranslate"><span class="pre">gamma_bounds</span></code> by golden-section search
+(the surface is convex, so the restriction is unimodal).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>returns</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gamma_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em>)</p></li>
+<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.optimization.EfficientFrontier" title="normix.finance.optimization.EfficientFrontier"><em>EfficientFrontier</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.finance.functional">
+<span id="weight-functional"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
+<p>Risk measures as JIT-able functions of portfolio weights.</p>
+<p><a class="reference internal" href="#normix.finance.functional.WeightFunctional" title="normix.finance.functional.WeightFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a> bundles a <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>,
+a multivariate normal-mixture model, and a fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> into
+a callable <code class="docutils literal notranslate"><span class="pre">w</span> <span class="pre">-&gt;</span> <span class="pre">ℝ</span></code> with gradient and Hessian companions for optimisation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.functional.</span></span><span class="sig-name descname"><span class="pre">WeightFunctional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Risk measure as a function of weights, with frozen model and <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<p>Bundles a <code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code>, a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code> model, and a
+realisation <code class="docutils literal notranslate"><span class="pre">Y</span></code> of the subordinator into JIT-able callables intended
+for mean-risk optimisation (Phase E).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.risk">
+<span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><span class="pre">RiskMeasure</span></a></span><a class="headerlink" href="#normix.finance.functional.WeightFunctional.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><span class="pre">NormalMixture</span></a></span><a class="headerlink" href="#normix.finance.functional.WeightFunctional.model" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.Y">
+<span class="sig-name descname"><span class="pre">Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.functional.WeightFunctional.Y" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.grad">
+<span class="sig-name descname"><span class="pre">grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional.grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional.grad" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.hess">
+<span class="sig-name descname"><span class="pre">hess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional.hess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional.hess" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="fitting.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Fitting</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="utils.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Utilities</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.projection">Portfolio Projection</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.projection.project_portfolio"><code class="docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.risk">Risk Measures</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure"><code class="docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value_reduced"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value_reduced()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR"><code class="docutils literal notranslate"><span class="pre">CVaR</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.alpha"><code class="docutils literal notranslate"><span class="pre">CVaR.alpha</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.var"><code class="docutils literal notranslate"><span class="pre">CVaR.var()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value"><code class="docutils literal notranslate"><span class="pre">CVaR.value()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_reduced"><code class="docutils literal notranslate"><span class="pre">CVaR.value_reduced()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_scalar"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_scalar()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_scalar"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_scalar()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.optimization">Mean-Risk Optimization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface"><code class="docutils literal notranslate"><span class="pre">EfficientSurface</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.mu_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.mu_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.gamma_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.gamma_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.risk"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientSurface.expected_return"><code class="docutils literal notranslate"><span class="pre">EfficientSurface.expected_return</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.expected_return"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.expected_return</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.risk"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.mu_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.mu_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.gamma_tilde"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.gamma_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.EfficientFrontier.weights"><code class="docutils literal notranslate"><span class="pre">EfficientFrontier.weights</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.expected_return"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.expected_return()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_variance_point()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.projection_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.projection_at()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk_at()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_surface()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_frontier()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.functional">Weight Functional</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional"><code class="docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.risk"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.model"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.Y"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.grad"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.grad()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.hess"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.hess()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

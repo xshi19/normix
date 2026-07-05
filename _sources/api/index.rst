@@ -1,10 +1,27 @@
 API Reference
 =============
 
-.. contents:: Modules
-   :local:
-   :depth: 1
+.. toctree::
+   :maxdepth: 1
+   :hidden:
 
+   distributions
+   mixtures
+   fitting
+   finance
+   utils
+
+Reference pages, one per subpackage:
+
+- :doc:`distributions` — the nine GH-family distributions (univariate,
+  multivariate, and their joint/marginal/univariate-wrapper/factor variants)
+- :doc:`mixtures` — the ``JointNormalMixture`` / ``NormalMixture`` /
+  ``FactorNormalMixture`` base classes that every mixture distribution builds on
+- :doc:`fitting` — EM fitters, solvers, and the incremental-EM
+  :math:`\eta`-update machinery
+- :doc:`finance` — portfolio projection, risk measures, and mean-risk
+  optimization
+- :doc:`utils` — Bessel functions, constants, sampling, and plotting helpers
 
 Base Classes
 ------------
@@ -16,141 +33,9 @@ Base Classes
    :undoc-members:
    :show-inheritance:
 
+Divergences
+-----------
 
-Univariate Distributions
-------------------------
-
-Gamma
-^^^^^
-
-.. automodule:: normix.distributions.gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Inverse Gamma
-^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.inverse_gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Inverse Gaussian
-^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.inverse_gaussian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Generalized Inverse Gaussian
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.generalized_inverse_gaussian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Multivariate Distributions
---------------------------
-
-.. automodule:: normix.distributions.normal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Mixture Base Classes
---------------------
-
-JointNormalMixture
-^^^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.mixtures.joint
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-NormalMixture
-^^^^^^^^^^^^^
-
-.. automodule:: normix.mixtures.marginal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Mixture Distributions
----------------------
-
-Variance Gamma
-^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.variance_gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Normal Inverse Gamma
-^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.normal_inverse_gamma
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Normal Inverse Gaussian
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.normal_inverse_gaussian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Generalized Hyperbolic
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.distributions.generalized_hyperbolic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Fitting
--------
-
-EM Fitters
-^^^^^^^^^^
-
-.. automodule:: normix.fitting.em
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Solvers
-^^^^^^^
-
-.. automodule:: normix.fitting.solvers
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Utilities
----------
-
-Bessel Functions
-^^^^^^^^^^^^^^^^
-
-.. automodule:: normix.utils.bessel
-   :members:
-   :undoc-members:
-
-Constants
-^^^^^^^^^
-
-.. automodule:: normix.utils.constants
+.. automodule:: normix.divergences
    :members:
    :undoc-members:

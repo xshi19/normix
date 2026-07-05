@@ -1,0 +1,1199 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>normix.mixtures.factor &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/mixtures/factor';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2F_modules/normix/mixtures/factor.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for normix.mixtures.factor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Factor-analysis mixture base class: :math:`\\Sigma = F F^\\top + \\mathrm{diag}(D)` storage.</span>
+
+<span class="sd">A factor-analysis Generalized-Hyperbolic random vector</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    X \\stackrel{d}{=} \\mu + \\gamma Y + \\sqrt{Y}\\,(F Z + \\varepsilon),</span>
+<span class="sd">    \\qquad Z \\sim N(0, I_r),\\;</span>
+<span class="sd">    \\varepsilon \\sim N(0, \\mathrm{diag}(D)),</span>
+
+<span class="sd">where :math:`Y` is a GH subordinator (Gamma, InverseGamma,</span>
+<span class="sd">InverseGaussian or GIG). The marginal :math:`X` is a normal</span>
+<span class="sd">variance-mean mixture with dispersion :math:`\\Sigma = F F^\\top +</span>
+<span class="sd">\\mathrm{diag}(D)`. Storing :math:`(F, D)` instead of a full Cholesky of</span>
+<span class="sd">:math:`\\Sigma` keeps quadratic forms and log-determinants in</span>
+<span class="sd">:math:`\\mathcal{O}(d r^2 + r^3)` via Woodbury and makes the rotation</span>
+<span class="sd">gauge of :math:`F` irrelevant for convergence (we measure on</span>
+<span class="sd">:math:`\\Sigma`).</span>
+
+<span class="sd">This module hosts only the abstract :class:`FactorNormalMixture` base.</span>
+<span class="sd">The four concrete subordinator families</span>
+<span class="sd">(:class:`~normix.distributions.variance_gamma.FactorVarianceGamma`,</span>
+<span class="sd">:class:`~normix.distributions.normal_inverse_gamma.FactorNormalInverseGamma`,</span>
+<span class="sd">:class:`~normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian`,</span>
+<span class="sd">:class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`)</span>
+<span class="sd">live next to their full-:math:`\\Sigma` siblings in</span>
+<span class="sd">``normix/distributions/``.</span>
+
+<span class="sd">The FA complete-data structure is over :math:`(X, Y, Z)` with ten</span>
+<span class="sd">sufficient statistics (see ``docs/theory/factor_analysis.rst``), so this</span>
+<span class="sd">family does not share the joint&#39;s six-statistic exponential-family</span>
+<span class="sd">signature — that is why :class:`FactorNormalMixture` is a sibling of</span>
+<span class="sd">:class:`~normix.mixtures.marginal.NormalMixture`, not a subclass.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactorMixtureStats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarginalMixture</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">B_POST_FLOOR</span><span class="p">,</span> <span class="n">D_FLOOR</span><span class="p">,</span> <span class="n">SIGMA_INIT_REG</span>
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Abstract base</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="FactorNormalMixture">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FactorNormalMixture</span><span class="p">(</span><span class="n">MarginalMixture</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract marginal :math:`f(x)` for a factor-analysis normal</span>
+<span class="sd">    variance-mean mixture with dispersion</span>
+<span class="sd">    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`.</span>
+
+<span class="sd">    Stored fields</span>
+<span class="sd">    -------------</span>
+<span class="sd">    mu : (d,)</span>
+<span class="sd">        Location :math:`\mu`.</span>
+<span class="sd">    gamma : (d,)</span>
+<span class="sd">        Skewness :math:`\gamma`.</span>
+<span class="sd">    F : (d, r)</span>
+<span class="sd">        Factor loadings; ``r`` is the latent factor dimension.</span>
+<span class="sd">    D : (d,)</span>
+<span class="sd">        Diagonal entries of the residual covariance (positive).</span>
+<span class="sd">    subordinator : ExponentialFamily</span>
+<span class="sd">        Fitted subordinator (Gamma / InverseGamma / InverseGaussian /</span>
+<span class="sd">        GIG).</span>
+
+<span class="sd">    Subclasses define the subordinator family (via the instance stored in</span>
+<span class="sd">    ``subordinator``, which supplies the shared posterior map through</span>
+<span class="sd">    ``to_gig()``) and implement :meth:`log_prob`,</span>
+<span class="sd">    :meth:`_subordinator_from_eta`, and a few forwarders / initialisers.</span>
+<span class="sd">    The prior-to-posterior GIG conjugacy (:meth:`_posterior_gig_params`)</span>
+<span class="sd">    is uniform across families and lives on the base. The linear algebra for</span>
+<span class="sd">    :math:`\Sigma^{-1}` and :math:`\log|\Sigma|` is shared via</span>
+<span class="sd">    Woodbury helpers (:meth:`_M`, :meth:`_solve`, :meth:`_quad_form`,</span>
+<span class="sd">    :meth:`_log_det_sigma`, :meth:`_beta`).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    ``F`` is identifiable only up to a right :math:`r \times r`</span>
+<span class="sd">    orthogonal rotation, so convergence is measured on</span>
+<span class="sd">    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`</span>
+<span class="sd">    (:meth:`em_convergence_params`) rather than on ``F`` directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>          <span class="c1"># (d,)</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>       <span class="c1"># (d,)</span>
+    <span class="n">F</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>           <span class="c1"># (d, r)</span>
+    <span class="n">D</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>           <span class="c1"># (d,) diagonal entries (positive)</span>
+    <span class="n">subordinator</span><span class="p">:</span> <span class="n">ExponentialFamily</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Shape accessors</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">r</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Shared subclass helper</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_init_args</span><span class="p">(</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">F</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Coerce ``(mu, gamma, F, D)`` to float64 and floor ``D`` for positivity.&quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">D_FLOOR</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Woodbury helpers (Σ = F Fᵀ + diag(D), all in O(d r² + r³))</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_M</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`M = I_r + F^\top D^{-1} F`, shape ``(r, r)``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\Sigma^{-1} x` via Woodbury, ``x`` shape ``(d,)``.&quot;&quot;&quot;</span>
+        <span class="n">Dinv_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Dinv_x</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Dinv_x</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">@</span> <span class="n">inner</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_solve_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\Sigma^{-1} X` via Woodbury, ``X`` shape ``(d, k)``.&quot;&quot;&quot;</span>
+        <span class="n">Dinv_X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Dinv_X</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Dinv_X</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">@</span> <span class="n">inner</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_quad_form</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`x^\top \Sigma^{-1} x`, scalar.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma| = \log|D| + \log|M|`.&quot;&quot;&quot;</span>
+        <span class="n">sign</span><span class="p">,</span> <span class="n">logdet_M</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">))</span> <span class="o">+</span> <span class="n">logdet_M</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_beta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\beta = F^\top \Sigma^{-1} = M^{-1} F^\top D^{-1}`,</span>
+<span class="sd">        shape ``(r, d)``.&quot;&quot;&quot;</span>
+        <span class="n">FtDinv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">(),</span> <span class="n">FtDinv</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_quad_forms</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return :math:`(z_2, w_2, zw)` =</span>
+<span class="sd">        :math:`((x-\mu)^\top \Sigma^{-1} (x-\mu),\;</span>
+<span class="sd">        \gamma^\top \Sigma^{-1} \gamma,\;</span>
+<span class="sd">        \gamma^\top \Sigma^{-1} (x-\mu))`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">r_vec</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">Sigma_inv_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span><span class="n">r_vec</span><span class="p">)</span>
+        <span class="n">Sigma_inv_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="n">z2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r_vec</span><span class="p">,</span> <span class="n">Sigma_inv_r</span><span class="p">)</span>
+        <span class="n">w2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma_inv_g</span><span class="p">)</span>
+        <span class="n">zw</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">Sigma_inv_r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Marginal moments (mean / cov / sigma)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.sigma">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\Sigma = F F^\top + \mathrm{diag}(D)` (dense).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.log_det_sigma">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.log_det_sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_det_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\log|\Sigma|`, computed via Woodbury.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_det_sigma</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.mean">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma\,E[Y]`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.cov">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.cov">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.&quot;&quot;&quot;</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">Var_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">var</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.rvs">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sample ``n`` observations from the marginal :math:`f(x)`.</span>
+
+<span class="sd">        Uses :math:`X = \mu + \gamma Y + \sqrt{Y}(F Z + \varepsilon)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">kZ</span><span class="p">,</span> <span class="n">kE</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">kZ</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">kE</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">E</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">sqrtY</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Y</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+             <span class="o">+</span> <span class="n">sqrtY</span> <span class="o">*</span> <span class="p">(</span><span class="n">Z</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">X</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Subordinator hooks (subclass-specific)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_gig_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Prior-to-posterior GIG conjugacy map, uniform across families.</span>
+
+<span class="sd">        Posterior :math:`Y \mid X = x \sim \mathrm{GIG}(p_{\mathrm{post}},</span>
+<span class="sd">        a_{\mathrm{post}}, b_{\mathrm{post}})` given quad-form scalars</span>
+<span class="sd">        :math:`z_2 = (x-\mu)^\top \Sigma^{-1} (x-\mu)`,</span>
+<span class="sd">        :math:`w_2 = \gamma^\top \Sigma^{-1} \gamma`:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            p_{\mathrm{post}} = p_{\mathrm{gig}} - \tfrac{d}{2}, \quad</span>
+<span class="sd">            a_{\mathrm{post}} = a_{\mathrm{gig}} + w_2, \quad</span>
+<span class="sd">            b_{\mathrm{post}} = b_{\mathrm{gig}} + z_2,</span>
+
+<span class="sd">        where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`</span>
+<span class="sd">        are the subordinator&#39;s exact GIG coordinates (``subordinator.to_gig()``).</span>
+<span class="sd">        See :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`</span>
+<span class="sd">        for the per-family table. Stays **pure**; the :math:`b_{\mathrm{post}}`</span>
+<span class="sd">        floor lives in :meth:`_floored_posterior_gig_params`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">gig</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">z2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_floored_posterior_gig_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: :meth:`_posterior_gig_params` with</span>
+<span class="sd">        :math:`b_{\mathrm{post}}` floored at</span>
+<span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;</span>
+<span class="sd">        only binds for VG, prior :math:`b=0`).&quot;&quot;&quot;</span>
+        <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior_gig_params</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b_post</span><span class="p">,</span> <span class="n">B_POST_FLOOR</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_from_eta</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">FactorMixtureStats</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExponentialFamily</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the subordinator from the relevant subset of</span>
+<span class="sd">        :math:`(s_1, s_2, s_3) = (E[1/Y], E[Y], E[\\log Y])`.</span>
+
+<span class="sd">        ``theta0`` is forwarded to the subordinator solver as a</span>
+<span class="sd">        warm-start; closed-form subordinators ignore it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_subordinator_expectations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return :math:`(E[\log Y], E[1/Y], E[Y])` under the</span>
+<span class="sd">        subordinator prior (used by :meth:`compute_eta_from_model`).&quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># E-step: posterior expectations + factor-stat reduction</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_conditional_expectations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return :math:`(E[\log Y \mid x],\, E[1/Y \mid x],\,</span>
+<span class="sd">        E[Y \mid x])` for a single observation.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">_zw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_floored_posterior_gig_params</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+        <span class="n">gig</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a_post</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_post</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">gig</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.e_step">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.e_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FactorMixtureStats</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Full E-step: posterior :math:`Y` expectations + deterministic</span>
+<span class="sd">        :math:`Z` reductions.</span>
+
+<span class="sd">        Returns a :class:`~normix.fitting.eta.FactorMixtureStats`</span>
+<span class="sd">        whose first six fields are batch averages of the standard normal</span>
+<span class="sd">        variance-mean mixture sufficient statistics, and whose four</span>
+<span class="sd">        :math:`Z`-fields are computed from the first six via the</span>
+<span class="sd">        deterministic relations in</span>
+<span class="sd">        ``docs/theory/factor_analysis.rst`` §E-Step (no extra Bessel</span>
+<span class="sd">        evaluations).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+            <span class="n">sub_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator_cpu</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span><span class="p">:</span>
+            <span class="n">sub_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator_jax</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown backend </span><span class="si">{</span><span class="n">backend</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_stats</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator_jax</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conditional_expectations</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CPU path: per-observation quad forms in JAX (vmapped) plus</span>
+<span class="sd">        GIG Bessel via scipy.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_z2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">z2_all</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_z2</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">w2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quad_form</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="c1"># The posterior map returns scalars or arrays matching z2_all;</span>
+        <span class="c1"># broadcasting handles both.</span>
+        <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_floored_posterior_gig_params</span><span class="p">(</span><span class="n">z2_all</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">p_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">p_post</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,))</span>
+        <span class="n">a_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">a_post</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,))</span>
+        <span class="n">b_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">b_post</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,))</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">expectation_params_batch</span><span class="p">(</span>
+            <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_stats</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">sub_exp</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FactorMixtureStats</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Average per-obs expectations into the six classical sums and</span>
+<span class="sd">        compute the four factor-related statistics deterministically.&quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="n">sub_exp</span>
+
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_Y</span><span class="p">)</span>
+        <span class="n">s3</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">)</span>
+        <span class="n">s4</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">s5</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">s6</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj,n-&gt;nij&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FactorMixtureStats</span><span class="p">(</span>
+            <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="o">=</span><span class="n">s3</span><span class="p">,</span>
+            <span class="n">E_X</span><span class="o">=</span><span class="n">s4</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">s5</span><span class="p">,</span> <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">s6</span><span class="p">,</span>
+            <span class="n">E_XZT_inv_sqrtY</span><span class="o">=</span><span class="n">s7</span><span class="p">,</span> <span class="n">E_Z_inv_sqrtY</span><span class="o">=</span><span class="n">s8</span><span class="p">,</span>
+            <span class="n">E_Z_sqrtY</span><span class="o">=</span><span class="n">s9</span><span class="p">,</span> <span class="n">E_ZZT</span><span class="o">=</span><span class="n">s10</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_z_stats_from_six</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">s1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">s4</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s5</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s6</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Deterministic relations from</span>
+<span class="sd">        ``docs/theory/factor_analysis.rst`` §E-Step. Inputs are the</span>
+<span class="sd">        already-aggregated first six statistics; outputs are</span>
+<span class="sd">        :math:`(s_7, s_8, s_9, s_{10})`.</span>
+
+<span class="sd">        Computed at the *current* model parameters (μ, γ, F, β); β is</span>
+<span class="sd">        evaluated once via :meth:`_beta`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">()</span>                              <span class="c1"># (r, d)</span>
+
+        <span class="c1"># s_7 = (s_6 - s_5 μᵀ - s_4 γᵀ) βᵀ                shape (d, r)</span>
+        <span class="n">s7</span> <span class="o">=</span> <span class="p">(</span><span class="n">s6</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s5</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s4</span><span class="p">,</span> <span class="n">gamma</span><span class="p">))</span> <span class="o">@</span> <span class="n">beta</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># s_8 = β (s_5 - μ s_1 - γ)                       shape (r,)</span>
+        <span class="n">s8</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">@</span> <span class="p">(</span><span class="n">s5</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">s1</span> <span class="o">-</span> <span class="n">gamma</span><span class="p">)</span>
+
+        <span class="c1"># s_9 = β (s_4 - μ - γ s_2)                       shape (r,)</span>
+        <span class="n">s9</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">@</span> <span class="p">(</span><span class="n">s4</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">s2</span><span class="p">)</span>
+
+        <span class="c1"># s_10 = I_r - β F + β · core · βᵀ                shape (r, r)</span>
+        <span class="c1"># core = s_6 - s_5 μᵀ - μ s_5ᵀ + μ μᵀ s_1</span>
+        <span class="c1">#        - (s_4 - μ) γᵀ - γ (s_4 - μ)ᵀ + γ γᵀ s_2</span>
+        <span class="n">core</span> <span class="o">=</span> <span class="p">(</span><span class="n">s6</span>
+                <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s5</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">s5</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">s1</span>
+                <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">s4</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+                <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">s4</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">s2</span><span class="p">)</span>
+        <span class="n">s10</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+               <span class="o">-</span> <span class="n">beta</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span>
+               <span class="o">+</span> <span class="n">beta</span> <span class="o">@</span> <span class="n">core</span> <span class="o">@</span> <span class="n">beta</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="c1"># Symmetrise to remove float64 roundoff (s10 is symmetric in math).</span>
+        <span class="n">s10</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">s10</span> <span class="o">+</span> <span class="n">s10</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># M-step: closed-form FA update on (μ, γ, F, D)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mstep_factor_params</span><span class="p">(</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">FactorMixtureStats</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Closed-form M-step for :math:`(\mu, \gamma, F, D)` from</span>
+<span class="sd">        :class:`FactorMixtureStats`. Implements equations</span>
+<span class="sd">        :eq:`fa-aux` and :eq:`fa-mstep` of</span>
+<span class="sd">        ``docs/theory/factor_analysis.rst``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span>
+        <span class="n">s4</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X</span>
+        <span class="n">s5</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span>
+        <span class="n">s6</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span>
+        <span class="n">s7</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_XZT_inv_sqrtY</span>
+        <span class="n">s8</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Z_inv_sqrtY</span>
+        <span class="n">s9</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Z_sqrtY</span>
+        <span class="n">s10</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_ZZT</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">s4</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># s_10⁻¹ applied to the small column blocks we need.</span>
+        <span class="n">s10_inv_s8</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">s10</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+        <span class="n">s10_inv_s9</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">s10</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+        <span class="n">s10_inv_s7T</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">s10</span><span class="p">,</span> <span class="n">s7</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+
+        <span class="n">q1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s8</span><span class="p">,</span> <span class="n">s10_inv_s8</span><span class="p">)</span> <span class="o">-</span> <span class="n">s1</span>
+        <span class="n">q2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s9</span><span class="p">,</span> <span class="n">s10_inv_s8</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">q3</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s9</span><span class="p">,</span> <span class="n">s10_inv_s9</span><span class="p">)</span> <span class="o">-</span> <span class="n">s2</span>
+        <span class="n">q4</span> <span class="o">=</span> <span class="n">s10_inv_s7T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">s8</span> <span class="o">-</span> <span class="n">s5</span>     <span class="c1"># (d,)</span>
+        <span class="n">q5</span> <span class="o">=</span> <span class="n">s10_inv_s7T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">s9</span> <span class="o">-</span> <span class="n">s4</span>     <span class="c1"># (d,)</span>
+
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">q2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">q1</span> <span class="o">*</span> <span class="n">q3</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span><span class="n">q2</span> <span class="o">*</span> <span class="n">q5</span> <span class="o">-</span> <span class="n">q3</span> <span class="o">*</span> <span class="n">q4</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="p">(</span><span class="n">q2</span> <span class="o">*</span> <span class="n">q4</span> <span class="o">-</span> <span class="n">q1</span> <span class="o">*</span> <span class="n">q5</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+
+        <span class="c1"># F = (s_7 - μ s_8ᵀ - γ s_9ᵀ) s_10⁻¹              shape (d, r)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">s10</span><span class="p">,</span> <span class="p">(</span><span class="n">s7</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">s8</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">s9</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">assume_a</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="c1"># D = diag(R) where R is the long expression of §M-Step.</span>
+        <span class="c1"># We only need diag(R); compute term by term.</span>
+        <span class="n">F_s8</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">s8</span>                <span class="c1"># (d,)</span>
+        <span class="n">F_s9</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">s9</span>                <span class="c1"># (d,)</span>
+        <span class="n">F_s10_FT_diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,jk,ik-&gt;i&#39;</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">s10</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+
+        <span class="n">diag_R</span> <span class="o">=</span> <span class="p">(</span><span class="n">s1</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">mu</span>
+                  <span class="o">+</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">gamma</span>
+                  <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">s4</span> <span class="o">*</span> <span class="n">gamma</span>
+                  <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">s5</span> <span class="o">*</span> <span class="n">mu</span>
+                  <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s6</span><span class="p">)</span>
+                  <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ij-&gt;i&#39;</span><span class="p">,</span> <span class="n">s7</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+                  <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">F_s8</span> <span class="o">*</span> <span class="n">mu</span>
+                  <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">F_s9</span> <span class="o">*</span> <span class="n">gamma</span>
+                  <span class="o">+</span> <span class="n">F_s10_FT_diag</span>
+                  <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)</span>
+
+        <span class="n">D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">diag_R</span><span class="p">,</span> <span class="n">D_FLOOR</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.m_step">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.m_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">FactorMixtureStats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Full M-step: update :math:`(\mu, \gamma, F, D)` and the</span>
+<span class="sd">        subordinator from :class:`FactorMixtureStats`.</span>
+
+<span class="sd">        Equivalent to ``self.m_step_normal(eta).m_step_subordinator(eta,</span>
+<span class="sd">        **kwargs)``. Subclasses with iterative subordinator solvers (e.g.</span>
+<span class="sd">        :class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`)</span>
+<span class="sd">        may override to inject a warm-start.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_normal</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span><span class="o">.</span><span class="n">m_step_subordinator</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.m_step_normal">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.m_step_normal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">FactorMixtureStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;M-step for :math:`(\mu, \gamma, F, D)` only (MCECM cycle 1).</span>
+
+<span class="sd">        Subordinator unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mstep_factor_params</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_factor_params</span><span class="p">(</span><span class="n">mu_new</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.m_step_subordinator">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.m_step_subordinator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">FactorMixtureStats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;M-step for the subordinator only (MCECM cycle 2).</span>
+
+<span class="sd">        Reads the subordinator-relevant fields of ``eta``;</span>
+<span class="sd">        :math:`(\mu, \gamma, F, D)` are read from ``self`` and copied</span>
+<span class="sd">        unchanged. Subclasses with iterative solvers may override to</span>
+<span class="sd">        add a warm-start or sanity-check fallback.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_subordinator_from_eta</span><span class="p">(</span>
+            <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_with_subordinator</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Immutable update helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replace_factor_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">F</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy with (mu, gamma, F, D) replaced; subordinator unchanged.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">F</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">D</span><span class="p">),</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_with_subordinator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">:</span> <span class="n">ExponentialFamily</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy with a new subordinator, all else unchanged.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">subordinator</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">subordinator</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Eta from model (incremental EM warm-start)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.compute_eta_from_model">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FactorMixtureStats</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reconstruct :class:`FactorMixtureStats` from the model&#39;s own</span>
+<span class="sd">        parameters.</span>
+
+<span class="sd">        The first six fields use the marginal expectations of the joint</span>
+<span class="sd">        sufficient statistics under the current :math:`\Sigma = F F^\top</span>
+<span class="sd">        + \mathrm{diag}(D)`; the four :math:`Z`-fields use the same</span>
+<span class="sd">        deterministic relations as :meth:`e_step` (§E-Step of the</span>
+<span class="sd">        theory doc).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
+
+        <span class="n">s4</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="n">s5</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">E_inv_Y</span> <span class="o">+</span> <span class="n">gamma</span>
+        <span class="n">s6</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sigma</span>
+              <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_Y</span>
+              <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
+              <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">))</span>
+        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FactorMixtureStats</span><span class="p">(</span>
+            <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="n">E_Y</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="o">=</span><span class="n">E_log_Y</span><span class="p">,</span>
+            <span class="n">E_X</span><span class="o">=</span><span class="n">s4</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">s5</span><span class="p">,</span> <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">s6</span><span class="p">,</span>
+            <span class="n">E_XZT_inv_sqrtY</span><span class="o">=</span><span class="n">s7</span><span class="p">,</span> <span class="n">E_Z_inv_sqrtY</span><span class="o">=</span><span class="n">s8</span><span class="p">,</span>
+            <span class="n">E_Z_sqrtY</span><span class="o">=</span><span class="n">s9</span><span class="p">,</span> <span class="n">E_ZZT</span><span class="o">=</span><span class="n">s10</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Convergence hook</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.em_convergence_params">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.em_convergence_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return :math:`(\mu, \gamma, \Sigma)` for the convergence</span>
+<span class="sd">        check.</span>
+
+<span class="sd">        :math:`\Sigma = F F^\top + \mathrm{diag}(D)` rather than ``F``</span>
+<span class="sd">        directly, because ``F`` is identifiable only up to an</span>
+<span class="sd">        :math:`r \times r` orthogonal rotation and would never converge</span>
+<span class="sd">        in norm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Regularisation</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rescale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply :math:`Y \to s\,Y` reparameterisation.</span>
+
+<span class="sd">        Pushes the scale through :math:`(\gamma, F, D)` and the</span>
+<span class="sd">        subordinator: :math:`\gamma \to \gamma/s`,</span>
+<span class="sd">        :math:`F \to F/\sqrt{s}`, :math:`D \to D/s` (so</span>
+<span class="sd">        :math:`\Sigma \to \Sigma/s`); the subordinator-side rescale is</span>
+<span class="sd">        delegated to :meth:`_build_rescaled`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">F_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+        <span class="n">D_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="n">gamma_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.regularize_det_sigma">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale to enforce :math:`\log|\Sigma| = \mathrm{target\_log\_det}`.</span>
+
+<span class="sd">        Same family as the full-Σ implementation but the</span>
+<span class="sd">        log-determinant is computed via the Woodbury identity</span>
+<span class="sd">        :math:`\log|\Sigma| = \log|D| + \log|I_r + F^\top D^{-1} F|`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_scale</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_det_sigma</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_log_det</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rescale</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.regularize_det_sigma_one">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.regularize_det_sigma_one">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">regularize_det_sigma_one</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Enforce :math:`|\Sigma| = 1`. Alias for</span>
+<span class="sd">        :meth:`regularize_det_sigma` with ``target_log_det = 0``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularize_det_sigma</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FactorNormalMixture.regularize_a_eq_b">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.regularize_a_eq_b">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">regularize_a_eq_b</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale subordinator so that :math:`a = b = \sqrt{ab}`.</span>
+
+<span class="sd">        Default no-op; overridden in</span>
+<span class="sd">        :class:`~normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic`</span>
+<span class="sd">        and</span>
+<span class="sd">        :class:`~normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">gamma_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">F_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">D_new</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">scale</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a new model with rescaled :math:`(F, D, \\gamma)`</span>
+<span class="sd">        and a subordinator scaled to compensate (so :math:`Y\\Sigma`</span>
+<span class="sd">        keeps the correct dispersion).&quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Default initialisation</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.default_init">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.default_init">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Moment-based initialisation from data with ``r`` factors.</span>
+
+<span class="sd">        Sets :math:`\\mu = \\bar X`, :math:`\\gamma = 0`, and splits the</span>
+<span class="sd">        empirical covariance into a rank-``r`` factor block (top-``r``</span>
+<span class="sd">        eigenvectors scaled by :math:`\\sqrt{\\lambda - \\bar\\lambda}`)</span>
+<span class="sd">        plus a positive diagonal residual.</span>
+
+<span class="sd">        Useful as a starting point for ``model.fit(X)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Xc</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">mu</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="p">(</span><span class="n">Xc</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Xc</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span> <span class="o">+</span> <span class="n">SIGMA_INIT_REG</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>            <span class="c1"># ascending</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">eigvals</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>                 <span class="c1"># descending</span>
+        <span class="n">eigvals</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">r</span><span class="p">]</span>
+        <span class="n">top_vals</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span>
+        <span class="n">rest_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eigvals</span><span class="p">[</span><span class="n">r</span><span class="p">:])</span> <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">d</span> <span class="k">else</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">D_FLOOR</span><span class="p">)</span>
+        <span class="n">scaled_vals</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">top_vals</span> <span class="o">-</span> <span class="n">rest_mean</span><span class="p">,</span> <span class="n">D_FLOOR</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">top</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">scaled_vals</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>         <span class="c1"># (d, r)</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">F</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">D_FLOOR</span><span class="p">)</span>
+
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_init_params</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_init_params</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">F</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a model with default subordinator parameters.&quot;&quot;&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># replace(**) — immutable update on top-level fields</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="n">_NORMAL_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FactorNormalMixture.replace">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.replace">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">updates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a new model with selected top-level fields replaced.</span>
+
+<span class="sd">        Accepts any subset of :attr:`_NORMAL_KEYS`. Subclass-specific</span>
+<span class="sd">        subordinator parameter shortcuts (e.g. ``alpha=...``) are not</span>
+<span class="sd">        supported on the FA family — use ``replace(subordinator=</span>
+<span class="sd">        Gamma(alpha=..., beta=...))`` instead. This keeps the contract</span>
+<span class="sd">        narrow (one storage form per family).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_NORMAL_KEYS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;unknown field(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2"> for &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; valid keys are &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_NORMAL_KEYS</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">new_values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">),</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">new_values</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

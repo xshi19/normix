@@ -1,0 +1,1015 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Utilities &#8212; normix 0.2.7 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/utils';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Changelog" href="../changelog.html" />
+    <link rel="prev" title="Finance" href="finance.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.2.7 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fapi/utils.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/utils.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Utilities</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.bessel">Bessel Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.log_kv"><code class="docutils literal notranslate"><span class="pre">log_kv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.constants">Constants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.gammainc">Incomplete Gamma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.gammainc.gammaincinv"><code class="docutils literal notranslate"><span class="pre">gammaincinv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.rvs">PINV Sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.build_pinv_table"><code class="docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.rvs_pinv"><code class="docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting">Plotting</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.set_theme"><code class="docutils literal notranslate"><span class="pre">set_theme()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.style_axes"><code class="docutils literal notranslate"><span class="pre">style_axes()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.savefig"><code class="docutils literal notranslate"><span class="pre">savefig()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_pdf_cdf_comparison"><code class="docutils literal notranslate"><span class="pre">plot_pdf_cdf_comparison()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_sample_histograms"><code class="docutils literal notranslate"><span class="pre">plot_sample_histograms()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_mle_fit"><code class="docutils literal notranslate"><span class="pre">plot_mle_fit()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_joint_1d"><code class="docutils literal notranslate"><span class="pre">plot_joint_1d()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_marginal_2d"><code class="docutils literal notranslate"><span class="pre">plot_marginal_2d()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_em_convergence"><code class="docutils literal notranslate"><span class="pre">plot_em_convergence()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation">Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.validate_moments"><code class="docutils literal notranslate"><span class="pre">validate_moments()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.print_moment_validation"><code class="docutils literal notranslate"><span class="pre">print_moment_validation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.print_exp_family_params"><code class="docutils literal notranslate"><span class="pre">print_exp_family_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">#</a></h1>
+<nav class="contents local" id="modules">
+<p class="topic-title">Modules</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-normix.utils.bessel" id="id1">Bessel Functions</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.utils.constants" id="id2">Constants</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.utils.gammainc" id="id3">Incomplete Gamma</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.utils.rvs" id="id4">PINV Sampling</a></p></li>
+<li><p><a class="reference internal" href="#plotting" id="id5">Plotting</a></p></li>
+<li><p><a class="reference internal" href="#validation" id="id6">Validation</a></p></li>
+</ul>
+</nav>
+<section id="module-normix.utils.bessel">
+<span id="bessel-functions"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">Bessel Functions</a><a class="headerlink" href="#module-normix.utils.bessel" title="Link to this heading">#</a></h2>
+<p>JAX-compatible log modified Bessel function of the second kind.</p>
+<p>log_kv(v, z) = log K_v(z), fully pure-JAX with zero scipy callbacks.</p>
+<dl class="simple">
+<dt>Regime-specific methods, selected via lax.cond (only one branch executes):</dt><dd><ol class="arabic simple">
+<li><p>Hankel asymptotic (DLMF 10.40.2)   — large z</p></li>
+<li><p>Olver uniform expansion (DLMF 10.41.4) — large v</p></li>
+<li><p>Small-z leading asymptotic (DLMF 10.30.2) — z → 0</p></li>
+<li><p>Gauss-Legendre quadrature (Takekawa 2022) — moderate z, v</p></li>
+</ol>
+</dd>
+</dl>
+<p>Using lax.cond (not jnp.where) means only the selected branch executes
+at runtime. lax.cond requires scalar conditions, so the core scalar
+function _log_kv_scalar is vmapped over array inputs.</p>
+<dl class="simple">
+<dt>Custom JVP for full autodiff:</dt><dd><ul class="simple">
+<li><p>∂/∂z : exact recurrence K’_v = −(K_{v−1}+K_{v+1})/2</p></li>
+<li><p>∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)</p></li>
+</ul>
+</dd>
+</dl>
+<p>backend=’jax’  (default): pure-JAX, JIT-able, differentiable.
+backend=’cpu’           : scipy.special.kve, fully vectorized numpy.</p>
+<blockquote>
+<div><p>Not JIT-able. Fast for EM hot path.</p>
+</div></blockquote>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.bessel.log_kv">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.bessel.</span></span><span class="sig-name descname"><span class="pre">log_kv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/bessel.html#log_kv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.bessel.log_kv" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\log K_v(z)\)</span> — log modified Bessel function of the second kind.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<em>scalar</em><em> or </em><em>array</em>) – Order (any real; <span class="math notranslate nohighlight">\(K_v = K_{-v}\)</span>).</p></li>
+<li><p><strong>z</strong> (<em>scalar</em><em> or </em><em>array</em>) – Argument (must be &gt; 0).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">'jax'</span></code>: pure-JAX, <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> regime selection, custom JVP.
+JIT-able, differentiable. Default for <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>, <code class="docutils literal notranslate"><span class="pre">pdf</span></code>, etc.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>, fully vectorised NumPy.
+Not JIT-able. Fast for EM hot path.</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Same broadcast shape as <code class="docutils literal notranslate"><span class="pre">(v,</span> <span class="pre">z)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Evaluate at a single point (JAX backend, JIT-able):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="go">-0.112...</span>
+</pre></div>
+</div>
+<p>CPU backend (uses scipy, faster for EM hot-paths):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+<span class="go">-0.112...</span>
+</pre></div>
+</div>
+<p>Symmetry <span class="math notranslate nohighlight">\(K_v(z) = K_{-v}(z)\)</span>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">1e-10</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Differentiable via JAX:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dlogkv_dz</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="p">))(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">dlogkv_dz</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>   <span class="c1"># K_v decreases with z</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-normix.utils.constants">
+<span id="constants"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Constants</a><a class="headerlink" href="#module-normix.utils.constants" title="Link to this heading">#</a></h2>
+<p>Shared numerical constants for normix.</p>
+</section>
+<section id="module-normix.utils.gammainc">
+<span id="incomplete-gamma"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Incomplete Gamma</a><a class="headerlink" href="#module-normix.utils.gammainc" title="Link to this heading">#</a></h2>
+<p>Pure-JAX inverse of the regularised incomplete gamma function.</p>
+<p>JAX exposes <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.scipy.special.gammainc.html#jax.scipy.special.gammainc" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.scipy.special.gammainc()</span></code></a> (the regularised lower
+incomplete gamma <span class="math notranslate nohighlight">\(P(a, x) = \gamma(a, x)/\Gamma(a)\)</span>) but does not
+ship its inverse.  <a class="reference internal" href="#normix.utils.gammainc.gammaincinv" title="normix.utils.gammainc.gammaincinv"><code class="xref py py-func docutils literal notranslate"><span class="pre">gammaincinv()</span></code></a> solves <span class="math notranslate nohighlight">\(P(a, x) = q\)</span> by
+Newton iteration with a Wilson–Hilferty starting guess — fully JIT- and
+vmap-compatible.  This is the JAX analogue of
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.special.gammaincinv()</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.gammainc.gammaincinv">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.gammainc.</span></span><span class="sig-name descname"><span class="pre">gammaincinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/gammainc.html#gammaincinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.gammainc.gammaincinv" title="Link to this definition">#</a></dt>
+<dd><p>Solve <span class="math notranslate nohighlight">\(P(a, x) = q\)</span> for <span class="math notranslate nohighlight">\(x\)</span> by Newton iteration.</p>
+<p>JAX equivalent of <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.special.gammaincinv()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Shape parameter, <span class="math notranslate nohighlight">\(a &gt; 0\)</span>.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Probability, <span class="math notranslate nohighlight">\(q \in (0, 1)\)</span>.</p></li>
+<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Newton iteration count.  The default of 50 is safe; convergence
+is typically reached in &lt;10 steps.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Starts from the Wilson–Hilferty cube-root normal approximation and
+iterates <span class="math notranslate nohighlight">\(x \leftarrow x - (P(a, x) - q) / p(a, x)\)</span>, where
+<span class="math notranslate nohighlight">\(p(a, x) = x^{a-1} e^{-x} / \Gamma(a)\)</span> is the Gamma density.
+The density is evaluated in log space to avoid overflow for large
+<span class="math notranslate nohighlight">\(a\)</span>.</p>
+</dd></dl>
+
+</section>
+<section id="module-normix.utils.rvs">
+<span id="pinv-sampling"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink">PINV Sampling</a><a class="headerlink" href="#module-normix.utils.rvs" title="Link to this heading">#</a></h2>
+<p>Generic RVS utilities for univariate distributions.</p>
+<p><a class="reference internal" href="#normix.utils.rvs.build_pinv_table" title="normix.utils.rvs.build_pinv_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a> builds a quantile table from any univariate
+log-kernel in pure JAX (trapezoidal CDF on a <span class="math notranslate nohighlight">\(w\)</span>-grid).  Distributions
+supply <code class="docutils literal notranslate"><span class="pre">log_kernel(w)</span></code> from their own <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> (plus a Jacobian when
+working in <span class="math notranslate nohighlight">\(w = \log x\)</span>).  <a class="reference internal" href="#normix.utils.rvs.rvs_pinv" title="normix.utils.rvs.rvs_pinv"><code class="xref py py-func docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a> samples via inverse lookup.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.rvs.build_pinv_table">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.rvs.</span></span><span class="sig-name descname"><span class="pre">build_pinv_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_of_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-14</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#build_pinv_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.build_pinv_table" title="Link to this definition">#</a></dt>
+<dd><p>Build a PINV quantile table in pure JAX.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_kernel</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>) – Callable <code class="docutils literal notranslate"><span class="pre">w</span> <span class="pre">-&gt;</span> <span class="pre">log</span> <span class="pre">f(w)</span></code> for a univariate density on the
+<em>internal</em> <span class="math notranslate nohighlight">\(w\)</span>-axis.  For support <span class="math notranslate nohighlight">\((0, \infty)\)</span> with
+<span class="math notranslate nohighlight">\(w = \log x\)</span>, pass <code class="docutils literal notranslate"><span class="pre">log_kernel(w)</span> <span class="pre">=</span> <span class="pre">log_prob(exp(w))</span> <span class="pre">+</span> <span class="pre">w</span></code>.
+For support <span class="math notranslate nohighlight">\(\mathbb{R}\)</span> with <span class="math notranslate nohighlight">\(w = x\)</span>, pass
+<code class="docutils literal notranslate"><span class="pre">log_kernel(w)</span> <span class="pre">=</span> <span class="pre">log_prob(w)</span></code>.</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Mode of the density on the <span class="math notranslate nohighlight">\(w\)</span>-axis (starting point for tail
+bisection).</p></li>
+<li><p><strong>x_of_w</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>] </em><em>| </em><em>None</em>) – Map internal <span class="math notranslate nohighlight">\(w\)</span> to the observation axis (default identity).
+Use <code class="docutils literal notranslate"><span class="pre">jnp.exp</span></code> when <span class="math notranslate nohighlight">\(w = \log x\)</span>.</p></li>
+<li><p><strong>n_grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of grid points for the trapezoidal CDF.</p></li>
+<li><p><strong>tail_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Tail mass below which bisection stops.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>JAX arrays of shape <code class="docutils literal notranslate"><span class="pre">(n_grid,)</span></code> — trapezoidal CDF values and
+corresponding <span class="math notranslate nohighlight">\(x\)</span> values for <code class="docutils literal notranslate"><span class="pre">jnp.interp</span></code> in <code class="docutils literal notranslate"><span class="pre">ppf</span></code> /
+<code class="docutils literal notranslate"><span class="pre">cdf</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>u_grid, x_grid</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.rvs.rvs_pinv">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.rvs.</span></span><span class="sig-name descname"><span class="pre">rvs_pinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#rvs_pinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.rvs_pinv" title="Link to this definition">#</a></dt>
+<dd><p>Sample <em>n</em> observations via numerical inverse CDF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – JAX PRNG key.</p></li>
+<li><p><strong>u_grid</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Arrays returned by <a class="reference internal" href="#normix.utils.rvs.build_pinv_table" title="normix.utils.rvs.build_pinv_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a>.</p></li>
+<li><p><strong>x_grid</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Arrays returned by <a class="reference internal" href="#normix.utils.rvs.build_pinv_table" title="normix.utils.rvs.build_pinv_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a>.</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Sample size.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>samples</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="plotting">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Plotting</a><a class="headerlink" href="#plotting" title="Link to this heading">#</a></h2>
+<p>Requires the <code class="docutils literal notranslate"><span class="pre">plotting</span></code> extra (<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span> <span class="pre">--extra</span> <span class="pre">plotting</span></code>); used by every
+executable tutorial for consistent figure styling.</p>
+<p id="module-normix.utils.plotting">Plotting utilities for normix notebooks.</p>
+<p>Requires the <code class="docutils literal notranslate"><span class="pre">plotting</span></code> extra: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">normix[plotting]</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.set_theme">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">set_theme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#set_theme"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.set_theme" title="Link to this definition">#</a></dt>
+<dd><p>Apply the normix Matplotlib theme (Kami-derived visual tokens).</p>
+<p>Matches <code class="docutils literal notranslate"><span class="pre">incerto-wiki/docs/design/VISUAL_STYLE.md</span></code> so tutorial figures
+align with the documentation site aesthetic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.style_axes">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">style_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'y'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#style_axes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.style_axes" title="Link to this definition">#</a></dt>
+<dd><p>Apply final styling to one or more Matplotlib axes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>axes</strong> (<em>Axes</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><em>Axes</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><em>Axes</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>grid_axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>legend</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Axes</em> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<em>Axes</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.savefig">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">savefig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#savefig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.savefig" title="Link to this definition">#</a></dt>
+<dd><p>Save a figure with normix theme defaults.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fig</strong> (<em>Figure</em>)</p></li>
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_pdf_cdf_comparison">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_pdf_cdf_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_pdf_cdf_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_pdf_cdf_comparison" title="Link to this definition">#</a></dt>
+<dd><p>Plot PDF and CDF comparing normix vs scipy for multiple distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><em>dicts with keys {label</em><em>, </em><em>dist</em><em>, </em><em>scipy}</em>)</p></li>
+<li><p><strong>x</strong> (<em>1-D evaluation grid</em>)</p></li>
+<li><p><strong>xlabel</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_sample_histograms">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_sample_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_sample_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_sample_histograms" title="Link to this definition">#</a></dt>
+<dd><p>Grid of histograms with theoretical PDF overlay.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><em>dicts with keys {label</em><em>, </em><em>dist</em><em>, </em><em>samples</em><em>, </em><em>x_plot</em><em> (</em><em>optional</em><em>)</em><em>}</em>)</p></li>
+<li><p><strong>ncols</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_mle_fit">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_mle_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Maximum</span> <span class="pre">Likelihood</span> <span class="pre">Estimation'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_mle_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_mle_fit" title="Link to this definition">#</a></dt>
+<dd><p>Histogram of data with multiple PDF overlays for MLE comparison.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>1-D sample array</em>)</p></li>
+<li><p><strong>fit_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><em>dicts {label</em><em>, </em><em>dist</em><em>, </em><em>ls</em><em>, </em><em>color}</em>)</p></li>
+<li><p><strong>xlabel</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_joint_1d">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_joint_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_joint_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_joint_1d" title="Link to this definition">#</a></dt>
+<dd><p>Visualize a 1-D joint distribution f(x, y).</p>
+<p>Left: scatter X vs Y.  Right: marginal histogram of X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_marginal_2d">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_marginal_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marginal_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_marginal_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_marginal_2d" title="Link to this definition">#</a></dt>
+<dd><p>Visualize a 2-D marginal distribution: scatter + marginal histograms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.plotting.plot_em_convergence">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_em_convergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EM</span> <span class="pre">Convergence'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_ll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/plotting.html#plot_em_convergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.plotting.plot_em_convergence" title="Link to this definition">#</a></dt>
+<dd><p>Plot EM log-likelihood convergence curve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_likelihoods</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>true_ll</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Figure</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="validation">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Validation</a><a class="headerlink" href="#validation" title="Link to this heading">#</a></h2>
+<p>Moment-validation and parameter-printing helpers used in notebooks and tutorials.</p>
+<p id="module-normix.utils.validation">Moment validation and parameter printing utilities for normix notebooks.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.validation.validate_moments">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.validation.</span></span><span class="sig-name descname"><span class="pre">validate_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_joint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/validation.html#validate_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.validation.validate_moments" title="Link to this definition">#</a></dt>
+<dd><p>Validate E[X] and E[Y] by comparing samples vs analytical values.</p>
+<p>Uses dist.mean() for theoretical E[X] and subordinator().mean() for E[Y].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>is_joint</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.validation.print_moment_validation">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.validation.</span></span><span class="sig-name descname"><span class="pre">print_moment_validation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/validation.html#print_moment_validation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.validation.print_moment_validation" title="Link to this definition">#</a></dt>
+<dd><p>Print moment validation results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a><em>]</em>)</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.utils.validation.print_exp_family_params">
+<span class="sig-prename descclassname"><span class="pre">normix.utils.validation.</span></span><span class="sig-name descname"><span class="pre">print_exp_family_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/validation.html#print_exp_family_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.validation.print_exp_family_params" title="Link to this definition">#</a></dt>
+<dd><p>Print natural and expectation parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="finance.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Finance</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../changelog.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Changelog</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.bessel">Bessel Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.log_kv"><code class="docutils literal notranslate"><span class="pre">log_kv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.constants">Constants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.gammainc">Incomplete Gamma</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.gammainc.gammaincinv"><code class="docutils literal notranslate"><span class="pre">gammaincinv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.rvs">PINV Sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.build_pinv_table"><code class="docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.rvs_pinv"><code class="docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting">Plotting</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.set_theme"><code class="docutils literal notranslate"><span class="pre">set_theme()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.style_axes"><code class="docutils literal notranslate"><span class="pre">style_axes()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.savefig"><code class="docutils literal notranslate"><span class="pre">savefig()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_pdf_cdf_comparison"><code class="docutils literal notranslate"><span class="pre">plot_pdf_cdf_comparison()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_sample_histograms"><code class="docutils literal notranslate"><span class="pre">plot_sample_histograms()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_mle_fit"><code class="docutils literal notranslate"><span class="pre">plot_mle_fit()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_joint_1d"><code class="docutils literal notranslate"><span class="pre">plot_joint_1d()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_marginal_2d"><code class="docutils literal notranslate"><span class="pre">plot_marginal_2d()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.plotting.plot_em_convergence"><code class="docutils literal notranslate"><span class="pre">plot_em_convergence()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#validation">Validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.validate_moments"><code class="docutils literal notranslate"><span class="pre">validate_moments()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.print_moment_validation"><code class="docutils literal notranslate"><span class="pre">print_moment_validation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.validation.print_exp_family_params"><code class="docutils literal notranslate"><span class="pre">print_exp_family_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

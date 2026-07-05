@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>normix.distributions.generalized_inverse_gaussian &#8212; normix 0.2.2 documentation</title>
+    <title>normix.distributions.generalized_inverse_gaussian &#8212; normix 0.2.7 documentation</title>
   
   
   
@@ -40,17 +40,16 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3254b25e"></script>
+    <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/distributions/generalized_inverse_gaussian';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="" />
+  <meta name="docsearch:version" content="0.2" />
   </head>
   
   
@@ -127,7 +126,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.2 documentation</p>
+    <p class="title logo__title">normix 0.2.7 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -212,7 +211,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
     </div>
@@ -540,7 +547,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneralizedInverseGaussian</span><span class="p">(</span><span class="n">ExponentialFamily</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generalized Inverse Gaussian distribution.</span>
@@ -558,7 +565,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_gig">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Identity embedding into the GIG family.</span>
 
@@ -616,13 +623,13 @@
                          <span class="n">psi_bessel</span><span class="p">))</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.natural_params">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.sufficient_statistics">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sufficient_statistics</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -630,7 +637,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.log_base_measure">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_base_measure</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span></div>
@@ -821,7 +828,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.expectation_params_batch">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">expectation_params_batch</span><span class="p">(</span>
         <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span>
@@ -879,21 +886,21 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.mean">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \eta_3` from expectation parameters.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.var">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2].&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fisher_information</span><span class="p">()[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.mode">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.</span>
 
@@ -907,7 +914,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.cdf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CDF :math:`F(x) = P(X \le x)`.</span>
 
@@ -932,7 +939,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.ppf">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Quantile (inverse CDF) :math:`F^{-1}(q)` via the PINV table.&quot;&quot;&quot;</span>
         <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -951,7 +958,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.rvs">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;devroye&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -1002,7 +1009,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`Gamma` family.</span>
 
@@ -1018,7 +1025,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gamma">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_inverse_gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`InverseGamma` family.</span>
 
@@ -1030,7 +1037,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gaussian">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_inverse_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL projection onto the :class:`InverseGaussian` family.</span>
 
@@ -1050,7 +1057,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.from_natural">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -1061,7 +1068,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.from_expectation">
-<a class="viewcode-back" href="../../../api/index.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">[docs]</a>
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_expectation</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
