@@ -156,6 +156,12 @@ class VarianceGamma(NormalMixture):
         where :math:`\nu = \alpha - d/2`,
         :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,
         :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.
+
+        :math:`q,\,2c` are floored at :data:`~normix.utils.constants.LOG_EPS`
+        *before* forming :math:`\sqrt{2qc}`, matching the floor used in the
+        :math:`(q/2c)^{\nu/2}` ratio — otherwise :math:`x=\mu` sends the true
+        :math:`q=0` into ``log_kv`` unfloored while the ratio uses the
+        floored value, breaking the cancellation needed for a finite limit.
         """
         j = self._joint
         d = j.d
@@ -178,11 +184,13 @@ class VarianceGamma(NormalMixture):
                  - jax.scipy.special.gammaln(alpha)
                  + alpha * jnp.log(beta))
 
-        z_arg = jnp.sqrt(2.0 * q * c)
+        q_eff = q + LOG_EPS
+        c2_eff = 2.0 * c + LOG_EPS
+        z_arg = jnp.sqrt(q_eff * c2_eff)
         log_K = log_kv(nu, z_arg)
 
         log_f = (log_C
-                 + 0.5 * nu * jnp.log(q / (2.0 * c + LOG_EPS) + LOG_EPS)
+                 + 0.5 * nu * jnp.log(q_eff / c2_eff)
                  + log_K
                  + linear)
         return log_f
@@ -358,10 +366,13 @@ class FactorVarianceGamma(FactorNormalMixture):
                  - jax.scipy.special.gammaln(alpha)
                  + alpha * jnp.log(beta))
 
-        z_arg = jnp.sqrt(2.0 * z2 * c)
+        # q, 2c floored consistently before sqrt(2qc) — see VarianceGamma.log_prob.
+        q_eff = z2 + LOG_EPS
+        c2_eff = 2.0 * c + LOG_EPS
+        z_arg = jnp.sqrt(q_eff * c2_eff)
         log_K = log_kv(nu, z_arg)
         return (log_C
-                + 0.5 * nu * jnp.log(z2 / (2.0 * c + LOG_EPS) + LOG_EPS)
+                + 0.5 * nu * jnp.log(q_eff / c2_eff)
                 + log_K + zw)
 
     def _subordinator_expectations(self):

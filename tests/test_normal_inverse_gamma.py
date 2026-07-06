@@ -13,6 +13,7 @@ import pytest
 jax.config.update("jax_enable_x64", True)
 
 from normix.distributions import JointNormalInverseGamma, NormalInverseGamma
+from normix import UnivariateNormalInverseGamma
 
 
 def _joint_1d(alpha=3.0, beta=1.0):
@@ -207,3 +208,42 @@ class TestNormalInverseGammaEdgeCases:
         X = nig.rvs(20, seed=42)
         lps = jax.vmap(nig.log_prob)(X)
         assert jnp.all(jnp.isfinite(lps))
+
+    @pytest.mark.parametrize("alpha,beta", [(3.0, 2.0), (1.5, 0.5), (10.0, 4.0)])
+    def test_symmetric_matches_student_t(self, alpha, beta):
+        r"""gamma=0: X | Y ~ N(0, sigma^2 Y), Y ~ InvGamma(alpha, beta) is
+        exactly a scaled Student-t (df=2*alpha, scale=sigma*sqrt(beta/alpha)).
+
+        Regression test: the marginal log-density's normalising integral
+        2(b/a)^{p/2} K_p(sqrt(ab)) has a = gamma^T Lambda gamma = 0
+        identically when gamma=0. Feeding the unfloored a into sqrt(ab)
+        (fed to ``log_kv``) while the (b/a)^{p/2} ratio used a floored a
+        broke the small-z cancellation and inflated the density by ~50
+        orders of magnitude (see docs/tutorials/core/02_gh_family_tour.md).
+        """
+        from scipy import stats
+        nig = UnivariateNormalInverseGamma.from_classical(
+            mu=0.0, gamma=0.0, sigma=1.0, alpha=alpha, beta=beta)
+        xs = jnp.linspace(-6.0, 6.0, 25)
+        ours = np.array(jax.vmap(nig.pdf)(xs))
+        ref = stats.t(df=2.0 * alpha, scale=np.sqrt(beta / alpha)).pdf(np.array(xs))
+        np.testing.assert_allclose(ours, ref, rtol=1e-6, atol=1e-8)
+
+    def test_symmetric_multivariate_matches_multivariate_t(self):
+        r"""Multivariate analogue of ``test_symmetric_matches_student_t``:
+        gamma=0 collapses NInvG to a multivariate Student-t with scale
+        matrix (beta/alpha)*Sigma and df=2*alpha.
+        """
+        from scipy.stats import multivariate_t
+        alpha, beta = 3.0, 2.0
+        Sigma = jnp.array([[1.0, 0.3], [0.3, 1.0]])
+        nig = NormalInverseGamma.from_classical(
+            mu=jnp.zeros(2), gamma=jnp.zeros(2), sigma=Sigma, alpha=alpha, beta=beta,
+        )
+        ref = multivariate_t(loc=[0.0, 0.0], shape=(beta / alpha) * np.array(Sigma),
+                              df=2.0 * alpha)
+        rng = np.random.default_rng(0)
+        pts = jnp.asarray(rng.normal(size=(10, 2)) * 2.0)
+        ours = np.array(jax.vmap(nig.pdf)(pts))
+        expected = ref.pdf(np.array(pts))
+        np.testing.assert_allclose(ours, expected, rtol=1e-6, atol=1e-8)

@@ -120,6 +120,50 @@ def test_factor_log_prob_matches_full_cov(
                                rtol=1e-10, atol=1e-12)
 
 
+def test_factor_ninvg_symmetric_matches_full_cov_at_gamma_zero():
+    """FactorNormalInverseGamma log_prob matches the full-cov NInvG at
+    gamma=0, where a_gig = gamma^T Sigma^-1 gamma = 0 identically.
+
+    Regression test for the sqrt(ab) floor mismatch fixed in
+    ``NormalInverseGamma.log_prob`` / ``FactorNormalInverseGamma.log_prob``
+    (see docs/tutorials/core/02_gh_family_tour.md).
+    """
+    F = jnp.array([[1.0, 0.0], [0.5, 0.3], [0.0, 0.8]])
+    D = jnp.array([0.5, 0.7, 0.4])
+    mu = jnp.array([0.1, 0.2, -0.1])
+    gamma = jnp.zeros(3)
+    fa, full = _matched_factor_full(
+        FactorNormalInverseGamma, NormalInverseGamma,
+        mu=mu, gamma=gamma, F=F, D=D, alpha=3.0, beta=2.0)
+
+    key = jax.random.PRNGKey(5)
+    X = mu[None, :] + jax.random.normal(key, (10, 3), dtype=jnp.float64)
+    lp_fa = jax.vmap(fa.log_prob)(X)
+    lp_full = jax.vmap(full.log_prob)(X)
+    assert jnp.all(jnp.isfinite(lp_fa))
+    np.testing.assert_allclose(np.asarray(lp_fa), np.asarray(lp_full),
+                               rtol=1e-10, atol=1e-12)
+
+
+def test_factor_vg_matches_full_cov_at_mode():
+    """FactorVarianceGamma log_prob matches the full-cov VG exactly at
+    x=mu (q=0), the degenerate boundary fixed in ``VarianceGamma.log_prob``
+    / ``FactorVarianceGamma.log_prob``.
+    """
+    F = jnp.array([[1.0, 0.0], [0.5, 0.3], [0.0, 0.8]])
+    D = jnp.array([0.5, 0.7, 0.4])
+    mu = jnp.array([0.1, 0.2, -0.1])
+    gamma = jnp.array([0.1, 0.0, -0.05])
+    fa, full = _matched_factor_full(
+        FactorVarianceGamma, VarianceGamma,
+        mu=mu, gamma=gamma, F=F, D=D, alpha=2.5, beta=1.5)
+
+    lp_fa = float(fa.log_prob(mu))
+    lp_full = float(full.log_prob(mu))
+    assert np.isfinite(lp_fa)
+    np.testing.assert_allclose(lp_fa, lp_full, rtol=1e-10)
+
+
 def test_factor_quad_form_agrees_with_dense_solve(small_factor_setup):
     """_quad_form(x) = xᵀΣ⁻¹x where Σ is the dense Woodbury reconstruction."""
     mu, gamma, F, D = small_factor_setup

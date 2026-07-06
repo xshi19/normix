@@ -30,6 +30,10 @@ class JointNormalInverseGamma(JointNormalMixture):
     :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`.
 
     GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.
+
+    The :math:`\gamma y` mean term is the *skewness* that generalizes this
+    beyond the textbook Normal-inverse-gamma conjugate prior — see
+    :class:`NormalInverseGamma` for its role in the marginal density.
     """
 
     alpha: jax.Array
@@ -131,7 +135,24 @@ class JointNormalInverseGamma(JointNormalMixture):
 
 
 class NormalInverseGamma(NormalMixture):
-    """Marginal Normal-Inverse Gamma distribution f(x)."""
+    r"""Marginal Normal-Inverse Gamma distribution :math:`f(x)`.
+
+    Not the textbook Normal-inverse-gamma conjugate prior — that
+    distribution is a pure *variance* mixture,
+    :math:`X\mid Y\sim\mathcal N(\mu,\Sigma Y)`, whose marginal is a plain
+    Student-t with no special functions. This class is the GH-family
+    variance-*mean* mixture (see :class:`JointNormalInverseGamma`):
+    :math:`X\mid Y\sim\mathcal N(\mu+\gamma Y,\Sigma Y)`. The extra
+    :math:`\gamma Y` term is why :meth:`log_prob` needs
+    :func:`~normix.utils.bessel.log_kv`: expanding the quadratic form adds a
+    term linear in :math:`Y`, turning the :math:`\int_0^\infty dY` integral
+    from a Gamma integral into a Generalized Inverse Gaussian one,
+    :math:`2(b/a)^{p/2}K_p(\sqrt{ab})` with :math:`a=\gamma^\top\Sigma^{-1}\gamma`.
+    At :math:`\gamma=0` this reduces exactly to the textbook result
+    :math:`f(x)=t\big(x\mid\nu=2\alpha,\ \hat\mu=\mu,\
+    \hat\Sigma=\tfrac{\beta}{\alpha}\Sigma\big)` — see
+    :doc:`/theory/gh` "Special Cases".
+    """
 
     def __init__(self, joint: JointNormalInverseGamma):
         object.__setattr__(self, '_joint', joint)
@@ -149,6 +170,13 @@ class NormalInverseGamma(NormalMixture):
         GIG params: :math:`p=-\alpha`, :math:`a=\gamma^\top\Lambda\gamma`,
         :math:`b=2\beta+Q(x)`.
         The normalising integral is :math:`2(b/a)^{p/2} K_p(\sqrt{ab})`.
+
+        :math:`a,b` are floored at :data:`~normix.utils.constants.LOG_EPS`
+        *before* forming :math:`\sqrt{ab}`, matching the floor used in the
+        :math:`(b/a)^{p/2}` ratio. Without this, :math:`\gamma=0` (the
+        common no-skew case) sends the true :math:`a=0` into ``log_kv``
+        unfloored while the ratio uses the floored value, breaking the
+        cancellation between the two that is needed for a finite limit.
         """
         j = self._joint
         d = j.d
@@ -169,10 +197,12 @@ class NormalInverseGamma(NormalMixture):
                  - jax.scipy.special.gammaln(alpha)
                  + alpha * jnp.log(beta))
 
-        sqrt_ab = jnp.sqrt(a_gig * b_gig)
+        a_eff = a_gig + LOG_EPS
+        b_eff = b_gig + LOG_EPS
+        sqrt_ab = jnp.sqrt(a_eff * b_eff)
         log_bessel = log_kv(p_gig, sqrt_ab)
         log_integral = (jnp.log(2.0)
-                        + 0.5 * p_gig * jnp.log((b_gig + LOG_EPS) / (a_gig + LOG_EPS))
+                        + 0.5 * p_gig * jnp.log(b_eff / a_eff)
                         + log_bessel)
 
         log_f = log_C + linear + log_integral
@@ -334,11 +364,13 @@ class FactorNormalInverseGamma(FactorNormalMixture):
                  - jax.scipy.special.gammaln(alpha)
                  + alpha * jnp.log(beta))
 
-        sqrt_ab = jnp.sqrt(a_gig * b_gig)
+        # a, b floored consistently before sqrt(ab) — see NormalInverseGamma.log_prob.
+        a_eff = a_gig + LOG_EPS
+        b_eff = b_gig + LOG_EPS
+        sqrt_ab = jnp.sqrt(a_eff * b_eff)
         log_bessel = log_kv(p_gig, sqrt_ab)
         log_integral = (jnp.log(2.0)
-                        + 0.5 * p_gig * jnp.log(
-                            (b_gig + LOG_EPS) / (a_gig + LOG_EPS))
+                        + 0.5 * p_gig * jnp.log(b_eff / a_eff)
                         + log_bessel)
         return log_C + zw + log_integral
 

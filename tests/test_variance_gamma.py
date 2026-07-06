@@ -13,6 +13,7 @@ import pytest
 jax.config.update("jax_enable_x64", True)
 
 from normix.distributions import JointVarianceGamma, VarianceGamma
+from normix import UnivariateVarianceGamma
 
 
 def _joint_1d(mu=0.0, gamma=0.5, sigma=1.0, alpha=2.0, beta=1.0):
@@ -503,3 +504,50 @@ class TestVarianceGammaEdgeCases:
         X = vg.rvs(20, seed=42)
         lps = jax.vmap(vg.log_prob)(X)
         assert jnp.all(jnp.isfinite(lps))
+
+    @staticmethod
+    def _analytic_mode_log_pdf(mu, gamma, sigma, alpha, beta):
+        r"""Independent (no ``log_kv``) reference for the VG log-density at
+        x=mu, valid when nu = alpha - d/2 > 0:
+
+        .. math::
+
+            \log f(\mu) = \log C + \log\Gamma(\nu) - \log 2 - \nu\log c,
+            \quad c = \beta + \tfrac12\gamma^\top\Sigma^{-1}\gamma.
+        """
+        from scipy.special import gammaln
+        mu = np.asarray(mu, dtype=float)
+        gamma = np.asarray(gamma, dtype=float)
+        sigma = np.asarray(sigma, dtype=float)
+        d = mu.shape[0]
+        Lambda = np.linalg.inv(sigma)
+        c = beta + 0.5 * (gamma @ Lambda @ gamma)
+        nu = alpha - d / 2.0
+        log_det_sigma = np.log(np.linalg.det(sigma))
+        log_C = (np.log(2.0) - 0.5 * d * np.log(2.0 * np.pi) - 0.5 * log_det_sigma
+                 - gammaln(alpha) + alpha * np.log(beta))
+        return log_C + gammaln(nu) - np.log(2.0) - nu * np.log(c)
+
+    @pytest.mark.parametrize("gamma_", [0.0, 0.5])
+    def test_mode_density_matches_analytic_limit(self, gamma_):
+        r"""x=mu (q=0 exactly): regression test for the sqrt(2qc) vs.
+        q/(2c) floor mismatch that previously spiked the mode density to
+        ~3.6e10 instead of the true ~0.62 (alpha=1.2, beta=1.2, d=1, so
+        nu=0.7>0 and the true density at the mode is finite). Checked
+        against an analytic formula that never calls ``log_kv``.
+        """
+        alpha, beta = 1.2, 1.2
+        vg = UnivariateVarianceGamma.from_classical(
+            mu=0.0, gamma=gamma_, sigma=1.0, alpha=alpha, beta=beta)
+        ours = float(vg.log_prob(jnp.array([0.0])))
+        ref = self._analytic_mode_log_pdf([0.0], [gamma_], [[1.0]], alpha, beta)
+        np.testing.assert_allclose(ours, ref, rtol=1e-8)
+
+    def test_mode_density_continuous(self):
+        """pdf(mu) must be continuous with pdf(mu + tiny epsilon), not a spike."""
+        vg = UnivariateVarianceGamma.from_classical(
+            mu=0.0, gamma=0.0, sigma=1.0, alpha=1.2, beta=1.2)
+        p_at_mode = float(vg.pdf(jnp.array([0.0])))
+        p_near_mode = float(vg.pdf(jnp.array([1e-6])))
+        assert p_at_mode < 10.0
+        np.testing.assert_allclose(p_at_mode, p_near_mode, rtol=1e-4)
