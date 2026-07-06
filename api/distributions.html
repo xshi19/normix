@@ -2070,6 +2070,11 @@ K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
 <p>where <span class="math notranslate nohighlight">\(\nu = \alpha - d/2\)</span>,
 <span class="math notranslate nohighlight">\(c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma\)</span>,
 <span class="math notranslate nohighlight">\(q = (x-\mu)^\top\Lambda(x-\mu)\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(q,\,2c\)</span> are floored at <code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code>
+<em>before</em> forming <span class="math notranslate nohighlight">\(\sqrt{2qc}\)</span>, matching the floor used in the
+<span class="math notranslate nohighlight">\((q/2c)^{\nu/2}\)</span> ratio — otherwise <span class="math notranslate nohighlight">\(x=\mu\)</span> sends the true
+<span class="math notranslate nohighlight">\(q=0\)</span> into <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> unfloored while the ratio uses the
+floored value, breaking the cancellation needed for a finite limit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -2213,6 +2218,9 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <spa
 <p>Joint <span class="math notranslate nohighlight">\(f(x,y)\)</span>: <span class="math notranslate nohighlight">\(X\mid Y \sim \mathcal{N}(\mu+\gamma y, \Sigma y)\)</span>,
 <span class="math notranslate nohighlight">\(Y \sim \mathrm{InvGamma}(\alpha, \beta)\)</span>.</p>
 <p>GIG limit: <span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(b = 2\beta\)</span>.</p>
+<p>The <span class="math notranslate nohighlight">\(\gamma y\)</span> mean term is the <em>skewness</em> that generalizes this
+beyond the textbook Normal-inverse-gamma conjugate prior — see
+<a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></a> for its role in the marginal density.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2298,7 +2306,22 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <spa
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.distributions.normal_inverse_gamma.</span></span><span class="sig-name descname"><span class="pre">NormalInverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">joint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a></p>
-<p>Marginal Normal-Inverse Gamma distribution f(x).</p>
+<p>Marginal Normal-Inverse Gamma distribution <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
+<p>Not the textbook Normal-inverse-gamma conjugate prior — that
+distribution is a pure <em>variance</em> mixture,
+<span class="math notranslate nohighlight">\(X\mid Y\sim\mathcal N(\mu,\Sigma Y)\)</span>, whose marginal is a plain
+Student-t with no special functions. This class is the GH-family
+variance-<em>mean</em> mixture (see <a class="reference internal" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalInverseGamma</span></code></a>):
+<span class="math notranslate nohighlight">\(X\mid Y\sim\mathcal N(\mu+\gamma Y,\Sigma Y)\)</span>. The extra
+<span class="math notranslate nohighlight">\(\gamma Y\)</span> term is why <a class="reference internal" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code></a> needs
+<a class="reference internal" href="utils.html#normix.utils.bessel.log_kv" title="normix.utils.bessel.log_kv"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_kv()</span></code></a>: expanding the quadratic form adds a
+term linear in <span class="math notranslate nohighlight">\(Y\)</span>, turning the <span class="math notranslate nohighlight">\(\int_0^\infty dY\)</span> integral
+from a Gamma integral into a Generalized Inverse Gaussian one,
+<span class="math notranslate nohighlight">\(2(b/a)^{p/2}K_p(\sqrt{ab})\)</span> with <span class="math notranslate nohighlight">\(a=\gamma^\top\Sigma^{-1}\gamma\)</span>.
+At <span class="math notranslate nohighlight">\(\gamma=0\)</span> this reduces exactly to the textbook result
+<span class="math notranslate nohighlight">\(f(x)=t\big(x\mid\nu=2\alpha,\ \hat\mu=\mu,\
+\hat\Sigma=\tfrac{\beta}{\alpha}\Sigma\big)\)</span> — see
+<a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a> “Special Cases”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>joint</strong> (<a class="reference internal" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma" title="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma"><em>JointNormalInverseGamma</em></a>)</p>
@@ -2316,6 +2339,12 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = -\alpha\)</span>, <spa
 <p>GIG params: <span class="math notranslate nohighlight">\(p=-\alpha\)</span>, <span class="math notranslate nohighlight">\(a=\gamma^\top\Lambda\gamma\)</span>,
 <span class="math notranslate nohighlight">\(b=2\beta+Q(x)\)</span>.
 The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^{p/2} K_p(\sqrt{ab})\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(a,b\)</span> are floored at <code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code>
+<em>before</em> forming <span class="math notranslate nohighlight">\(\sqrt{ab}\)</span>, matching the floor used in the
+<span class="math notranslate nohighlight">\((b/a)^{p/2}\)</span> ratio. Without this, <span class="math notranslate nohighlight">\(\gamma=0\)</span> (the
+common no-skew case) sends the true <span class="math notranslate nohighlight">\(a=0\)</span> into <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>
+unfloored while the ratio uses the floored value, breaking the
+cancellation between the two that is needed for a finite limit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

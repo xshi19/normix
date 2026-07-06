@@ -401,6 +401,10 @@
 <span class="sd">    :math:`Y \sim \mathrm{InvGamma}(\alpha, \beta)`.</span>
 
 <span class="sd">    GIG limit: :math:`p = -\alpha`, :math:`a \to 0`, :math:`b = 2\beta`.</span>
+
+<span class="sd">    The :math:`\gamma y` mean term is the *skewness* that generalizes this</span>
+<span class="sd">    beyond the textbook Normal-inverse-gamma conjugate prior — see</span>
+<span class="sd">    :class:`NormalInverseGamma` for its role in the marginal density.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
@@ -520,7 +524,24 @@
 <div class="viewcode-block" id="NormalInverseGamma">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalInverseGamma</span><span class="p">(</span><span class="n">NormalMixture</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marginal Normal-Inverse Gamma distribution f(x).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Marginal Normal-Inverse Gamma distribution :math:`f(x)`.</span>
+
+<span class="sd">    Not the textbook Normal-inverse-gamma conjugate prior — that</span>
+<span class="sd">    distribution is a pure *variance* mixture,</span>
+<span class="sd">    :math:`X\mid Y\sim\mathcal N(\mu,\Sigma Y)`, whose marginal is a plain</span>
+<span class="sd">    Student-t with no special functions. This class is the GH-family</span>
+<span class="sd">    variance-*mean* mixture (see :class:`JointNormalInverseGamma`):</span>
+<span class="sd">    :math:`X\mid Y\sim\mathcal N(\mu+\gamma Y,\Sigma Y)`. The extra</span>
+<span class="sd">    :math:`\gamma Y` term is why :meth:`log_prob` needs</span>
+<span class="sd">    :func:`~normix.utils.bessel.log_kv`: expanding the quadratic form adds a</span>
+<span class="sd">    term linear in :math:`Y`, turning the :math:`\int_0^\infty dY` integral</span>
+<span class="sd">    from a Gamma integral into a Generalized Inverse Gaussian one,</span>
+<span class="sd">    :math:`2(b/a)^{p/2}K_p(\sqrt{ab})` with :math:`a=\gamma^\top\Sigma^{-1}\gamma`.</span>
+<span class="sd">    At :math:`\gamma=0` this reduces exactly to the textbook result</span>
+<span class="sd">    :math:`f(x)=t\big(x\mid\nu=2\alpha,\ \hat\mu=\mu,\</span>
+<span class="sd">    \hat\Sigma=\tfrac{\beta}{\alpha}\Sigma\big)` — see</span>
+<span class="sd">    :doc:`/theory/gh` &quot;Special Cases&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="n">JointNormalInverseGamma</span><span class="p">):</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_joint&#39;</span><span class="p">,</span> <span class="n">joint</span><span class="p">)</span>
@@ -543,6 +564,13 @@
 <span class="sd">        GIG params: :math:`p=-\alpha`, :math:`a=\gamma^\top\Lambda\gamma`,</span>
 <span class="sd">        :math:`b=2\beta+Q(x)`.</span>
 <span class="sd">        The normalising integral is :math:`2(b/a)^{p/2} K_p(\sqrt{ab})`.</span>
+
+<span class="sd">        :math:`a,b` are floored at :data:`~normix.utils.constants.LOG_EPS`</span>
+<span class="sd">        *before* forming :math:`\sqrt{ab}`, matching the floor used in the</span>
+<span class="sd">        :math:`(b/a)^{p/2}` ratio. Without this, :math:`\gamma=0` (the</span>
+<span class="sd">        common no-skew case) sends the true :math:`a=0` into ``log_kv``</span>
+<span class="sd">        unfloored while the ratio uses the floored value, breaking the</span>
+<span class="sd">        cancellation between the two that is needed for a finite limit.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">d</span>
@@ -563,10 +591,12 @@
                  <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
                  <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
 
-        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_gig</span> <span class="o">*</span> <span class="n">b_gig</span><span class="p">)</span>
+        <span class="n">a_eff</span> <span class="o">=</span> <span class="n">a_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">b_eff</span> <span class="o">=</span> <span class="n">b_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_eff</span> <span class="o">*</span> <span class="n">b_eff</span><span class="p">)</span>
         <span class="n">log_bessel</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_gig</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
         <span class="n">log_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p_gig</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">b_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">))</span>
+                        <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p_gig</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_eff</span> <span class="o">/</span> <span class="n">a_eff</span><span class="p">)</span>
                         <span class="o">+</span> <span class="n">log_bessel</span><span class="p">)</span>
 
         <span class="n">log_f</span> <span class="o">=</span> <span class="n">log_C</span> <span class="o">+</span> <span class="n">linear</span> <span class="o">+</span> <span class="n">log_integral</span>
@@ -749,11 +779,13 @@
                  <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
                  <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
 
-        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_gig</span> <span class="o">*</span> <span class="n">b_gig</span><span class="p">)</span>
+        <span class="c1"># a, b floored consistently before sqrt(ab) — see NormalInverseGamma.log_prob.</span>
+        <span class="n">a_eff</span> <span class="o">=</span> <span class="n">a_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">b_eff</span> <span class="o">=</span> <span class="n">b_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">sqrt_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_eff</span> <span class="o">*</span> <span class="n">b_eff</span><span class="p">)</span>
         <span class="n">log_bessel</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">p_gig</span><span class="p">,</span> <span class="n">sqrt_ab</span><span class="p">)</span>
         <span class="n">log_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p_gig</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                            <span class="p">(</span><span class="n">b_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a_gig</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">))</span>
+                        <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p_gig</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b_eff</span> <span class="o">/</span> <span class="n">a_eff</span><span class="p">)</span>
                         <span class="o">+</span> <span class="n">log_bessel</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">log_C</span> <span class="o">+</span> <span class="n">zw</span> <span class="o">+</span> <span class="n">log_integral</span></div>
 

@@ -550,6 +550,12 @@
 <span class="sd">        where :math:`\nu = \alpha - d/2`,</span>
 <span class="sd">        :math:`c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma`,</span>
 <span class="sd">        :math:`q = (x-\mu)^\top\Lambda(x-\mu)`.</span>
+
+<span class="sd">        :math:`q,\,2c` are floored at :data:`~normix.utils.constants.LOG_EPS`</span>
+<span class="sd">        *before* forming :math:`\sqrt{2qc}`, matching the floor used in the</span>
+<span class="sd">        :math:`(q/2c)^{\nu/2}` ratio — otherwise :math:`x=\mu` sends the true</span>
+<span class="sd">        :math:`q=0` into ``log_kv`` unfloored while the ratio uses the</span>
+<span class="sd">        floored value, breaking the cancellation needed for a finite limit.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">d</span>
@@ -572,11 +578,13 @@
                  <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
                  <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
 
-        <span class="n">z_arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">q</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">q_eff</span> <span class="o">=</span> <span class="n">q</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">c2_eff</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">z_arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">q_eff</span> <span class="o">*</span> <span class="n">c2_eff</span><span class="p">)</span>
         <span class="n">log_K</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">z_arg</span><span class="p">)</span>
 
         <span class="n">log_f</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_C</span>
-                 <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+                 <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q_eff</span> <span class="o">/</span> <span class="n">c2_eff</span><span class="p">)</span>
                  <span class="o">+</span> <span class="n">log_K</span>
                  <span class="o">+</span> <span class="n">linear</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">log_f</span></div>
@@ -773,10 +781,13 @@
                  <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
                  <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
 
-        <span class="n">z_arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">z2</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+        <span class="c1"># q, 2c floored consistently before sqrt(2qc) — see VarianceGamma.log_prob.</span>
+        <span class="n">q_eff</span> <span class="o">=</span> <span class="n">z2</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">c2_eff</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span>
+        <span class="n">z_arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">q_eff</span> <span class="o">*</span> <span class="n">c2_eff</span><span class="p">)</span>
         <span class="n">log_K</span> <span class="o">=</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">z_arg</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">log_C</span>
-                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+                <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q_eff</span> <span class="o">/</span> <span class="n">c2_eff</span><span class="p">)</span>
                 <span class="o">+</span> <span class="n">log_K</span> <span class="o">+</span> <span class="n">zw</span><span class="p">)</span></div>
 
 
