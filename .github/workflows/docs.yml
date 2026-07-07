@@ -52,13 +52,19 @@ jobs:
             -o -name reviews -o -name tech_notes -o -name archive \
             -o -name references \) -print)"
 
+      # The myst-nb execution cache is keyed only on notebook cell source, so a
+      # fix to library source (normix/**) does NOT invalidate cached outputs.
+      # Include normix/** in both the primary key and the restore-key prefix so
+      # a library change forces a full re-execution and never restores outputs
+      # produced by a different version of the library (which would republish
+      # stale figures — see docs-publish skill "Gotchas").
       - name: Restore myst-nb cache
         uses: actions/cache@v4
         with:
           path: docs/_build/.jupyter_cache
-          key: myst-nb-${{ runner.os }}-${{ hashFiles('docs/tutorials/**', 'uv.lock', 'pyproject.toml') }}
+          key: myst-nb-${{ runner.os }}-${{ hashFiles('normix/**') }}-${{ hashFiles('docs/tutorials/**', 'uv.lock', 'pyproject.toml') }}
           restore-keys: |
-            myst-nb-${{ runner.os }}-
+            myst-nb-${{ runner.os }}-${{ hashFiles('normix/**') }}-
 
       - name: Build Sphinx HTML
         run: |
