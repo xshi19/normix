@@ -46,7 +46,9 @@ Docs are deployed automatically by `.github/workflows/docs.yml` on every push
 to `master` / `main`. The workflow:
 
 1. Runs `scripts/check_doc_links.sh` (cross-link invariants)
-2. Restores myst-nb cache keyed on `docs/tutorials/**`, `uv.lock`, `pyproject.toml`
+2. Restores myst-nb cache keyed on `normix/**`, `docs/tutorials/**`, `uv.lock`,
+   `pyproject.toml` (the `normix/**` component forces re-execution when library
+   source changes)
 3. Builds HTML via `uv run sphinx-build -b html docs docs/_build/html`
 4. Runs linkcheck (report-only, `continue-on-error`)
 5. Deploys to `gh-pages` on push to default branch
@@ -103,6 +105,13 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - **Jekyll trap**: Keep `.nojekyll` on `gh-pages` so Sphinx `_static/`, `_sources/`, `_modules/` are served correctly.
 - **Worktree trap**: If using a temporary worktree for `gh-pages`, do not delete the worktree's `.git` pointer file while clearing content.
 - **Notebook trap**: Pull/build requests may happen while local notebooks are dirty. Preserve and restore them.
+- **Library-fix / stale-figure trap**: myst-nb's `execution_mode: cache` keys the
+  execution cache on notebook *cell source* only — not on the `normix` library
+  that produces the outputs. A fix to `normix/**` therefore does NOT invalidate
+  cached figures, so a normal cached build republishes the old (buggy) figure
+  even though the workflow "succeeded". The CI cache key includes `hashFiles('normix/**')`
+  to force re-execution on library changes. For a one-off local republish after a
+  library fix, use `uv run make -C docs html-strict` (force) or `clean-cache` first.
 - **Tutorial runtime**: the full tutorial tree (`docs/tutorials/**`, 18 executable pages) runs in a few minutes on a fresh build; `em/04_em_vs_mcecm` is the long pole (~2 min, sweeps 21 values of $p$ with EM + MCECM). CI restores the myst-nb cache from prior master builds.
 - **`notebooks/` is not published**: it's a personal research workspace (two-tier `.ipynb`-scratch / jupytext-`.py`-preserved policy, see `notebooks/README.md`), not built by Sphinx.
 
