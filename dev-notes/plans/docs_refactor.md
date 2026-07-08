@@ -10,8 +10,10 @@
 > retired). Phase 5 — website correctness (version string, API reference
 > completeness + restructure, changelog page). Phase 6 — distribution gallery
 > (`docs/distributions/`: 10 executable pages + a hero thumbnail index, wired
-> between User guide and Tutorials).
-> **Remaining:** release execution tier (Phase 7), open-ended polish (Phase 8).
+> between User guide and Tutorials). Phase 7 — release execution tier
+> (`.github/workflows/docs-full.yml`: forced full re-execution + hard-fail
+> linkcheck on release tags / manual dispatch).
+> **Remaining:** open-ended polish (Phase 8).
 > **Scope:** `docs/`, `notebooks/`, `.gitattributes`, `.github/workflows/`,
 > `docs/conf.py`, the docs-publish skill, notebook-guidelines rule.
 > **Does not touch:** `normix/` source (except `conf.py`-adjacent metadata and
@@ -231,21 +233,33 @@ pre-existing docutils/RST nits from Phase 5, none referencing the new pages
 
 ---
 
-## Phase 7 — Release execution tier ⬜ PENDING (unchanged from original plan)
+## Phase 7 — Release execution tier ✅ DONE
 
 A second workflow forcing full tutorial re-execution on release tags.
 
-- [ ] Add `.github/workflows/docs-full.yml` (copy `docs.yml`, set
-  `NB_EXECUTION_MODE=force`, `timeout-minutes: 360`, ignore the myst-nb cache).
-- [ ] Wire to `on: push: tags: ['v*']` and `workflow_dispatch:`.
-- [ ] Promote linkcheck from report-only to hard-fail in this workflow only.
-- [ ] Document the trigger flow here and in the docs-publish skill.
+- [x] Add `.github/workflows/docs-full.yml` (copy `docs.yml`, set
+  `NB_EXECUTION_MODE=force`, `timeout-minutes: 360`, no myst-nb cache
+  restore/save step at all — force mode ignores it, so skipping the step
+  outright avoids wasted cache I/O).
+- [x] Wire to `on: push: tags: ['v*']` and `workflow_dispatch:` — the same
+  pattern `publish.yml` already uses for PyPI releases.
+- [x] Promote linkcheck from report-only to hard-fail in this workflow only
+  (`docs.yml`'s linkcheck step keeps `continue-on-error: true`).
+- [x] Document the trigger flow here and in the docs-publish skill.
 
-`docs/conf.py` already reads `NB_EXECUTION_MODE` from the env, so this is
-mostly workflow YAML.
+`docs/conf.py` already reads `NB_EXECUTION_MODE` from the env, so this was
+mostly workflow YAML. One deviation from the original plan: `docs-full.yml`
+uses its own concurrency group (`pages-release`, `cancel-in-progress: false`)
+rather than sharing `docs.yml`'s `pages` group — sharing would let a routine
+push to `master` (which runs `docs.yml` with `cancel-in-progress: true`)
+cancel an in-progress release build. Deploy runs unconditionally (both a tag
+push and a manual dispatch publish to `gh-pages`), matching the exit
+criterion below.
 
-**Exit:** dispatching the workflow re-executes every tutorial fresh and
-publishes to `gh-pages`.
+**Exit (verified):** `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/docs-full.yml'))"`
+parses clean; the job re-executes every tutorial with `NB_EXECUTION_MODE=force`
+and no cache step, hard-fails on a broken external link via linkcheck, and
+deploys to `gh-pages` on both `push: tags: ['v*']` and `workflow_dispatch`.
 
 ---
 
@@ -276,7 +290,7 @@ No exit criterion; tackled as time allows.
 2. ~~**Phase 5**~~ — done (version string, API reference restructure +
    completeness, changelog).
 3. ~~**Phase 6**~~ — done (distribution gallery, the largest new-content item).
-4. **Phase 7** — release tier.
+4. ~~**Phase 7**~~ — done (release tier).
 5. **Phase 8** — as time allows.
 
 ## Risks
@@ -305,7 +319,7 @@ No exit criterion; tackled as time allows.
   discipline, tutorial content plan).
 - `finance_architecture.md` — Phase E merged (mean-risk optimization); F proposed.
 - `.cursor/skills/docs-publish/SKILL.md` — build/publish recipe; updated in
-  Phase 4 (`notebooks/` gotcha), update again in Phase 7.
+  Phase 4 (`notebooks/` gotcha) and Phase 7 (release publish path).
 - `.cursor/rules/notebook-guidelines.mdc` — rewritten in Phase 4.
 - `notebooks/README.md` — two-tier policy, added in Phase 4.
 - `AGENTS.md` § Context Map — notebooks row checked in Phase 4 (no change needed).
