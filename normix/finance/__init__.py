@@ -8,7 +8,7 @@ Given a multivariate normal-mixture model and weights :math:`w`,
 object; :class:`WeightFunctional` exposes risk as a JIT-able function of
 :math:`w` for optimisation.
 
-See ``docs/theory/cvar_derivatives.rst`` for the CVaR derivative formulas.
+See ``docs/theory/cvar_derivatives.md`` for the CVaR derivative formulas.
 """
 from __future__ import annotations
 

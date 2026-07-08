@@ -27,6 +27,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'sphinx_design',
+    'sphinx_togglebutton',
 ]
 
 templates_path = ['_templates']
@@ -45,6 +47,10 @@ exclude_patterns = [
 
 # Enable after docstring cross-reference cleanup (post Phase 1).
 nitpicky = False
+# Theory pages use Markdown links to Sphinx citation anchors (MyST does not
+# parse RST ``[Key]_`` citation syntax), so Sphinx reports those citations as
+# unreferenced even though the HTML anchors resolve.
+suppress_warnings = ['ref.citation']
 nitpick_ignore = [
     ('py:class', 'jax.Array'),
     ('py:class', 'jaxtyping.Array'),
@@ -124,4 +130,10 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'jax': ('https://jax.readthedocs.io/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'equinox': ('https://docs.kidger.site/equinox/', None),
 }
+
+# myst-nb hide-input / hide-output prompts (sphinx-togglebutton)
+nb_code_prompt_show = 'Show code cell {type}'
+nb_code_prompt_hide = 'Hide code cell {type}'

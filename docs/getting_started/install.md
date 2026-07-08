@@ -2,7 +2,24 @@
 
 normix requires **Python ≥ 3.12** and runs on CPU or GPU through JAX.
 
-## With uv (recommended)
+## From PyPI
+
+```bash
+pip install normix
+```
+
+Optional plotting helpers:
+
+```bash
+pip install "normix[plotting]"
+```
+
+The docs site header shows the version of the package used to *build* these
+pages. PyPI releases can lag the docs branch — if `pip` installs an older
+wheel than the header, prefer the from-source path below for the matching
+code.
+
+## From source (development)
 
 ```bash
 git clone https://github.com/xshi19/normix
@@ -14,7 +31,7 @@ uv sync
 Run anything in that environment with `uv run`, e.g. `uv run python`,
 `uv run pytest`, `uv run jupyter lab`.
 
-## With pip
+Editable install with pip instead of uv:
 
 ```bash
 pip install -e .
@@ -47,10 +64,8 @@ If float64 is not enabled, normix emits a warning on import.
 
 ## Optional extras
 
-The documentation and plotting helpers pull in a few more packages:
-
 ```bash
-uv sync --extra docs        # Sphinx, myst-nb, sphinx-book-theme
+uv sync --extra docs --extra plotting   # Sphinx site + matplotlib helpers
 ```
 
 Once installed, head to the {doc}`quickstart` for a 30-second example, or

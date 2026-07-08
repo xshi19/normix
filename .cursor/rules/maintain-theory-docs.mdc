@@ -8,56 +8,59 @@ alwaysApply: false
 
 > High-level principles: `dev-notes/design/agent_instructions_design.md`
 
-`docs/theory/` contains **mathematical derivations** in reStructuredText (`.rst`)
-format, based on [Shi2016]. These are the formal mathematical foundations for
-the distributions and algorithms implemented in normix.
+`docs/theory/` contains **mathematical derivations** in MyST Markdown (`.md`),
+based on [Shi2016]. These are the formal mathematical foundations for the
+distributions and algorithms implemented in normix.
 
 ## Current Contents
 
-| File | Topic |
-|---|---|
-| `gig.rst` | Generalized Inverse Gaussian distribution |
-| `gh.rst` | Generalized Hyperbolic distribution |
-| `em_algorithm.rst` | EM algorithm for GH mixtures |
-| `shrinkage.rst` | Shrinkage estimation |
-| `factor_analysis.rst` | Factor analysis |
-| `online_em.rst` | Online EM algorithm |
-| `mean_risk_optimization.rst` | Mean-risk portfolio optimization |
-| `cvar_derivatives.rst` | CVaR derivatives |
-| `transaction_costs.rst` | Transaction cost modeling |
-| `enb.rst` | Effective number of bets |
-| `generalized_enb.rst` | Generalized ENB |
+| File | Topic | Tutorial counterpart |
+|---|---|---|
+| `gig.md` | Generalized Inverse Gaussian | `tutorials/distributions/02_gig` |
+| `gh.md` | Generalized Hyperbolic | `tutorials/core/02_gh_family_tour` |
+| `varentropy.md` | Entropy / varentropy / Rényi | `tutorials/stats/03_varentropy` |
+| `em_algorithm.md` | EM for GH mixtures | `tutorials/em/*` |
+| `online_em.md` | Online EM | (theory-only for now) |
+| `shrinkage.md` | Shrinkage estimation | (theory-only for now) |
+| `factor_analysis.md` | Factor analysis | `tutorials/distributions/05_factor_mixtures` |
+| `mean_risk_optimization.md` | Mean-risk portfolios | `tutorials/finance/05_mean_risk_optimization` |
+| `cvar_derivatives.md` | CVaR derivatives | `tutorials/finance/04_cvar_optimization` |
+| `transaction_costs.md` | Transaction costs | (theory-only for now) |
+| `enb.md` / `generalized_enb.md` | Effective number of bets | (theory-only for now) |
 
 ## Format
 
-- **reStructuredText** (`.rst`) — not Markdown. Use `.. math::` directives for equations.
-- Follow the conventions in existing files for consistency.
-- `index.rst` maintains the table of contents via `.. toctree::`.
+- **MyST Markdown** (`.md`). Prefer ` ```{math} ` with optional `:label:` for
+  numbered equations; inline `:math:` roles and `:eq:` cross-refs are fine.
+- Citation definitions (`.. [Key] ...`) stay in `{eval-rst}` blocks so Sphinx
+  resolves `[Key]_` references.
+- `index.md` maintains the toctree, grouped by topic (Distributions / Fitting /
+  Portfolio & risk).
+
+## Selective enrichment (not a full merge)
+
+Tutorials stay executable demos; theory stays formal derivations. For
+high-overlap pairs, pull the *key* formulas into the tutorial intro and keep
+the full derivation on the theory page with a cross-link. Do **not** paste
+code cells into theory pages, and do **not** collapse both into one mega-page.
 
 ## When to Update
 
-- **New distribution added**: add a theory file with its mathematical derivation
-- **New algorithm implemented** (e.g. new EM variant, new optimization): add derivation
-- **Error found in derivation**: fix in place, note the correction
-
-## When to Create a New File
-
-1. Check `index.rst` — does a relevant file already exist?
-2. Add the new file to the `.. toctree::` in `index.rst`
-3. Follow the structure of existing files (definitions, properties, proofs)
+- **New distribution / algorithm**: add a theory file with its derivation
+- **Error in a derivation**: fix in place
+- **New tutorial for a theory-only topic**: add a cross-link both ways; optionally
+  enrich the tutorial intro with the key formulas
 
 ## Relationship to Other Docs
 
 - `docs/theory/` = **formal math** (definitions, theorems, proofs)
-- `dev-notes/tech_notes/` = **implementation notes** (benchmarks, numerical issues, algorithm choices)
-- `docs/design/` = **design rationale** (why we chose this approach)
-
-These three are complementary. A theory file derives the formula; a tech note
-explains how we compute it efficiently; a design doc explains why we chose that
-computation over alternatives.
+- `dev-notes/tech_notes/` = **implementation notes**
+- `docs/design/` = **design rationale**
 
 ## Gotchas
 
-- **Don't put implementation details here.** This is pure math. Code patterns belong in `.cursor/rules/` or tech notes.
-- **Don't mix `.rst` and `.md`** in this directory. All theory docs are `.rst`.
-- **Reference [Shi2016] properly** using the `.. [Shi2016]` citation defined in `index.rst`.
+- **Don't put implementation details here.** Pure math only.
+- **Don't mix `.rst` and `.md`** — all theory content is MyST `.md`.
+- **Reference [Shi2016]** via the citation defined in `index.md`.
+- A one-shot converter lives at `scripts/rst_theory_to_myst.py` (historical;
+  theory is already MyST).

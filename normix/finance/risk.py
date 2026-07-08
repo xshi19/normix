@@ -5,7 +5,7 @@ The current implementation provides Conditional Value at Risk (CVaR), with
 value, first derivatives, and second derivatives in both the projected
 parameter space :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)` and the
 portfolio-weight space :math:`w \in \mathbb{R}^d`. Formulas follow
-``docs/theory/cvar_derivatives.rst``.
+``docs/theory/cvar_derivatives.md``.
 
 Monte Carlo for CVaR value and derivatives is conditional over the
 subordinator :math:`Y` (common random numbers). Deterministic VaR uses
@@ -166,7 +166,7 @@ class CVaR(RiskMeasure):
         r"""Return the :math:`3 \times 3` Hessian in :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)`.
 
         :math:`\partial^2/\partial \tilde\mu \, \cdot = 0` exactly; the other
-        non-trivial blocks follow ``docs/theory/cvar_derivatives.rst``
+        non-trivial blocks follow ``docs/theory/cvar_derivatives.md``
         :eq:`cvar-nm-hessian`.
         """
         mu = univariate._mu_scalar

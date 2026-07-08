@@ -255,7 +255,7 @@ Until then, `JointNormalMixture._quad_forms` and
 ## 7. Sufficient Statistics in Theory Order
 
 Both stats classes use **descriptive field names** in **theory order**
-(matching `../../docs/theory/shrinkage.rst` and `../../docs/theory/factor_analysis.rst`):
+(matching `../../docs/theory/shrinkage.md` and `../../docs/theory/factor_analysis.md`):
 
 ```python
 class NormalMixtureEta(eqx.Module):
@@ -284,6 +284,6 @@ family.
 
 - Architecture: `../ARCHITECTURE.md` § *Mixture Structure*.
 - EM machinery: `em_framework.md`.
-- Theory: `../../docs/theory/gh.rst`, `../../docs/theory/factor_analysis.rst`,
-  `../../docs/theory/shrinkage.rst`.
+- Theory: `../../docs/theory/gh.md`, `../../docs/theory/factor_analysis.md`,
+  `../../docs/theory/shrinkage.md`.
 - Historical / archived rationale: `../archive/design/em_covariance_extensions.md`.

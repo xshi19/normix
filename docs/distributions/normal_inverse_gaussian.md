@@ -29,6 +29,7 @@ The skewness $\gamma$ tilts the marginal; the InverseGaussian mixing gives it
 its characteristic semi-heavy tails.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

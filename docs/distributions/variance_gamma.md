@@ -28,6 +28,7 @@ The skewness vector $\gamma$ tilts the density; at $\gamma = 0$ it is symmetric
 about $\mu$. Below is the one-dimensional marginal.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

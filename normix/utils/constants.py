@@ -71,7 +71,7 @@ SIGMA_REG: float = 1e-8
 SAFE_DENOMINATOR: float = 1e-10
 
 # Positivity floor for the diagonal D in the factor-analysis M-step
-# (Σ = F Fᵀ + diag(D)). See `docs/theory/factor_analysis.rst`.
+# (Σ = F Fᵀ + diag(D)). See `docs/theory/factor_analysis.md`.
 D_FLOOR: float = 1e-8
 
 # ── Convergence constants ─────────────────────────────────────────────

@@ -61,11 +61,11 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Design decisions table (internal) | `dev-notes/design/design.md` |
 | Agent instructions design | `dev-notes/design/agent_instructions_design.md` |
 | Full design doc index (internal) | `dev-notes/design/index.md` |
-| Mathematical theory & derivations | `docs/theory/` (`.rst` format, based on [Shi2016]) |
+| Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
 | Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`) |
 | `normix.finance` roadmap (Phase D + Phase E mean-risk done; txn costs & F proposed) | `dev-notes/plans/finance_architecture.md` |
-| Docs refactor plan (Phases 1–6 done; 7–8 pending) | `dev-notes/plans/docs_refactor.md` |
+| Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
@@ -84,6 +84,6 @@ Priority: Elegancy > Numerical Efficiency & Robustness > Mathematical Clarity > 
 
 - **Numerical Efficiency & Robustness**: normix targets the same standard as professional scientific-computing libraries. Use knowledge of numerical linear algebra, optimisation, and statistics to choose efficient algorithms (e.g. `assume_a` flags for triangular/positive-definite solves, exploiting Cholesky structure). Code must be robust under extreme parameters — handle edge cases, guard against overflow/underflow (e.g. large-$z$ asymptotics in `log_kv`), and prefer log-space arithmetic where magnitudes vary widely.
 
-- **Mathematical Clarity**: Math is the backbone of this package. We start with math theory, and end with practical engineering solutions. Mathematical notation in docstrings, `.rst` theory docs, and code comments must be clean and internally consistent. Maintain a clear correspondence between math symbols and code variable names (e.g. $\theta$ ↔ `theta`, $\eta$ ↔ `eta`, $\psi$ ↔ `log_partition`). Avoid ad-hoc or ambiguous notation.
+- **Mathematical Clarity**: Math is the backbone of this package. We start with math theory, and end with practical engineering solutions. Mathematical notation in docstrings, MyST theory docs, and code comments must be clean and internally consistent. Maintain a clear correspondence between math symbols and code variable names (e.g. $\theta$ ↔ `theta`, $\eta$ ↔ `eta`, $\psi$ ↔ `log_partition`). Avoid ad-hoc or ambiguous notation.
 
 - **Simplicity**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it; removing something and getting equal or better results is a simplification win. However, simplicity must not sacrifice any of the three higher-priority concerns. Delegating to a general-case implementation when a closed-form specialisation exists is not "simpler" — it is mathematically more complex and numerically wasteful. Special-case distributions (NIG, VG, NInvG) must use their own analytical formulas rather than routing through GeneralizedHyperbolic.
