@@ -135,8 +135,7 @@ intersphinx_mapping = {
     'equinox': ('https://docs.kidger.site/equinox/', None),
 }
 
-# linkcheck: treat GitHub issue→PR redirects as OK; ignore anchors on
-# GitHub compare pages (Sphinx sometimes false-positives on them).
+# linkcheck: GitHub auto-redirects /issues/N → /pull/N for PRs; treat as OK.
 linkcheck_allowed_redirects = {
     r'https://github\.com/xshi19/normix/issues/\d+':
         r'https://github\.com/xshi19/normix/pull/\d+',
