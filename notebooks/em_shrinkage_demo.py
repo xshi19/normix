@@ -48,7 +48,7 @@ def _intro(mo):
         * test log-likelihood vs $\tau$ sweep.
     4. Diagnostic: condition number of $\Sigma$ and out-of-sample LL.
 
-    References: `docs/theory/shrinkage.rst`,
+    References: `docs/theory/shrinkage.md`,
     `docs/design/em_framework.md` § 4 (Penalised EM via the
     `Shrinkage` combinator).
     """)
@@ -222,7 +222,7 @@ def _phase1_eta_fields(NormalMixtureEta, VarianceGamma, X_train, mo):
     )
     mo.md(
         "### 2.1 `NormalMixtureEta` in theory order\n\n"
-        "Field order matches `docs/theory/shrinkage.rst` "
+        "Field order matches `docs/theory/shrinkage.md` "
         "$(s_1, s_2, s_3, s_4, s_5, s_6)$ — shared with the planned "
         "`FactorMixtureStats` so per-field $\\tau$ ports across families.\n\n"
         f"{_field_summary}\n\n"
@@ -411,7 +411,7 @@ def _phase2_header(mo):
 
     Equivalently $\tau_k$ is a *pseudo-count*: the prior contributes as
     much as $\tau_k \cdot n$ effective observations on $s_k$ against $n$
-    real ones (see `docs/theory/shrinkage.rst` for the derivation).
+    real ones (see `docs/theory/shrinkage.md` for the derivation).
     """)
     return
 
@@ -838,7 +838,7 @@ def _summary(mo):
           `SampleWeightedUpdate` for incremental EM.
 
     See `docs/design/em_framework.md` § 4 for the API rationale and
-    `docs/theory/shrinkage.rst` for the derivation.
+    `docs/theory/shrinkage.md` for the derivation.
     """)
     return
 

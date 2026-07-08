@@ -367,8 +367,8 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 
 - Architecture surface: `../ARCHITECTURE.md` § *EM Algorithm*.
 - Solvers (η→θ): `solvers_and_bessel.md`.
-- Theory: `../../docs/theory/em_algorithm.rst`, `../../docs/theory/shrinkage.rst`,
-  `../../docs/theory/factor_analysis.rst`.
+- Theory: `../../docs/theory/em_algorithm.md`, `../../docs/theory/shrinkage.md`,
+  `../../docs/theory/factor_analysis.md`.
 - Companion notebook: `notebooks/em_shrinkage_demo.py`.
 - Historical / archived: `../archive/design/em_covariance_extensions.md`,
   `../archive/design/penalised_em.md`.

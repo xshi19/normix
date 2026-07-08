@@ -31,6 +31,7 @@ A rank-$r$ block $F F^\top$ captures the dominant correlations; the diagonal
 $D$ supplies asset-specific idiosyncratic variance and keeps $\Sigma$ full-rank.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

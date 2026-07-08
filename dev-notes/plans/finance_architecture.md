@@ -14,10 +14,10 @@ prerequisites (Phases A–C / Phases 1–4 of the EM extensions plan) are in
 (VG/NInvG prior-moment floors, posterior `b_post` floor, diverged guard — see
 `../archive/design/em_robustness_followups.md`).
 **Scope:** new top-level subpackage `normix/finance/`
-**Theory:** `../../docs/theory/cvar_derivatives.rst`,
-`../../docs/theory/mean_risk_optimization.rst`,
-`../../docs/theory/transaction_costs.rst`,
-`../../docs/theory/diversification.rst` (where applicable)
+**Theory:** `../../docs/theory/cvar_derivatives.md`,
+`../../docs/theory/mean_risk_optimization.md`,
+`../../docs/theory/transaction_costs.md`,
+`../../docs/theory/diversification.md` (where applicable)
 **Living EM design:** `../design/em_framework.md`,
 `../design/mixtures.md`.
 
@@ -119,7 +119,7 @@ Then build:
 Why this interface works well:
 
 - it keeps the analytic formulas close to the univariate theory in
-  `../../docs/theory/cvar_derivatives.rst`;
+  `../../docs/theory/cvar_derivatives.md`;
 - it separates univariate risk calculus from portfolio chain rules;
 - it allows exact formulas first, with Monte Carlo fallbacks later.
 
@@ -129,7 +129,7 @@ apply the chain rule from projection parameters back to weights using
 
 ## Mean-Risk Optimization
 
-The theory in `../../docs/theory/mean_risk_optimization.rst` suggests two
+The theory in `../../docs/theory/mean_risk_optimization.md` suggests two
 layers:
 
 1. a general portfolio problem API;
@@ -162,7 +162,7 @@ Implementation advice:
 
 ## Transaction Costs
 
-The transaction-cost theory in `../../docs/theory/transaction_costs.rst` is
+The transaction-cost theory in `../../docs/theory/transaction_costs.md` is
 best treated as an optimization layer, not as a risk-measure layer.
 
 Recommended design:
@@ -256,7 +256,7 @@ engine.
 
 - **Mean-risk optimization — Implemented (2026-06-26).**
   `normix.finance.optimization.MeanRiskProblem(model, risk)` implements the
-  efficient-surface reduction from `../../docs/theory/mean_risk_optimization.rst`:
+  efficient-surface reduction from `../../docs/theory/mean_risk_optimization.md`:
   the 3×3 matrix `A = [μ γ e]ᵀ Σ⁻¹ [μ γ e]` (Cholesky solves), minimum-dispersion
   `weights(μ̃, γ̃) = Σ⁻¹[μ γ e] A⁻¹ [μ̃ γ̃ 1]ᵀ`, `dispersion`/`expected_return`/
   `min_variance_point`, the convex `efficient_surface` (Fig. 8), and the
@@ -273,7 +273,7 @@ engine.
     overlays the gauge-invariant efficient frontiers of VG / NIG / NInvG / GH.
   - Tests: [`tests/finance/test_optimization.py`](../../tests/finance/test_optimization.py).
 - **Transaction costs — still proposed.** Add the local-quadratic / QP builders
-  from `../../docs/theory/transaction_costs.rst`; keep external solver
+  from `../../docs/theory/transaction_costs.md`; keep external solver
   dependencies optional until usage patterns settle.
 
 ### Phase F: Diversification analytics

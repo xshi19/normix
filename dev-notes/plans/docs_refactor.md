@@ -1,6 +1,6 @@
 # Docs & Notebooks: remaining work
 
-> **ACTIVE — refreshed 2026-07-07.**
+> **ACTIVE — refreshed 2026-07-08.**
 > **Done (archived):** Phases 1–3 — MyST + `myst-nb` infrastructure, Kami visual
 > theme, internal/external split (`docs/` vs `dev-notes/`), and the full tutorial
 > tree (21 tutorials + getting_started + user_guide + design pages) are **built
@@ -12,8 +12,11 @@
 > (`docs/distributions/`: 10 executable pages + a hero thumbnail index, wired
 > between User guide and Tutorials). Phase 7 — release execution tier
 > (`.github/workflows/docs-full.yml`: forced full re-execution + hard-fail
-> linkcheck on release tags / manual dispatch).
-> **Remaining:** open-ended polish (Phase 8).
+> linkcheck on release tags / manual dispatch). Phase 8a — landing cards,
+> gallery `hide-input`, pip-first install, intersphinx (scipy/equinox), theory
+> MyST migration + grouped TOC, selective GIG/varentropy enrichment.
+> **Remaining:** Phase 8 optional polish (API rename, PR previews, PyPI badge,
+> further enrichment).
 > **Scope:** `docs/`, `notebooks/`, `.gitattributes`, `.github/workflows/`,
 > `docs/conf.py`, the docs-publish skill, notebook-guidelines rule.
 > **Does not touch:** `normix/` source (except `conf.py`-adjacent metadata and
@@ -263,24 +266,37 @@ deploys to `gh-pages` on both `push: tags: ['v*']` and `workflow_dispatch`.
 
 ---
 
-## Phase 8 — Polish (open-ended, optional)
+## Phase 8 — Polish (in progress)
 
-Website structure ideas beyond correctness, roughly in value order:
+Website structure and navigation polish beyond correctness.
 
-- **Landing page cards.** Use `sphinx-design` grid cards for the main sections
-  (Getting started / User guide / Tutorials / Theory / API) instead of the
-  current prose-only "Where to start". Add a hero figure — the distribution
-  gallery thumbnail grid from Phase 6 is the natural candidate.
-- **Intersphinx** to `jax`, `equinox`, `scipy` so type references in autodoc
-  link out.
-- **`api/` → `reference/` rename** (deferred from Phase 3; the 5b restructure
-  happened without it — still optional, now a standalone rename).
-- **Migrate `docs/theory/*.rst` → MyST `.md`** opportunistically when touched.
+### 8a — Landing, gallery UX, install, intersphinx, theory MyST ✅
+
+- [x] Landing page `sphinx-design` grid cards for Getting started / Gallery /
+  Tutorials / User guide / Theory / API (replaces prose-only "Where to start").
+- [x] Gallery density/hero plot cells use `hide-input` (click-to-expand via
+  `sphinx-togglebutton`); Quick usage cells stay visible. NIG non-convergence
+  demo left for a separate investigation.
+- [x] Install page leads with `pip install normix`; clone/`uv sync` is the
+  development path. Notes that PyPI can lag the docs-build version.
+- [x] Intersphinx mapping extended with `scipy` and `equinox`.
+- [x] `docs/theory/*.rst` → MyST `.md` (equation labels and citations preserved);
+  theory `index.md` TOC grouped into Distributions / Fitting / Portfolio & risk.
+- [x] Selective enrichment (not a full merge): GIG and varentropy tutorials
+  pull key formulas into the intro and cross-link the theory pages; theory
+  pages link back. Theory-only topics (shrinkage, transaction costs, ENB)
+  stay math-only until matching tutorials land.
+- [x] Agent docs updated (`maintain-theory-docs.mdc`, `AGENTS.md`, ARCHITECTURE).
+
+### Still optional / deferred
+
+- **`api/` → `reference/` rename** (deferred from Phase 3; low UX gain).
 - **PR-preview deploys** if maintainer load ever justifies it.
-- **PyPI badge / install matrix** on the landing page once the package is
-  published to PyPI.
+- **PyPI badge** on the landing page once PyPI catches up to the docs version.
+- Further selective enrichment of remaining high-overlap pairs (GH, EM,
+  mean-risk, CVaR, factor) as those tutorials are touched.
 
-No exit criterion; tackled as time allows.
+No hard exit criterion; remaining items as time allows.
 
 ---
 
@@ -291,7 +307,9 @@ No exit criterion; tackled as time allows.
    completeness, changelog).
 3. ~~**Phase 6**~~ — done (distribution gallery, the largest new-content item).
 4. ~~**Phase 7**~~ — done (release tier).
-5. **Phase 8** — as time allows.
+5. ~~**Phase 8a**~~ — done (landing cards, gallery hide-input, install,
+   intersphinx, theory MyST + TOC, selective enrichment).
+6. **Phase 8 remainder** — as time allows.
 
 ## Risks
 
