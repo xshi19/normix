@@ -163,6 +163,22 @@
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/finance.html">Finance</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
@@ -497,10 +513,10 @@ returns an <code class="docutils literal notranslate"><span class="pre">EMResult
   Regularize   : none
   Tolerance    : 1.0e-04
   Max iters    : 150
-  Converged after 56 iterations (16.44s), final LL=-4.129249
+  Converged after 56 iterations (16.83s), final LL=-4.129249
 converged : True
 iterations: 56
-elapsed   : 16.44s
+elapsed   : 16.83s
 </pre></div>
 </div>
 </div>
@@ -515,7 +531,7 @@ elapsed   : 16.44s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fields: [&#39;model&#39;, &#39;log_likelihoods&#39;, &#39;param_changes&#39;, &#39;n_iter&#39;, &#39;converged&#39;, &#39;elapsed_time&#39;]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fields: [&#39;model&#39;, &#39;log_likelihoods&#39;, &#39;param_changes&#39;, &#39;n_iter&#39;, &#39;converged&#39;, &#39;elapsed_time&#39;, &#39;diverged&#39;]
 fitted γ: [ 0.4167 -0.339   0.082 ]
 true   γ: [ 0.4 -0.3  0.1]
 </pre></div>
