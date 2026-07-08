@@ -128,10 +128,17 @@ autodoc_typehints = 'description'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'jax': ('https://jax.readthedocs.io/en/latest/', None),
+    # Canonical host moved off jax.readthedocs.io (inventory redirects).
+    'jax': ('https://docs.jax.dev/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'equinox': ('https://docs.kidger.site/equinox/', None),
+}
+
+# linkcheck: GitHub auto-redirects /issues/N → /pull/N for PRs; treat as OK.
+linkcheck_allowed_redirects = {
+    r'https://github\.com/xshi19/normix/issues/\d+':
+        r'https://github\.com/xshi19/normix/pull/\d+',
 }
 
 # myst-nb hide-input / hide-output prompts (sphinx-togglebutton)
