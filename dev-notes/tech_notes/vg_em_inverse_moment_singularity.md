@@ -1,7 +1,7 @@
 # The Inverse-Moment Singularity in the VG EM (and the `b_post` floor)
 
 > Companion to the bug report [`investigations/variance_gamma_em_nan.md`](../investigations/variance_gamma_em_nan.md).
-> Theory: [`docs/theory/gh.rst`](../../docs/theory/gh.rst), [`docs/theory/em_algorithm.rst`](../../docs/theory/em_algorithm.rst).
+> Theory: [`docs/theory/gh.md`](../../docs/theory/gh.md), [`docs/theory/em_algorithm.md`](../../docs/theory/em_algorithm.md).
 > Code: `normix/mixtures/{joint,marginal,factor}.py`,
 > `normix/distributions/{variance_gamma,generalized_hyperbolic,generalized_inverse_gaussian,gamma}.py`,
 > `normix/utils/constants.py` (`B_POST_FLOOR`).
@@ -36,7 +36,7 @@ we use $q(x)$ throughout to match `normix`'s theory docs.)
 
 ## 1. Setup: the normal variance–mean mixture
 
-The complete-data density factorises (`docs/theory/gh.rst` eq. gh-joint;
+The complete-data density factorises (`docs/theory/gh.md` eq. gh-joint;
 `JointNormalMixture.log_prob_joint`):
 
 $$
@@ -74,7 +74,7 @@ VG is the unique `normix` family with $b=0$ — the root of everything below.
 ## 3. E-step: the posterior is GIG (shared); the decisive role of $b$
 
 The posterior of the mixing variable is conjugate
-(`docs/theory/em_algorithm.rst`):
+(`docs/theory/em_algorithm.md`):
 
 $$
 Y\mid X=x \;\sim\; \mathrm{GIG}\big(\underbrace{p - \tfrac{d}{2}}_{p_{\text{post}}},\;
@@ -112,7 +112,7 @@ $$
 
 The batch E-step (`NormalMixture._aggregate_eta`) averages these into the six
 expectation parameters $\hat\eta = \tfrac1n\sum_i E[t(x_i,Y)\mid x_i]$, in the
-order of `docs/theory/gh.rst`:
+order of `docs/theory/gh.md`:
 
 $$
 \eta_1 = E[\log Y],\;\; \eta_2 = E[Y^{-1}],\;\; \eta_3 = E[Y],\;\;
@@ -124,7 +124,7 @@ $$
 ## 4. M-step: identical closed form for VG and GH
 
 Maximising $\sum_i E[\log f(x_i, Y)\mid x_i]$ over the Gaussian block gives the
-**same** closed form for every family (`docs/theory/gh.rst` eq. gh-m-step;
+**same** closed form for every family (`docs/theory/gh.md` eq. gh-m-step;
 `JointNormalMixture._mstep_normal_params`):
 
 $$
@@ -567,5 +567,5 @@ $|D|<10^{-10}$. The test:
   variance-gamma models.* Statistical Methods & Applications 27(1).
 - N. E. Day (1969). *Estimating the components of a mixture of normal
   distributions.* Biometrika 56(3) — origin of the unbounded-likelihood degeneracy.
-- `normix` theory: [`docs/theory/gh.rst`](../../docs/theory/gh.rst),
-  [`docs/theory/em_algorithm.rst`](../../docs/theory/em_algorithm.rst).
+- `normix` theory: [`docs/theory/gh.md`](../../docs/theory/gh.md),
+  [`docs/theory/em_algorithm.md`](../../docs/theory/em_algorithm.md).

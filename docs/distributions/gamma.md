@@ -29,6 +29,7 @@ The shape $\alpha$ interpolates from a monotone-decreasing density
 to an increasingly symmetric bell ($\alpha \gg 1$).
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

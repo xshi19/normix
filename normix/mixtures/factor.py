@@ -28,7 +28,7 @@ live next to their full-:math:`\\Sigma` siblings in
 ``normix/distributions/``.
 
 The FA complete-data structure is over :math:`(X, Y, Z)` with ten
-sufficient statistics (see ``docs/theory/factor_analysis.rst``), so this
+sufficient statistics (see ``docs/theory/factor_analysis.md``), so this
 family does not share the joint's six-statistic exponential-family
 signature — that is why :class:`FactorNormalMixture` is a sibling of
 :class:`~normix.mixtures.marginal.NormalMixture`, not a subclass.
@@ -302,7 +302,7 @@ class FactorNormalMixture(MarginalMixture):
         variance-mean mixture sufficient statistics, and whose four
         :math:`Z`-fields are computed from the first six via the
         deterministic relations in
-        ``docs/theory/factor_analysis.rst`` §E-Step (no extra Bessel
+        ``docs/theory/factor_analysis.md`` §E-Step (no extra Bessel
         evaluations).
         """
         if backend == 'cpu':
@@ -372,7 +372,7 @@ class FactorNormalMixture(MarginalMixture):
         s4: jax.Array, s5: jax.Array, s6: jax.Array,
     ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Deterministic relations from
-        ``docs/theory/factor_analysis.rst`` §E-Step. Inputs are the
+        ``docs/theory/factor_analysis.md`` §E-Step. Inputs are the
         already-aggregated first six statistics; outputs are
         :math:`(s_7, s_8, s_9, s_{10})`.
 
@@ -419,7 +419,7 @@ class FactorNormalMixture(MarginalMixture):
         r"""Closed-form M-step for :math:`(\mu, \gamma, F, D)` from
         :class:`FactorMixtureStats`. Implements equations
         :eq:`fa-aux` and :eq:`fa-mstep` of
-        ``docs/theory/factor_analysis.rst``.
+        ``docs/theory/factor_analysis.md``.
         """
         s1 = eta.E_inv_Y
         s2 = eta.E_Y

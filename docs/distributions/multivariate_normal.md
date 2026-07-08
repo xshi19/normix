@@ -31,6 +31,7 @@ The correlation reshapes the elliptical contours; here are three $2\times2$
 covariances at $\mu = 0$.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

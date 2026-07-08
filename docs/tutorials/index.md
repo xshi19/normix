@@ -9,6 +9,11 @@ foundation; **Distributions** tours every class; **EM** covers fitting in
 practice; **Statistics** adds model comparison and goodness of fit; and
 **Finance** applies everything to real market data.
 
+Formal derivations live in the {doc}`../theory/index` — tutorials pull in the
+key formulas where they help, and link out for the full math. Some theory
+topics (shrinkage, transaction costs, ENB) are theory-only until matching
+tutorials land.
+
 ```{toctree}
 :maxdepth: 1
 :caption: Core concepts

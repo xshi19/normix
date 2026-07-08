@@ -33,7 +33,7 @@
 
 - `../ARCHITECTURE.md` — module hierarchy, distribution storage table,
   numerical constants table.
-- `../../docs/theory/` — mathematical derivations (`.rst`).
+- `../../docs/theory/` — mathematical derivations (MyST `.md`).
 - `../tech_notes/` — deep dives (Bessel survey, GIG benchmarks,
   EM profiling, JAX overhead).
 - `../plans/` — work not yet done. `finance_architecture.md` lives

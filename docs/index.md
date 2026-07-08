@@ -36,13 +36,51 @@ log_p = jax.vmap(result.model.log_prob)(X)
 
 ## Where to start
 
-- New here? Read {doc}`getting_started/install` then the
-  {doc}`getting_started/quickstart`.
-- Want the concepts? The {doc}`user_guide/exponential_family` guide explains the
-  structure underneath everything.
-- Looking for a specific distribution? The {doc}`distributions/index` has one
-  compact page per distribution with a density plot and usage recipe.
-- Prefer learning by example? The {doc}`tutorials/index` run end to end.
+````{grid} 1 1 2 3
+:gutter: 3
+
+```{grid-item-card} Getting started
+:link: getting_started/install
+:link-type: doc
+
+Install, a 30-second quickstart, and a guided first fit.
+```
+
+```{grid-item-card} Distribution gallery
+:link: distributions/index
+:link-type: doc
+
+One page per distribution — density picture, parametrizations, ten-line recipe.
+```
+
+```{grid-item-card} Tutorials
+:link: tutorials/index
+:link-type: doc
+
+Executable end-to-end tracks: core, distributions, EM, stats, finance.
+```
+
+```{grid-item-card} User guide
+:link: user_guide/exponential_family
+:link-type: doc
+
+Concepts behind the API — exponential families, EM, divergences, finance.
+```
+
+```{grid-item-card} Theory
+:link: theory/index
+:link-type: doc
+
+Formal derivations for the GH family, EM, and portfolio mathematics.
+```
+
+```{grid-item-card} API reference
+:link: api/index
+:link-type: doc
+
+Autodoc for every public module — distributions, mixtures, fitting, finance.
+```
+````
 
 ```{toctree}
 :maxdepth: 2
@@ -92,9 +130,3 @@ design/index
 api/index
 changelog
 ```
-
-## Indices
-
-- {ref}`genindex`
-- {ref}`modindex`
-- {ref}`search`

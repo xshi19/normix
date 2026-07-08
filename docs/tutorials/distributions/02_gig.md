@@ -22,6 +22,18 @@ it apart from the simpler positive distributions: its **log-partition involves
 Bessel functions**, and inverting expectation parameters back to natural
 parameters requires a **multi-start Newton solver**.
 
+The moments have a closed Bessel-ratio form (see {doc}`../../theory/gig` for
+the full derivation, including the MGF and Hellinger distance):
+
+$$
+\mathbb{E}[X^\alpha]
+  = \Bigl(\sqrt{\tfrac{b}{a}}\Bigr)^\alpha
+    \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}.
+$$
+
+Special cases recovered as limits: Inverse Gaussian ($p = -\tfrac12$),
+Gamma ($p > 0$, $b \to 0$), and Inverse Gamma ($p < 0$, $a \to 0$).
+
 ```{code-cell} python
 import jax
 jax.config.update("jax_enable_x64", True)

@@ -1,0 +1,424 @@
+# EM Algorithm for Generalized Hyperbolic Distributions
+
+The Expectation-Maximization (EM) algorithm is a classical iterative method for
+fitting data with hidden (latent) variables [Dempster1977](#dempster1977). This section
+describes the EM algorithm for the Generalized Hyperbolic (GH) distribution,
+following the framework in [Hu2005](#hu2005) with some modifications.
+
+## Overview
+
+The key insight is that while the marginal GH distribution $f(x)$ is not
+an exponential family, the joint distribution $f(x, y)$ of the observed
+variable $X$ and the latent mixing variable $Y$ **is** an exponential
+family. This makes the EM algorithm particularly elegant.
+
+Our approach differs from previous works in several ways:
+
+1. We use general convex optimization to solve the GIG MLE directly without
+   fixing the parameter $p$ (called $\lambda$ in some references).
+
+2. Constraints on GIG parameters are unnecessary since the optimization is
+   stable under the Hellinger distance.
+
+3. The best way to regularize GH parameters is to fix $|\Sigma| = 1$,
+   and this can be done at the end of each EM iteration without affecting
+   convergence.
+
+## Conditional Distribution of Y given X
+
+Recall that a GH random vector $X$ can be expressed as:
+
+```{math}
+X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z
+```
+
+where $Z \sim N(0, \Sigma)$ is independent of $Y \sim \text{GIG}(p, a, b)$.
+
+Given the joint density $f(x, y)$, we can compute the conditional density
+of $Y$ given $X$:
+
+```{math}
+f(y | x, \theta) &= \frac{f(x, y | \theta)}{f(x | \theta)} \\
+&\propto y^{p - 1 - d/2} \exp\left(-\frac{1}{2}(x-\mu-\gamma y)^\top \Sigma^{-1}
+(x-\mu-\gamma y) y^{-1} - \frac{1}{2}(b y^{-1} + a y)\right) \\
+&\propto y^{p - 1 - d/2} \exp\left(-\frac{1}{2}\left(b + (x-\mu)^\top \Sigma^{-1}(x-\mu)\right) y^{-1}
+- \frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right) y\right)
+```
+
+where $\theta = (\mu, \gamma, \Sigma, p, a, b)$ denotes the full parameter set.
+
+This is a GIG distribution with parameters:
+
+```{math}
+Y | X = x \sim \text{GIG}\left(p - \frac{d}{2}, \,
+a + \gamma^\top \Sigma^{-1} \gamma, \,
+b + (x-\mu)^\top \Sigma^{-1}(x-\mu)\right)
+```
+
+## Conditional Expectations
+
+Using the GIG moment formula, we obtain the conditional expectations needed for
+the E-step:
+
+```{math}
+:label: gig-moment-cond
+
+E[Y^\alpha | X = x, \theta] = \left(\sqrt{\frac{b + (x-\mu)^\top \Sigma^{-1}(x-\mu)}
+{a + \gamma^\top \Sigma^{-1} \gamma}}\right)^\alpha
+\frac{K_{p - d/2 + \alpha}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}
+{K_{p - d/2}\left(\sqrt{(b + q(x))(a + \tilde{q})}\right)}
+```
+
+where:
+
+- $q(x) = (x-\mu)^\top \Sigma^{-1}(x-\mu)$ is the squared Mahalanobis distance
+- $\tilde{q} = \gamma^\top \Sigma^{-1} \gamma$
+
+For the log moment:
+
+```{math}
+E[\log Y | X = x, \theta] = \left.\frac{\partial}{\partial \alpha}
+E[Y^\alpha | X = x, \theta]\right|_{\alpha=0}
+```
+
+This derivative can be computed numerically.
+
+## The EM Algorithm
+
+Let $x_1, \ldots, x_n \in \mathbb{R}^d$ be i.i.d. sample data. Given initial
+parameters $\theta_0 = (\mu_0, \gamma_0, \Sigma_0, p_0, a_0, b_0)$, the EM
+algorithm iterates between two steps.
+
+### E-Step
+
+The $(k+1)$-th E-step computes the average conditional expectations of the
+sufficient statistics:
+
+```{math}
+:label: e-step
+
+\hat{\eta}_1^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{\eta}_2^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \theta_k] \\
+\hat{\eta}_3^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \theta_k] \\
+\hat{\eta}_4^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j \\
+\hat{\eta}_5^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{\eta}_6^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j x_j^\top E[Y^{-1} | X = x_j, \theta_k]
+```
+
+where the conditional expectations are computed using {eq}`gig-moment-cond`.
+
+Note that $(\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})$ are
+estimates of the GIG expectation parameters, and
+$(\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})$ are estimates
+of the normal component expectation parameters.
+
+### M-Step
+
+The M-step solves the optimization problem:
+
+```{math}
+\theta_{k+1} = \arg\max_\theta \sum_{j=1}^n E[\log f(X, Y | \theta) | X = x_j, \theta_k]
+```
+
+This is equivalent to maximizing the joint GH log-likelihood at the estimated
+expectation parameters:
+
+```{math}
+\theta_{k+1} = \arg\max_\theta L_{\text{GH}}(\mu, \gamma, \Sigma, p, a, b |
+\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)},
+\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})
+```
+
+The closed-form solutions are (see {doc}`gh` for derivation):
+
+```{math}
+:label: m-step
+
+\mu_{k+1} &= \frac{\hat{\eta}_4^{(k)} - \hat{\eta}_2^{(k)} \hat{\eta}_5^{(k)}}
+{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
+\gamma_{k+1} &= \frac{\hat{\eta}_5^{(k)} - \hat{\eta}_1^{(k)} \hat{\eta}_4^{(k)}}
+{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
+\Sigma_{k+1} &= \hat{\eta}_6^{(k)} - \hat{\eta}_5^{(k)} \mu_{k+1}^\top
+- \mu_{k+1} (\hat{\eta}_5^{(k)})^\top + \hat{\eta}_1^{(k)} \mu_{k+1} \mu_{k+1}^\top
+- \hat{\eta}_2^{(k)} \gamma_{k+1} \gamma_{k+1}^\top \\
+(p_{k+1}, a_{k+1}, b_{k+1}) &= \arg\max_{p, a, b}
+L_{\text{GIG}}(p, a, b | \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})
+```
+
+The first three equations have closed-form solutions, while the GIG parameters
+require numerical optimization.
+
+## Parameter Regularization
+
+The GH model is not identifiable since the parameter sets
+$(\mu, \gamma/c, \Sigma/c, p, c \cdot b, a/c)$ give the same distribution
+for any $c > 0$. A good way to regularize is to fix $|\Sigma| = 1$.
+
+Instead of adding a constraint to the optimization, we can rescale parameters
+at the end of each M-step:
+
+```{math}
+(\mu_k, \gamma_k, \Sigma_k, p_k, a_k, b_k) \rightarrow
+\left(\mu_k, |\Sigma_k|^{-1/d} \gamma_k, |\Sigma_k|^{-1/d} \Sigma_k,
+p_k, |\Sigma_k|^{-1/d} a_k, |\Sigma_k|^{1/d} b_k\right)
+```
+
+This rescaling does not affect the convergence of the EM algorithm:
+
+**Proposition.** If we write the $(k+1)$-th iteration as a function
+$f$, i.e.,
+
+```{math}
+(\mu_{k+1}, \gamma_{k+1}, \Sigma_{k+1}, p_{k+1}, a_{k+1}, b_{k+1})
+= f(\mu_k, \gamma_k, \Sigma_k, p_k, a_k, b_k)
+```
+
+then for any $c > 0$:
+
+```{math}
+(\mu_{k+1}, c \gamma_{k+1}, c \Sigma_{k+1}, p_{k+1}, a_{k+1}/c, c \, b_{k+1})
+= f(\mu_k, c \gamma_k, c \Sigma_k, p_k, a_k/c, c \, b_k)
+```
+
+*Proof.* A direct computation using {eq}`gig-moment-cond` shows that:
+
+```{math}
+E[Y^\alpha | X = x, \tilde{\theta}_k] &= E[Y^\alpha | X = x, \theta_k] / c^\alpha \\
+E[\log Y | X = x, \tilde{\theta}_k] &= E[\log Y | X = x, \theta_k] - \log c
+```
+
+where $\tilde{\theta}_k = (\mu_k, c\gamma_k, c\Sigma_k, p_k, a_k/c, c \, b_k)$.
+
+Thus if $\hat{\eta}_1^{(k)}, \ldots, \hat{\eta}_6^{(k)}$ are the E-step
+outputs given $\theta_k$, then
+$c \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}/c, \hat{\eta}_3^{(k)} - \log c,
+\hat{\eta}_4^{(k)}, c \hat{\eta}_5^{(k)}, c \hat{\eta}_6^{(k)}$ are the
+corresponding outputs given $\tilde{\theta}_k$. The result follows by
+applying these to {eq}`m-step`. ∎
+
+## MCECM Algorithm
+
+An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
+algorithm [McNeil2010](#mcneil2010). Unlike the EM algorithm which updates all parameters
+via {eq}`m-step`, MCECM proceeds in two cycles:
+
+**Cycle 1:** Compute $\mu_{k+1}$, $\gamma_{k+1}$, $\Sigma_{k+1}$
+from the first three equations in {eq}`m-step`, then set
+$\Sigma_{k+1} \leftarrow \Sigma_{k+1} / |\Sigma_{k+1}|^{1/d}$.
+
+**Cycle 2:** Set $\tilde{\theta}_{k+1} = (\mu_{k+1}, \gamma_{k+1}, \Sigma_{k+1}, p_k, a_k, b_k)$
+and recompute the GIG expectation parameters:
+
+```{math}
+\tilde{\eta}_1^{(k+1)} &= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \tilde{\theta}_{k+1}] \\
+\tilde{\eta}_2^{(k+1)} &= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \tilde{\theta}_{k+1}] \\
+\tilde{\eta}_3^{(k+1)} &= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \tilde{\theta}_{k+1}]
+```
+
+Then update the GIG parameters:
+
+```{math}
+(p_{k+1}, a_{k+1}, b_{k+1}) = \arg\max_{p, a, b}
+L_{\text{GIG}}(p, a, b | \tilde{\eta}_1^{(k+1)}, \tilde{\eta}_2^{(k+1)}, \tilde{\eta}_3^{(k+1)})
+```
+
+Both algorithms converge to the MLE and have similar computational efficiency.
+
+## Special Cases
+
+For special cases of the GH distribution, the EM algorithm simplifies because
+the mixing distribution has fewer parameters and the M-step has closed-form
+solutions.
+
+### Variance Gamma (VG)
+
+The Variance Gamma distribution uses a **Gamma** mixing distribution:
+$Y \sim \text{Gamma}(\alpha, \beta)$. The GIG reduces to Gamma when
+$b \to 0$.
+
+**Sufficient statistics for Y:**
+
+```{math}
+t_Y(y) = (\log y, \, y)
+```
+
+**Expectation parameters:**
+
+```{math}
+\eta_1 &= E[\log Y] = \psi(\alpha) - \log \beta \\
+\eta_2 &= E[Y] = \alpha / \beta
+```
+
+where $\psi$ is the digamma function.
+
+**E-step:** The conditional distribution $Y | X = x$ is GIG with
+$b = (x-\mu)^\top \Sigma^{-1}(x-\mu)$, so we still need to compute
+GIG conditional expectations. However, the M-step simplifies.
+
+**M-step for Gamma parameters:** Given $\hat{\eta}_1 = E[\log Y]$ and
+$\hat{\eta}_2 = E[Y]$, we solve:
+
+```{math}
+\psi(\alpha) - \log(\alpha / \hat{\eta}_2) = \hat{\eta}_1
+```
+
+This is a single-variable equation that can be solved efficiently using
+Newton's method:
+
+```{math}
+\alpha^{(t+1)} = \alpha^{(t)} - \frac{\psi(\alpha^{(t)}) - \log \alpha^{(t)} - (\hat{\eta}_1 - \log \hat{\eta}_2)}
+{\psi'(\alpha^{(t)}) - 1/\alpha^{(t)}}
+```
+
+Then $\beta = \alpha / \hat{\eta}_2$.
+
+### Normal-Inverse Gaussian (NIG)
+
+The Normal-Inverse Gaussian distribution uses an **Inverse Gaussian** mixing
+distribution: $Y \sim \text{IG}(\mu_Y, \lambda)$. This corresponds to
+GIG with $p = -1/2$.
+
+**Sufficient statistics for Y:**
+
+```{math}
+t_Y(y) = (y, \, y^{-1})
+```
+
+**Expectation parameters:**
+
+```{math}
+\eta_1 &= E[Y] = \mu_Y \\
+\eta_2 &= E[Y^{-1}] = 1/\mu_Y + 1/\lambda
+```
+
+**M-step for Inverse Gaussian parameters:** Given $\hat{\eta}_1 = E[Y]$
+and $\hat{\eta}_2 = E[Y^{-1}]$, the closed-form solution is:
+
+```{math}
+\mu_Y &= \hat{\eta}_1 \\
+\lambda &= \frac{1}{\hat{\eta}_2 - 1/\hat{\eta}_1}
+```
+
+This is fully analytical with no optimization required.
+
+### Normal-Inverse Gamma (NInvG)
+
+The Normal-Inverse Gamma distribution uses an **Inverse Gamma** mixing
+distribution: $Y \sim \text{InvGamma}(\alpha, \beta)$. This corresponds
+to GIG with $a \to 0$ (or equivalently, $p < 0$ with $a = 0$).
+
+**Sufficient statistics for Y:**
+
+```{math}
+t_Y(y) = (\log y, \, y^{-1})
+```
+
+**Expectation parameters:**
+
+```{math}
+\eta_1 &= E[\log Y] = \log \beta - \psi(\alpha) \\
+\eta_2 &= E[Y^{-1}] = \alpha / \beta
+```
+
+**M-step for Inverse Gamma parameters:** Given $\hat{\eta}_1 = E[\log Y]$
+and $\hat{\eta}_2 = E[Y^{-1}]$, we solve:
+
+```{math}
+\log(\alpha / \hat{\eta}_2) - \psi(\alpha) = \hat{\eta}_1
+```
+
+This is again a single-variable equation solved by Newton's method:
+
+```{math}
+\alpha^{(t+1)} = \alpha^{(t)} - \frac{\log \alpha^{(t)} - \psi(\alpha^{(t)}) - (\hat{\eta}_1 + \log \hat{\eta}_2)}
+{\frac{1}{\alpha^{(t)}} - \psi'(\alpha^{(t)})}
+```
+
+Then $\beta = \alpha / \hat{\eta}_2$.
+
+### Summary of Special Cases
+
+.. list-table:: EM Algorithm Simplifications for Special Cases
+   :header-rows: 1
+   :widths: 20 25 25 30
+
+   * - Distribution
+     - Mixing Dist.
+     - Sufficient Stats
+     - M-Step Complexity
+   * - GH (general)
+     - GIG($p, a, b$)
+     - $(\log y, y^{-1}, y)$
+     - 3D optimization
+   * - Variance Gamma
+     - Gamma($\alpha, \beta$)
+     - $(\log y, y)$
+     - 1D Newton
+   * - Normal-Inv Gaussian
+     - InvGauss($\mu, \lambda$)
+     - $(y, y^{-1})$
+     - Closed-form
+   * - Normal-Inv Gamma
+     - InvGamma($\alpha, \beta$)
+     - $(\log y, y^{-1})$
+     - 1D Newton
+
+The Normal-Inverse Gaussian case is particularly attractive because the M-step
+is fully analytical. The Variance Gamma and Normal-Inverse Gamma cases require
+only 1D optimization (Newton's method), which is much faster and more stable
+than the 3D optimization required for the general GH case.
+
+## Numerical Considerations
+
+### High-Dimensional Issues
+
+When the dimension $d$ is large (e.g., 500), computing the modified Bessel
+functions in {eq}`gig-moment-cond` can be challenging. For large $d$,
+$K_{p + d/2 + \alpha}$ may overflow or underflow. This is addressed using
+log-space computations in the {mod}`normix.utils.bessel` module.
+
+### Matrix Conditioning
+
+The formula for $\Sigma_{k+1}$ in {eq}`m-step` has the same numerical
+issues as the sample covariance: the condition number can be huge when the
+sample size is relatively small. Shrinkage estimators (such as penalized
+likelihood methods) can help improve the conditioning of $\Sigma$.
+
+## Implementation in normix
+
+In ``normix``, the EM algorithm is implemented in the {meth}`fit` method of
+{class}`~normix.mixtures.marginal.NormalMixture` subclasses
+(e.g. {class}`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`,
+{class}`~normix.distributions.variance_gamma.VarianceGamma`, etc.).
+The key methods are:
+
+- {meth}`~normix.mixtures.marginal.NormalMixture.e_step`: Computes the
+  averaged conditional expectations $E[\log Y|X]$, $E[Y^{-1}|X]$,
+  $E[Y|X]$, $E[X|X]$, $E[X/Y|X]$, $E[XX^\top/Y|X]$
+  over the data, returning a {class}`~normix.fitting.eta.NormalMixtureEta`.
+- {meth}`~normix.mixtures.marginal.NormalMixture.m_step`: Updates all
+  parameters from the expectation parameters. This is exactly the
+  $\eta\to\theta$ map for the joint exponential family and is
+  available in classmethod form as
+  {meth}`~normix.mixtures.marginal.NormalMixture.from_expectation`
+  (and {meth}`~normix.mixtures.joint.JointNormalMixture.from_expectation`).
+  The normal-component update is closed-form
+  ({meth}`~normix.mixtures.joint.JointNormalMixture._mstep_normal_params`);
+  the subordinator update calls each subordinator's own
+  {meth}`from_expectation` (closed-form for Gamma, InverseGamma,
+  InverseGaussian; numerical via
+  {func}`~normix.fitting.solvers.solve_bregman` for the GIG case).
+  {meth}`~normix.mixtures.marginal.NormalMixture.m_step_subordinator`
+  is the MCECM cycle-2 specialisation (subordinator only, normal block
+  unchanged).
+- {meth}`~normix.mixtures.joint.JointNormalMixture.conditional_expectations`:
+  Computes $E[\log Y|X=x]$, $E[Y^{-1}|X=x]$, $E[Y|X=x]$
+  for a single observation, used inside the E-step.
+
+## References
+
+```{eval-rst}
+.. [Dempster1977] Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977).
+   Maximum likelihood from incomplete data via the EM algorithm.
+   *Journal of the Royal Statistical Society: Series B*, 39(1), 1-38.
+```
