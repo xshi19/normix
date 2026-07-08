@@ -58,6 +58,32 @@ publish from a non-default branch.**
 
 To trigger a docs update: merge or push to `master` / `main` and let the workflow run.
 
+## Release publish path (full re-execution)
+
+`.github/workflows/docs-full.yml` is a second workflow for release tags. Unlike
+`docs.yml`, it forces every tutorial to re-execute from scratch (no myst-nb
+cache) and turns linkcheck into a hard gate instead of a report:
+
+1. Triggers: `push: tags: ['v*']` (fires automatically alongside `publish.yml`
+   on a release-please tag) or `workflow_dispatch` (manual run from the
+   Actions tab, any ref).
+2. Builds with `NB_EXECUTION_MODE=force` — no cache restore/save step, so a
+   stale cached figure can never slip into a release build.
+3. Runs `sphinx-build -b linkcheck` **without** `continue-on-error`: a broken
+   external link fails the workflow.
+4. Deploys to `gh-pages` unconditionally (tag push or manual dispatch both
+   deploy).
+5. `timeout-minutes: 360` — full re-execution of the tutorial tree is much
+   slower than the cached `docs.yml` build; budget for it.
+6. Separate concurrency group (`pages-release`, `cancel-in-progress: false`)
+   so a routine push to `master` running `docs.yml` cannot cancel an
+   in-progress release build (they'd otherwise share `docs.yml`'s `pages`
+   group and `cancel-in-progress: true` would kill the release run).
+
+Use `workflow_dispatch` to manually force a full re-execution + republish
+without cutting a release (e.g. after suspecting a stale cached figure, or
+before a release to catch linkcheck failures early).
+
 ## Fallback: local build + publish
 
 Use only when the CI workflow is unavailable or broken.
@@ -122,6 +148,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `docs/_static/normix.css`
 - `scripts/check_doc_links.sh`
 - `.github/workflows/docs.yml`
+- `.github/workflows/docs-full.yml`
 - `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`
 - `dev-notes/plans/docs_refactor.md` — migration status
 - `AGENTS.md`

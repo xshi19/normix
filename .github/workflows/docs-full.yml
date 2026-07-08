@@ -1,0 +1,73 @@
+name: Docs (full re-execution)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Install docs dependencies
+        run: |
+          uv sync --extra docs --extra plotting
+          uv pip install pandas ipykernel
+
+      - name: Cross-link invariants
+        run: bash scripts/check_doc_links.sh
+
+      - name: Structural docs/ invariant
+        run: |
+          test -z "$(find docs -type d \( -name plans -o -name investigations \
+            -o -name reviews -o -name tech_notes -o -name archive \
+            -o -name references \) -print)"
+
+      # No myst-nb cache restore here: NB_EXECUTION_MODE=force re-executes
+      # every tutorial from scratch regardless of any cached output, so
+      # restoring (or later saving) a cache would be wasted work.
+      - name: Build Sphinx HTML (force re-execution)
+        env:
+          NB_EXECUTION_MODE: force
+        run: |
+          uv run sphinx-build -b html docs docs/_build/html
+          touch docs/_build/html/.nojekyll
+
+      # Unlike the report-only check in docs.yml, this is a release gate:
+      # a broken external link fails the workflow instead of just being logged.
+      - name: Link check (hard fail)
+        run: uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
