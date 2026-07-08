@@ -40,6 +40,8 @@ log_p = jax.vmap(result.model.log_prob)(X)
   {doc}`getting_started/quickstart`.
 - Want the concepts? The {doc}`user_guide/exponential_family` guide explains the
   structure underneath everything.
+- Looking for a specific distribution? The {doc}`distributions/index` has one
+  compact page per distribution with a density plot and usage recipe.
 - Prefer learning by example? The {doc}`tutorials/index` run end to end.
 
 ```{toctree}
@@ -62,6 +64,14 @@ user_guide/exponential_family
 user_guide/em_fitting
 user_guide/divergences
 user_guide/finance
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Distributions
+:hidden:
+
+distributions/index
 ```
 
 ```{toctree}

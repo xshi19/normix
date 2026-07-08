@@ -1,6 +1,6 @@
 # Docs & Notebooks: remaining work
 
-> **ACTIVE — refreshed 2026-07-04.**
+> **ACTIVE — refreshed 2026-07-07.**
 > **Done (archived):** Phases 1–3 — MyST + `myst-nb` infrastructure, Kami visual
 > theme, internal/external split (`docs/` vs `dev-notes/`), and the full tutorial
 > tree (21 tutorials + getting_started + user_guide + design pages) are **built
@@ -8,9 +8,10 @@
 > [`../archive/plans/docs_refactor_phases_1_3.md`](../archive/plans/docs_refactor_phases_1_3.md).
 > **Done:** Phase 4 — notebook strategy (revised two-tier policy; `nbsphinx`
 > retired). Phase 5 — website correctness (version string, API reference
-> completeness + restructure, changelog page).
-> **Remaining:** distribution gallery (Phase 6), release execution tier
-> (Phase 7), open-ended polish (Phase 8).
+> completeness + restructure, changelog page). Phase 6 — distribution gallery
+> (`docs/distributions/`: 10 executable pages + a hero thumbnail index, wired
+> between User guide and Tutorials).
+> **Remaining:** release execution tier (Phase 7), open-ended polish (Phase 8).
 > **Scope:** `docs/`, `notebooks/`, `.gitattributes`, `.github/workflows/`,
 > `docs/conf.py`, the docs-publish skill, notebook-guidelines rule.
 > **Does not touch:** `normix/` source (except `conf.py`-adjacent metadata and
@@ -42,6 +43,9 @@
   done); every public module in `normix/__init__.py` is now reachable.
 - `docs/changelog.md` `{include}`s the root `CHANGELOG.md`, wired into the
   Reference toctree (Phase 5c, done).
+- `docs/distributions/` holds the per-distribution gallery (Phase 6, done): a
+  hero-grid `index.md` + 10 executable pages, wired into the main toctree
+  between User guide and Tutorials.
 
 ---
 
@@ -182,38 +186,48 @@ present before Phase 5 by re-running on `git stash`).
 
 ---
 
-## Phase 6 — Distribution gallery ⬜ PROPOSED
+## Phase 6 — Distribution gallery ✅ DONE
 
 The old repo had one demo notebook per distribution; the tutorial tree
-deliberately consolidated them into 5 thematic tours, so there is no longer a
-per-distribution landing page. That is a real gap: "what does normix's NIG look
+deliberately consolidated them into 5 thematic tours, so there was no longer a
+per-distribution landing page. That was a real gap: "what does normix's NIG look
 like and how do I use it" deserves a direct, linkable answer (the way
 `scipy.stats` has one page per distribution) — without resurrecting the 16
 redundant notebooks.
 
-**Proposal:** `docs/distributions/` — one compact executable MyST page per
-distribution (9 core + factor variants grouped on one page ≈ 10 pages), each
-following a fixed template:
+**Delivered:** `docs/distributions/` — a slim executable `index.md` plus 10
+compact executable MyST pages (9 core distributions + one grouped
+`factor_variants.md`), each following the fixed template:
 
 1. **Density gallery** — pdf across 3–4 parameter settings (one small figure,
-   `set_theme()` styled).
-2. **Parametrization table** — classical ↔ natural $\theta$ ↔ expectation
-   $\eta$, with the stored-attribute names.
-3. **Quick usage** — `from_classical` → `pdf` / `rvs` / `fit` in ~10 lines.
-4. **Cross-links** — API class, theory page, and the thematic tutorial that
-   exercises it in depth.
+   `set_theme()` styled). Positive families vary their shape; MVN shows three
+   2-D correlation contours; the mixtures vary the skewness $\gamma$ (GH varies
+   the GIG shape $p$); the factor page shows the $FF^\top + \mathrm{diag}(D)$
+   covariance as a heatmap pair.
+2. **Parametrization** — classical ↔ natural $\theta$ ↔ expectation $\eta$ with
+   stored-attribute names for the EF distributions (Gamma, InverseGamma,
+   InverseGaussian, GIG, MultivariateNormal); the mixtures list the classical
+   stored attributes + subordinator and point at {doc}`/theory/gh` for the joint
+   EF natural parametrization (the marginal itself is not an EF).
+3. **Quick usage** — construct / `from_classical` → `pdf` / `mean` / `rvs` →
+   `fit_mle` (EF) or `default_init(...).fit(...)` (mixtures), in ~10 lines.
+4. **See also** — `{py:class}` API link, `{doc}` theory page, and the thematic
+   tutorial(s) that exercise it in depth.
 
-Each page is small (< 1 min execution) so CI cost is negligible. The landing
-page gets a visual index (grid of density thumbnails) — doubles as the "hero"
-demo of the family tree.
+Pages are ordered by hierarchy (GIG → Gamma/InverseGamma/InverseGaussian →
+MultivariateNormal → VG/NInvG/NIG/GH → factor variants) so the gallery
+*narrates* the GH family structure. The `index.md` hero is a 3×3 thumbnail grid
+of the nine core densities (positive families, the Gaussian contour core, the
+skewed mixtures) titled "The Generalized Hyperbolic family". `Univariate*`
+wrappers are covered as a one-line note on each mixture page (per the Open
+Questions recommendation), not as separate pages.
 
-Order pages by hierarchy: GIG → (Gamma, InverseGamma, InverseGaussian limits) →
-MultivariateNormal → mixtures (VG, NInvG, NIG, GH) → factor variants — the
-gallery then *narrates* the GH family structure, which is normix's core pitch.
-
-**Exit:** every distribution in the README table has a linkable page with a
-density plot; gallery index wired into the main toctree between User guide and
-Tutorials.
+**Exit (verified):** every distribution in the README table has a linkable
+page with a density plot; `distributions/index` wired into the main toctree
+(and the "Where to start" prose) between User guide and Tutorials;
+`uv run make -C docs html` builds green — the only warnings (9) are the
+pre-existing docutils/RST nits from Phase 5, none referencing the new pages
+(confirmed via `sphinx-build -E -w`).
 
 ---
 
@@ -261,7 +275,7 @@ No exit criterion; tackled as time allows.
 1. ~~**Phase 4**~~ — done (notebook cleanup + nbsphinx retirement).
 2. ~~**Phase 5**~~ — done (version string, API reference restructure +
    completeness, changelog).
-3. **Phase 6** — distribution gallery (the largest new-content item).
+3. ~~**Phase 6**~~ — done (distribution gallery, the largest new-content item).
 4. **Phase 7** — release tier.
 5. **Phase 8** — as time allows.
 
