@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,7 +46,13 @@
     <script src="../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/finance';</script>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -558,14 +566,14 @@ representing the distribution of <span class="math notranslate nohighlight">\(w^
 value, first derivatives, and second derivatives in both the projected
 parameter space <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span> and the
 portfolio-weight space <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>. Formulas follow
-<code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.rst</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.md</span></code>.</p>
 <p>Monte Carlo for CVaR value and derivatives is conditional over the
 subordinator <span class="math notranslate nohighlight">\(Y\)</span> (common random numbers). Deterministic VaR uses
 the <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> PINV <code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.risk.</span></span><span class="sig-name descname"><span class="pre">RiskMeasure</span></span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Abstract base for portfolio risk measures.</p>
 <dl class="field-list simple">
 </dl>
@@ -716,7 +724,7 @@ evaluation — then reuses <code class="xref py py-meth docutils literal notrans
 <span class="sig-name descname"><span class="pre">hessian_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_scalar" title="Link to this definition">#</a></dt>
 <dd><p>Return the <span class="math notranslate nohighlight">\(3 \times 3\)</span> Hessian in <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>.</p>
 <p><span class="math notranslate nohighlight">\(\partial^2/\partial \tilde\mu \, \cdot = 0\)</span> exactly; the other
-non-trivial blocks follow <code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.rst</span></code>
+non-trivial blocks follow <code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.md</span></code>
 <a class="reference internal" href="../theory/cvar_derivatives.html#equation-cvar-nm-hessian">(4)</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -813,7 +821,7 @@ its lower envelope under the return constraint is the <strong>efficient frontier
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">EfficientSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_return</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#EfficientSurface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.EfficientSurface" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Efficient surface <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) \mapsto \rho\)</span> on a grid.</p>
 <p><code class="docutils literal notranslate"><span class="pre">risk[i,</span> <span class="pre">j]</span></code> is the risk of the minimum-dispersion portfolio with
 reduced coordinates <code class="docutils literal notranslate"><span class="pre">(mu_tilde[i],</span> <span class="pre">gamma_tilde[j])</span></code>;
@@ -853,7 +861,7 @@ reduced coordinates <code class="docutils literal notranslate"><span class="pre"
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.optimization.EfficientFrontier">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">EfficientFrontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_return</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#EfficientFrontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.EfficientFrontier" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Mean-risk efficient frontier: minimum risk per target expected return.</p>
 <p>Each entry is the solution of the reduced problem on the constraint line
 <span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma E[Y] = m\)</span>, including the realised
@@ -899,7 +907,7 @@ portfolio <code class="docutils literal notranslate"><span class="pre">weights</
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">MeanRiskProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Mean-risk optimization in reduced <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> coordinates.</p>
 <p>Bundles a fitted <a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> and a
 <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>. All heavy evaluations share a
@@ -1089,7 +1097,7 @@ a callable <code class="docutils literal notranslate"><span class="pre">w</span>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.functional.</span></span><span class="sig-name descname"><span class="pre">WeightFunctional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Risk measure as a function of weights, with frozen model and <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
 <p>Bundles a <code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code>, a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code> model, and a
 realisation <code class="docutils literal notranslate"><span class="pre">Y</span></code> of the subordinator into JIT-able callables intended

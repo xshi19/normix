@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,7 +46,13 @@
     <script src="../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/fitting';</script>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -997,7 +1005,7 @@ s_6 = E[X X^\top / Y].\]</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">NormalMixtureEta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Aggregated expectation parameters for normal variance-mean mixtures.</p>
 <p>Fields are stored in <strong>theory order</strong> <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_6)</span></code>: the first six
 statistics are shared with <a class="reference internal" href="#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a> so that
@@ -1056,7 +1064,7 @@ transfer unchanged.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">FactorMixtureStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XZT_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_ZZT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#FactorMixtureStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Aggregated expectation parameters for factor-analysis mixtures.</p>
 <p>Fields are stored in theory order <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_{10})</span></code> from
 <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>. The first six are identical to
@@ -1187,14 +1195,14 @@ for non-affine predictors (e.g. an MLP that maps
 <p>implemented by <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule" title="normix.fitting.eta_rules.AffineRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineRule</span></code></a>, which delegates to
 <a class="reference internal" href="#normix.fitting.eta_rules.AffineRule.weights" title="normix.fitting.eta_rules.AffineRule.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AffineRule.weights()</span></code></a> returning <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">c,</span> <span class="pre">state)</span></code> and combines
 via <a class="reference internal" href="#normix.fitting.eta.affine_combine" title="normix.fitting.eta.affine_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">affine_combine()</span></code></a>.</p>
-<p>All rules are <code class="xref py py-class docutils literal notranslate"><span class="pre">equinox.Module</span></code> pytrees so their hyperparameters
+<p>All rules are <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">equinox.Module</span></code></a> pytrees so their hyperparameters
 (e.g. <code class="docutils literal notranslate"><span class="pre">tau0</span></code>, <code class="docutils literal notranslate"><span class="pre">w</span></code>, <code class="docutils literal notranslate"><span class="pre">tau</span></code>) are JAX array leaves — JIT-compatible
 and differentiable for future meta-learning of step-size schedules.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta_rules.EtaUpdateRule">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta_rules.</span></span><span class="sig-name descname"><span class="pre">EtaUpdateRule</span></span><a class="reference internal" href="../_modules/normix/fitting/eta_rules.html#EtaUpdateRule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta_rules.EtaUpdateRule" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Abstract base for eta update rules.</p>
 <p>The fitter only knows <code class="xref py py-meth docutils literal notranslate"><span class="pre">__call__()</span></code>; whether a concrete rule is
 affine, a combinator, or an ML-style predictor is invisible at the

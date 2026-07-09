@@ -29,6 +29,7 @@ The shape $\lambda$ controls concentration: as $\lambda \to \infty$ the density
 concentrates around $\mu$; small $\lambda$ produces a heavy, right-skewed tail.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

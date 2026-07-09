@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,13 +46,19 @@
     <script src="../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'theory/em_algorithm';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Shrinkage with Penalized Likelihood" href="shrinkage.html" />
+    <link rel="next" title="Online EM Algorithm" href="online_em.html" />
     <link rel="prev" title="Entropy, Varentropy, and Rényi Entropy" href="varentropy.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -345,7 +353,7 @@
       
       
       
-      <li><a href="../_sources/theory/em_algorithm.rst" target="_blank"
+      <li><a href="../_sources/theory/em_algorithm.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -355,7 +363,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -466,12 +474,12 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="em-algorithm-for-generalized-hyperbolic-distributions">
+  <section class="tex2jax_ignore mathjax_ignore" id="em-algorithm-for-generalized-hyperbolic-distributions">
 <h1>EM Algorithm for Generalized Hyperbolic Distributions<a class="headerlink" href="#em-algorithm-for-generalized-hyperbolic-distributions" title="Link to this heading">#</a></h1>
 <p>The Expectation-Maximization (EM) algorithm is a classical iterative method for
-fitting data with hidden (latent) variables <a class="reference internal" href="#dempster1977" id="id1"><span>[Dempster1977]</span></a>. This section
+fitting data with hidden (latent) variables <a class="reference internal" href="#dempster1977">Dempster1977</a>. This section
 describes the EM algorithm for the Generalized Hyperbolic (GH) distribution,
-following the framework in <a class="reference internal" href="gh.html#hu2005" id="id2"><span>[Hu2005]</span></a> with some modifications.</p>
+following the framework in <a class="reference internal" href="gh.html#hu2005"><span class="std std-ref">Hu2005</span></a> with some modifications.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>The key insight is that while the marginal GH distribution <span class="math notranslate nohighlight">\(f(x)\)</span> is not
@@ -614,7 +622,7 @@ applying these to <a class="reference internal" href="#equation-m-step">(3)</a>.
 <section id="mcecm-algorithm">
 <h2>MCECM Algorithm<a class="headerlink" href="#mcecm-algorithm" title="Link to this heading">#</a></h2>
 <p>An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
-algorithm <a class="reference internal" href="gh.html#mcneil2010" id="id3"><span>[McNeil2010]</span></a>. Unlike the EM algorithm which updates all parameters
+algorithm <a class="reference internal" href="gh.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a>. Unlike the EM algorithm which updates all parameters
 via <a class="reference internal" href="#equation-m-step">(3)</a>, MCECM proceeds in two cycles:</p>
 <p><strong>Cycle 1:</strong> Compute <span class="math notranslate nohighlight">\(\mu_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\gamma_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span>
 from the first three equations in <a class="reference internal" href="#equation-m-step">(3)</a>, then set
@@ -706,45 +714,46 @@ and <span class="math notranslate nohighlight">\(\hat{\eta}_2 = E[Y^{-1}]\)</spa
 </section>
 <section id="summary-of-special-cases">
 <h3>Summary of Special Cases<a class="headerlink" href="#summary-of-special-cases" title="Link to this heading">#</a></h3>
-<div class="pst-scrollable-table-container"><table class="table" id="id4">
-<caption><span class="caption-text">EM Algorithm Simplifications for Special Cases</span><a class="headerlink" href="#id4" title="Link to this table">#</a></caption>
-<colgroup>
-<col style="width: 20.0%" />
-<col style="width: 25.0%" />
-<col style="width: 25.0%" />
-<col style="width: 30.0%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Distribution</p></th>
-<th class="head"><p>Mixing Dist.</p></th>
-<th class="head"><p>Sufficient Stats</p></th>
-<th class="head"><p>M-Step Complexity</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>GH (general)</p></td>
-<td><p>GIG(<span class="math notranslate nohighlight">\(p, a, b\)</span>)</p></td>
-<td><p><span class="math notranslate nohighlight">\((\log y, y^{-1}, y)\)</span></p></td>
-<td><p>3D optimization</p></td>
-</tr>
-<tr class="row-odd"><td><p>Variance Gamma</p></td>
-<td><p>Gamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></td>
-<td><p><span class="math notranslate nohighlight">\((\log y, y)\)</span></p></td>
-<td><p>1D Newton</p></td>
-</tr>
-<tr class="row-even"><td><p>Normal-Inv Gaussian</p></td>
-<td><p>InvGauss(<span class="math notranslate nohighlight">\(\mu, \lambda\)</span>)</p></td>
-<td><p><span class="math notranslate nohighlight">\((y, y^{-1})\)</span></p></td>
-<td><p>Closed-form</p></td>
-</tr>
-<tr class="row-odd"><td><p>Normal-Inv Gamma</p></td>
-<td><p>InvGamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></td>
-<td><p><span class="math notranslate nohighlight">\((\log y, y^{-1})\)</span></p></td>
-<td><p>1D Newton</p></td>
-</tr>
-</tbody>
-</table>
-</div>
+<p>.. list-table:: EM Algorithm Simplifications for Special Cases
+:header-rows: 1
+:widths: 20 25 25 30</p>
+<ul class="simple">
+<li><ul>
+<li><p>Distribution</p></li>
+<li><p>Mixing Dist.</p></li>
+<li><p>Sufficient Stats</p></li>
+<li><p>M-Step Complexity</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>GH (general)</p></li>
+<li><p>GIG(<span class="math notranslate nohighlight">\(p, a, b\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\((\log y, y^{-1}, y)\)</span></p></li>
+<li><p>3D optimization</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>Variance Gamma</p></li>
+<li><p>Gamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\((\log y, y)\)</span></p></li>
+<li><p>1D Newton</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>Normal-Inv Gaussian</p></li>
+<li><p>InvGauss(<span class="math notranslate nohighlight">\(\mu, \lambda\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\((y, y^{-1})\)</span></p></li>
+<li><p>Closed-form</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>Normal-Inv Gamma</p></li>
+<li><p>InvGamma(<span class="math notranslate nohighlight">\(\alpha, \beta\)</span>)</p></li>
+<li><p><span class="math notranslate nohighlight">\((\log y, y^{-1})\)</span></p></li>
+<li><p>1D Newton</p></li>
+</ul>
+</li>
+</ul>
 <p>The Normal-Inverse Gaussian case is particularly attractive because the M-step
 is fully analytical. The Variance Gamma and Normal-Inverse Gamma cases require
 only 1D optimization (Newton’s method), which is much faster and more stable
@@ -804,7 +813,7 @@ for a single observation, used inside the E-step.</p></li>
 <h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <div role="list" class="citation-list">
 <div class="citation" id="dempster1977" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Dempster1977</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span>Dempster1977<span class="fn-bracket">]</span></span>
 <p>Dempster, A. P., Laird, N. M., &amp; Rubin, D. B. (1977).
 Maximum likelihood from incomplete data via the EM algorithm.
 <em>Journal of the Royal Statistical Society: Series B</em>, 39(1), 1-38.</p>
@@ -834,11 +843,11 @@ Maximum likelihood from incomplete data via the EM algorithm.
       </div>
     </a>
     <a class="right-next"
-       href="shrinkage.html"
+       href="online_em.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Shrinkage with Penalized Likelihood</p>
+        <p class="prev-next-title">Online EM Algorithm</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,7 +46,13 @@
     <script src="../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'theory/generalized_enb';</script>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -345,7 +353,7 @@
       
       
       
-      <li><a href="../_sources/theory/generalized_enb.rst" target="_blank"
+      <li><a href="../_sources/theory/generalized_enb.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -355,7 +363,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -450,7 +458,7 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="generalized-effective-number-of-bets">
+  <section class="tex2jax_ignore mathjax_ignore" id="generalized-effective-number-of-bets">
 <h1>Generalized Effective Number of Bets<a class="headerlink" href="#generalized-effective-number-of-bets" title="Link to this heading">#</a></h1>
 <p>This section extends the ENB framework from <a class="reference internal" href="enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a> to general convex
 risk measures by diagonalizing the Hessian of the risk function.</p>
@@ -459,7 +467,7 @@ risk measures by diagonalizing the Hessian of the risk function.</p>
 <p><strong>Definition.</strong> A function <span class="math notranslate nohighlight">\(r : \mathbb{R}^n \to \mathbb{R}\)</span> is
 <span class="math notranslate nohighlight">\(\tau\)</span>-<strong>homogeneous</strong> if <span class="math notranslate nohighlight">\(r(tw) = t^\tau r(w)\)</span> for all
 <span class="math notranslate nohighlight">\(w \in \mathbb{R}^n\)</span> and <span class="math notranslate nohighlight">\(t &gt; 0\)</span>.</p>
-<p><strong>Proposition</strong> (Tasche <a class="reference internal" href="#tasche1999b" id="id1"><span>[Tasche1999b]</span></a>). Let <span class="math notranslate nohighlight">\(r\)</span> be a totally
+<p><strong>Proposition</strong> (Tasche <a class="reference internal" href="#tasche1999b">Tasche1999b</a>). Let <span class="math notranslate nohighlight">\(r\)</span> be a totally
 differentiable, <span class="math notranslate nohighlight">\(\tau\)</span>-homogeneous function with <span class="math notranslate nohighlight">\(\tau \neq 0\)</span>.
 Then:</p>
 <ol class="arabic simple">
@@ -557,7 +565,7 @@ assigns a larger risk contribution to the heavy-tailed asset.</p>
 <h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <div role="list" class="citation-list">
 <div class="citation" id="tasche1999b" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Tasche1999b</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span>Tasche1999b<span class="fn-bracket">]</span></span>
 <p>Tasche, D. (1999). Risk contributions and performance
 measurement. Report of the Lehrstuhl für mathematische Statistik, TU München.</p>
 </div>

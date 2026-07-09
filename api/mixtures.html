@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,7 +46,13 @@
     <script src="../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/mixtures';</script>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -811,7 +819,7 @@ implementation lives in the sibling class <code class="xref py py-class docutils
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.marginal.</span></span><span class="sig-name descname"><span class="pre">MarginalMixture</span></span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Abstract interface for marginal mixtures used by the EM fitters.</p>
 <p>Concrete subclasses pick the storage of the Gaussian dispersion (full
 Cholesky in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, low-rank-plus-diagonal in
@@ -1302,7 +1310,7 @@ Cholesky (mutually exclusive with <code class="docutils literal notranslate"><sp
 <code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code> for GH).</p></li>
 </ul>
 <p>The actual storage lives in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.joint" title="normix.mixtures.marginal.NormalMixture.joint"><code class="xref py py-attr docutils literal notranslate"><span class="pre">joint</span></code></a>; this method does an
-immutable update via <code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code>.</p>
+immutable update via <a class="reference external" href="https://docs.kidger.site/equinox/api/manipulation/#equinox.tree_at" title="(in Equinox v0.0.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code></a>.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vg2</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">new_mu</span><span class="p">)</span>                    <span class="c1"># change μ</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vg3</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>          <span class="c1"># change subordinator</span>
@@ -1421,7 +1429,7 @@ The four concrete subordinator families
 live next to their full-<span class="math notranslate nohighlight">\(\Sigma\)</span> siblings in
 <code class="docutils literal notranslate"><span class="pre">normix/distributions/</span></code>.</p>
 <p>The FA complete-data structure is over <span class="math notranslate nohighlight">\((X, Y, Z)\)</span> with ten
-sufficient statistics (see <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.rst</span></code>), so this
+sufficient statistics (see <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code>), so this
 family does not share the joint’s six-statistic exponential-family
 signature — that is why <a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a> is a sibling of
 <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, not a subclass.</p>
@@ -1568,7 +1576,7 @@ whose first six fields are batch averages of the standard normal
 variance-mean mixture sufficient statistics, and whose four
 <span class="math notranslate nohighlight">\(Z\)</span>-fields are computed from the first six via the
 deterministic relations in
-<code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.rst</span></code> §E-Step (no extra Bessel
+<code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code> §E-Step (no extra Bessel
 evaluations).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

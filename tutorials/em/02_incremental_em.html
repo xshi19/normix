@@ -33,6 +33,8 @@
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -44,7 +46,13 @@
     <script src="../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/em/02_incremental_em';</script>
@@ -213,9 +221,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -622,7 +630,7 @@ rules:</p>
   step   48/60  LL=-2.767970  |Δparams|=4.0360e-01
   step   54/60  LL=-2.769208  |Δparams|=5.3523e-01
   step   60/60  LL=-2.766001  |Δparams|=2.6125e+00
-  Done (3.91s), final LL=-2.766001
+  Done (3.87s), final LL=-2.766001
 EM [incremental] NormalInverseGaussian: rule=EWMAUpdate, batch_size=512, max_steps=60, inner_iter=1
   step    6/60  LL=-2.794093  |Δparams|=2.0370e-01
   step   12/60  LL=-2.784090  |Δparams|=1.1905e-01
@@ -634,7 +642,7 @@ EM [incremental] NormalInverseGaussian: rule=EWMAUpdate, batch_size=512, max_ste
   step   48/60  LL=-2.768355  |Δparams|=2.6078e-02
   step   54/60  LL=-2.768068  |Δparams|=3.9422e-02
   step   60/60  LL=-2.767476  |Δparams|=4.1363e-02
-  Done (3.85s), final LL=-2.767476
+  Done (3.82s), final LL=-2.767476
 </pre></div>
 </div>
 <img alt="../../_images/7dd9d0b4262998e3171b0c4a03b7dcd27486697bfbff161e3a1d3ff0bdcaa7d0.png" src="../../_images/7dd9d0b4262998e3171b0c4a03b7dcd27486697bfbff161e3a1d3ff0bdcaa7d0.png" />

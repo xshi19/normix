@@ -30,6 +30,7 @@ all-encompassing {doc}`GeneralizedHyperbolic <generalized_hyperbolic>`. The
 low-rank-plus-diagonal structure.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

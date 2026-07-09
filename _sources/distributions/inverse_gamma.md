@@ -30,6 +30,7 @@ Smaller $\alpha$ makes the right tail heavier; the mode sits at
 $\beta/(\alpha+1)$, well below the mean.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

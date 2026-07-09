@@ -32,6 +32,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/normix.css?v=42f88721" />
   
   <!-- So that users can add custom icons -->
@@ -43,7 +45,13 @@
     <script src="../../../_static/documentation_options.js?v=ac67dabd"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../../_static/togglebutton.js?v=b8b12719"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/normix/mixtures/factor';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -210,9 +218,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../theory/online_em.html">Online EM Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
@@ -413,7 +421,7 @@
 <span class="sd">``normix/distributions/``.</span>
 
 <span class="sd">The FA complete-data structure is over :math:`(X, Y, Z)` with ten</span>
-<span class="sd">sufficient statistics (see ``docs/theory/factor_analysis.rst``), so this</span>
+<span class="sd">sufficient statistics (see ``docs/theory/factor_analysis.md``), so this</span>
 <span class="sd">family does not share the joint&#39;s six-statistic exponential-family</span>
 <span class="sd">signature — that is why :class:`FactorNormalMixture` is a sibling of</span>
 <span class="sd">:class:`~normix.mixtures.marginal.NormalMixture`, not a subclass.</span>
@@ -706,7 +714,7 @@
 <span class="sd">        variance-mean mixture sufficient statistics, and whose four</span>
 <span class="sd">        :math:`Z`-fields are computed from the first six via the</span>
 <span class="sd">        deterministic relations in</span>
-<span class="sd">        ``docs/theory/factor_analysis.rst`` §E-Step (no extra Bessel</span>
+<span class="sd">        ``docs/theory/factor_analysis.md`` §E-Step (no extra Bessel</span>
 <span class="sd">        evaluations).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
@@ -777,7 +785,7 @@
         <span class="n">s4</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s5</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s6</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Deterministic relations from</span>
-<span class="sd">        ``docs/theory/factor_analysis.rst`` §E-Step. Inputs are the</span>
+<span class="sd">        ``docs/theory/factor_analysis.md`` §E-Step. Inputs are the</span>
 <span class="sd">        already-aggregated first six statistics; outputs are</span>
 <span class="sd">        :math:`(s_7, s_8, s_9, s_{10})`.</span>
 
@@ -824,7 +832,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Closed-form M-step for :math:`(\mu, \gamma, F, D)` from</span>
 <span class="sd">        :class:`FactorMixtureStats`. Implements equations</span>
 <span class="sd">        :eq:`fa-aux` and :eq:`fa-mstep` of</span>
-<span class="sd">        ``docs/theory/factor_analysis.rst``.</span>
+<span class="sd">        ``docs/theory/factor_analysis.md``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">s1</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span>
         <span class="n">s2</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_Y</span>
