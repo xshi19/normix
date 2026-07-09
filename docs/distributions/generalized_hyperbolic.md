@@ -33,6 +33,7 @@ GH exposes the GIG shape $p$, which tunes the tail weight independently. Here we
 vary $p$ at a fixed positive skew.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

@@ -130,7 +130,7 @@ reminder that finiteness checks don't catch magnitude bugs.
 
 ## References
 
-- `docs/theory/gh.rst` for the GIG normalising-integral identity and the
+- `docs/theory/gh.md` for the GIG normalising-integral identity and the
   marginal density derivation.
 - [`vg_em_inverse_moment_singularity.md`](vg_em_inverse_moment_singularity.md) —
   the sibling $q(x)\to0$ degeneracy in the EM conditional moments (a different

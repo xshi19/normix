@@ -30,6 +30,7 @@ $p \le 1$, unimodal with an interior mode for $p > 1$), while $a$ and $b$ set
 the scale and the two tails.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

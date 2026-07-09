@@ -27,6 +27,7 @@ tails, heavier than the {doc}`VarianceGamma <variance_gamma>`.
 As with every mixture, $\gamma$ controls skewness about $\mu$.
 
 ```{code-cell} python
+:tags: [hide-input]
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp

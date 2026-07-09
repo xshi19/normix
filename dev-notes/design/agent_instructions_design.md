@@ -94,7 +94,7 @@ Every fact appears in exactly one place. Other documents **point** to it.
 | Distribution catalog | `.cursor/rules/project-overview.mdc` | `AGENTS.md` |
 | Numerical constants | `normix/utils/constants.py` | `.cursor/rules/coding-conventions.mdc` |
 | Design rationale | `design.md` | `AGENTS.md` |
-| Mathematical derivations | `../../docs/theory/*.rst` | `AGENTS.md`, `../ARCHITECTURE.md` |
+| Mathematical derivations | `../../docs/theory/*.md` | `AGENTS.md`, `../ARCHITECTURE.md` |
 | Bessel implementation | `../tech_notes/bessel_*.md` | `../ARCHITECTURE.md` |
 
 Duplicating facts across files leads to contradictions when one is updated
