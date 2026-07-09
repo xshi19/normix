@@ -275,8 +275,9 @@ Website structure and navigation polish beyond correctness.
 - [x] Landing page `sphinx-design` grid cards for Getting started / Gallery /
   Tutorials / User guide / Theory / API (replaces prose-only "Where to start").
 - [x] Gallery density/hero plot cells use `hide-input` (click-to-expand via
-  `sphinx-togglebutton`); Quick usage cells stay visible. NIG non-convergence
-  demo left for a separate investigation.
+  `sphinx-togglebutton`); Quick usage cells stay visible. NIG
+  `converged: False` was a near-zero-`μ` relative-change artefact — fixed
+  by hybrid-scale EM convergence (`‖Δ‖/(1+‖θ‖)`).
 - [x] Install page leads with `pip install normix`; clone/`uv sync` is the
   development path. Notes that PyPI can lag the docs-build version.
 - [x] Intersphinx mapping extended with `scipy` and `equinox`.

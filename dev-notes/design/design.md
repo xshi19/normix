@@ -101,7 +101,7 @@ the class as `@classmethod` or `@staticmethod`.
 |---|---|---|---|
 | E1 | EM separation | Model + Fitter (GMMX-style) | `em_framework.md` § 1 |
 | E2 | EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace |
-| E3 | Convergence criterion | Max relative L2 change in `em_convergence_params()`; subordinator excluded | `em_framework.md` § 2.1 |
+| E3 | Convergence criterion | Max hybrid-scale L2 change `‖Δ‖/(1+‖θ‖)` in `em_convergence_params()`; subordinator excluded | Avoids near-zero `μ` inflation; `em_framework.md` § 2.1 |
 | E4 | Fitter classes | `BatchEMFitter` + `IncrementalEMFitter` (D1) | Replaces obsolete `OnlineEMFitter` / `MiniBatchEMFitter` |
 | E5 | η-update rule abstraction | Two layers: `EtaUpdateRule.__call__` + `AffineRule.weights` | Future ML-style predictors plug in; `em_framework.md` § 3 |
 | E6 | `EtaUpdateRule` | `eqx.Module` (not plain ABC) | Hyperparams are JAX leaves — JIT-compatible, differentiable |

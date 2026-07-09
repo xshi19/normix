@@ -16,7 +16,6 @@ from typing import Any, Optional
 import jax
 import jax.numpy as jnp
 
-from normix.utils.constants import PARAM_CHANGE_EPS
 
 
 def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Array:
@@ -71,8 +70,9 @@ class BatchEMFitter:
     **MCECM**: E-step → M-step (normal params only) → regularize →
     E-step → M-step (subordinator only).
 
-    Convergence is measured by relative parameter change in the normal
+    Convergence is measured by hybrid-scale parameter change in the normal
     parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.
+    Per leaf the change is ``||new - old|| / (1 + ||old||)``.
 
     Loop selection is automatic:
       - lax.scan when both backends are 'jax', verbose <= 1, algorithm='em',
@@ -86,7 +86,8 @@ class BatchEMFitter:
     max_iter : int
         Maximum number of iterations.
     tol : float
-        Convergence tolerance on max relative parameter change.
+        Convergence tolerance on max hybrid-scale parameter change
+        (``||Δ|| / (1 + ||θ||)``).
     verbose : int
         0 = silent, 1 = summary, 2 = per-iteration table.
     regularization : str
@@ -776,17 +777,23 @@ class IncrementalEMFitter:
 
 
 def _param_change(new_params, old_params) -> jax.Array:
-    """Max relative L2 change across leaves of a model's convergence pytree.
+    """Max hybrid-scale L2 change across leaves of a model's convergence pytree.
 
     Both pytrees come from :meth:`MarginalMixture.em_convergence_params`
-    (called before and after the iteration). Per-leaf relative change is
-    ``||new - old|| / max(||old||, eps)``; the overall measure is the
-    maximum across leaves.
+    (called before and after the iteration). Per-leaf change is
+    ``||new - old|| / (1 + ||old||)``; the overall measure is the maximum
+    across leaves.
+
+    The additive ``1`` keeps the criterion well-behaved when a leaf is near
+    zero (common for :math:`\\mu` in centred returns). A pure relative
+    ``||Δ|| / ||old||`` then inflates tiny absolute drifts along the
+    :math:`(\\mu, \\gamma)` ridge and reports non-convergence long after the
+    likelihood has flattened.
     """
     leaves_new = jax.tree.leaves(new_params)
     leaves_old = jax.tree.leaves(old_params)
     rels = jnp.stack([
-        jnp.linalg.norm(n - o) / jnp.maximum(jnp.linalg.norm(o), PARAM_CHANGE_EPS)
+        jnp.linalg.norm(n - o) / (1.0 + jnp.linalg.norm(o))
         for n, o in zip(leaves_new, leaves_old)
     ])
     return jnp.max(rels)
