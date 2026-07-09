@@ -16,7 +16,6 @@ from typing import Any, Optional
 import jax
 import jax.numpy as jnp
 
-from normix.utils.constants import PARAM_CHANGE_EPS
 
 
 def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Array:
@@ -71,8 +70,12 @@ class BatchEMFitter:
     **MCECM**: E-step → M-step (normal params only) → regularize →
     E-step → M-step (subordinator only).
 
-    Convergence is measured by relative parameter change in the normal
-    parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.
+    Convergence is measured by hybrid-scale **RMS** parameter change in the
+    normal parameters (mu, gamma, L_Sigma), excluding subordinator (GIG)
+    parameters. Per leaf the change is
+    ``rms(new - old) / (1 + rms(old))`` with
+    ``rms(v) = ||v||_2 / sqrt(m)`` and ``m = v.size``. Likelihood is not
+    used for stopping (optional LL traces remain diagnostics only).
 
     Loop selection is automatic:
       - lax.scan when both backends are 'jax', verbose <= 1, algorithm='em',
@@ -86,7 +89,9 @@ class BatchEMFitter:
     max_iter : int
         Maximum number of iterations.
     tol : float
-        Convergence tolerance on max relative parameter change.
+        Convergence tolerance on max hybrid-scale RMS parameter change
+        (``rms(Δ) / (1 + rms(θ))``). Roughly dimension-free: ``tol=1e-3``
+        means a typical coordinate moved by ~0.1% of its natural scale.
     verbose : int
         0 = silent, 1 = summary, 2 = per-iteration table.
     regularization : str
@@ -775,18 +780,34 @@ class IncrementalEMFitter:
     _regularize = BatchEMFitter._regularize
 
 
+def _rms(x: jax.Array) -> jax.Array:
+    """Root-mean-square of a leaf: ``||x||_2 / sqrt(m)`` with ``m = x.size``."""
+    m = jnp.maximum(x.size, 1)
+    return jnp.linalg.norm(x) / jnp.sqrt(m.astype(x.dtype))
+
+
 def _param_change(new_params, old_params) -> jax.Array:
-    """Max relative L2 change across leaves of a model's convergence pytree.
+    """Max hybrid-scale RMS change across leaves of a model's convergence pytree.
 
     Both pytrees come from :meth:`MarginalMixture.em_convergence_params`
-    (called before and after the iteration). Per-leaf relative change is
-    ``||new - old|| / max(||old||, eps)``; the overall measure is the
-    maximum across leaves.
+    (called before and after the iteration). Per-leaf change is
+    ``rms(new - old) / (1 + rms(old))`` with
+    ``rms(v) = ||v||_2 / sqrt(m)``; the overall measure is the maximum
+    across leaves.
+
+    RMS (rather than raw L2) keeps a fixed ``tol`` roughly dimension-free:
+    the same per-coordinate drift yields the same leaf score for
+    :math:`d=1` and large :math:`d`, and prevents the :math:`d^2`-sized
+    :math:`L_\\Sigma` leaf from dominating :math:`\\mu` / :math:`\\gamma`.
+    The additive ``1`` keeps the criterion well-behaved when a leaf is
+    near zero (common for :math:`\\mu` in centred returns); a pure
+    relative ``||Δ|| / ||old||`` then inflates tiny absolute drifts along
+    the :math:`(\\mu, \\gamma)` ridge.
     """
     leaves_new = jax.tree.leaves(new_params)
     leaves_old = jax.tree.leaves(old_params)
     rels = jnp.stack([
-        jnp.linalg.norm(n - o) / jnp.maximum(jnp.linalg.norm(o), PARAM_CHANGE_EPS)
+        _rms(n - o) / (1.0 + _rms(o))
         for n, o in zip(leaves_new, leaves_old)
     ])
     return jnp.max(rels)
