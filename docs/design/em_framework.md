@@ -28,7 +28,7 @@ Both return `EMResult`:
 | Field | Always set | Notes |
 |---|---|---|
 | `model` | yes | the fitted pytree |
-| `param_changes` | yes | max hybrid-scale L2 change in `em_convergence_params()` per iteration |
+| `param_changes` | yes | max hybrid-scale RMS change in `em_convergence_params()` per iteration |
 | `n_iter` | yes | iterations actually run |
 | `converged` | yes (Batch) / `None` (Incremental) | `bool` for batch; incremental is fixed-budget |
 | `stop_reason` | optional | `'tol'`, `'max_iter'`, or `'budget'` |
@@ -71,11 +71,31 @@ sidesteps the $r \times r$ orthogonal gauge of $F$ — the Σ-recovery
 test in `tests/test_factor_mixture.py` passes without an
 orthogonalisation step.
 
-`_param_change(new, old)` takes the max hybrid-scale L2 change across
-leaves: ``||new - old|| / (1 + ||old||)``. The additive ``1`` avoids
-inflating tiny absolute drifts when a leaf (typically ``μ``) is near
-zero — a pure relative ``||Δ|| / ||old||`` then reports non-convergence
-long after the likelihood has flattened along the ``(μ, γ)`` ridge.
+`_param_change(new, old)` takes the max hybrid-scale **RMS** change
+across leaves:
+
+$$
+\max_{\text{leaves}}\;
+\frac{\mathrm{rms}(\Delta)}{1 + \mathrm{rms}(\theta)},
+\qquad
+\mathrm{rms}(v) = \|v\|_2 / \sqrt{m},\quad m = |v|.
+$$
+
+**Why parameter change, not likelihood.** Stopping on observed (or
+expected) log-likelihood is mathematically natural for EM, but a poor
+library default here: each LL evaluation is Bessel-heavy for GH/NIG,
+absolute $\Delta\ell$ still scales with $d$, and a flat likelihood on
+the $(\mu,\gamma)$ ridge does not imply unique parameters. Likelihood
+traces remain optional diagnostics (`track_ll` / `verbose`); they are
+not part of `converged`.
+
+**Why hybrid RMS.** The additive $1$ avoids near-zero-$\mu$ inflation
+from a pure relative $\|\Delta\|/\|\theta\|$ (centred returns). RMS
+(rather than raw L2) keeps a fixed `tol` roughly dimension-free — the
+same per-coordinate drift scores the same for $d=1$ and large $d$ —
+and stops the $d^2$-sized $L_\Sigma$ leaf from dominating $\mu$/$\gamma$.
+Subordinator parameters stay out of the pool (their solver has its own
+tolerance).
 
 ---
 

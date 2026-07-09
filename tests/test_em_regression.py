@@ -119,7 +119,7 @@ class TestNIGEMRegression:
         """Docs gallery example: centred μ=0 must converge within 50 iters.
 
         Pure relative ‖Δμ‖/‖μ‖ inflated near-zero μ drifts along the (μ, γ)
-        ridge; hybrid-scale ‖Δ‖/(1+‖θ‖) is the intended criterion.
+        ridge; hybrid-scale RMS rms(Δ)/(1+rms(θ)) is the intended criterion.
         """
         true = NormalInverseGaussian.from_classical(
             mu=jnp.array([0.0, 0.0]),
@@ -135,6 +135,24 @@ class TestNIGEMRegression:
         assert int(result.n_iter) > 1
         np.testing.assert_allclose(
             np.asarray(result.model.gamma), np.array([0.3, -0.4]), atol=0.15)
+
+
+class TestParamChangeMetric:
+    """Hybrid-scale RMS change is roughly dimension-free."""
+
+    def test_same_per_coord_drift_independent_of_d(self):
+        from normix.fitting.em import _param_change
+
+        scores = []
+        for d in (1, 2, 10, 50):
+            old = (jnp.zeros(d), 0.3 * jnp.ones(d), jnp.eye(d))
+            new = (
+                1e-3 * jnp.ones(d),
+                0.3 * jnp.ones(d) + 1e-3 * jnp.ones(d),
+                jnp.eye(d),
+            )
+            scores.append(float(_param_change(new, old)))
+        np.testing.assert_allclose(scores, scores[0], rtol=1e-12)
 
 
 class TestGHEMRegression:
