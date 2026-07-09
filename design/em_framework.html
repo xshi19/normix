@@ -514,7 +514,7 @@ and make their attributes traceable).</p>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">param_changes</span></code></p></td>
 <td><p>yes</p></td>
-<td><p>max relative L2 change in <code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> per iteration</p></td>
+<td><p>max hybrid-scale RMS change in <code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> per iteration</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">n_iter</span></code></p></td>
 <td><p>yes</p></td>
@@ -582,8 +582,29 @@ Returning <span class="math notranslate nohighlight">\(\Sigma\)</span> from <cod
 sidesteps the <span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal gauge of <span class="math notranslate nohighlight">\(F\)</span> — the Σ-recovery
 test in <code class="docutils literal notranslate"><span class="pre">tests/test_factor_mixture.py</span></code> passes without an
 orthogonalisation step.</p>
-<p><code class="docutils literal notranslate"><span class="pre">_param_change(new,</span> <span class="pre">old)</span></code> takes max relative L2 change across leaves,
-clamping the denominator at <code class="docutils literal notranslate"><span class="pre">_PARAM_EPS</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">_param_change(new,</span> <span class="pre">old)</span></code> takes the max hybrid-scale <strong>RMS</strong> change
+across leaves:</p>
+<div class="math notranslate nohighlight">
+\[
+\max_{\text{leaves}}\;
+\frac{\mathrm{rms}(\Delta)}{1 + \mathrm{rms}(\theta)},
+\qquad
+\mathrm{rms}(v) = \|v\|_2 / \sqrt{m},\quad m = |v|.
+\]</div>
+<p><strong>Why parameter change, not likelihood.</strong> Stopping on observed (or
+expected) log-likelihood is mathematically natural for EM, but a poor
+library default here: each LL evaluation is Bessel-heavy for GH/NIG,
+absolute <span class="math notranslate nohighlight">\(\Delta\ell\)</span> still scales with <span class="math notranslate nohighlight">\(d\)</span>, and a flat likelihood on
+the <span class="math notranslate nohighlight">\((\mu,\gamma)\)</span> ridge does not imply unique parameters. Likelihood
+traces remain optional diagnostics (<code class="docutils literal notranslate"><span class="pre">track_ll</span></code> / <code class="docutils literal notranslate"><span class="pre">verbose</span></code>); they are
+not part of <code class="docutils literal notranslate"><span class="pre">converged</span></code>.</p>
+<p><strong>Why hybrid RMS.</strong> The additive <span class="math notranslate nohighlight">\(1\)</span> avoids near-zero-<span class="math notranslate nohighlight">\(\mu\)</span> inflation
+from a pure relative <span class="math notranslate nohighlight">\(\|\Delta\|/\|\theta\|\)</span> (centred returns). RMS
+(rather than raw L2) keeps a fixed <code class="docutils literal notranslate"><span class="pre">tol</span></code> roughly dimension-free — the
+same per-coordinate drift scores the same for <span class="math notranslate nohighlight">\(d=1\)</span> and large <span class="math notranslate nohighlight">\(d\)</span> —
+and stops the <span class="math notranslate nohighlight">\(d^2\)</span>-sized <span class="math notranslate nohighlight">\(L_\Sigma\)</span> leaf from dominating <span class="math notranslate nohighlight">\(\mu\)</span>/<span class="math notranslate nohighlight">\(\gamma\)</span>.
+Subordinator parameters stay out of the pool (their solver has its own
+tolerance).</p>
 </section>
 </section>
 <hr class="docutils" />

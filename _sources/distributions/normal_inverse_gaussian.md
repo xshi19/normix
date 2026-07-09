@@ -82,7 +82,8 @@ print("cov:\n", np.asarray(nig.cov()))
 
 X = nig.rvs(2_000, seed=0)
 result = NormalInverseGaussian.default_init(X).fit(X, max_iter=50, tol=1e-3)
-print("converged:", result.converged, " fitted gamma:", np.asarray(result.model.gamma))
+print("converged:", bool(result.converged), "n_iter:", int(result.n_iter),
+      "fitted gamma:", np.asarray(result.model.gamma))
 ```
 
 The $d = 1$ sibling {py:class}`~normix.distributions.normal_inverse_gaussian.UnivariateNormalInverseGaussian`

@@ -558,7 +558,8 @@ natural parametrization and the EM machinery are in <a class="reference internal
 
 <span class="n">X</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">2_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">NormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="s2">&quot; fitted gamma:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">),</span> <span class="s2">&quot;n_iter:&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">n_iter</span><span class="p">),</span>
+      <span class="s2">&quot;fitted gamma:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -567,7 +568,7 @@ natural parametrization and the EM machinery are in <a class="reference internal
 cov:
  [[1.09 0.18]
  [0.18 1.16]]
-converged: False  fitted gamma: [ 0.46963 -0.68287]
+converged: True n_iter: 33 fitted gamma: [ 0.45926 -0.66675]
 </pre></div>
 </div>
 </div>

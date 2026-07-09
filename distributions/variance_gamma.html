@@ -560,7 +560,8 @@ derived in <a class="reference internal" href="../theory/gh.html"><span class="d
 
 <span class="n">X</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">2_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>                  <span class="c1"># (n, d); vg.joint.rvs gives (X, Y)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="s2">&quot; fitted gamma:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converged:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">),</span> <span class="s2">&quot;n_iter:&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">n_iter</span><span class="p">),</span>
+      <span class="s2">&quot;fitted gamma:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -569,7 +570,7 @@ derived in <a class="reference internal" href="../theory/gh.html"><span class="d
 cov:
  [[1.06    0.22   ]
  [0.22    1.10667]]
-converged: True  fitted gamma: [ 0.19431 -0.26915]
+converged: True n_iter: 16 fitted gamma: [ 0.19024 -0.26257]
 </pre></div>
 </div>
 </div>

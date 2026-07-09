@@ -659,8 +659,12 @@ divergence and a finite but not-yet-converged stop.</p>
 <p><strong>EM</strong> (default): E-step → M-step (all params) → regularize.</p>
 <p><strong>MCECM</strong>: E-step → M-step (normal params only) → regularize →
 E-step → M-step (subordinator only).</p>
-<p>Convergence is measured by relative parameter change in the normal
-parameters (mu, gamma, L_Sigma), excluding subordinator (GIG) parameters.</p>
+<p>Convergence is measured by hybrid-scale <strong>RMS</strong> parameter change in the
+normal parameters (mu, gamma, L_Sigma), excluding subordinator (GIG)
+parameters. Per leaf the change is
+<code class="docutils literal notranslate"><span class="pre">rms(new</span> <span class="pre">-</span> <span class="pre">old)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">rms(old))</span></code> with
+<code class="docutils literal notranslate"><span class="pre">rms(v)</span> <span class="pre">=</span> <span class="pre">||v||_2</span> <span class="pre">/</span> <span class="pre">sqrt(m)</span></code> and <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">=</span> <span class="pre">v.size</span></code>. Likelihood is not
+used for stopping (optional LL traces remain diagnostics only).</p>
 <dl class="simple">
 <dt>Loop selection is automatic:</dt><dd><ul class="simple">
 <li><p>lax.scan when both backends are ‘jax’, verbose &lt;= 1, algorithm=’em’,
@@ -674,7 +678,9 @@ and no eta_update rule</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
 <li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max relative parameter change.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max hybrid-scale RMS parameter change
+(<code class="docutils literal notranslate"><span class="pre">rms(Δ)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">rms(θ))</span></code>). Roughly dimension-free: <code class="docutils literal notranslate"><span class="pre">tol=1e-3</span></code>
+means a typical coordinate moved by ~0.1% of its natural scale.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
 <li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
 <ul>

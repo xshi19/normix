@@ -90,7 +90,8 @@ print("cov:\n", np.asarray(gh.cov()))
 X = gh.rvs(2_000, seed=0)
 # default_init warm-starts from the best of the NIG / VG / NInvG sub-model fits
 result = GeneralizedHyperbolic.default_init(X).fit(X, max_iter=50, tol=1e-3)
-print("converged:", result.converged, " fitted gamma:", np.asarray(result.model.gamma))
+print("converged:", bool(result.converged), "n_iter:", int(result.n_iter),
+      "fitted gamma:", np.asarray(result.model.gamma))
 ```
 
 The $d = 1$ sibling {py:class}`~normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic`
