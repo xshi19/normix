@@ -40,7 +40,7 @@ Before committing:
 - **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`
 - **Information measures**: exponential families provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)` (autodiff of $R(\alpha)=\log\int p^\alpha$); marginal mixtures expose `joint_entropy/varentropy/renyi` (marginal-of-X versions are intractable)
 
-## Design Philosophy
+## Core Dependencies
 
 `jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `matplotlib` (notebooks), `optax` (optional).
 
@@ -63,7 +63,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Full design doc index (internal) | `dev-notes/design/index.md` |
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`) |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`) |
 | `normix.finance` roadmap (Phase D + Phase E mean-risk done; txn costs & F proposed) | `dev-notes/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
@@ -72,9 +72,16 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Technical notes | `dev-notes/tech_notes/` |
 | Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers, JIT solvers, incremental EM, GH path comparison (`bench_gh_paths.py`); `run_all.py` orchestrator; `compare.py` diff tool |
 | Git conventions | `.cursor/skills/git-conventions/` |
-| Doc/rule/skill maintenance | `.cursor/skills/agent-maintenance/` |
+| Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
 | Cross-link conventions | `.cursor/rules/docs-cross-links.mdc` |
+| One-way-door design workflow (→ design.md row) | `.cursor/skills/architect/` (calls `arena`, the strong model panel) |
+| Adversarial diff review (Bessel/solver/EM/`custom_jvp`) | `.cursor/skills/interrogate/` |
+| Walkthroughs & design history | `.cursor/skills/how/`, `.cursor/skills/why/` |
+| TDD bug fixes / novel-work playbooks | `.cursor/skills/tdd/`, `.cursor/skills/figure-it-out/` |
+| Engineering principles library | `.cursor/skills/principles/` |
+| Prose style + writing registers | `.cursor/skills/unslop/` |
+| pstack skill survey (archived; implemented) | `dev-notes/archive/references/pstack_skills_review.md` |
 
 ## Design Philosophy
 

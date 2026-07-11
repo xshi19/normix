@@ -4,7 +4,9 @@ description: >-
   Maintain agent-facing knowledge: rules, docs, AGENTS.md, ARCHITECTURE.md,
   skills. Use when adding new modules, distributions, constants, or design
   decisions. Use when docs may be stale or rules may contradict. Use when
-  the user asks to update or audit documentation, rules, or skills.
+  the user asks to update or audit documentation, rules, or skills. Also
+  use to reflect after a long or corrective session ("reflect") and route
+  lessons into rules and skills.
 ---
 
 # Agent Maintenance
@@ -72,6 +74,26 @@ system. Each trigger below tells you what to update and where.
 2. Identify contradictions
 3. Resolve by keeping the more specific/recent intent
 4. Remove duplicated content — each fact lives in one place
+
+### After a Long or Corrective Session (Reflect)
+
+Run a reflection pass when the user says "reflect", when a complex task
+just landed and the recipe is worth keeping, when the user corrected your
+approach mid-task, or when you hit dead ends before finding the working
+path. Skip for trivial sessions — one-offs are not lessons.
+
+1. Review the session for three kinds of signal: recurring corrections,
+   the dead-end → working-path pattern, and rules/skills that were
+   missing, stale, or failed to trigger when they should have.
+2. Structural check first: if a lesson can be a test, a constant, a lint,
+   or a glob fix, encode that instead of prose (principles skill § Encode
+   lessons in structure). The instruction is often the symptom.
+3. Route each surviving lesson through the triggers above (recurring
+   mistake → rule gotcha; new multi-step workflow → skill; design insight
+   → `design.md` row).
+4. Present the proposed edits as an Accepted / Rejected list and wait for
+   approval before applying — rule and skill edits affect every future
+   session. Note dropped findings with a one-line reason.
 
 ## Single Source of Truth
 
