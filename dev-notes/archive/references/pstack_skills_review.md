@@ -1,6 +1,13 @@
 # pstack Skills: Survey and Fit Assessment for normix
 
-**Date:** 2026-05-25 · **Revised:** 2026-06-28 (Part II added)
+> **ARCHIVED (2026-07-11).** The survey is implemented; this document is
+> retained as historical record and rationale. Durable learnings were
+> promoted to `../../design/agent_instructions_design.md`; the remaining
+> work (loops, automations, the umbrella orchestrator, and the Slack
+> decision) lives in `../../plans/loops_and_orchestration.md`. Do not
+> update this file except to fix dangling cross-references.
+
+**Date:** 2026-05-25 · **Revised:** 2026-06-28 (Part II added) · **Archived:** 2026-07-11
 **Plugin source:** [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)
 **Author of pstack:** poteto (lauren / @poteto — React Compiler core team, ex-Meta/Netflix/Cursor)
 
@@ -11,6 +18,26 @@
 > screenshot/video verification** poteto relies on — with concrete
 > recommendations for loops, multi-agent, and human-reviewer efficiency on
 > normix. If you only read one part, read Part II.
+
+> **Adoption status (2026-07-10).** Implemented as normix skills under
+> `.cursor/skills/` (see `design.md` row C4):
+> `architect` (checkpoint on one-way doors; lands a `design.md` row),
+> `arena` (strong panel, Cursor-only: `claude-fable-5-thinking-max`,
+> `gpt-5.6-sol-max`, `grok-4.5-fast-xhigh`), `interrogate` (cheap panel
+> default: `composer-2.5-fast`, `claude-sonnet-5-thinking-high`,
+> `gpt-5.6-terra-medium`; escalates to the arena panel for deep-math
+> diffs), `how` (single agent, explain + critique), `why` (simplified:
+> design docs + archive + tech notes + git, no MCP fan-out),
+> `figure-it-out`, `tdd`, `unslop` (carve-outs + math rules +
+> `references/writing-registers.md`), and one consolidated `principles`
+> skill (16 leaves merged; four priorities stay in `AGENTS.md`). `reflect`
+> merged into `agent-maintenance` as an "After a Long or Corrective
+> Session" trigger. Skipped: `poteto-mode`, `poteto-agent`, `automate-me`,
+> `typescript-best-practices`, `principle-experience-first`. On hold:
+> `show-me-your-work`, the §7.4 umbrella orchestrator, and §12–14
+> loops/automations. Claude Code / Codex cannot spawn cross-family
+> subagent panels natively, so the panel skills are Cursor-only with a
+> same-family fallback noted inline.
 
 ---
 
@@ -26,7 +53,7 @@ This document answers three questions per skill:
 
 1. **What it does.**
 2. **Does it fit normix?** (against the design philosophy in
-   `../design/design.md`: Elegance > Numerical efficiency &
+   `../../design/design.md`: Elegance > Numerical efficiency &
    robustness > Mathematical clarity > Simplicity. Cross-checked
    against the four existing normix skills:
    `agent-maintenance`, `git-conventions`, `running-tests`,
@@ -100,14 +127,14 @@ with no such MCPs. That mismatch drives several of the "skip" /
   around it").
 - **Recommendation.** Adopt for one-way-door design changes;
   document the trigger explicitly so it isn't invoked on every
-  task. Pair with normix's existing `../design/design.md`
+  task. Pair with normix's existing `../../design/design.md`
   decision table (the rationale rows are the natural sketch
   artifact).
 - **Example.** Designing M5's "canonical map on both layers;
   closed-form pytree path + Bregman fallback":
   - *With:* arena returns four shape proposals; synthesized design
     becomes a row in `design.md` and a sketch in
-    `../plans/`.
+    `../../plans/`.
   - *Without:* one model produces one shape; nuance from the
     rejected alternatives is lost.
 
@@ -170,7 +197,7 @@ with no such MCPs. That mismatch drives several of the "skip" /
   - *With `how`:* three explorers (solver interface, EF base
     class, log-partition triad) feed a synthesizer producing an
     onboarding-grade explanation.
-  - *Without:* agent reads `../design/exponential_family.md`
+  - *Without:* agent reads `../../design/exponential_family.md`
     §2 and `solvers_and_bessel.md` §1 directly. Comparable
     quality at lower token cost.
 
@@ -185,14 +212,14 @@ with no such MCPs. That mismatch drives several of the "skip" /
   normix.** Only source control (`git`, `gh`) is available. The
   remaining six would all be "skipped — no MCP" rows.
 - **Recommendation.** Skip. normix already encodes design
-  rationale in three first-class locations: `../design/` (why),
-  `../archive/design/` (superseded why), and PR descriptions.
+  rationale in three first-class locations: `../../design/` (why),
+  `../design/` (superseded why), and PR descriptions.
   The lightweight question "why did we pick X" is answered by
-  the decision table in `../design/design.md` plus
+  the decision table in `../../design/design.md` plus
   `git log -p`.
 - **Example.** "Why does GIG η→θ default to CPU L-BFGS-B?":
   - *With `why`:* six "no MCP" gaps, one source-control investigator,
-    a synthesizer that mostly cites `../design/design.md` rows
+    a synthesizer that mostly cites `../../design/design.md` rows
     S2 and S5 anyway.
   - *Without:* same answer, found in 30s by reading row S5.
 
@@ -337,10 +364,10 @@ normix code review.
 |---|---|---|
 | `laziness-protocol` | Adopt | Mirrors design row F10 ("module-level functions forbidden; keep the interface on the class") and the Simplicity priority. |
 | `foundational-thinking` | Adopt | Mirrors the Elegance priority ("Think in high-level abstractions — modules, base classes, object hierarchies"). |
-| `redesign-from-first-principles` | Adopt | Mirrors normix's "refactor instead of patch" stance from `../design/design.md`. |
+| `redesign-from-first-principles` | Adopt | Mirrors normix's "refactor instead of patch" stance from `../../design/design.md`. |
 | `subtract-before-you-add` | Adopt | Mirrors Simplicity ("Removing something for equal-or-better results is a simplification win"). |
 | `minimize-reader-load` | Adopt | Mirrors Elegance ("Reading and using normix should be enjoyable"). |
-| `outcome-oriented-execution` | Adopt with adaptation | Useful for `../plans/` migration plans. The "intermediate breakage is acceptable when planned" rule needs the carve-out that **EM convergence tests must stay green** between phases. |
+| `outcome-oriented-execution` | Adopt with adaptation | Useful for `../../plans/` migration plans. The "intermediate breakage is acceptable when planned" rule needs the carve-out that **EM convergence tests must stay green** between phases. |
 | `experience-first` | Skip | Product/UX-oriented. normix is a library; user delight comes via mathematical clarity and numerical correctness, not transitions and spacing. |
 | `exhaust-the-design-space` | Adopt | Pairs with `architect` and `arena`. Aligns with normix's preference for "ask whether the underlying design should be refactored". |
 | `boundary-discipline` | Adopt | Maps directly onto normix's "constructors clamp inputs; internal code trusts them" pattern (decision row F6). |
@@ -385,7 +412,7 @@ descriptions. No wrapper needed.
 
 ### 7.2 Adopt for narrow triggers
 
-- **`architect`** — when a design row in `../design/design.md`
+- **`architect`** — when a design row in `../../design/design.md`
   is about to be added (one-way-door).
 - **`arena`** — only as a callee of `architect`, capped at 1–2
   invocations per quarter.
@@ -435,7 +462,7 @@ If yes, the new skill belongs in `.cursor/skills/` and follows
 ## Part II — "Loops You Can Trust": new learnings (revised 2026-06-28)
 
 Added after poteto published [*Loops You Can Trust*](https://x.com/poteto/article/2069824386283319343)
-(local copy: `../../docs/pdfs/lauren on X_ _Loops You Can Trust_ _ X.pdf`) and
+(no local copy in the repo) and
 pstack grew new skills, principles, playbooks, and the `benny` automation pack.
 Part I surveyed *which skills fit*. Part II answers *how to run them as loops*,
 *whether multi-agent helps normix*, *how the human reviewer stays efficient*,
@@ -671,12 +698,12 @@ Prioritized, lowest-effort first:
 
 - pstack source: [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)
 - pstack marketplace page: [cursor.com/marketplace/cursor/pstack](https://cursor.com/marketplace/cursor/pstack)
-- poteto, *Loops You Can Trust* (2026-06-24): [x.com/poteto/article/2069824386283319343](https://x.com/poteto/article/2069824386283319343); local copy `../../docs/pdfs/lauren on X_ _Loops You Can Trust_ _ X.pdf`.
+- poteto, *Loops You Can Trust* (2026-06-24): [x.com/poteto/article/2069824386283319343](https://x.com/poteto/article/2069824386283319343) (no local copy in the repo).
 - Cursor Automations docs: [cursor.com/docs/cloud-agent/automations](https://cursor.com/docs/cloud-agent/automations).
 - `benny` automation pack: [`cursor/plugins/pstack/automations/benny`](https://github.com/cursor/plugins/tree/main/pstack/automations/benny) and its [`FOR_AGENTS.md`](https://github.com/cursor/plugins/blob/main/pstack/automations/benny/FOR_AGENTS.md).
 - New pstack skills referenced in Part II: `blast-radius`, `recall`, `setup-pstack`, `principle-build-the-lever`, `principle-sequence-verifiable-units`, playbook `hillclimb`.
 - normix verification surfaces: `benchmarks/utils.py`, `benchmarks/compare.py`, `normix/utils/plotting.py`.
-- normix philosophy: `../design/design.md` §Philosophy.
-- normix agent-instruction design: `../design/agent_instructions_design.md`.
+- normix philosophy: `../../design/design.md` §Philosophy.
+- normix agent-instruction design: `../../design/agent_instructions_design.md`.
 - Existing normix skills: `.cursor/skills/`.
 - Existing normix rules: `.cursor/rules/`.

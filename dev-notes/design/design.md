@@ -150,6 +150,7 @@ the class as `@classmethod` or `@staticmethod`.
 | C1 | Class naming | `GeneralizedInverseGaussian` primary, `GIG` alias | Full name canonical; short alias for legacy code |
 | C2 | Cholesky factors | always named `L_Sigma` | Single convention |
 | C3 | Sufficient statistics field naming | descriptive (`E_inv_Y`, `E_X_inv_Y`, …) in theory order | Heterogeneous shapes, `tree.map` works naturally |
+| C4 | Workflow skills (pstack adoption) | `architect`+`arena` (strong panel, Cursor-only), `interrogate` (cheap panel + strong escalation), `how`/`why` (single-agent), `tdd`, `unslop` (+ registers), `figure-it-out`, one consolidated `principles` skill; `reflect` merged into `agent-maintenance` | Survey and verdicts (archived): `../archive/references/pstack_skills_review.md`; learnings promoted to `agent_instructions_design.md`; remaining loops/orchestrator work: `../plans/loops_and_orchestration.md` |
 
 ---
 
@@ -157,6 +158,9 @@ the class as `@classmethod` or `@staticmethod`.
 
 - Topical detail: `index.md` (TOC).
 - Architecture: `../ARCHITECTURE.md`.
+- How decisions get made: one-way-door designs run through
+  `.cursor/skills/architect/` (arena candidate fan-out) and land here as
+  new rows.
 - Implementation surface: `AGENTS.md` and `.cursor/rules/coding-conventions.mdc`.
 - Theory: `../../docs/theory/`.
 - Tech notes: `../tech_notes/`.

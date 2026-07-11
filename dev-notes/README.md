@@ -19,7 +19,7 @@ https://xshi19.github.io/normix/ — nothing in this tree is built by Sphinx.
 | [`investigations/`](investigations/) | One-off performance / test-suite investigations |
 | [`reviews/`](reviews/) | Package review notes |
 | [`references/`](references/) | External library surveys |
-| [`archive/`](archive/) | Implemented design proposals (historical) |
+| [`archive/`](archive/) | Implemented proposals, completed plans, and acted-on surveys (historical) |
 
 ## See also
 

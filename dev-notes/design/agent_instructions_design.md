@@ -20,6 +20,8 @@ discipline for our agent-facing knowledge system.
 | [Harness Engineering (OpenAI, Feb 2026)](https://openai.com/index/harness-engineering/) | AGENTS.md = table of contents, not encyclopedia; progressive disclosure; enforce architecture mechanically; repository knowledge is the system of record |
 | [How To Be A World-Class Agentic Engineer (nonsensee, Mar 2026)](https://nonsensee.medium.com/how-to-be-a-world-class-agentic-engineer-413783d24388) | Context is everything — give only what's needed; CLAUDE.md is a nested directory of where to find context; rules = preferences, skills = recipes; start barebones, iterate, consolidate |
 | [Lessons from Building Claude Code: How We Use Skills (Anthropic, Mar 2026)](https://x.com/trq212/status/2033949937936085378) | Skills are folders, not just files; progressive disclosure via file system; gotchas sections are highest signal; don't state the obvious; don't railroad the agent |
+| [pstack plugin (poteto, 2026)](https://github.com/cursor/plugins/tree/main/pstack) | Workflow skills with narrow triggers; a principles library cited by name from workflows; multi-model panels for design and review. Adapted into normix skills 2026-07 — survey, verdicts, and adaptations archived at `../archive/references/pstack_skills_review.md` (decision row C4 in `design.md`) |
+| [poteto, *Loops You Can Trust* (Jun 2026)](https://x.com/poteto/article/2069824386283319343) | Verification is the limiting step — build it before the loop; demand artifacts, not claims; build the lever; loops earn autonomy only after they earn trust. Drives `../plans/loops_and_orchestration.md` |
 
 ---
 
@@ -42,9 +44,9 @@ Context is injected in layers:
 ```
 Layer 0   AGENTS.md               Always in context. Map + pointers.
 Layer 1   .cursor/rules/*.mdc     Auto-injected by glob match (e.g. *.py triggers coding-conventions).
-Layer 2   *.md        Read on demand when the agent is making design decisions.
-Layer 3   ../tech_notes/*.md    Read on demand when the agent hits a specific numerical/algorithmic problem.
-Layer 4   skills/                 Invoked explicitly for specific workflows.
+Layer 2   design/*.md             Read on demand when the agent is making design decisions.
+Layer 3   tech_notes/*.md         Read on demand when the agent hits a specific numerical/algorithmic problem.
+Layer 4   .cursor/skills/         Descriptions always visible; bodies load on invocation (by description match or explicit request).
 ```
 
 Each layer adds context **only when relevant**. An agent fixing a test never
@@ -102,6 +104,64 @@ and the other isn't.
 
 ---
 
+## Skills Architecture (2026-07, post-pstack)
+
+Adopting the pstack skill library (survey and verdicts:
+`../archive/references/pstack_skills_review.md`; decision row C4 in
+`design.md`) settled three structural questions worth recording.
+
+### Where do principles live?
+
+The four priorities (Elegance > Numerical efficiency & robustness >
+Mathematical clarity > Simplicity) stay in `AGENTS.md`; operational
+principles live in **one** consolidated skill
+(`.cursor/skills/principles/`).
+
+- `AGENTS.md` is the only always-in-context surface. Moving the value
+  hierarchy into a skill would make it conditional — *more* ignorable,
+  not less. AGENTS.md carries *what to optimize*; the skill carries
+  *how to execute under it*.
+- One skill, not eighteen leaves: every skill's description is always
+  listed in the system prompt, so eighteen principle skills would cost
+  eighteen description lines in every session and fragment retrieval.
+  One description line, named sections inside (§ Prove it works,
+  § Subtract before you add, …).
+- No duplication: a pstack principle that restated an AGENTS.md priority
+  contributed only its operational test (">3 files to trace → flatten",
+  the 30-second reader test) plus normix grounding (design rows, the
+  `compare.py` lever).
+
+### How principles stay visible (three layers)
+
+1. `AGENTS.md` — always in context; the priorities cannot be missed.
+2. The `principles` skill description — always in the system prompt's
+   skill list, auto-invoked in design/review/refactor contexts.
+3. Workflow skills (`architect`, `arena`, `interrogate`, `figure-it-out`,
+   `tdd`) cite principle sections by name at the moments they matter,
+   forcing the read.
+
+Rule of thumb: a principle that matters *everywhere* goes to AGENTS.md;
+one that matters *at specific moments* goes to the skill and gets cited
+by the workflows that own those moments.
+
+### Workflow skills: narrow triggers, recorded outputs
+
+- Each workflow skill states its trigger in the description and its
+  non-trigger in the body (architect: "would this add a `design.md`
+  row? if not, skip"). Skills produce records; docs remain the record —
+  architect *lands* a design.md row rather than replacing the table.
+- Multi-model panels are a review signal priced by task shape:
+  open-ended generation (arena) gets the strong panel; bounded diff
+  review (interrogate) gets a cheap cross-family trio, escalating only
+  for deep-math paths. Panels are defined once (`arena/SKILL.md`) and
+  referenced, never copied. Cross-family panels are Cursor-only —
+  Claude Code and Codex cannot spawn other-family subagents natively.
+- Checkpoint policy: reversible work proceeds without asking; one-way
+  doors get a human checkpoint (architect Phase C). Human attention is
+  spent exactly where reversal is expensive.
+
+---
+
 ## Structure
 
 Detailed rules for each document type live in their own `.cursor/rules/` files,
@@ -112,7 +172,7 @@ when only one is relevant.
 |---|---|
 | `AGENTS.md` | `.cursor/rules/maintain-agents-md.mdc` |
 | `../ARCHITECTURE.md` | `.cursor/rules/maintain-architecture-md.mdc` |
-| ``, `../tech_notes/`, `../references/` | `.cursor/rules/maintain-design-docs.mdc` |
+| Design docs (this dir), `../tech_notes/`, `../references/` | `.cursor/rules/maintain-design-docs.mdc` |
 | `../../docs/theory/` | `.cursor/rules/maintain-theory-docs.mdc` |
 | `.cursor/rules/*.mdc` | `.cursor/rules/maintain-cursor-rules.mdc` |
 | `.cursor/skills/` | `.cursor/rules/maintain-skills.mdc` |
@@ -155,8 +215,11 @@ Git commit conventions for docs and all other changes are codified in the
 1. Agent starts → sees `AGENTS.md` (map) + `project-overview.mdc` (always applied)
 2. Opens a `.py` file → `coding-conventions.mdc` auto-injected
 3. Needs to understand GIG optimization → reads `../tech_notes/gig_eta_to_theta.md`
-4. Needs to add a new distribution → invokes `add-distribution` skill
-5. Commits → uses `git-conventions` skill
+4. Needs to add a new distribution → follows the `agent-maintenance`
+   skill's "New Distribution Added" trigger list
+5. Proposes a new ABC layer → `architect` skill (checkpoint, then a
+   `design.md` row)
+6. Commits → uses `git-conventions` skill
 
 At no point does the agent load everything. Context grows only as needed.
 
