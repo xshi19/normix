@@ -78,6 +78,10 @@ EM/MCECM algorithms are derived in {doc}`../theory/gh` and
 
 ## Quick usage
 
+Raw $(\gamma, \Sigma, a, b)$ are identified only up to the scale gauge
+$Y \mapsto cY$ (see {doc}`../theory/em_algorithm`); compare the invariants
+$\mu$, $\gamma E[Y]$, and $E[Y]\,\Sigma$ instead.
+
 ```{code-cell} python
 mu = jnp.array([0.0, 0.0])
 gamma = jnp.array([0.3, -0.4])
@@ -90,8 +94,14 @@ print("cov:\n", np.asarray(gh.cov()))
 X = gh.rvs(2_000, seed=0)
 # default_init warm-starts from the best of the NIG / VG / NInvG sub-model fits
 result = GeneralizedHyperbolic.default_init(X).fit(X, max_iter=50, tol=1e-3)
-print("converged:", bool(result.converged), "n_iter:", int(result.n_iter),
-      "fitted gamma:", np.asarray(result.model.gamma))
+fit = result.model
+ey = float(fit.joint.subordinator().mean())
+print("converged:", bool(result.converged), "n_iter:", int(result.n_iter))
+print("mu:", np.asarray(fit.mu))
+print("gamma * E[Y]:", np.asarray(fit.gamma) * ey)   # true [0.3, -0.4] (E[Y]=1)
+print("E[Y] * Sigma:\n", ey * np.asarray(fit.sigma()))
+print("mean:", np.asarray(fit.mean()))
+print("cov:\n", np.asarray(fit.cov()))
 ```
 
 The $d = 1$ sibling {py:class}`~normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic`
