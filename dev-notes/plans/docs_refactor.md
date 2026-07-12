@@ -285,7 +285,7 @@ Website structure and navigation polish beyond correctness.
   theory `index.md` TOC grouped into Distributions / Fitting / Portfolio & risk.
 - [x] Selective enrichment (not a full merge): GIG and varentropy tutorials
   pull key formulas into the intro and cross-link the theory pages; theory
-  pages link back. Theory-only topics (shrinkage, transaction costs, ENB)
+  pages link back. Theory-only topics (shrinkage, ENB)
   stay math-only until matching tutorials land.
 - [x] Agent docs updated (`maintain-theory-docs.mdc`, `AGENTS.md`, ARCHITECTURE).
 

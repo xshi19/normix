@@ -83,6 +83,28 @@ The `efficient_surface` is the convex surface of [Shi2016, Fig. 8]; the
 {doc}`../tutorials/finance/05_mean_risk_optimization` for a worked replication
 across all four mixture families.
 
+## Transaction costs
+
+An $\ell_1$ turnover penalty breaks the two-dimensional reduction, so
+rebalancing with costs uses a **local quadratic program** at the current
+portfolio $w_0$:
+
+```python
+from normix.finance import TransactionCostProblem, CVaR
+
+tc = TransactionCostProblem(model, CVaR(0.05), c1=5.0, c2=5e-2)
+Y = model.joint.subordinator().rvs(15_000, seed=0)
+A = -jnp.eye(model.d)              # optional long-only
+result = tc.solve(w0, Y, A=A, b=jnp.zeros(model.d))
+
+result.weights                     # w* (or w0 if the approx. gain is ≤ 0)
+result.turnover                    # ‖w* − w0‖₁
+result.qp.m_tilde, result.qp.H_tilde   # theory matrices for an external QP
+```
+
+The risk measure is unchanged — only `gradient_w` / `hessian_w` at $w_0$ enter
+the QP. See {doc}`../tutorials/finance/06_transaction_costs`.
+
 ## Scaling to many assets
 
 At portfolio scale the factor mixtures replace a dense covariance with
