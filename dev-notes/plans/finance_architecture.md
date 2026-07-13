@@ -1,14 +1,14 @@
 # Finance Architecture: `normix.finance`
 
-> **IN PROGRESS — Phase D done; Phase E mean-risk done (transaction costs pending); Phase F proposed.**
+> **IN PROGRESS — Phase D done; Phase E done (mean-risk + transaction costs); Phase F proposed.**
 > Moved to `../plans/` on 2026-05-10 (previously in `../design/`).
 > Cross-references to the EM / covariance work now point to the archived proposal.
 
-**Date:** 2026-04-17 (status refreshed 2026-06-26)
-**Status:** Phase D (portfolio projection + CVaR) and the **mean-risk** half of
-Phase E (efficient surface + frontier reduction) are implemented and shipped;
-see the records below. Phase E transaction costs and Phase F (diversification)
-remain design sketches. The EM / covariance
+**Date:** 2026-04-17 (status refreshed 2026-07-12)
+**Status:** Phase D (portfolio projection + CVaR) and Phase E (mean-risk
+efficient surface/frontier **and** local-quadratic transaction costs) are
+implemented and shipped; see the records below. Phase F (diversification)
+remains a design sketch. The EM / covariance
 prerequisites (Phases A–C / Phases 1–4 of the EM extensions plan) are in
 `master`, and the EM fitter the finance layer builds on has since been hardened
 (VG/NInvG prior-moment floors, posterior `b_post` floor, diverged guard — see
@@ -272,9 +272,19 @@ engine.
     replicates [Shi2016] Figs. 8–9 (efficient surface + geometry) for GH and
     overlays the gauge-invariant efficient frontiers of VG / NIG / NInvG / GH.
   - Tests: [`tests/finance/test_optimization.py`](../../tests/finance/test_optimization.py).
-- **Transaction costs — still proposed.** Add the local-quadratic / QP builders
-  from `../../docs/theory/transaction_costs.md`; keep external solver
-  dependencies optional until usage patterns settle.
+- **Transaction costs — Implemented (2026-07-12).**
+  `normix.finance.transaction_costs` builds the local-quadratic / buy-sell QP
+  from `../../docs/theory/transaction_costs.md` without changing the risk
+  measure API: `QuadraticApproximation` stores $(r(w_0), \nabla r, H_r)$ via
+  `CVaR.gradient_w` / `hessian_w`; `TransactionCostQP` exposes the theory
+  matrices $(\tilde m, \tilde H, \tilde e, \tilde A, \tilde b)$;
+  `TransactionCostProblem(model, risk, c1, c2).solve(w0, Y, …)` runs a SciPy
+  SLSQP default (no new QP dependency) and returns `TransactionCostResult`
+  with weights, turnover, and an `improved` flag (hold $w_0$ when the
+  approximate gain is non-positive). Optional inequality block $A w \le b$
+  (e.g. long-only). Tikhonov damping of $\tilde H$ uses `HESSIAN_DAMPING`.
+  - Tutorial: [`docs/tutorials/finance/06_transaction_costs.md`](../../docs/tutorials/finance/06_transaction_costs.md)
+  - Tests: [`tests/finance/test_transaction_costs.py`](../../tests/finance/test_transaction_costs.py).
 
 ### Phase F: Diversification analytics
 

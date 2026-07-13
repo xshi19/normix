@@ -29,6 +29,14 @@ Mean-Risk Optimization
    :undoc-members:
    :show-inheritance:
 
+Transaction Costs
+-----------------
+
+.. automodule:: normix.finance.transaction_costs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Weight Functional
 -------------------
 

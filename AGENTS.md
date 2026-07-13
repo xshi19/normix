@@ -64,7 +64,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
 | Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`) |
-| `normix.finance` roadmap (Phase D + Phase E mean-risk done; txn costs & F proposed) | `dev-notes/plans/finance_architecture.md` |
+| `normix.finance` roadmap (Phase D + Phase E done; Phase F diversification proposed) | `dev-notes/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |

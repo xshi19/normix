@@ -25,7 +25,7 @@ distributions and algorithms implemented in normix.
 | `factor_analysis.md` | Factor analysis | `tutorials/distributions/05_factor_mixtures` |
 | `mean_risk_optimization.md` | Mean-risk portfolios | `tutorials/finance/05_mean_risk_optimization` |
 | `cvar_derivatives.md` | CVaR derivatives | `tutorials/finance/04_cvar_optimization` |
-| `transaction_costs.md` | Transaction costs | (theory-only for now) |
+| `transaction_costs.md` | Transaction costs | `tutorials/finance/06_transaction_costs` |
 | `enb.md` / `generalized_enb.md` | Effective number of bets | (theory-only for now) |
 
 ## Format

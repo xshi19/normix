@@ -35,6 +35,7 @@ normix/                     # JAX implementation
 │   ├── risk.py             # RiskMeasure ABC, CVaR(α): value, value_reduced, gradient, Hessian in (μ̃,γ̃,σ̃) and w
 │   ├── functional.py       # WeightFunctional: risk as a JIT-able w ↦ ℝ with grad/hess
 │   ├── optimization.py     # MeanRiskProblem, EfficientSurface, EfficientFrontier (2-D reduction)
+│   ├── transaction_costs.py # local-quadratic turnover QP (TransactionCostProblem)
 │   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over Y (object + raw vectorizable cores)
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
@@ -291,5 +292,5 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch |
 | `docs/theory/` | Mathematical derivations (MyST `.md`) |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
-| `plans/finance_architecture.md` | `normix.finance` roadmap; Phase D (projection + CVaR) and Phase E mean-risk (efficient surface/frontier) implemented; Phase E transaction costs and Phase F still proposed |
+| `plans/finance_architecture.md` | `normix.finance` roadmap; Phase D + Phase E (mean-risk + transaction costs) implemented; Phase F still proposed |
 | `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

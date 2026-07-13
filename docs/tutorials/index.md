@@ -11,7 +11,7 @@ practice; **Statistics** adds model comparison and goodness of fit; and
 
 Formal derivations live in the {doc}`../theory/index` — tutorials pull in the
 key formulas where they help, and link out for the full math. Some theory
-topics (shrinkage, transaction costs, ENB) are theory-only until matching
+topics (shrinkage, ENB) are theory-only until matching
 tutorials land.
 
 ```{toctree}
@@ -63,4 +63,5 @@ finance/02_multivariate_stocks
 finance/03_factor_mixture_portfolios
 finance/04_cvar_optimization
 finance/05_mean_risk_optimization
+finance/06_transaction_costs
 ```
