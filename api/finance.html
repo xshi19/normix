@@ -211,6 +211,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 </ul>
 </details></li>
 </ul>
@@ -495,6 +496,63 @@
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.transaction_costs">Transaction Costs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.w0"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.w0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.value"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.value</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.gradient"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.gradient</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.hessian"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.hessian</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.m_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.H_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.H_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.e_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.e_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.approx"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.m"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.H_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.e_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.A_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.A_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.b_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.b_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.w0"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.w0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.c1"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.c1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.c2"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.c2</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.d"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.weights_from_v"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.weights_from_v()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.approx_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx_objective()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.hold_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.hold_objective()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.weights"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.weights</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.v"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.v</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.turnover"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.turnover</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.approx_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.approx_objective</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.hold_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.hold_objective</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.improved"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.improved</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.qp"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.qp</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.build_quadratic_approximation"><code class="docutils literal notranslate"><span class="pre">build_quadratic_approximation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.build_transaction_cost_qp"><code class="docutils literal notranslate"><span class="pre">build_transaction_cost_qp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.solve_transaction_cost_qp"><code class="docutils literal notranslate"><span class="pre">solve_transaction_cost_qp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.model"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.risk"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.c1"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.c1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.c2"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.c2</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.expected_return_vector()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.approximate"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.approximate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.build_qp"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.build_qp()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.solve"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.solve()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.true_objective_at()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.functional">Weight Functional</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional"><code class="docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.risk"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.risk</span></code></a></li>
@@ -522,14 +580,15 @@
 <nav class="contents local" id="modules">
 <p class="topic-title">Modules</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#module-normix.finance.projection" id="id1">Portfolio Projection</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.risk" id="id2">Risk Measures</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.optimization" id="id3">Mean-Risk Optimization</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.functional" id="id4">Weight Functional</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.projection" id="id5">Portfolio Projection</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.risk" id="id6">Risk Measures</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.optimization" id="id7">Mean-Risk Optimization</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.transaction_costs" id="id8">Transaction Costs</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.functional" id="id9">Weight Functional</a></p></li>
 </ul>
 </nav>
 <section id="module-normix.finance.projection">
-<span id="portfolio-projection"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">Portfolio Projection</a><a class="headerlink" href="#module-normix.finance.projection" title="Link to this heading">#</a></h2>
+<span id="portfolio-projection"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Portfolio Projection</a><a class="headerlink" href="#module-normix.finance.projection" title="Link to this heading">#</a></h2>
 <p>Portfolio projection: bridge from multivariate normal mixtures to univariate.</p>
 <p>For a normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\)</span> with
 <span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span> and weights <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>,
@@ -560,7 +619,7 @@ representing the distribution of <span class="math notranslate nohighlight">\(w^
 
 </section>
 <section id="module-normix.finance.risk">
-<span id="risk-measures"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Risk Measures</a><a class="headerlink" href="#module-normix.finance.risk" title="Link to this heading">#</a></h2>
+<span id="risk-measures"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Risk Measures</a><a class="headerlink" href="#module-normix.finance.risk" title="Link to this heading">#</a></h2>
 <p>Coherent risk measures for univariate normal-mixture portfolio returns.</p>
 <p>The current implementation provides Conditional Value at Risk (CVaR), with
 value, first derivatives, and second derivatives in both the projected
@@ -796,7 +855,7 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 
 </section>
 <section id="module-normix.finance.optimization">
-<span id="mean-risk-optimization"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Mean-Risk Optimization</a><a class="headerlink" href="#module-normix.finance.optimization" title="Link to this heading">#</a></h2>
+<span id="mean-risk-optimization"></span><h2><a class="toc-backref" href="#id7" role="doc-backlink">Mean-Risk Optimization</a><a class="headerlink" href="#module-normix.finance.optimization" title="Link to this heading">#</a></h2>
 <p>Mean-risk portfolio optimization for normal-mixture models.</p>
 <p>For a multivariate normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y
 + \sqrt{Y} Z\)</span> with <span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span>, the mean-risk
@@ -1088,8 +1147,515 @@ line <span class="math notranslate nohighlight">\(\tilde\mu = m - \tilde\gamma E
 </dd></dl>
 
 </section>
+<section id="module-normix.finance.transaction_costs">
+<span id="transaction-costs"></span><h2><a class="toc-backref" href="#id8" role="doc-backlink">Transaction Costs</a><a class="headerlink" href="#module-normix.finance.transaction_costs" title="Link to this heading">#</a></h2>
+<p>Local-quadratic transaction-cost portfolio rebalancing.</p>
+<p>The mean-risk problem with an <span class="math notranslate nohighlight">\(\ell_1\)</span> turnover penalty</p>
+<div class="math notranslate nohighlight">
+\[\max_w \; w^\top m - c_1\, r(w) - c_2 \|w - w_0\|_1
+\quad\text{s.t.}\quad w^\top e = 1,\; A w \le b\]</div>
+<p>cannot use the two-dimensional efficient-surface reduction, because the
+turnover term breaks translation invariance in the reduced coordinates.
+When costs keep the solution near the current portfolio <span class="math notranslate nohighlight">\(w_0\)</span>, a
+second-order Taylor expansion of the convex risk <span class="math notranslate nohighlight">\(r\)</span> yields a
+convex quadratic program in buy/sell variables
+<span class="math notranslate nohighlight">\(v = (v^+; v^-)\)</span> with <span class="math notranslate nohighlight">\(w = w_0 + v^+ - v^-\)</span>
+(see <a class="reference internal" href="../theory/transaction_costs.html"><span class="doc">Portfolio Optimization with Transaction Costs</span></a>).</p>
+<p>This module builds the QP matrices from any <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>
+that supplies <a class="reference internal" href="#normix.finance.risk.CVaR.gradient_w" title="normix.finance.risk.CVaR.gradient_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient_w()</span></code></a> /
+<a class="reference internal" href="#normix.finance.risk.CVaR.hessian_w" title="normix.finance.risk.CVaR.hessian_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">hessian_w()</span></code></a>. Solving is optional and uses
+<code class="docutils literal notranslate"><span class="pre">scipy.optimize</span></code> (already a core dependency); heavier QP backends can
+consume the same matrices later.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.QuadraticApproximation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">QuadraticApproximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#QuadraticApproximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.QuadraticApproximation" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Local Taylor model of <span class="math notranslate nohighlight">\(r\)</span> at the current portfolio <span class="math notranslate nohighlight">\(w_0\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[r(w) \approx r(w_0) + (w - w_0)^\top \nabla r(w_0)
++ \tfrac12 (w - w_0)^\top H_r(w_0)\,(w - w_0).\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>gradient</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>hessian</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.QuadraticApproximation.w0">
+<span class="sig-name descname"><span class="pre">w0</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.QuadraticApproximation.w0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.QuadraticApproximation.value">
+<span class="sig-name descname"><span class="pre">value</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.QuadraticApproximation.value" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.QuadraticApproximation.gradient">
+<span class="sig-name descname"><span class="pre">gradient</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.QuadraticApproximation.gradient" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.QuadraticApproximation.hessian">
+<span class="sig-name descname"><span class="pre">hessian</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.QuadraticApproximation.hessian" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">TransactionCostQP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostQP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Buy/sell quadratic program for the local transaction-cost problem.</p>
+<p>Maximises <span class="math notranslate nohighlight">\(v^\top \tilde m - (c_1/2)\, v^\top \tilde H\, v\)</span> over
+<span class="math notranslate nohighlight">\(v \ge 0\)</span> subject to <span class="math notranslate nohighlight">\(v^\top \tilde e = 0\)</span> and optional
+<span class="math notranslate nohighlight">\(\tilde A v \le \tilde b\)</span>. Reconstruct
+<span class="math notranslate nohighlight">\(w^* = w_0 + (I\;-I)\,v^*\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>H_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>e_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>A_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>b_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>c1</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>c2</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>approx</strong> (<a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation"><em>QuadraticApproximation</em></a>)</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.m_tilde">
+<span class="sig-name descname"><span class="pre">m_tilde</span></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.m_tilde" title="Link to this definition">#</a></dt>
+<dd><p>Linear term <span class="math notranslate nohighlight">\(\tilde m \in \mathbb{R}^{2d}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.H_tilde">
+<span class="sig-name descname"><span class="pre">H_tilde</span></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.H_tilde" title="Link to this definition">#</a></dt>
+<dd><p>Block Hessian <span class="math notranslate nohighlight">\(\tilde H\)</span> (optionally Tikhonov-regularised).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.e_tilde">
+<span class="sig-name descname"><span class="pre">e_tilde</span></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.e_tilde" title="Link to this definition">#</a></dt>
+<dd><p>Budget dual vector <span class="math notranslate nohighlight">\((e; -e)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">A_tilde,</span> <span class="pre">b_tilde</span></span></dt>
+<dd><p>Optional inequality block; <code class="docutils literal notranslate"><span class="pre">None</span></code> when only the budget constraint
+is active.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w0,</span> <span class="pre">c1,</span> <span class="pre">c2</span></span></dt>
+<dd><p>Anchor portfolio and objective coefficients.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.approx">
+<span class="sig-name descname"><span class="pre">approx</span></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.approx" title="Link to this definition">#</a></dt>
+<dd><p>Underlying risk Taylor model (for objective bookkeeping).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation">normix.finance.transaction_costs.QuadraticApproximation</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.m">
+<span class="sig-name descname"><span class="pre">m</span></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.m" title="Link to this definition">#</a></dt>
+<dd><p>Expected-return vector used to build <span class="math notranslate nohighlight">\(\tilde m\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)">jax.Array</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">m_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">H_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">e_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#id2" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.A_tilde">
+<span class="sig-name descname"><span class="pre">A_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.A_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.b_tilde">
+<span class="sig-name descname"><span class="pre">b_tilde</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.b_tilde" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.w0">
+<span class="sig-name descname"><span class="pre">w0</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.w0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.c1">
+<span class="sig-name descname"><span class="pre">c1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.c1" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.c2">
+<span class="sig-name descname"><span class="pre">c2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.c2" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">approx</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation"><span class="pre">QuadraticApproximation</span></a></span><a class="headerlink" href="#id3" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">m</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#id4" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.d">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.d" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.weights_from_v">
+<span class="sig-name descname"><span class="pre">weights_from_v</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostQP.weights_from_v"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.weights_from_v" title="Link to this definition">#</a></dt>
+<dd><p>Map buy/sell variables to portfolio weights <span class="math notranslate nohighlight">\(w_0 + v^+ - v^-\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.approx_objective">
+<span class="sig-name descname"><span class="pre">approx_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostQP.approx_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.approx_objective" title="Link to this definition">#</a></dt>
+<dd><p>Local quadratic objective (constants retained) at weights <code class="docutils literal notranslate"><span class="pre">w</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostQP.hold_objective">
+<span class="sig-name descname"><span class="pre">hold_objective</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostQP.hold_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostQP.hold_objective" title="Link to this definition">#</a></dt>
+<dd><p>Objective of holding <span class="math notranslate nohighlight">\(w_0\)</span> (zero turnover).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">TransactionCostResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">turnover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hold_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">improved</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Solution of the local transaction-cost QP.</p>
+<p><code class="docutils literal notranslate"><span class="pre">improved</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> when the approximate objective at <code class="docutils literal notranslate"><span class="pre">weights</span></code>
+exceeds the hold objective; otherwise the theory recommends keeping
+<span class="math notranslate nohighlight">\(w_0\)</span> (see the note in <a class="reference internal" href="../theory/transaction_costs.html"><span class="doc">Portfolio Optimization with Transaction Costs</span></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>v</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>turnover</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>approx_objective</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>hold_objective</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>improved</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>qp</strong> (<a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostQP" title="normix.finance.transaction_costs.TransactionCostQP"><em>TransactionCostQP</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.weights">
+<span class="sig-name descname"><span class="pre">weights</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.weights" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.v">
+<span class="sig-name descname"><span class="pre">v</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.v" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.turnover">
+<span class="sig-name descname"><span class="pre">turnover</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.turnover" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.approx_objective">
+<span class="sig-name descname"><span class="pre">approx_objective</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.approx_objective" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.hold_objective">
+<span class="sig-name descname"><span class="pre">hold_objective</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.hold_objective" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.improved">
+<span class="sig-name descname"><span class="pre">improved</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.improved" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostResult.qp">
+<span class="sig-name descname"><span class="pre">qp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostQP" title="normix.finance.transaction_costs.TransactionCostQP"><span class="pre">TransactionCostQP</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostResult.qp" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.build_quadratic_approximation">
+<span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">build_quadratic_approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#build_quadratic_approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.build_quadratic_approximation" title="Link to this definition">#</a></dt>
+<dd><p>Evaluate <span class="math notranslate nohighlight">\(r(w_0)\)</span>, <span class="math notranslate nohighlight">\(\nabla r(w_0)\)</span>, and <span class="math notranslate nohighlight">\(H_r(w_0)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation"><em>QuadraticApproximation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.build_transaction_cost_qp">
+<span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">build_transaction_cost_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">approx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#build_transaction_cost_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.build_transaction_cost_qp" title="Link to this definition">#</a></dt>
+<dd><p>Assemble the buy/sell QP matrices from a risk Taylor model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>approx</strong> (<a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation"><em>QuadraticApproximation</em></a>) – Local approximation of <span class="math notranslate nohighlight">\(r\)</span> at <span class="math notranslate nohighlight">\(w_0\)</span>.</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Expected-return vector (<span class="math notranslate nohighlight">\(E[X]\)</span> for a normal mixture).</p></li>
+<li><p><strong>c1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Risk and turnover coefficients.</p></li>
+<li><p><strong>c2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Risk and turnover coefficients.</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>) – Optional inequality <span class="math notranslate nohighlight">\(A w \le b\)</span> (same <span class="math notranslate nohighlight">\(w_0\)</span> must be
+feasible). Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> for the budget-only problem.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>) – Optional inequality <span class="math notranslate nohighlight">\(A w \le b\)</span> (same <span class="math notranslate nohighlight">\(w_0\)</span> must be
+feasible). Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> for the budget-only problem.</p></li>
+<li><p><strong>hess_reg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Tikhonov damping added to <span class="math notranslate nohighlight">\(\tilde H\)</span> so the QP is strictly
+convex (<span class="math notranslate nohighlight">\(\tilde H\)</span> has a nontrivial nullspace along
+<span class="math notranslate nohighlight">\(v^+ = v^-\)</span>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostQP" title="normix.finance.transaction_costs.TransactionCostQP"><em>TransactionCostQP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.solve_transaction_cost_qp">
+<span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">solve_transaction_cost_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qp</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#solve_transaction_cost_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.solve_transaction_cost_qp" title="Link to this definition">#</a></dt>
+<dd><p>Solve the local QP with <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code> (SLSQP).</p>
+<p>Minimises <span class="math notranslate nohighlight">\((c_1/2)\, v^\top \tilde H\, v - \tilde m^\top v\)</span> subject
+to <span class="math notranslate nohighlight">\(v \ge 0\)</span>, <span class="math notranslate nohighlight">\(\tilde e^\top v = 0\)</span>, and optional
+<span class="math notranslate nohighlight">\(\tilde A v \le \tilde b\)</span>. If the approximate objective does not
+beat holding <span class="math notranslate nohighlight">\(w_0\)</span>, returns the hold portfolio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qp</strong> (<a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostQP" title="normix.finance.transaction_costs.TransactionCostQP"><em>TransactionCostQP</em></a>)</p></li>
+<li><p><strong>x0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostResult" title="normix.finance.transaction_costs.TransactionCostResult"><em>TransactionCostResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">TransactionCostProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Local-quadratic transaction-cost rebalancing for a normal mixture.</p>
+<p>Bundles a fitted <a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> and a
+<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a> with coefficients
+<span class="math notranslate nohighlight">\((c_1, c_2)\)</span>. The risk object is reused unchanged — only its
+weight-space gradient and Hessian at <span class="math notranslate nohighlight">\(w_0\)</span> enter the QP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
+<li><p><strong>c1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>c2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><span class="pre">NormalMixture</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.model" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.risk">
+<span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><span class="pre">RiskMeasure</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.c1">
+<span class="sig-name descname"><span class="pre">c1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.c1" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.c2">
+<span class="sig-name descname"><span class="pre">c2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.c2" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector">
+<span class="sig-name descname"><span class="pre">expected_return_vector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.expected_return_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector" title="Link to this definition">#</a></dt>
+<dd><p>Asset expected returns <span class="math notranslate nohighlight">\(m = E[X] = \mu + \gamma\, E[Y]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.approximate">
+<span class="sig-name descname"><span class="pre">approximate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.approximate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.approximate" title="Link to this definition">#</a></dt>
+<dd><p>Local Taylor model of risk at <code class="docutils literal notranslate"><span class="pre">w0</span></code> under subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.QuadraticApproximation" title="normix.finance.transaction_costs.QuadraticApproximation"><em>QuadraticApproximation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.build_qp">
+<span class="sig-name descname"><span class="pre">build_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.build_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.build_qp" title="Link to this definition">#</a></dt>
+<dd><p>Build the buy/sell QP at <code class="docutils literal notranslate"><span class="pre">w0</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">m</span></code> defaults to <a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector" title="normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector"><code class="xref py py-meth docutils literal notranslate"><span class="pre">expected_return_vector()</span></code></a>. Optional <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>
+encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. long-only via <code class="docutils literal notranslate"><span class="pre">A</span> <span class="pre">=</span> <span class="pre">-I</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">=</span> <span class="pre">0</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hess_reg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostQP" title="normix.finance.transaction_costs.TransactionCostQP"><em>TransactionCostQP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.solve" title="Link to this definition">#</a></dt>
+<dd><p>Build and solve the local QP; see <a class="reference internal" href="#normix.finance.transaction_costs.solve_transaction_cost_qp" title="normix.finance.transaction_costs.solve_transaction_cost_qp"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve_transaction_cost_qp()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>A</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hess_reg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostResult" title="normix.finance.transaction_costs.TransactionCostResult"><em>TransactionCostResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.true_objective_at">
+<span class="sig-name descname"><span class="pre">true_objective_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.true_objective_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at" title="Link to this definition">#</a></dt>
+<dd><p>Exact objective <span class="math notranslate nohighlight">\(w^\top m - c_1 r(w) - c_2 \|w - w_0\|_1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="module-normix.finance.functional">
-<span id="weight-functional"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
+<span id="weight-functional"></span><h2><a class="toc-backref" href="#id9" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
 <p>Risk measures as JIT-able functions of portfolio weights.</p>
 <p><a class="reference internal" href="#normix.finance.functional.WeightFunctional" title="normix.finance.functional.WeightFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a> bundles a <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>,
 a multivariate normal-mixture model, and a fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> into
@@ -1256,6 +1822,63 @@ for mean-risk optimisation (Phase E).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk_at()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_surface()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_frontier()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.transaction_costs">Transaction Costs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.w0"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.w0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.value"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.value</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.gradient"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.gradient</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.QuadraticApproximation.hessian"><code class="docutils literal notranslate"><span class="pre">QuadraticApproximation.hessian</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.m_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.H_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.H_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.e_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.e_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.approx"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.m"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.H_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.e_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.A_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.A_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.b_tilde"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.b_tilde</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.w0"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.w0</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.c1"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.c1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.c2"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.c2</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.m</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.d"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.d</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.weights_from_v"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.weights_from_v()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.approx_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.approx_objective()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostQP.hold_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostQP.hold_objective()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.weights"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.weights</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.v"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.v</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.turnover"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.turnover</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.approx_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.approx_objective</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.hold_objective"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.hold_objective</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.improved"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.improved</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostResult.qp"><code class="docutils literal notranslate"><span class="pre">TransactionCostResult.qp</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.build_quadratic_approximation"><code class="docutils literal notranslate"><span class="pre">build_quadratic_approximation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.build_transaction_cost_qp"><code class="docutils literal notranslate"><span class="pre">build_transaction_cost_qp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.solve_transaction_cost_qp"><code class="docutils literal notranslate"><span class="pre">solve_transaction_cost_qp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.model"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.risk"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.c1"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.c1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.c2"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.c2</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.expected_return_vector()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.approximate"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.approximate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.build_qp"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.build_qp()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.solve"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.solve()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at"><code class="docutils literal notranslate"><span class="pre">TransactionCostProblem.true_objective_at()</span></code></a></li>
 </ul>
 </li>
 </ul>

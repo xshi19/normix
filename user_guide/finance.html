@@ -211,6 +211,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 </ul>
 </details></li>
 </ul>
@@ -443,6 +444,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-risk-var-and-cvar">Tail risk: VaR and CVaR</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differentiable-risk">Differentiable risk</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-risk optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#transaction-costs">Transaction costs</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scaling-to-many-assets">Scaling to many assets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#further-reading">Further reading</a></li>
 </ul>
@@ -532,6 +534,26 @@ the normal-mixture reduction to two coordinates
 <a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html"><span class="doc">Mean-risk optimization and the efficient surface</span></a> for a worked replication
 across all four mixture families.</p>
 </section>
+<section id="transaction-costs">
+<h2>Transaction costs<a class="headerlink" href="#transaction-costs" title="Link to this heading">#</a></h2>
+<p>An <span class="math notranslate nohighlight">\(\ell_1\)</span> turnover penalty breaks the two-dimensional reduction, so
+rebalancing with costs uses a <strong>local quadratic program</strong> at the current
+portfolio <span class="math notranslate nohighlight">\(w_0\)</span>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransactionCostProblem</span><span class="p">,</span> <span class="n">CVaR</span>
+
+<span class="n">tc</span> <span class="o">=</span> <span class="n">TransactionCostProblem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">),</span> <span class="n">c1</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">c2</span><span class="o">=</span><span class="mf">5e-2</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">15_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">d</span><span class="p">)</span>              <span class="c1"># optional long-only</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">d</span><span class="p">))</span>
+
+<span class="n">result</span><span class="o">.</span><span class="n">weights</span>                     <span class="c1"># w* (or w0 if the approx. gain is ≤ 0)</span>
+<span class="n">result</span><span class="o">.</span><span class="n">turnover</span>                    <span class="c1"># ‖w* − w0‖₁</span>
+<span class="n">result</span><span class="o">.</span><span class="n">qp</span><span class="o">.</span><span class="n">m_tilde</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">qp</span><span class="o">.</span><span class="n">H_tilde</span>   <span class="c1"># theory matrices for an external QP</span>
+</pre></div>
+</div>
+<p>The risk measure is unchanged — only <code class="docutils literal notranslate"><span class="pre">gradient_w</span></code> / <code class="docutils literal notranslate"><span class="pre">hessian_w</span></code> at <span class="math notranslate nohighlight">\(w_0\)</span> enter
+the QP. See <a class="reference internal" href="../tutorials/finance/06_transaction_costs.html"><span class="doc">Transaction costs and local-quadratic rebalancing</span></a>.</p>
+</section>
 <section id="scaling-to-many-assets">
 <h2>Scaling to many assets<a class="headerlink" href="#scaling-to-many-assets" title="Link to this heading">#</a></h2>
 <p>At portfolio scale the factor mixtures replace a dense covariance with
@@ -599,6 +621,7 @@ transaction costs, and factor analysis — is developed in the
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-risk-var-and-cvar">Tail risk: VaR and CVaR</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differentiable-risk">Differentiable risk</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-risk optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#transaction-costs">Transaction costs</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scaling-to-many-assets">Scaling to many assets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#further-reading">Further reading</a></li>
 </ul>

@@ -208,6 +208,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 </ul>
 </details></li>
 </ul>
@@ -409,6 +410,7 @@
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -433,14 +435,14 @@
         <li><a href="api/fitting.html#normix.fitting.eta_rules.AffineUpdate.a">(normix.fitting.eta_rules.AffineUpdate attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.A_tilde">A_tilde (normix.finance.transaction_costs.TransactionCostQP attribute)</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.eta.affine_combine">affine_combine() (in module normix.fitting.eta)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.AffineRule">AffineRule (class in normix.fitting.eta_rules)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.AffineUpdate">AffineUpdate (class in normix.fitting.eta_rules)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.gamma.Gamma.alpha">alpha (normix.distributions.gamma.Gamma attribute)</a>
 
       <ul>
@@ -462,6 +464,16 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#id3">approx (normix.finance.transaction_costs.TransactionCostQP attribute)</a>, <a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.approx">[1]</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.approx_objective">approx_objective (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.approx_objective">approx_objective() (normix.finance.transaction_costs.TransactionCostQP method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.approximate">approximate() (normix.finance.transaction_costs.TransactionCostProblem method)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="B">B</h2>
@@ -479,6 +491,8 @@
         <li><a href="api/fitting.html#normix.fitting.eta_rules.AffineUpdate.b">(normix.fitting.eta_rules.AffineUpdate attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.b_tilde">b_tilde (normix.finance.transaction_costs.TransactionCostQP attribute)</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.Shrinkage.base">base (normix.fitting.eta_rules.Shrinkage attribute)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.em.BatchEMFitter">BatchEMFitter (class in normix.fitting.em)</a>
@@ -511,6 +525,12 @@
 </li>
       <li><a href="api/utils.html#normix.utils.rvs.build_pinv_table">build_pinv_table() (in module normix.utils.rvs)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.build_qp">build_qp() (normix.finance.transaction_costs.TransactionCostProblem method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.build_quadratic_approximation">build_quadratic_approximation() (in module normix.finance.transaction_costs)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.build_transaction_cost_qp">build_transaction_cost_qp() (in module normix.finance.transaction_costs)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -519,6 +539,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.AffineUpdate.c">c (normix.fitting.eta_rules.AffineUpdate attribute)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.c1">c1 (normix.finance.transaction_costs.TransactionCostProblem attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.c1">(normix.finance.transaction_costs.TransactionCostQP attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.c2">c2 (normix.finance.transaction_costs.TransactionCostProblem attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.c2">(normix.finance.transaction_costs.TransactionCostQP attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/distributions.html#normix.distributions.gamma.Gamma.cdf">cdf() (normix.distributions.gamma.Gamma method)</a>
 
       <ul>
@@ -531,6 +563,8 @@
         <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.cdf">(normix.exponential_family.ExponentialFamily method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.compute_eta_from_model">compute_eta_from_model() (normix.mixtures.factor.FactorNormalMixture method)</a>
 
       <ul>
@@ -539,8 +573,6 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.compute_eta_from_model">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/mixtures.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations">conditional_expectations() (normix.mixtures.joint.JointNormalMixture method)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.em.EMResult.converged">converged (normix.fitting.em.EMResult attribute)</a>
@@ -566,7 +598,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.normal.MultivariateNormal.d">d (normix.distributions.normal.MultivariateNormal property)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.d">(normix.finance.transaction_costs.TransactionCostQP property)</a>
 </li>
+      </ul></li>
       <li><a href="api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.D">D (normix.mixtures.factor.FactorNormalMixture attribute)</a>
 </li>
       <li><a href="api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.d">d (normix.mixtures.factor.FactorNormalMixture property)</a>
@@ -623,6 +659,8 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.e_step">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#id2">e_tilde (normix.finance.transaction_costs.TransactionCostQP attribute)</a>, <a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.e_tilde">[1]</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.eta.FactorMixtureStats.E_X">E_X (normix.fitting.eta.FactorMixtureStats attribute)</a>
 
       <ul>
@@ -710,6 +748,8 @@
 </li>
       </ul></li>
       <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.expected_return">expected_return() (normix.finance.optimization.MeanRiskProblem method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector">expected_return_vector() (normix.finance.transaction_costs.TransactionCostProblem method)</a>
 </li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily">ExponentialFamily (class in normix.exponential_family)</a>
 </li>
@@ -869,6 +909,8 @@
 </li>
       <li><a href="api/fitting.html#normix.fitting.solvers.BregmanResult.grad_norm">grad_norm (normix.fitting.solvers.BregmanResult attribute)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.QuadraticApproximation.gradient">gradient (normix.finance.transaction_costs.QuadraticApproximation attribute)</a>
+</li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.gradient_scalar">gradient_scalar() (normix.finance.risk.CVaR method)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.gradient_w">gradient_w() (normix.finance.risk.CVaR method)</a>
@@ -879,13 +921,21 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#id1">H_tilde (normix.finance.transaction_costs.TransactionCostQP attribute)</a>, <a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.H_tilde">[1]</a>
+</li>
       <li><a href="api/finance.html#normix.finance.functional.WeightFunctional.hess">hess() (normix.finance.functional.WeightFunctional method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.QuadraticApproximation.hessian">hessian (normix.finance.transaction_costs.QuadraticApproximation attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.hessian_scalar">hessian_scalar() (normix.finance.risk.CVaR method)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.hessian_w">hessian_w() (normix.finance.risk.CVaR method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.hold_objective">hold_objective (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.hold_objective">hold_objective() (normix.finance.transaction_costs.TransactionCostQP method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -894,6 +944,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.IdentityUpdate">IdentityUpdate (class in normix.fitting.eta_rules)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.improved">improved (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.em.IncrementalEMFitter">IncrementalEMFitter (class in normix.fitting.em)</a>
 </li>
@@ -1051,6 +1103,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#id4">m (normix.finance.transaction_costs.TransactionCostQP attribute)</a>, <a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.m">[1]</a>
+</li>
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step">m_step() (normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic method)</a>
 
       <ul>
@@ -1083,6 +1137,8 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.m_step_subordinator">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#id0">m_tilde (normix.finance.transaction_costs.TransactionCostQP attribute)</a>, <a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.m_tilde">[1]</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.solvers.make_jit_newton_solver">make_jit_newton_solver() (in module normix.fitting.solvers)</a>
 </li>
       <li><a href="api/mixtures.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">marginal_log_likelihood() (normix.mixtures.marginal.MarginalMixture method)</a>
@@ -1126,6 +1182,8 @@
       <ul>
         <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.model">(normix.finance.optimization.MeanRiskProblem attribute)</a>
 </li>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.model">(normix.finance.transaction_costs.TransactionCostProblem attribute)</a>
+</li>
         <li><a href="api/fitting.html#normix.fitting.em.EMResult.model">(normix.fitting.em.EMResult attribute)</a>
 </li>
       </ul></li>
@@ -1162,6 +1220,8 @@
         <li><a href="api/finance.html#module-normix.finance.projection">normix.finance.projection</a>
 </li>
         <li><a href="api/finance.html#module-normix.finance.risk">normix.finance.risk</a>
+</li>
+        <li><a href="api/finance.html#module-normix.finance.transaction_costs">normix.finance.transaction_costs</a>
 </li>
         <li><a href="api/fitting.html#module-normix.fitting.em">normix.fitting.em</a>
 </li>
@@ -1337,8 +1397,6 @@
         <li><a href="api/index.html#module-normix.exponential_family">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     normix.finance.functional
 
@@ -1346,6 +1404,8 @@
         <li><a href="api/finance.html#module-normix.finance.functional">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     normix.finance.optimization
 
@@ -1365,6 +1425,13 @@
 
       <ul>
         <li><a href="api/finance.html#module-normix.finance.risk">module</a>
+</li>
+      </ul></li>
+      <li>
+    normix.finance.transaction_costs
+
+      <ul>
+        <li><a href="api/finance.html#module-normix.finance.transaction_costs">module</a>
 </li>
       </ul></li>
       <li>
@@ -1528,6 +1595,18 @@
   </ul></td>
 </tr></table>
 
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.qp">qp (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.QuadraticApproximation">QuadraticApproximation (class in normix.finance.transaction_costs)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1575,6 +1654,8 @@
         <li><a href="api/finance.html#normix.finance.optimization.EfficientSurface.risk">(normix.finance.optimization.EfficientSurface attribute)</a>
 </li>
         <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.risk">(normix.finance.optimization.MeanRiskProblem attribute)</a>
+</li>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.risk">(normix.finance.transaction_costs.TransactionCostProblem attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -1633,9 +1714,13 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.sigma">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.solve">solve() (normix.finance.transaction_costs.TransactionCostProblem method)</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.solvers.solve_bregman">solve_bregman() (in module normix.fitting.solvers)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.solvers.solve_bregman_multistart">solve_bregman_multistart() (in module normix.fitting.solvers)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.solve_transaction_cost_qp">solve_transaction_cost_qp() (in module normix.finance.transaction_costs)</a>
 </li>
       <li><a href="api/index.html#normix.divergences.squared_hellinger">squared_hellinger() (in module normix.divergences)</a>
 
@@ -1645,10 +1730,10 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.squared_hellinger">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
-      <li><a href="api/index.html#normix.divergences.squared_hellinger_from_psi">squared_hellinger_from_psi() (in module normix.divergences)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/index.html#normix.divergences.squared_hellinger_from_psi">squared_hellinger_from_psi() (in module normix.divergences)</a>
+</li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.std">std() (normix.exponential_family.ExponentialFamily method)</a>
 </li>
       <li><a href="api/utils.html#normix.utils.plotting.style_axes">style_axes() (in module normix.utils.plotting)</a>
@@ -1715,12 +1800,12 @@
         <li><a href="api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.to_gig">(normix.distributions.inverse_gaussian.InverseGaussian method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma">to_inverse_gamma() (normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian method)</a>
 </li>
       <li><a href="api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gaussian">to_inverse_gaussian() (normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.to_joint_generalized_hyperbolic">to_joint_generalized_hyperbolic() (normix.distributions.normal_inverse_gamma.JointNormalInverseGamma method)</a>
 
       <ul>
@@ -1740,6 +1825,16 @@
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian">to_normal_inverse_gaussian() (normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic method)</a>
 </li>
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">to_variance_gamma() (normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem">TransactionCostProblem (class in normix.finance.transaction_costs)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP">TransactionCostQP (class in normix.finance.transaction_costs)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult">TransactionCostResult (class in normix.finance.transaction_costs)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at">true_objective_at() (normix.finance.transaction_costs.TransactionCostProblem method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.turnover">turnover (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1763,7 +1858,11 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.v">v (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+</li>
       <li><a href="api/utils.html#normix.utils.validation.validate_moments">validate_moments() (in module normix.utils.validation)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.QuadraticApproximation.value">value (normix.finance.transaction_costs.QuadraticApproximation attribute)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.value">value() (normix.finance.risk.CVaR method)</a>
 
@@ -1779,6 +1878,8 @@
       </ul></li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.value_w">value_w() (normix.finance.risk.CVaR method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.gamma.Gamma.var">var() (normix.distributions.gamma.Gamma method)</a>
 
       <ul>
@@ -1793,8 +1894,6 @@
         <li><a href="api/finance.html#normix.finance.risk.CVaR.var">(normix.finance.risk.CVaR method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.varentropy">varentropy() (normix.exponential_family.ExponentialFamily method)</a>
 </li>
       <li><a href="api/distributions.html#normix.distributions.variance_gamma.VarianceGamma">VarianceGamma (class in normix.distributions.variance_gamma)</a>
@@ -1807,10 +1906,20 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.EWMAUpdate.w">w (normix.fitting.eta_rules.EWMAUpdate attribute)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.QuadraticApproximation.w0">w0 (normix.finance.transaction_costs.QuadraticApproximation attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.w0">(normix.finance.transaction_costs.TransactionCostQP attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/finance.html#normix.finance.functional.WeightFunctional">WeightFunctional (class in normix.finance.functional)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.optimization.EfficientFrontier.weights">weights (normix.finance.optimization.EfficientFrontier attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.weights">(normix.finance.transaction_costs.TransactionCostResult attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.weights">weights() (normix.finance.optimization.MeanRiskProblem method)</a>
 
       <ul>
@@ -1827,6 +1936,10 @@
         <li><a href="api/fitting.html#normix.fitting.eta_rules.SampleWeightedUpdate.weights">(normix.fitting.eta_rules.SampleWeightedUpdate method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.weights_from_v">weights_from_v() (normix.finance.transaction_costs.TransactionCostQP method)</a>
+</li>
   </ul></td>
 </tr></table>
 

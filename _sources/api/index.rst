@@ -19,8 +19,8 @@ Reference pages, one per subpackage:
   ``FactorNormalMixture`` base classes that every mixture distribution builds on
 - :doc:`fitting` — EM fitters, solvers, and the incremental-EM
   :math:`\eta`-update machinery
-- :doc:`finance` — portfolio projection, risk measures, and mean-risk
-  optimization
+- :doc:`finance` — portfolio projection, risk measures, mean-risk
+  optimization, and transaction-cost QPs
 - :doc:`utils` — Bessel functions, constants, sampling, and plotting helpers
 
 Base Classes

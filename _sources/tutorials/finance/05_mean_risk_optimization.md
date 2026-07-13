@@ -320,6 +320,6 @@ pd.DataFrame(weights, index=basket).round(3)
   allocations.
 
 For the mathematics — the monotonicity theorem and the reduction proof — see
-{doc}`../../theory/mean_risk_optimization`. Transaction-cost extensions and
-generalized diversification (effective number of bets) build on this same
-reduced surface.
+{doc}`../../theory/mean_risk_optimization`. Transaction-cost rebalancing (local
+QP) is covered in {doc}`06_transaction_costs`; generalized diversification
+(effective number of bets) remains on the roadmap.

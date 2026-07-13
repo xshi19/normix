@@ -116,3 +116,6 @@ The gradient $\nabla r(w_0)$ and Hessian $H_r(w_0)$ for CVaR
 risk can be computed using the formulas in {doc}`cvar_derivatives`. The QP
 formulation is typically orders of magnitude faster than solving the
 original non-smooth convex problem.
+
+Executable walkthrough:
+{doc}`../tutorials/finance/06_transaction_costs`.
