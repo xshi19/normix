@@ -251,6 +251,47 @@ Neither method evaluates the Bessel normalising constant. See
   with `log_kernel(w) = self.log_prob(jnp.atleast_1d(w))`, seeded at
   `self.mean()` (no closed-form mode for Bessel mixtures).
 
+### 5.1 Quantile-table reuse: `QuantileTable` (DEC-5)
+
+> Decision row: `design.md` § *2026-07 review Phase 0*, DEC-5. Decided
+> 2026-07-20; implementation lands with roadmap item E3 (Phase 5).
+
+Every `cdf`/`ppf` call above rebuilds the 4000-point table — 4000
+Bessel-heavy `log_prob` evaluations per call. Distributions are
+immutable (`eqx.Module`, row F1), so self-caching is out; DEC-5 gives
+repeated quantile workloads an explicit handle instead:
+
+```python
+class QuantileTable(eqx.Module):
+    """Frozen PINV quantile table; a pytree, so jit/vmap/scan-safe."""
+    u_grid: jax.Array   # (n_grid,) trapezoidal CDF values
+    x_grid: jax.Array   # (n_grid,) observation-axis values
+
+    def cdf(self, x): ...   # jnp.interp(x, x_grid, u_grid, left=0.0, right=1.0)
+    def ppf(self, q): ...   # jnp.interp(q, u_grid, x_grid)
+    def rvs(self, n, seed=42): ...   # inverse-CDF sampling (rvs_pinv)
+```
+
+- Lives in `utils/rvs.py` next to `build_pinv_table`, which stays the
+  raw functional core (the table object holds its output; interp
+  bookkeeping like `left=0.0, right=1.0` moves off the call sites).
+- PINV-backed distributions gain `quantile_table() -> QuantileTable`
+  (the `_UnivariateNormalMixtureMixin`, `GIG`, `InverseGaussian`);
+  their `cdf`/`ppf`/`rvs(method='pinv')` re-express through it with
+  per-call semantics unchanged — holding the table is the caller's
+  opt-in amortisation.
+- Interaction: GIG's degenerate-regime `cdf`/`ppf` delegation to
+  Gamma/InverseGamma closed forms (roadmap B4) bypasses the table —
+  `quantile_table()` is only meaningful in the PINV regime; E3's
+  implementation must not regress B4's resolution.
+
+Alternative rejected: documenting `u_grid, x_grid = dist._pinv_grids()`
+reuse. The helper exists only on the univariate-mixin today (no uniform
+accessor across GIG / InverseGaussian), raw tuples push interp
+bookkeeping onto every caller, and a bare tuple communicates nothing
+about grid semantics. The table object is the same two arrays with the
+three obvious methods attached.
+
 ---
 
 ## 6. Cross-References
