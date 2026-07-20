@@ -148,8 +148,8 @@ rule that resolves both:
 - **Computed values are methods.** `subordinator()` *constructs* a
   fresh distribution object from stored fields on the joint/marginal
   path, and `sigma()` computes $L_\Sigma L_\Sigma^\top$ — the
-  conventions already avoid `@property` for computed values, so
-  uniformity lands on the method spelling everywhere:
+  conventions say "no `@property` for expensive operations — compute
+  explicitly", so uniformity lands on the method spelling everywhere:
   abstract `subordinator()` on `MarginalMixture`, forwarded by
   `NormalMixture` (`self._joint.subordinator()`), returned by
   `FactorNormalMixture` from a now-private `_subordinator` field

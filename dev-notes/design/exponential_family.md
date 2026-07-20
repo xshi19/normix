@@ -194,8 +194,8 @@ is θ-affine.**
 | InverseGamma ⊂ GIG | θ₃ ≡ 0 | yes | correct |
 | InverseGaussian ⊂ GIG | θ₁ ≡ −3/2 | yes | correct |
 | NIG ⊂ GH | θ₁ ≡ −3/2 − d/2 | yes | correct |
-| VG ⊂ GH | θ₂ = −½μᵀΛμ (b = 0) | **no** (quadratic in θ₄…θ₆) | **wrong** |
-| NInvG ⊂ GH | θ₃ = −½γᵀΛγ (a = 0) | **no** | **wrong** |
+| VG ⊂ GH | θ₂ = −½μᵀΛμ (b = 0) | **no** (nonlinear in θ₅, θ₆: μᵀΛμ = θ₅ᵀΛ⁻¹θ₅) | **wrong** |
+| NInvG ⊂ GH | θ₃ = −½γᵀΛγ (a = 0) | **no** (nonlinear in θ₄, θ₆) | **wrong** |
 
 For curved embeddings the midpoint leaves the manifold, and the
 restricted ψ silently drops the lost direction. Measured (d = 2,
