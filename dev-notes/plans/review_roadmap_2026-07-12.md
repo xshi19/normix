@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — not started (2026-07-16).**
+> **ACTIVE — Phase 0 complete (2026-07-20); implementation phases not started.**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -25,7 +25,7 @@
 
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
-| B1 | 1.1, 8.1 | Cross-family `squared_hellinger(p, q)` / `kl_divergence(p, q)` evaluate `type(p)`'s ψ at *q*'s θ; the special-case ψs reinterpret θ under their own constraint, so mismatched families return plausible wrong numbers. Measured: `H²(NIG, GH_p=0.7) = 0.074043` vs truth `0.017019` (the reverse direction is correct because GH's ψ reads any θ). | Per **DEC-1**: in Tier 2/3 dispatch, when `type(p) is not type(q)`, lift both operands via `to_generalized_hyperbolic()` and compare in GH coordinates; raise when no lift exists. Touches `normix/divergences.py` Tier 3, `ExponentialFamily.squared_hellinger`/`kl_divergence`, and the `NormalMixture` delegating methods. Regression tests: the measured example asserts ≈ 0.017019 in *both* argument orders; exact-embedding case stays 0. DEC-1 must also scope the univariate EF level: Gamma vs InverseGamma θ share shape `(2,)`, so the same silent-wrong-number mode exists there (lift to GIG, or raise). ~50 LOC + tests. | P1 |
+| B1 | 1.1, 8.1 | Cross-family `squared_hellinger(p, q)` / `kl_divergence(p, q)` evaluate `type(p)`'s ψ at *q*'s θ; the special-case ψs reinterpret θ under their own constraint, so mismatched families return plausible wrong numbers. Measured: `H²(NIG, GH_p=0.7) = 0.074043` vs truth `0.017019` (the reverse direction is correct because GH's ψ reads any θ). **Phase-0 finding widens the bug: same-family VG/NInvG divergences are also wrong** (curved θ-embeddings; `H²(VG(μ₁), VG(μ₂)) = 0.0` vs truth `0.0814`) — see `../design/exponential_family.md` § 5.1 for the measured table and repro parameters. | Per **DEC-1 as recorded** (`../design/design.md` § *2026-07 review Phase 0*; rationale + sketch in `../design/exponential_family.md` § 5): Tier 2 lifts **both** operands **unconditionally** into their divergence gauge (GIG / JointGH, `boundary_eps=0`) via the `_divergence_lift()` hook — the review's type-mismatch trigger is superseded (it misses the same-family curved cases). KL sources η_p from closed forms via the tail-split `_divergence_eta()` hook + a Tier-1 sibling; mismatched gauges raise `TypeError`. Regression tests: cross-family symmetry (both orders equal the GH-gauge truth), the same-family VG/NInvG measured targets, exact-embedding case stays 0, Gamma-vs-InverseGamma via GIG, KL boundary/infinity semantics (finite when the infinite moment's chord coefficient A = 0). ~80–120 LOC + tests. | P1 |
 | B2 | 1.2 | `renyi` value at α = 1 is right but `jax.grad` through the `jnp.where` singularity guard returns 0.0 there; truth is −V_H/2 (Gamma(2,1): −0.3225). | Taylor branch `H − V_H(α−1)/2` inside an \|1−α\| < ε window with both `jnp.where` branches NaN-free (double-where), or a `jax.custom_jvp`. Regression test: `jax.grad(dist.renyi)(1.0) ≈ -dist.varentropy()/2` (lands with T4). ~15 LOC. | P1 |
 | B3 | 1.3 | `GIG.fisher_information(backend='jax')` mixed entries H₁₂/H₁₃ are 4.5%/2.2% off at (p=0.7, a=1.4, b=0.9) — the integer-shift FD for ∂²log K_ν/∂ν∂z is documented for the Newton solver but leaks into a public API with no caveat. | Either FD the mixed term with ±`BESSEL_EPS_V` (4 extra Bessel evals, orders p±ε±1), or document the accuracy asymmetry on `fisher_information` and point to `backend='cpu'` / `jax.hessian`. Pick during implementation; interrogate review on the PR (GIG Hessian). ~25 LOC. | P2 |
 | B4 | 1.4 | `GIG.cdf`/`ppf` call `float(self.p)` to pick the degenerate-limit branch → `jax.jit(g.cdf)` raises; contradicts the broadly advertised JIT-compatibility. | `lax.cond` on the degeneracy test (both branches traceable), or document the exception on the methods and in `ARCHITECTURE.md`. The `Univariate*` mixin `cdf`/`ppf` are pure JAX and unaffected. ~30 LOC. | P2 |
@@ -137,21 +137,22 @@ Everything else is independent; Phases 1, 2, and 7 touch no `normix/` logic.
 
 ## Phases
 
-### Phase 0 — Design decisions
+### Phase 0 — Design decisions — **DONE (2026-07-20)**
 
-Five decisions, each landing as a `../design/design.md` row before its code:
+Five decisions, each landing as a `../design/design.md` row before its code.
+**All five recorded** in `../design/design.md` § *2026-07 review Phase 0*;
+exit criterion met. DEC-1 ran through the architect/arena skills (3-model
+panel + cross-judge; synthesis note in `../design/exponential_family.md`
+§ 5.5); DEC-2…DEC-5 were uncontested after grounding and were recorded
+directly.
 
-| ID | Decision | Gates | Proposal on the table |
-|----|----------|-------|----------------------|
-| DEC-1 | Cross-family divergence dispatch: lift-to-GH vs raise; Tier 2 or Tier 3 ownership; boundary handling | B1 | Review recommends lifting via `to_generalized_hyperbolic()` (turns a footgun into a feature); raise when no lift exists. Wrinkle: VG/NInvG (and Gamma/InverseGamma at EF level) sit on the GIG boundary where GH's ψ degenerates — the lifts take `boundary_eps`, so decide exact-vs-ε semantics |
-| DEC-2 | One spelling for computed accessors: `subordinator` and `sigma` across `MarginalMixture` / `FactorNormalMixture` / `Univariate*` / `MultivariateNormal` | D1, D2 | Method everywhere (conventions avoid `@property` for computed matrices); resolve the factor-field name collision |
-| DEC-3 | `fit()` defaults mechanism | D3 | `_fit_defaults()` classmethod consumed by the base `fit(**kwargs)` |
-| DEC-4 | `finance/projection.py` placement | D4 | Fold into `finance/__init__` or drop in favour of `model.project(w)` |
-| DEC-5 | Quantile-table reuse shape | E3 | Frozen table object vs documented `_pinv_grids()` reuse |
-
-DEC-1 is the only decision blocking a P1 item — take it first. DEC-2 and
-DEC-5 shape public API / a new abstraction; run them through the architect
-skill if contested. **Exit:** design.md rows recorded.
+| ID | Decision | Gates | Outcome (see design.md rows for full detail) |
+|----|----------|-------|----------------------------------------------|
+| DEC-1 | Cross-family divergence dispatch | B1 | **Unconditional** gauge lift at Tier 2 via `_divergence_lift()` (GIG / JointGH, `boundary_eps=0` — exact via the degenerate ψ branch, verified ≤ 1e-10); `TypeError` when gauges differ. KL via exact closed-form η with tail-split `_divergence_eta() → (eta_fin, m, v)`; honest +∞ only when the infinite moment couples to a nonzero chord coefficient. Scope grew: Phase-0 verification found same-family VG/NInvG divergences are wrong too (curved embeddings), so the review's type-mismatch trigger was rejected. Rationale: `../design/exponential_family.md` § 5 |
+| DEC-2 | Computed-accessor spelling | D1, D2 | Method everywhere: abstract `subordinator()` on `MarginalMixture`; factor field renamed `_subordinator`; univariate-mixin property deleted; `MultivariateNormal.sigma` → `sigma()`. Stored-parameter forwarders stay properties. Rationale: `../design/mixtures.md` § 4.1 |
+| DEC-3 | `fit()` defaults mechanism | D3 | `_fit_defaults()` classmethod merged under user kwargs by one base `fit(X, *, alpha_min=None, **fitter_kwargs)`; the three overrides are deleted; `BatchEMFitter.__init__` is the single source of default values. Rationale: `../design/em_framework.md` § 1.1 |
+| DEC-4 | `finance/projection.py` placement | D4 | Drop the module and `project_portfolio`; `model.project(w)` is the only spelling (no wrapper that only forwards). `finance_architecture.md` annotated. |
+| DEC-5 | Quantile-table reuse shape | E3 | Frozen `QuantileTable(eqx.Module)` (`u_grid`, `x_grid`; `cdf`/`ppf`/`rvs`) in `utils/rvs.py`, returned by `quantile_table()` on PINV-backed distributions; `build_pinv_table` stays the functional core. Rationale: `../design/solvers_and_bessel.md` § 5.1 |
 
 ### Phase 1 — Hygiene sweep (C1–C5)
 
