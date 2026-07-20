@@ -86,6 +86,14 @@ Whether the projection lives as a helper function or a method on
 - only move it into the core distribution API later if it becomes
   universally useful outside finance.
 
+> **Resolved (DEC-4, 2026-07-20).** The "later" clause triggered:
+> `NormalMixture.project(w)` landed in Phase D and is the universal
+> spelling, leaving `project_portfolio` a wrapper that only forwards.
+> Per `../design/design.md` § *2026-07 review Phase 0* DEC-4, the
+> `finance/projection.py` module and `project_portfolio` are deleted in
+> review-roadmap Phase 6 (item D4); tutorials, the user guide, tests,
+> and `finance/__init__` move to `model.project(w)`.
+
 ## Proposed Module Layout
 
 ```text

@@ -133,6 +133,41 @@ The marginal `mean()` and `cov()` (=$E[Y]\Sigma + \mathrm{Var}[Y]\gamma\gamma^\t
 remain distinct from `mu` and `sigma()`: those are the **conditional**
 Gaussian's parameters, not the marginal's moments.
 
+### 4.1 Accessor spelling: method for computed, property for stored (DEC-2)
+
+> Decision row: `design.md` § *2026-07 review Phase 0*, DEC-2. Decided
+> 2026-07-20; implementation lands with roadmap items D1/D2 (Phase 6).
+
+Before DEC-2 "the subordinator" had three spellings —
+`model.joint.subordinator()` (method), `factor_model.subordinator`
+(eqx field), `univariate.subordinator` (mixin property) — and
+`NormalMixture` itself had none; `MultivariateNormal.sigma` was a
+property while every mixture class spells `sigma()` as a method. The
+rule that resolves both:
+
+- **Computed values are methods.** `subordinator()` *constructs* a
+  fresh distribution object from stored fields on the joint/marginal
+  path, and `sigma()` computes $L_\Sigma L_\Sigma^\top$ — the
+  conventions say "no `@property` for expensive operations — compute
+  explicitly", so uniformity lands on the method spelling everywhere:
+  abstract `subordinator()` on `MarginalMixture`, forwarded by
+  `NormalMixture` (`self._joint.subordinator()`), returned by
+  `FactorNormalMixture` from a now-private `_subordinator` field
+  (an eqx field and a method cannot share a name; the private field
+  mirrors `NormalMixture._joint`), and inherited by the `Univariate*`
+  mixin (its property is deleted). `MultivariateNormal.sigma` becomes
+  `sigma()`.
+- **Stored-parameter forwarders stay properties.** `mu`, `gamma`,
+  `L_Sigma`, and the per-subclass subordinator *fields* (`alpha`,
+  `beta`, `mu_ig`, `lam`, `p`, `a`, `b`) are attribute reads, not
+  computations — the facade table above is unchanged.
+
+Alternative rejected: property everywhere. It would misrepresent the
+constructing accessors as free attribute reads and contradict the
+"no `@property` for computed values" convention; the factor family's
+stored field is the only case a property spelling fits, and one class's
+convenience does not justify a three-way public wart.
+
 ---
 
 ## 5. `from_expectation` as the Canonical η→Model Map

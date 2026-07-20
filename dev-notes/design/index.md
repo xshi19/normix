@@ -22,11 +22,15 @@
 | Why two classes for each mixture distribution? | `mixtures.md` § 1 |
 | Why is the joint a public exponential family? | `mixtures.md` § 2 |
 | Why three classmethod tiers for the log-partition? | `exponential_family.md` § 2 |
+| Why do divergences lift to GIG/GH gauge coordinates? | `exponential_family.md` § 5 |
+| Why is `subordinator()` a method everywhere? | `mixtures.md` § 4.1 |
+| How do per-family `fit()` defaults work? | `em_framework.md` § 1.1 |
 | What does `'det_sigma_x'` regularisation do? | `em_framework.md` § 5 |
 | Why does `'a_eq_b'` matter beyond `'det_sigma_one'`? | `em_framework.md` § 5.2 |
 | Why is `Shrinkage` a combinator, not subclasses? | `em_framework.md` § 4.3 |
 | Why hand-rolled Newton instead of `optimistix`? | `solvers_and_bessel.md` § 1.2 |
 | Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 4 |
+| How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |
 
 ## See also

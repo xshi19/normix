@@ -36,6 +36,47 @@ Both return `EMResult`:
 | `log_likelihoods` | optional (verbose ≥ 1) | per-iteration LL trace |
 | `elapsed_time` | yes | wall clock |
 
+### 1.1 One `fit()` signature: `_fit_defaults()` (DEC-3)
+
+> Decision row: `design.md` § *2026-07 review Phase 0*, DEC-3. Decided
+> 2026-07-20; implementation lands with roadmap item D3 (Phase 6).
+
+The VG/NInvG/GH `fit()` overrides existed only to flip default backends
+(and, for GH, the regularization), re-listed every parameter, and
+*narrowed* the API — `track_ll`, `eta_update`, and `m_step_kwargs` were
+unreachable without dropping to `BatchEMFitter`. DEC-3 replaces them
+with a per-family defaults classmethod consumed by one base signature:
+
+```python
+class MarginalMixture(eqx.Module):
+    @classmethod
+    def _fit_defaults(cls) -> dict:
+        """Family-specific BatchEMFitter defaults, merged UNDER user kwargs."""
+        return {}
+
+    def fit(self, X, *, alpha_min=None, **fitter_kwargs) -> "EMResult":
+        # kwargs = {**cls._fit_defaults(), **fitter_kwargs}
+        # alpha_min resolved via self.d into m_step_kwargs (VG semantics),
+        # then BatchEMFitter(**kwargs).fit(self, X)
+        ...
+```
+
+- `VarianceGamma`/`NormalInverseGamma`: `{'e_step_backend': 'cpu'}`
+  (CPU E-step is faster for the degenerate-GIG posterior).
+- `GeneralizedHyperbolic`:
+  `{'e_step_backend': 'cpu', 'regularization': 'det_sigma_one'}`
+  (scale non-identifiability).
+- Everything not in a family's `_fit_defaults` falls through to
+  `BatchEMFitter.__init__` defaults — the **single source of default
+  values**; the base `fit` stops re-listing them.
+- `alpha_min` stays an explicit keyword: it needs `self.d` to resolve
+  the `'density'`/`'inverse_moment'` sentinels, and it merges into any
+  user-supplied `m_step_kwargs` (the explicit argument wins).
+
+Alternative rejected: keeping per-family `fit` overrides but widening
+each signature — three copies of a growing parameter list is exactly
+the drift that produced the narrowing bug.
+
 ---
 
 ## 2. EM Steps on Marginal Mixtures
