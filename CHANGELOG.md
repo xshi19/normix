@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.2.8](https://github.com/xshi19/normix/compare/v0.2.7...v0.2.8) (2026-07-20)
+
+
+### Features
+
+* add entropy, varentropy, and Renyi entropy to exponential families ([#63](https://github.com/xshi19/normix/issues/63)) ([559feae](https://github.com/xshi19/normix/commit/559feaeac179dfdacab230341860faab43701cd0))
+* **finance:** local-quadratic transaction-cost QP ([#78](https://github.com/xshi19/normix/issues/78)) ([986a7aa](https://github.com/xshi19/normix/commit/986a7aa32d985e90cfa7afafe580be612b63fe23))
+* **finance:** mean-risk optimization — efficient surface & frontier (Phase E) ([#61](https://github.com/xshi19/normix/issues/61)) ([63e0a9b](https://github.com/xshi19/normix/commit/63e0a9bd9d6915ce28e601d8f0c4724cebe5bf71))
+
+
+### Bug Fixes
+
+* **docs:** bust myst-nb cache on normix source changes ([#68](https://github.com/xshi19/normix/issues/68)) ([e03e9f4](https://github.com/xshi19/normix/commit/e03e9f444d9e91a0295fab64cb4fa295619b8655))
+* **docs:** remove nested double-border on inline code chips ([#64](https://github.com/xshi19/normix/issues/64)) ([74187aa](https://github.com/xshi19/normix/commit/74187aa95351a8c713f2d251a6f05620ced3308d))
+* **docs:** stop painting sphinx-design cards black ([#74](https://github.com/xshi19/normix/issues/74)) ([4a51f41](https://github.com/xshi19/normix/commit/4a51f41f76fa4afab9129692121db1603dd37a8c))
+* **em:** hybrid-scale EM convergence for near-zero μ ([#75](https://github.com/xshi19/normix/issues/75)) ([9ba2cb0](https://github.com/xshi19/normix/commit/9ba2cb071837c9fed757bfdf5781c05aae357bc8))
+* **ninvg:** floor GIG params consistently before log_kv in marginal pdf ([#67](https://github.com/xshi19/normix/issues/67)) ([9fea176](https://github.com/xshi19/normix/commit/9fea176f7589271eb9028bd00af1090eb5a35c19))
+
+
+### Documentation
+
+* complete docs refactor Phases 4–5 (notebooks, API, changelog) ([#66](https://github.com/xshi19/normix/issues/66)) ([e368e37](https://github.com/xshi19/normix/commit/e368e3705818e562c7b7ae2d5e39db284073e9b9))
+* **design:** review-roadmap Phase 0 — record DEC-1…DEC-5 ([#81](https://github.com/xshi19/normix/issues/81)) ([7b65966](https://github.com/xshi19/normix/commit/7b6596677f55f5beec0ea3f5c5254062cce6aeff))
+* **distributions:** add Phase 6 per-distribution gallery ([#69](https://github.com/xshi19/normix/issues/69)) ([fc770ac](https://github.com/xshi19/normix/commit/fc770acdbdbf5c724b3529fd0099a9b341cc9f30))
+* **distributions:** compare gauge-invariant EM outputs in gallery ([#77](https://github.com/xshi19/normix/issues/77)) ([4d0c046](https://github.com/xshi19/normix/commit/4d0c046048b6bc4460e7ff298e014066b9be349a))
+* land Phase 8a + linkcheck fix on master ([#73](https://github.com/xshi19/normix/issues/73)) ([f68985f](https://github.com/xshi19/normix/commit/f68985f55423179b7445a6e70f97a07f931d2cf2))
+* **plans:** add roadmap for the 2026-07-12 package review ([#80](https://github.com/xshi19/normix/issues/80)) ([e275b59](https://github.com/xshi19/normix/commit/e275b5925b6e4679012ae25eb5dcb8d81e9bbd24))
+* **plans:** archive completed plans and refresh active-plan status ([#59](https://github.com/xshi19/normix/issues/59)) ([fe6703a](https://github.com/xshi19/normix/commit/fe6703a81a00fcf3ba2364150d20648e10d55617))
+* **reviews:** add 2026-07-12 full package review ([#79](https://github.com/xshi19/normix/issues/79)) ([4c13a63](https://github.com/xshi19/normix/commit/4c13a63c67cd6f8c9d13d4e481d41711e9c04cfc))
+* **rules:** adopt pstack workflow skills and archive the survey ([#76](https://github.com/xshi19/normix/issues/76)) ([6c5f0d2](https://github.com/xshi19/normix/commit/6c5f0d2aa129523463ed14fdd79d7159a054d597))
+* **tutorials:** add entropy-varentropy frontier figures for GIG and GH ([#65](https://github.com/xshi19/normix/issues/65)) ([9a1fc69](https://github.com/xshi19/normix/commit/9a1fc69d7351b47c22c33957593ac522234ab6b7))
+
 ## [0.2.7](https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7) (2026-06-25)
 
 
