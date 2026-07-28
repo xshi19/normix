@@ -16,7 +16,6 @@ the corresponding ``Univariate*`` distribution instance.
 from __future__ import annotations
 
 import jax
-import jax.numpy as jnp
 
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 

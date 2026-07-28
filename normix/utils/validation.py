@@ -5,10 +5,6 @@ from typing import Any, Dict
 
 import numpy as np
 
-import jax
-import jax.numpy as jnp
-
-
 
 def validate_moments(
     dist,

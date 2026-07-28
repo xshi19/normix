@@ -20,7 +20,6 @@ from __future__ import annotations
 import abc
 from typing import Any, Dict
 
-import numpy as np
 import equinox as eqx
 import jax
 import jax.numpy as jnp
@@ -186,7 +185,6 @@ class NormalMixture(MarginalMixture):
     _NORMAL_KEYS = ('mu', 'gamma', 'L_Sigma')
 
     def __init__(self, joint):
-        from normix.mixtures.joint import JointNormalMixture
         self._joint = joint
 
     @property

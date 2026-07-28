@@ -430,7 +430,6 @@ class FactorNormalMixture(MarginalMixture):
         s8 = eta.E_Z_inv_sqrtY
         s9 = eta.E_Z_sqrtY
         s10 = eta.E_ZZT
-        d = s4.shape[0]
 
         # s_10⁻¹ applied to the small column blocks we need.
         s10_inv_s8 = jax.scipy.linalg.solve(s10, s8, assume_a='pos')

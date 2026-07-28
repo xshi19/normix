@@ -72,15 +72,13 @@ from __future__ import annotations
 import abc
 from typing import Dict, Tuple
 
-import numpy as np
-import equinox as eqx
 import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 
 
-from normix.utils.constants import B_POST_FLOOR, LOG_EPS, SAFE_DENOMINATOR, SIGMA_REG
+from normix.utils.constants import B_POST_FLOOR, SAFE_DENOMINATOR, SIGMA_REG
 
 
 class JointNormalMixture(ExponentialFamily):
@@ -476,8 +474,6 @@ class JointNormalMixture(ExponentialFamily):
 
         Returns ``(mu_new, gamma_new, L_new)``.
         """
-        from normix.fitting.eta import NormalMixtureEta  # noqa: F811
-
         D = 1.0 - eta.E_inv_Y * eta.E_Y
 
         # Cauchy–Schwarz gives D <= 0 always; floor at -SAFE_DENOMINATOR so a
