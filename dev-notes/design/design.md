@@ -53,9 +53,9 @@ updates go through `eqx.tree_at` or the `replace(**)` facade.
 | `jax` | Array computation, autodiff, JIT, vmap |
 | `equinox` | Pytree-based modules (immutable, filterable) |
 | `jaxopt` | L-BFGS-B for GIG η→θ constrained optimization |
-| `tensorflow_probability.substrates.jax` | `log_bessel_kve` only |
-| `scipy` | CPU Bessel evaluation via `kve` (EM hot path) |
-| `optax` | optional, for meta-learning experiments |
+| `numpy` | Array host; CPU triad / scipy interop |
+| `scipy` | CPU Bessel evaluation via `kve` (EM hot path); optimizers |
+| `matplotlib` | optional (`plotting` extra; notebooks) |
 
 Module-level functions are forbidden. Distribution behaviour lives on
 the class as `@classmethod` or `@staticmethod`.

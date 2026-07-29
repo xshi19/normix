@@ -6,7 +6,7 @@ alwaysApply: true
 # normix
 
 JAX package for Generalized Hyperbolic distributions as exponential families.
-Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
+Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`.
 
 | Distribution | Subordinator | Stored Attributes |
 |---|---|---|
@@ -14,17 +14,17 @@ Built on Equinox. Dependencies: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only).
 | InverseGamma | — | `alpha`, `beta` |
 | InverseGaussian | — | `mu`, `lam` |
 | GIG | — | `p`, `a`, `b` |
-| MultivariateNormal | — | `mu`, `L` (Cholesky) |
-| VarianceGamma | Gamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
-| NormalInverseGamma | InverseGamma | `mu`, `gamma`, `L`, `alpha`, `beta` |
-| NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L`, `mu_ig`, `lam` |
-| GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L`, `p`, `a`, `b` |
+| MultivariateNormal | — | `mu`, `L_Sigma` (Cholesky) |
+| VarianceGamma | Gamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` |
+| NormalInverseGamma | InverseGamma | `mu`, `gamma`, `L_Sigma`, `alpha`, `beta` |
+| NormalInverseGaussian | InverseGaussian | `mu`, `gamma`, `L_Sigma`, `mu_ig`, `lam` |
+| GeneralizedHyperbolic | GIG | `mu`, `gamma`, `L_Sigma`, `p`, `a`, `b` |
 
 All distributions provide: `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`.
 Exponential families also provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)`.
 Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`,
 `joint_entropy`, `joint_varentropy`, `joint_renyi(alpha)`.
 
-Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `_bessel.py`.
+Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `normix/utils/bessel.py`.
 Architecture: `dev-notes/ARCHITECTURE.md`. Published design: `docs/design/`.
 Tech notes: `dev-notes/tech_notes/`.
