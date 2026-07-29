@@ -681,15 +681,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">z</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span></div>
 
 
-<div class="viewcode-block" id="MultivariateNormal.sample">
-<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal.MultivariateNormal.sample">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">())</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw samples via an explicit JAX key.  Legacy API — prefer ``rvs``.&quot;&quot;&quot;</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div>
-
-
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Properties</span>
     <span class="c1"># ------------------------------------------------------------------</span>
