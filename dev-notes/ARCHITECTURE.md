@@ -249,13 +249,19 @@ from there. Never define magic numbers locally in distribution files.
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
+| `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |
+| `GIG_CLAMP_LO` | `1e-6` | Lower clamp for GIG `a`, `b` in the GH M-step |
+| `GIG_CLAMP_HI` | `1e6` | Upper clamp for GIG `a`, `b` in the GH M-step |
+| `GIG_P_MAX` | `50.0` | Maximum \|p\| from GIG solver before fallback |
 | `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step (bounds the conditional inverse moment near the mode; only binds for VG) |
 | `ALPHA_MOMENT_MARGIN` | `0.1` | Floor on the `(α−1)` denominator of the VG/NInvG prior moment `β/(α−1)` in `compute_eta_from_model` (keeps it finite and positive when `α ≤ 1`) |
 | `ALPHA_MIN_MARGIN` | `0.1` | Margin ε for the opt-in VG `fit(alpha_min=…)` shape bound: `'density'`→`d/2+ε`, `'inverse_moment'`→`d/2+1+ε` |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
+| `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
+| `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
 
 ## GIG η→θ Optimization
 

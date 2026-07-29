@@ -1,7 +1,7 @@
 # normix
 
 JAX package for Generalized Hyperbolic distributions as exponential families.
-Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `tfp` (Bessel only), `optax` (optional).
+Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotlib` (optional).
 
 ## Commands
 
@@ -42,7 +42,7 @@ Before committing:
 
 ## Core Dependencies
 
-`jax`, `equinox`, `jaxopt`, `tensorflow_probability.substrates.jax` (Bessel only), `matplotlib` (notebooks), `optax` (optional).
+`jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotlib` (optional, notebooks/plotting).
 
 ## Context Map
 
@@ -64,7 +64,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
 | Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`, `review_roadmap_2026-07-12.md`) |
-| 2026-07-12 review roadmap (44 items; Phase 0 design decisions done, implementation not started) | `dev-notes/plans/review_roadmap_2026-07-12.md` |
+| 2026-07-12 review roadmap (44 items; Phases 0–2 done) | `dev-notes/plans/review_roadmap_2026-07-12.md` |
 | `normix.finance` roadmap (Phase D + Phase E done; Phase F diversification proposed) | `dev-notes/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
