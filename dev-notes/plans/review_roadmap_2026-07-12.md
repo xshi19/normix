@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); implementation phases 2+ not started.**
+> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); implementation phases 3+ not started.**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -161,13 +161,16 @@ One PR, pure deletions plus one comment.
 `rg "_gig_rvs_pinv|def sample" normix/` shows neither; `data/gig_test.csv`
 gone; fast suite green.
 
-### Phase 2 — Agent docs & rules sync (DOC1–DOC7)
+### Phase 2 — Agent docs & rules sync (DOC1–DOC7) — **DONE (2026-07-29)**
 
 Two docs commits: internal rules/dev-notes (DOC1–DOC5), public docstrings +
 README (DOC6, DOC7).
 **Exit:** `rg "tfp|tensorflow|optax" AGENTS.md .cursor/rules/ dev-notes/design/design.md`
 returns only historical/archive mentions; constants tables match
 `constants.py` name-for-name; `bash scripts/check_doc_links.sh` OK.
+DOC5 was already correct (`transaction_costs` tutorial linked). DOC7 documents
+the current joint `from_natural` contract (not the outdated 2026-04-04
+"unsupported" claim — joints gained `from_natural` in the earlier D2 work).
 
 ### Phase 3 — Correctness (B1–B8)
 
@@ -226,7 +229,7 @@ gallery/API docs updated.
 |-------|-------|-------|------------|
 | 0 | Design decisions | DEC-1…5 | — |
 | 1 | Hygiene sweep | C1–C5 | — ✅ |
-| 2 | Agent docs & rules sync | DOC1–DOC7 | — |
+| 2 | Agent docs & rules sync | DOC1–DOC7 | — ✅ |
 | 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
 | 4 | Test hardening | T1–T5 | — (B2/B7 tests land with fixes) |
 | 5 | Efficiency | E1, E2, E4–E7; E3 | DEC-5 (E3 only) |

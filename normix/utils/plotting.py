@@ -72,8 +72,8 @@ FIG_H = FIG_W / PHI
 def set_theme(*, scale: float = 1.0) -> None:
     """Apply the normix Matplotlib theme (Kami-derived visual tokens).
 
-    Matches ``incerto-wiki/docs/design/VISUAL_STYLE.md`` so tutorial figures
-    align with the documentation site aesthetic.
+    Shared colour/typography tokens so tutorial figures match the
+    documentation site aesthetic.
     """
     if scale <= 0:
         raise ValueError("scale must be positive")

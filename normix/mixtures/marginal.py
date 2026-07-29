@@ -6,7 +6,7 @@ divergences module depend on. :class:`NormalMixture` is the
 full-covariance implementation, owning a
 :class:`~normix.mixtures.joint.JointNormalMixture`. A factor-analysis
 implementation lives in the sibling class :class:`FactorNormalMixture`
-(see ``docs/design/mixtures.md`` § 6).
+(see :doc:`/design/mixtures`).
 
 NormalMixture provides:
 

@@ -20,7 +20,6 @@ For local development:
 
 ```bash
 uv sync
-pip install -e .
 ```
 
 ## Quick Start
@@ -74,9 +73,31 @@ log_p = jax.vmap(result.model.log_prob)(X)   # shape (1000,)
 | `NormalInverseGaussian` | InverseGaussian | `mu`, `gamma`, `L_Sigma`, `mu_ig`, `lam` |
 | `GeneralizedHyperbolic` | GIG | `mu`, `gamma`, `L_Sigma`, `p`, `a`, `b` |
 
+### Univariate marginals ($d=1$)
+
+Scalar scipy-style API with `cdf`/`ppf` (same parameters as the multivariate marginals above, with scalar `mu`/`gamma`/`L_Sigma`):
+
+| Class | Subordinator |
+|---|---|
+| `UnivariateVarianceGamma` | Gamma |
+| `UnivariateNormalInverseGamma` | InverseGamma |
+| `UnivariateNormalInverseGaussian` | InverseGaussian |
+| `UnivariateGeneralizedHyperbolic` | GIG |
+
+### Factor-analysis mixtures
+
+Low-rank-plus-diagonal dispersion $\Sigma = FF^\top + \mathrm{diag}(D)$:
+
+| Class | Subordinator |
+|---|---|
+| `FactorVarianceGamma` | Gamma |
+| `FactorNormalInverseGamma` | InverseGamma |
+| `FactorNormalInverseGaussian` | InverseGaussian |
+| `FactorGeneralizedHyperbolic` | GIG |
+
 ### Joint distributions
 
-The `Joint*` classes (e.g. `JointGeneralizedHyperbolic`) model the full joint $f(x,y)$ where Y is the mixing variable. They are exponential families and are used internally for the EM E-step.
+The `Joint*` classes (e.g. `JointGeneralizedHyperbolic`) model the full joint $f(x,y)$ where Y is the mixing variable. They are public exponential families used for analysis, simulation, complete-data likelihood, and the EM E-step; `from_natural` is implemented (VG/NInvG/NIG validate that $\theta$ lies on the constrained subfamily).
 
 ## Exponential Family API
 
