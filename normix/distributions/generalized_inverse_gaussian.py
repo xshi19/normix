@@ -67,7 +67,7 @@ from normix.utils.constants import (
     THETA_FLOOR, FD_EPS_FISHER, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
-    bregman_objective, solve_bregman, solve_bregman_multistart,
+    solve_bregman, solve_bregman_multistart,
     make_jit_newton_solver,
 )
 
@@ -84,7 +84,7 @@ from normix.fitting.solvers import (
 #    Three-piece tangent-line envelope, batch-parallel (no
 #    ``while_loop``), ~80–90% acceptance.
 #
-# 2. ``build_pinv_table`` + ``_gig_rvs_pinv`` — Numerical inverse CDF via
+# 2. ``build_pinv_table`` + ``rvs_pinv`` — Numerical inverse CDF via
 #    :func:`normix.utils.rvs.build_pinv_table` seeded at :meth:`GIG.mode`.
 
 _GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
@@ -169,12 +169,6 @@ def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
 
     first_idx = jnp.argmax(ok, axis=0)
     return ew[first_idx, jnp.arange(n)]
-
-
-def _gig_rvs_pinv(key, u_grid, x_grid, n):
-    """Sample *n* GIG variates from a precomputed PINV table."""
-    return rvs_pinv(key, u_grid, x_grid, n)
-
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
@@ -586,7 +580,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             u_grid, x_grid = build_pinv_table(
                 log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
             )
-            return _gig_rvs_pinv(key, u_grid, x_grid, n)
+            return rvs_pinv(key, u_grid, x_grid, n)
 
         if method == "scipy":
             from scipy import stats
@@ -772,7 +766,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Uses Gamma, InverseGamma, InverseGaussian special cases.
         """
-        import numpy as np
         from normix.distributions.gamma import Gamma
         from normix.distributions.inverse_gamma import InverseGamma
         from normix.distributions.inverse_gaussian import InverseGaussian

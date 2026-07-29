@@ -165,7 +165,8 @@ class BatchEMFitter:
         self.eta_update = eta_update
         self.track_ll = track_ll
         self.m_step_kwargs = dict(m_step_kwargs) if m_step_kwargs else {}
-        # Optional test hook: force a non-finite max_change at this 1-based step.
+        # Test hook: force a non-finite max_change at this 1-based step.
+        # Used by ``tests/test_em_regression.py`` (``TestEMDivergenceGuard``).
         self._force_nonfinite_at_step: int | None = None
 
     # ------------------------------------------------------------------

@@ -33,6 +33,9 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Ruff unused-import check
+        run: uv run ruff check --select F401,F811,F841 normix/
+
       - name: Run tests
         run: uv run pytest tests/ -q --tb=short
 

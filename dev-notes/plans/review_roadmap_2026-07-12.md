@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0 complete (2026-07-20); implementation phases not started.**
+> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); implementation phases 2+ not started.**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -154,7 +154,7 @@ directly.
 | DEC-4 | `finance/projection.py` placement | D4 | Drop the module and `project_portfolio`; `model.project(w)` is the only spelling (no wrapper that only forwards). `finance_architecture.md` annotated. |
 | DEC-5 | Quantile-table reuse shape | E3 | Frozen `QuantileTable(eqx.Module)` (`u_grid`, `x_grid`; `cdf`/`ppf`/`rvs`) in `utils/rvs.py`, returned by `quantile_table()` on PINV-backed distributions; `build_pinv_table` stays the functional core. Rationale: `../design/solvers_and_bessel.md` § 5.1 |
 
-### Phase 1 — Hygiene sweep (C1–C5)
+### Phase 1 — Hygiene sweep (C1–C5) — **DONE (2026-07-28)**
 
 One PR, pure deletions plus one comment.
 **Exit:** `ruff check --select F401,F811,F841 normix/` clean;
@@ -225,7 +225,7 @@ gallery/API docs updated.
 | Phase | Theme | Items | Blocked by |
 |-------|-------|-------|------------|
 | 0 | Design decisions | DEC-1…5 | — |
-| 1 | Hygiene sweep | C1–C5 | — |
+| 1 | Hygiene sweep | C1–C5 | — ✅ |
 | 2 | Agent docs & rules sync | DOC1–DOC7 | — |
 | 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
 | 4 | Test hardening | T1–T5 | — (B2/B7 tests land with fixes) |

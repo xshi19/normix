@@ -25,9 +25,8 @@ b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 """
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Tuple
 
-import equinox as eqx
 import jax
 import jax.numpy as jnp
 

@@ -20,7 +20,7 @@ This is the expectation parametrization of
 """
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from typing import Callable, Union
 
 import equinox as eqx
 import jax

@@ -255,12 +255,6 @@ class MultivariateNormal(ExponentialFamily):
         z = jax.random.normal(key, shape=(n, d), dtype=jnp.float64)
         return self.mu[None, :] + z @ self.L_Sigma.T
 
-    def sample(self, key: jax.Array, shape: tuple = ()) -> jax.Array:
-        """Draw samples via an explicit JAX key.  Legacy API — prefer ``rvs``."""
-        d = self.mu.shape[0]
-        z = jax.random.normal(key, shape=(*shape, d), dtype=jnp.float64)
-        return self.mu + (z @ self.L_Sigma.T)
-
     # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------

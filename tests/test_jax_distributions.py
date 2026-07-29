@@ -730,10 +730,3 @@ class TestMultivariateNormal:
             np.array(mvn_fit.mean()), np.array(mu_true), atol=0.05)
         np.testing.assert_allclose(
             np.array(mvn_fit.cov()), np.array(cov_true), atol=0.1)
-
-    def test_sample_backward_compat(self, mvn_2d):
-        """Legacy sample(key, shape) API still works."""
-        key = jax.random.PRNGKey(0)
-        X = mvn_2d.sample(key, shape=(20,))
-        assert X.shape == (20, 2)
-        assert jnp.all(jnp.isfinite(X))

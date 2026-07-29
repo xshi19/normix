@@ -44,7 +44,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
