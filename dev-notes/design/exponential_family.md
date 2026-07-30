@@ -170,7 +170,7 @@ and are hard to override.
 ## 5. Divergences in Gauge Coordinates (DEC-1)
 
 > Decision row: `design.md` § *2026-07 review Phase 0*, DEC-1. Status:
-> decided 2026-07-20, implementation lands with roadmap item B1.
+> decided 2026-07-20; implemented with roadmap item B1 (2026-07-29).
 
 ### 5.1 The failure and its geometry
 

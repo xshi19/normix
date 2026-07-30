@@ -187,15 +187,55 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self.a = jnp.asarray(a, dtype=jnp.float64)
         self.b = jnp.asarray(b, dtype=jnp.float64)
 
-    def to_gig(self) -> "GeneralizedInverseGaussian":
+    def to_gig(self, *, boundary_eps: float = 0.0) -> "GeneralizedInverseGaussian":
         r"""Identity embedding into the GIG family.
 
         GIG is already in GIG coordinates, so this returns ``self``. It exists
         so that every subordinator family exposes a uniform ``to_gig()`` for
         the shared prior-to-posterior conjugacy map in the EM E-step (see
         :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`).
+        ``boundary_eps`` is accepted for API uniformity and ignored.
         """
+        del boundary_eps
         return self
+
+    def _divergence_eta(self):
+        r"""Degenerate-aware GIG split mirroring the :math:`\psi` branches.
+
+        At the Gamma (:math:`b\to 0`) or InverseGamma (:math:`a\to 0`) boundary
+        the possibly-infinite moment uses the closed-form subordinator split;
+        in the interior all moments are finite Bessel ratios.
+        """
+        p, a, b = self.p, self.a, self.b
+        sqrt_ab = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
+        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
+        use_gamma = use_degen & (b <= a)
+        use_invg = use_degen & (a < b)
+
+        alpha_g = jnp.maximum(p, LOG_EPS)
+        beta_g = jnp.maximum(a / 2.0, LOG_EPS)
+        E_log_g = jax.scipy.special.digamma(alpha_g) - jnp.log(beta_g)
+        E_X_g = alpha_g / beta_g
+        m_g = jnp.where(alpha_g > 1.0, beta_g / (alpha_g - 1.0), jnp.inf)
+        eta_g = jnp.array([E_log_g, 0.0, E_X_g])
+        v_g = jnp.array([0.0, 1.0, 0.0])
+
+        alpha_ig = jnp.maximum(-p, LOG_EPS)
+        beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
+        E_log_ig = jnp.log(beta_ig) - jax.scipy.special.digamma(alpha_ig)
+        E_inv_ig = alpha_ig / beta_ig
+        m_ig = jnp.where(alpha_ig > 1.0, beta_ig / (alpha_ig - 1.0), jnp.inf)
+        eta_ig = jnp.array([E_log_ig, E_inv_ig, 0.0])
+        v_ig = jnp.array([0.0, 0.0, 1.0])
+
+        eta_int = type(self)._grad_log_partition(self.natural_params())
+        m_int = jnp.zeros((), dtype=eta_int.dtype)
+        v_int = jnp.zeros_like(eta_int)
+
+        eta = jnp.where(use_gamma, eta_g, jnp.where(use_invg, eta_ig, eta_int))
+        m = jnp.where(use_gamma, m_g, jnp.where(use_invg, m_ig, m_int))
+        v = jnp.where(use_gamma, v_g, jnp.where(use_invg, v_ig, v_int))
+        return eta, m, v
 
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface

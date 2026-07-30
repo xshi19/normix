@@ -115,9 +115,9 @@ All conversions are JIT-compatible and support `jax.grad` and `jax.vmap`.
 
 Three-tier design for statistical divergences between exponential family distributions:
 
-**Tier 1** (`divergences.py`): Functional core — `squared_hellinger_from_psi(psi, θ_p, θ_q)`, `kl_divergence_from_psi(psi, grad_psi, θ_p, θ_q)`. Pure functions of callables + arrays. Maximally composable with `jax.jit`, `jax.vmap`, `jax.grad`.
+**Tier 1** (`divergences.py`): Functional core — `squared_hellinger_from_psi`, `kl_divergence_from_psi`, and the tail-split sibling `kl_divergence_from_eta(psi, θ_p, θ_q, η_fin, m, v)`. Pure functions of callables + arrays.
 
-**Tier 2** (`ExponentialFamily`): Instance methods — `model.squared_hellinger(other)`, `model.kl_divergence(other)`. Default calls Tier 1 with the class's `_log_partition_from_theta`. Subclasses may override for numerically improved variants. `NormalMixture` delegates to its joint distribution (upper bound).
+**Tier 2** (`ExponentialFamily`): Instance methods lift both operands into their divergence gauge via `_divergence_lift()` (GIG / JointGH, `boundary_eps=0`), then call Tier 1. KL sources η from `_divergence_eta() → (η_fin, m, v)` (closed forms; honest `+∞` on boundary moments). Mismatched gauges raise `TypeError`. `NormalMixture` delegates to its joint (upper bound). Rationale: `design/exponential_family.md` § 5 (DEC-1).
 
 **Tier 3** (`divergences.py`): Module convenience — `squared_hellinger(p, q)`, `kl_divergence(p, q)`. Accepts `ExponentialFamily` or `NormalMixture`, delegates to Tier 2.
 

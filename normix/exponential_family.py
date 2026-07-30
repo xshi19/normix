@@ -269,33 +269,79 @@ class ExponentialFamily(eqx.Module):
     # Divergences (Tier 2 — subclasses may override)
     # ------------------------------------------------------------------
 
+    def _divergence_lift(self) -> "ExponentialFamily":
+        r"""Return ``self`` in its divergence gauge.
+
+        The gauge is the ambient family whose :math:`\psi` is faithful on the
+        convex hull of lifted members (GIG for subordinators, JointGH for
+        joints). Default: identity.
+        """
+        return self
+
+    def _divergence_eta(self) -> tuple:
+        r"""Exact :math:`(\eta_{\mathrm{fin}}, m, v)` in gauge coordinates.
+
+        Represents :math:`\eta = \eta_{\mathrm{fin}} + m\,v` where :math:`m\ge 0`
+        is the one possibly-divergent scalar moment (may be ``inf``) and
+        :math:`v` is its structural direction in the gauge :math:`t`-layout.
+        Default: finite :math:`\eta = \nabla\psi(\theta)`, :math:`m = 0`.
+        """
+        eta = self.expectation_params()
+        return eta, jnp.zeros((), dtype=eta.dtype), jnp.zeros_like(eta)
+
+    def _divergence_pair(
+        self, other: "ExponentialFamily"
+    ) -> tuple["ExponentialFamily", "ExponentialFamily"]:
+        """Lift both operands and check gauge / dimension compatibility."""
+        lp = self._divergence_lift()
+        lq = other._divergence_lift()
+        if type(lp) is not type(lq):
+            raise TypeError(
+                f"Incompatible divergence gauges: "
+                f"{type(self).__name__} lifts to {type(lp).__name__}, "
+                f"{type(other).__name__} lifts to {type(lq).__name__}"
+            )
+        if getattr(lp, "d", None) is not None and getattr(lq, "d", None) is not None:
+            if lp.d != lq.d:
+                raise ValueError(
+                    f"Dimension mismatch for divergences: "
+                    f"{type(self).__name__} has d={lp.d}, "
+                    f"{type(other).__name__} has d={lq.d}"
+                )
+        return lp, lq
+
     def squared_hellinger(self, other: "ExponentialFamily") -> jax.Array:
         r"""Squared Hellinger distance :math:`H^2(p, q)`.
 
-        Default uses the general exponential-family formula via :math:`\psi`.
-        Subclasses may override for numerically improved variants.
+        Both operands are lifted into their divergence gauge before evaluating
+        the general exponential-family formula via the gauge :math:`\psi`.
         """
         from normix.divergences import squared_hellinger_from_psi
-        cls = type(self)
+        lp, lq = self._divergence_pair(other)
         return squared_hellinger_from_psi(
-            cls._log_partition_from_theta,
-            self.natural_params(),
-            other.natural_params(),
+            type(lp)._log_partition_from_theta,
+            lp.natural_params(),
+            lq.natural_params(),
         )
 
     def kl_divergence(self, other: "ExponentialFamily") -> jax.Array:
         r"""KL divergence :math:`D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})`.
 
-        Default uses the Bregman-divergence formula via :math:`\psi` and :math:`\nabla\psi`.
-        Subclasses may override.
+        Uses the gauge :math:`\psi` after lifting both operands, with
+        :math:`\eta_p` from the source family's closed-form tail split
+        (:meth:`_divergence_eta`) rather than :math:`\nabla\psi` at a
+        boundary :math:`\theta`.
         """
-        from normix.divergences import kl_divergence_from_psi
-        cls = type(self)
-        return kl_divergence_from_psi(
-            cls._log_partition_from_theta,
-            cls._grad_log_partition,
-            self.natural_params(),
-            other.natural_params(),
+        from normix.divergences import kl_divergence_from_eta
+        lp, lq = self._divergence_pair(other)
+        eta_fin, m, v = self._divergence_eta()
+        return kl_divergence_from_eta(
+            type(lp)._log_partition_from_theta,
+            lp.natural_params(),
+            lq.natural_params(),
+            eta_fin,
+            m,
+            v,
         )
 
     # ------------------------------------------------------------------
