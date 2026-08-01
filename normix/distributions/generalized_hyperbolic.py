@@ -74,6 +74,14 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(p=self.p, a=self.a, b=self.b)
 
+    def to_joint_generalized_hyperbolic(self, *, boundary_eps: float = 0.0):
+        """Identity: JointGH is already the divergence gauge."""
+        del boundary_eps
+        return self
+
+    def _divergence_lift(self) -> "JointGeneralizedHyperbolic":
+        return self
+
     # ------------------------------------------------------------------
     # ExponentialFamily: natural params / log partition
     # ------------------------------------------------------------------

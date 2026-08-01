@@ -142,22 +142,6 @@ class JointNormalInverseGaussian(JointNormalMixture):
         """
         return self.to_joint_generalized_hyperbolic().log_density_power(alpha)
 
-    def to_joint_generalized_hyperbolic(self):
-        r"""Exact embedding into :class:`JointGeneralizedHyperbolic`.
-
-        Lifts the InverseGaussian subordinator to GIG via
-        :meth:`InverseGaussian.to_gig` (no boundary approximation) and
-        keeps the Normal block unchanged.
-        """
-        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        gig = self.subordinator().to_gig()
-        return JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=gig.p, a=gig.a, b=gig.b,
-        )
-
-
-
 class NormalInverseGaussian(NormalMixture):
     """Marginal Normal-Inverse Gaussian distribution f(x)."""
 

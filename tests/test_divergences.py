@@ -17,8 +17,9 @@ jax.config.update("jax_enable_x64", True)
 
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
+    MultivariateNormal,
     JointVarianceGamma, VarianceGamma,
-    JointGeneralizedHyperbolic, GeneralizedHyperbolic,
+    NormalInverseGamma, NormalInverseGaussian, GeneralizedHyperbolic,
     squared_hellinger, kl_divergence,
     squared_hellinger_from_psi, kl_divergence_from_psi,
 )
@@ -353,3 +354,158 @@ class TestCombinedTransforms:
 
         g = float(grad_loss(jnp.float64(3.0)))
         assert g != 0.0
+
+
+# ===========================================================================
+# B1 / DEC-1: unconditional gauge lift (measured Phase-0 targets)
+# ===========================================================================
+
+_MU_P = jnp.array([0.1, -0.2])
+_MU_Q = jnp.array([0.9, 0.5])
+_GAMMA = jnp.array([0.3, 0.1])
+_GAMMA_Q = jnp.array([1.0, -0.5])
+_SIGMA = jnp.array([[1.0, 0.3], [0.3, 0.8]])
+
+
+class TestGaugeLiftHellinger:
+    """Regression targets from ``dev-notes/design/exponential_family.md`` §5.1."""
+
+    def test_same_family_vg_mu_direction(self):
+        vg_p = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        vg_q = VarianceGamma.from_classical(
+            mu=_MU_Q, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        h2 = float(vg_p.squared_hellinger(vg_q))
+        np.testing.assert_allclose(h2, 0.0813770940, rtol=1e-8)
+
+    def test_same_family_ninvg_gamma_direction(self):
+        p = NormalInverseGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=2.0)
+        q = NormalInverseGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA_Q, sigma=_SIGMA, alpha=3.0, beta=2.0)
+        h2 = float(p.squared_hellinger(q))
+        np.testing.assert_allclose(h2, 0.1528534803, rtol=1e-8)
+
+    def test_gamma_vs_inverse_gamma(self):
+        g = Gamma(alpha=2.0, beta=1.5)
+        ig = InverseGamma(alpha=3.0, beta=2.0)
+        h_gi = float(g.squared_hellinger(ig))
+        h_ig = float(ig.squared_hellinger(g))
+        np.testing.assert_allclose(h_gi, 0.0592459797, rtol=1e-8)
+        np.testing.assert_allclose(h_ig, h_gi, rtol=1e-12)
+
+    def test_nig_gh_cross_family_symmetric(self):
+        nig = NormalInverseGaussian.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, mu_ig=1.0, lam=2.0)
+        gig = nig.joint.subordinator().to_gig()
+        gh = GeneralizedHyperbolic.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA,
+            p=0.7, a=float(gig.a), b=float(gig.b))
+        h_ng = float(nig.squared_hellinger(gh))
+        h_gn = float(gh.squared_hellinger(nig))
+        np.testing.assert_allclose(h_ng, h_gn, rtol=1e-10)
+        # GH ψ already read any θ; that direction is the gauge truth.
+        np.testing.assert_allclose(h_ng, h_gn, atol=0.0)
+        assert h_ng > 1e-3  # must not collapse to the NIG-ψ false zero
+
+    def test_exact_embedding_zero(self):
+        nig = NormalInverseGaussian.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, mu_ig=1.0, lam=2.0)
+        gh = GeneralizedHyperbolic(
+            nig.joint.to_joint_generalized_hyperbolic())
+        np.testing.assert_allclose(
+            float(nig.squared_hellinger(gh)), 0.0, atol=1e-12)
+        np.testing.assert_allclose(
+            float(gh.squared_hellinger(nig)), 0.0, atol=1e-12)
+
+
+class TestGaugeLiftKL:
+    """Regression targets from ``dev-notes/design/exponential_family.md`` §5.3."""
+
+    def test_same_family_vg_mu_direction(self):
+        vg_p = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        vg_q = VarianceGamma.from_classical(
+            mu=_MU_Q, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        kl = float(vg_p.kl_divergence(vg_q))
+        np.testing.assert_allclose(kl, 0.3517605634, rtol=1e-8)
+
+    def test_gamma_vs_inverse_gamma(self):
+        g = Gamma(alpha=2.5, beta=1.5)
+        ig = InverseGamma(alpha=3.0, beta=2.0)
+        kl = float(g.kl_divergence(ig))
+        np.testing.assert_allclose(kl, 0.4799889676, rtol=1e-8)
+
+    def test_vg_vs_gh_both_orders(self):
+        """Cross-family KL: both orders finite, asymmetric, match gauge oracle."""
+        import jax.scipy.special as jsp
+        from normix.divergences import kl_divergence_from_eta
+
+        vg = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        gh = GeneralizedHyperbolic.from_classical(
+            mu=_MU_Q, gamma=_GAMMA, sigma=_SIGMA, p=0.7, a=2.0, b=1.0)
+        jp = vg.joint.to_joint_generalized_hyperbolic()
+        jq = gh.joint
+        alpha, beta = 3.0, 1.5
+        E_log = jsp.digamma(alpha) - jnp.log(beta)
+        E_Y = alpha / beta
+        E_inv = beta / (alpha - 1.0)
+        eta = jnp.concatenate([
+            jnp.array([E_log, E_inv, E_Y]),
+            _MU_P + _GAMMA * E_Y,
+            _MU_P * E_inv + _GAMMA,
+            (_SIGMA
+             + jnp.outer(_MU_P, _MU_P) * E_inv
+             + jnp.outer(_GAMMA, _GAMMA) * E_Y
+             + jnp.outer(_MU_P, _GAMMA)
+             + jnp.outer(_GAMMA, _MU_P)).ravel(),
+        ])
+        zeros = jnp.zeros_like(eta)
+        kl_true = float(kl_divergence_from_eta(
+            type(jp)._log_partition_from_theta,
+            jp.natural_params(), jq.natural_params(),
+            eta, jnp.array(0.0), zeros))
+        np.testing.assert_allclose(
+            float(vg.kl_divergence(gh)), kl_true, rtol=1e-8)
+        kl_fwd = float(vg.kl_divergence(gh))
+        kl_rev = float(gh.kl_divergence(vg))
+        assert jnp.isfinite(kl_fwd) and jnp.isfinite(kl_rev)
+        assert abs(kl_fwd - kl_rev) > 1e-3
+
+    def test_kl_infinite_when_chord_couples(self):
+        """VG(α ≤ 1) vs shifted-μ target: E[1/Y]=∞ couples → +∞."""
+        vg_p = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=0.8, beta=1.5)
+        vg_q = VarianceGamma.from_classical(
+            mu=_MU_Q, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=1.5)
+        assert jnp.isinf(vg_p.kl_divergence(vg_q))
+
+    def test_kl_finite_when_chord_coefficient_zero(self):
+        """Two VGs differing only in (α, β) with identical (μ, Σ): A = 0."""
+        vg_p = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=0.8, beta=1.5)
+        vg_q = VarianceGamma.from_classical(
+            mu=_MU_P, gamma=_GAMMA, sigma=_SIGMA, alpha=3.0, beta=2.0)
+        kl = float(vg_p.kl_divergence(vg_q))
+        assert jnp.isfinite(kl)
+        assert kl > 0.0
+
+
+class TestGaugeMismatch:
+    def test_mismatched_gauges_raise_type_error(self):
+        g = Gamma(alpha=2.0, beta=1.0)
+        mvn = MultivariateNormal.from_classical(
+            mu=jnp.zeros(2), sigma=jnp.eye(2))
+        with pytest.raises(TypeError, match="divergence gauge"):
+            g.squared_hellinger(mvn)
+
+    def test_dimension_mismatch_raises_value_error(self):
+        vg2 = VarianceGamma.from_classical(
+            mu=jnp.zeros(2), gamma=jnp.zeros(2), sigma=jnp.eye(2),
+            alpha=3.0, beta=1.5)
+        vg3 = VarianceGamma.from_classical(
+            mu=jnp.zeros(3), gamma=jnp.zeros(3), sigma=jnp.eye(3),
+            alpha=3.0, beta=1.5)
+        with pytest.raises(ValueError, match="[Dd]imension"):
+            vg2.squared_hellinger(vg3)

@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); implementation phases 3+ not started.**
+> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); Phase 3 in progress (B1 done 2026-07-29).**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -25,7 +25,7 @@
 
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
-| B1 | 1.1, 8.1 | Cross-family `squared_hellinger(p, q)` / `kl_divergence(p, q)` evaluate `type(p)`'s ψ at *q*'s θ; the special-case ψs reinterpret θ under their own constraint, so mismatched families return plausible wrong numbers. Measured: `H²(NIG, GH_p=0.7) = 0.074043` vs truth `0.017019` (the reverse direction is correct because GH's ψ reads any θ). **Phase-0 finding widens the bug: same-family VG/NInvG divergences are also wrong** (curved θ-embeddings; `H²(VG(μ₁), VG(μ₂)) = 0.0` vs truth `0.0814`) — see `../design/exponential_family.md` § 5.1 for the measured table and repro parameters. | Per **DEC-1 as recorded** (`../design/design.md` § *2026-07 review Phase 0*; rationale + sketch in `../design/exponential_family.md` § 5): Tier 2 lifts **both** operands **unconditionally** into their divergence gauge (GIG / JointGH, `boundary_eps=0`) via the `_divergence_lift()` hook — the review's type-mismatch trigger is superseded (it misses the same-family curved cases). KL sources η_p from closed forms via the tail-split `_divergence_eta()` hook + a Tier-1 sibling; mismatched gauges raise `TypeError`. Regression tests: cross-family symmetry (both orders equal the GH-gauge truth), the same-family VG/NInvG measured targets, exact-embedding case stays 0, Gamma-vs-InverseGamma via GIG, KL boundary/infinity semantics (finite when the infinite moment's chord coefficient A = 0). ~80–120 LOC + tests. | P1 |
+| B1 | 1.1, 8.1 | Cross-family `squared_hellinger(p, q)` / `kl_divergence(p, q)` evaluate `type(p)`'s ψ at *q*'s θ; the special-case ψs reinterpret θ under their own constraint, so mismatched families return plausible wrong numbers. Measured: `H²(NIG, GH_p=0.7) = 0.074043` vs truth `0.017019` (the reverse direction is correct because GH's ψ reads any θ). **Phase-0 finding widens the bug: same-family VG/NInvG divergences are also wrong** (curved θ-embeddings; `H²(VG(μ₁), VG(μ₂)) = 0.0` vs truth `0.0814`) — see `../design/exponential_family.md` § 5.1 for the measured table and repro parameters. | **DONE (2026-07-29).** Per **DEC-1**: unconditional `_divergence_lift()` to GIG / JointGH (`boundary_eps=0`); KL via `_divergence_eta()` + `kl_divergence_from_eta`; mismatched gauges → `TypeError`. Regression tests in `tests/test_divergences.py` (`TestGaugeLift*`). | P1 |
 | B2 | 1.2 | `renyi` value at α = 1 is right but `jax.grad` through the `jnp.where` singularity guard returns 0.0 there; truth is −V_H/2 (Gamma(2,1): −0.3225). | Taylor branch `H − V_H(α−1)/2` inside an \|1−α\| < ε window with both `jnp.where` branches NaN-free (double-where), or a `jax.custom_jvp`. Regression test: `jax.grad(dist.renyi)(1.0) ≈ -dist.varentropy()/2` (lands with T4). ~15 LOC. | P1 |
 | B3 | 1.3 | `GIG.fisher_information(backend='jax')` mixed entries H₁₂/H₁₃ are 4.5%/2.2% off at (p=0.7, a=1.4, b=0.9) — the integer-shift FD for ∂²log K_ν/∂ν∂z is documented for the Newton solver but leaks into a public API with no caveat. | Either FD the mixed term with ±`BESSEL_EPS_V` (4 extra Bessel evals, orders p±ε±1), or document the accuracy asymmetry on `fisher_information` and point to `backend='cpu'` / `jax.hessian`. Pick during implementation; interrogate review on the PR (GIG Hessian). ~25 LOC. | P2 |
 | B4 | 1.4 | `GIG.cdf`/`ppf` call `float(self.p)` to pick the degenerate-limit branch → `jax.jit(g.cdf)` raises; contradicts the broadly advertised JIT-compatibility. | `lax.cond` on the degeneracy test (both branches traceable), or document the exception on the methods and in `ARCHITECTURE.md`. The `Univariate*` mixin `cdf`/`ppf` are pure JAX and unaffected. ~30 LOC. | P2 |
@@ -172,7 +172,7 @@ DOC5 was already correct (`transaction_costs` tutorial linked). DOC7 documents
 the current joint `from_natural` contract (not the outdated 2026-04-04
 "unsupported" claim — joints gained `from_natural` in the earlier D2 work).
 
-### Phase 3 — Correctness (B1–B8)
+### Phase 3 — Correctness (B1–B8) — **IN PROGRESS**
 
 TDD per item (failing test first — all eight have crisp reproductions).
 Interrogate review on the B3 (GIG Hessian) and B5/B6 (EM fitter) PRs.
@@ -181,6 +181,11 @@ Interrogate review on the B3 (GIG Hessian) and B5/B6 (EM fitter) PRs.
 agree on step-1 convergence and return Python `bool`/`int`;
 `jax.jit(gig.cdf)` either works or the exception is documented in the
 docstring and `ARCHITECTURE.md`.
+
+| Item | Status |
+|------|--------|
+| B1 | **DONE (2026-07-29)** — gauge lift + tail-split KL |
+| B2–B8 | pending |
 
 ### Phase 4 — Test-suite hardening (T1–T5)
 

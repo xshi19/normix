@@ -119,21 +119,6 @@ class JointNormalInverseGamma(JointNormalMixture):
         return cls(mu=mu, gamma=gamma, L_Sigma=L_Sigma,
                    alpha=subordinator.alpha, beta=subordinator.beta)
 
-    def to_joint_generalized_hyperbolic(self, *, boundary_eps: float = 0.0):
-        r"""Exact embedding into :class:`JointGeneralizedHyperbolic`.
-
-        Lifts the InverseGamma subordinator to GIG via
-        :meth:`InverseGamma.to_gig` and keeps the Normal block unchanged.
-        """
-        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
-        gig = self.subordinator().to_gig(boundary_eps=boundary_eps)
-        return JointGeneralizedHyperbolic(
-            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
-            p=gig.p, a=gig.a, b=gig.b,
-        )
-
-
-
 class NormalInverseGamma(NormalMixture):
     r"""Marginal Normal-Inverse Gamma distribution :math:`f(x)`.
 

@@ -226,19 +226,31 @@ class InverseGaussian(ExponentialFamily):
         mu = jnp.sqrt(theta[1] / theta[0])   # both negative, ratio positive
         return cls(mu=mu, lam=lam)
 
-    def to_gig(self):
+    def to_gig(self, *, boundary_eps: float = 0.0):
         r"""Exact embedding into the GIG family.
 
         InverseGaussian(:math:`\mu`, :math:`\lambda`) is GIG with
         :math:`p = -1/2,\; a = \lambda/\mu^2,\; b = \lambda`. No boundary
         approximation: the embedding lands strictly inside GIG's domain.
+        ``boundary_eps`` is accepted for API uniformity with Gamma/InvGamma
+        and ignored.
         """
+        del boundary_eps
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG(
             p=jnp.full_like(self.mu, -0.5),
             a=self.lam / self.mu ** 2,
             b=self.lam,
         )
+
+    def _divergence_lift(self):
+        """Divergence gauge is GIG."""
+        return self.to_gig()
+
+    def _divergence_eta(self):
+        """Interior GIG moments (all finite)."""
+        eta = self.to_gig().expectation_params()
+        return eta, jnp.zeros((), dtype=eta.dtype), jnp.zeros_like(eta)
 
     @classmethod
     def from_expectation(

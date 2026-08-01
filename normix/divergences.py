@@ -13,11 +13,15 @@ Statistical divergences for exponential family distributions.
     D_{\\mathrm{KL}}(p \\| q) = \\psi(\\theta_q) - \\psi(\\theta_p)
     - (\\theta_q - \\theta_p)^\\top \\nabla\\psi(\\theta_p)
 
+``kl_divergence_from_eta`` is the tail-split sibling used when a boundary
+moment may be infinite (:math:`\\eta = \\eta_{\\mathrm{fin}} + m\\,v`).
+
 **Tier 3 — module convenience** (delegates to Tier 2 instance methods):
 
 ``squared_hellinger(p, q)`` and ``kl_divergence(p, q)`` accept
 :class:`~normix.exponential_family.ExponentialFamily` or
-:class:`~normix.mixtures.marginal.NormalMixture` objects.
+:class:`~normix.mixtures.marginal.NormalMixture` objects. Tier 2 lifts both
+operands into their divergence gauge before calling Tier 1.
 """
 from __future__ import annotations
 
@@ -80,6 +84,44 @@ def kl_divergence_from_psi(
     """
     eta_p = grad_psi(theta_p)
     return psi(theta_q) - psi(theta_p) - jnp.dot(theta_q - theta_p, eta_p)
+
+
+def kl_divergence_from_eta(
+    psi: Callable[[jax.Array], jax.Array],
+    theta_p: jax.Array,
+    theta_q: jax.Array,
+    eta_fin: jax.Array,
+    m: jax.Array,
+    v: jax.Array,
+) -> jax.Array:
+    r"""KL with a tail-split expectation parameter :math:`\eta = \eta_{\mathrm{fin}} + m\,v`.
+
+    .. math::
+
+        D_{\mathrm{KL}}(p \| q)
+        = \psi(\theta_q) - \psi(\theta_p)
+        - \Delta\theta^\top \eta_{\mathrm{fin}}
+        + m\,A,
+        \qquad
+        A = \max(-\Delta\theta^\top v,\, 0)
+
+    The product :math:`m A` is masked when :math:`A = 0` so that an infinite
+    moment with a zero chord coefficient stays finite (no :math:`0\cdot\infty`).
+
+    Parameters
+    ----------
+    psi : callable
+        Gauge log-partition.
+    theta_p, theta_q : jax.Array
+        Natural parameters in gauge coordinates.
+    eta_fin, m, v : jax.Array
+        Tail-split of :math:`\eta_p` (see
+        :meth:`~normix.exponential_family.ExponentialFamily._divergence_eta`).
+    """
+    dtheta = theta_q - theta_p
+    A = jnp.maximum(-jnp.dot(dtheta, v), 0.0)
+    finite = psi(theta_q) - psi(theta_p) - jnp.dot(dtheta, eta_fin)
+    return finite + jnp.where(A > 0.0, m * A, jnp.zeros((), dtype=finite.dtype))
 
 
 # ------------------------------------------------------------------

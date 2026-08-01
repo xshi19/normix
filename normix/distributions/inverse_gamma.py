@@ -162,6 +162,20 @@ class InverseGamma(ExponentialFamily):
             b=2.0 * self.beta,
         )
 
+    def _divergence_lift(self):
+        """Divergence gauge is GIG (``boundary_eps = 0``)."""
+        return self.to_gig(boundary_eps=0.0)
+
+    def _divergence_eta(self):
+        r"""GIG-coordinate split: :math:`E[X]` may be :math:`+\infty` for :math:`\alpha\le 1`."""
+        alpha, beta = self.alpha, self.beta
+        E_log = jnp.log(beta) - jax.scipy.special.digamma(alpha)
+        E_inv = alpha / beta
+        m = jnp.where(alpha > 1.0, beta / (alpha - 1.0), jnp.inf)
+        eta_fin = jnp.array([E_log, E_inv, 0.0])
+        v = jnp.array([0.0, 0.0, 1.0])
+        return eta_fin, m, v
+
     @classmethod
     def from_expectation(
         cls,

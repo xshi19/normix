@@ -102,6 +102,65 @@ class JointNormalMixture(ExponentialFamily):
         """Return the fitted subordinator distribution."""
 
     # ------------------------------------------------------------------
+    # Gauge lift / divergence η (DEC-1)
+    # ------------------------------------------------------------------
+
+    def to_joint_generalized_hyperbolic(self, *, boundary_eps: float = 0.0):
+        r"""Exact embedding into :class:`~normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic`.
+
+        Lifts the subordinator via :meth:`to_gig` and keeps the Normal block
+        (:math:`\mu, \gamma, L_\Sigma`) unchanged. ``boundary_eps = 0`` stores
+        the Gamma/InvGamma boundary exactly (required for divergence gauges).
+        """
+        from normix.distributions.generalized_hyperbolic import JointGeneralizedHyperbolic
+        gig = self.subordinator().to_gig(boundary_eps=boundary_eps)
+        return JointGeneralizedHyperbolic(
+            mu=self.mu, gamma=self.gamma, L_Sigma=self.L_Sigma,
+            p=gig.p, a=gig.a, b=gig.b,
+        )
+
+    def _divergence_lift(self) -> "JointNormalMixture":
+        """Divergence gauge is JointGH (``boundary_eps = 0``)."""
+        return self.to_joint_generalized_hyperbolic(boundary_eps=0.0)
+
+    def _divergence_eta(self):
+        r"""Assemble joint-gauge :math:`\eta` from the subordinator tail split.
+
+        Same algebra as :meth:`~normix.mixtures.marginal.NormalMixture.compute_eta_from_model`,
+        but without the EM-only :math:`\alpha`-moment floor: infinite prior
+        moments stay honest ``inf`` and are handled by
+        :func:`~normix.divergences.kl_divergence_from_eta`.
+        """
+        eta_s, m, v_s = self.subordinator()._divergence_eta()
+        mu, gamma, sigma = self.mu, self.gamma, self.sigma()
+        E_log, E_inv_fin, E_Y_fin = eta_s[0], eta_s[1], eta_s[2]
+        eta_fin = jnp.concatenate([
+            jnp.array([E_log, E_inv_fin, E_Y_fin]),
+            mu + gamma * E_Y_fin,
+            mu * E_inv_fin + gamma,
+            (sigma
+             + jnp.outer(mu, mu) * E_inv_fin
+             + jnp.outer(gamma, gamma) * E_Y_fin
+             + jnp.outer(mu, gamma)
+             + jnp.outer(gamma, mu)).ravel(),
+        ])
+        d = mu.shape[0]
+        v_inv = jnp.concatenate([
+            jnp.array([0.0, 1.0, 0.0]),
+            jnp.zeros(d),
+            mu,
+            jnp.outer(mu, mu).ravel(),
+        ])
+        v_Y = jnp.concatenate([
+            jnp.array([0.0, 0.0, 1.0]),
+            gamma,
+            jnp.zeros(d),
+            jnp.outer(gamma, gamma).ravel(),
+        ])
+        v = v_s[1] * v_inv + v_s[2] * v_Y
+        return eta_fin, m, v
+
+    # ------------------------------------------------------------------
     # Derived from subclass
     # ------------------------------------------------------------------
 

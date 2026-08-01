@@ -92,6 +92,7 @@ from normix.divergences import (
     kl_divergence,
     squared_hellinger_from_psi,
     kl_divergence_from_psi,
+    kl_divergence_from_eta,
 )
 
 __version__ = "0.2.7"  # x-release-please-version
@@ -162,4 +163,5 @@ __all__ = [
     "kl_divergence",
     "squared_hellinger_from_psi",
     "kl_divergence_from_psi",
+    "kl_divergence_from_eta",
 ]
