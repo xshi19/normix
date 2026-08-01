@@ -97,6 +97,23 @@ def test_gig_degenerate_gamma_limit_delegates():
         np.asarray(gig.ppf(qs)), np.asarray(g.ppf(qs)), rtol=1e-8, atol=1e-10)
 
 
+@pytest.mark.contract
+@pytest.mark.parametrize("p,a,b", [
+    (1.0, 2.0, 3.0),          # interior PINV path
+    (2.0, 2.0, 0.0),          # Gamma limit
+    (-2.0, 0.0, 2.0),         # InverseGamma limit
+])
+def test_gig_cdf_ppf_jittable(p, a, b):
+    """B4: jax.jit(gig.cdf/ppf) must not raise (no host float() casts)."""
+    gig = GIG(p=p, a=a, b=b)
+    x = jnp.asarray(1.0)
+    q = jnp.asarray(0.5)
+    cdf_jit = float(jax.jit(lambda g, z: g.cdf(z))(gig, x))
+    ppf_jit = float(jax.jit(lambda g, u: g.ppf(u))(gig, q))
+    np.testing.assert_allclose(cdf_jit, float(gig.cdf(x)), rtol=1e-10)
+    np.testing.assert_allclose(ppf_jit, float(gig.ppf(q)), rtol=1e-10)
+
+
 def test_gig_degenerate_invgamma_limit_delegates():
     """GIG(p<0, a≈0, b) should match InverseGamma(-p, b/2)."""
     p, a, b = -2.0, 0.0, 3.0

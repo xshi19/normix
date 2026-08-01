@@ -549,23 +549,25 @@ class TestLogPartitionTriad:
         np.testing.assert_allclose(grad_cpu, grad_jax, rtol=1e-8)
 
     def test_fisher_information_backends_agree_gig(self):
-        """GIG fisher_information backends agree on diagonal and H[1,2].
+        """GIG fisher_information jax/cpu agree, including mixed entries (B3).
 
-        The JAX backend uses integer-shift FD (Δν=1) for the mixed Bessel
-        derivative L_vz, while the CPU backend uses central FD with eps=1e-4.
-        Entries not involving L_vz (diagonal, H[1,2]) agree to rtol=1e-4.
+        JAX uses central FD (step BESSEL_EPS_V) for L_vz; CPU uses
+        FD_EPS_FISHER on ψ. Both match jax.hessian on the review point
+        (p=0.7, a=1.4, b=0.9) that previously showed 4.5%/2.2% mixed-entry
+        errors under the integer-shift approximation.
         """
         from normix import GIG
-        gig = GIG(p=1.0, a=1.0, b=1.0)
+        gig = GIG(p=0.7, a=1.4, b=0.9)
         FI_jax = np.asarray(gig.fisher_information(backend='jax'))
         FI_cpu = np.asarray(gig.fisher_information(backend='cpu'))
-        # Entries without L_vz: diagonal and H[1,2]
-        np.testing.assert_allclose(np.diag(FI_jax), np.diag(FI_cpu), rtol=1e-4)
-        np.testing.assert_allclose(FI_jax[1, 2], FI_cpu[1, 2], rtol=1e-4)
-        # Mixed entries: same sign and same order of magnitude
-        for i, j in [(0, 1), (0, 2)]:
-            assert np.sign(FI_jax[i, j]) == np.sign(FI_cpu[i, j])
-            assert abs(FI_jax[i, j]) < 5.0 * abs(FI_cpu[i, j])
+        H_ad = np.asarray(
+            jax.hessian(GIG._log_partition_from_theta)(gig.natural_params()))
+        np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-4)
+        # L_vv (H11) retains O(ε²) central-FD error vs forward-mode hessian;
+        # mixed entries (the review bug) match to ~1e-12.
+        np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-5)
+        np.testing.assert_allclose(FI_jax[0, 1], H_ad[0, 1], rtol=1e-10)
+        np.testing.assert_allclose(FI_jax[0, 2], H_ad[0, 2], rtol=1e-10)
 
     def test_expectation_params_backends_agree(self):
         """expectation_params('jax') matches ('cpu') for all distributions."""
