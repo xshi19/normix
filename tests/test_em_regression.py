@@ -365,6 +365,21 @@ class TestEMStep1Convergence:
         assert result.diverged is False
         assert result.n_iter == 1
 
+    @pytest.mark.contract
+    def test_scan_does_not_converge_after_divergence(self):
+        """Post-divergence scan padding must not set converged=True."""
+        init, X, _ = self._near_mle_setup()
+        # Loose tol so any finite padded step would otherwise look converged.
+        fitter = BatchEMFitter(
+            max_iter=5, tol=1e6, verbose=0,
+            e_step_backend="jax", m_step_backend="jax",
+        )
+        fitter._force_nonfinite_at_step = 1
+        result = fitter.fit(init, X)
+        assert result.diverged is True
+        assert result.converged is False
+        assert result.n_iter == 1
+
 
 class TestEMDivergenceGuard:
     """T7: non-finite iterate triggers diverged=True and keep-last-finite."""
