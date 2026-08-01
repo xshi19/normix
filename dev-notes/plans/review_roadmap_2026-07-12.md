@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); Phase 3 in progress (B1 done 2026-07-29).**
+> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); Phase 3 complete (B1 2026-07-29; B2–B8 2026-08-01).**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -26,13 +26,13 @@
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
 | B1 | 1.1, 8.1 | Cross-family `squared_hellinger(p, q)` / `kl_divergence(p, q)` evaluate `type(p)`'s ψ at *q*'s θ; the special-case ψs reinterpret θ under their own constraint, so mismatched families return plausible wrong numbers. Measured: `H²(NIG, GH_p=0.7) = 0.074043` vs truth `0.017019` (the reverse direction is correct because GH's ψ reads any θ). **Phase-0 finding widens the bug: same-family VG/NInvG divergences are also wrong** (curved θ-embeddings; `H²(VG(μ₁), VG(μ₂)) = 0.0` vs truth `0.0814`) — see `../design/exponential_family.md` § 5.1 for the measured table and repro parameters. | **DONE (2026-07-29).** Per **DEC-1**: unconditional `_divergence_lift()` to GIG / JointGH (`boundary_eps=0`); KL via `_divergence_eta()` + `kl_divergence_from_eta`; mismatched gauges → `TypeError`. Regression tests in `tests/test_divergences.py` (`TestGaugeLift*`). | P1 |
-| B2 | 1.2 | `renyi` value at α = 1 is right but `jax.grad` through the `jnp.where` singularity guard returns 0.0 there; truth is −V_H/2 (Gamma(2,1): −0.3225). | Taylor branch `H − V_H(α−1)/2` inside an \|1−α\| < ε window with both `jnp.where` branches NaN-free (double-where), or a `jax.custom_jvp`. Regression test: `jax.grad(dist.renyi)(1.0) ≈ -dist.varentropy()/2` (lands with T4). ~15 LOC. | P1 |
-| B3 | 1.3 | `GIG.fisher_information(backend='jax')` mixed entries H₁₂/H₁₃ are 4.5%/2.2% off at (p=0.7, a=1.4, b=0.9) — the integer-shift FD for ∂²log K_ν/∂ν∂z is documented for the Newton solver but leaks into a public API with no caveat. | Either FD the mixed term with ±`BESSEL_EPS_V` (4 extra Bessel evals, orders p±ε±1), or document the accuracy asymmetry on `fisher_information` and point to `backend='cpu'` / `jax.hessian`. Pick during implementation; interrogate review on the PR (GIG Hessian). ~25 LOC. | P2 |
-| B4 | 1.4 | `GIG.cdf`/`ppf` call `float(self.p)` to pick the degenerate-limit branch → `jax.jit(g.cdf)` raises; contradicts the broadly advertised JIT-compatibility. | `lax.cond` on the degeneracy test (both branches traceable), or document the exception on the methods and in `ARCHITECTURE.md`. The `Univariate*` mixin `cdf`/`ppf` are pure JAX and unaffected. ~30 LOC. | P2 |
-| B5 | 1.5 | `BatchEMFitter._fit_loop` refuses to converge at iteration 1 (`max_change < tol and i > 0`; `converged` requires `n_iter > 1`) while the `lax.scan` path can converge at step 1 — same fitter, two stopping semantics. | Unify; test that both paths agree on a fit that converges in one step. Interrogate review (EM fitter). ~10 LOC. | P2 |
-| B6 | 1.5 | `EMResult` type drift on the scan path: `converged` is a JAX bool array, `n_iter` an int32 array against an `int` annotation; `result.converged is True` fails. | Cast to Python `bool`/`int` at the result boundary; test both paths. ~10 LOC. | P2 |
-| B7 | 1.5 | `quantile_cmc` brackets ±5·std around the PINV ppf; if the CMC root falls outside (tiny `len(Y)`, extreme α), bisection silently returns an endpoint. | Bracket width tied to α, or an endpoint assertion. ~10 LOC + test. | P3 |
-| B8 | 1.5 | `_UnivariateNormalMixtureMixin.log_prob` on a batched `(n,)` input fails loudly but with a cryptic `solve_triangular` shape error. | Eager `ndim` check with a "use `jax.vmap`" hint. ~8 LOC + test. | P3 |
+| B2 | 1.2 | `renyi` value at α = 1 is right but `jax.grad` through the `jnp.where` singularity guard returns 0.0 there; truth is −V_H/2 (Gamma(2,1): −0.3225). | **DONE.** Taylor branch `H − V_H(α−1)/2` inside \|1−α\| < `RENYI_TAYLOR_EPS` (double-where, both branches NaN-free). Regression: `tests/test_varentropy.py::test_renyi_grad_at_one_equals_minus_half_varentropy`. | P1 |
+| B3 | 1.3 | `GIG.fisher_information(backend='jax')` mixed entries H₁₂/H₁₃ are 4.5%/2.2% off at (p=0.7, a=1.4, b=0.9) — the integer-shift FD for ∂²log K_ν/∂ν∂z is documented for the Newton solver but leaks into a public API with no caveat. | **DONE.** Central FD on `L_z` at `p±BESSEL_EPS_V` (11 Bessel evals); mixed entries match `jax.hessian` to ~1e-12. | P2 |
+| B4 | 1.4 | `GIG.cdf`/`ppf` call `float(self.p)` to pick the degenerate-limit branch → `jax.jit(g.cdf)` raises; contradicts the broadly advertised JIT-compatibility. | **DONE.** Shared `_cdf_or_ppf` with `lax.cond` on degeneracy (Gamma / InvGamma / PINV). | P2 |
+| B5 | 1.5 | `BatchEMFitter._fit_loop` refuses to converge at iteration 1 (`max_change < tol and i > 0`; `converged` requires `n_iter > 1`) while the `lax.scan` path can converge at step 1 — same fitter, two stopping semantics. | **DONE.** Loop uses the same rule as scan (tol on any finite iterate). | P2 |
+| B6 | 1.5 | `EMResult` type drift on the scan path: `converged` is a JAX bool array, `n_iter` an int32 array against an `int` annotation; `result.converged is True` fails. | **DONE.** `int`/`bool` casts at the scan result boundary. | P2 |
+| B7 | 1.5 | `quantile_cmc` brackets ±5·std around the PINV ppf; if the CMC root falls outside (tiny `len(Y)`, extreme α), bisection silently returns an endpoint. | **DONE.** Half-width `5σ/√(q(1−q))` plus up to 8 outward doublings before bisection. | P3 |
+| B8 | 1.5 | `_UnivariateNormalMixtureMixin.log_prob` on a batched `(n,)` input fails loudly but with a cryptic `solve_triangular` shape error. | **DONE.** Eager shape check with a `jax.vmap` hint. | P3 |
 
 ### Design / API consistency (D) — review §2
 
@@ -172,20 +172,25 @@ DOC5 was already correct (`transaction_costs` tutorial linked). DOC7 documents
 the current joint `from_natural` contract (not the outdated 2026-04-04
 "unsupported" claim — joints gained `from_natural` in the earlier D2 work).
 
-### Phase 3 — Correctness (B1–B8) — **IN PROGRESS**
+### Phase 3 — Correctness (B1–B8) — **DONE (2026-08-01)**
 
 TDD per item (failing test first — all eight have crisp reproductions).
 Interrogate review on the B3 (GIG Hessian) and B5/B6 (EM fitter) PRs.
 **Exit:** cross-family H² symmetric and equal to the GH-lifted truth;
 `jax.grad(renyi)` at exactly 1.0 equals −varentropy/2; loop and scan paths
 agree on step-1 convergence and return Python `bool`/`int`;
-`jax.jit(gig.cdf)` either works or the exception is documented in the
-docstring and `ARCHITECTURE.md`.
+`jax.jit(gig.cdf)` works via `lax.cond` (no host `float()` casts).
 
 | Item | Status |
 |------|--------|
 | B1 | **DONE (2026-07-29)** — gauge lift + tail-split KL |
-| B2–B8 | pending |
+| B2 | **DONE (2026-08-01)** — Rényi Taylor window + grad regression |
+| B3 | **DONE (2026-08-01)** — central-FD mixed Hessian term |
+| B4 | **DONE (2026-08-01)** — JIT-safe GIG cdf/ppf |
+| B5 | **DONE (2026-08-01)** — unified step-1 convergence |
+| B6 | **DONE (2026-08-01)** — Python `bool`/`int` on scan path |
+| B7 | **DONE (2026-08-01)** — α-aware CMC bracket + expansion |
+| B8 | **DONE (2026-08-01)** — univariate `log_prob` shape check |
 
 ### Phase 4 — Test-suite hardening (T1–T5)
 
