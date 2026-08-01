@@ -348,8 +348,8 @@ class BatchEMFitter:
             model=final_model,
             log_likelihoods=log_likelihoods,
             param_changes=param_changes,
-            n_iter=n_iter,
-            converged=converged,
+            n_iter=int(n_iter),
+            converged=bool(converged),
             elapsed_time=elapsed,
             diverged=bool(diverged),
         )
@@ -415,15 +415,13 @@ class BatchEMFitter:
                 if ll is not None:
                     prev_ll = ll
 
-            if max_change < self.tol and i > 0:
+            if max_change < self.tol:
                 break
 
         elapsed = time.perf_counter() - t_total
-        converged = (
-            not diverged
-            and bool(max_change < self.tol)
-            and n_iter > 1
-        )
+        # Same stopping rule as _fit_scan: tolerance met on any finite
+        # iterate (including step 1) counts as converged.
+        converged = not diverged and bool(max_change < self.tol)
 
         if self.verbose >= 2:
             self._print_footer(n_iter, converged, elapsed,

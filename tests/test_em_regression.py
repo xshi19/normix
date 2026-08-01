@@ -298,6 +298,60 @@ class TestEMMonotoneLL:
         assert jnp.all(dll[active] >= -1e-5)
 
 
+class TestEMStep1Convergence:
+    """B5/B6: loop and scan share step-1 stopping; EMResult uses Python types."""
+
+    @staticmethod
+    def _near_mle_setup():
+        """Data + init whose first EM step already meets tol=2e-2.
+
+        Sampling noise at the true parameters gives ~0.016 change on step 1;
+        the old loop path refused to stop there (``i > 0`` / ``n_iter > 1``).
+        """
+        true = VarianceGamma.from_classical(
+            mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
+            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
+        )
+        X = true.rvs(2000, seed=42)
+        return true, X, 2e-2
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_step1_convergence_and_python_types(self, loop):
+        init, X, tol = self._near_mle_setup()
+        if loop == "scan":
+            fitter = BatchEMFitter(
+                max_iter=20, tol=tol, verbose=0,
+                e_step_backend="jax", m_step_backend="jax",
+            )
+        else:
+            fitter = BatchEMFitter(
+                max_iter=20, tol=tol, verbose=0,
+                e_step_backend="cpu", m_step_backend="cpu",
+            )
+        result = fitter.fit(init, X)
+        assert result.converged is True
+        assert result.diverged is False
+        assert result.n_iter == 1
+        assert isinstance(result.converged, bool)
+        assert isinstance(result.n_iter, int)
+        assert isinstance(result.diverged, bool)
+
+    @pytest.mark.contract
+    def test_scan_and_loop_agree_on_step1(self):
+        init, X, tol = self._near_mle_setup()
+        scan = BatchEMFitter(
+            max_iter=20, tol=tol, verbose=0,
+            e_step_backend="jax", m_step_backend="jax",
+        ).fit(init, X)
+        loop = BatchEMFitter(
+            max_iter=20, tol=tol, verbose=0,
+            e_step_backend="cpu", m_step_backend="cpu",
+        ).fit(init, X)
+        assert scan.converged is True and loop.converged is True
+        assert scan.n_iter == loop.n_iter == 1
+
+
 class TestEMDivergenceGuard:
     """T7: non-finite iterate triggers diverged=True and keep-last-finite."""
 
