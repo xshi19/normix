@@ -766,8 +766,16 @@ class _UnivariateNormalMixtureMixin:
         return super().rvs(n, seed)[:, 0]
 
     def log_prob(self, x: jax.Array) -> jax.Array:
-        r"""Marginal :math:`\log f(x)` for a scalar (or ``(1,)``) input."""
+        r"""Marginal :math:`\log f(x)` for a scalar (or ``(1,)``) input.
+
+        Batch a length-:math:`n` vector with ``jax.vmap(dist.log_prob)``.
+        """
         x = jnp.asarray(x, dtype=jnp.float64)
+        if x.ndim > 1 or (x.ndim == 1 and x.shape[0] > 1):
+            raise ValueError(
+                f"{type(self).__name__}.log_prob expects a scalar or shape "
+                f"(1,); got shape {tuple(x.shape)}. Batch via jax.vmap."
+            )
         return super().log_prob(jnp.atleast_1d(x))
 
     def pdf(self, x: jax.Array) -> jax.Array:
