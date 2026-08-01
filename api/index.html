@@ -474,6 +474,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.divergences">Divergences</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.squared_hellinger_from_psi"><code class="docutils literal notranslate"><span class="pre">squared_hellinger_from_psi()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence_from_psi"><code class="docutils literal notranslate"><span class="pre">kl_divergence_from_psi()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence_from_eta"><code class="docutils literal notranslate"><span class="pre">kl_divergence_from_eta()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">squared_hellinger()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence"><code class="docutils literal notranslate"><span class="pre">kl_divergence()</span></code></a></li>
 </ul>
@@ -765,8 +766,8 @@ first-order expansion <span class="math notranslate nohighlight">\(H_\alpha = H 
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.squared_hellinger">
 <span class="sig-name descname"><span class="pre">squared_hellinger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.squared_hellinger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.squared_hellinger" title="Link to this definition">#</a></dt>
 <dd><p>Squared Hellinger distance <span class="math notranslate nohighlight">\(H^2(p, q)\)</span>.</p>
-<p>Default uses the general exponential-family formula via <span class="math notranslate nohighlight">\(\psi\)</span>.
-Subclasses may override for numerically improved variants.</p>
+<p>Both operands are lifted into their divergence gauge before evaluating
+the general exponential-family formula via the gauge <span class="math notranslate nohighlight">\(\psi\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a>)</p>
@@ -781,8 +782,10 @@ Subclasses may override for numerically improved variants.</p>
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.kl_divergence">
 <span class="sig-name descname"><span class="pre">kl_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.kl_divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.kl_divergence" title="Link to this definition">#</a></dt>
 <dd><p>KL divergence <span class="math notranslate nohighlight">\(D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})\)</span>.</p>
-<p>Default uses the Bregman-divergence formula via <span class="math notranslate nohighlight">\(\psi\)</span> and <span class="math notranslate nohighlight">\(\nabla\psi\)</span>.
-Subclasses may override.</p>
+<p>Uses the gauge <span class="math notranslate nohighlight">\(\psi\)</span> after lifting both operands, with
+<span class="math notranslate nohighlight">\(\eta_p\)</span> from the source family’s closed-form tail split
+(<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>) rather than <span class="math notranslate nohighlight">\(\nabla\psi\)</span> at a
+boundary <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a>)</p>
@@ -923,10 +926,13 @@ an initial model. For distributions with closed-form <code class="docutils liter
 <div class="math notranslate nohighlight">
 \[D_{\mathrm{KL}}(p \| q) = \psi(\theta_q) - \psi(\theta_p)
 - (\theta_q - \theta_p)^\top \nabla\psi(\theta_p)\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">kl_divergence_from_eta</span></code> is the tail-split sibling used when a boundary
+moment may be infinite (<span class="math notranslate nohighlight">\(\eta = \eta_{\mathrm{fin}} + m\,v\)</span>).</p>
 <p><strong>Tier 3 — module convenience</strong> (delegates to Tier 2 instance methods):</p>
 <p><code class="docutils literal notranslate"><span class="pre">squared_hellinger(p,</span> <span class="pre">q)</span></code> and <code class="docutils literal notranslate"><span class="pre">kl_divergence(p,</span> <span class="pre">q)</span></code> accept
 <a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a> or
-<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> objects.</p>
+<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> objects. Tier 2 lifts both
+operands into their divergence gauge before calling Tier 1.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.divergences.squared_hellinger_from_psi">
 <span class="sig-prename descclassname"><span class="pre">normix.divergences.</span></span><span class="sig-name descname"><span class="pre">squared_hellinger_from_psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/divergences.html#squared_hellinger_from_psi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.divergences.squared_hellinger_from_psi" title="Link to this definition">#</a></dt>
@@ -962,6 +968,39 @@ an initial model. For distributions with closed-form <code class="docutils liter
 <li><p><strong>grad_psi</strong> (<em>callable</em>) – Gradient <span class="math notranslate nohighlight">\(\nabla\psi(\theta)\)</span>.</p></li>
 <li><p><strong>theta_p</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameter vectors.</p></li>
 <li><p><strong>theta_q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameter vectors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="normix.divergences.kl_divergence_from_eta">
+<span class="sig-prename descclassname"><span class="pre">normix.divergences.</span></span><span class="sig-name descname"><span class="pre">kl_divergence_from_eta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_fin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/divergences.html#kl_divergence_from_eta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.divergences.kl_divergence_from_eta" title="Link to this definition">#</a></dt>
+<dd><p>KL with a tail-split expectation parameter <span class="math notranslate nohighlight">\(\eta = \eta_{\mathrm{fin}} + m\,v\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[D_{\mathrm{KL}}(p \| q)
+= \psi(\theta_q) - \psi(\theta_p)
+- \Delta\theta^\top \eta_{\mathrm{fin}}
++ m\,A,
+\qquad
+A = \max(-\Delta\theta^\top v,\, 0)\]</div>
+<p>The product <span class="math notranslate nohighlight">\(m A\)</span> is masked when <span class="math notranslate nohighlight">\(A = 0\)</span> so that an infinite
+moment with a zero chord coefficient stays finite (no <span class="math notranslate nohighlight">\(0\cdot\infty\)</span>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>psi</strong> (<em>callable</em>) – Gauge log-partition.</p></li>
+<li><p><strong>theta_p</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameters in gauge coordinates.</p></li>
+<li><p><strong>theta_q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameters in gauge coordinates.</p></li>
+<li><p><strong>eta_fin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
+<li><p><strong>v</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1097,6 +1136,7 @@ the joint distributions.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.divergences">Divergences</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.squared_hellinger_from_psi"><code class="docutils literal notranslate"><span class="pre">squared_hellinger_from_psi()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence_from_psi"><code class="docutils literal notranslate"><span class="pre">kl_divergence_from_psi()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence_from_eta"><code class="docutils literal notranslate"><span class="pre">kl_divergence_from_eta()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.squared_hellinger"><code class="docutils literal notranslate"><span class="pre">squared_hellinger()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.divergences.kl_divergence"><code class="docutils literal notranslate"><span class="pre">kl_divergence()</span></code></a></li>
 </ul>

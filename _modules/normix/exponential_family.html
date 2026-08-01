@@ -716,20 +716,61 @@
     <span class="c1"># Divergences (Tier 2 — subclasses may override)</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_lift</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return ``self`` in its divergence gauge.</span>
+
+<span class="sd">        The gauge is the ambient family whose :math:`\psi` is faithful on the</span>
+<span class="sd">        convex hull of lifted members (GIG for subordinators, JointGH for</span>
+<span class="sd">        joints). Default: identity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact :math:`(\eta_{\mathrm{fin}}, m, v)` in gauge coordinates.</span>
+
+<span class="sd">        Represents :math:`\eta = \eta_{\mathrm{fin}} + m\,v` where :math:`m\ge 0`</span>
+<span class="sd">        is the one possibly-divergent scalar moment (may be ``inf``) and</span>
+<span class="sd">        :math:`v` is its structural direction in the gauge :math:`t`-layout.</span>
+<span class="sd">        Default: finite :math:`\eta = \nabla\psi(\theta)`, :math:`m = 0`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">eta</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_pair</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;ExponentialFamily&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">,</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lift both operands and check gauge / dimension compatibility.&quot;&quot;&quot;</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_divergence_lift</span><span class="p">()</span>
+        <span class="n">lq</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_divergence_lift</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">lp</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">lq</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Incompatible divergence gauges: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> lifts to </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">lp</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> lifts to </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">lq</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">lq</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lp</span><span class="o">.</span><span class="n">d</span> <span class="o">!=</span> <span class="n">lq</span><span class="o">.</span><span class="n">d</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Dimension mismatch for divergences: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has d=</span><span class="si">{</span><span class="n">lp</span><span class="o">.</span><span class="n">d</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has d=</span><span class="si">{</span><span class="n">lq</span><span class="o">.</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">lp</span><span class="p">,</span> <span class="n">lq</span>
+
 <div class="viewcode-block" id="ExponentialFamily.squared_hellinger">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.squared_hellinger">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">squared_hellinger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Squared Hellinger distance :math:`H^2(p, q)`.</span>
 
-<span class="sd">        Default uses the general exponential-family formula via :math:`\psi`.</span>
-<span class="sd">        Subclasses may override for numerically improved variants.</span>
+<span class="sd">        Both operands are lifted into their divergence gauge before evaluating</span>
+<span class="sd">        the general exponential-family formula via the gauge :math:`\psi`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.divergences</span><span class="w"> </span><span class="kn">import</span> <span class="n">squared_hellinger_from_psi</span>
-        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lp</span><span class="p">,</span> <span class="n">lq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_divergence_pair</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">squared_hellinger_from_psi</span><span class="p">(</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
-            <span class="n">other</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">lp</span><span class="p">)</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
+            <span class="n">lp</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="n">lq</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
         <span class="p">)</span></div>
 
 
@@ -738,16 +779,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;ExponentialFamily&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL divergence :math:`D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})`.</span>
 
-<span class="sd">        Default uses the Bregman-divergence formula via :math:`\psi` and :math:`\nabla\psi`.</span>
-<span class="sd">        Subclasses may override.</span>
+<span class="sd">        Uses the gauge :math:`\psi` after lifting both operands, with</span>
+<span class="sd">        :math:`\eta_p` from the source family&#39;s closed-form tail split</span>
+<span class="sd">        (:meth:`_divergence_eta`) rather than :math:`\nabla\psi` at a</span>
+<span class="sd">        boundary :math:`\theta`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.divergences</span><span class="w"> </span><span class="kn">import</span> <span class="n">kl_divergence_from_psi</span>
-        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">kl_divergence_from_psi</span><span class="p">(</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
-            <span class="n">other</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.divergences</span><span class="w"> </span><span class="kn">import</span> <span class="n">kl_divergence_from_eta</span>
+        <span class="n">lp</span><span class="p">,</span> <span class="n">lq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_divergence_pair</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="n">eta_fin</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_divergence_eta</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">kl_divergence_from_eta</span><span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">lp</span><span class="p">)</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>
+            <span class="n">lp</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="n">lq</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
+            <span class="n">eta_fin</span><span class="p">,</span>
+            <span class="n">m</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

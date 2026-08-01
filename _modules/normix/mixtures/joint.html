@@ -501,6 +501,68 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Gauge lift / divergence η (DEC-1)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="JointNormalMixture.to_joint_generalized_hyperbolic">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_joint_generalized_hyperbolic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">boundary_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exact embedding into :class:`~normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic`.</span>
+
+<span class="sd">        Lifts the subordinator via :meth:`to_gig` and keeps the Normal block</span>
+<span class="sd">        (:math:`\mu, \gamma, L_\Sigma`) unchanged. ``boundary_eps = 0`` stores</span>
+<span class="sd">        the Gamma/InvGamma boundary exactly (required for divergence gauges).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_hyperbolic</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointGeneralizedHyperbolic</span>
+        <span class="n">gig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gig</span><span class="p">(</span><span class="n">boundary_eps</span><span class="o">=</span><span class="n">boundary_eps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">gig</span><span class="o">.</span><span class="n">b</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_lift</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;JointNormalMixture&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Divergence gauge is JointGH (``boundary_eps = 0``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_joint_generalized_hyperbolic</span><span class="p">(</span><span class="n">boundary_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Assemble joint-gauge :math:`\eta` from the subordinator tail split.</span>
+
+<span class="sd">        Same algebra as :meth:`~normix.mixtures.marginal.NormalMixture.compute_eta_from_model`,</span>
+<span class="sd">        but without the EM-only :math:`\alpha`-moment floor: infinite prior</span>
+<span class="sd">        moments stay honest ``inf`` and are handled by</span>
+<span class="sd">        :func:`~normix.divergences.kl_divergence_from_eta`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eta_s</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">_divergence_eta</span><span class="p">()</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
+        <span class="n">E_log</span><span class="p">,</span> <span class="n">E_inv_fin</span><span class="p">,</span> <span class="n">E_Y_fin</span> <span class="o">=</span> <span class="n">eta_s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta_s</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta_s</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">eta_fin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log</span><span class="p">,</span> <span class="n">E_inv_fin</span><span class="p">,</span> <span class="n">E_Y_fin</span><span class="p">]),</span>
+            <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y_fin</span><span class="p">,</span>
+            <span class="n">mu</span> <span class="o">*</span> <span class="n">E_inv_fin</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">sigma</span>
+             <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_fin</span>
+             <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y_fin</span>
+             <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+             <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+        <span class="p">])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">v_inv</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
+            <span class="n">mu</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+        <span class="p">])</span>
+        <span class="n">v_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>
+            <span class="n">gamma</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+        <span class="p">])</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v_s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">v_inv</span> <span class="o">+</span> <span class="n">v_s</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">v_Y</span>
+        <span class="k">return</span> <span class="n">eta_fin</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Derived from subclass</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 

@@ -446,6 +446,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.gamma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.to_joint_generalized_hyperbolic()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>
@@ -637,6 +638,20 @@ Subordinator parameters defined by concrete subclasses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic">
+<span class="sig-name descname"><span class="pre">to_joint_generalized_hyperbolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.to_joint_generalized_hyperbolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic" title="Link to this definition">#</a></dt>
+<dd><p>Exact embedding into <a class="reference internal" href="distributions.html#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic</span></code></a>.</p>
+<p>Lifts the subordinator via <code class="xref py py-meth docutils literal notranslate"><span class="pre">to_gig()</span></code> and keeps the Normal block
+(<span class="math notranslate nohighlight">\(\mu, \gamma, L_\Sigma\)</span>) unchanged. <code class="docutils literal notranslate"><span class="pre">boundary_eps</span> <span class="pre">=</span> <span class="pre">0</span></code> stores
+the Gamma/InvGamma boundary exactly (required for divergence gauges).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1824,6 +1839,7 @@ narrow (one storage form per family).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.gamma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.gamma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.to_joint_generalized_hyperbolic()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>

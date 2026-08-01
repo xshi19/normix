@@ -407,11 +407,15 @@
 <span class="sd">    D_{\\mathrm{KL}}(p \\| q) = \\psi(\\theta_q) - \\psi(\\theta_p)</span>
 <span class="sd">    - (\\theta_q - \\theta_p)^\\top \\nabla\\psi(\\theta_p)</span>
 
+<span class="sd">``kl_divergence_from_eta`` is the tail-split sibling used when a boundary</span>
+<span class="sd">moment may be infinite (:math:`\\eta = \\eta_{\\mathrm{fin}} + m\\,v`).</span>
+
 <span class="sd">**Tier 3 — module convenience** (delegates to Tier 2 instance methods):</span>
 
 <span class="sd">``squared_hellinger(p, q)`` and ``kl_divergence(p, q)`` accept</span>
 <span class="sd">:class:`~normix.exponential_family.ExponentialFamily` or</span>
-<span class="sd">:class:`~normix.mixtures.marginal.NormalMixture` objects.</span>
+<span class="sd">:class:`~normix.mixtures.marginal.NormalMixture` objects. Tier 2 lifts both</span>
+<span class="sd">operands into their divergence gauge before calling Tier 1.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -479,6 +483,47 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">eta_p</span> <span class="o">=</span> <span class="n">grad_psi</span><span class="p">(</span><span class="n">theta_p</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">psi</span><span class="p">(</span><span class="n">theta_q</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span><span class="p">(</span><span class="n">theta_p</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta_q</span> <span class="o">-</span> <span class="n">theta_p</span><span class="p">,</span> <span class="n">eta_p</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="kl_divergence_from_eta">
+<a class="viewcode-back" href="../../api/index.html#normix.divergences.kl_divergence_from_eta">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence_from_eta</span><span class="p">(</span>
+    <span class="n">psi</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="n">theta_p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">theta_q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">eta_fin</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">m</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;KL with a tail-split expectation parameter :math:`\eta = \eta_{\mathrm{fin}} + m\,v`.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        D_{\mathrm{KL}}(p \| q)</span>
+<span class="sd">        = \psi(\theta_q) - \psi(\theta_p)</span>
+<span class="sd">        - \Delta\theta^\top \eta_{\mathrm{fin}}</span>
+<span class="sd">        + m\,A,</span>
+<span class="sd">        \qquad</span>
+<span class="sd">        A = \max(-\Delta\theta^\top v,\, 0)</span>
+
+<span class="sd">    The product :math:`m A` is masked when :math:`A = 0` so that an infinite</span>
+<span class="sd">    moment with a zero chord coefficient stays finite (no :math:`0\cdot\infty`).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    psi : callable</span>
+<span class="sd">        Gauge log-partition.</span>
+<span class="sd">    theta_p, theta_q : jax.Array</span>
+<span class="sd">        Natural parameters in gauge coordinates.</span>
+<span class="sd">    eta_fin, m, v : jax.Array</span>
+<span class="sd">        Tail-split of :math:`\eta_p` (see</span>
+<span class="sd">        :meth:`~normix.exponential_family.ExponentialFamily._divergence_eta`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dtheta</span> <span class="o">=</span> <span class="n">theta_q</span> <span class="o">-</span> <span class="n">theta_p</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">dtheta</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">psi</span><span class="p">(</span><span class="n">theta_q</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span><span class="p">(</span><span class="n">theta_p</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">dtheta</span><span class="p">,</span> <span class="n">eta_fin</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">finite</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">A</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">m</span> <span class="o">*</span> <span class="n">A</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">finite</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span></div>
 
 
 
