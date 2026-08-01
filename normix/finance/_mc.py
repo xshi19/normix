@@ -88,17 +88,38 @@ def quantile_cmc(
     q: float | jax.Array,
     Y: jax.Array,
     n_bisect: int = 60,
+    n_expand: int = 8,
 ) -> jax.Array:
     r"""Solve :math:`\hat F(x_q) = q` by bisection on the CMC CDF.
 
     Returns the :math:`q`-quantile :math:`x_q` of the portfolio return.
-    The bracket is centred on the PINV quantile
-    :math:`F^{-1}(q)` with width :math:`\pm 5\sigma`.
+    The initial bracket is centred on the PINV quantile
+    :math:`F^{-1}(q)` with half-width :math:`5\sigma / \sqrt{q(1-q)}`
+    (wider for extreme tails). If the CMC root still lies outside — e.g.
+    tiny ``len(Y)`` with atypical draws — the bracket is doubled outward
+    up to ``n_expand`` times before bisection.
     """
+    q = jnp.asarray(q, dtype=jnp.float64)
+    mu = univariate._mu_scalar
+    gamma = univariate._gamma_scalar
+    sigma = univariate._sigma_scalar
     x_seed = univariate.ppf(q)
-    half_width = 5.0 * univariate.std()
+    q_tail = jnp.minimum(q, 1.0 - q)
+    half_width = 5.0 * univariate.std() / jnp.sqrt(
+        jnp.clip(q_tail, 1e-12, 0.5))
+    lo = x_seed - half_width
+    hi = x_seed + half_width
+
+    def expand(_, bracket):
+        lo_, hi_ = bracket
+        F_lo = cdf_cmc_raw(lo_, mu, gamma, sigma, Y)
+        F_hi = cdf_cmc_raw(hi_, mu, gamma, sigma, Y)
+        width = hi_ - lo_
+        lo_new = jnp.where(F_lo > q, lo_ - width, lo_)
+        hi_new = jnp.where(F_hi < q, hi_ + width, hi_)
+        return (lo_new, hi_new)
+
+    lo, hi = jax.lax.fori_loop(0, n_expand, expand, (lo, hi))
     return quantile_cmc_raw(
-        q, univariate._mu_scalar, univariate._gamma_scalar,
-        univariate._sigma_scalar, Y,
-        x_seed - half_width, x_seed + half_width, n_bisect,
+        q, mu, gamma, sigma, Y, lo, hi, n_bisect,
     )
