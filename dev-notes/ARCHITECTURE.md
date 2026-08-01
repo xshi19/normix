@@ -261,6 +261,7 @@ from there. Never define magic numbers locally in distribution files.
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
+| `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
 
 ## GIG η→θ Optimization

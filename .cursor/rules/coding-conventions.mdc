@@ -140,6 +140,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | `TINY` | `1e-300` | Smallest positive floor for numpy-side log (prevents exact zero) |
 | `BESSEL_EPS_V` | `1e-5` | FD step for Bessel order derivative ∂log K_v/∂v |
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for Gamma/InverseGamma limit in GIG |
+| `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping for Newton Hessian |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ during warm-start initialisation |
 | `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |

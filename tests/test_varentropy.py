@@ -102,6 +102,25 @@ def test_varentropy_is_minus_twice_renyi_slope(dist):
     np.testing.assert_allclose(-2.0 * slope, float(dist.varentropy()), rtol=1e-3)
 
 
+@pytest.mark.contract
+@pytest.mark.parametrize("dist, expected_grad", [
+    # Review §1.2: Gamma(2,1) → V_H ≈ 0.6449 → H_α'(1) = -V_H/2 ≈ -0.3225
+    (Gamma(alpha=2.0, beta=1.0), -0.32246703342411326),
+    (Gamma(alpha=2.0, beta=3.0), None),
+    (GIG(p=-0.5, a=2.0, b=3.0), None),
+])
+def test_renyi_grad_at_one_equals_minus_half_varentropy(dist, expected_grad):
+    """B2: jax.grad(renyi) at exactly α=1 must be −V_H/2, not 0."""
+    grad = float(jax.grad(dist.renyi)(1.0))
+    truth = float(-dist.varentropy() / 2.0)
+    np.testing.assert_allclose(grad, truth, rtol=1e-8)
+    if expected_grad is not None:
+        np.testing.assert_allclose(grad, expected_grad, rtol=1e-10)
+    # Value at α=1 remains Shannon entropy
+    np.testing.assert_allclose(
+        float(dist.renyi(1.0)), float(dist.entropy()), rtol=1e-10)
+
+
 # ---------------------------------------------------------------------------
 # Delegation consistency for embedded special cases
 # ---------------------------------------------------------------------------

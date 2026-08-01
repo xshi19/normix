@@ -42,6 +42,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.utils.constants import RENYI_TAYLOR_EPS
 
 
 class ExponentialFamily(eqx.Module):
@@ -223,9 +224,7 @@ class ExponentialFamily(eqx.Module):
         Obtained by differentiating :meth:`log_density_power` twice. For
         constant base measure this is the Fisher quadratic form
         :math:`\theta^\top I(\theta)\,\theta`. The autodiff route is used
-        deliberately: it flows through the accurate ``log_kv`` custom JVP,
-        whereas the analytical GIG Hessian carries a coarser
-        mixed-derivative approximation tuned for the Newton solver.
+        deliberately: it flows through the accurate ``log_kv`` custom JVP.
         """
         one = jnp.asarray(1.0, dtype=jnp.float64)
         return jax.grad(jax.grad(self.log_density_power))(one)
@@ -237,13 +236,21 @@ class ExponentialFamily(eqx.Module):
         is the removable-singularity limit, the Shannon :meth:`entropy`; the
         first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
         + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.
+
+        Inside :math:`|1-\alpha| <` ``RENYI_TAYLOR_EPS`` the Taylor branch is
+        used so both the value and :func:`jax.grad` are correct at
+        :math:`\alpha = 1` (a bare :func:`jnp.where` singularity guard makes
+        the gradient identically zero there).
         """
         alpha = jnp.asarray(alpha, dtype=jnp.float64)
-        one_minus = 1.0 - alpha
-        safe = jnp.where(one_minus == 0.0, 1.0, one_minus)
-        return jnp.where(one_minus == 0.0,
-                         self.entropy(),
-                         self.log_density_power(alpha) / safe)
+        delta = alpha - 1.0
+        near = jnp.abs(delta) < RENYI_TAYLOR_EPS
+        # Both branches NaN-free: away from 1 use R(α)/(1-α); near 1 the
+        # denominator is replaced by 1 so the unused exact branch stays 0.
+        safe = jnp.where(near, jnp.ones_like(delta), -delta)
+        exact = self.log_density_power(alpha) / safe
+        taylor = self.entropy() - 0.5 * self.varentropy() * delta
+        return jnp.where(near, taylor, exact)
 
     def mean(self) -> jax.Array:
         """E[X]. Subclasses should override with analytical formulas."""
