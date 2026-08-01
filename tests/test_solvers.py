@@ -510,24 +510,17 @@ class TestLogPartitionTriad:
         np.testing.assert_allclose(H_analytical, H_jax, rtol=1e-7)
 
     def test_gig_hessian_matches_fd(self):
-        """GIG analytical Hessian vs finite differences on CPU log-partition.
-
-        The mixed derivative H[0,1], H[0,2] uses integer-shift FD (Δν=1),
-        which may differ from the reference FD by ~10%. Diagonal entries and
-        H[1,2] use exact z-recurrences and should agree to rtol=1e-4.
-        """
+        """GIG analytical Hessian vs CPU FD / jax.hessian (B3 mixed-term fix)."""
         from normix import GIG
-        gig = GIG(p=1.0, a=1.0, b=1.0)
-        theta = np.asarray(gig.natural_params(), dtype=np.float64)
-        H_analytical = np.asarray(GIG._hessian_log_partition(jnp.array(theta)))
-        H_fd = np.asarray(GIG._hessian_log_partition_cpu(theta))
-        # Diagonal and H[1,2] (no L_vz): exact Bessel recurrences, tight tolerance
-        np.testing.assert_allclose(np.diag(H_analytical), np.diag(H_fd), rtol=1e-4)
-        np.testing.assert_allclose(H_analytical[1, 2], H_fd[1, 2], rtol=1e-4)
-        # H[0,1] and H[0,2] involve integer-shift L_vz; same sign and same order
-        assert np.sign(H_analytical[0, 1]) == np.sign(H_fd[0, 1])
-        assert np.sign(H_analytical[0, 2]) == np.sign(H_fd[0, 2])
-        assert abs(H_analytical[0, 1]) < 5.0 * abs(H_fd[0, 1])
+        gig = GIG(p=0.7, a=1.4, b=0.9)
+        theta = gig.natural_params()
+        H_analytical = np.asarray(GIG._hessian_log_partition(theta))
+        H_fd = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
+        H_ad = np.asarray(jax.hessian(GIG._log_partition_from_theta)(theta))
+        np.testing.assert_allclose(H_analytical, H_fd, rtol=1e-4)
+        np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-5)
+        np.testing.assert_allclose(H_analytical[0, 1], H_ad[0, 1], rtol=1e-10)
+        np.testing.assert_allclose(H_analytical[0, 2], H_ad[0, 2], rtol=1e-10)
 
     def test_gig_hessian_finite_and_symmetric(self):
         """GIG analytical Hessian should be finite and symmetric."""

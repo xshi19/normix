@@ -302,7 +302,9 @@ class BatchEMFitter:
             finite = jnp.isfinite(max_change)
             done = converged | diverged
             conv_new = finite & (max_change < self.tol)
-            diverged_new = diverged | ~finite
+            # Freeze divergence after a prior stop so post-convergence
+            # scan steps cannot set diverged=True on an already-accepted model.
+            diverged_new = diverged | (~finite & ~done)
             keep_old = done | ~finite
             mdl_out = jax.tree.map(
                 lambda new, old: jnp.where(keep_old, old, new), mdl_new, mdl)

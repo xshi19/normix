@@ -348,12 +348,15 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         The mixed derivative :math:`\partial^2\log K_\nu/\partial\nu\partial z`
         uses :math:`L_z` at orders :math:`p\pm\varepsilon` (four extra Bessel
-        evals at :math:`p\pm\varepsilon\pm 1`), matching ``jax.hessian`` /
-        ``backend='cpu'`` to ~1e-11 relative on the mixed Fisher entries.
+        evals at :math:`p\pm\varepsilon\pm 1`). At moderate :math:`z` this
+        matches ``jax.hessian`` to ~1e-11 on the mixed Fisher entries (the
+        integer-shift FD it replaces was ~2–4.5% off). Accuracy degrades
+        for very large :math:`z` or when :math:`p\pm\varepsilon` straddles a
+        ``log_kv`` regime seam.
 
-        Note: :math:`H_\theta` may still have small negative eigenvalues near
-        degeneracy; the Newton solver applies ``HESSIAN_DAMPING`` before
-        solving so convergence is not affected.
+        Note: :math:`H_\theta` may have small negative eigenvalues (from the
+        :math:`L_{vv}` FD or near degeneracy); the Newton solver applies
+        ``HESSIAN_DAMPING`` before solving.
 
         Valid in the non-degenerate regime (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``).
         """

@@ -237,20 +237,23 @@ class ExponentialFamily(eqx.Module):
         first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
         + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.
 
-        Inside :math:`|1-\alpha| <` ``RENYI_TAYLOR_EPS`` the Taylor branch is
-        used so both the value and :func:`jax.grad` are correct at
-        :math:`\alpha = 1` (a bare :func:`jnp.where` singularity guard makes
-        the gradient identically zero there).
+        Inside :math:`|1-\alpha| <` ``RENYI_TAYLOR_EPS`` a Taylor branch is
+        selected via :func:`jax.lax.cond` so :func:`jax.grad` at
+        :math:`\alpha = 1` equals :math:`-V_H/2` (a bare :func:`jnp.where`
+        singularity guard makes that gradient identically zero). ``lax.cond``
+        avoids evaluating the varentropy branch away from :math:`\alpha = 1`.
         """
         alpha = jnp.asarray(alpha, dtype=jnp.float64)
         delta = alpha - 1.0
         near = jnp.abs(delta) < RENYI_TAYLOR_EPS
-        # Both branches NaN-free: away from 1 use R(α)/(1-α); near 1 the
-        # denominator is replaced by 1 so the unused exact branch stays 0.
-        safe = jnp.where(near, jnp.ones_like(delta), -delta)
-        exact = self.log_density_power(alpha) / safe
-        taylor = self.entropy() - 0.5 * self.varentropy() * delta
-        return jnp.where(near, taylor, exact)
+
+        def _taylor(_: jax.Array) -> jax.Array:
+            return self.entropy() - 0.5 * self.varentropy() * delta
+
+        def _exact(_: jax.Array) -> jax.Array:
+            return self.log_density_power(alpha) / (1.0 - alpha)
+
+        return jax.lax.cond(near, _taylor, _exact, alpha)
 
     def mean(self) -> jax.Array:
         """E[X]. Subclasses should override with analytical formulas."""

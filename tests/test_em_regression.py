@@ -351,6 +351,20 @@ class TestEMStep1Convergence:
         assert scan.converged is True and loop.converged is True
         assert scan.n_iter == loop.n_iter == 1
 
+    @pytest.mark.contract
+    def test_scan_does_not_diverge_after_convergence(self):
+        """Post-convergence scan steps must not set diverged on an accepted model."""
+        init, X, tol = self._near_mle_setup()
+        fitter = BatchEMFitter(
+            max_iter=20, tol=tol, verbose=0,
+            e_step_backend="jax", m_step_backend="jax",
+        )
+        fitter._force_nonfinite_at_step = 2
+        result = fitter.fit(init, X)
+        assert result.converged is True
+        assert result.diverged is False
+        assert result.n_iter == 1
+
 
 class TestEMDivergenceGuard:
     """T7: non-finite iterate triggers diverged=True and keep-last-finite."""
