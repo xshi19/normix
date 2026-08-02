@@ -79,7 +79,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 |---|---|---|---|---|
 | `_log_partition_from_theta` | ✓ | ✓ | ✓ | ✓ |
 | `_grad_log_partition` | analytical | analytical | analytical | inherits (`jax.grad`) |
-| `_hessian_log_partition` | analytical | analytical | analytical | analytical (7-Bessel) |
+| `_hessian_log_partition` | analytical | analytical | analytical | analytical (11-Bessel) |
 | `_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
 | `_grad_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
 | `_hessian_log_partition_cpu` | inherits | inherits | inherits | central FD on CPU ψ |
@@ -261,6 +261,7 @@ from there. Never define magic numbers locally in distribution files.
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
+| `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
 
 ## GIG η→θ Optimization
@@ -274,7 +275,7 @@ $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s
 
 **Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
 - `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
-- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (7-Bessel analytical Hessian). The warm-started hot path is routed through a module-level `_gig_jax_newton_jit` produced by `make_jit_newton_solver` so all warm-started GIG solves share one cached XLA executable.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (11-Bessel analytical Hessian). The warm-started hot path is routed through a module-level `_gig_jax_newton_jit` produced by `make_jit_newton_solver` so all warm-started GIG solves share one cached XLA executable.
 - `backend='jax', method='lbfgs'`: JAXopt L-BFGS.
 - Omitting `theta0` in **`ExponentialFamily.from_expectation`**: defaults to **`jnp.zeros_like(eta)`**. **GIG** overrides: `theta0=None` runs **`solve_bregman_multistart`** on the η-rescaled problem (CPU L-BFGS-B, seeds from Gamma / InverseGamma / InverseGaussian special cases).
 

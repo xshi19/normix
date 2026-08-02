@@ -42,6 +42,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.utils.constants import RENYI_TAYLOR_EPS
 
 
 class ExponentialFamily(eqx.Module):
@@ -223,9 +224,7 @@ class ExponentialFamily(eqx.Module):
         Obtained by differentiating :meth:`log_density_power` twice. For
         constant base measure this is the Fisher quadratic form
         :math:`\theta^\top I(\theta)\,\theta`. The autodiff route is used
-        deliberately: it flows through the accurate ``log_kv`` custom JVP,
-        whereas the analytical GIG Hessian carries a coarser
-        mixed-derivative approximation tuned for the Newton solver.
+        deliberately: it flows through the accurate ``log_kv`` custom JVP.
         """
         one = jnp.asarray(1.0, dtype=jnp.float64)
         return jax.grad(jax.grad(self.log_density_power))(one)
@@ -237,13 +236,47 @@ class ExponentialFamily(eqx.Module):
         is the removable-singularity limit, the Shannon :meth:`entropy`; the
         first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
         + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.
+
+        A :func:`jax.custom_jvp` supplies the limiting derivative
+        :math:`H_\alpha'(1) = -V_H/2`. The primal uses :func:`jax.lax.cond` so
+        the varentropy is not evaluated for :math:`\alpha` away from 1 (a bare
+        :func:`jnp.where` singularity guard both zeroes the gradient at
+        :math:`\alpha = 1` and forces the expensive unused branch).
         """
         alpha = jnp.asarray(alpha, dtype=jnp.float64)
-        one_minus = 1.0 - alpha
-        safe = jnp.where(one_minus == 0.0, 1.0, one_minus)
-        return jnp.where(one_minus == 0.0,
-                         self.entropy(),
-                         self.log_density_power(alpha) / safe)
+
+        @jax.custom_jvp
+        def _renyi(a: jax.Array) -> jax.Array:
+            delta = a - 1.0
+            near = jnp.abs(delta) < RENYI_TAYLOR_EPS
+
+            def _taylor(_: jax.Array) -> jax.Array:
+                return self.entropy() - 0.5 * self.varentropy() * delta
+
+            def _exact(_: jax.Array) -> jax.Array:
+                return self.log_density_power(a) / (1.0 - a)
+
+            return jax.lax.cond(near, _taylor, _exact, a)
+
+        @_renyi.defjvp
+        def _renyi_jvp(primals, tangents):
+            (a,), (da,) = primals, tangents
+            near = jnp.abs(a - 1.0) < RENYI_TAYLOR_EPS
+
+            def _grad_near(_: jax.Array) -> jax.Array:
+                return -0.5 * self.varentropy()
+
+            def _grad_far(_: jax.Array) -> jax.Array:
+                # Quotient rule for R(a)/(1-a); a is away from 1 here.
+                R = self.log_density_power(a)
+                Rp = jax.grad(self.log_density_power)(a)
+                denom = 1.0 - a
+                return (Rp * denom + R) / (denom * denom)
+
+            g = jax.lax.cond(near, _grad_near, _grad_far, a)
+            return _renyi(a), g * da
+
+        return _renyi(alpha)
 
     def mean(self) -> jax.Array:
         """E[X]. Subclasses should override with analytical formulas."""

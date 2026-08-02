@@ -25,8 +25,9 @@ import pytest
 jax.config.update("jax_enable_x64", True)
 
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
+from normix import UnivariateVarianceGamma
 from normix.finance import CVaR, WeightFunctional, project_portfolio
-from normix.finance._mc import cdf_cmc
+from normix.finance._mc import cdf_cmc, cdf_cmc_raw, quantile_cmc
 
 
 def _model():
@@ -81,6 +82,26 @@ def test_var_inversion():
     v = cvar._var_cmc(proj, Y)
     F_at_neg_v = cdf_cmc(proj, -v, Y)
     np.testing.assert_allclose(float(F_at_neg_v), 0.05, atol=1e-8)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("q", [1e-6, 0.999])
+def test_quantile_cmc_brackets_extreme_Y(q):
+    """B7: CMC root must be bracketed even when Y is atypical vs PINV."""
+    uv = UnivariateVarianceGamma.from_classical(
+        mu=0.0, gamma=0.0, sigma=1.0, alpha=2.0, beta=1.0,
+    )
+    # Extreme draws make ±5σ around the PINV seed miss the CMC root.
+    Y = jnp.array([1e-6, 1e-6, 100.0])
+    x = float(quantile_cmc(uv, q, Y))
+    F = float(cdf_cmc_raw(
+        x, uv._mu_scalar, uv._gamma_scalar, uv._sigma_scalar, Y))
+    np.testing.assert_allclose(F, q, atol=1e-8)
+    # Not stuck at a ±5σ endpoint of the old fixed bracket
+    x_seed = float(uv.ppf(q))
+    old_half = 5.0 * float(uv.std())
+    assert abs(x - (x_seed - old_half)) > 1e-6
+    assert abs(x - (x_seed + old_half)) > 1e-6
 
 
 def test_var_ppf_deterministic():

@@ -84,6 +84,10 @@ SIGMA_INIT_REG: float = 1e-4
 # Central FD step for Fisher information (second-order)
 FD_EPS_FISHER: float = 1e-4
 
+# Half-width of the Taylor window for Rényi entropy about α = 1
+# (H_α = H − ½ V_H (α−1) + O((α−1)²)); keeps jax.grad(renyi) defined at α = 1
+RENYI_TAYLOR_EPS: float = 1e-6
+
 # ── Bessel regime thresholds ─────────────────────────────────────────
 
 # z threshold below which small-z asymptotic is used in log_kv

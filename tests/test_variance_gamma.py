@@ -551,3 +551,14 @@ class TestVarianceGammaEdgeCases:
         p_near_mode = float(vg.pdf(jnp.array([1e-6])))
         assert p_at_mode < 10.0
         np.testing.assert_allclose(p_at_mode, p_near_mode, rtol=1e-4)
+
+    @pytest.mark.contract
+    def test_univariate_log_prob_rejects_batched_input(self):
+        """B8: batched (n,) input must raise a clear jax.vmap hint."""
+        vg = UnivariateVarianceGamma.from_classical(
+            mu=0.0, gamma=0.2, sigma=1.0, alpha=2.0, beta=1.0)
+        with pytest.raises(ValueError, match="jax.vmap"):
+            vg.log_prob(jnp.ones(5))
+        # Scalar and (1,) still work
+        assert np.isfinite(float(vg.log_prob(0.0)))
+        assert np.isfinite(float(vg.log_prob(jnp.array([0.0]))))
