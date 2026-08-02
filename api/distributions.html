@@ -1453,7 +1453,7 @@ and ignored.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> : JAX, uses <code class="docutils literal notranslate"><span class="pre">log_kv(backend='jax')</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code>       : analytical Bessel ratios (5 <span class="math notranslate nohighlight">\(K_\nu\)</span> calls)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>    : analytical 7-Bessel Hessian in <span class="math notranslate nohighlight">\(\theta\)</span>-space</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>    : analytical 11-Bessel Hessian in <span class="math notranslate nohighlight">\(\theta\)</span>-space</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code>        : numpy + <code class="docutils literal notranslate"><span class="pre">log_kv(backend='cpu')</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition_cpu</span></code>   : analytical Bessel ratios via <code class="docutils literal notranslate"><span class="pre">scipy.kve</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition_cpu</span></code>: central FD on <code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code></p></li>
@@ -1608,6 +1608,8 @@ and this returns the interior local maximum.</p>
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>; seeded at <span class="math notranslate nohighlight">\(\log\)</span> <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mode()</span></code></a>.  In the
 degenerate regimes (<span class="math notranslate nohighlight">\(\sqrt{ab} &lt;\)</span> <code class="docutils literal notranslate"><span class="pre">GIG_DEGEN_THRESHOLD</span></code>)
 delegates to the limiting Gamma / InverseGamma CDF for accuracy.</p>
+<p>JIT-compatible: the degeneracy test uses <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.cond.html#jax.lax.cond" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.cond()</span></code></a>
+(no host <code class="docutils literal notranslate"><span class="pre">float()</span></code> casts).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1622,6 +1624,7 @@ delegates to the limiting Gamma / InverseGamma CDF for accuracy.</p>
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf">
 <span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf" title="Link to this definition">#</a></dt>
 <dd><p>Quantile (inverse CDF) <span class="math notranslate nohighlight">\(F^{-1}(q)\)</span> via the PINV table.</p>
+<p>JIT-compatible: see <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cdf()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

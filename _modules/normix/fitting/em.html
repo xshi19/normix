@@ -703,8 +703,10 @@
                 <span class="n">max_change</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">step_no</span> <span class="o">==</span> <span class="n">force_at</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">max_change</span><span class="p">)</span>
             <span class="n">finite</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">max_change</span><span class="p">)</span>
             <span class="n">done</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">diverged</span>
-            <span class="n">conv_new</span> <span class="o">=</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
-            <span class="n">diverged_new</span> <span class="o">=</span> <span class="n">diverged</span> <span class="o">|</span> <span class="o">~</span><span class="n">finite</span>
+            <span class="c1"># Freeze both flags after a prior stop so scan padding cannot</span>
+            <span class="c1"># flip converged↔diverged on an already-accepted / reverted model.</span>
+            <span class="n">conv_new</span> <span class="o">=</span> <span class="o">~</span><span class="n">done</span> <span class="o">&amp;</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
+            <span class="n">diverged_new</span> <span class="o">=</span> <span class="n">diverged</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">finite</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">done</span><span class="p">)</span>
             <span class="n">keep_old</span> <span class="o">=</span> <span class="n">done</span> <span class="o">|</span> <span class="o">~</span><span class="n">finite</span>
             <span class="n">mdl_out</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">keep_old</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">),</span> <span class="n">mdl_new</span><span class="p">,</span> <span class="n">mdl</span><span class="p">)</span>
@@ -750,8 +752,8 @@
             <span class="n">model</span><span class="o">=</span><span class="n">final_model</span><span class="p">,</span>
             <span class="n">log_likelihoods</span><span class="o">=</span><span class="n">log_likelihoods</span><span class="p">,</span>
             <span class="n">param_changes</span><span class="o">=</span><span class="n">param_changes</span><span class="p">,</span>
-            <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iter</span><span class="p">,</span>
-            <span class="n">converged</span><span class="o">=</span><span class="n">converged</span><span class="p">,</span>
+            <span class="n">n_iter</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_iter</span><span class="p">),</span>
+            <span class="n">converged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">converged</span><span class="p">),</span>
             <span class="n">elapsed_time</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
             <span class="n">diverged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">diverged</span><span class="p">),</span>
         <span class="p">)</span>
@@ -817,15 +819,13 @@
                 <span class="k">if</span> <span class="n">ll</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">prev_ll</span> <span class="o">=</span> <span class="n">ll</span>
 
-            <span class="k">if</span> <span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
                 <span class="k">break</span>
 
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t_total</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="n">diverged</span>
-            <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="n">n_iter</span> <span class="o">&gt;</span> <span class="mi">1</span>
-        <span class="p">)</span>
+        <span class="c1"># Same stopping rule as _fit_scan: tolerance met on any finite</span>
+        <span class="c1"># iterate (including step 1) counts as converged.</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">diverged</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">max_change</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_print_footer</span><span class="p">(</span><span class="n">n_iter</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">,</span>

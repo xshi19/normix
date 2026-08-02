@@ -670,9 +670,7 @@ base measure this equals <span class="math notranslate nohighlight">\(\psi(\thet
 <p>Obtained by differentiating <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.log_density_power" title="normix.exponential_family.ExponentialFamily.log_density_power"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_density_power()</span></code></a> twice. For
 constant base measure this is the Fisher quadratic form
 <span class="math notranslate nohighlight">\(\theta^\top I(\theta)\,\theta\)</span>. The autodiff route is used
-deliberately: it flows through the accurate <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> custom JVP,
-whereas the analytical GIG Hessian carries a coarser
-mixed-derivative approximation tuned for the Newton solver.</p>
+deliberately: it flows through the accurate <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> custom JVP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -688,6 +686,11 @@ mixed-derivative approximation tuned for the Newton solver.</p>
 is the removable-singularity limit, the Shannon <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>; the
 first-order expansion <span class="math notranslate nohighlight">\(H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
 + \mathcal{O}((\alpha-1)^2)\)</span> links it to the varentropy.</p>
+<p>A <code class="xref py py-func docutils literal notranslate"><span class="pre">jax.custom_jvp()</span></code> supplies the limiting derivative
+<span class="math notranslate nohighlight">\(H_\alpha'(1) = -V_H/2\)</span>. The primal uses <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.cond.html#jax.lax.cond" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.cond()</span></code></a> so
+the varentropy is not evaluated for <span class="math notranslate nohighlight">\(\alpha\)</span> away from 1 (a bare
+<code class="xref py py-func docutils literal notranslate"><span class="pre">jnp.where()</span></code> singularity guard both zeroes the gradient at
+<span class="math notranslate nohighlight">\(\alpha = 1\)</span> and forces the expensive unused branch).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

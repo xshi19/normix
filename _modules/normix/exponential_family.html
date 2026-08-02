@@ -436,6 +436,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">RENYI_TAYLOR_EPS</span>
 
 
 <div class="viewcode-block" id="ExponentialFamily">
@@ -651,9 +652,7 @@
 <span class="sd">        Obtained by differentiating :meth:`log_density_power` twice. For</span>
 <span class="sd">        constant base measure this is the Fisher quadratic form</span>
 <span class="sd">        :math:`\theta^\top I(\theta)\,\theta`. The autodiff route is used</span>
-<span class="sd">        deliberately: it flows through the accurate ``log_kv`` custom JVP,</span>
-<span class="sd">        whereas the analytical GIG Hessian carries a coarser</span>
-<span class="sd">        mixed-derivative approximation tuned for the Newton solver.</span>
+<span class="sd">        deliberately: it flows through the accurate ``log_kv`` custom JVP.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">one</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">))(</span><span class="n">one</span><span class="p">)</span></div>
@@ -668,13 +667,47 @@
 <span class="sd">        is the removable-singularity limit, the Shannon :meth:`entropy`; the</span>
 <span class="sd">        first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)</span>
 <span class="sd">        + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.</span>
+
+<span class="sd">        A :func:`jax.custom_jvp` supplies the limiting derivative</span>
+<span class="sd">        :math:`H_\alpha&#39;(1) = -V_H/2`. The primal uses :func:`jax.lax.cond` so</span>
+<span class="sd">        the varentropy is not evaluated for :math:`\alpha` away from 1 (a bare</span>
+<span class="sd">        :func:`jnp.where` singularity guard both zeroes the gradient at</span>
+<span class="sd">        :math:`\alpha = 1` and forces the expensive unused branch).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">one_minus</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span>
-        <span class="n">safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">one_minus</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">one_minus</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">one_minus</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">entropy</span><span class="p">(),</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">/</span> <span class="n">safe</span><span class="p">)</span></div>
+
+        <span class="nd">@jax</span><span class="o">.</span><span class="n">custom_jvp</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_renyi</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="mf">1.0</span>
+            <span class="n">near</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">RENYI_TAYLOR_EPS</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">_taylor</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span> <span class="o">*</span> <span class="n">delta</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">_exact</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="n">_taylor</span><span class="p">,</span> <span class="n">_exact</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+
+        <span class="nd">@_renyi</span><span class="o">.</span><span class="n">defjvp</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_renyi_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">a</span><span class="p">,),</span> <span class="p">(</span><span class="n">da</span><span class="p">,)</span> <span class="o">=</span> <span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span>
+            <span class="n">near</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">RENYI_TAYLOR_EPS</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">_grad_near</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+                <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">_grad_far</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+                <span class="c1"># Quotient rule for R(a)/(1-a); a is away from 1 here.</span>
+                <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">Rp</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">)(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">denom</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">Rp</span> <span class="o">*</span> <span class="n">denom</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">denom</span> <span class="o">*</span> <span class="n">denom</span><span class="p">)</span>
+
+            <span class="n">g</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="n">_grad_near</span><span class="p">,</span> <span class="n">_grad_far</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_renyi</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">g</span> <span class="o">*</span> <span class="n">da</span>
+
+        <span class="k">return</span> <span class="n">_renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.mean">
