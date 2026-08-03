@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0 complete (2026-07-20); Phase 1 complete (2026-07-28); Phase 2 complete (2026-07-29); Phase 3 complete (B1 2026-07-29; B2–B8 2026-08-01).**
+> **ACTIVE — Phase 0–3 done; Phase 4 complete (2026-08-03).**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -192,14 +192,22 @@ agree on step-1 convergence and return Python `bool`/`int`;
 | B7 | **DONE (2026-08-01)** — α-aware CMC bracket + expansion |
 | B8 | **DONE (2026-08-01)** — univariate `log_prob` shape check |
 
-### Phase 4 — Test-suite hardening (T1–T5)
+### Phase 4 — Test-suite hardening (T1–T5) — **DONE (2026-08-03)**
 
 T1 first — it is independent and the highest-value guard; land it before the
 Phase 5/6 refactors it protects.
-**Exit:** `uv run pytest tests/ -m contract` includes the quadrature suite,
+**Exit met:** `uv run pytest tests/ -m contract` includes the quadrature suite,
 green at ≤ 1e-8; `rg -l "jax_enable_x64" tests/` returns only `conftest.py`;
 `--strict-markers` passes with no unused markers; fast-suite runtime not
 regressed (heavy tests now deselected by the default marker expression).
+
+| Item | Status |
+|------|--------|
+| T1 | **DONE** — `tests/test_marginal_quadrature.py` (`contract`) |
+| T2 | **DONE** — `tests/conftest.py` x64 + SP500 fixtures |
+| T3 | **DONE** — `smoke` on package imports; drop spurious `gpu`; mark heavy tests |
+| T4 | **DONE** — `tests/test_utils.py` (B2/B7 regressions already with Phase 3) |
+| T5 | **DONE** — tighter EM checks; MCECM-vs-EM at MLE |
 
 ### Phase 5 — Efficiency (E1, E2, E4–E7; E3 after DEC-5)
 
@@ -241,7 +249,7 @@ gallery/API docs updated.
 | 1 | Hygiene sweep | C1–C5 | — ✅ |
 | 2 | Agent docs & rules sync | DOC1–DOC7 | — ✅ |
 | 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
-| 4 | Test hardening | T1–T5 | — (B2/B7 tests land with fixes) |
+| 4 | Test hardening | T1–T5 | — ✅ |
 | 5 | Efficiency | E1, E2, E4–E7; E3 | DEC-5 (E3 only) |
 | 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 |
 | 7 | Website | W1–W7 | W7 after W1/W2/W6 |
