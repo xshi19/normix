@@ -33,8 +33,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     BatchEMFitter,
     FactorGeneralizedHyperbolic,
@@ -47,11 +45,9 @@ from normix import (
     VarianceGamma,
 )
 
-
 # ============================================================================
 # Helpers
 # ============================================================================
-
 
 def _gamma_E_Y(model) -> np.ndarray:
     r"""Orbit-invariant skewness vector :math:`\gamma\,E[Y]`.
@@ -66,11 +62,9 @@ def _gamma_E_Y(model) -> np.ndarray:
         sub = sub()
     return np.asarray(model.gamma) * float(sub.mean())
 
-
 def _cov_X(model) -> np.ndarray:
     """Marginal covariance — invariant under the scale orbit."""
     return np.asarray(model.cov())
-
 
 def _ab(model) -> float:
     """``a · b`` for GH-family models (orbit invariant). Returns 0 when one
@@ -87,7 +81,6 @@ def _ab(model) -> float:
     if family in ('GeneralizedHyperbolic', 'FactorGeneralizedHyperbolic'):
         return float(model.a * model.b)
     raise KeyError(family)
-
 
 # ============================================================================
 # Fixture: one model per family on a small d (and a fresh test sample)
@@ -109,7 +102,6 @@ F0 = jnp.array([[1.0, 0.0],
                 [0.0, 0.7]])
 D0 = jnp.array([0.4, 0.5, 0.3, 0.6])
 
-
 def _make_full_models():
     return {
         'VG': VarianceGamma.from_classical(
@@ -121,7 +113,6 @@ def _make_full_models():
         'GH': GeneralizedHyperbolic.from_classical(
             mu=mu0, gamma=gamma0, sigma=sigma0, p=1.0, a=2.0, b=0.5),
     }
-
 
 def _make_factor_models():
     return {
@@ -135,18 +126,14 @@ def _make_factor_models():
             mu=mu0, gamma=gamma0, F=F0, D=D0, p=1.0, a=2.0, b=0.5),
     }
 
-
 def _all_models():
     return {**_make_full_models(), **_make_factor_models()}
 
-
 ALL_NAMES = list(_all_models().keys())
-
 
 # ============================================================================
 # 1. Log-prob invariance under each regularization
 # ============================================================================
-
 
 @pytest.mark.parametrize("name", ALL_NAMES)
 @pytest.mark.parametrize("method", ['det_sigma_one', 'det_sigma_x', 'a_eq_b'])
@@ -169,11 +156,9 @@ def test_regularization_preserves_log_prob(name, method):
         err_msg=f"{name} {method} broke log-prob invariance",
     )
 
-
 # ============================================================================
 # 2. Orbit invariants (μ, p-equivalent, ab, γᵀΣ⁻¹γ)
 # ============================================================================
-
 
 @pytest.mark.parametrize("name", ALL_NAMES)
 @pytest.mark.parametrize("method", ['det_sigma_one', 'det_sigma_x', 'a_eq_b'])
@@ -198,11 +183,9 @@ def test_regularization_preserves_orbit_invariants(name, method):
     np.testing.assert_allclose(
         _cov_X(regularised), _cov_X(model), rtol=1e-8, atol=1e-10)
 
-
 # ============================================================================
 # 3. Target equalities
 # ============================================================================
-
 
 @pytest.mark.parametrize("name", ALL_NAMES)
 def test_det_sigma_one_yields_unit_determinant(name):
@@ -211,7 +194,6 @@ def test_det_sigma_one_yields_unit_determinant(name):
     np.testing.assert_allclose(
         float(regularised.log_det_sigma()), 0.0, atol=1e-10)
 
-
 @pytest.mark.parametrize("name", ALL_NAMES)
 def test_det_sigma_x_yields_target_determinant(name):
     model = _all_models()[name]
@@ -219,7 +201,6 @@ def test_det_sigma_x_yields_target_determinant(name):
     regularised = model.regularize_det_sigma(target)
     np.testing.assert_allclose(
         float(regularised.log_det_sigma()), target, atol=1e-9)
-
 
 @pytest.mark.parametrize(
     "name", ['NIG', 'GH', 'FactorNIG', 'FactorGH'],
@@ -235,7 +216,6 @@ def test_a_eq_b_makes_a_equal_b(name):
         b = float(regularised.b)
     np.testing.assert_allclose(a, b, rtol=1e-10)
 
-
 @pytest.mark.parametrize(
     "name", ['VG', 'NInvG', 'FactorVG', 'FactorNInvG'],
 )
@@ -246,11 +226,9 @@ def test_a_eq_b_is_noop_for_boundary_families(name):
     regularised = model.regularize_a_eq_b()
     assert regularised is model
 
-
 # ============================================================================
 # 4. Idempotence: regularize ∘ regularize == regularize
 # ============================================================================
-
 
 @pytest.mark.parametrize("name", ALL_NAMES)
 @pytest.mark.parametrize("method", ['det_sigma_one', 'a_eq_b'])
@@ -268,16 +246,13 @@ def test_regularization_idempotent(name, method):
         np.asarray(lp_twice), np.asarray(lp_once),
         rtol=1e-10, atol=1e-12)
 
-
 # ============================================================================
 # 5. BatchEMFitter integration
 # ============================================================================
 
-
 def test_batch_em_fitter_rejects_unknown_regularization():
     with pytest.raises(ValueError, match="regularization must be one of"):
         BatchEMFitter(regularization='bogus')
-
 
 def test_batch_em_fitter_det_sigma_x_targets_initial_log_det():
     """After EM with regularization='det_sigma_x', |Σ_fitted| matches
@@ -295,7 +270,6 @@ def test_batch_em_fitter_det_sigma_x_targets_initial_log_det():
         float(result.model.log_det_sigma()), target,
         atol=1e-6, rtol=1e-6)
 
-
 def test_batch_em_fitter_a_eq_b_yields_equal_a_b_for_gh():
     init = GeneralizedHyperbolic.default_init(np.asarray(X))
     fitter = BatchEMFitter(
@@ -308,11 +282,9 @@ def test_batch_em_fitter_a_eq_b_yields_equal_a_b_for_gh():
     b = float(result.model.b)
     np.testing.assert_allclose(a, b, rtol=1e-9)
 
-
 # ============================================================================
 # 6. FactorGH.default_init runs and beats the moment-based fallback
 # ============================================================================
-
 
 def test_factor_gh_default_init_beats_moment_fallback():
     """default_init should never give a worse LL than the parent's
@@ -337,7 +309,6 @@ def test_factor_gh_default_init_beats_moment_fallback():
     assert ll_init >= ll_fallback - 1e-6, (
         f"default_init LL={ll_init:.6f} worse than moment fallback "
         f"LL={ll_fallback:.6f}")
-
 
 def FactorNormalMixture_default_init_fallback(cls, X, *, r):
     """Helper that calls the parent (PCA-based) default_init bypassing

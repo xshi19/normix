@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
+pytestmark = [pytest.mark.slow, pytest.mark.stress]
 
 from normix.distributions import (
     JointVarianceGamma,
@@ -21,15 +21,12 @@ from normix.distributions import (
     JointGeneralizedHyperbolic,
 )
 
-
 def _simple_cov(d, diag=1.0, off_diag=0.2):
     Sigma = np.full((d, d), off_diag)
     np.fill_diagonal(Sigma, diag)
     return jnp.array(Sigma)
 
-
 DIM = 50
-
 
 @pytest.fixture
 def vg_high():
@@ -38,14 +35,12 @@ def vg_high():
         sigma=_simple_cov(DIM), alpha=2.0, beta=1.0,
     )
 
-
 @pytest.fixture
 def ninvg_high():
     return JointNormalInverseGamma.from_classical(
         mu=jnp.zeros(DIM), gamma=jnp.full(DIM, 0.1),
         sigma=_simple_cov(DIM), alpha=3.0, beta=1.0,
     )
-
 
 @pytest.fixture
 def nig_high():
@@ -54,14 +49,12 @@ def nig_high():
         sigma=_simple_cov(DIM), mu_ig=1.0, lam=1.0,
     )
 
-
 @pytest.fixture
 def gh_high():
     return JointGeneralizedHyperbolic.from_classical(
         mu=jnp.zeros(DIM), gamma=jnp.full(DIM, 0.1),
         sigma=_simple_cov(DIM), p=1.0, a=1.0, b=1.0,
     )
-
 
 class TestHighDimVG:
 
@@ -80,7 +73,6 @@ class TestHighDimVG:
             lp = float(vg_high.log_prob_joint(X[i], Y[i]))
             assert np.isfinite(lp), f"Non-finite log_prob at sample {i}"
 
-
 class TestHighDimNInvG:
 
     def test_rvs_shapes(self, ninvg_high):
@@ -94,7 +86,6 @@ class TestHighDimNInvG:
             lp = float(ninvg_high.log_prob_joint(X[i], Y[i]))
             assert np.isfinite(lp)
 
-
 class TestHighDimNIG:
 
     def test_rvs_shapes(self, nig_high):
@@ -107,7 +98,6 @@ class TestHighDimNIG:
         for i in range(5):
             lp = float(nig_high.log_prob_joint(X[i], Y[i]))
             assert np.isfinite(lp)
-
 
 class TestHighDimGH:
 

@@ -12,13 +12,10 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.gamma import Gamma
 from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
-
 
 class TestGIGGammaLimit:
     """GIG(p, a, b→0) should behave like Gamma(shape=p, rate=a/2)."""
@@ -42,7 +39,6 @@ class TestGIGGammaLimit:
         gig_fit = gig.fit(data)
         assert_allclose(float(gig_fit.mean()), 3.0 / 2.0, rtol=0.15)
 
-
 class TestGIGInverseGammaLimit:
     """GIG(p, a→0, b) should behave like InverseGamma(shape=-p, rate=b/2)."""
 
@@ -61,7 +57,6 @@ class TestGIGInverseGammaLimit:
         gig = GIG(p=p, a=1e-14, b=b)
         assert np.isfinite(float(gig.log_partition()))
 
-
 class TestGIGInverseGaussianLimit:
     """GIG(p=-1/2, a, b) should relate to InverseGaussian."""
 
@@ -72,7 +67,6 @@ class TestGIGInverseGaussianLimit:
         gig = GIG(p=-0.5, a=a, b=b)
         ig = InverseGaussian(mu=mu_ig, lam=lam)
         assert_allclose(float(gig.mean()), float(ig.mean()), rtol=1e-4)
-
 
 class TestGIGFitting:
     """GIG fit on boundary data."""

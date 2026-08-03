@@ -29,8 +29,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions import (
     Gamma,
     InverseGamma,
@@ -46,11 +44,9 @@ from normix.distributions import (
     VarianceGamma,
 )
 
-
 # ---------------------------------------------------------------------------
 # Subordinator level: Gamma / InverseGamma / InverseGaussian <-> GIG
 # ---------------------------------------------------------------------------
-
 
 class TestSubordinatorRoundtrip:
     """``special.to_gig().to_special()`` must recover the original parameters."""
@@ -82,7 +78,6 @@ class TestSubordinatorRoundtrip:
         assert_allclose(float(igauss_back.mu), mu, rtol=1e-12)
         assert_allclose(float(igauss_back.lam), lam, rtol=1e-12)
 
-
 class TestSubordinatorLift:
     """Direct check of the algebraic embedding (special -> GIG)."""
 
@@ -110,7 +105,6 @@ class TestSubordinatorLift:
         assert float(gig.p) == pytest.approx(-0.5)
         assert float(gig.a) == pytest.approx(lam / mu ** 2)
         assert float(gig.b) == pytest.approx(lam)
-
 
 class TestGIGProjectionMomentMatch:
     """``GIG.to_<family>`` must satisfy the KL first-order conditions."""
@@ -152,7 +146,6 @@ class TestGIGProjectionMomentMatch:
         assert_allclose(float(eta_ig[0]), float(eta[2]), rtol=1e-10)
         assert_allclose(float(eta_ig[1]), float(eta[1]), rtol=1e-10)
 
-
 class TestGIGProjectionIdentityOnManifold:
     """A GIG that *is* a special case must project back to itself exactly."""
 
@@ -178,17 +171,14 @@ class TestGIGProjectionIdentityOnManifold:
         assert_allclose(float(igauss.mu), mu, rtol=1e-12)
         assert_allclose(float(igauss.lam), lam, rtol=1e-12)
 
-
 # ---------------------------------------------------------------------------
 # Joint level: JointGH <-> JointVG / JointNInvG / JointNIG
 # ---------------------------------------------------------------------------
-
 
 def _normal_block_2d():
     return (jnp.array([0.1, -0.2]),
             jnp.array([0.05, 0.1]),
             jnp.array([[1.0, 0.3], [0.3, 1.5]]))
-
 
 class TestJointRoundtripPreservesNormalBlock:
     """Lift then project must preserve mu, gamma, Sigma exactly."""
@@ -220,7 +210,6 @@ class TestJointRoundtripPreservesNormalBlock:
         assert_allclose(np.asarray(ninvg_back.gamma), np.asarray(gamma), atol=0)
         assert_allclose(np.asarray(ninvg_back.sigma()), np.asarray(sigma), atol=0)
 
-
 class TestJointRoundtripKLZero:
     """KL between original and round-tripped joint must be ~0."""
 
@@ -251,7 +240,6 @@ class TestJointRoundtripKLZero:
         kl = float(ninvg.kl_divergence(ninvg_back))
         assert abs(kl) < self.KL_TOL
 
-
 class TestJointBoundaryEps:
     """boundary_eps lifts the lifted GIG away from the exact boundary."""
 
@@ -264,7 +252,6 @@ class TestJointBoundaryEps:
         # Round-trip is still essentially exact.
         vg_back = gh.to_variance_gamma()
         assert float(vg.kl_divergence(vg_back)) < 1e-10
-
 
 class TestGHProjectionIdentity:
     """A GH that lies on a special-case manifold projects back exactly."""
@@ -295,7 +282,6 @@ class TestGHProjectionIdentity:
         ninvg_proj = gh.to_normal_inverse_gamma()
         assert_allclose(float(ninvg_proj.alpha), 3.0, rtol=1e-6, atol=1e-7)
         assert_allclose(float(ninvg_proj.beta), 2.0, rtol=1e-6, atol=1e-7)
-
 
 class TestGHProjectionMinimisesKL:
     """The projection must minimise KL inside the target family.
@@ -340,11 +326,9 @@ class TestGHProjectionMinimisesKL:
                 f"projection isn't a local KL min: KL_proj={kl_proj}, "
                 f"beta*={delta_beta}: KL={avg_kl(vg_pert)}")
 
-
 # ---------------------------------------------------------------------------
 # Composition: cross-family conversions via GIG / GH
 # ---------------------------------------------------------------------------
-
 
 class TestComposition:
     """Cross-special-case projections via the general family must succeed."""

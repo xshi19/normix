@@ -24,8 +24,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.variance_gamma import (
     JointVarianceGamma, VarianceGamma,
 )
@@ -42,15 +40,12 @@ from normix.fitting.shrinkage_targets import (
     eta0_from_model, eta0_isotropic, eta0_with_sigma,
 )
 
-
 KEY = jax.random.PRNGKey(7)
 D = 3
 N = 200
 
-
 def _make_data(key=KEY, n=N, d=D):
     return jax.random.normal(key, shape=(n, d), dtype=jnp.float64) * 0.5
-
 
 def _make_models(X):
     d = X.shape[1]
@@ -67,7 +62,6 @@ def _make_models(X):
             mu=mu, gamma=jnp.zeros(d), sigma=sigma, p=-0.5, a=2.0, b=1.0),
     }
 
-
 _DIST_NAMES = ["VG", "NInvG", "NIG", "GH"]
 _JOINT_CLS = {
     "VG": JointVarianceGamma,
@@ -81,7 +75,6 @@ _MARGINAL_CLS = {
     "NIG": NormalInverseGaussian,
     "GH": GeneralizedHyperbolic,
 }
-
 
 # ---------------------------------------------------------------------------
 # Forwarding properties
@@ -100,7 +93,6 @@ def test_normal_param_properties_match_joint(dist_name):
         np.array(model.sigma()), np.array(j.sigma()), atol=1e-12)
     np.testing.assert_allclose(
         float(model.log_det_sigma()), float(j.log_det_sigma()), atol=1e-12)
-
 
 def test_subordinator_properties_forward():
     """Subordinator fields are exposed on each marginal subclass."""
@@ -124,7 +116,6 @@ def test_subordinator_properties_forward():
     np.testing.assert_allclose(float(gh.a), float(gh.joint.a))
     np.testing.assert_allclose(float(gh.b), float(gh.joint.b))
 
-
 def test_sigma_distinct_from_marginal_cov():
     """sigma() is the GIG-mixed dispersion Σ, not the marginal Cov[X]."""
     X = _make_data()
@@ -134,7 +125,6 @@ def test_sigma_distinct_from_marginal_cov():
     # Both PD, but Cov includes E[Y]·Σ + Var[Y]·γγᵀ — distinct from Σ
     # except in degenerate cases (E[Y]=1, γ=0).
     assert Sigma.shape == Cov.shape == (D, D)
-
 
 # ---------------------------------------------------------------------------
 # Joint.from_expectation(NormalMixtureEta)
@@ -171,7 +161,6 @@ def test_joint_from_expectation_pytree_matches_m_step(dist_name):
     eigvals = np.linalg.eigvalsh(Sigma)
     assert np.all(eigvals > 0), f"{dist_name}: Σ not PD after from_expectation"
 
-
 @pytest.mark.parametrize("dist_name", _DIST_NAMES)
 def test_marginal_from_expectation_wraps_joint(dist_name):
     """MarginalXxx.from_expectation(eta).joint == JointXxx.from_expectation(eta)."""
@@ -190,7 +179,6 @@ def test_marginal_from_expectation_wraps_joint(dist_name):
     np.testing.assert_allclose(
         np.array(m_from_eta.joint.L_Sigma),
         np.array(j_from_eta.L_Sigma), atol=1e-12)
-
 
 def test_joint_from_expectation_flat_array_dispatches_to_bregman():
     """A flat ``jax.Array`` η dispatches to the inherited Bregman solver.
@@ -211,7 +199,6 @@ def test_joint_from_expectation_flat_array_dispatches_to_bregman():
     j2 = JointVarianceGamma.from_expectation(eta_flat, backend='cpu')
     assert isinstance(j2, JointVarianceGamma)
     assert j2.mu.shape == j.mu.shape
-
 
 # ---------------------------------------------------------------------------
 # eta0_isotropic round-trip — the original validation use case
@@ -241,7 +228,6 @@ def test_eta0_isotropic_recovers_sigma_via_from_expectation(dist_name):
     expected = sigma2 * np.eye(D)
     np.testing.assert_allclose(Sigma, expected, atol=1e-8, rtol=1e-6)
 
-
 @pytest.mark.parametrize("dist_name", _DIST_NAMES)
 def test_eta0_with_sigma_recovers_arbitrary_sigma(dist_name):
     """from_expectation(eta0_with_sigma(model, Σ₀)) recovers Σ₀ exactly."""
@@ -257,7 +243,6 @@ def test_eta0_with_sigma_recovers_arbitrary_sigma(dist_name):
     np.testing.assert_allclose(
         np.array(recovered.sigma()), np.array(Sigma0),
         atol=1e-8, rtol=1e-6)
-
 
 @pytest.mark.parametrize("dist_name", _DIST_NAMES)
 def test_eta0_from_model_round_trip(dist_name):
@@ -282,7 +267,6 @@ def test_eta0_from_model_round_trip(dist_name):
         atol=1e-8, rtol=1e-6,
         err_msg=f"{dist_name}: Σ not recovered from compute_eta_from_model")
 
-
 # ---------------------------------------------------------------------------
 # replace(**) — view + immutable update
 # ---------------------------------------------------------------------------
@@ -306,7 +290,6 @@ def test_replace_normal_params(dist_name):
     # original is unmodified (immutable)
     assert not np.allclose(np.array(model.mu), np.array(new_mu))
 
-
 def test_replace_sigma_alias_converts_to_cholesky():
     """replace(sigma=Σ) sets L_Sigma = chol(Σ)."""
     X = _make_data()
@@ -319,13 +302,11 @@ def test_replace_sigma_alias_converts_to_cholesky():
     np.testing.assert_allclose(
         np.array(updated.sigma()), np.array(Sigma_new), atol=1e-12)
 
-
 def test_replace_sigma_and_L_Sigma_conflict_raises():
     X = _make_data()
     vg = _make_models(X)["VG"]
     with pytest.raises(ValueError, match="either `sigma` or `L_Sigma`"):
         vg.replace(sigma=jnp.eye(D), L_Sigma=jnp.eye(D))
-
 
 def test_replace_subordinator_params_VG():
     """replace(alpha=..., beta=...) updates the Gamma subordinator only."""
@@ -339,14 +320,12 @@ def test_replace_subordinator_params_VG():
     np.testing.assert_array_equal(np.array(updated.mu), np.array(vg.mu))
     np.testing.assert_array_equal(np.array(updated.gamma), np.array(vg.gamma))
 
-
 def test_replace_subordinator_params_NIG():
     X = _make_data()
     nig = _make_models(X)["NIG"]
     updated = nig.replace(mu_ig=2.0, lam=3.0)
     np.testing.assert_allclose(float(updated.mu_ig), 2.0)
     np.testing.assert_allclose(float(updated.lam), 3.0)
-
 
 def test_replace_subordinator_params_GH():
     X = _make_data()
@@ -355,7 +334,6 @@ def test_replace_subordinator_params_GH():
     np.testing.assert_allclose(float(updated.p), 1.0)
     np.testing.assert_allclose(float(updated.a), 3.0)
     np.testing.assert_allclose(float(updated.b), 4.0)
-
 
 def test_replace_unknown_key_raises():
     X = _make_data()
@@ -366,13 +344,11 @@ def test_replace_unknown_key_raises():
     with pytest.raises(ValueError, match="unknown parameter"):
         vg.replace(mu_ig=1.0)
 
-
 def test_replace_no_args_returns_self():
     X = _make_data()
     vg = _make_models(X)["VG"]
     out = vg.replace()
     assert out is vg
-
 
 def test_replace_then_log_prob_finite():
     """A replaced model is still a usable distribution (log_prob finite)."""

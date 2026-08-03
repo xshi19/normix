@@ -20,8 +20,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import NormalInverseGaussian
 from normix.finance import CVaR, TransactionCostProblem
 from normix.finance.transaction_costs import (
@@ -29,7 +27,6 @@ from normix.finance.transaction_costs import (
     build_transaction_cost_qp,
     solve_transaction_cost_qp,
 )
-
 
 def _model(d: int = 4):
     rng = np.random.default_rng(2)
@@ -41,10 +38,8 @@ def _model(d: int = 4):
         mu=mu, gamma=gamma, sigma=sigma, mu_ig=1.0, lam=1.5,
     )
 
-
 def _equal_weight(d: int) -> jnp.ndarray:
     return jnp.full(d, 1.0 / d, dtype=jnp.float64)
-
 
 def test_qp_blocks_match_theory():
     model = _model(4)
@@ -69,7 +64,6 @@ def test_qp_blocks_match_theory():
     np.testing.assert_allclose(qp.e_tilde, np.concatenate([e, -e]), rtol=1e-12)
     assert qp.A_tilde is None and qp.b_tilde is None
 
-
 def test_weights_from_v_budget_and_reconstruction():
     model = _model(3)
     w0 = _equal_weight(3)
@@ -82,7 +76,6 @@ def test_weights_from_v_budget_and_reconstruction():
     np.testing.assert_allclose(w, w0 + jnp.array([0.05, -0.02, -0.03]), rtol=1e-12)
     np.testing.assert_allclose(float(w.sum()), 1.0, atol=1e-12)
 
-
 def test_large_c2_holds_current_portfolio():
     model = _model(4)
     w0 = _equal_weight(4)
@@ -94,7 +87,6 @@ def test_large_c2_holds_current_portfolio():
     np.testing.assert_allclose(result.weights, w0, atol=1e-8)
     assert float(result.turnover) < 1e-8
     assert not bool(result.improved)
-
 
 def test_moderate_costs_rebalance_near_w0():
     model = _model(4)
@@ -119,7 +111,6 @@ def test_moderate_costs_rebalance_near_w0():
         rtol=1e-10,
     )
 
-
 def test_long_only_constraints():
     model = _model(3)
     w0 = jnp.array([0.5, 0.3, 0.2], dtype=jnp.float64)
@@ -132,7 +123,6 @@ def test_long_only_constraints():
     np.testing.assert_allclose(float(result.weights.sum()), 1.0, atol=1e-8)
     assert np.all(np.asarray(result.weights) >= -1e-8)
 
-
 def test_hold_objective_matches_true_at_w0():
     model = _model(3)
     w0 = _equal_weight(3)
@@ -143,14 +133,12 @@ def test_hold_objective_matches_true_at_w0():
     true_hold = float(prob.true_objective_at(w0, w0, Y))
     np.testing.assert_allclose(hold, true_hold, rtol=1e-12)
 
-
 def test_reject_nonpositive_coefficients():
     model = _model(2)
     with pytest.raises(ValueError, match="c1 and c2"):
         TransactionCostProblem(model, CVaR(0.05), c1=0.0, c2=1e-4)
     with pytest.raises(ValueError, match="c1 and c2"):
         TransactionCostProblem(model, CVaR(0.05), c1=1.0, c2=-1e-4)
-
 
 def test_solve_qp_direct_api():
     model = _model(3)

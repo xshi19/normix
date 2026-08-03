@@ -10,18 +10,14 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions import JointVarianceGamma, VarianceGamma
 from normix import UnivariateVarianceGamma
-
 
 def _joint_1d(mu=0.0, gamma=0.5, sigma=1.0, alpha=2.0, beta=1.0):
     return JointVarianceGamma.from_classical(
         mu=jnp.array([mu]), gamma=jnp.array([gamma]),
         sigma=jnp.array([[sigma]]), alpha=alpha, beta=beta,
     )
-
 
 def _joint_2d():
     return JointVarianceGamma.from_classical(
@@ -30,7 +26,6 @@ def _joint_2d():
         sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
         alpha=2.0, beta=1.0,
     )
-
 
 # ============================================================
 # Joint VG Tests
@@ -103,7 +98,6 @@ class TestJointVarianceGamma:
         xy = jnp.concatenate([x, jnp.array([y])])
         np.testing.assert_allclose(
             float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-10)
-
 
 # ============================================================
 # Marginal VG Tests
@@ -187,7 +181,6 @@ class TestVarianceGamma:
         analytical_cov = np.array(vg.cov())
         np.testing.assert_allclose(sample_cov, analytical_cov, rtol=0.1)
 
-
 # ============================================================
 # Conditional Expectations
 # ============================================================
@@ -218,7 +211,6 @@ class TestConditionalExpectationsVG:
             cond = vg._joint.conditional_expectations(X[i])
             assert float(cond['E_Y']) > 0
             assert float(cond['E_inv_Y']) > 0
-
 
 # ============================================================
 # Inverse-moment singularity / overflow fix
@@ -405,7 +397,6 @@ class TestInverseMomentSingularityVG:
         for leaf in (j.mu, j.gamma, j.L_Sigma, j.alpha, j.beta):
             assert jnp.all(jnp.isfinite(leaf))
 
-
 class TestAlphaMinBound:
     r"""F4: the opt-in ``alpha_min`` shape bound (VG likelihood-boundedness).
 
@@ -476,7 +467,6 @@ class TestAlphaMinBound:
         X = self._heavy_peaked_data(1, seed=6)
         with pytest.raises(ValueError, match="alpha_min"):
             VarianceGamma.default_init(X).fit(X, max_iter=2, alpha_min='nonsense')
-
 
 # ============================================================
 # Edge Cases

@@ -13,8 +13,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
     MultivariateNormal,
@@ -23,7 +21,6 @@ from normix import (
     squared_hellinger, kl_divergence,
     squared_hellinger_from_psi, kl_divergence_from_psi,
 )
-
 
 # ===========================================================================
 # Helpers
@@ -46,7 +43,6 @@ def _gig_hellinger_analytical(p1, a1, b1, p2, a2, b2):
         - 0.5 * pb * np.log(ab / bb)
     )
     return 1.0 - np.exp(log_affinity)
-
 
 # ===========================================================================
 # Tier 1: functional core
@@ -102,7 +98,6 @@ class TestTier1Gamma:
         kl_21 = kl_divergence_from_psi(psi, grad, t2, t1)
         assert abs(float(kl_12) - float(kl_21)) > 1e-3
 
-
 class TestTier1GIG:
 
     def test_hellinger_vs_analytical(self):
@@ -116,7 +111,6 @@ class TestTier1GIG:
             g1.natural_params(), g2.natural_params()))
         h2_analytical = _gig_hellinger_analytical(p1, a1, b1, p2, a2, b2)
         np.testing.assert_allclose(h2_general, h2_analytical, rtol=1e-8)
-
 
 # ===========================================================================
 # Tier 2: instance methods
@@ -161,7 +155,6 @@ class TestTier2:
         h2 = float(ig1.squared_hellinger(ig2))
         assert 0 < h2 < 1
 
-
 # ===========================================================================
 # Tier 3: module convenience
 # ===========================================================================
@@ -193,7 +186,6 @@ class TestTier3:
                                alpha=4.0, beta=3.0))
         h2 = float(squared_hellinger(vg1, vg2))
         assert 0 < h2 < 1
-
 
 # ===========================================================================
 # JAX transformations
@@ -233,7 +225,6 @@ class TestJit:
         result = float(kl(t1, t2))
         assert result > 0
 
-
 class TestVmap:
 
     def test_tier1_vmap_over_targets(self):
@@ -272,7 +263,6 @@ class TestVmap:
 
         assert h2_batch.shape == (5,)
         np.testing.assert_allclose(float(h2_batch[3]), 0.0, atol=1e-10)
-
 
 class TestGrad:
 
@@ -323,7 +313,6 @@ class TestGrad:
         g = float(grad_fn(jnp.float64(2.0)))
         np.testing.assert_allclose(g, 0.0, atol=1e-6)
 
-
 # ===========================================================================
 # Combined jit + vmap + grad
 # ===========================================================================
@@ -355,7 +344,6 @@ class TestCombinedTransforms:
         g = float(grad_loss(jnp.float64(3.0)))
         assert g != 0.0
 
-
 # ===========================================================================
 # B1 / DEC-1: unconditional gauge lift (measured Phase-0 targets)
 # ===========================================================================
@@ -365,7 +353,6 @@ _MU_Q = jnp.array([0.9, 0.5])
 _GAMMA = jnp.array([0.3, 0.1])
 _GAMMA_Q = jnp.array([1.0, -0.5])
 _SIGMA = jnp.array([[1.0, 0.3], [0.3, 0.8]])
-
 
 class TestGaugeLiftHellinger:
     """Regression targets from ``dev-notes/design/exponential_family.md`` §5.1."""
@@ -417,7 +404,6 @@ class TestGaugeLiftHellinger:
             float(nig.squared_hellinger(gh)), 0.0, atol=1e-12)
         np.testing.assert_allclose(
             float(gh.squared_hellinger(nig)), 0.0, atol=1e-12)
-
 
 class TestGaugeLiftKL:
     """Regression targets from ``dev-notes/design/exponential_family.md`` §5.3."""
@@ -490,7 +476,6 @@ class TestGaugeLiftKL:
         kl = float(vg_p.kl_divergence(vg_q))
         assert jnp.isfinite(kl)
         assert kl > 0.0
-
 
 class TestGaugeMismatch:
     def test_mismatched_gauges_raise_type_error(self):

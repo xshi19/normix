@@ -10,17 +10,13 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions import JointNormalInverseGaussian, NormalInverseGaussian
-
 
 def _joint_1d(mu_ig=1.0, lam=1.0):
     return JointNormalInverseGaussian.from_classical(
         mu=jnp.array([0.0]), gamma=jnp.array([0.5]),
         sigma=jnp.array([[1.0]]), mu_ig=mu_ig, lam=lam,
     )
-
 
 def _joint_2d():
     return JointNormalInverseGaussian.from_classical(
@@ -29,7 +25,6 @@ def _joint_2d():
         sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
         mu_ig=1.0, lam=1.0,
     )
-
 
 # ============================================================
 # Joint Tests
@@ -84,7 +79,6 @@ class TestJointNormalInverseGaussian:
         xy = jnp.concatenate([x, jnp.array([y])])
         np.testing.assert_allclose(
             float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-10)
-
 
 # ============================================================
 # Marginal Tests
@@ -149,7 +143,6 @@ class TestNormalInverseGaussian:
         np.testing.assert_allclose(
             np.cov(np.array(X), rowvar=False), np.array(nig.cov()), rtol=0.15)
 
-
 # ============================================================
 # Conditional Expectations
 # ============================================================
@@ -179,7 +172,6 @@ class TestConditionalExpectationsNIG:
             cond = nig._joint.conditional_expectations(X[i])
             assert float(cond['E_Y']) > 0
             assert float(cond['E_inv_Y']) > 0
-
 
 # ============================================================
 # Edge Cases

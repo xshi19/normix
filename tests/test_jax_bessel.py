@@ -8,10 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.utils.bessel import log_kv
-
 
 # ---------------------------------------------------------------------------
 # Scipy reference
@@ -21,7 +18,6 @@ def _scipy_log_kv(v, z):
     """scipy reference for log K_v(z)."""
     from scipy.special import kve
     return float(np.log(kve(abs(float(v)), float(z))) - float(z))
-
 
 # ---------------------------------------------------------------------------
 # Phase 1: Hankel asymptotic regime (large z)
@@ -49,7 +45,6 @@ def test_hankel_regime(v, z):
         f"Hankel log_kv({v}, {z}): got {result}, expected {expected}, "
         f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
     )
-
 
 # ---------------------------------------------------------------------------
 # Phase 2: Quadrature regime (moderate z, moderate/large v)
@@ -84,7 +79,6 @@ def test_quadrature_regime(v, z):
         f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
     )
 
-
 # ---------------------------------------------------------------------------
 # Phase 3: Olver uniform expansion (large v)
 # ---------------------------------------------------------------------------
@@ -110,7 +104,6 @@ def test_olver_regime(v, z):
         f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
     )
 
-
 # ---------------------------------------------------------------------------
 # Phase 3: Small-z leading asymptotic
 # ---------------------------------------------------------------------------
@@ -133,13 +126,11 @@ def test_smallz_regime(v, z):
         f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
     )
 
-
 def test_no_scipy_callback():
     """Verify that log_kv works without importing scipy (pure JAX)."""
     import sys
     result = float(log_kv(jnp.array(1.0), jnp.array(2.0)))
     assert np.isfinite(result)
-
 
 # ---------------------------------------------------------------------------
 # Primal evaluation (mixed regimes)
@@ -161,14 +152,12 @@ def test_log_kv_primal(v, z):
         f"log_kv({v}, {z}): got {result}, expected {expected}"
     )
 
-
 def test_log_kv_small_z():
     """Small z: asymptotic fallback should avoid -inf."""
     v, z = 1.0, 1e-12
     result = float(log_kv(jnp.array(v), jnp.array(z)))
     assert np.isfinite(result), f"Expected finite, got {result}"
     assert result > 0, "log K_v for small z should be large positive"
-
 
 def test_log_kv_vectorized():
     vs = jnp.array([0.5, 1.0, 1.5, 2.0])
@@ -179,7 +168,6 @@ def test_log_kv_vectorized():
         expected = _scipy_log_kv(float(v), float(z))
         assert abs(float(results[i]) - expected) < 1e-8
 
-
 def test_log_kv_vectorized_mixed_regimes():
     """Vectorized call with points in both Hankel and fallback regimes."""
     vs = jnp.array([0.5,  1.0, 10.0, 0.5])
@@ -189,7 +177,6 @@ def test_log_kv_vectorized_mixed_regimes():
     for i, (v, z) in enumerate(zip(vs, zs)):
         expected = _scipy_log_kv(float(v), float(z))
         assert abs(float(results[i]) - expected) < 1e-8
-
 
 # ---------------------------------------------------------------------------
 # Gradients ∂/∂z
@@ -213,7 +200,6 @@ def test_log_kv_grad_z(v, z):
     assert abs(grad_z - fd) / (abs(fd) + 1e-10) < 1e-4, (
         f"∂/∂z log_kv({v},{z}): got {grad_z}, fd={fd}"
     )
-
 
 # ---------------------------------------------------------------------------
 # Gradients ∂/∂v
@@ -239,7 +225,6 @@ def test_log_kv_grad_v(v, z):
         f"∂/∂v log_kv({v},{z}): got {grad_v}, fd={fd}, rel_err={rel_err:.2e}"
     )
 
-
 # ---------------------------------------------------------------------------
 # Higher-order: jax.hessian
 # ---------------------------------------------------------------------------
@@ -257,7 +242,6 @@ def test_log_kv_hessian_wrt_z():
     z = float(z_arr)
     fd2 = (_scipy_log_kv(v, z + eps) - 2 * _scipy_log_kv(v, z) + _scipy_log_kv(v, z - eps)) / eps**2
     assert abs(float(d2_dz2) - fd2) / (abs(fd2) + 1e-10) < 0.01
-
 
 # ---------------------------------------------------------------------------
 # vmap

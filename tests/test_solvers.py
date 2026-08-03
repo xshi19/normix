@@ -11,8 +11,6 @@ import pytest
 import jax
 import jax.numpy as jnp
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.fitting.solvers import (
     BregmanResult,
     bregman_objective,
@@ -20,7 +18,6 @@ from normix.fitting.solvers import (
     solve_bregman_multistart,
     _setup_reparam,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -30,11 +27,9 @@ def quadratic_f(theta: jax.Array) -> jax.Array:
     """f(θ) = ½‖θ‖²  →  ∇f(θ) = θ  →  θ* = η."""
     return 0.5 * jnp.dot(theta, theta)
 
-
 def quadratic_grad(theta_np: np.ndarray) -> np.ndarray:
     """CPU gradient of quadratic_f."""
     return theta_np.copy()
-
 
 # ---------------------------------------------------------------------------
 # BregmanResult
@@ -57,7 +52,6 @@ class TestBregmanResult:
         with pytest.raises(Exception):
             r.fun = 1.0  # frozen dataclass
 
-
 # ---------------------------------------------------------------------------
 # bregman_objective
 # ---------------------------------------------------------------------------
@@ -76,7 +70,6 @@ class TestBregmanObjective:
         val_at_min = bregman_objective(eta, eta, quadratic_f)
         np.testing.assert_allclose(float(val_at_min), -0.5 * float(jnp.dot(eta, eta)),
                                    rtol=1e-10)
-
 
 # ---------------------------------------------------------------------------
 # _setup_reparam
@@ -127,14 +120,12 @@ class TestSetupReparam:
         # enforce constraint
         assert 0.0 < float(theta_rt[0]) < 1.0
 
-
 # ---------------------------------------------------------------------------
 # Quadratic tests: known closed-form solution θ* = η
 # ---------------------------------------------------------------------------
 
 ETA_QUAD = jnp.array([1.0, -2.0, 0.5])
 THETA0_QUAD = jnp.zeros(3)
-
 
 class TestSolveBregmanQuadratic:
     """For f(θ)=½‖θ‖², min_θ [f(θ)−θ·η] has θ*=η analytically."""
@@ -209,7 +200,6 @@ class TestSolveBregmanQuadratic:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
-
 # ---------------------------------------------------------------------------
 # Gamma distribution tests
 # ---------------------------------------------------------------------------
@@ -244,7 +234,6 @@ class TestSolveBregmanGamma:
             backend="cpu", method=method, bounds=bounds, max_steps=300, tol=1e-9,
         )
         np.testing.assert_allclose(r.theta, self.theta_true, rtol=1e-5)
-
 
 # ---------------------------------------------------------------------------
 # GIG distribution tests
@@ -345,7 +334,6 @@ class TestSolveBregmanGIG:
         )
         assert r.converged or r.grad_norm < 1e-6
 
-
 # ---------------------------------------------------------------------------
 # Multi-start tests
 # ---------------------------------------------------------------------------
@@ -418,7 +406,6 @@ class TestSolveBregmanMultistart:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
-
 # ---------------------------------------------------------------------------
 # ExponentialFamily.from_expectation uses solve_bregman
 # ---------------------------------------------------------------------------
@@ -452,7 +439,6 @@ class TestExponentialFamilyFromExpectation:
             eta, backend="jax", method="lbfgs", theta0=gig.natural_params(),
         )
         np.testing.assert_allclose(float(gig2.p), 0.5, rtol=1e-4)
-
 
 # ---------------------------------------------------------------------------
 # Log-Partition Triad interface tests
@@ -583,7 +569,6 @@ class TestLogPartitionTriad:
             eta_cpu = np.asarray(dist.expectation_params(backend='cpu'))
             np.testing.assert_allclose(eta_jax, eta_cpu, rtol=1e-8,
                                        err_msg=f"{type(dist).__name__} backend mismatch")
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

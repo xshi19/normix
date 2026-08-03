@@ -10,8 +10,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions import (
     JointGeneralizedHyperbolic,
     GeneralizedHyperbolic,
@@ -20,13 +18,11 @@ from normix.distributions import (
     NormalInverseGamma,
 )
 
-
 def _joint_1d(p=1.0, a=1.0, b=1.0):
     return JointGeneralizedHyperbolic.from_classical(
         mu=jnp.array([0.0]), gamma=jnp.array([0.5]),
         sigma=jnp.array([[1.0]]), p=p, a=a, b=b,
     )
-
 
 def _joint_2d():
     return JointGeneralizedHyperbolic.from_classical(
@@ -35,7 +31,6 @@ def _joint_2d():
         sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
         p=1.0, a=1.0, b=1.0,
     )
-
 
 # ============================================================
 # Joint Tests
@@ -75,7 +70,6 @@ class TestJointGeneralizedHyperbolic:
         xy = jnp.concatenate([x, jnp.array([y])])
         np.testing.assert_allclose(
             float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-10)
-
 
 # ============================================================
 # Marginal Tests
@@ -138,7 +132,6 @@ class TestGeneralizedHyperbolic:
         np.testing.assert_allclose(
             np.cov(np.array(X), rowvar=False), np.array(gh.cov()), rtol=0.2)
 
-
 # ============================================================
 # Special Case Consistency
 # ============================================================
@@ -181,7 +174,6 @@ class TestGHSpecialCases:
         assert np.all(np.isfinite(lps))
         assert np.all(np.isfinite(ninvg_mean))
 
-
 # ============================================================
 # Conditional Expectations
 # ============================================================
@@ -212,7 +204,6 @@ class TestConditionalExpectationsGH:
             cond = gh._joint.conditional_expectations(X[i])
             assert float(cond['E_Y']) > 0
             assert float(cond['E_inv_Y']) > 0
-
 
 # ============================================================
 # Edge Cases

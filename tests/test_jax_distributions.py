@@ -12,8 +12,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     Gamma, InverseGamma, InverseGaussian, GIG,
     GeneralizedHyperbolic, MultivariateNormal,
@@ -23,7 +21,6 @@ from normix import (
     JointNormalInverseGaussian,
     JointVarianceGamma,
 )
-
 
 # ===========================================================================
 # Gamma
@@ -94,7 +91,6 @@ class TestGamma:
         eigvals = jnp.linalg.eigvalsh(FI)
         assert jnp.all(eigvals > 0), f"Fisher info not PD: {eigvals}"
 
-
 # ===========================================================================
 # InverseGamma
 # ===========================================================================
@@ -134,7 +130,6 @@ class TestInverseGamma:
             # scipy invgamma: shape=alpha, scale=beta (rate=1/scale=1/beta)
             ref = float(invgamma.logpdf(x, a=alpha, scale=beta))
             assert abs(our - ref) < 1e-9, f"x={x}: ours={our}, scipy={ref}"
-
 
 # ===========================================================================
 # InverseGaussian
@@ -211,7 +206,6 @@ class TestInverseGaussian:
         np.testing.assert_allclose(our, ref, rtol=1e-6,
                                    err_msg=f"mu={mu}, lam={lam}, x={x}")
 
-
 # ===========================================================================
 # GIG
 # ===========================================================================
@@ -285,7 +279,6 @@ class TestGIG:
         assert FI.shape == (3, 3)
         assert jnp.all(jnp.isfinite(FI))
 
-
 # ===========================================================================
 # GeneralizedHyperbolic (marginal)
 # ===========================================================================
@@ -356,7 +349,6 @@ class TestGeneralizedHyperbolic:
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
 
-
 # ===========================================================================
 # M-step denominator sign (B1) — T6
 # ===========================================================================
@@ -420,7 +412,6 @@ class TestMStepDenominatorSign:
             D = 1.0 - float(eta.E_inv_Y) * float(eta.E_Y)
             assert D <= 1e-9, f"{name}: D = 1 - eta2*eta3 = {D} should be <= 0"
 
-
 # ===========================================================================
 # Joint normal mixtures — exponential-family log_prob vs explicit joint density
 # ===========================================================================
@@ -471,7 +462,6 @@ class TestJointExponentialFamilyLogProb:
         xy = jnp.concatenate([x, jnp.array([y])])
         np.testing.assert_allclose(
             float(j.log_prob(xy)), float(j.log_prob_joint(x, y)), rtol=1e-12)
-
 
 # ===========================================================================
 # Joint normal mixtures — exponential-family round-trip tests (T3)
@@ -629,7 +619,6 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.eye(2), p=1.0, a=1.0, b=1.0,
         )
         self._check_cond_expectations(j)
-
 
 # ===========================================================================
 # MultivariateNormal — ExponentialFamily round-trip tests (D3)

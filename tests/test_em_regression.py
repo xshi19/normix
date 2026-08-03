@@ -10,8 +10,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
@@ -19,7 +17,6 @@ from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter
 from normix.fitting.eta import NormalMixtureEta
 from normix.mixtures.joint import JointNormalMixture
-
 
 class TestVGEMRegression:
 
@@ -52,7 +49,6 @@ class TestVGEMRegression:
         eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
 
-
 class TestNInvGEMRegression:
 
     def test_ninvg_em_1d(self):
@@ -82,7 +78,6 @@ class TestNInvGEMRegression:
         Sigma = L @ L.T
         eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
-
 
 class TestNIGEMRegression:
 
@@ -136,7 +131,6 @@ class TestNIGEMRegression:
         np.testing.assert_allclose(
             np.asarray(result.model.gamma), np.array([0.3, -0.4]), atol=0.15)
 
-
 class TestParamChangeMetric:
     """Hybrid-scale RMS change is roughly dimension-free."""
 
@@ -154,7 +148,6 @@ class TestParamChangeMetric:
             scores.append(float(_param_change(new, old)))
         np.testing.assert_allclose(scores, scores[0], rtol=1e-12)
 
-
 class TestGHEMRegression:
 
     def test_gh_em_1d_det_sigma_one(self):
@@ -171,6 +164,8 @@ class TestGHEMRegression:
         assert float(fitted._joint.b) > 0
         ll = float(fitted.marginal_log_likelihood(X))
         assert np.isfinite(ll)
+        np.testing.assert_allclose(
+            np.array(fitted.mean()), np.array(true.mean()), atol=0.25)
 
     def test_gh_em_2d_det_sigma_one(self):
         true = GeneralizedHyperbolic.from_classical(
@@ -188,7 +183,10 @@ class TestGHEMRegression:
         Sigma = L @ L.T
         eigvals = np.linalg.eigvalsh(Sigma)
         assert np.all(eigvals > 0)
-
+        ll = float(fitted.marginal_log_likelihood(X))
+        assert np.isfinite(ll)
+        np.testing.assert_allclose(
+            np.array(fitted.mean()), np.array(true.mean()), atol=0.25)
 
 def _consistent_eta(mu_t, gam_t, eta2, D):
     """Build eta so the exact M-step returns (mu_t, gam_t) for this D."""
@@ -204,7 +202,6 @@ def _consistent_eta(mu_t, gam_t, eta2, D):
         E_X_inv_Y=eta5,
         E_XXT_inv_Y=jnp.eye(d),
     )
-
 
 class TestMstepDenominatorSign:
     """B1: sign-preserving M-step denominator D = 1 - eta2*eta3."""
@@ -255,7 +252,6 @@ class TestMstepDenominatorSign:
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
         assert D <= 1e-9
 
-
 def _heavy_peaked_vg_1d():
     """Heavy-peaked d=1 VG data with a near-mode observation (T5 setup)."""
     vg_true = VarianceGamma.from_classical(
@@ -265,11 +261,9 @@ def _heavy_peaked_vg_1d():
     X = vg_true.rvs(3000, seed=0).reshape(-1, 1)
     return jnp.concatenate([jnp.mean(X, axis=0, keepdims=True), X], axis=0)
 
-
 def _assert_model_finite(model) -> None:
     for leaf in jax.tree.leaves(model):
         assert jnp.all(jnp.isfinite(leaf))
-
 
 class TestEMMonotoneLL:
     """T5: per-iteration LL is non-decreasing (EM invariant) with track_ll."""
@@ -296,7 +290,6 @@ class TestEMMonotoneLL:
         # post-convergence with change=0). Allow float64 slack in floored VG EM.
         active = changes[:-1] > 0
         assert jnp.all(dll[active] >= -1e-5)
-
 
 class TestEMStep1Convergence:
     """B5/B6: loop and scan share step-1 stopping; EMResult uses Python types."""
@@ -379,7 +372,6 @@ class TestEMStep1Convergence:
         assert result.diverged is True
         assert result.converged is False
         assert result.n_iter == 1
-
 
 class TestEMDivergenceGuard:
     """T7: non-finite iterate triggers diverged=True and keep-last-finite."""

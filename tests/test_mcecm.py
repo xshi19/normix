@@ -4,15 +4,10 @@ Tests for the MCECM algorithm.
 Verifies that MCECM converges to the same MLE as EM for all mixture
 distributions (VG, NInvG, NIG, GH) on SP500 data.
 """
-from pathlib import Path
-
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pandas as pd
 import pytest
-
-jax.config.update("jax_enable_x64", True)
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
@@ -22,26 +17,9 @@ from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.variance_gamma import VarianceGamma
 from normix.fitting.em import BatchEMFitter
 
-DATA_PATH = Path(__file__).parent.parent / "data" / "sp500_returns.csv"
-N_STOCKS = 5
-
-_sp500_cache = None
-
-
-def _load_sp500():
-    global _sp500_cache
-    if _sp500_cache is not None:
-        return _sp500_cache
-    if not DATA_PATH.exists():
-        pytest.skip(f"SP500 data not found at {DATA_PATH}")
-    df = pd.read_csv(DATA_PATH, index_col=0, parse_dates=True).dropna(axis=1)
-    X = jnp.asarray(df.values[:, :N_STOCKS], dtype=jnp.float64)
-    _sp500_cache = X
-    return X
-
 
 def _make_models(X):
-    n, d = X.shape
+    d = X.shape[1]
     mu = jnp.mean(X, axis=0)
     sigma_emp = jnp.cov(X.T) + 1e-4 * jnp.eye(d)
 
@@ -70,11 +48,10 @@ def _make_models(X):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_mcecm_one_step_finite(dist_name):
+def test_mcecm_one_step_finite(dist_name, sp500_returns):
     """One MCECM iteration produces finite parameters and LL."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     regularization = 'det_sigma_one' if dist_name == 'GH' else 'none'
 
@@ -96,11 +73,10 @@ def test_mcecm_one_step_finite(dist_name):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_m_step_normal_preserves_subordinator(dist_name):
+def test_m_step_normal_preserves_subordinator(dist_name, sp500_returns):
     """m_step_normal should not change subordinator parameters."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     eta = model.e_step(X, backend='cpu')
     model_after = model.m_step_normal(eta)
@@ -132,11 +108,10 @@ def test_m_step_normal_preserves_subordinator(dist_name):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG"])
-def test_full_m_step_matches_split(dist_name):
+def test_full_m_step_matches_split(dist_name, sp500_returns):
     """m_step should produce the same result as m_step_normal + m_step_subordinator."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     eta = model.e_step(X, backend='cpu')
 
@@ -170,11 +145,10 @@ def test_full_m_step_matches_split(dist_name):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_mcecm_via_fit_interface(dist_name):
+def test_mcecm_via_fit_interface(dist_name, sp500_returns):
     """model.fit(algorithm='mcecm') should work for all distributions."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     regularization = 'det_sigma_one' if dist_name == 'GH' else 'none'
 
@@ -187,6 +161,34 @@ def test_mcecm_via_fit_interface(dist_name):
     assert result.n_iter >= 1
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"{dist_name} MCECM .fit() LL not finite"
+
+
+# ---------------------------------------------------------------------------
+# MCECM ≡ EM at the MLE (T5)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG"])
+def test_mcecm_matches_em_at_mle(dist_name, sp500_returns):
+    """From the same init, MCECM and EM converge to the same LL and params."""
+    X = sp500_returns
+    init = _make_models(X)[dist_name]
+    kwargs = dict(
+        max_iter=40, tol=1e-6, verbose=0,
+        e_step_backend='cpu', m_step_backend='cpu',
+    )
+
+    em = BatchEMFitter(algorithm='em', **kwargs).fit(init, X)
+    mcecm = BatchEMFitter(algorithm='mcecm', **kwargs).fit(init, X)
+
+    ll_em = float(em.model.marginal_log_likelihood(X))
+    ll_mcecm = float(mcecm.model.marginal_log_likelihood(X))
+    np.testing.assert_allclose(ll_mcecm, ll_em, rtol=1e-4, atol=1e-4)
+
+    np.testing.assert_allclose(
+        np.array(mcecm.model.mu), np.array(em.model.mu), rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(
+        np.array(mcecm.model.gamma), np.array(em.model.gamma),
+        rtol=5e-3, atol=5e-3)
 
 
 # ---------------------------------------------------------------------------
