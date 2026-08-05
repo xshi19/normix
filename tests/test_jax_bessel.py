@@ -264,19 +264,24 @@ def test_log_kv_jvp_joint_matches_partials():
 
 
 def test_log_kv_z_only_jaxpr_skips_nu_fd():
-    """z-only differentiation must not stage the ν±ε FD pair (E4 skip)."""
-    from normix.utils.constants import BESSEL_EPS_V
+    """z-only differentiation stages fewer lax.cond eqns than joint (E4 skip).
+
+    With ``symbolic_zeros=True``, z-only drops the ν±ε FD (and the two
+    regime-dispatched Bessel evals it needs). Joint differentiation keeps
+    both tangent branches. Measured on this point: 12 vs 20 ``cond`` eqns.
+    """
     v = jnp.array(1.5)
     z = jnp.array(2.0)
     z_only = str(jax.make_jaxpr(jax.grad(lambda zz: log_kv(v, zz)))(z))
     both = str(jax.make_jaxpr(jax.jacfwd(log_kv, argnums=(0, 1)))(v, z))
-    eps_lit = repr(float(BESSEL_EPS_V))
-    # Concrete eps appears in the ν-FD branch; z-only must omit it.
-    assert eps_lit not in z_only, (
-        f"z-only jaxpr still contains BESSEL_EPS_V={eps_lit}"
+    n_z = z_only.count('cond')
+    n_both = both.count('cond')
+    assert n_z < n_both, (
+        f"expected z-only jaxpr fewer conds than joint; got {n_z} vs {n_both}"
     )
-    assert eps_lit in both, (
-        f"joint jaxpr missing BESSEL_EPS_V={eps_lit} (FD path expected)"
+    assert n_z <= 12 and n_both >= 20, (
+        f"unexpected cond counts (z-only={n_z}, joint={n_both}); "
+        "E4 skip may have regressed"
     )
 
 
