@@ -226,6 +226,61 @@ def test_log_kv_grad_v(v, z):
     )
 
 # ---------------------------------------------------------------------------
+# symbolic_zeros JVP (E4): z-only and v-only tangents
+# ---------------------------------------------------------------------------
+
+def test_log_kv_jvp_z_only_matches_grad():
+    """z-only JVP must match ∂/∂z and skip the v finite-difference branch."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    primal, tangent = jax.jvp(lambda zz: log_kv(v, zz), (z,), (jnp.ones_like(z),))
+    grad_z = jax.grad(lambda zz: log_kv(v, zz))(z)
+    np.testing.assert_allclose(float(primal), float(log_kv(v, z)), rtol=1e-12)
+    np.testing.assert_allclose(float(tangent), float(grad_z), rtol=1e-12)
+
+
+def test_log_kv_jvp_v_only_matches_grad():
+    """v-only JVP must match ∂/∂v (FD path still active)."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    primal, tangent = jax.jvp(lambda vv: log_kv(vv, z), (v,), (jnp.ones_like(v),))
+    grad_v = jax.grad(lambda vv: log_kv(vv, z))(v)
+    np.testing.assert_allclose(float(primal), float(log_kv(v, z)), rtol=1e-12)
+    np.testing.assert_allclose(float(tangent), float(grad_v), rtol=1e-12)
+
+
+def test_log_kv_jvp_joint_matches_partials():
+    """Both-tangent JVP equals linear combination of partials (E4)."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    dv = jnp.array(0.3)
+    dz = jnp.array(-0.7)
+    _, tangent = jax.jvp(log_kv, (v, z), (dv, dz))
+    gv = jax.grad(lambda vv: log_kv(vv, z))(v)
+    gz = jax.grad(lambda zz: log_kv(v, zz))(z)
+    np.testing.assert_allclose(
+        float(tangent), float(gv * dv + gz * dz), rtol=1e-12,
+    )
+
+
+def test_log_kv_z_only_jaxpr_skips_nu_fd():
+    """z-only differentiation must not stage the ν±ε FD pair (E4 skip)."""
+    from normix.utils.constants import BESSEL_EPS_V
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    z_only = str(jax.make_jaxpr(jax.grad(lambda zz: log_kv(v, zz)))(z))
+    both = str(jax.make_jaxpr(jax.jacfwd(log_kv, argnums=(0, 1)))(v, z))
+    eps_lit = repr(float(BESSEL_EPS_V))
+    # Concrete eps appears in the ν-FD branch; z-only must omit it.
+    assert eps_lit not in z_only, (
+        f"z-only jaxpr still contains BESSEL_EPS_V={eps_lit}"
+    )
+    assert eps_lit in both, (
+        f"joint jaxpr missing BESSEL_EPS_V={eps_lit} (FD path expected)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Higher-order: jax.hessian
 # ---------------------------------------------------------------------------
 

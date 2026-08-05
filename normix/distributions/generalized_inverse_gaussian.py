@@ -60,7 +60,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from normix.utils.bessel import log_kv
-from normix.utils.rvs import build_pinv_table, rvs_pinv
+from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
     LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD,
@@ -550,8 +550,21 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return self.expectation_params()[2]
 
     def var(self) -> jax.Array:
-        r""":math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2]."""
-        return self.fisher_information()[2, 2]
+        r""":math:`\mathrm{Var}[X] = E[X^2] - E[X]^2` via three Bessel evaluations.
+
+        Uses the moment formula
+        :math:`E[X^r] = (b/a)^{r/2}\,K_{p+r}(\sqrt{ab})/K_p(\sqrt{ab})`
+        rather than the full 11-Bessel Fisher Hessian entry ``[2, 2]``.
+        """
+        a = jnp.maximum(self.a, LOG_EPS)
+        b = jnp.maximum(self.b, LOG_EPS)
+        z = jnp.sqrt(a * b)
+        orders = jnp.array([self.p, self.p + 1.0, self.p + 2.0])
+        L, L_p1, L_p2 = jax.vmap(log_kv)(orders, jnp.full(3, z))
+        ba = b / a
+        E_X = jnp.sqrt(ba) * jnp.exp(L_p1 - L)
+        E_X2 = ba * jnp.exp(L_p2 - L)
+        return E_X2 - E_X ** 2
 
     def mode(self) -> jax.Array:
         r"""Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.
@@ -586,6 +599,19 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         q = jnp.asarray(q, dtype=jnp.float64)
         return self._cdf_or_ppf(q, inverse=True)
 
+    def quantile_table(self) -> QuantileTable:
+        r"""Frozen PINV table (non-degenerate regime only).
+
+        Degenerate Gamma / InverseGamma limits bypass the table in
+        :meth:`cdf` / :meth:`ppf`; hold this object when evaluating many
+        quantiles at fixed non-degenerate parameters.
+        """
+        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+        u_grid, x_grid = build_pinv_table(
+            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+        )
+        return QuantileTable(u_grid=u_grid, x_grid=x_grid)
+
     def _cdf_or_ppf(self, z: jax.Array, *, inverse: bool) -> jax.Array:
         """Shared JIT-safe CDF / PPF with degenerate Gamma / InvGamma limits."""
         p, a, b = self.p, self.a, self.b
@@ -610,13 +636,10 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             return jnp.where(use_gamma, g.cdf(z_), ig.cdf(z_))
 
         def _pinv(z_):
-            log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
-            u_grid, x_grid = build_pinv_table(
-                log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
-            )
+            table = self.quantile_table()
             if inverse:
-                return jnp.interp(z_, u_grid, x_grid)
-            return jnp.interp(z_, x_grid, u_grid, left=0.0, right=1.0)
+                return table.ppf(z_)
+            return table.cdf(z_)
 
         return jax.lax.cond(use_degen, _degen, _pinv, z)
 
@@ -645,12 +668,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             return _gig_rvs_devroye(key, self.p, self.a, self.b, n)
 
         if method == "pinv":
-            key = jax.random.PRNGKey(seed)
-            log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
-            u_grid, x_grid = build_pinv_table(
-                log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
-            )
-            return rvs_pinv(key, u_grid, x_grid, n)
+            return self.quantile_table().rvs(n, seed=seed)
 
         if method == "scipy":
             from scipy import stats

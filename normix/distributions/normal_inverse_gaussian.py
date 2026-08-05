@@ -191,11 +191,19 @@ class NormalInverseGaussian(NormalMixture):
         return log_f
 
     def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
-        from normix.distributions.generalized_inverse_gaussian import GIG
+        r"""Prior IG moments: closed-form :math:`E[Y], E[1/Y]`; Bessel for :math:`E[\log Y]`."""
+        from normix.utils.bessel import log_kv
+        from normix.utils.constants import BESSEL_EPS_V
         j = self._joint
-        gig = GIG(p=jnp.float64(-0.5), a=j.lam / j.mu_ig**2, b=j.lam)
-        eta = gig.expectation_params()
-        return eta[0], eta[1], eta[2]
+        mu, lam = j.mu_ig, j.lam
+        E_Y = mu
+        E_inv_Y = 1.0 / mu + 1.0 / lam
+        # IG = GIG(p=-1/2, a=λ/μ², b=λ); E[log Y] = ∂_p log K_p(z) + log μ
+        z = lam / mu
+        eps = BESSEL_EPS_V
+        p = jnp.float64(-0.5)
+        E_log_Y = (log_kv(p + eps, z) - log_kv(p - eps, z)) / (2.0 * eps) + jnp.log(mu)
+        return E_log_Y, E_inv_Y, E_Y
 
     @classmethod
     def _joint_class(cls):
@@ -347,13 +355,17 @@ class FactorNormalInverseGaussian(FactorNormalMixture):
                 + zw)
 
     def _subordinator_expectations(self):
-        from normix.distributions.generalized_inverse_gaussian import GIG
-        gig = GIG(
-            p=jnp.float64(-0.5),
-            a=self.lam / (self.mu_ig ** 2), b=self.lam,
-        )
-        eta = gig.expectation_params()
-        return eta[0], eta[1], eta[2]
+        r"""Prior IG moments: closed-form :math:`E[Y], E[1/Y]`; Bessel for :math:`E[\log Y]`."""
+        from normix.utils.bessel import log_kv
+        from normix.utils.constants import BESSEL_EPS_V
+        mu, lam = self.mu_ig, self.lam
+        E_Y = mu
+        E_inv_Y = 1.0 / mu + 1.0 / lam
+        z = lam / mu
+        eps = BESSEL_EPS_V
+        p = jnp.float64(-0.5)
+        E_log_Y = (log_kv(p + eps, z) - log_kv(p - eps, z)) / (2.0 * eps) + jnp.log(mu)
+        return E_log_Y, E_inv_Y, E_Y
 
     @classmethod
     def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):

@@ -52,7 +52,6 @@ class RiskMeasure(eqx.Module):
         subordinator draws ``Y``.
         """
 
-
 class CVaR(RiskMeasure):
     r"""Conditional Value at Risk at confidence :math:`\alpha \in (0, 1)`.
 
@@ -115,6 +114,42 @@ class CVaR(RiskMeasure):
         integral = jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi)
         return -integral / self.alpha
 
+    def _scalar_bundle(
+        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+        v: jax.Array,
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        r"""CVaR value, 3-vector gradient, and 3×3 Hessian at a fixed CMC VaR.
+
+        Shares the single quantile solve ``v = VaR_α`` across value and both
+        derivative orders (see :meth:`value_grad_hess_w`).
+        """
+        mu = univariate._mu_scalar
+        gamma = univariate._gamma_scalar
+        sigma = univariate._sigma_scalar
+        sqY = jnp.sqrt(Y)
+        z = (-v - mu - gamma * Y) / (sigma * sqY)
+        Phi = jax.scipy.stats.norm.cdf(z)
+        phi = _phi(z)
+
+        rcvar = -jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi) / self.alpha
+        d_mu = jnp.asarray(-1.0, dtype=jnp.float64)
+        d_gamma = -jnp.mean(Y * Phi) / self.alpha
+        d_sigma = (rcvar + mu - gamma * d_gamma) / sigma
+        g = jnp.stack([d_mu, d_gamma, d_sigma])
+
+        num = jnp.mean(sqY * phi)
+        den = jnp.mean(phi / sqY)
+        dvar_dgamma = -num / den
+        d2_gg = jnp.mean(sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma)
+        d2_gs = -(gamma / sigma) * d2_gg
+        d2_ss = -(gamma / sigma) * d2_gs
+        H = jnp.zeros((3, 3), dtype=jnp.float64)
+        H = H.at[1, 1].set(d2_gg)
+        H = H.at[1, 2].set(d2_gs)
+        H = H.at[2, 1].set(d2_gs)
+        H = H.at[2, 2].set(d2_ss)
+        return rcvar, g, H
+
     def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
         x_alpha = -self._var_cmc(univariate, Y)
         return self._cvar_from_quantile(
@@ -146,19 +181,9 @@ class CVaR(RiskMeasure):
     ) -> jax.Array:
         r"""Return :math:`(\partial r / \partial \tilde\mu,
         \partial r / \partial \tilde\gamma, \partial r / \partial \tilde\sigma)`."""
-        mu = univariate._mu_scalar
-        gamma = univariate._gamma_scalar
-        sigma = univariate._sigma_scalar
         v = self._var_cmc(univariate, Y)
-        sqY = jnp.sqrt(Y)
-        z = (-v - mu - gamma * Y) / (sigma * sqY)
-        Phi = jax.scipy.stats.norm.cdf(z)
-        phi = _phi(z)
-        rcvar = -jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi) / self.alpha
-        d_mu = -1.0
-        d_gamma = -jnp.mean(Y * Phi) / self.alpha
-        d_sigma = (rcvar + mu - gamma * d_gamma) / sigma
-        return jnp.stack([jnp.asarray(d_mu, dtype=jnp.float64), d_gamma, d_sigma])
+        _, g, _ = self._scalar_bundle(univariate, Y, v)
+        return g
 
     def hessian_scalar(
         self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
@@ -169,29 +194,49 @@ class CVaR(RiskMeasure):
         non-trivial blocks follow ``docs/theory/cvar_derivatives.md``
         :eq:`cvar-nm-hessian`.
         """
-        mu = univariate._mu_scalar
-        gamma = univariate._gamma_scalar
-        sigma = univariate._sigma_scalar
         v = self._var_cmc(univariate, Y)
-        sqY = jnp.sqrt(Y)
-        z = (-v - mu - gamma * Y) / (sigma * sqY)
-        phi = _phi(z)
-        num = jnp.mean(sqY * phi)
-        den = jnp.mean(phi / sqY)
-        dvar_dgamma = -num / den
-        d2_gg = jnp.mean(sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma)
-        d2_gs = -(gamma / sigma) * d2_gg
-        d2_ss = -(gamma / sigma) * d2_gs
-        H = jnp.zeros((3, 3), dtype=jnp.float64)
-        H = H.at[1, 1].set(d2_gg)
-        H = H.at[1, 2].set(d2_gs)
-        H = H.at[2, 1].set(d2_gs)
-        H = H.at[2, 2].set(d2_ss)
+        _, _, H = self._scalar_bundle(univariate, Y, v)
         return H
 
     # ------------------------------------------------------------------
     # Portfolio-space value, gradient, Hessian (chain rule)
     # ------------------------------------------------------------------
+
+    def _grad_w_from_scalar(
+        self,
+        model: NormalMixture,
+        w: jax.Array,
+        uni: _UnivariateNormalMixtureMixin,
+        g: jax.Array,
+    ) -> jax.Array:
+        j = model._joint
+        w = jnp.asarray(w, dtype=jnp.float64)
+        Sigma_w = j.sigma() @ w
+        return g[0] * j.mu + g[1] * j.gamma + g[2] * Sigma_w / uni._sigma_scalar
+
+    def _hess_w_from_scalar(
+        self,
+        model: NormalMixture,
+        w: jax.Array,
+        uni: _UnivariateNormalMixtureMixin,
+        g: jax.Array,
+        H_s: jax.Array,
+    ) -> jax.Array:
+        j = model._joint
+        w = jnp.asarray(w, dtype=jnp.float64)
+        Sigma = j.sigma()
+        Sigma_w = Sigma @ w
+        sigma = uni._sigma_scalar
+        sigma2 = sigma ** 2
+        sigma3 = sigma ** 3
+        return (
+            jnp.outer(j.gamma, j.gamma) * H_s[1, 1]
+            + (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma))
+              * H_s[1, 2] / sigma
+            + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma2
+            + (sigma2 * Sigma - jnp.outer(Sigma_w, Sigma_w))
+              * g[2] / sigma3
+        )
 
     @eqx.filter_jit
     def value_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
@@ -201,32 +246,31 @@ class CVaR(RiskMeasure):
     def gradient_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
         r"""Gradient :math:`\nabla_w r_{\operatorname{CVaR}_\alpha}(w)`."""
         uni = model.project(w)
-        g = self.gradient_scalar(uni, Y)
-        j = model._joint
-        w = jnp.asarray(w, dtype=jnp.float64)
-        Sigma_w = j.sigma() @ w
-        return g[0] * j.mu + g[1] * j.gamma + g[2] * Sigma_w / uni._sigma_scalar
+        v = self._var_cmc(uni, Y)
+        _, g, _ = self._scalar_bundle(uni, Y, v)
+        return self._grad_w_from_scalar(model, w, uni, g)
 
     @eqx.filter_jit
     def hessian_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
         r"""Hessian :math:`H_{r_{\operatorname{CVaR}_\alpha}}(w)`."""
         uni = model.project(w)
-        g = self.gradient_scalar(uni, Y)
-        H_s = self.hessian_scalar(uni, Y)
-        j = model._joint
-        w = jnp.asarray(w, dtype=jnp.float64)
-        Sigma = j.sigma()
-        Sigma_w = Sigma @ w
-        sigma = uni._sigma_scalar
-        sigma2 = sigma ** 2
-        sigma3 = sigma ** 3
+        v = self._var_cmc(uni, Y)
+        _, g, H_s = self._scalar_bundle(uni, Y, v)
+        return self._hess_w_from_scalar(model, w, uni, g, H_s)
 
-        H = (
-            jnp.outer(j.gamma, j.gamma) * H_s[1, 1]
-            + (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma))
-              * H_s[1, 2] / sigma
-            + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma2
-            + (sigma2 * Sigma - jnp.outer(Sigma_w, Sigma_w))
-              * g[2] / sigma3
-        )
-        return H
+    @eqx.filter_jit
+    def value_grad_hess_w(
+        self, model: NormalMixture, w: jax.Array, Y: jax.Array,
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        r"""Fused :math:`(r, \nabla_w r, H_r)` with one CMC VaR solve.
+
+        Equivalent to calling :meth:`value_w`, :meth:`gradient_w`, and
+        :meth:`hessian_w` separately, but projects once and bisects the
+        conditional-MC CDF once.
+        """
+        uni = model.project(w)
+        v = self._var_cmc(uni, Y)
+        value, g, H_s = self._scalar_bundle(uni, Y, v)
+        grad_w = self._grad_w_from_scalar(model, w, uni, g)
+        hess_w = self._hess_w_from_scalar(model, w, uni, g, H_s)
+        return value, grad_w, hess_w

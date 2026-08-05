@@ -13,9 +13,11 @@ Using lax.cond (not jnp.where) means only the selected branch executes
 at runtime. lax.cond requires scalar conditions, so the core scalar
 function _log_kv_scalar is vmapped over array inputs.
 
-Custom JVP for full autodiff:
-  - ∂/∂z : exact recurrence K'_v = −(K_{v−1}+K_{v+1})/2
-  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)
+Custom JVP for full autodiff (``defjvp(..., symbolic_zeros=True)``):
+  - ∂/∂z : exact recurrence K'_v = −(K_{v−1}+K_{v+1})/2;
+    skipped when the z-tangent is a symbolic zero (v-only differentiation)
+  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V);
+    skipped when the v-tangent is a symbolic zero (z-only differentiation)
 
 backend='jax'  (default): pure-JAX, JIT-able, differentiable.
 backend='cpu'           : scipy.special.kve, fully vectorized numpy.
@@ -27,8 +29,11 @@ import functools
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.custom_derivatives import SymbolicZero
 
-from normix.utils.constants import TINY, LOG_EPS, BESSEL_SMALLZ_THRESHOLD
+from normix.utils.constants import (
+    BESSEL_EPS_V, BESSEL_SMALLZ_THRESHOLD, LOG_EPS, TINY,
+)
 
 
 _N_QUAD = 64
@@ -36,6 +41,7 @@ _GL_NODES_NP, _GL_WEIGHTS_NP = np.polynomial.legendre.leggauss(_N_QUAD)
 _GL_NODES = jnp.asarray(_GL_NODES_NP, dtype=jnp.float64)
 _GL_WEIGHTS = jnp.asarray(_GL_WEIGHTS_NP, dtype=jnp.float64)
 _LOG_GL_WEIGHTS = jnp.log(_GL_WEIGHTS)
+_EPS_V = jnp.asarray(BESSEL_EPS_V, dtype=jnp.float64)
 
 _HANKEL_THRESHOLD = 25.0
 _OLVER_V_THRESHOLD = 25.0
@@ -188,21 +194,36 @@ def _log_kv_jax(v: jax.Array, z: jax.Array) -> jax.Array:
     return jax.vmap(_log_kv_scalar)(v.ravel(), z.ravel()).reshape(shape)
 
 
-@_log_kv_jax.defjvp
+def _is_symbolic_zero(tangent) -> bool:
+    """True for JAX symbolic-zero tangents (not involved in differentiation)."""
+    return type(tangent) is SymbolicZero
+
+
 def _log_kv_jax_jvp(primals, tangents):
     v, z = primals
     dv, dz = tangents
     primal_out = _log_kv_jax(v, z)
 
-    log_kvm1 = _log_kv_jax(v - 1.0, z)
-    log_kvp1 = _log_kv_jax(v + 1.0, z)
-    dlogkv_dz = -0.5 * (jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out))
+    tangent_out = jnp.zeros_like(primal_out)
+    if not _is_symbolic_zero(dz):
+        log_kvm1 = _log_kv_jax(v - 1.0, z)
+        log_kvp1 = _log_kv_jax(v + 1.0, z)
+        dlogkv_dz = -0.5 * (
+            jnp.exp(log_kvm1 - primal_out) + jnp.exp(log_kvp1 - primal_out)
+        )
+        tangent_out = tangent_out + dlogkv_dz * dz
 
-    from normix.utils.constants import BESSEL_EPS_V
-    _EPS_V = jnp.asarray(BESSEL_EPS_V, dtype=jnp.float64)
-    dlogkv_dv = (_log_kv_jax(v + _EPS_V, z) - _log_kv_jax(v - _EPS_V, z)) / (2.0 * _EPS_V)
+    if not _is_symbolic_zero(dv):
+        dlogkv_dv = (
+            (_log_kv_jax(v + _EPS_V, z) - _log_kv_jax(v - _EPS_V, z))
+            / (2.0 * _EPS_V)
+        )
+        tangent_out = tangent_out + dlogkv_dv * dv
 
-    return primal_out, dlogkv_dz * dz + dlogkv_dv * dv
+    return primal_out, tangent_out
+
+
+_log_kv_jax.defjvp(_log_kv_jax_jvp, symbolic_zeros=True)
 
 
 # ---------------------------------------------------------------------------

@@ -37,7 +37,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
-from normix.utils.rvs import build_pinv_table
+from normix.utils.rvs import QuantileTable, build_pinv_table
 
 
 
@@ -175,18 +175,25 @@ class InverseGaussian(ExponentialFamily):
         log_term2 = 2.0 * self.lam / self.mu + jax.scipy.special.log_ndtr(-t2)
         return jax.scipy.stats.norm.cdf(t1) + jnp.exp(log_term2)
 
+    def quantile_table(self) -> QuantileTable:
+        r"""Frozen PINV table for amortised :meth:`ppf` / sampling.
+
+        The analytical :meth:`cdf` does not use this table; hold the return
+        value when evaluating many quantiles at fixed parameters.
+        """
+        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
+        u_grid, x_grid = build_pinv_table(
+            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+        )
+        return QuantileTable(u_grid=u_grid, x_grid=x_grid)
+
     def ppf(self, q: jax.Array) -> jax.Array:
         r"""Quantile function via a PINV table built from :meth:`log_prob`.
 
         Trapezoidal-CDF lookup on :math:`w = \log x`, seeded at
         :math:`\log` :meth:`mode`.
         """
-        q = jnp.asarray(q, dtype=jnp.float64)
-        log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
-        u_grid, x_grid = build_pinv_table(
-            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
-        )
-        return jnp.interp(q, u_grid, x_grid)
+        return self.quantile_table().ppf(q)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample *n* observations from :math:`\mathrm{InvGaussian}(\mu, \lambda)` via JAX PRNG.

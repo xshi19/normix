@@ -117,6 +117,22 @@ class TestNormalInverseGaussian:
         expected = mu + gamma * mu_ig
         np.testing.assert_allclose(np.array(nig.mean()), np.array(expected), rtol=1e-10)
 
+    def test_subordinator_expectations_closed_forms(self):
+        """E6: E[Y], E[1/Y] closed-form; E[log Y] matches GIG embedding."""
+        from normix.distributions.generalized_inverse_gaussian import GIG
+        mu_ig, lam = 1.5, 2.0
+        nig = NormalInverseGaussian.from_classical(
+            mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
+            sigma=jnp.array([[1.0]]), mu_ig=mu_ig, lam=lam,
+        )
+        E_log_Y, E_inv_Y, E_Y = nig._subordinator_expectations()
+        np.testing.assert_allclose(float(E_Y), mu_ig, rtol=1e-12)
+        np.testing.assert_allclose(float(E_inv_Y), 1.0 / mu_ig + 1.0 / lam, rtol=1e-12)
+        gig = GIG(p=-0.5, a=lam / mu_ig ** 2, b=lam)
+        np.testing.assert_allclose(
+            float(E_log_Y), float(gig.expectation_params()[0]), rtol=1e-10,
+        )
+
     @pytest.mark.slow
     @pytest.mark.stress
     def test_sample_mean_matches(self):

@@ -23,6 +23,7 @@ from normix import (
     UnivariateNormalInverseGaussian,
     UnivariateGeneralizedHyperbolic,
 )
+from normix.utils.rvs import QuantileTable
 
 _QS = np.array([0.05, 0.25, 0.5, 0.75, 0.95])
 
@@ -182,3 +183,35 @@ def test_univariate_rejects_multivariate_joint():
     )
     with pytest.raises(ValueError, match="d=1"):
         UnivariateVarianceGamma(joint)
+
+
+def test_quantile_table_matches_ppf_cdf():
+    """E3: held QuantileTable agrees with per-call cdf/ppf."""
+    gig = GIG(p=0.7, a=1.4, b=0.9)
+    table = gig.quantile_table()
+    assert isinstance(table, QuantileTable)
+    qs = jnp.asarray(_QS)
+    np.testing.assert_allclose(
+        np.asarray(table.ppf(qs)), np.asarray(gig.ppf(qs)), rtol=1e-12,
+    )
+    xs = table.ppf(qs)
+    np.testing.assert_allclose(
+        np.asarray(table.cdf(xs)), np.asarray(gig.cdf(xs)), rtol=1e-12,
+    )
+
+    uni = UnivariateNormalInverseGaussian.from_classical(
+        mu=0.0, gamma=0.2, sigma=1.0, mu_ig=1.0, lam=1.5,
+    )
+    ut = uni.quantile_table()
+    np.testing.assert_allclose(
+        np.asarray(ut.ppf(qs)), np.asarray(uni.ppf(qs)), rtol=1e-12,
+    )
+
+
+def test_ig_quantile_table_matches_ppf():
+    ig = InverseGaussian(mu=1.0, lam=2.0)
+    table = ig.quantile_table()
+    qs = jnp.asarray(_QS)
+    np.testing.assert_allclose(
+        np.asarray(table.ppf(qs)), np.asarray(ig.ppf(qs)), rtol=1e-12,
+    )

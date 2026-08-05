@@ -18,7 +18,7 @@ from normix.utils.constants import LOG_EPS
 
 @jax.jit
 def gammaincinv(
-    a: jax.Array, q: jax.Array, n_iter: int = 50,
+    a: jax.Array, q: jax.Array, max_iter: int = 20, tol: float = 1e-12,
 ) -> jax.Array:
     r"""Solve :math:`P(a, x) = q` for :math:`x` by Newton iteration.
 
@@ -30,9 +30,10 @@ def gammaincinv(
         Shape parameter, :math:`a > 0`.
     q
         Probability, :math:`q \in (0, 1)`.
-    n_iter
-        Newton iteration count.  The default of 50 is safe; convergence
-        is typically reached in <10 steps.
+    max_iter
+        Maximum Newton iterations (typically converges in <10 steps).
+    tol
+        Absolute residual tolerance on :math:`|P(a, x) - q|`.
 
     Notes
     -----
@@ -51,10 +52,18 @@ def gammaincinv(
     x0 = a_b * (1.0 - 1.0 / (9.0 * a_b) + z / jnp.sqrt(9.0 * a_b)) ** 3
     x0 = jnp.maximum(x0, LOG_EPS)
 
-    def body(_, x):
-        f = jax.scipy.special.gammainc(a_b, x) - q_b
-        log_fp = (a_b - 1.0) * jnp.log(x) - x - jax.scipy.special.gammaln(a_b)
-        fp = jnp.exp(log_fp)
-        return jnp.maximum(x - f / fp, LOG_EPS)
+    def _residual(x):
+        return jax.scipy.special.gammainc(a_b, x) - q_b
 
-    return jax.lax.fori_loop(0, n_iter, body, x0)
+    def cond(state):
+        i, x, f = state
+        return (i < max_iter) & (jnp.max(jnp.abs(f)) > tol)
+
+    def body(state):
+        i, x, f = state
+        log_fp = (a_b - 1.0) * jnp.log(x) - x - jax.scipy.special.gammaln(a_b)
+        x_new = jnp.maximum(x - f / jnp.exp(log_fp), LOG_EPS)
+        return i + 1, x_new, _residual(x_new)
+
+    _, x, _ = jax.lax.while_loop(cond, body, (0, x0, _residual(x0)))
+    return x

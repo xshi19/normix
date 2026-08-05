@@ -356,7 +356,7 @@ class FactorNormalMixture(MarginalMixture):
         s3 = jnp.mean(E_log_Y)
         s4 = jnp.mean(X, axis=0)
         s5 = jnp.mean(X * E_inv_Y[:, None], axis=0)
-        s6 = jnp.mean(jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0)
+        s6 = jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
 
         s7, s8, s9, s10 = self._z_stats_from_six(s1, s2, s4, s5, s6)
         return FactorMixtureStats(

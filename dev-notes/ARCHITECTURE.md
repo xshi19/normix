@@ -41,7 +41,7 @@ normix/                     # JAX implementation
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
     ├── gammainc.py          # gammaincinv (JAX equivalent of scipy.special.gammaincinv)
-    ├── rvs.py               # Generic RVS: build_pinv_table (pure JAX), rvs_pinv
+    ├── rvs.py               # Generic RVS: QuantileTable, build_pinv_table, rvs_pinv
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
     └── validation.py        # moment validation, parameter printing (notebooks)
 ```
@@ -225,14 +225,15 @@ Any distribution that calls `log_kv` must override the Tier 3 CPU classmethods (
 Generic PINV (Polynomial-Interpolation-based Numerical Inversion) in `utils/rvs.py`:
 
 - `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)` — pure-JAX quantile table from any univariate log-kernel. Tail bisection via `lax.fori_loop`, trapezoidal CDF via `jnp.cumsum`. No normalising constant needed.
+- `QuantileTable(u_grid, x_grid)` — frozen pytree with `cdf` / `ppf` / `rvs`; returned by `quantile_table()` on PINV-backed distributions (`Univariate*` mixin, GIG, InverseGaussian) so repeated quantile workloads amortise the build (DEC-5 / E3).
 - `rvs_pinv(key, u_grid, x_grid, n)` — samples via `jnp.interp`. Fully vectorised, GPU-friendly.
 
-Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and seed the table at `jnp.log(self.mode())`. Closed-form `mode()` methods live on `Gamma`, `InverseGamma`, `InverseGaussian`, and `GIG`. `InverseGaussian.ppf` and both `GIG.cdf`/`GIG.ppf` inline a single `build_pinv_table` call — no per-distribution wrapper.
+Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and seed the table at `jnp.log(self.mode())`. Closed-form `mode()` methods live on `Gamma`, `InverseGamma`, `InverseGaussian`, and `GIG`. Per-call `cdf`/`ppf` rebuild the table; hold `quantile_table()` for amortisation. GIG degenerate Gamma/InvGamma limits bypass the table (B4).
 
 GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py`:
 
 - `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
-- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — thin alias of `rvs_pinv` for `GIG.rvs(method='pinv')`.
+- `GIG.rvs(method='pinv')` — routes through `quantile_table().rvs`.
 
 Neither method evaluates the Bessel normalising constant. See `tech_notes/gig_rvs.md`.
 

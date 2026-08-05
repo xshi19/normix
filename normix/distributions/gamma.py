@@ -215,16 +215,17 @@ class Gamma(ExponentialFamily):
 
 
 @jax.jit
-def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
+def _newton_digamma(
+    target: jax.Array, max_iter: int = 20, tol: float = 1e-12,
+) -> jax.Array:
     r"""
     Solve :math:`\psi(\alpha) - \log\alpha = \text{target}` for :math:`\alpha > 0`
     via Newton iterations.
 
-    Uses ``jax.lax.fori_loop`` for JIT-compatibility. Decorated with
-    ``@jax.jit`` so repeated Python-loop calls (e.g. inside the VG/NInvG
-    M-step) hit the XLA cache instead of re-tracing the body every time.
-    ``n_iter`` defaults are baked in; pass non-default values only inside an
-    enclosing jit to avoid retracing per call.
+    Uses ``jax.lax.while_loop`` (typically converges in <10 steps; capped at
+    ``max_iter``). Decorated with ``@jax.jit`` so repeated Python-loop calls
+    (e.g. inside the VG/NInvG M-step) hit the XLA cache instead of re-tracing
+    the body every time.
     """
     alpha0 = jnp.where(
         target >= -2.22,
@@ -233,18 +234,27 @@ def _newton_digamma(target: jax.Array, n_iter: int = 50) -> jax.Array:
     )
     alpha0 = jnp.maximum(alpha0, 0.1)
 
-    def body(_, alpha):
-        psi = jax.scipy.special.digamma(alpha)
+    def _residual(alpha):
+        return jax.scipy.special.digamma(alpha) - jnp.log(alpha) - target
+
+    def cond(state):
+        i, alpha, f = state
+        return (i < max_iter) & (jnp.abs(f) > tol)
+
+    def body(state):
+        i, alpha, f = state
         psi_prime = jax.scipy.special.polygamma(1, alpha)
-        f = psi - jnp.log(alpha) - target
         fp = psi_prime - 1.0 / alpha
-        alpha_new = alpha - f / fp
-        return jnp.maximum(alpha_new, LOG_EPS)
+        alpha_new = jnp.maximum(alpha - f / fp, LOG_EPS)
+        return i + 1, alpha_new, _residual(alpha_new)
 
-    return jax.lax.fori_loop(0, n_iter, body, alpha0)
+    _, alpha, _ = jax.lax.while_loop(
+        cond, body, (0, alpha0, _residual(alpha0)),
+    )
+    return alpha
 
 
-def _newton_digamma_cpu(target: float, n_iter: int = 50, tol: float = 1e-12) -> float:
+def _newton_digamma_cpu(target: float, n_iter: int = 20, tol: float = 1e-12) -> float:
     r"""CPU variant using :func:`scipy.special.digamma` / :func:`scipy.special.polygamma`.
 
     No XLA tracing — suitable for the Python-loop EM path.
