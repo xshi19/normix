@@ -16,13 +16,10 @@ import pytest
 from scipy import stats
 from scipy.special import digamma
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.gamma import Gamma
 from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
 from normix.distributions.generalized_inverse_gaussian import GIG
-
 
 # ============================================================
 # Gamma
@@ -94,7 +91,6 @@ class TestGammaVsScipy:
         np.testing.assert_allclose(samples.mean(), alpha / beta, rtol=0.05)
         np.testing.assert_allclose(samples.var(), alpha / beta**2, rtol=0.1)
 
-
 # ============================================================
 # Inverse Gamma
 # ============================================================
@@ -161,7 +157,6 @@ class TestInverseGammaVsScipy:
         ig = InverseGamma(alpha=alpha, beta=beta)
         samples = np.array(ig.rvs(10000, seed=42))
         np.testing.assert_allclose(samples.mean(), beta / (alpha - 1), rtol=0.05)
-
 
 # ============================================================
 # Inverse Gaussian
@@ -230,7 +225,6 @@ class TestInverseGaussianVsScipy:
         samples = np.array(ig.rvs(10000, seed=42))
         np.testing.assert_allclose(samples.mean(), mu, rtol=0.05)
         np.testing.assert_allclose(samples.var(), mu**3 / lam, rtol=0.15)
-
 
 # ============================================================
 # GIG

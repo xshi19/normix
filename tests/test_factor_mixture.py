@@ -28,8 +28,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     BatchEMFitter,
     FactorMixtureStats,
@@ -45,14 +43,11 @@ from normix import (
     VarianceGamma,
 )
 
-
 KEY = jax.random.PRNGKey(7)
-
 
 # ============================================================================
 # Helpers
 # ============================================================================
-
 
 def _matched_factor_full(factor_cls, full_cls, *, mu, gamma, F, D, **sub):
     """Build a (factor model, full-cov model) pair sharing Σ = FFᵀ+diag(D)."""
@@ -62,7 +57,6 @@ def _matched_factor_full(factor_cls, full_cls, *, mu, gamma, F, D, **sub):
     full_model = full_cls.from_classical(
         mu=mu, gamma=gamma, sigma=Sigma, **sub)
     return factor_model, full_model
-
 
 @pytest.fixture(scope='module')
 def small_factor_setup():
@@ -78,11 +72,9 @@ def small_factor_setup():
     gamma = jnp.array([0.2, 0.0, -0.1, 0.1])
     return mu, gamma, F, D
 
-
 # ============================================================================
 # 1. Density / Woodbury agreement
 # ============================================================================
-
 
 @pytest.mark.parametrize(
     "factor_cls, full_cls, sub",
@@ -119,7 +111,6 @@ def test_factor_log_prob_matches_full_cov(
     np.testing.assert_allclose(np.asarray(lp_fa), np.asarray(lp_full),
                                rtol=1e-10, atol=1e-12)
 
-
 def test_factor_ninvg_symmetric_matches_full_cov_at_gamma_zero():
     """FactorNormalInverseGamma log_prob matches the full-cov NInvG at
     gamma=0, where a_gig = gamma^T Sigma^-1 gamma = 0 identically.
@@ -144,7 +135,6 @@ def test_factor_ninvg_symmetric_matches_full_cov_at_gamma_zero():
     np.testing.assert_allclose(np.asarray(lp_fa), np.asarray(lp_full),
                                rtol=1e-10, atol=1e-12)
 
-
 def test_factor_vg_matches_full_cov_at_mode():
     """FactorVarianceGamma log_prob matches the full-cov VG exactly at
     x=mu (q=0), the degenerate boundary fixed in ``VarianceGamma.log_prob``
@@ -163,7 +153,6 @@ def test_factor_vg_matches_full_cov_at_mode():
     assert np.isfinite(lp_fa)
     np.testing.assert_allclose(lp_fa, lp_full, rtol=1e-10)
 
-
 def test_factor_quad_form_agrees_with_dense_solve(small_factor_setup):
     """_quad_form(x) = xᵀΣ⁻¹x where Σ is the dense Woodbury reconstruction."""
     mu, gamma, F, D = small_factor_setup
@@ -178,7 +167,6 @@ def test_factor_quad_form_agrees_with_dense_solve(small_factor_setup):
         q_dense = float(x @ Sigma_inv @ x)
         np.testing.assert_allclose(q_fa, q_dense, rtol=1e-10)
 
-
 def test_factor_beta_matches_FT_Sigma_inv(small_factor_setup):
     """β = M⁻¹FᵀD⁻¹ equals FᵀΣ⁻¹ from a dense solve."""
     mu, gamma, F, D = small_factor_setup
@@ -190,11 +178,9 @@ def test_factor_beta_matches_FT_Sigma_inv(small_factor_setup):
                                np.asarray(beta_dense),
                                rtol=1e-10, atol=1e-12)
 
-
 # ============================================================================
 # 2. E-step / M-step round-trip
 # ============================================================================
-
 
 def test_e_step_returns_factor_stats(small_factor_setup):
     """e_step returns a FactorMixtureStats with the right shapes."""
@@ -215,7 +201,6 @@ def test_e_step_returns_factor_stats(small_factor_setup):
     leaves = jax.tree.leaves(eta)
     for leaf in leaves:
         assert jnp.all(jnp.isfinite(leaf))
-
 
 def test_m_step_normal_then_subordinator_recovers_eta(small_factor_setup):
     """m_step on the model's own η returns the same model up to tiny FP drift.
@@ -240,12 +225,12 @@ def test_m_step_normal_then_subordinator_recovers_eta(small_factor_setup):
     np.testing.assert_allclose(float(fa2.alpha), float(fa.alpha), rtol=1e-6)
     np.testing.assert_allclose(float(fa2.beta), float(fa.beta), rtol=1e-6)
 
-
 # ============================================================================
 # 3. Recovery on synthetic data: Σ recovered up to rotation gauge of F
 # ============================================================================
 
-
+@pytest.mark.slow
+@pytest.mark.stress
 def test_em_recovers_sigma_and_subordinator():
     """Generate from FactorVG with known params, fit, recover Σ and α, β."""
     F_true = jnp.array(
@@ -271,10 +256,10 @@ def test_em_recovers_sigma_and_subordinator():
     result = fitter.fit(init, X)
     fitted = result.model
 
-    # μ recovered.
+    # μ recovered (n=4000; sample noise dominates relative error near 0).
     np.testing.assert_allclose(
         np.asarray(fitted.mu), np.asarray(mu_true),
-        atol=0.15, rtol=0.5)
+        atol=0.15, rtol=0.25)
 
     # Σ recovered up to FP / sample noise (Σ is rotation-invariant for F).
     Sigma_fit = np.asarray(fitted.sigma())
@@ -286,12 +271,11 @@ def test_em_recovers_sigma_and_subordinator():
     assert abs(float(fitted.alpha) - 3.0) < 0.5
     assert abs(float(fitted.beta) - 2.0) < 0.5
 
-
 # ============================================================================
 # 3b. Inverse-moment singularity (T1b): high-d factor VG stays finite
 # ============================================================================
 
-
+@pytest.mark.slow
 @pytest.mark.parametrize("backend", ["jax", "cpu"])
 def test_factor_vg_high_dim_no_overflow(backend):
     r"""T1b: FactorVarianceGamma (d=10, r=2) EM stays finite and improves LL.
@@ -326,12 +310,11 @@ def test_factor_vg_high_dim_no_overflow(backend):
         assert jnp.all(jnp.isfinite(leaf))
     assert float(fitted.marginal_log_likelihood(X)) >= ll_init - 1e-6
 
-
 # ============================================================================
 # 4. Match against full-cov fit when r = d - 1
 # ============================================================================
 
-
+@pytest.mark.slow
 def test_factor_fit_matches_full_cov_when_r_equals_d_minus_1():
     """With r = d - 1 and large n, FA marginal LL matches full-cov LL."""
     d, r, n = 4, 3, 3000
@@ -361,11 +344,9 @@ def test_factor_fit_matches_full_cov_when_r_equals_d_minus_1():
     assert abs(ll_fa - ll_full) < 0.05, (
         f"FA LL={ll_fa:.4f} vs full-cov LL={ll_full:.4f}")
 
-
 # ============================================================================
 # 5. Convergence on Σ ignores rotational gauge of F
 # ============================================================================
-
 
 def test_em_convergence_params_invariant_to_F_rotation(small_factor_setup):
     """em_convergence_params returns Σ which is rotation-invariant in F."""
@@ -388,11 +369,9 @@ def test_em_convergence_params_invariant_to_F_rotation(small_factor_setup):
         np.testing.assert_allclose(np.asarray(a), np.asarray(b),
                                    atol=1e-10)
 
-
 # ============================================================================
 # 6. Shrinkage combinator on FactorMixtureStats
 # ============================================================================
-
 
 def test_shrinkage_tau_zero_equals_base_on_factor_stats(small_factor_setup):
     """Shrinkage(IdentityUpdate(), eta0, tau=0) is a no-op for the factor
@@ -420,7 +399,6 @@ def test_shrinkage_tau_zero_equals_base_on_factor_stats(small_factor_setup):
                       jax.tree.leaves(out_shrunk)):
         np.testing.assert_allclose(np.asarray(lb), np.asarray(ls),
                                    rtol=1e-10, atol=1e-12)
-
 
 def test_shrinkage_per_field_tau_only_sigma_on_factor_stats(small_factor_setup):
     """Per-field τ with non-zero entry only on E_XXT_inv_Y leaves the
@@ -472,11 +450,9 @@ def test_shrinkage_per_field_tau_only_sigma_on_factor_stats(small_factor_setup):
     np.testing.assert_allclose(np.asarray(out_sigma), np.asarray(expected),
                                rtol=1e-10, atol=1e-12)
 
-
 # ============================================================================
 # 7. Mean / cov / rvs sanity checks
 # ============================================================================
-
 
 def test_factor_mean_and_cov_match_sample_estimates():
     """Sample mean/cov from rvs should be close to the analytic mean/cov."""
@@ -498,11 +474,9 @@ def test_factor_mean_and_cov_match_sample_estimates():
     rel = jnp.linalg.norm(sample_cov - fa.cov()) / jnp.linalg.norm(fa.cov())
     assert float(rel) < 0.1
 
-
 # ============================================================================
 # 8. Replace / immutability
 # ============================================================================
-
 
 def test_replace_updates_top_level_fields(small_factor_setup):
     mu, gamma, F, D = small_factor_setup
@@ -515,7 +489,6 @@ def test_replace_updates_top_level_fields(small_factor_setup):
     # Immutability: original unchanged.
     np.testing.assert_allclose(np.asarray(fa.F), np.asarray(F))
 
-
 def test_replace_unknown_key_raises(small_factor_setup):
     mu, gamma, F, D = small_factor_setup
     fa = FactorVarianceGamma.from_classical(
@@ -523,11 +496,9 @@ def test_replace_unknown_key_raises(small_factor_setup):
     with pytest.raises(ValueError, match="unknown field"):
         fa.replace(alpha=99.0)
 
-
 # ============================================================================
 # 9. det(Σ)=1 regularisation round-trips through Y'·Σ' invariance
 # ============================================================================
-
 
 @pytest.mark.parametrize(
     "factor_cls, sub",

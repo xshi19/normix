@@ -10,15 +10,9 @@ Verifies that both backends produce the same results for all mixture distributio
 Uses a small SP500 subset (5 stocks) to keep tests fast while exercising
 real-world parameter ranges.
 """
-from pathlib import Path
-
-import jax
 import jax.numpy as jnp
 import numpy as np
-import pandas as pd
 import pytest
-
-jax.config.update("jax_enable_x64", True)
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
@@ -27,31 +21,14 @@ from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.variance_gamma import VarianceGamma
 
-DATA_PATH = Path(__file__).parent.parent / "data" / "sp500_returns.csv"
-N_STOCKS = 5
-
-_sp500_cache = None
-
-
-def _load_sp500():
-    global _sp500_cache
-    if _sp500_cache is not None:
-        return _sp500_cache
-    if not DATA_PATH.exists():
-        pytest.skip(f"SP500 data not found at {DATA_PATH}")
-    df = pd.read_csv(DATA_PATH, index_col=0, parse_dates=True).dropna(axis=1)
-    X = jnp.asarray(df.values[:, :N_STOCKS], dtype=jnp.float64)
-    _sp500_cache = X
-    return X
-
 
 def _make_models(X):
     """Create initial models for all distribution types from SP500 data."""
-    n, d = X.shape
+    d = X.shape[1]
     mu = jnp.mean(X, axis=0)
     sigma_emp = jnp.cov(X.T) + 1e-4 * jnp.eye(d)
 
-    models = {
+    return {
         "VG": VarianceGamma.from_classical(
             mu=mu, gamma=jnp.zeros(d), sigma=sigma_emp,
             alpha=2.0, beta=1.0,
@@ -69,7 +46,6 @@ def _make_models(X):
             p=-0.5, a=2.0, b=1.0,
         ),
     }
-    return models
 
 
 # ---------------------------------------------------------------------------
@@ -77,11 +53,10 @@ def _make_models(X):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_e_step_cpu_vs_jax_sp500(dist_name):
+def test_e_step_cpu_vs_jax_sp500(dist_name, sp500_returns):
     """E-step with CPU and JAX backends produce the same expectations on SP500 data."""
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     eta_jax = model.e_step(X, backend='jax')
     eta_cpu = model.e_step(X, backend='cpu')
@@ -100,7 +75,7 @@ def test_e_step_cpu_vs_jax_sp500(dist_name):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
-def test_m_step_cpu_vs_jax_sp500(dist_name):
+def test_m_step_cpu_vs_jax_sp500(dist_name, sp500_returns):
     """M-step with CPU and JAX backends produce the same model on SP500 data.
 
     VG, NInvG, NIG have closed-form subordinator M-steps (no backend kwarg
@@ -109,9 +84,8 @@ def test_m_step_cpu_vs_jax_sp500(dist_name):
     we verify that the normal parameter updates (mu, gamma, L) are identical
     regardless of the backend kwarg passed to m_step.
     """
-    X = _load_sp500()
-    models = _make_models(X)
-    model = models[dist_name]
+    X = sp500_returns
+    model = _make_models(X)[dist_name]
 
     eta = model.e_step(X, backend='cpu')
 
@@ -145,5 +119,3 @@ def test_m_step_cpu_vs_jax_sp500(dist_name):
             f"cpu={ll_cpu:.4f} jax={ll_jax:.4f} "
             f"(GIG params may differ due to solver convergence)"
         )
-
-

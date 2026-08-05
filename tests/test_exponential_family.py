@@ -11,10 +11,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import ExponentialFamily, Gamma, InverseGamma, InverseGaussian, GIG
-
 
 class TestExponentialFamilyContract:
     """Verify the EF contract using Gamma as a concrete subclass."""
@@ -65,7 +62,6 @@ class TestExponentialFamilyContract:
         g_fit = g_init.fit(data)
         np.testing.assert_allclose(float(g_fit.alpha), alpha_true, rtol=0.1)
         np.testing.assert_allclose(float(g_fit.beta), beta_true, rtol=0.1)
-
 
 class TestExponentialFamilyInvariants:
     """T2: Mathematical invariants that should hold for all EF distributions."""

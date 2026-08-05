@@ -17,8 +17,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
@@ -44,10 +42,8 @@ KEY = jax.random.PRNGKey(42)
 D = 3
 N = 200
 
-
 def _make_data(key=KEY, n=N, d=D):
     return jax.random.normal(key, shape=(n, d), dtype=jnp.float64) * 0.5
-
 
 def _make_models(X):
     d = X.shape[1]
@@ -64,7 +60,6 @@ def _make_models(X):
             mu=mu, gamma=jnp.zeros(d), sigma=sigma, p=-0.5, a=2.0, b=1.0),
     }
 
-
 # ---------------------------------------------------------------------------
 # compute_eta_from_model
 # ---------------------------------------------------------------------------
@@ -79,7 +74,6 @@ def test_compute_eta_from_model_fields_finite(dist_name):
         val = getattr(eta, field)
         assert jnp.all(jnp.isfinite(val)), (
             f"{dist_name}.compute_eta_from_model().{field} not finite: {val}")
-
 
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
 def test_compute_eta_round_trip(dist_name):
@@ -99,7 +93,6 @@ def test_compute_eta_round_trip(dist_name):
         atol=1e-6, rtol=1e-4,
         err_msg=f"{dist_name} gamma not recovered from compute_eta_from_model",
     )
-
 
 @pytest.mark.parametrize("alpha", [1.0, 0.8, 0.2])
 def test_compute_eta_from_model_small_alpha(alpha):
@@ -137,7 +130,6 @@ def test_compute_eta_from_model_small_alpha(alpha):
             assert E_log_Y == pytest.approx(np.log(beta) - float(digamma(alpha)), rel=1e-12)
             assert E_inv_Y == pytest.approx(alpha / beta, rel=1e-12)
 
-
 def test_incremental_em_heavy_peaked_vg_finite():
     """T4: IncrementalEMFitter on heavy-peaked VG (alpha_true=0.7) stays finite.
 
@@ -170,7 +162,6 @@ def test_incremental_em_heavy_peaked_vg_finite():
     eta = result.model.compute_eta_from_model()
     assert float(eta.E_inv_Y) > 0.0 and float(eta.E_Y) > 0.0
 
-
 # ---------------------------------------------------------------------------
 # affine_combine
 # ---------------------------------------------------------------------------
@@ -185,7 +176,6 @@ def test_affine_combine_identity():
     np.testing.assert_allclose(
         np.array(result.E_X), np.array(eta2.E_X), atol=1e-12)
 
-
 def test_affine_combine_midpoint():
     """affine_combine with b=0.5, c=0.5 gives midpoint."""
     X = _make_data()
@@ -195,7 +185,6 @@ def test_affine_combine_midpoint():
     result = affine_combine(eta1, eta2, b=0.5, c=0.5)
     expected = 0.5 * np.array(eta1.E_X) + 0.5 * np.array(eta2.E_X)
     np.testing.assert_allclose(np.array(result.E_X), expected, atol=1e-12)
-
 
 def test_affine_combine_with_shift():
     """affine_combine with additive shift a."""
@@ -208,7 +197,6 @@ def test_affine_combine_with_shift():
     expected = np.array(eta2.E_Y) + 0.1
     np.testing.assert_allclose(float(result.E_Y), float(expected), atol=1e-12)
 
-
 # ---------------------------------------------------------------------------
 # Eta update rules — weight contracts
 # ---------------------------------------------------------------------------
@@ -220,14 +208,12 @@ def test_identity_update_weights():
     assert float(b) == 0.0
     assert float(c) == 1.0
 
-
 def test_robbins_monro_weights():
     rule = RobbinsMonroUpdate(tau0=10.0)
     a, b, c, state = rule.weights(0, 100, {})
     assert a is None
     assert abs(float(c) - 1.0 / 10.0) < 1e-12
     assert abs(float(b) - (1.0 - 1.0 / 10.0)) < 1e-12
-
 
 def test_sample_weighted_cumulative():
     rule = SampleWeightedUpdate()
@@ -242,14 +228,12 @@ def test_sample_weighted_cumulative():
     assert abs(float(b2) - 100.0 / 150.0) < 1e-12
     assert abs(float(c2) - 50.0 / 150.0) < 1e-12
 
-
 def test_ewma_weights():
     rule = EWMAUpdate(w=0.3)
     a, b, c, _ = rule.weights(5, 100, {})
     assert a is None
     assert abs(float(b) - 0.7) < 1e-12
     assert abs(float(c) - 0.3) < 1e-12
-
 
 def test_shrinkage_combinator_scalar_closed_form():
     """Shrinkage(IdentityUpdate(), eta0, scalar_tau) matches closed form.
@@ -280,7 +264,6 @@ def test_shrinkage_combinator_scalar_closed_form():
     np.testing.assert_allclose(
         np.array(eta_t.E_XXT_inv_Y), expected_S6, atol=1e-12)
 
-
 def test_rules_are_pytrees():
     """All rules are eqx.Module pytrees with JAX array leaves."""
     X = _make_data()
@@ -301,7 +284,6 @@ def test_rules_are_pytrees():
         for leaf in leaves:
             assert hasattr(leaf, 'shape'), (
                 f"{name} leaf {leaf!r} is not a JAX array")
-
 
 # ---------------------------------------------------------------------------
 # Shrinkage combinator — semantic tests
@@ -335,7 +317,6 @@ def test_shrinkage_tau_zero_equals_base(base_factory):
                                atol=1e-12)
     np.testing.assert_allclose(np.array(eta_b.E_XXT_inv_Y),
                                np.array(eta_s.E_XXT_inv_Y), atol=1e-12)
-
 
 def test_shrinkage_per_field_tau_only_sigma():
     """Per-field τ with only E_XXT_inv_Y non-zero leaves other fields untouched."""
@@ -372,7 +353,6 @@ def test_shrinkage_per_field_tau_only_sigma():
     )
     np.testing.assert_allclose(
         np.array(eta_t.E_XXT_inv_Y), expected_S6, atol=1e-12)
-
 
 def test_shrinkage_preserves_running_state():
     """Shrinkage(RobbinsMonroUpdate(...), …) retains the running mean.
@@ -413,7 +393,6 @@ def test_shrinkage_preserves_running_state():
     # Sanity: step 1 differs from step 0.
     assert abs(expected_E_Y_1 - expected_E_Y_0) > 1e-15
 
-
 def test_shrinkage_preserves_sample_weighted_state():
     """SampleWeightedUpdate's cumulative_n is threaded through Shrinkage."""
     X = _make_data()
@@ -430,7 +409,6 @@ def test_shrinkage_preserves_sample_weighted_state():
     _, state = shrunk(eta0, eta_new, jnp.int32(1), 50, state)
     assert float(state['cumulative_n']) == 150.0
 
-
 # ---------------------------------------------------------------------------
 # Shrinkage target builders
 # ---------------------------------------------------------------------------
@@ -443,7 +421,6 @@ def test_eta0_from_model_matches_compute_eta_from_model():
     np.testing.assert_allclose(np.array(a.E_X), np.array(b.E_X), atol=1e-12)
     np.testing.assert_allclose(
         np.array(a.E_XXT_inv_Y), np.array(b.E_XXT_inv_Y), atol=1e-12)
-
 
 def test_eta0_isotropic_substitutes_sigma():
     """eta0_isotropic(σ²) puts σ² I_d into the dispersion part of E_XXT_inv_Y."""
@@ -466,7 +443,6 @@ def test_eta0_isotropic_substitutes_sigma():
     np.testing.assert_allclose(
         np.array(eta.E_XXT_inv_Y), expected, atol=1e-10)
 
-
 def test_eta0_diagonal_and_with_sigma_consistent():
     X = _make_data()
     model = _make_models(X)["VG"]
@@ -476,13 +452,11 @@ def test_eta0_diagonal_and_with_sigma_consistent():
     np.testing.assert_allclose(
         np.array(a.E_XXT_inv_Y), np.array(b.E_XXT_inv_Y), atol=1e-12)
 
-
 # ---------------------------------------------------------------------------
 # IncrementalEMFitter — smoke tests
 # ---------------------------------------------------------------------------
 
 @pytest.mark.slow
-@pytest.mark.gpu
 @pytest.mark.parametrize("dist_name", ["VG", "NInvG", "NIG", "GH"])
 def test_incremental_em_robbins_monro(dist_name):
     """IncrementalEMFitter with RobbinsMonroUpdate produces a finite model."""
@@ -497,7 +471,6 @@ def test_incremental_em_robbins_monro(dist_name):
     result = fitter.fit(model, X, key=KEY)
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"{dist_name} incremental EM LL not finite: {ll}"
-
 
 @pytest.mark.parametrize("rule_name,rule", [
     ("identity", IdentityUpdate()),
@@ -518,7 +491,6 @@ def test_incremental_em_various_rules(rule_name, rule):
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"rule={rule_name}: LL not finite after incremental EM"
 
-
 def test_incremental_em_fine_tuning():
     """IncrementalEMFitter with inner_iter > 1 (fine-tuning mode)."""
     X = _make_data()
@@ -532,7 +504,6 @@ def test_incremental_em_fine_tuning():
     result = fitter.fit(model, X, key=KEY)
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"fine-tuning LL not finite: {ll}"
-
 
 def test_incremental_em_shrinkage():
     """IncrementalEMFitter with Shrinkage(IdentityUpdate(), eta0, tau)."""
@@ -549,7 +520,6 @@ def test_incremental_em_shrinkage():
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"shrinkage LL not finite: {ll}"
 
-
 def test_incremental_em_shrinkage_over_running_rule():
     """Composing Shrinkage with a running rule produces a finite model."""
     X = _make_data()
@@ -564,7 +534,6 @@ def test_incremental_em_shrinkage_over_running_rule():
     result = fitter.fit(model, X, key=KEY)
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"shrinkage∘RM LL not finite: {ll}"
-
 
 # ---------------------------------------------------------------------------
 # IncrementalEMFitter — lax.scan parity (JAX backends, verbose==0 path)
@@ -625,7 +594,6 @@ def test_incremental_em_scan_matches_python_loop():
         rtol=1e-9,
     )
 
-
 def test_batch_em_with_shrinkage():
     """BatchEMFitter with Shrinkage combinator penalises toward prior."""
     X = _make_data()
@@ -640,7 +608,6 @@ def test_batch_em_with_shrinkage():
     result = fitter.fit(model, X)
     ll = float(result.model.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"batch EM + shrinkage LL not finite: {ll}"
-
 
 def test_batch_em_eta_update_none_unchanged():
     """BatchEMFitter with eta_update=None behaves identically to default."""
@@ -663,7 +630,6 @@ def test_batch_em_eta_update_none_unchanged():
         np.array(result2.model._joint.mu),
         atol=1e-10,
     )
-
 
 # ---------------------------------------------------------------------------
 # IncrementalEMFitter — LL improves from default init

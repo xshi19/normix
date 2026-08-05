@@ -16,11 +16,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.utils.bessel import log_kv
-
 
 # ---------------------------------------------------------------------------
 # Parameter grid for parametric tests
@@ -40,7 +37,6 @@ _PARAM_GRID = [
     (10.0,  1.0,   1.0),   # large positive p
     (-10.0, 1.0,   1.0),   # large negative p
 ]
-
 
 class TestGIGBessel:
     """Tests relying on the Bessel-function structure of GIG."""
@@ -81,7 +77,6 @@ class TestGIGBessel:
         fd = (float(log_kv(v, z + eps)) - float(log_kv(v, z - eps))) / (2 * eps)
         assert_allclose(grad_jax, fd, rtol=1e-4,
                         err_msg=f"JAX grad of log_kv != FD for v={v}, z={z}")
-
 
 class TestGIGEFContract:
     """Verify the exponential-family contract across a wide parameter range."""
@@ -130,7 +125,6 @@ class TestGIGEFContract:
         assert_allclose(float(gig2.a), a, rtol=1e-10)
         assert_allclose(float(gig2.b), b, rtol=1e-10)
 
-
 class TestGIGMoments:
     """Verify moment properties of GIG."""
 
@@ -160,7 +154,6 @@ class TestGIGMoments:
         eta = gig.expectation_params()
         assert m > 0, f"mean() ≤ 0 for p={p},a={a},b={b}"
         assert_allclose(m, float(eta[2]), rtol=1e-8)
-
 
 class TestGIGRvs:
     """Verify random variate generation."""
@@ -193,7 +186,6 @@ class TestGIGRvs:
         emp_inv = float(jnp.mean(1.0 / samples))
         eta = gig.expectation_params()
         assert_allclose(emp_inv, float(eta[1]), rtol=0.03)
-
 
 class TestGIGExtremeParameters:
     """Edge cases at parameter extremes."""

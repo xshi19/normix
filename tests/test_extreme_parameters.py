@@ -12,8 +12,6 @@ import numpy as np
 import pytest
 from scipy import stats
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.gamma import Gamma
 from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
@@ -24,7 +22,6 @@ from normix.distributions import (
     NormalInverseGaussian,
     GeneralizedHyperbolic,
 )
-
 
 # ============================================================
 # Gamma extreme
@@ -55,7 +52,6 @@ class TestGammaExtreme:
         eta = g.expectation_params()
         assert jnp.all(jnp.isfinite(eta))
 
-
 # ============================================================
 # InverseGamma extreme
 # ============================================================
@@ -78,7 +74,6 @@ class TestInverseGammaExtreme:
         assert np.isfinite(float(ig.mean()))
         if alpha > 2:
             assert np.isfinite(float(ig.var()))
-
 
 # ============================================================
 # InverseGaussian extreme
@@ -115,7 +110,6 @@ class TestInverseGaussianExtreme:
         samples = ig.rvs(100, seed=42)
         assert jnp.all(jnp.isfinite(samples))
         assert jnp.all(samples > 0)
-
 
 # ============================================================
 # GIG extreme
@@ -156,7 +150,6 @@ class TestGIGExtreme:
         samples = gig.rvs(100, seed=42)
         assert jnp.all(jnp.isfinite(samples))
         assert jnp.all(samples > 0)
-
 
 # ============================================================
 # Mixture distribution extreme parameters

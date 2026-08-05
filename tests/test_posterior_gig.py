@@ -26,8 +26,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     FactorGeneralizedHyperbolic,
     FactorNormalInverseGamma,
@@ -40,7 +38,6 @@ from normix import (
 )
 from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.utils.constants import B_POST_FLOOR
-
 
 # ---------------------------------------------------------------------------
 # Builders: matched joint (via marginal) and factor models per family.
@@ -78,17 +75,14 @@ _FAMILIES = {
     ),
 }
 
-
 def _make_joint(name):
     marg_cls, _, sub, _ = _FAMILIES[name]
     return marg_cls.from_classical(
         mu=_MU, gamma=_GAMMA, sigma=_SIGMA, **sub)._joint
 
-
 def _make_factor(name):
     _, fac_cls, sub, _ = _FAMILIES[name]
     return fac_cls.from_classical(mu=_MU, gamma=_GAMMA, F=_F, D=_D, **sub)
-
 
 @pytest.mark.parametrize("name", list(_FAMILIES))
 @pytest.mark.parametrize("hierarchy", ["joint", "factor"])
@@ -106,7 +100,6 @@ def test_posterior_gig_map_matches_analytic_formula(name, hierarchy):
     np.testing.assert_allclose(float(p_post), p_gig - D_DIM / 2.0, rtol=1e-12)
     np.testing.assert_allclose(float(a_post), a_gig + w2, rtol=1e-12)
     np.testing.assert_allclose(float(b_post), b_gig + z2, rtol=1e-12)
-
 
 @pytest.mark.parametrize("name", list(_FAMILIES))
 @pytest.mark.parametrize("hierarchy", ["joint", "factor"])
@@ -126,7 +119,6 @@ def test_floor_binds_only_for_vg(name, hierarchy):
         np.testing.assert_allclose(
             float(b_floored), float(b_unfloored), rtol=1e-12)
 
-
 @pytest.mark.parametrize("name", ["NInvG", "NIG", "GH"])
 def test_conditional_expectations_at_mode_unfloored(name):
     """Dormancy: ``conditional_expectations(x=mu)`` equals the GIG moments at
@@ -143,13 +135,11 @@ def test_conditional_expectations_at_mode_unfloored(name):
     np.testing.assert_allclose(float(cond["E_inv_Y"]), float(ref[1]), rtol=1e-12)
     np.testing.assert_allclose(float(cond["E_Y"]), float(ref[2]), rtol=1e-12)
 
-
 def _data_with_mode(seed):
     rng = np.random.default_rng(seed)
     X = jnp.asarray(rng.normal(size=(12, D_DIM)) * 0.7 + np.asarray(_MU))
     # Prepend an exact-mode observation so the VG floor is exercised.
     return jnp.concatenate([_MU[None, :], X], axis=0)
-
 
 @pytest.mark.parametrize("name", list(_FAMILIES))
 def test_estep_marginal_backend_parity(name):
@@ -166,7 +156,6 @@ def test_estep_marginal_backend_parity(name):
                     jax.tree_util.tree_leaves(eta_cpu)):
         np.testing.assert_allclose(np.asarray(a), np.asarray(b),
                                    rtol=1e-7, atol=1e-8)
-
 
 @pytest.mark.parametrize("name", list(_FAMILIES))
 def test_estep_factor_backend_parity(name):

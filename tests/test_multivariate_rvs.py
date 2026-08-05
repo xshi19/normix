@@ -12,8 +12,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions import (
     JointVarianceGamma,
     JointNormalInverseGamma,
@@ -21,7 +19,6 @@ from normix.distributions import (
     JointGeneralizedHyperbolic,
     VarianceGamma,
 )
-
 
 MU_2D = jnp.array([0.1, -0.2])
 GAMMA_2D = jnp.array([0.3, -0.15])
@@ -34,7 +31,6 @@ SIGMA_3D = jnp.array([
     [0.3, 1.5, -0.2],
     [0.1, -0.2, 0.8],
 ])
-
 
 def _make_2d_joints():
     return [
@@ -51,7 +47,6 @@ def _make_2d_joints():
             mu=MU_2D, gamma=GAMMA_2D, sigma=SIGMA_2D,
             p=-0.5, a=2.0, b=1.0)),
     ]
-
 
 # ============================================================
 # L_Sigma tests
@@ -79,7 +74,6 @@ class TestLSigma:
         np.testing.assert_allclose(Sigma_from_L, np.array(SIGMA_2D), rtol=1e-10,
                                    err_msg=f"{name}: L@L.T != Sigma")
 
-
 # ============================================================
 # Sample covariance tests
 # ============================================================
@@ -97,7 +91,6 @@ def _mixing_moments(name, dist):
         return mu_ig, mu_ig**3 / lam
     elif name == "GH":
         return None, None
-
 
 @pytest.mark.slow
 @pytest.mark.stress
@@ -143,7 +136,6 @@ class TestSampleCovariance:
             X_np.mean(axis=0), mean_theory, rtol=0.05, atol=0.05,
             err_msg=f"{name}: sample mean mismatch")
 
-
 # ============================================================
 # 3D covariance test
 # ============================================================
@@ -187,7 +179,6 @@ class TestSampleCovariance3D:
         frob_error = np.linalg.norm(Cov_sample - Cov_theory, 'fro')
         frob_norm = np.linalg.norm(Cov_theory, 'fro')
         assert frob_error / frob_norm < 0.06
-
 
 # ============================================================
 # log_prob / rvs consistency

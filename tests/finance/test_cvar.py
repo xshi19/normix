@@ -22,13 +22,10 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix import UnivariateVarianceGamma
 from normix.finance import CVaR, WeightFunctional, project_portfolio
 from normix.finance._mc import cdf_cmc, cdf_cmc_raw, quantile_cmc
-
 
 def _model():
     mu = jnp.array([0.001, 0.0005, 0.0002])
@@ -42,7 +39,6 @@ def _model():
         mu=mu, gamma=gamma, sigma=sigma, mu_ig=1.0, lam=1.5,
     )
 
-
 def _perturb(proj, idx, eps):
     mu = proj._mu_scalar
     gamma = proj._gamma_scalar
@@ -52,7 +48,6 @@ def _perturb(proj, idx, eps):
     if idx == 1:
         return proj.replace(gamma=jnp.array([gamma + eps]))
     return proj.replace(L_Sigma=jnp.array([[sigma + eps]]))
-
 
 def test_projection_matches_analytic():
     model = _model()
@@ -72,7 +67,6 @@ def test_projection_matches_analytic():
         rtol=1e-12,
     )
 
-
 def test_var_inversion():
     model = _model()
     proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
@@ -82,7 +76,6 @@ def test_var_inversion():
     v = cvar._var_cmc(proj, Y)
     F_at_neg_v = cdf_cmc(proj, -v, Y)
     np.testing.assert_allclose(float(F_at_neg_v), 0.05, atol=1e-8)
-
 
 @pytest.mark.contract
 @pytest.mark.parametrize("q", [1e-6, 0.999])
@@ -103,14 +96,12 @@ def test_quantile_cmc_brackets_extreme_Y(q):
     assert abs(x - (x_seed - old_half)) > 1e-6
     assert abs(x - (x_seed + old_half)) > 1e-6
 
-
 def test_var_ppf_deterministic():
     model = _model()
     proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
     cvar = CVaR(0.05)
     v = cvar.var(proj)
     np.testing.assert_allclose(v, -proj.ppf(0.05), rtol=1e-10)
-
 
 @pytest.mark.slow
 def test_cvar_value_vs_direct_mc():
@@ -133,7 +124,6 @@ def test_cvar_value_vs_direct_mc():
         f"analytic={analytic}, simulated={simulated}, se={se}"
     )
 
-
 def test_gradient_scalar_vs_fd():
     model = _model()
     proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
@@ -149,7 +139,6 @@ def test_gradient_scalar_vs_fd():
         for i in range(3)
     ])
     np.testing.assert_allclose(np.asarray(g), np.asarray(g_fd), rtol=1e-3, atol=1e-5)
-
 
 def test_hessian_scalar_vs_fd():
     model = _model()
@@ -169,7 +158,6 @@ def test_hessian_scalar_vs_fd():
             rtol=2e-3, atol=1e-4,
         )
 
-
 def test_gradient_w_directional_vs_fd():
     model = _model()
     w0 = jnp.array([0.4, 0.3, 0.3])
@@ -183,7 +171,6 @@ def test_gradient_w_directional_vs_fd():
     h = 1e-5
     fd = (cvar.value_w(model, w0 + h * d, Y) - cvar.value_w(model, w0 - h * d, Y)) / (2 * h)
     np.testing.assert_allclose(float(jnp.dot(gw, d)), float(fd), rtol=1e-3, atol=1e-6)
-
 
 def test_hessian_w_directional_vs_fd():
     model = _model()
@@ -203,7 +190,6 @@ def test_hessian_w_directional_vs_fd():
     dHd_fd = (v_plus - 2 * v_mid + v_minus) / h ** 2
 
     np.testing.assert_allclose(dHd, dHd_fd, rtol=5e-3, atol=1e-5)
-
 
 def test_weight_functional_matches_cvar_w():
     model = _model()

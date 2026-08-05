@@ -13,8 +13,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix.utils.bessel import log_kv
 from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.distributions.generalized_hyperbolic import (
@@ -28,7 +26,6 @@ from normix.distributions.normal_inverse_gaussian import (
     JointNormalInverseGaussian, NormalInverseGaussian,
 )
 from normix.fitting.em import BatchEMFitter
-
 
 # ---------------------------------------------------------------------------
 # Phase 1: log_kv backend='cpu'
@@ -59,7 +56,6 @@ def test_log_kv_cpu_vs_jax(v, z):
         f"rel_err={rel_err:.2e}"
     )
 
-
 def test_log_kv_cpu_vectorized():
     """CPU backend handles array inputs (broadcasting)."""
     vs = np.array([0.5, 1.0, 1.5, 2.0])
@@ -72,7 +68,6 @@ def test_log_kv_cpu_vectorized():
             f"CPU vectorized log_kv({v},{z}): got {result_cpu[i]}, expected {expected}"
         )
 
-
 def test_log_kv_cpu_broadcast():
     """CPU backend broadcasts v scalar over z array."""
     v = np.float64(1.0)
@@ -81,7 +76,6 @@ def test_log_kv_cpu_broadcast():
     assert result_cpu.shape == (4,)
     assert np.all(np.isfinite(result_cpu))
 
-
 def test_log_kv_default_backend_unchanged():
     """Calling log_kv without backend still uses JAX path (backward compat)."""
     v, z = jnp.array(1.0), jnp.array(2.0)
@@ -89,13 +83,11 @@ def test_log_kv_default_backend_unchanged():
     result_jax = float(log_kv(v, z, backend='jax'))
     assert result_default == result_jax
 
-
 def test_log_kv_jax_path_still_jit_able():
     """The JAX path (default) remains JIT-able after the refactor."""
     jitted = jax.jit(lambda v, z: log_kv(v, z))
     result = float(jitted(jnp.array(1.0), jnp.array(2.0)))
     assert np.isfinite(result)
-
 
 def test_log_kv_jax_path_still_differentiable():
     """The JAX path (default) still has custom JVP — gradients work."""
@@ -104,7 +96,6 @@ def test_log_kv_jax_path_still_differentiable():
     grad_v = jax.grad(lambda v: log_kv(v, jnp.array(2.0)))(jnp.array(1.0))
     assert jnp.isfinite(grad_v)
 
-
 def test_log_kv_small_z_cpu():
     """CPU backend handles z near zero (inf_mask fix)."""
     for v in [0.5, 1.0, 2.0]:
@@ -112,7 +103,6 @@ def test_log_kv_small_z_cpu():
             result = float(log_kv(v, z, backend='cpu'))
             assert np.isfinite(result), f"log_kv({v},{z},cpu) not finite: {result}"
             assert result > 0, f"log_kv({v},{z},cpu) should be large positive"
-
 
 # ---------------------------------------------------------------------------
 # Phase 2: GIG.expectation_params(backend='cpu')
@@ -134,14 +124,12 @@ def test_gig_expectation_params_cpu_vs_jax(p, a, b):
     np.testing.assert_allclose(eta_cpu, eta_jax, rtol=1e-6, atol=1e-8,
                                 err_msg=f"GIG({p},{a},{b}) expectation_params mismatch")
 
-
 def test_gig_expectation_params_default_unchanged():
     """Default (no backend arg) still uses JAX path."""
     gig = GIG(p=1.0, a=2.0, b=3.0)
     eta_default = np.array(gig.expectation_params())
     eta_jax = np.array(gig.expectation_params(backend='jax'))
     np.testing.assert_array_equal(eta_default, eta_jax)
-
 
 def test_gig_expectation_params_batch_cpu():
     """GIG.expectation_params_batch(backend='cpu') agrees with JAX path."""
@@ -157,7 +145,6 @@ def test_gig_expectation_params_batch_cpu():
     np.testing.assert_allclose(eta_cpu, eta_jax, rtol=1e-6, atol=1e-8,
                                 err_msg="expectation_params_batch cpu vs jax mismatch")
 
-
 def test_gig_expectation_params_batch_default_is_jax():
     """Default backend for batch is JAX (backward compat)."""
     p = jnp.array([1.0, 0.5])
@@ -166,7 +153,6 @@ def test_gig_expectation_params_batch_default_is_jax():
     eta_default = np.array(GIG.expectation_params_batch(p, a, b))
     eta_jax = np.array(GIG.expectation_params_batch(p, a, b, backend='jax'))
     np.testing.assert_array_equal(eta_default, eta_jax)
-
 
 @pytest.mark.parametrize("p,a,b", [
     (1.0, 2.0, 3.0),
@@ -188,7 +174,6 @@ def test_gig_from_expectation_solver_cpu(p, a, b):
     np.testing.assert_allclose(eta_recovered, eta, rtol=1e-5, atol=1e-7,
                                 err_msg=f"GIG({p},{a},{b}) cpu solver roundtrip failed")
 
-
 # ---------------------------------------------------------------------------
 # Phase 3: NormalMixture.e_step(backend='cpu')
 # ---------------------------------------------------------------------------
@@ -203,7 +188,6 @@ def _make_gh_model(d=2, seed=42):
     return GeneralizedHyperbolic.from_classical(
         mu=mu, gamma=gamma, sigma=sigma, p=1.0, a=2.0, b=3.0
     )
-
 
 @pytest.mark.parametrize("d", [1, 2, 4])
 def test_e_step_cpu_vs_jax_gh(d):
@@ -223,7 +207,6 @@ def test_e_step_cpu_vs_jax_gh(d):
             err_msg=f"e_step cpu vs jax mismatch for {field} (d={d})"
         )
 
-
 def test_e_step_default_backend_unchanged():
     """Default e_step (no backend arg) still uses JAX path."""
     model = _make_gh_model(d=2)
@@ -236,7 +219,6 @@ def test_e_step_default_backend_unchanged():
             np.array(getattr(eta_jax, field)),
         )
 
-
 def _make_vg_model(d=2, seed=42):
     rng = np.random.default_rng(seed)
     mu = rng.standard_normal(d)
@@ -246,7 +228,6 @@ def _make_vg_model(d=2, seed=42):
     return VarianceGamma.from_classical(
         mu=mu, gamma=gamma, sigma=sigma, alpha=2.0, beta=1.0
     )
-
 
 def _make_nig_model(d=2, seed=42):
     rng = np.random.default_rng(seed)
@@ -258,7 +239,6 @@ def _make_nig_model(d=2, seed=42):
         mu=mu, gamma=gamma, sigma=sigma, alpha=2.0, beta=1.0
     )
 
-
 def _make_niig_model(d=2, seed=42):
     rng = np.random.default_rng(seed)
     mu = rng.standard_normal(d)
@@ -268,7 +248,6 @@ def _make_niig_model(d=2, seed=42):
     return NormalInverseGaussian.from_classical(
         mu=mu, gamma=gamma, sigma=sigma, mu_ig=1.0, lam=2.0
     )
-
 
 @pytest.mark.parametrize("model_fn,name", [
     (_make_vg_model, "VG"),
@@ -291,7 +270,6 @@ def test_e_step_cpu_vs_jax_all_distributions(model_fn, name):
             err_msg=f"{name} e_step cpu vs jax mismatch for {field}"
         )
 
-
 # ---------------------------------------------------------------------------
 # Phase 4: BatchEMFitter with CPU backend
 # ---------------------------------------------------------------------------
@@ -306,7 +284,6 @@ def test_batch_em_fitter_cpu_backend_fields():
     assert fitter.m_step_backend == 'cpu'
     assert fitter.m_step_method == 'lbfgs'
 
-
 def test_batch_em_fitter_defaults_unchanged():
     """BatchEMFitter default fields."""
     fitter = BatchEMFitter()
@@ -317,7 +294,6 @@ def test_batch_em_fitter_defaults_unchanged():
     assert fitter.tol == 1e-3
     assert fitter.regularization == 'none'
     assert fitter.verbose == 0
-
 
 def test_batch_em_fitter_cpu_converges_gh():
     """BatchEMFitter with CPU backend converges on a small GH problem."""
@@ -341,7 +317,6 @@ def test_batch_em_fitter_cpu_converges_gh():
     ll = float(fitted.marginal_log_likelihood(X))
     assert np.isfinite(ll), f"Log-likelihood not finite: {ll}"
 
-
 # ---------------------------------------------------------------------------
 # Posterior GIG params
 # ---------------------------------------------------------------------------
@@ -363,7 +338,6 @@ def test_posterior_gig_params_gh():
     assert float(a_post) == pytest.approx(2.0 + float(w2))
     assert float(b_post) == pytest.approx(3.0 + float(z2))
 
-
 def test_posterior_gig_params_vg():
     d = 2
     j = JointVarianceGamma(
@@ -378,7 +352,6 @@ def test_posterior_gig_params_vg():
     assert float(a_post) == pytest.approx(2.0 * 1.0 + float(w2))
     assert float(b_post) == pytest.approx(float(z2))
 
-
 def test_posterior_gig_params_nig():
     d = 2
     j = JointNormalInverseGamma(
@@ -392,7 +365,6 @@ def test_posterior_gig_params_nig():
     assert float(p_post) == pytest.approx(-2.0 - d / 2.0)
     assert float(a_post) == pytest.approx(float(w2))
     assert float(b_post) == pytest.approx(2.0 * 1.0 + float(z2))
-
 
 def test_posterior_gig_params_niig():
     d = 2

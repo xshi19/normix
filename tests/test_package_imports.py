@@ -5,12 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import jax
 import pytest
 
-
-jax.config.update("jax_enable_x64", True)
-
+pytestmark = pytest.mark.smoke
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,7 +42,6 @@ print("ok")
     )
     assert result.returncode == 0, result.stderr or result.stdout
 
-
 def test_plotting_exports_remain_available():
     """The public plotting re-exports remain available lazily."""
     pytest.importorskip("matplotlib")
@@ -55,7 +51,6 @@ def test_plotting_exports_remain_available():
     assert FIG_W > 0
     assert FIG_H > 0
     assert callable(plot_pdf_cdf_comparison)
-
 
 def test_plotting_module_remains_importable():
     """Notebook-style submodule imports still work."""

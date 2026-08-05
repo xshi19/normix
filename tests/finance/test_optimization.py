@@ -20,8 +20,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-jax.config.update("jax_enable_x64", True)
-
 from normix import (
     GeneralizedHyperbolic, NormalInverseGamma, NormalInverseGaussian,
     UnivariateGeneralizedHyperbolic, VarianceGamma,
@@ -29,12 +27,10 @@ from normix import (
 from normix.finance import CVaR, MeanRiskProblem
 from normix.finance.optimization import EfficientFrontier, EfficientSurface
 
-
 def _sigma(d: int) -> jnp.ndarray:
     rng = np.random.default_rng(0)
     a = rng.normal(size=(d, d))
     return jnp.asarray(a @ a.T / d + 0.5 * np.eye(d), dtype=jnp.float64) * 3e-4
-
 
 def _mu_gamma(d: int) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Non-collinear location/skewness vectors (so ``[mu gamma e]`` is rank 3)."""
@@ -43,33 +39,27 @@ def _mu_gamma(d: int) -> tuple[jnp.ndarray, jnp.ndarray]:
     gamma = jnp.asarray(1e-4 + 7e-4 * rng.random(d), dtype=jnp.float64)
     return mu, gamma
 
-
 def _nig_model(d: int = 5):
     mu, gamma = _mu_gamma(d)
     return NormalInverseGaussian.from_classical(
         mu=mu, gamma=gamma, sigma=_sigma(d), mu_ig=1.0, lam=1.5)
-
 
 def _vg_model(d):
     mu, gamma = _mu_gamma(d)
     return VarianceGamma.from_classical(
         mu=mu, gamma=gamma, sigma=_sigma(d), alpha=2.0, beta=2.0)
 
-
 def _ninvg_model(d):
     mu, gamma = _mu_gamma(d)
     return NormalInverseGamma.from_classical(
         mu=mu, gamma=gamma, sigma=_sigma(d), alpha=3.0, beta=2.0)
-
 
 def _gh_model(d):
     mu, gamma = _mu_gamma(d)
     return GeneralizedHyperbolic.from_classical(
         mu=mu, gamma=gamma, sigma=_sigma(d), p=-0.5, a=1.0, b=1.0)
 
-
 _FAMILIES = {"VG": _vg_model, "NIG": _nig_model, "NInvG": _ninvg_model, "GH": _gh_model}
-
 
 def _kkt_min_variance(Sigma, M, c):
     """Independent equality-constrained min-variance solve (full KKT system)."""
@@ -77,7 +67,6 @@ def _kkt_min_variance(Sigma, M, c):
     KKT = np.block([[2 * Sigma, M], [M.T, np.zeros((k, k))]])
     rhs = np.concatenate([np.zeros(d), c])
     return np.linalg.solve(KKT, rhs)[:d]
-
 
 def test_weights_match_kkt_and_constraints():
     model = _nig_model(5)
@@ -95,7 +84,6 @@ def test_weights_match_kkt_and_constraints():
     np.testing.assert_allclose(float(model.mu @ w), mu_t, rtol=1e-9)
     np.testing.assert_allclose(float(model.gamma @ w), gamma_t, rtol=1e-9)
 
-
 def test_dispersion_matches_quadratic_and_projection():
     model = _nig_model(5)
     prob = MeanRiskProblem(model, CVaR(0.05))
@@ -110,7 +98,6 @@ def test_dispersion_matches_quadratic_and_projection():
     np.testing.assert_allclose(float(proj._mu_scalar), mu_t, rtol=1e-9)
     np.testing.assert_allclose(float(proj._gamma_scalar), gamma_t, rtol=1e-9)
     np.testing.assert_allclose(float(proj._sigma_scalar) ** 2, g, rtol=1e-9)
-
 
 def test_min_variance_point_closed_form():
     model = _nig_model(5)
@@ -129,7 +116,6 @@ def test_min_variance_point_closed_form():
         float(prob.dispersion(mu_t, gamma_t)), float(w_mv @ Sigma @ w_mv),
         rtol=1e-8)
 
-
 def test_risk_at_matches_object_and_value_reduced():
     model = _nig_model(4)
     cvar = CVaR(0.05)
@@ -145,7 +131,6 @@ def test_risk_at_matches_object_and_value_reduced():
 
     np.testing.assert_allclose(r_reduced, r_object, rtol=1e-4, atol=1e-6)
     np.testing.assert_allclose(r_reduced, r_value_reduced, rtol=1e-10)
-
 
 def test_efficient_surface_shape_and_finite():
     model = _nig_model(5)
@@ -164,7 +149,6 @@ def test_efficient_surface_shape_and_finite():
     EY = float(prob.E_Y())
     MU, GA = np.meshgrid(np.asarray(mu_grid), np.asarray(gamma_grid), indexing="ij")
     np.testing.assert_allclose(np.asarray(surf.expected_return), MU + GA * EY, rtol=1e-9)
-
 
 def test_efficient_frontier_minimises_and_realises_return():
     model = _nig_model(5)
@@ -189,7 +173,6 @@ def test_efficient_frontier_minimises_and_realises_return():
             r_alt = float(prob.risk_at(mu_alt, gamma_alt, Y))
             assert r_alt >= float(front.risk[k]) - 1e-7
 
-
 @pytest.mark.parametrize("name", list(_FAMILIES))
 def test_reduction_runs_for_all_families(name):
     model = _FAMILIES[name](5)
@@ -207,13 +190,11 @@ def test_reduction_runs_for_all_families(name):
     np.testing.assert_allclose(np.asarray(front.weights).sum(axis=1),
                                np.ones(4), atol=1e-8)
 
-
 # Parameters rounded from the generalized-hyperbolic fit to the S&P 500 basket
 # in docs/tutorials/finance/05 (a = b gauge): the GIG(p, a, b) subordinator
 # (E[Y] ≈ 0.27) and the minimum-variance reduced coordinates (μ̃, γ̃, σ̃).
 _GH_SUBORDINATOR = dict(p=-1.75, a=0.5, b=0.5)
 _VERTEX = dict(mu=1.1e-3, gamma=-2.0e-3, sigma=1.6e-2)
-
 
 def test_cvar_monotonicity_theorem_signs():
     r"""Theorem 1/2 monotonicity signs hold for CVaR on a normal mixture.
