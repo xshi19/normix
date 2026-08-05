@@ -603,9 +603,11 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 alpha=jnp.maximum(-p, LOG_EPS),
                 beta=jnp.maximum(b / 2.0, LOG_EPS),
             )
+            # Gamma limit requires p>0 (and b≪a); otherwise InverseGamma.
+            use_gamma = (b <= a) & (p > 0)
             if inverse:
-                return jnp.where(b <= a, g.ppf(z_), ig.ppf(z_))
-            return jnp.where(b <= a, g.cdf(z_), ig.cdf(z_))
+                return jnp.where(use_gamma, g.ppf(z_), ig.ppf(z_))
+            return jnp.where(use_gamma, g.cdf(z_), ig.cdf(z_))
 
         def _pinv(z_):
             log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w

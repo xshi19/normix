@@ -516,11 +516,15 @@ class TestLogPartitionTriad:
         theta = gig.natural_params()
         H_analytical = np.asarray(GIG._hessian_log_partition(theta))
         H_fd = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
-        H_ad = np.asarray(jax.hessian(GIG._log_partition_from_theta)(theta))
-        np.testing.assert_allclose(H_analytical, H_fd, rtol=1e-4)
-        np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-5)
-        np.testing.assert_allclose(H_analytical[0, 1], H_ad[0, 1], rtol=1e-10)
-        np.testing.assert_allclose(H_analytical[0, 2], H_ad[0, 2], rtol=1e-10)
+        try:
+            H_ad = np.asarray(jax.hessian(GIG._log_partition_from_theta)(theta))
+            np.testing.assert_allclose(H_analytical, H_fd, rtol=1e-4)
+            np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-5)
+            np.testing.assert_allclose(H_analytical[0, 1], H_ad[0, 1], rtol=1e-10)
+            np.testing.assert_allclose(H_analytical[0, 2], H_ad[0, 2], rtol=1e-10)
+        finally:
+            # Full jax.hessian through log_kv poisons later GH varentropy compiles.
+            jax.clear_caches()
 
     def test_gig_hessian_finite_and_symmetric(self):
         """GIG analytical Hessian should be finite and symmetric."""
@@ -553,14 +557,17 @@ class TestLogPartitionTriad:
         gig = GIG(p=0.7, a=1.4, b=0.9)
         FI_jax = np.asarray(gig.fisher_information(backend='jax'))
         FI_cpu = np.asarray(gig.fisher_information(backend='cpu'))
-        H_ad = np.asarray(
-            jax.hessian(GIG._log_partition_from_theta)(gig.natural_params()))
-        np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-4)
-        # L_vv (H11) retains O(ε²) central-FD error vs forward-mode hessian;
-        # mixed entries (the review bug) match to ~1e-12.
-        np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-5)
-        np.testing.assert_allclose(FI_jax[0, 1], H_ad[0, 1], rtol=1e-10)
-        np.testing.assert_allclose(FI_jax[0, 2], H_ad[0, 2], rtol=1e-10)
+        try:
+            H_ad = np.asarray(
+                jax.hessian(GIG._log_partition_from_theta)(gig.natural_params()))
+            np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-4)
+            # L_vv (H11) retains O(ε²) central-FD error vs forward-mode hessian;
+            # mixed entries (the review bug) match to ~1e-12.
+            np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-5)
+            np.testing.assert_allclose(FI_jax[0, 1], H_ad[0, 1], rtol=1e-10)
+            np.testing.assert_allclose(FI_jax[0, 2], H_ad[0, 2], rtol=1e-10)
+        finally:
+            jax.clear_caches()
 
     def test_expectation_params_backends_agree(self):
         """expectation_params('jax') matches ('cpu') for all distributions."""
