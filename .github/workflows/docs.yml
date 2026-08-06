@@ -11,10 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  # Per-ref / per-PR so a release-please sync or another PR cannot cancel
-  # this build (a single global `pages` group made PR Docs checks flake).
-  # Same-ref re-runs still cancel in-progress work.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: pages
   cancel-in-progress: true
 
 jobs:
