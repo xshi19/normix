@@ -69,12 +69,12 @@ class FactorNormalMixture(MarginalMixture):
         Factor loadings; ``r`` is the latent factor dimension.
     D : (d,)
         Diagonal entries of the residual covariance (positive).
-    subordinator : ExponentialFamily
+    _subordinator : ExponentialFamily
         Fitted subordinator (Gamma / InverseGamma / InverseGaussian /
-        GIG).
+        GIG). Access via :meth:`subordinator`.
 
     Subclasses define the subordinator family (via the instance stored in
-    ``subordinator``, which supplies the shared posterior map through
+    ``_subordinator``, which supplies the shared posterior map through
     ``to_gig()``) and implement :meth:`log_prob`,
     :meth:`_subordinator_from_eta`, and a few forwarders / initialisers.
     The prior-to-posterior GIG conjugacy (:meth:`_posterior_gig_params`)
@@ -95,7 +95,7 @@ class FactorNormalMixture(MarginalMixture):
     gamma: jax.Array       # (d,)
     F: jax.Array           # (d, r)
     D: jax.Array           # (d,) diagonal entries (positive)
-    subordinator: ExponentialFamily
+    _subordinator: ExponentialFamily
 
     # ------------------------------------------------------------------
     # Shape accessors
@@ -108,6 +108,10 @@ class FactorNormalMixture(MarginalMixture):
     @property
     def r(self) -> int:
         return int(self.F.shape[1])
+
+    def subordinator(self) -> ExponentialFamily:
+        """Return the fitted subordinator distribution :math:`Y`."""
+        return self._subordinator
 
     # ------------------------------------------------------------------
     # Shared subclass helper
@@ -192,12 +196,12 @@ class FactorNormalMixture(MarginalMixture):
 
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \mu + \gamma\,E[Y]`."""
-        return self.mu + self.gamma * self.subordinator.mean()
+        return self.mu + self.gamma * self._subordinator.mean()
 
     def cov(self) -> jax.Array:
         r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`."""
-        E_Y = self.subordinator.mean()
-        Var_Y = self.subordinator.var()
+        E_Y = self._subordinator.mean()
+        Var_Y = self._subordinator.var()
         return E_Y * self.sigma() + Var_Y * jnp.outer(self.gamma, self.gamma)
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
@@ -205,7 +209,7 @@ class FactorNormalMixture(MarginalMixture):
 
         Uses :math:`X = \mu + \gamma Y + \sqrt{Y}(F Z + \varepsilon)`.
         """
-        Y = self.subordinator.rvs(n, seed)
+        Y = self._subordinator.rvs(n, seed)
         key = jax.random.PRNGKey(seed + 1)
         kZ, kE = jax.random.split(key)
         Z = jax.random.normal(kZ, shape=(n, self.r), dtype=jnp.float64)
@@ -238,12 +242,13 @@ class FactorNormalMixture(MarginalMixture):
             b_{\mathrm{post}} = b_{\mathrm{gig}} + z_2,
 
         where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`
-        are the subordinator's exact GIG coordinates (``subordinator.to_gig()``).
+        are the subordinator's exact GIG coordinates
+        (``subordinator().to_gig()``).
         See :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`
         for the per-family table. Stays **pure**; the :math:`b_{\mathrm{post}}`
         floor lives in :meth:`_floored_posterior_gig_params`.
         """
-        gig = self.subordinator.to_gig()
+        gig = self._subordinator.to_gig()
         return gig.p - self.d / 2.0, gig.a + w2, gig.b + z2
 
     def _floored_posterior_gig_params(
@@ -502,7 +507,7 @@ class FactorNormalMixture(MarginalMixture):
         add a warm-start or sanity-check fallback.
         """
         sub = type(self)._subordinator_from_eta(
-            eta, theta0=self.subordinator.natural_params(), **kwargs)
+            eta, theta0=self._subordinator.natural_params(), **kwargs)
         return self._with_subordinator(sub)
 
     # ------------------------------------------------------------------
@@ -524,7 +529,7 @@ class FactorNormalMixture(MarginalMixture):
         self, subordinator: ExponentialFamily,
     ) -> "FactorNormalMixture":
         """Return a copy with a new subordinator, all else unchanged."""
-        return eqx.tree_at(lambda m: m.subordinator, self, subordinator)
+        return eqx.tree_at(lambda m: m._subordinator, self, subordinator)
 
     # ------------------------------------------------------------------
     # Eta from model (incremental EM warm-start)
@@ -687,11 +692,12 @@ class FactorNormalMixture(MarginalMixture):
     def replace(self, **updates) -> "FactorNormalMixture":
         r"""Return a new model with selected top-level fields replaced.
 
-        Accepts any subset of :attr:`_NORMAL_KEYS`. Subclass-specific
-        subordinator parameter shortcuts (e.g. ``alpha=...``) are not
-        supported on the FA family — use ``replace(subordinator=
-        Gamma(alpha=..., beta=...))`` instead. This keeps the contract
-        narrow (one storage form per family).
+        Accepts any subset of :attr:`_NORMAL_KEYS`. The public key
+        ``subordinator`` updates the private ``_subordinator`` field.
+        Subclass-specific subordinator parameter shortcuts (e.g.
+        ``alpha=...``) are not supported on the FA family — use
+        ``replace(subordinator=Gamma(alpha=..., beta=...))`` instead.
+        This keeps the contract narrow (one storage form per family).
         """
         unknown = set(updates) - set(self._NORMAL_KEYS)
         if unknown:
@@ -701,9 +707,10 @@ class FactorNormalMixture(MarginalMixture):
                 f"{sorted(self._NORMAL_KEYS)}")
         if not updates:
             return self
-        keys = tuple(updates.keys())
-        new_values = tuple(updates[k] for k in keys)
+        field_names = tuple(
+            '_subordinator' if k == 'subordinator' else k for k in updates)
+        new_values = tuple(updates[k] for k in updates)
         return eqx.tree_at(
-            lambda m: tuple(getattr(m, k) for k in keys),
+            lambda m: tuple(getattr(m, k) for k in field_names),
             self, new_values,
         )

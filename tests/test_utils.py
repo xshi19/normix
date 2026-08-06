@@ -85,7 +85,7 @@ def test_quantile_cmc_inverts_cmc_cdf(q):
     uv = UnivariateVarianceGamma.from_classical(
         mu=0.0, gamma=0.2, sigma=1.0, alpha=2.0, beta=1.0,
     )
-    Y = uv.subordinator.rvs(2000, seed=1)
+    Y = uv.subordinator().rvs(2000, seed=1)
     x = float(quantile_cmc(uv, q, Y))
     F = float(cdf_cmc_raw(
         x, uv._mu_scalar, uv._gamma_scalar, uv._sigma_scalar, Y))

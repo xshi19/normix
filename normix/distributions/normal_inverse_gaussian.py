@@ -313,7 +313,7 @@ class FactorNormalInverseGaussian(FactorNormalMixture):
         object.__setattr__(self, 'gamma', gamma)
         object.__setattr__(self, 'F', F)
         object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
+        object.__setattr__(self, '_subordinator', sub)
 
     @classmethod
     def from_classical(
@@ -323,11 +323,11 @@ class FactorNormalInverseGaussian(FactorNormalMixture):
 
     @property
     def mu_ig(self) -> jax.Array:
-        return self.subordinator.mu
+        return self._subordinator.mu
 
     @property
     def lam(self) -> jax.Array:
-        return self.subordinator.lam
+        return self._subordinator.lam
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)

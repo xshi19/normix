@@ -1,9 +1,9 @@
 """
-Tests for `normix.finance.projection` and `normix.finance.risk`.
+Tests for `NormalMixture.project` and `normix.finance.risk`.
 
 Cover the Phase D contract:
 
-- ``project_portfolio`` / ``NormalMixture.project`` match the analytic
+- ``NormalMixture.project`` matches the analytic
   projection of a normal mixture onto a weight vector.
 - CMC VaR inversion satisfies :math:`\\hat F(-\\mathrm{VaR}; Y) = \\alpha`.
 - Analytic ``CVaR.value`` matches a large-N direct-sample Monte Carlo
@@ -24,7 +24,7 @@ import pytest
 
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix import UnivariateVarianceGamma
-from normix.finance import CVaR, WeightFunctional, project_portfolio
+from normix.finance import CVaR, WeightFunctional
 from normix.finance._mc import cdf_cmc, cdf_cmc_raw, quantile_cmc
 
 def _model():
@@ -52,7 +52,7 @@ def _perturb(proj, idx, eps):
 def test_projection_matches_analytic():
     model = _model()
     w = jnp.array([0.4, 0.3, 0.3])
-    proj = project_portfolio(model, w)
+    proj = model.project(w)
 
     j = model._joint
     np.testing.assert_allclose(proj._mu_scalar, jnp.dot(w, j.mu), rtol=1e-12)
@@ -63,15 +63,15 @@ def test_projection_matches_analytic():
 
     np.testing.assert_allclose(
         proj.mean(),
-        proj._mu_scalar + proj._gamma_scalar * proj.subordinator.mean(),
+        proj._mu_scalar + proj._gamma_scalar * proj.subordinator().mean(),
         rtol=1e-12,
     )
 
 def test_var_inversion():
     model = _model()
-    proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
+    proj = model.project(jnp.array([0.4, 0.3, 0.3]))
     cvar = CVaR(0.05)
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
 
     v = cvar._var_cmc(proj, Y)
     F_at_neg_v = cdf_cmc(proj, -v, Y)
@@ -98,7 +98,7 @@ def test_quantile_cmc_brackets_extreme_Y(q):
 
 def test_var_ppf_deterministic():
     model = _model()
-    proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
+    proj = model.project(jnp.array([0.4, 0.3, 0.3]))
     cvar = CVaR(0.05)
     v = cvar.var(proj)
     np.testing.assert_allclose(v, -proj.ppf(0.05), rtol=1e-10)
@@ -107,10 +107,10 @@ def test_var_ppf_deterministic():
 def test_cvar_value_vs_direct_mc():
     model = _model()
     w = jnp.array([0.4, 0.3, 0.3])
-    proj = project_portfolio(model, w)
+    proj = model.project(w)
     cvar = CVaR(0.05)
 
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
     analytic = float(cvar.value(proj, Y))
 
     n_sim = 400_000
@@ -126,9 +126,9 @@ def test_cvar_value_vs_direct_mc():
 
 def test_gradient_scalar_vs_fd():
     model = _model()
-    proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
+    proj = model.project(jnp.array([0.4, 0.3, 0.3]))
     cvar = CVaR(0.05)
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
     g = cvar.gradient_scalar(proj, Y)
 
     eps = jnp.array([1e-5, 1e-5, 1e-6])
@@ -142,9 +142,9 @@ def test_gradient_scalar_vs_fd():
 
 def test_hessian_scalar_vs_fd():
     model = _model()
-    proj = project_portfolio(model, jnp.array([0.4, 0.3, 0.3]))
+    proj = model.project(jnp.array([0.4, 0.3, 0.3]))
     cvar = CVaR(0.05)
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
     H = cvar.hessian_scalar(proj, Y)
 
     np.testing.assert_array_equal(np.asarray(H[0, :]), np.zeros(3))
@@ -162,8 +162,8 @@ def test_gradient_w_directional_vs_fd():
     model = _model()
     w0 = jnp.array([0.4, 0.3, 0.3])
     cvar = CVaR(0.05)
-    proj = project_portfolio(model, w0)
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    proj = model.project(w0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
 
     gw = cvar.gradient_w(model, w0, Y)
     d = jnp.array([1.0, -0.5, -0.5])
@@ -176,8 +176,8 @@ def test_hessian_w_directional_vs_fd():
     model = _model()
     w0 = jnp.array([0.4, 0.3, 0.3])
     cvar = CVaR(0.05)
-    proj = project_portfolio(model, w0)
-    Y = proj.subordinator.rvs(20_000, seed=0)
+    proj = model.project(w0)
+    Y = proj.subordinator().rvs(20_000, seed=0)
 
     H = cvar.hessian_w(model, w0, Y)
     d = jnp.array([1.0, -0.5, -0.5])
@@ -195,7 +195,7 @@ def test_weight_functional_matches_cvar_w():
     model = _model()
     w0 = jnp.array([0.4, 0.3, 0.3])
     cvar = CVaR(0.05)
-    Y = project_portfolio(model, w0).subordinator.rvs(20_000, seed=0)
+    Y = model.project(w0).subordinator().rvs(20_000, seed=0)
     wf = WeightFunctional(cvar, model, Y)
 
     np.testing.assert_allclose(float(wf(w0)), float(cvar.value_w(model, w0, Y)), rtol=1e-12)
@@ -212,7 +212,7 @@ def test_value_grad_hess_w_matches_unfused():
     model = _model()
     w0 = jnp.array([0.4, 0.3, 0.3])
     cvar = CVaR(0.05)
-    Y = project_portfolio(model, w0).subordinator.rvs(8_000, seed=1)
+    Y = model.project(w0).subordinator().rvs(8_000, seed=1)
 
     value, grad, hess = cvar.value_grad_hess_w(model, w0, Y)
     np.testing.assert_allclose(

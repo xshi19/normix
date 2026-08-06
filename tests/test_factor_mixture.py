@@ -153,6 +153,21 @@ def test_factor_vg_matches_full_cov_at_mode():
     assert np.isfinite(lp_fa)
     np.testing.assert_allclose(lp_fa, lp_full, rtol=1e-10)
 
+def test_factor_subordinator_method(small_factor_setup):
+    """DEC-2: factor models expose ``subordinator()``; field is private."""
+    mu, gamma, F, D = small_factor_setup
+    fa = FactorVarianceGamma.from_classical(
+        mu=mu, gamma=gamma, F=F, D=D, alpha=2.5, beta=1.5)
+    assert callable(fa.subordinator)
+    assert hasattr(fa, '_subordinator')
+    np.testing.assert_allclose(float(fa.subordinator().alpha), 2.5)
+    np.testing.assert_allclose(float(fa._subordinator.alpha), 2.5)
+    # Public replace key still accepts ``subordinator=``
+    from normix.distributions.gamma import Gamma
+    fa2 = fa.replace(subordinator=Gamma(alpha=3.0, beta=2.0))
+    np.testing.assert_allclose(float(fa2.subordinator().alpha), 3.0)
+
+
 def test_factor_quad_form_agrees_with_dense_solve(small_factor_setup):
     """_quad_form(x) = xᵀΣ⁻¹x where Σ is the dense Woodbury reconstruction."""
     mu, gamma, F, D = small_factor_setup

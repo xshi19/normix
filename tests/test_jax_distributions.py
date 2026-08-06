@@ -664,6 +664,12 @@ class TestMultivariateNormal:
         np.testing.assert_allclose(
             np.array(mvn2.cov()), np.array(mvn_2d.cov()), rtol=1e-9)
 
+    def test_sigma_is_method(self, mvn_2d):
+        """DEC-2: ``sigma()`` matches ``cov()`` (method, not property)."""
+        assert callable(mvn_2d.sigma)
+        np.testing.assert_allclose(
+            np.array(mvn_2d.sigma()), np.array(mvn_2d.cov()), rtol=1e-12)
+
     def test_expectation_params_eq_grad(self, mvn_2d):
         theta = mvn_2d.natural_params()
         eta = mvn_2d.expectation_params()

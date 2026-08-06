@@ -93,26 +93,39 @@ class MarginalMixture(eqx.Module):
         ``(mu, gamma, F F^T + D)`` to sidestep the rotational gauge.
         """
 
+    @abc.abstractmethod
+    def subordinator(self):
+        """Return the subordinator distribution :math:`Y`."""
+
     # ------------------------------------------------------------------
     # Convenience
     # ------------------------------------------------------------------
+
+    @classmethod
+    def _fit_defaults(cls) -> dict:
+        """Family-specific :class:`~normix.fitting.em.BatchEMFitter` defaults.
+
+        Merged **under** user kwargs in :meth:`fit`. Override in subclasses
+        that need non-``BatchEMFitter`` defaults (e.g. CPU E-step). Empty
+        dict means every knob falls through to ``BatchEMFitter.__init__``.
+        """
+        return {}
 
     def fit(
         self,
         X: jax.Array,
         *,
-        algorithm: str = 'em',
-        verbose: int = 0,
-        max_iter: int = 200,
-        tol: float = 1e-3,
-        regularization: str = 'none',
-        e_step_backend: str = 'jax',
-        m_step_backend: str = 'cpu',
-        m_step_method: str = 'newton',
         alpha_min: "float | str | None" = None,
+        **fitter_kwargs,
     ) -> "EMResult":
         r"""Fit using ``self`` as initialisation. Returns
         :class:`~normix.fitting.em.EMResult`.
+
+        Keyword arguments other than ``alpha_min`` are forwarded to
+        :class:`~normix.fitting.em.BatchEMFitter` (``algorithm``,
+        ``track_ll``, ``eta_update``, ``m_step_kwargs``, backends, …).
+        Family-specific defaults come from :meth:`_fit_defaults` and are
+        overridden by any explicitly supplied kwarg.
 
         Parameters
         ----------
@@ -129,22 +142,18 @@ class MarginalMixture(eqx.Module):
             (``'inverse_moment'`` — :math:`E[1/Y\mid x]` also bounded), with
             :math:`\varepsilon=` :data:`~normix.utils.constants.ALPHA_MIN_MARGIN`.
             Has no effect on NInvG / NIG / GH (their prior :math:`b>0` keeps
-            the likelihood bounded for every :math:`\alpha`).
+            the likelihood bounded for every :math:`\alpha`). When set, it is
+            merged into ``m_step_kwargs`` and wins over any
+            ``alpha_min`` already present there.
         """
         from normix.fitting.em import BatchEMFitter
-        m_step_kwargs = None
+        kwargs = {**type(self)._fit_defaults(), **fitter_kwargs}
         resolved = self._resolve_alpha_min(alpha_min)
         if resolved is not None:
-            m_step_kwargs = {'alpha_min': resolved}
-        fitter = BatchEMFitter(
-            algorithm=algorithm,
-            verbose=verbose, max_iter=max_iter, tol=tol,
-            regularization=regularization,
-            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
-            m_step_method=m_step_method,
-            m_step_kwargs=m_step_kwargs,
-        )
-        return fitter.fit(self, X)
+            m_step_kwargs = dict(kwargs.get('m_step_kwargs') or {})
+            m_step_kwargs['alpha_min'] = resolved
+            kwargs['m_step_kwargs'] = m_step_kwargs
+        return BatchEMFitter(**kwargs).fit(self, X)
 
     def _resolve_alpha_min(
         self, alpha_min: "float | str | None",
@@ -221,6 +230,10 @@ class NormalMixture(MarginalMixture):
         :math:`E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.
         """
         return self._joint.sigma()
+
+    def subordinator(self):
+        """Subordinator distribution :math:`Y` (forwarded from the joint)."""
+        return self._joint.subordinator()
 
     def log_det_sigma(self) -> jax.Array:
         r""":math:`\log|\Sigma|` (forwarded from the joint)."""
@@ -715,11 +728,6 @@ class _UnivariateNormalMixtureMixin:
             raise ValueError(
                 f"{type(self).__name__} requires d=1, got d={int(joint.mu.shape[0])}")
         super().__init__(joint)
-
-    @property
-    def subordinator(self):
-        """Subordinator distribution :math:`Y` (forwarded from the joint)."""
-        return self._joint.subordinator()
 
     @property
     def _mu_scalar(self) -> jax.Array:

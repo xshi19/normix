@@ -25,7 +25,6 @@ import pandas as pd
 from pathlib import Path
 
 from normix import NormalInverseGaussian
-from normix.finance import project_portfolio
 from normix.fitting.em import BatchEMFitter
 from normix.utils.plotting import set_theme
 
@@ -108,12 +107,12 @@ absorbing the time-varying volatility into the mixing variable.
 ## Projecting to a portfolio
 
 Any linear combination of the assets is again a univariate member of the same
-family. `project_portfolio` returns that 1-D distribution in closed form — no
+family. `model.project(w)` returns that 1-D distribution in closed form — no
 re-fitting:
 
 ```{code-cell} python
 w = jnp.ones(len(basket)) / len(basket)         # equal weight
-port = project_portfolio(model, w)
+port = model.project(w)
 realized_port = R @ np.asarray(w)
 print(f"portfolio mean  {float(port.mean()):.5f}  (empirical {realized_port.mean():.5f})")
 print(f"portfolio std   {float(port.std()):.5f}  (empirical {realized_port.std():.5f})")
@@ -126,7 +125,7 @@ print(f"5% quantile     {float(port.ppf(jnp.array(0.05))):.5f}")
   log-likelihood ascent and fitted correlation are standard sanity checks.
 - $\mathbb{E}[Y \mid X]$ recovered via `joint.conditional_expectations` is an
   interpretable latent volatility that tracks turbulent days.
-- `project_portfolio(model, w)` gives the portfolio return distribution in
+- `model.project(w)` gives the portfolio return distribution in
   closed form for any weights.
 
 Next: {doc}`03_factor_mixture_portfolios` scales this to 30 assets with a
