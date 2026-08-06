@@ -11,7 +11,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: pages
+  # Per-ref / per-PR so release-please / other PRs cannot cancel this build.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
