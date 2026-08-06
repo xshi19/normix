@@ -92,6 +92,23 @@ def _golden_section_min(f, lo: Array, hi: Array, n_iter: int) -> Array:
     return 0.5 * (a + b)
 
 
+def _reduced_factors(model: NormalMixture) -> tuple[Array, Array, Array]:
+    r"""Return ``(A, A_inv, Sinv_M)`` with :math:`M = [\mu\;\gamma\;e]`.
+
+    :math:`A = M^\top \Sigma^{-1} M` (3×3 SPD),
+    :math:`\Sigma^{-1} M` (d×3), via Cholesky solves on
+    :math:`\Sigma = L L^\top`.
+    """
+    mu = model.mu
+    gamma = model.gamma
+    e = jnp.ones_like(mu)
+    M = jnp.stack([mu, gamma, e], axis=1)                  # (d, 3)
+    Sinv_M = cho_solve((model.L_Sigma, True), M)           # (d, 3)
+    A = M.T @ Sinv_M                                       # (3, 3)
+    A_inv = cho_solve(cho_factor(A), jnp.eye(3, dtype=A.dtype))
+    return A, A_inv, Sinv_M
+
+
 class MeanRiskProblem(eqx.Module):
     r"""Mean-risk optimization in reduced :math:`(\tilde\mu, \tilde\gamma)` coordinates.
 
@@ -99,30 +116,28 @@ class MeanRiskProblem(eqx.Module):
     :class:`~normix.finance.risk.RiskMeasure`. All heavy evaluations share a
     fixed subordinator sample ``Y`` (common random numbers); draw it once via
     ``model.joint.subordinator().rvs(n, seed)``.
+
+    The Cholesky factors :math:`A`, :math:`A^{-1}`, and :math:`\Sigma^{-1}M`
+    are computed once at construction (w-independent).
     """
 
     model: NormalMixture
     risk: RiskMeasure
+    A: Array
+    A_inv: Array
+    Sinv_M: Array
+
+    def __init__(self, model: NormalMixture, risk: RiskMeasure):
+        A, A_inv, Sinv_M = _reduced_factors(model)
+        object.__setattr__(self, 'model', model)
+        object.__setattr__(self, 'risk', risk)
+        object.__setattr__(self, 'A', A)
+        object.__setattr__(self, 'A_inv', A_inv)
+        object.__setattr__(self, 'Sinv_M', Sinv_M)
 
     # ------------------------------------------------------------------
     # Reduced-coordinate algebra
     # ------------------------------------------------------------------
-
-    def _reduced(self) -> tuple[Array, Array, Array]:
-        r"""Return ``(A, A_inv, Sinv_M)`` with :math:`M = [\mu\;\gamma\;e]`.
-
-        :math:`A = M^\top \Sigma^{-1} M` (3×3 SPD),
-        :math:`\Sigma^{-1} M` (d×3), via Cholesky solves on
-        :math:`\Sigma = L L^\top`.
-        """
-        mu = self.model.mu
-        gamma = self.model.gamma
-        e = jnp.ones_like(mu)
-        M = jnp.stack([mu, gamma, e], axis=1)                  # (d, 3)
-        Sinv_M = cho_solve((self.model.L_Sigma, True), M)      # (d, 3)
-        A = M.T @ Sinv_M                                       # (3, 3)
-        A_inv = cho_solve(cho_factor(A), jnp.eye(3, dtype=A.dtype))
-        return A, A_inv, Sinv_M
 
     def E_Y(self) -> Array:
         r""":math:`E[Y]` — subordinator mean."""
@@ -130,19 +145,17 @@ class MeanRiskProblem(eqx.Module):
 
     def weights(self, mu_tilde: Array, gamma_tilde: Array) -> Array:
         r"""Minimum-dispersion weights realising :math:`(\tilde\mu, \tilde\gamma)`."""
-        _, A_inv, Sinv_M = self._reduced()
         c = jnp.stack([jnp.asarray(mu_tilde, dtype=jnp.float64),
                        jnp.asarray(gamma_tilde, dtype=jnp.float64),
                        jnp.ones((), dtype=jnp.float64)])
-        return Sinv_M @ (A_inv @ c)
+        return self.Sinv_M @ (self.A_inv @ c)
 
     def dispersion(self, mu_tilde: Array, gamma_tilde: Array) -> Array:
         r"""Realised dispersion :math:`g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*`."""
-        _, A_inv, _ = self._reduced()
         c = jnp.stack([jnp.asarray(mu_tilde, dtype=jnp.float64),
                        jnp.asarray(gamma_tilde, dtype=jnp.float64),
                        jnp.ones((), dtype=jnp.float64)])
-        return c @ A_inv @ c
+        return c @ self.A_inv @ c
 
     def expected_return(self, mu_tilde: Array, gamma_tilde: Array) -> Array:
         r""":math:`m = \tilde\mu + \tilde\gamma\,E[Y]`."""
@@ -154,9 +167,8 @@ class MeanRiskProblem(eqx.Module):
 
         A convenient anchor for choosing efficient-surface grid ranges.
         """
-        A, _, _ = self._reduced()
-        denom = A[2, 2]
-        return A[0, 2] / denom, A[1, 2] / denom
+        denom = self.A[2, 2]
+        return self.A[0, 2] / denom, self.A[1, 2] / denom
 
     def projection_at(self, mu_tilde: Array, gamma_tilde: Array):
         r"""Univariate portfolio return at :math:`(\tilde\mu, \tilde\gamma)`.
@@ -174,9 +186,8 @@ class MeanRiskProblem(eqx.Module):
     @eqx.filter_jit
     def _surface_risk(self, mu_flat: Array, gamma_flat: Array, Y: Array) -> Array:
         r"""Risk over flattened reduced coordinates (vectorized, JIT-able)."""
-        _, A_inv, _ = self._reduced()
         C = jnp.stack([mu_flat, gamma_flat, jnp.ones_like(mu_flat)], axis=-1)
-        g = jnp.einsum('pi,ij,pj->p', C, A_inv, C)
+        g = jnp.einsum('pi,ij,pj->p', C, self.A_inv, C)
         sigma = jnp.sqrt(g)
         return jax.vmap(self.risk.value_reduced, in_axes=(0, 0, 0, None))(
             mu_flat, gamma_flat, sigma, Y)

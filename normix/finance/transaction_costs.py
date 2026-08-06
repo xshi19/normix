@@ -139,13 +139,21 @@ def build_quadratic_approximation(
     w0: Array,
     Y: Array,
 ) -> QuadraticApproximation:
-    r"""Evaluate :math:`r(w_0)`, :math:`\nabla r(w_0)`, and :math:`H_r(w_0)`."""
+    r"""Evaluate :math:`r(w_0)`, :math:`\nabla r(w_0)`, and :math:`H_r(w_0)`.
+
+    Uses :meth:`~normix.finance.risk.CVaR.value_grad_hess_w` when available
+    so the CMC VaR bisection runs once rather than three times.
+    """
     w0 = jnp.asarray(w0, dtype=jnp.float64)
+    fused = getattr(risk, 'value_grad_hess_w', None)
+    if fused is not None:
+        value, gradient, hessian = fused(model, w0, Y)
+    else:
+        value = risk.value_w(model, w0, Y)
+        gradient = risk.gradient_w(model, w0, Y)
+        hessian = risk.hessian_w(model, w0, Y)
     return QuadraticApproximation(
-        w0=w0,
-        value=risk.value_w(model, w0, Y),
-        gradient=risk.gradient_w(model, w0, Y),
-        hessian=risk.hessian_w(model, w0, Y),
+        w0=w0, value=value, gradient=gradient, hessian=hessian,
     )
 
 

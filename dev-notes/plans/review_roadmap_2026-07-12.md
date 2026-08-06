@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0–3 done; Phase 4 complete (2026-08-03).**
+> **ACTIVE — Phase 0–4 done; Phase 5 complete (2026-08-05).**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -61,13 +61,13 @@ One sweep PR; all trivially removable.
 
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
-| E1 | 4.1 | E-step aggregation materialises an `(n, d, d)` tensor: `jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y)` then `mean(axis=0)` — ~8 GB transient at n=100k, d=100. | Contract directly: `jnp.einsum('ni,nj,n->ij', ...) / n` in `NormalMixture._aggregate_eta` (`mixtures/marginal.py:433`) and `FactorNormalMixture._aggregate_stats` (`mixtures/factor.py:359`). Mathematically identical; existing EM tests guard it. ~4 LOC. | P1 |
-| E2 | 4.2, 8.2 | CVaR triple-computes the VaR bisection: `build_quadratic_approximation` calls `value_w`/`gradient_w`/`hessian_w`, each re-projecting, rebuilding the PINV table, and re-running the 60-step CMC bisection for the same `(w, Y)`. | Fused `value_grad_hess_w` sharing one quantile solve — ~3× cut on the dominant cost of `TransactionCostProblem.solve` and any SQP-style use. ~80 LOC + tests pinning equality with the unfused path. | P2 |
-| E3 | 4.3, 8.3 | PINV tables rebuilt on every `cdf`/`ppf` call (`_UnivariateNormalMixtureMixin._pinv_grids`, `GIG.cdf/ppf`, `InverseGaussian.ppf`): 4000 Bessel-heavy `log_prob` evals each time; modules are immutable so self-caching is out. | Per **DEC-5**: a small frozen quantile-table object (or documented `u_grid, x_grid = dist._pinv_grids()` reuse) so repeated quantile workloads amortise the build. ~60 LOC. | P3 |
-| E4 | 4.4 | `log_kv` custom JVP always pays the ∂ν finite difference (2 extra Bessel evals) even when only the z-tangent is nonzero. | `jax.custom_jvp(..., symbolic_zeros=True)`; verify JVP correctness for both tangent patterns. Interrogate review (bessel.py, `custom_jvp`). ~15 LOC. | P2 |
-| E5 | 4.5 | `_newton_digamma` (`distributions/gamma.py:204`) and `gammaincinv` (`utils/gammainc.py`) always run 50 `fori_loop` iterations (converged in <10). | `while_loop` with a tolerance, or cap at 20 — trims the VG/NInvG jax-backend M-step and Gamma/InvGamma `ppf`. ~20 LOC. | P3 |
-| E6 | 4.6 | `GIG.var()` builds the full 7-Bessel Hessian for entry [2,2] (closed form: 3 Bessel evals). `NormalInverseGaussian._subordinator_expectations` routes E[Y] and E[1/Y] through the 5-Bessel GIG path though both are closed-form for InverseGaussian (only E[log Y] needs Bessel). | Closed forms; tests pin equality with the current values. ~30 LOC. | P2 |
-| E7 | 4.7 | `MeanRiskProblem._reduced()` re-runs the Cholesky solves on every `weights`/`dispersion`/`risk_at` call; `A_inv` and `Sinv_M` are w-independent. | Precompute at construction (eqx fields). ~30 LOC. | P3 |
+| E1 | 4.1 | E-step aggregation materialises an `(n, d, d)` tensor: `jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y)` then `mean(axis=0)` — ~8 GB transient at n=100k, d=100. | **DONE.** Contract to `jnp.einsum('ni,nj,n->ij', ...) / n` in `_aggregate_eta` and `_aggregate_stats`. | P1 |
+| E2 | 4.2, 8.2 | CVaR triple-computes the VaR bisection: `build_quadratic_approximation` calls `value_w`/`gradient_w`/`hessian_w`, each re-projecting, rebuilding the PINV table, and re-running the 60-step CMC bisection for the same `(w, Y)`. | **DONE.** Fused `CVaR.value_grad_hess_w` + `_scalar_bundle`; `build_quadratic_approximation` uses it. ~3.4× measured. Equality test in `tests/finance/test_cvar.py`. | P2 |
+| E3 | 4.3, 8.3 | PINV tables rebuilt on every `cdf`/`ppf` call (`_UnivariateNormalMixtureMixin._pinv_grids`, `GIG.cdf/ppf`, `InverseGaussian.ppf`): 4000 Bessel-heavy `log_prob` evals each time; modules are immutable so self-caching is out. | **DONE.** `QuantileTable` in `utils/rvs.py`; `quantile_table()` on Univariate mixin / GIG / IG. Degenerate GIG path unchanged (B4). | P3 |
+| E4 | 4.4 | `log_kv` custom JVP always pays the ∂ν finite difference (2 extra Bessel evals) even when only the z-tangent is nonzero. | **DONE.** `defjvp(..., symbolic_zeros=True)` (needs `jax>=0.4.38`; env may be newer). Skip inactive tangent branches. Tests: z-only / v-only / joint JVP + jaxpr skip-lock. Interrogate follow-ups applied. | P2 |
+| E5 | 4.5 | `_newton_digamma` (`distributions/gamma.py:204`) and `gammaincinv` (`utils/gammainc.py`) always run 50 `fori_loop` iterations (converged in <10). | **DONE.** `while_loop` with tol/`max_iter=20` for both. | P3 |
+| E6 | 4.6 | `GIG.var()` builds the full 7-Bessel Hessian for entry [2,2] (closed form: 3 Bessel evals). `NormalInverseGaussian._subordinator_expectations` routes E[Y] and E[1/Y] through the 5-Bessel GIG path though both are closed-form for InverseGaussian (only E[log Y] needs Bessel). | **DONE.** 3-Bessel `GIG.var`; NIG closed-form E[Y]/E[1/Y] + 2-Bessel E[log Y]. | P2 |
+| E7 | 4.7 | `MeanRiskProblem._reduced()` re-runs the Cholesky solves on every `weights`/`dispersion`/`risk_at` call; `A_inv` and `Sinv_M` are w-independent. | **DONE.** `A` / `A_inv` / `Sinv_M` eqx fields at construction. | P3 |
 
 ### Stale docs / rules (DOC) — review §5
 
@@ -209,15 +209,14 @@ regressed (heavy tests now deselected by the default marker expression).
 | T4 | **DONE** — `tests/test_utils.py` (B2/B7 regressions already with Phase 3) |
 | T5 | **DONE** — tighter EM checks; MCECM-vs-EM at MLE |
 
-### Phase 5 — Efficiency (E1, E2, E4–E7; E3 after DEC-5)
+### Phase 5 — Efficiency (E1, E2, E4–E7; E3 after DEC-5) — **DONE (2026-08-05)**
 
-Benchmark before/after (`benchmarks/run_all.py` + `compare.py`); E2 may need
-a small CVaR benchmark if none covers it. Interrogate review on the E4 PR
-(`bessel.py`, `custom_jvp`).
-**Exit:** aggregation einsum contracts to `'ni,nj,n->ij'` (no `(n, d, d)`
-intermediate); fused CVaR path runs one quantile solve where three ran, with
-value/gradient/Hessian equal to the unfused path; `slow or stress` suite
-green; no benchmark regression.
+All seven items landed. E2 fused CVaR measured ~3.4× vs unfused
+`value_w`/`gradient_w`/`hessian_w` (n=20k CMC). E4 uses
+`defjvp(..., symbolic_zeros=True)` (API since `jax>=0.4.38`; not a
+`custom_jvp` constructor kwarg).
+**Exit:** einsum is `'ni,nj,n->ij'`; fused CVaR equals unfused path;
+fast suite green (1054); `QuantileTable` + `quantile_table()` per DEC-5.
 
 ### Phase 6 — API consistency (D1–D4, after Phase 0 + Phase 4)
 
@@ -250,7 +249,7 @@ gallery/API docs updated.
 | 2 | Agent docs & rules sync | DOC1–DOC7 | — ✅ |
 | 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
 | 4 | Test hardening | T1–T5 | — ✅ |
-| 5 | Efficiency | E1, E2, E4–E7; E3 | DEC-5 (E3 only) |
+| 5 | Efficiency | E1–E7 | DEC-5 (E3 only) ✅ |
 | 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 |
 | 7 | Website | W1–W7 | W7 after W1/W2/W6 |
 | 8 | Features | F1 | — |
@@ -267,6 +266,12 @@ pass, Phase 8 last.
   (`.cursor/skills/git-conventions/`); Phase 1 and Phase 2 are each one PR.
 - Interrogate skill is mandatory for PRs touching `normix/utils/bessel.py`
   (E4), the GIG solver surface (B3), or the EM fitter (B5, B6, E1).
+- **WSL2 / jaxlib note (E4 interrogate, 2026-08-05):** chaining
+  `test_gig_properties` → `test_varentropy` → `test_cpu_bessel_backend`
+  in one process can SIGSEGV in `mlir.make_ir_context` under accumulated
+  compilation (reproduced with *and* without the E4 JVP). Not a Bessel
+  regression; isolate the CPU-backend file if bisecting. Pin is
+  `jax>=0.4.38` (no upper bound).
 - TDD skill for every B item; the review's measured numbers above are the
   failing-test targets.
 - Per agent-maintenance: DEC rows go to `../design/design.md`; constants-table

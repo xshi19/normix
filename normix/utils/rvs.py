@@ -4,14 +4,44 @@ Generic RVS utilities for univariate distributions.
 :func:`build_pinv_table` builds a quantile table from any univariate
 log-kernel in pure JAX (trapezoidal CDF on a :math:`w`-grid).  Distributions
 supply ``log_kernel(w)`` from their own ``log_prob`` (plus a Jacobian when
-working in :math:`w = \\log x`).  :func:`rvs_pinv` samples via inverse lookup.
+working in :math:`w = \\log x`).  :class:`QuantileTable` holds the grids for
+amortised ``cdf`` / ``ppf`` / ``rvs``; :func:`rvs_pinv` samples via inverse
+lookup.
 """
 from __future__ import annotations
 
 from typing import Callable, Optional
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
+
+
+class QuantileTable(eqx.Module):
+    r"""Frozen PINV quantile table (a pytree — jit/vmap/scan-safe).
+
+    Built once via :func:`build_pinv_table` (or a distribution's
+    :meth:`quantile_table`); reuse across repeated ``cdf`` / ``ppf`` /
+    ``rvs`` calls so the 4000-point grid is not rebuilt each time.
+    """
+
+    u_grid: jax.Array
+    x_grid: jax.Array
+
+    def cdf(self, x: jax.Array) -> jax.Array:
+        r"""CDF lookup :math:`F(x)` via linear interpolation on the table."""
+        x = jnp.asarray(x, dtype=jnp.float64)
+        return jnp.interp(x, self.x_grid, self.u_grid, left=0.0, right=1.0)
+
+    def ppf(self, q: jax.Array) -> jax.Array:
+        r"""Quantile lookup :math:`F^{-1}(q)` via linear interpolation."""
+        q = jnp.asarray(q, dtype=jnp.float64)
+        return jnp.interp(q, self.u_grid, self.x_grid)
+
+    def rvs(self, n: int, seed: int = 42) -> jax.Array:
+        r"""Inverse-CDF sample of size ``n`` from this table."""
+        key = jax.random.PRNGKey(seed)
+        return rvs_pinv(key, self.u_grid, self.x_grid, n)
 
 
 def _bisect_w(

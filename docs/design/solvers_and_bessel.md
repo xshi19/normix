@@ -138,11 +138,15 @@ at runtime):
 | Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | leading asymptotic |
 | Quadrature | otherwise | 64-point Gauss–Legendre (Takekawa 2022) |
 
-Custom JVP via `@jax.custom_jvp`:
+Custom JVP via `@jax.custom_jvp` with
+`defjvp(..., symbolic_zeros=True)`:
 
 - $\partial/\partial z$: exact recurrence
-  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$.
-- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$.
+  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$; skipped when the $z$-tangent
+  is a symbolic zero.
+- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$;
+  skipped when the $v$-tangent is a symbolic zero (z-only
+  differentiation avoids the two extra Bessel evaluations).
 
 ### 3.2 CPU backend (EM hot path)
 

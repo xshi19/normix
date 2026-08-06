@@ -226,6 +226,66 @@ def test_log_kv_grad_v(v, z):
     )
 
 # ---------------------------------------------------------------------------
+# symbolic_zeros JVP (E4): z-only and v-only tangents
+# ---------------------------------------------------------------------------
+
+def test_log_kv_jvp_z_only_matches_grad():
+    """z-only JVP must match ∂/∂z and skip the v finite-difference branch."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    primal, tangent = jax.jvp(lambda zz: log_kv(v, zz), (z,), (jnp.ones_like(z),))
+    grad_z = jax.grad(lambda zz: log_kv(v, zz))(z)
+    np.testing.assert_allclose(float(primal), float(log_kv(v, z)), rtol=1e-12)
+    np.testing.assert_allclose(float(tangent), float(grad_z), rtol=1e-12)
+
+
+def test_log_kv_jvp_v_only_matches_grad():
+    """v-only JVP must match ∂/∂v (FD path still active)."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    primal, tangent = jax.jvp(lambda vv: log_kv(vv, z), (v,), (jnp.ones_like(v),))
+    grad_v = jax.grad(lambda vv: log_kv(vv, z))(v)
+    np.testing.assert_allclose(float(primal), float(log_kv(v, z)), rtol=1e-12)
+    np.testing.assert_allclose(float(tangent), float(grad_v), rtol=1e-12)
+
+
+def test_log_kv_jvp_joint_matches_partials():
+    """Both-tangent JVP equals linear combination of partials (E4)."""
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    dv = jnp.array(0.3)
+    dz = jnp.array(-0.7)
+    _, tangent = jax.jvp(log_kv, (v, z), (dv, dz))
+    gv = jax.grad(lambda vv: log_kv(vv, z))(v)
+    gz = jax.grad(lambda zz: log_kv(v, zz))(z)
+    np.testing.assert_allclose(
+        float(tangent), float(gv * dv + gz * dz), rtol=1e-12,
+    )
+
+
+def test_log_kv_z_only_jaxpr_skips_nu_fd():
+    """z-only differentiation stages fewer lax.cond eqns than joint (E4 skip).
+
+    With ``symbolic_zeros=True``, z-only drops the ν±ε FD (and the two
+    regime-dispatched Bessel evals it needs). Joint differentiation keeps
+    both tangent branches. Measured on this point: 12 vs 20 ``cond`` eqns.
+    """
+    v = jnp.array(1.5)
+    z = jnp.array(2.0)
+    z_only = str(jax.make_jaxpr(jax.grad(lambda zz: log_kv(v, zz)))(z))
+    both = str(jax.make_jaxpr(jax.jacfwd(log_kv, argnums=(0, 1)))(v, z))
+    n_z = z_only.count('cond')
+    n_both = both.count('cond')
+    assert n_z < n_both, (
+        f"expected z-only jaxpr fewer conds than joint; got {n_z} vs {n_both}"
+    )
+    assert n_z <= 12 and n_both >= 20, (
+        f"unexpected cond counts (z-only={n_z}, joint={n_both}); "
+        "E4 skip may have regressed"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Higher-order: jax.hessian
 # ---------------------------------------------------------------------------
 

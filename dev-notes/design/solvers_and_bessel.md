@@ -142,11 +142,15 @@ at runtime):
 | Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | leading asymptotic |
 | Quadrature | otherwise | 64-point Gauss–Legendre (Takekawa 2022) |
 
-Custom JVP via `@jax.custom_jvp`:
+Custom JVP via `@jax.custom_jvp` with
+`defjvp(..., symbolic_zeros=True)`:
 
 - $\partial/\partial z$: exact recurrence
-  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$.
-- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$.
+  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$; skipped when the $z$-tangent
+  is a symbolic zero.
+- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$;
+  skipped when the $v$-tangent is a symbolic zero (z-only
+  differentiation avoids the two extra Bessel evaluations).
 
 ### 3.2 CPU backend (EM hot path)
 
@@ -254,7 +258,7 @@ Neither method evaluates the Bessel normalising constant. See
 ### 5.1 Quantile-table reuse: `QuantileTable` (DEC-5)
 
 > Decision row: `design.md` § *2026-07 review Phase 0*, DEC-5. Decided
-> 2026-07-20; implementation lands with roadmap item E3 (Phase 5).
+> 2026-07-20; implemented with roadmap item E3 (Phase 5, 2026-08-05).
 
 Every `cdf`/`ppf` call above rebuilds the 4000-point table — 4000
 Bessel-heavy `log_prob` evaluations per call. Distributions are

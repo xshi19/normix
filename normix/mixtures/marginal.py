@@ -26,7 +26,7 @@ import jax.numpy as jnp
 
 
 from normix.utils.constants import SIGMA_INIT_REG
-from normix.utils.rvs import build_pinv_table
+from normix.utils.rvs import QuantileTable, build_pinv_table
 
 
 class MarginalMixture(eqx.Module):
@@ -427,8 +427,9 @@ class NormalMixture(MarginalMixture):
             E_Y=jnp.mean(sub_exp['E_Y']),
             E_X=jnp.mean(X, axis=0),
             E_X_inv_Y=jnp.mean(X * E_inv_Y[:, None], axis=0),
-            E_XXT_inv_Y=jnp.mean(
-                jnp.einsum('ni,nj,n->nij', X, X, E_inv_Y), axis=0),
+            E_XXT_inv_Y=(
+                jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
+            ),
         )
 
     # ------------------------------------------------------------------
@@ -737,17 +738,22 @@ class _UnivariateNormalMixtureMixin:
         log_kernel = lambda w: self.log_prob(jnp.atleast_1d(w))
         return build_pinv_table(log_kernel, self.mean())
 
+    def quantile_table(self) -> QuantileTable:
+        r"""Frozen PINV table for amortised :meth:`cdf` / :meth:`ppf` / sampling.
+
+        Per-call :meth:`cdf` / :meth:`ppf` rebuild the table; hold the return
+        value when evaluating many quantiles at fixed parameters.
+        """
+        u_grid, x_grid = self._pinv_grids()
+        return QuantileTable(u_grid=u_grid, x_grid=x_grid)
+
     def cdf(self, x: jax.Array) -> jax.Array:
         r"""CDF :math:`F(x)` via PINV lookup."""
-        u_grid, x_grid = self._pinv_grids()
-        x = jnp.asarray(x, dtype=jnp.float64)
-        return jnp.interp(x, x_grid, u_grid, left=0.0, right=1.0)
+        return self.quantile_table().cdf(x)
 
     def ppf(self, q: jax.Array) -> jax.Array:
         r"""Quantile function :math:`F^{-1}(q)` via PINV lookup."""
-        u_grid, x_grid = self._pinv_grids()
-        q = jnp.asarray(q, dtype=jnp.float64)
-        return jnp.interp(q, u_grid, x_grid)
+        return self.quantile_table().ppf(q)
 
     def mean(self) -> jax.Array:
         r"""Scalar :math:`E[X]` (unwraps the parent's ``(1,)`` return)."""

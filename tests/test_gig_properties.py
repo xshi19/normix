@@ -217,3 +217,13 @@ class TestGIGExtremeParameters:
         # Under this reparametrization, E[Y] is scaled by `scale`
         assert_allclose(float(gig2.mean()), float(gig1.mean()) * scale, rtol=1e-4,
                         err_msg=f"Scale invariance failed at scale={scale}")
+
+    @pytest.mark.parametrize("p,a,b", [
+        (0.7, 1.4, 0.9), (1.0, 2.0, 2.0), (-0.5, 1.0, 1.0), (2.0, 1.0, 1.0),
+    ])
+    def test_var_matches_fisher_entry(self, p, a, b):
+        """E6: closed-form var() equals Fisher information [2, 2]."""
+        gig = GIG(p=p, a=a, b=b)
+        assert_allclose(
+            float(gig.var()), float(gig.fisher_information()[2, 2]), rtol=1e-10,
+        )

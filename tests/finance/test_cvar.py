@@ -205,3 +205,22 @@ def test_weight_functional_matches_cvar_w():
     np.testing.assert_allclose(
         np.asarray(wf.hess(w0)), np.asarray(cvar.hessian_w(model, w0, Y)), rtol=1e-12,
     )
+
+
+def test_value_grad_hess_w_matches_unfused():
+    """E2: fused path equals separate value_w / gradient_w / hessian_w."""
+    model = _model()
+    w0 = jnp.array([0.4, 0.3, 0.3])
+    cvar = CVaR(0.05)
+    Y = project_portfolio(model, w0).subordinator.rvs(8_000, seed=1)
+
+    value, grad, hess = cvar.value_grad_hess_w(model, w0, Y)
+    np.testing.assert_allclose(
+        float(value), float(cvar.value_w(model, w0, Y)), rtol=1e-12,
+    )
+    np.testing.assert_allclose(
+        np.asarray(grad), np.asarray(cvar.gradient_w(model, w0, Y)), rtol=1e-12,
+    )
+    np.testing.assert_allclose(
+        np.asarray(hess), np.asarray(cvar.hessian_w(model, w0, Y)), rtol=1e-12,
+    )
