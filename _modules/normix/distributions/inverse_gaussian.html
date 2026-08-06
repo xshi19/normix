@@ -431,7 +431,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_pinv_table</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantileTable</span><span class="p">,</span> <span class="n">build_pinv_table</span>
 
 
 
@@ -595,6 +595,21 @@
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_term2</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="InverseGaussian.quantile_table">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.quantile_table">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quantile_table</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantileTable</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Frozen PINV table for amortised :meth:`ppf` / sampling.</span>
+
+<span class="sd">        The analytical :meth:`cdf` does not use this table; hold the return</span>
+<span class="sd">        value when evaluating many quantiles at fixed parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="o">+</span> <span class="n">w</span>
+        <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span> <span class="o">=</span> <span class="n">build_pinv_table</span><span class="p">(</span>
+            <span class="n">log_kernel</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">()),</span> <span class="n">x_of_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">QuantileTable</span><span class="p">(</span><span class="n">u_grid</span><span class="o">=</span><span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span><span class="o">=</span><span class="n">x_grid</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="InverseGaussian.ppf">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -603,12 +618,7 @@
 <span class="sd">        Trapezoidal-CDF lookup on :math:`w = \log x`, seeded at</span>
 <span class="sd">        :math:`\log` :meth:`mode`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="o">+</span> <span class="n">w</span>
-        <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span> <span class="o">=</span> <span class="n">build_pinv_table</span><span class="p">(</span>
-            <span class="n">log_kernel</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">()),</span> <span class="n">x_of_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantile_table</span><span class="p">()</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InverseGaussian.rvs">

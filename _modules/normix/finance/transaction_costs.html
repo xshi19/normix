@@ -553,13 +553,21 @@
     <span class="n">w0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuadraticApproximation</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evaluate :math:`r(w_0)`, :math:`\nabla r(w_0)`, and :math:`H_r(w_0)`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evaluate :math:`r(w_0)`, :math:`\nabla r(w_0)`, and :math:`H_r(w_0)`.</span>
+
+<span class="sd">    Uses :meth:`~normix.finance.risk.CVaR.value_grad_hess_w` when available</span>
+<span class="sd">    so the CMC VaR bisection runs once rather than three times.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">w0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">fused</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">risk</span><span class="p">,</span> <span class="s1">&#39;value_grad_hess_w&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fused</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">gradient</span><span class="p">,</span> <span class="n">hessian</span> <span class="o">=</span> <span class="n">fused</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">risk</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="n">gradient</span> <span class="o">=</span> <span class="n">risk</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="n">hessian</span> <span class="o">=</span> <span class="n">risk</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">QuadraticApproximation</span><span class="p">(</span>
-        <span class="n">w0</span><span class="o">=</span><span class="n">w0</span><span class="p">,</span>
-        <span class="n">value</span><span class="o">=</span><span class="n">risk</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span>
-        <span class="n">gradient</span><span class="o">=</span><span class="n">risk</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span>
-        <span class="n">hessian</span><span class="o">=</span><span class="n">risk</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span>
+        <span class="n">w0</span><span class="o">=</span><span class="n">w0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">gradient</span><span class="o">=</span><span class="n">gradient</span><span class="p">,</span> <span class="n">hessian</span><span class="o">=</span><span class="n">hessian</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

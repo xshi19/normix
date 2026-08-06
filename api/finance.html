@@ -460,6 +460,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_grad_hess_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_grad_hess_w()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -483,6 +484,9 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A_inv"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A_inv</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Sinv_M</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
@@ -851,6 +855,27 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_grad_hess_w">
+<span class="sig-name descname"><span class="pre">value_grad_hess_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_grad_hess_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_grad_hess_w" title="Link to this definition">#</a></dt>
+<dd><p>Fused <span class="math notranslate nohighlight">\((r, \nabla_w r, H_r)\)</span> with one CMC VaR solve.</p>
+<p>Equivalent to calling <a class="reference internal" href="#normix.finance.risk.CVaR.value_w" title="normix.finance.risk.CVaR.value_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value_w()</span></code></a>, <a class="reference internal" href="#normix.finance.risk.CVaR.gradient_w" title="normix.finance.risk.CVaR.gradient_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient_w()</span></code></a>, and
+<a class="reference internal" href="#normix.finance.risk.CVaR.hessian_w" title="normix.finance.risk.CVaR.hessian_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">hessian_w()</span></code></a> separately, but projects once and bisects the
+conditional-MC CDF once.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -972,6 +997,8 @@ portfolio <code class="docutils literal notranslate"><span class="pre">weights</
 <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>. All heavy evaluations share a
 fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> (common random numbers); draw it once via
 <code class="docutils literal notranslate"><span class="pre">model.joint.subordinator().rvs(n,</span> <span class="pre">seed)</span></code>.</p>
+<p>The Cholesky factors <span class="math notranslate nohighlight">\(A\)</span>, <span class="math notranslate nohighlight">\(A^{-1}\)</span>, and <span class="math notranslate nohighlight">\(\Sigma^{-1}M\)</span>
+are computed once at construction (w-independent).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -988,6 +1015,21 @@ fixed subordinator sample <code class="docutils literal notranslate"><span class
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.risk">
 <span class="sig-name descname"><span class="pre">risk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><span class="pre">RiskMeasure</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.risk" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.A">
+<span class="sig-name descname"><span class="pre">A</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.A" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.A_inv">
+<span class="sig-name descname"><span class="pre">A_inv</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.A_inv" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.Sinv_M">
+<span class="sig-name descname"><span class="pre">Sinv_M</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -1457,6 +1499,8 @@ exceeds the hold objective; otherwise the theory recommends keeping
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.build_quadratic_approximation">
 <span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">build_quadratic_approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#build_quadratic_approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.build_quadratic_approximation" title="Link to this definition">#</a></dt>
 <dd><p>Evaluate <span class="math notranslate nohighlight">\(r(w_0)\)</span>, <span class="math notranslate nohighlight">\(\nabla r(w_0)\)</span>, and <span class="math notranslate nohighlight">\(H_r(w_0)\)</span>.</p>
+<p>Uses <a class="reference internal" href="#normix.finance.risk.CVaR.value_grad_hess_w" title="normix.finance.risk.CVaR.value_grad_hess_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value_grad_hess_w()</span></code></a> when available
+so the CMC VaR bisection runs once rather than three times.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1790,6 +1834,7 @@ for mean-risk optimisation (Phase E).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_grad_hess_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_grad_hess_w()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1813,6 +1858,9 @@ for mean-risk optimisation (Phase E).</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A_inv"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A_inv</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Sinv_M</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>

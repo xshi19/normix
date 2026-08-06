@@ -407,9 +407,11 @@
 <span class="sd">at runtime. lax.cond requires scalar conditions, so the core scalar</span>
 <span class="sd">function _log_kv_scalar is vmapped over array inputs.</span>
 
-<span class="sd">Custom JVP for full autodiff:</span>
-<span class="sd">  - ∂/∂z : exact recurrence K&#39;_v = −(K_{v−1}+K_{v+1})/2</span>
-<span class="sd">  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)</span>
+<span class="sd">Custom JVP for full autodiff (``defjvp(..., symbolic_zeros=True)``):</span>
+<span class="sd">  - ∂/∂z : exact recurrence K&#39;_v = −(K_{v−1}+K_{v+1})/2;</span>
+<span class="sd">    skipped when the z-tangent is a symbolic zero (v-only differentiation)</span>
+<span class="sd">  - ∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V);</span>
+<span class="sd">    skipped when the v-tangent is a symbolic zero (z-only differentiation)</span>
 
 <span class="sd">backend=&#39;jax&#39;  (default): pure-JAX, JIT-able, differentiable.</span>
 <span class="sd">backend=&#39;cpu&#39;           : scipy.special.kve, fully vectorized numpy.</span>
@@ -421,8 +423,11 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.custom_derivatives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SymbolicZero</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">TINY</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">BESSEL_SMALLZ_THRESHOLD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">BESSEL_SMALLZ_THRESHOLD</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">TINY</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="n">_N_QUAD</span> <span class="o">=</span> <span class="mi">64</span>
@@ -430,6 +435,7 @@
 <span class="n">_GL_NODES</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_GL_NODES_NP</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 <span class="n">_GL_WEIGHTS</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_GL_WEIGHTS_NP</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 <span class="n">_LOG_GL_WEIGHTS</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">_GL_WEIGHTS</span><span class="p">)</span>
+<span class="n">_EPS_V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
 <span class="n">_HANKEL_THRESHOLD</span> <span class="o">=</span> <span class="mf">25.0</span>
 <span class="n">_OLVER_V_THRESHOLD</span> <span class="o">=</span> <span class="mf">25.0</span>
@@ -582,21 +588,36 @@
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_log_kv_scalar</span><span class="p">)(</span><span class="n">v</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">z</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
 
 
-<span class="nd">@_log_kv_jax</span><span class="o">.</span><span class="n">defjvp</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_symbolic_zero</span><span class="p">(</span><span class="n">tangent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True for JAX symbolic-zero tangents (not involved in differentiation).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">tangent</span><span class="p">)</span> <span class="ow">is</span> <span class="n">SymbolicZero</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_jax_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
     <span class="n">v</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">primals</span>
     <span class="n">dv</span><span class="p">,</span> <span class="n">dz</span> <span class="o">=</span> <span class="n">tangents</span>
     <span class="n">primal_out</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
 
-    <span class="n">log_kvm1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    <span class="n">log_kvp1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    <span class="n">dlogkv_dz</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvm1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvp1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">))</span>
+    <span class="n">tangent_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">primal_out</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_symbolic_zero</span><span class="p">(</span><span class="n">dz</span><span class="p">):</span>
+        <span class="n">log_kvm1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">log_kvp1</span> <span class="o">=</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">dlogkv_dz</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvm1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kvp1</span> <span class="o">-</span> <span class="n">primal_out</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">tangent_out</span> <span class="o">=</span> <span class="n">tangent_out</span> <span class="o">+</span> <span class="n">dlogkv_dz</span> <span class="o">*</span> <span class="n">dz</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">BESSEL_EPS_V</span>
-    <span class="n">_EPS_V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">dlogkv_dv</span> <span class="o">=</span> <span class="p">(</span><span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">_EPS_V</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_symbolic_zero</span><span class="p">(</span><span class="n">dv</span><span class="p">):</span>
+        <span class="n">dlogkv_dv</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">_log_kv_jax</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">_EPS_V</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+            <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">_EPS_V</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">tangent_out</span> <span class="o">=</span> <span class="n">tangent_out</span> <span class="o">+</span> <span class="n">dlogkv_dv</span> <span class="o">*</span> <span class="n">dv</span>
 
-    <span class="k">return</span> <span class="n">primal_out</span><span class="p">,</span> <span class="n">dlogkv_dz</span> <span class="o">*</span> <span class="n">dz</span> <span class="o">+</span> <span class="n">dlogkv_dv</span> <span class="o">*</span> <span class="n">dv</span>
+    <span class="k">return</span> <span class="n">primal_out</span><span class="p">,</span> <span class="n">tangent_out</span>
+
+
+<span class="n">_log_kv_jax</span><span class="o">.</span><span class="n">defjvp</span><span class="p">(</span><span class="n">_log_kv_jax_jvp</span><span class="p">,</span> <span class="n">symbolic_zeros</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>

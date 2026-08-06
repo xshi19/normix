@@ -398,14 +398,56 @@
 <span class="sd">:func:`build_pinv_table` builds a quantile table from any univariate</span>
 <span class="sd">log-kernel in pure JAX (trapezoidal CDF on a :math:`w`-grid).  Distributions</span>
 <span class="sd">supply ``log_kernel(w)`` from their own ``log_prob`` (plus a Jacobian when</span>
-<span class="sd">working in :math:`w = \\log x`).  :func:`rvs_pinv` samples via inverse lookup.</span>
+<span class="sd">working in :math:`w = \\log x`).  :class:`QuantileTable` holds the grids for</span>
+<span class="sd">amortised ``cdf`` / ``ppf`` / ``rvs``; :func:`rvs_pinv` samples via inverse</span>
+<span class="sd">lookup.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+
+<div class="viewcode-block" id="QuantileTable">
+<a class="viewcode-back" href="../../../api/utils.html#normix.utils.rvs.QuantileTable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantileTable</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Frozen PINV quantile table (a pytree — jit/vmap/scan-safe).</span>
+
+<span class="sd">    Built once via :func:`build_pinv_table` (or a distribution&#39;s</span>
+<span class="sd">    :meth:`quantile_table`); reuse across repeated ``cdf`` / ``ppf`` /</span>
+<span class="sd">    ``rvs`` calls so the 4000-point grid is not rebuilt each time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">u_grid</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+    <span class="n">x_grid</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+
+<div class="viewcode-block" id="QuantileTable.cdf">
+<a class="viewcode-back" href="../../../api/utils.html#normix.utils.rvs.QuantileTable.cdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CDF lookup :math:`F(x)` via linear interpolation on the table.&quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_grid</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantileTable.ppf">
+<a class="viewcode-back" href="../../../api/utils.html#normix.utils.rvs.QuantileTable.ppf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Quantile lookup :math:`F^{-1}(q)` via linear interpolation.&quot;&quot;&quot;</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_grid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantileTable.rvs">
+<a class="viewcode-back" href="../../../api/utils.html#normix.utils.rvs.QuantileTable.rvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Inverse-CDF sample of size ``n`` from this table.&quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rvs_pinv</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_grid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_grid</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bisect_w</span><span class="p">(</span>

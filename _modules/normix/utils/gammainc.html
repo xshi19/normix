@@ -414,7 +414,7 @@
 <a class="viewcode-back" href="../../../api/utils.html#normix.utils.gammainc.gammaincinv">[docs]</a>
 <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">gammaincinv</span><span class="p">(</span>
-    <span class="n">a</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Solve :math:`P(a, x) = q` for :math:`x` by Newton iteration.</span>
 
@@ -426,9 +426,10 @@
 <span class="sd">        Shape parameter, :math:`a &gt; 0`.</span>
 <span class="sd">    q</span>
 <span class="sd">        Probability, :math:`q \in (0, 1)`.</span>
-<span class="sd">    n_iter</span>
-<span class="sd">        Newton iteration count.  The default of 50 is safe; convergence</span>
-<span class="sd">        is typically reached in &lt;10 steps.</span>
+<span class="sd">    max_iter</span>
+<span class="sd">        Maximum Newton iterations (typically converges in &lt;10 steps).</span>
+<span class="sd">    tol</span>
+<span class="sd">        Absolute residual tolerance on :math:`|P(a, x) - q|`.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -447,13 +448,21 @@
     <span class="n">x0</span> <span class="o">=</span> <span class="n">a_b</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">9.0</span> <span class="o">*</span> <span class="n">a_b</span><span class="p">)</span> <span class="o">+</span> <span class="n">z</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">9.0</span> <span class="o">*</span> <span class="n">a_b</span><span class="p">))</span> <span class="o">**</span> <span class="mi">3</span>
     <span class="n">x0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="n">a_b</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">q_b</span>
-        <span class="n">log_fp</span> <span class="o">=</span> <span class="p">(</span><span class="n">a_b</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">a_b</span><span class="p">)</span>
-        <span class="n">fp</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_fp</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">f</span> <span class="o">/</span> <span class="n">fp</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_residual</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="n">a_b</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">q_b</span>
 
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iter</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="n">log_fp</span> <span class="o">=</span> <span class="p">(</span><span class="n">a_b</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">a_b</span><span class="p">)</span>
+        <span class="n">x_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">f</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_fp</span><span class="p">),</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x_new</span><span class="p">,</span> <span class="n">_residual</span><span class="p">(</span><span class="n">x_new</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">_residual</span><span class="p">(</span><span class="n">x0</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">x</span></div>
 
 </pre></div>
 

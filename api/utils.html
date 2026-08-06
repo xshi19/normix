@@ -450,6 +450,14 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.rvs">PINV Sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable"><code class="docutils literal notranslate"><span class="pre">QuantileTable</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.u_grid"><code class="docutils literal notranslate"><span class="pre">QuantileTable.u_grid</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.x_grid"><code class="docutils literal notranslate"><span class="pre">QuantileTable.x_grid</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.cdf"><code class="docutils literal notranslate"><span class="pre">QuantileTable.cdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.ppf"><code class="docutils literal notranslate"><span class="pre">QuantileTable.ppf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.rvs"><code class="docutils literal notranslate"><span class="pre">QuantileTable.rvs()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.build_pinv_table"><code class="docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.rvs_pinv"><code class="docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a></li>
 </ul>
@@ -513,9 +521,11 @@
 at runtime. lax.cond requires scalar conditions, so the core scalar
 function _log_kv_scalar is vmapped over array inputs.</p>
 <dl class="simple">
-<dt>Custom JVP for full autodiff:</dt><dd><ul class="simple">
-<li><p>∂/∂z : exact recurrence K’_v = −(K_{v−1}+K_{v+1})/2</p></li>
-<li><p>∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V)</p></li>
+<dt>Custom JVP for full autodiff (<code class="docutils literal notranslate"><span class="pre">defjvp(...,</span> <span class="pre">symbolic_zeros=True)</span></code>):</dt><dd><ul class="simple">
+<li><p>∂/∂z : exact recurrence K’_v = −(K_{v−1}+K_{v+1})/2;
+skipped when the z-tangent is a symbolic zero (v-only differentiation)</p></li>
+<li><p>∂/∂v : central FD on log_kv itself (ε = BESSEL_EPS_V);
+skipped when the v-tangent is a symbolic zero (z-only differentiation)</p></li>
 </ul>
 </dd>
 </dl>
@@ -593,7 +603,7 @@ vmap-compatible.  This is the JAX analogue of
 <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.special.gammaincinv()</span></code>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.utils.gammainc.gammaincinv">
-<span class="sig-prename descclassname"><span class="pre">normix.utils.gammainc.</span></span><span class="sig-name descname"><span class="pre">gammaincinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/gammainc.html#gammaincinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.gammainc.gammaincinv" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">normix.utils.gammainc.</span></span><span class="sig-name descname"><span class="pre">gammaincinv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/gammainc.html#gammaincinv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.gammainc.gammaincinv" title="Link to this definition">#</a></dt>
 <dd><p>Solve <span class="math notranslate nohighlight">\(P(a, x) = q\)</span> for <span class="math notranslate nohighlight">\(x\)</span> by Newton iteration.</p>
 <p>JAX equivalent of <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.special.gammaincinv()</span></code>.</p>
 <dl class="field-list simple">
@@ -601,8 +611,8 @@ vmap-compatible.  This is the JAX analogue of
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Shape parameter, <span class="math notranslate nohighlight">\(a &gt; 0\)</span>.</p></li>
 <li><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>) – Probability, <span class="math notranslate nohighlight">\(q \in (0, 1)\)</span>.</p></li>
-<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Newton iteration count.  The default of 50 is safe; convergence
-is typically reached in &lt;10 steps.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum Newton iterations (typically converges in &lt;10 steps).</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Absolute residual tolerance on <span class="math notranslate nohighlight">\(|P(a, x) - q|\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -624,7 +634,81 @@ The density is evaluated in log space to avoid overflow for large
 <p><a class="reference internal" href="#normix.utils.rvs.build_pinv_table" title="normix.utils.rvs.build_pinv_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a> builds a quantile table from any univariate
 log-kernel in pure JAX (trapezoidal CDF on a <span class="math notranslate nohighlight">\(w\)</span>-grid).  Distributions
 supply <code class="docutils literal notranslate"><span class="pre">log_kernel(w)</span></code> from their own <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> (plus a Jacobian when
-working in <span class="math notranslate nohighlight">\(w = \log x\)</span>).  <a class="reference internal" href="#normix.utils.rvs.rvs_pinv" title="normix.utils.rvs.rvs_pinv"><code class="xref py py-func docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a> samples via inverse lookup.</p>
+working in <span class="math notranslate nohighlight">\(w = \log x\)</span>).  <a class="reference internal" href="#normix.utils.rvs.QuantileTable" title="normix.utils.rvs.QuantileTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantileTable</span></code></a> holds the grids for
+amortised <code class="docutils literal notranslate"><span class="pre">cdf</span></code> / <code class="docutils literal notranslate"><span class="pre">ppf</span></code> / <code class="docutils literal notranslate"><span class="pre">rvs</span></code>; <a class="reference internal" href="#normix.utils.rvs.rvs_pinv" title="normix.utils.rvs.rvs_pinv"><code class="xref py py-func docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a> samples via inverse
+lookup.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.utils.rvs.</span></span><span class="sig-name descname"><span class="pre">QuantileTable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_grid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#QuantileTable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.QuantileTable" title="Link to this definition">#</a></dt>
+<dd><p>Frozen PINV quantile table (a pytree — jit/vmap/scan-safe).</p>
+<p>Built once via <a class="reference internal" href="#normix.utils.rvs.build_pinv_table" title="normix.utils.rvs.build_pinv_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a> (or a distribution’s
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">quantile_table()</span></code>); reuse across repeated <code class="docutils literal notranslate"><span class="pre">cdf</span></code> / <code class="docutils literal notranslate"><span class="pre">ppf</span></code> /
+<code class="docutils literal notranslate"><span class="pre">rvs</span></code> calls so the 4000-point grid is not rebuilt each time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u_grid</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>x_grid</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable.u_grid">
+<span class="sig-name descname"><span class="pre">u_grid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.rvs.QuantileTable.u_grid" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable.x_grid">
+<span class="sig-name descname"><span class="pre">x_grid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.rvs.QuantileTable.x_grid" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable.cdf">
+<span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#QuantileTable.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.QuantileTable.cdf" title="Link to this definition">#</a></dt>
+<dd><p>CDF lookup <span class="math notranslate nohighlight">\(F(x)\)</span> via linear interpolation on the table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable.ppf">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#QuantileTable.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.QuantileTable.ppf" title="Link to this definition">#</a></dt>
+<dd><p>Quantile lookup <span class="math notranslate nohighlight">\(F^{-1}(q)\)</span> via linear interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.rvs.QuantileTable.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#QuantileTable.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.QuantileTable.rvs" title="Link to this definition">#</a></dt>
+<dd><p>Inverse-CDF sample of size <code class="docutils literal notranslate"><span class="pre">n</span></code> from this table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.utils.rvs.build_pinv_table">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.rvs.</span></span><span class="sig-name descname"><span class="pre">build_pinv_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_of_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-14</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/rvs.html#build_pinv_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.rvs.build_pinv_table" title="Link to this definition">#</a></dt>
@@ -651,7 +735,7 @@ corresponding <span class="math notranslate nohighlight">\(x\)</span> values for
 <code class="docutils literal notranslate"><span class="pre">cdf</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>u_grid, x_grid</p>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.utils.rvs.QuantileTable.u_grid" title="normix.utils.rvs.QuantileTable.u_grid">u_grid</a>, <a class="reference internal" href="#normix.utils.rvs.QuantileTable.x_grid" title="normix.utils.rvs.QuantileTable.x_grid">x_grid</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -961,6 +1045,14 @@ documentation site aesthetic.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.rvs">PINV Sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable"><code class="docutils literal notranslate"><span class="pre">QuantileTable</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.u_grid"><code class="docutils literal notranslate"><span class="pre">QuantileTable.u_grid</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.x_grid"><code class="docutils literal notranslate"><span class="pre">QuantileTable.x_grid</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.cdf"><code class="docutils literal notranslate"><span class="pre">QuantileTable.cdf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.ppf"><code class="docutils literal notranslate"><span class="pre">QuantileTable.ppf()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.QuantileTable.rvs"><code class="docutils literal notranslate"><span class="pre">QuantileTable.rvs()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.build_pinv_table"><code class="docutils literal notranslate"><span class="pre">build_pinv_table()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.rvs.rvs_pinv"><code class="docutils literal notranslate"><span class="pre">rvs_pinv()</span></code></a></li>
 </ul>

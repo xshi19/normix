@@ -454,7 +454,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_pinv_table</span><span class="p">,</span> <span class="n">rvs_pinv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantileTable</span><span class="p">,</span> <span class="n">build_pinv_table</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">TINY</span><span class="p">,</span> <span class="n">BESSEL_EPS_V</span><span class="p">,</span> <span class="n">GIG_DEGEN_THRESHOLD</span><span class="p">,</span>
@@ -966,8 +966,21 @@
 <div class="viewcode-block" id="GeneralizedInverseGaussian.var">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2` = Fisher information [2,2].&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fisher_information</span><span class="p">()[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Var}[X] = E[X^2] - E[X]^2` via three Bessel evaluations.</span>
+
+<span class="sd">        Uses the moment formula</span>
+<span class="sd">        :math:`E[X^r] = (b/a)^{r/2}\,K_{p+r}(\sqrt{ab})/K_p(\sqrt{ab})`</span>
+<span class="sd">        rather than the full 11-Bessel Fisher Hessian entry ``[2, 2]``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">orders</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">+</span> <span class="mf">2.0</span><span class="p">])</span>
+        <span class="n">L</span><span class="p">,</span> <span class="n">L_p1</span><span class="p">,</span> <span class="n">L_p2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_kv</span><span class="p">)(</span><span class="n">orders</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+        <span class="n">ba</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">a</span>
+        <span class="n">E_X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ba</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p1</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">E_X2</span> <span class="o">=</span> <span class="n">ba</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">L_p2</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">E_X2</span> <span class="o">-</span> <span class="n">E_X</span> <span class="o">**</span> <span class="mi">2</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.mode">
@@ -1012,6 +1025,22 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdf_or_ppf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="GeneralizedInverseGaussian.quantile_table">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quantile_table">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quantile_table</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantileTable</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Frozen PINV table (non-degenerate regime only).</span>
+
+<span class="sd">        Degenerate Gamma / InverseGamma limits bypass the table in</span>
+<span class="sd">        :meth:`cdf` / :meth:`ppf`; hold this object when evaluating many</span>
+<span class="sd">        quantiles at fixed non-degenerate parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="o">+</span> <span class="n">w</span>
+        <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span> <span class="o">=</span> <span class="n">build_pinv_table</span><span class="p">(</span>
+            <span class="n">log_kernel</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">()),</span> <span class="n">x_of_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">QuantileTable</span><span class="p">(</span><span class="n">u_grid</span><span class="o">=</span><span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span><span class="o">=</span><span class="n">x_grid</span><span class="p">)</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_cdf_or_ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">inverse</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Shared JIT-safe CDF / PPF with degenerate Gamma / InvGamma limits.&quot;&quot;&quot;</span>
         <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span>
@@ -1036,13 +1065,10 @@
             <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_gamma</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z_</span><span class="p">),</span> <span class="n">ig</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z_</span><span class="p">))</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_pinv</span><span class="p">(</span><span class="n">z_</span><span class="p">):</span>
-            <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="o">+</span> <span class="n">w</span>
-            <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span> <span class="o">=</span> <span class="n">build_pinv_table</span><span class="p">(</span>
-                <span class="n">log_kernel</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">()),</span> <span class="n">x_of_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantile_table</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">inverse</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">z_</span><span class="p">,</span> <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">z_</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">,</span> <span class="n">u_grid</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">table</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">z_</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">table</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z_</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">use_degen</span><span class="p">,</span> <span class="n">_degen</span><span class="p">,</span> <span class="n">_pinv</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
 
@@ -1073,12 +1099,7 @@
             <span class="k">return</span> <span class="n">_gig_rvs_devroye</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pinv&quot;</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-            <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="o">+</span> <span class="n">w</span>
-            <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span> <span class="o">=</span> <span class="n">build_pinv_table</span><span class="p">(</span>
-                <span class="n">log_kernel</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">()),</span> <span class="n">x_of_w</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">rvs_pinv</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">u_grid</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantile_table</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;scipy&quot;</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>

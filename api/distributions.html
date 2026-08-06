@@ -493,6 +493,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.cdf"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.cdf()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.quantile_table"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.quantile_table()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.ppf"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.ppf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.rvs"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.from_natural"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.from_natural()</span></code></a></li>
@@ -517,6 +518,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.ppf()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quantile_table"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.quantile_table()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gamma()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_inverse_gamma()</span></code></a></li>
@@ -1327,6 +1329,19 @@ route through this method) are evaluated on the GIG embedding.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.quantile_table">
+<span class="sig-name descname"><span class="pre">quantile_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.quantile_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.quantile_table" title="Link to this definition">#</a></dt>
+<dd><p>Frozen PINV table for amortised <a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian.ppf" title="normix.distributions.inverse_gaussian.InverseGaussian.ppf"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code></a> / sampling.</p>
+<p>The analytical <a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian.cdf" title="normix.distributions.inverse_gaussian.InverseGaussian.cdf"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cdf()</span></code></a> does not use this table; hold the return
+value when evaluating many quantiles at fixed parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="utils.html#normix.utils.rvs.QuantileTable" title="normix.utils.rvs.QuantileTable"><em>QuantileTable</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.ppf">
 <span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.ppf" title="Link to this definition">#</a></dt>
 <dd><p>Quantile function via a PINV table built from <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>.</p>
@@ -1577,7 +1592,10 @@ backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var">
 <span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\mathrm{Var}[X] = \partial^2\psi/\partial\theta_3^2\)</span> = Fisher information [2,2].</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Var}[X] = E[X^2] - E[X]^2\)</span> via three Bessel evaluations.</p>
+<p>Uses the moment formula
+<span class="math notranslate nohighlight">\(E[X^r] = (b/a)^{r/2}\,K_{p+r}(\sqrt{ab})/K_p(\sqrt{ab})\)</span>
+rather than the full 11-Bessel Fisher Hessian entry <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">2]</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1631,6 +1649,20 @@ delegates to the limiting Gamma / InverseGamma CDF for accuracy.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quantile_table">
+<span class="sig-name descname"><span class="pre">quantile_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.quantile_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quantile_table" title="Link to this definition">#</a></dt>
+<dd><p>Frozen PINV table (non-degenerate regime only).</p>
+<p>Degenerate Gamma / InverseGamma limits bypass the table in
+<a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cdf()</span></code></a> / <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code></a>; hold this object when evaluating many
+quantiles at fixed non-degenerate parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="utils.html#normix.utils.rvs.QuantileTable" title="normix.utils.rvs.QuantileTable"><em>QuantileTable</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3295,6 +3327,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.cdf"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.cdf()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.quantile_table"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.quantile_table()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.ppf"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.ppf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.rvs"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.from_natural"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.from_natural()</span></code></a></li>
@@ -3319,6 +3352,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.cdf"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.ppf"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.ppf()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quantile_table"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.quantile_table()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.rvs"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.rvs()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gamma()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_inverse_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_inverse_gamma()</span></code></a></li>

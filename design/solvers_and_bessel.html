@@ -684,11 +684,15 @@ at runtime):</p>
 </tbody>
 </table>
 </div>
-<p>Custom JVP via <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code>:</p>
+<p>Custom JVP via <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code> with
+<code class="docutils literal notranslate"><span class="pre">defjvp(...,</span> <span class="pre">symbolic_zeros=True)</span></code>:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(\partial/\partial z\)</span>: exact recurrence
-<span class="math notranslate nohighlight">\(K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2\)</span>.</p></li>
-<li><p><span class="math notranslate nohighlight">\(\partial/\partial v\)</span>: central FD with <span class="math notranslate nohighlight">\(\varepsilon = 10^{-5}\)</span>.</p></li>
+<span class="math notranslate nohighlight">\(K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2\)</span>; skipped when the <span class="math notranslate nohighlight">\(z\)</span>-tangent
+is a symbolic zero.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\partial/\partial v\)</span>: central FD with <span class="math notranslate nohighlight">\(\varepsilon = 10^{-5}\)</span>;
+skipped when the <span class="math notranslate nohighlight">\(v\)</span>-tangent is a symbolic zero (z-only
+differentiation avoids the two extra Bessel evaluations).</p></li>
 </ul>
 </section>
 <section id="cpu-backend-em-hot-path">
