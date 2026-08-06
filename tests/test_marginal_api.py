@@ -357,3 +357,39 @@ def test_replace_then_log_prob_finite():
     updated = vg.replace(mu=jnp.zeros(D), sigma=2.0 * jnp.eye(D), alpha=2.5)
     lp = updated.marginal_log_likelihood(X)
     assert jnp.isfinite(lp)
+
+
+# ---------------------------------------------------------------------------
+# DEC-2 / DEC-3 (roadmap Phase 6): accessor spelling + fit defaults
+# ---------------------------------------------------------------------------
+
+def test_subordinator_method_uniform():
+    """``subordinator()`` is a method on multivariate and univariate marginals."""
+    from normix import UnivariateVarianceGamma
+    X = _make_data()
+    vg = _make_models(X)["VG"]
+    sub = vg.subordinator()
+    assert callable(vg.subordinator)
+    np.testing.assert_allclose(float(sub.alpha), float(vg.alpha))
+    np.testing.assert_allclose(float(sub.beta), float(vg.beta))
+
+    uv = UnivariateVarianceGamma.from_classical(
+        mu=0.0, gamma=0.1, sigma=1.0, alpha=2.0, beta=1.0)
+    assert callable(uv.subordinator)
+    np.testing.assert_allclose(float(uv.subordinator().alpha), 2.0)
+
+
+def test_fit_defaults_and_pass_through():
+    """Family ``_fit_defaults`` apply; ``track_ll`` reaches BatchEMFitter."""
+    X = _make_data(n=80, d=2)
+    assert VarianceGamma._fit_defaults() == {'e_step_backend': 'cpu'}
+    assert NormalInverseGamma._fit_defaults() == {'e_step_backend': 'cpu'}
+    assert GeneralizedHyperbolic._fit_defaults() == {
+        'e_step_backend': 'cpu', 'regularization': 'det_sigma_one',
+    }
+    assert NormalInverseGaussian._fit_defaults() == {}
+
+    res = VarianceGamma.default_init(X).fit(
+        X, max_iter=3, tol=1e-4, track_ll=True)
+    assert res.log_likelihoods is not None
+    assert res.log_likelihoods.shape[0] == res.n_iter

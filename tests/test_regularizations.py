@@ -55,12 +55,7 @@ def _gamma_E_Y(model) -> np.ndarray:
     Under :math:`Y \to s\,Y`, :math:`\gamma \to \gamma/s` and
     :math:`E[Y] \to s\,E[Y]`, so the product is preserved.
     """
-    sub = (model.subordinator if hasattr(model, 'subordinator')
-           and not callable(model.subordinator)
-           else model._joint.subordinator())
-    if callable(sub):
-        sub = sub()
-    return np.asarray(model.gamma) * float(sub.mean())
+    return np.asarray(model.gamma) * float(model.subordinator().mean())
 
 def _cov_X(model) -> np.ndarray:
     """Marginal covariance — invariant under the scale orbit."""

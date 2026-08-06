@@ -31,12 +31,12 @@ normix/                     # JAX implementation
 │   ├── solvers.py          # solve_bregman*, BregmanResult, make_jit_newton_solver; Newton, L-BFGS, scipy multi-start
 │   └── __init__.py
 ├── finance/
-│   ├── projection.py       # project_portfolio (wᵀX → Univariate*)
 │   ├── risk.py             # RiskMeasure ABC, CVaR(α): value, value_reduced, gradient, Hessian in (μ̃,γ̃,σ̃) and w
 │   ├── functional.py       # WeightFunctional: risk as a JIT-able w ↦ ℝ with grad/hess
 │   ├── optimization.py     # MeanRiskProblem, EfficientSurface, EfficientFrontier (2-D reduction)
 │   ├── transaction_costs.py # local-quadratic turnover QP (TransactionCostProblem)
 │   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over Y (object + raw vectorizable cores)
+│                           # portfolio projection: NormalMixture.project(w) → Univariate*
 └── utils/
     ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
     ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...

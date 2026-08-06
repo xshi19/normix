@@ -293,7 +293,7 @@ def run_benchmark(
             np.mean(cond_exp["E_Y"]),
         ]
     )
-    sub = copy.deepcopy(gh._joint.subordinator)
+    sub = copy.deepcopy(gh._joint.subordinator())
     gig_profile = profile_summary(
         sub.set_expectation_params,
         sub_eta,

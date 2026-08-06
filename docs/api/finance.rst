@@ -5,13 +5,9 @@ Finance
    :local:
    :depth: 1
 
-Portfolio Projection
----------------------
-
-.. automodule:: normix.finance.projection
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Portfolio projection lives on the mixture itself
+(:meth:`~normix.mixtures.marginal.NormalMixture.project`); there is no
+separate finance-layer wrapper.
 
 Risk Measures
 --------------

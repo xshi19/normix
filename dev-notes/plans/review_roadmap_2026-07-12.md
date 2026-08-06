@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0–4 done; Phase 5 complete (2026-08-05).**
+> **ACTIVE — Phase 0–5 done; Phase 6 complete (2026-08-06).**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -40,10 +40,10 @@ All four need their Phase-0 decision (design.md row) before code.
 
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
-| D1 | 2 | Three spellings for "the subordinator": `model.joint.subordinator()` (method), `factor_model.subordinator` (field), `univariate.subordinator` (property) — a recurring doc/tutorial wart. | Uniform accessor on `MarginalMixture` per **DEC-2**. Constraint: an eqx field and a method cannot share the name `subordinator` on `FactorNormalMixture`, so uniformity implies renaming the field or wrapping it. Update tutorials/docs that spell it. ~40 LOC. | P2 |
-| D2 | 2 | `MultivariateNormal.sigma` is a property while `NormalMixture.sigma()` is a method — same name, different call syntax, adjacent classes. | Align per **DEC-2** (coding conventions prefer methods for computed matrices). ~10 LOC. | P3 |
-| D3 | 2 | VG/NInvG/GH `fit()` overrides exist only to flip default backends, re-list every parameter, and *narrow* the API (no `track_ll`, `eta_update`, `m_step_kwargs` without dropping to `BatchEMFitter`). | Per **DEC-3**: a `_fit_defaults()` classmethod consumed by the base `fit(**kwargs)` — one signature, pass-through preserved. ~60 LOC. | P2 |
-| D4 | 2 | `finance/projection.py` is a 30-line module wrapping `model.project(w)` in a free function — "no wrapper that only forwards". | Per **DEC-4**: fold into `finance/__init__` or drop in favour of the method; update the finance tutorials and `finance_architecture.md` references. ~30 LOC. | P2 |
+| D1 | 2 | Three spellings for "the subordinator": `model.joint.subordinator()` (method), `factor_model.subordinator` (field), `univariate.subordinator` (property) — a recurring doc/tutorial wart. | **DONE.** Abstract `subordinator()` on `MarginalMixture`; `NormalMixture` forwards joint; factor field `_subordinator`; univariate mixin property deleted. | P2 |
+| D2 | 2 | `MultivariateNormal.sigma` is a property while `NormalMixture.sigma()` is a method — same name, different call syntax, adjacent classes. | **DONE.** `MultivariateNormal.sigma` → `sigma()` method. | P3 |
+| D3 | 2 | VG/NInvG/GH `fit()` overrides exist only to flip default backends, re-list every parameter, and *narrow* the API (no `track_ll`, `eta_update`, `m_step_kwargs` without dropping to `BatchEMFitter`). | **DONE.** `_fit_defaults()` + single base `fit(X, *, alpha_min=None, **fitter_kwargs)`; three overrides deleted. | P2 |
+| D4 | 2 | `finance/projection.py` is a 30-line module wrapping `model.project(w)` in a free function — "no wrapper that only forwards". | **DONE.** Module and `project_portfolio` deleted; `model.project(w)` is the only spelling. | P2 |
 
 ### Dead code (C) — review §3
 
@@ -218,14 +218,22 @@ All seven items landed. E2 fused CVaR measured ~3.4× vs unfused
 **Exit:** einsum is `'ni,nj,n->ij'`; fused CVaR equals unfused path;
 fast suite green (1054); `QuantileTable` + `quantile_table()` per DEC-5.
 
-### Phase 6 — API consistency (D1–D4, after Phase 0 + Phase 4)
+### Phase 6 — API consistency (D1–D4, after Phase 0 + Phase 4) — **DONE (2026-08-06)**
 
 Public-API refactors, guarded by the hardened suite. Pre-1.0: change the
 code, no compatibility shims.
-**Exit:** one subordinator/sigma spelling everywhere (grep the three old
-spellings in `normix/`, `docs/`, tutorials); `fit()` has one signature with
-`track_ll`/`eta_update`/`m_step_kwargs` reachable on VG/NInvG/GH; no
-forward-only projection module; `finance_architecture.md` updated.
+**Exit met:** `subordinator()` / `sigma()` methods everywhere; factor field
+is `_subordinator`; `_fit_defaults()` + one base `fit` signature
+(`track_ll` / `eta_update` / `m_step_kwargs` reachable on VG/NInvG/GH);
+`finance/projection.py` and `project_portfolio` removed;
+`finance_architecture.md` updated.
+
+| Item | Status |
+|------|--------|
+| D1 | **DONE** — uniform `subordinator()` (DEC-2) |
+| D2 | **DONE** — `MultivariateNormal.sigma()` (DEC-2) |
+| D3 | **DONE** — `_fit_defaults()` (DEC-3) |
+| D4 | **DONE** — drop `project_portfolio` (DEC-4) |
 
 ### Phase 7 — Website (W1–W6, then W7)
 
@@ -250,7 +258,7 @@ gallery/API docs updated.
 | 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
 | 4 | Test hardening | T1–T5 | — ✅ |
 | 5 | Efficiency | E1–E7 | DEC-5 (E3 only) ✅ |
-| 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 |
+| 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 ✅ |
 | 7 | Website | W1–W7 | W7 after W1/W2/W6 |
 | 8 | Features | F1 | — |
 

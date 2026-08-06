@@ -228,24 +228,10 @@ class VarianceGamma(NormalMixture):
         )
         return VarianceGamma(joint_new)
 
-    def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
-            regularization='none',
-            e_step_backend='cpu', m_step_backend='cpu',
-            m_step_method='newton', alpha_min=None):
-        r"""Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
-        vmap for the degenerate-GIG posterior arising from the Gamma subordinator).
-
-        ``alpha_min`` (float or ``'density'`` / ``'inverse_moment'``) is the
-        opt-in lower bound on the Gamma shape :math:`\alpha` that keeps the VG
-        marginal likelihood bounded; see
-        :meth:`~normix.mixtures.marginal.MarginalMixture.fit`.
-        """
-        return super().fit(
-            X, algorithm=algorithm,
-            verbose=verbose, max_iter=max_iter, tol=tol,
-            regularization=regularization,
-            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
-            m_step_method=m_step_method, alpha_min=alpha_min)
+    @classmethod
+    def _fit_defaults(cls) -> dict:
+        """CPU E-step: faster for the degenerate-GIG Gamma posterior."""
+        return {'e_step_backend': 'cpu'}
 
     @classmethod
     def _from_init_params(cls, mu, gamma, sigma):
@@ -317,7 +303,7 @@ class FactorVarianceGamma(FactorNormalMixture):
         object.__setattr__(self, 'gamma', gamma)
         object.__setattr__(self, 'F', F)
         object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
+        object.__setattr__(self, '_subordinator', sub)
 
     @classmethod
     def from_classical(
@@ -327,11 +313,11 @@ class FactorVarianceGamma(FactorNormalMixture):
 
     @property
     def alpha(self) -> jax.Array:
-        return self.subordinator.alpha
+        return self._subordinator.alpha
 
     @property
     def beta(self) -> jax.Array:
-        return self.subordinator.beta
+        return self._subordinator.beta
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         r"""Marginal VG log-density evaluated with Woodbury Σ-solve."""

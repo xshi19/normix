@@ -269,7 +269,6 @@ class MultivariateNormal(ExponentialFamily):
         """Dimensionality (alias for ``d``)."""
         return self.d
 
-    @property
     def sigma(self) -> jax.Array:
-        r"""Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top` (alias for ``cov()``)."""
+        r"""Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top` (alias for :meth:`cov`)."""
         return self.cov()
