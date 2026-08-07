@@ -44,7 +44,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
-from normix.mixtures.marginal import MarginalMixture
+from normix.mixtures.marginal import MarginalMixture, _normal_mixture_skew_kurt
 from normix.utils.constants import B_POST_FLOOR, D_FLOOR, SIGMA_INIT_REG
 
 
@@ -203,6 +203,24 @@ class FactorNormalMixture(MarginalMixture):
         E_Y = self._subordinator.mean()
         Var_Y = self._subordinator.var()
         return E_Y * self.sigma() + Var_Y * jnp.outer(self.gamma, self.gamma)
+
+    def skewness(self) -> jax.Array:
+        r"""Component-wise skewness of :math:`X` (see :meth:`NormalMixture.skewness`)."""
+        m1, m2, m3, m4 = self._subordinator.raw_moments(
+            jnp.array([1.0, 2.0, 3.0, 4.0]))
+        sigma_diag = jnp.sum(self.F ** 2, axis=1) + self.D
+        skew, _ = _normal_mixture_skew_kurt(
+            self.gamma, sigma_diag, m1, m2, m3, m4)
+        return skew
+
+    def kurtosis(self) -> jax.Array:
+        r"""Component-wise excess kurtosis of :math:`X` (see :meth:`NormalMixture.kurtosis`)."""
+        m1, m2, m3, m4 = self._subordinator.raw_moments(
+            jnp.array([1.0, 2.0, 3.0, 4.0]))
+        sigma_diag = jnp.sum(self.F ** 2, axis=1) + self.D
+        _, kurt = _normal_mixture_skew_kurt(
+            self.gamma, sigma_diag, m1, m2, m3, m4)
+        return kurt
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample ``n`` observations from the marginal :math:`f(x)`.
