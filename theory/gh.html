@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
 
@@ -453,7 +457,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-stability">Numerical Stability</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
             </nav>
         </div>
@@ -547,9 +550,9 @@ the GH distribution is singular.</p>
 <p>There are several ways to regularize the GH family:</p>
 <ol class="arabic simple">
 <li><p><strong>Set</strong> <span class="math notranslate nohighlight">\(\delta = 1\)</span> (simplest approach)</p></li>
-<li><p><strong>Set</strong> <span class="math notranslate nohighlight">\(b = 1\)</span> in the EM algorithm <a class="reference internal" href="#protassov2004">Protassov2004</a></p></li>
-<li><p><strong>Fix</strong> <span class="math notranslate nohighlight">\(b\)</span> when <span class="math notranslate nohighlight">\(p &gt; -1\)</span> and fix <span class="math notranslate nohighlight">\(a\)</span> when <span class="math notranslate nohighlight">\(p &lt; 1\)</span> <a class="reference internal" href="#hu2005">Hu2005</a></p></li>
-<li><p><strong>Fix the determinant</strong> <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> <a class="reference internal" href="#mcneil2010">McNeil2010</a></p></li>
+<li><p><strong>Set</strong> <span class="math notranslate nohighlight">\(b = 1\)</span> in the EM algorithm <a class="reference internal" href="../references.html#protassov2004"><span class="std std-ref">Protassov2004</span></a></p></li>
+<li><p><strong>Fix</strong> <span class="math notranslate nohighlight">\(b\)</span> when <span class="math notranslate nohighlight">\(p &gt; -1\)</span> and fix <span class="math notranslate nohighlight">\(a\)</span> when <span class="math notranslate nohighlight">\(p &lt; 1\)</span> <a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a></p></li>
+<li><p><strong>Fix the determinant</strong> <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> <a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a></p></li>
 </ol>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -679,27 +682,10 @@ discussed in the <a class="reference internal" href="gig.html"><span class="doc"
 </ul>
 <p>These are implemented as separate classes in <code class="docutils literal notranslate"><span class="pre">normix</span></code>:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></a></p></li>
 </ul>
-</section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
-<div role="list" class="citation-list">
-<div class="citation" id="protassov2004" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Protassov2004<span class="fn-bracket">]</span></span>
-<p>Protassov, R. S. (2004). EM-based maximum likelihood parameter estimation for multivariate generalized hyperbolic distributions.</p>
-</div>
-<div class="citation" id="hu2005" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Hu2005<span class="fn-bracket">]</span></span>
-<p>Hu, W. (2005). Calibration of multivariate generalized hyperbolic distributions using the EM algorithm.</p>
-</div>
-<div class="citation" id="mcneil2010" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>McNeil2010<span class="fn-bracket">]</span></span>
-<p>McNeil, A. J., Frey, R., &amp; Embrechts, P. (2010). Quantitative Risk Management. Princeton University Press.</p>
-</div>
-</div>
 </section>
 </section>
 
@@ -763,7 +749,6 @@ discussed in the <a class="reference internal" href="gig.html"><span class="doc"
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-stability">Numerical Stability</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

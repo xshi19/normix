@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
 
@@ -445,7 +449,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
             </nav>
         </div>
@@ -464,7 +467,7 @@
 entropy — for the exponential-family components and for the joint normal
 variance-mean mixtures. We derive only the formulas used by the code; for the
 general structural decomposition of varentropy and its properties we refer to
-<a class="reference internal" href="#stankyavichyus2026">Stankyavichyus2026</a>.</p>
+<a class="reference internal" href="../references.html#stankyavichyus2026"><span class="std std-ref">Stankyavichyus2026</span></a>.</p>
 <p><strong>See also:</strong> Monte Carlo validation and fat-tail comparisons in
 <a class="reference internal" href="../tutorials/stats/03_varentropy.html"><span class="doc">Entropy, varentropy, and fat tails</span></a>.</p>
 <section id="definitions">
@@ -533,7 +536,7 @@ span of the score. This covers <a class="reference internal" href="../api/distri
 <a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a>, whose
 <span class="math notranslate nohighlight">\(\log h(x) = -\tfrac12\log(2\pi) - \tfrac32\log x\)</span> — formula
 <a class="reference internal" href="#equation-ve-ef-formulas">(6)</a> acquires base-measure covariance terms (see
-<a class="reference internal" href="#stankyavichyus2026">Stankyavichyus2026</a>). <code class="docutils literal notranslate"><span class="pre">normix</span></code> avoids them by evaluating the quantities
+<a class="reference internal" href="../references.html#stankyavichyus2026"><span class="std std-ref">Stankyavichyus2026</span></a>). <code class="docutils literal notranslate"><span class="pre">normix</span></code> avoids them by evaluating the quantities
 on the exact GIG embedding <span class="math notranslate nohighlight">\(\mathrm{GIG}(-\tfrac12, \lambda/\mu^2,
 \lambda)\)</span>, where <span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and the <span class="math notranslate nohighlight">\(\log x\)</span> term becomes
 a sufficient statistic.</p>
@@ -631,16 +634,6 @@ log-partition, with the Normal-Inverse Gaussian evaluated through its GH
 embedding so that the order <span class="math notranslate nohighlight">\(p\)</span> varies faithfully along the density-power
 path.</p>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
-<div role="list" class="citation-list">
-<div class="citation" id="stankyavichyus2026" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Stankyavichyus2026<span class="fn-bracket">]</span></span>
-<p>Stankyavichyus, A. V. (2026). <em>Varentropy: Overview,
-Computational Routes, and Structural Decomposition</em>. Preprint.</p>
-</div>
-</div>
-</section>
 </section>
 
 
@@ -695,7 +688,6 @@ Computational Routes, and Structural Decomposition</em>. Preprint.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

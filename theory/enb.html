@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
 
@@ -445,7 +449,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#effective-number-of-bets">Effective Number of Bets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#characterizing-diagonalizations">Characterizing Diagonalizations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion">Minimum Torsion</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
             </nav>
         </div>
@@ -461,7 +464,7 @@
 <h1>Effective Number of Bets and Minimum Torsion<a class="headerlink" href="#effective-number-of-bets-and-minimum-torsion" title="Link to this heading">#</a></h1>
 <p>This section reviews the effective number of bets (ENB) and the minimum
 torsion approach for measuring portfolio diversification, following
-<a class="reference internal" href="#meucci2010">Meucci2010</a> and <a class="reference internal" href="#meucci2014">Meucci2014</a>.</p>
+<a class="reference internal" href="../references.html#meucci2010"><span class="std std-ref">Meucci2010</span></a> and <a class="reference internal" href="../references.html#meucci2014"><span class="std std-ref">Meucci2014</span></a>.</p>
 <section id="variance-based-risk-decomposition">
 <h2>Variance-Based Risk Decomposition<a class="headerlink" href="#variance-based-risk-decomposition" title="Link to this heading">#</a></h2>
 <p>Let <span class="math notranslate nohighlight">\(X \in \mathbb{R}^n\)</span> be a random vector of asset returns with
@@ -530,7 +533,7 @@ direction. In particular:</p>
 </section>
 <section id="minimum-torsion">
 <h2>Minimum Torsion<a class="headerlink" href="#minimum-torsion" title="Link to this heading">#</a></h2>
-<p>The <strong>minimum torsion</strong> approach <a class="reference internal" href="#meucci2014">Meucci2014</a> selects <span class="math notranslate nohighlight">\(T\)</span> to minimize
+<p>The <strong>minimum torsion</strong> approach <a class="reference internal" href="../references.html#meucci2014"><span class="std std-ref">Meucci2014</span></a> selects <span class="math notranslate nohighlight">\(T\)</span> to minimize
 the change from the original weights. The rationale is that if <span class="math notranslate nohighlight">\(w\)</span> is
 close to equally weighted, then <span class="math notranslate nohighlight">\(v = (T^\top)^{-1} w\)</span> should also be
 close to equally weighted.</p>
@@ -552,23 +555,7 @@ D \text{ diagonal}, \; V \text{ orthogonal}.\]</div>
 \[T_{MT} = U S^{-1/2} U^\top
 \operatorname{diag}(\Sigma)^{-1/2}.\]</div>
 <p>For the general case (unconstrained <span class="math notranslate nohighlight">\(D\)</span>), an iterative algorithm that
-converges rapidly is described in <a class="reference internal" href="#meucci2014">Meucci2014</a>.</p>
-</section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
-<div role="list" class="citation-list">
-<div class="citation" id="meucci2010" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Meucci2010<span class="fn-bracket">]</span></span>
-<p>Meucci, A. (2010). Managing diversification.
-<em>Risk Magazine</em>, 22(5), 74-79.</p>
-</div>
-<div class="citation" id="meucci2014" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Meucci2014<span class="fn-bracket">]</span></span>
-<p>Meucci, A., Santangelo, A., &amp; Deguest, R. (2014).
-Measuring portfolio diversification based on optimized uncorrelated
-factors. <em>SSRN Electronic Journal</em>.</p>
-</div>
-</div>
+converges rapidly is described in <a class="reference internal" href="../references.html#meucci2014"><span class="std std-ref">Meucci2014</span></a>.</p>
 </section>
 </section>
 
@@ -624,7 +611,6 @@ factors. <em>SSRN Electronic Journal</em>.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#effective-number-of-bets">Effective Number of Bets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#characterizing-diagonalizations">Characterizing Diagonalizations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion">Minimum Torsion</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

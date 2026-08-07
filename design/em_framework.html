@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
 
@@ -484,7 +488,7 @@
 <div><p><strong>Scope.</strong> Why model and fitter are separate, what the η-update rule
 abstraction buys, how the <code class="docutils literal notranslate"><span class="pre">Shrinkage</span></code> combinator generalises penalised
 EM, and what the four covariance-regularisation modes do.</p>
-<p><strong>Where things live.</strong> Public API is in the <a class="reference internal" href="../api/index.html"><span class="doc std std-doc">API Reference</span></a>.
+<p><strong>Where things live.</strong> Public API is in the <a class="reference internal" href="../api/index.html"><span class="doc">API Reference</span></a>.
 Parameter facade and <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> dispatch are in <a class="reference internal" href="mixtures.html"><span class="doc">Mixture Architecture</span></a>.
 Solver internals are in <a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a>.</p>
 </div></blockquote>
@@ -1034,8 +1038,9 @@ backends are <code class="docutils literal notranslate"><span class="pre">'jax'<
 <h2>7. Cross-References<a class="headerlink" href="#cross-references" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Solvers (η→θ): <a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a>.</p></li>
-<li><p>Theory: <a class="reference internal" href="../theory/em_algorithm.html"><span class="doc std std-doc">EM algorithm</span></a>, <a class="reference internal" href="../theory/shrinkage.html"><span class="doc std std-doc">Shrinkage</span></a>,
-<a class="reference internal" href="../theory/factor_analysis.html"><span class="doc std std-doc">Factor analysis</span></a>.</p></li>
+<li><p>Theory: <a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM algorithm</span></a>,
+<a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage</span></a>,
+<a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor analysis</span></a>.</p></li>
 </ul>
 </section>
 </section>

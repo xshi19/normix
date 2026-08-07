@@ -76,10 +76,10 @@ frontier = prob.efficient_frontier(targets, Y, gamma_bounds=(lo, hi))  # min ris
 frontier.weights                   # realised portfolio weights along the frontier
 ```
 
-The `efficient_surface` is the convex surface of [Shi2016, Fig. 8]; the
-`efficient_frontier` is the classical risk–return frontier of Fig. 9. See
-{doc}`../tutorials/finance/05_mean_risk_optimization` for a worked replication
-across all four mixture families.
+The `efficient_surface` is the convex surface of {ref}`Shi2016 <shi2016>`
+(Fig. 8); the `efficient_frontier` is the classical risk–return frontier of
+Fig. 9. See {doc}`../tutorials/finance/05_mean_risk_optimization` for a worked
+replication across all four mixture families.
 
 ## Transaction costs
 
@@ -88,6 +88,7 @@ rebalancing with costs uses a **local quadratic program** at the current
 portfolio $w_0$:
 
 ```python
+import jax.numpy as jnp
 from normix.finance import TransactionCostProblem, CVaR
 
 tc = TransactionCostProblem(model, CVaR(0.05), c1=5.0, c2=5e-2)

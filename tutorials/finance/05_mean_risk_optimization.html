@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -484,7 +488,7 @@ w^*(\tilde\mu, \tilde\gamma) = \Sigma^{-1}[\mu\;\gamma\;e]\,A^{-1}
 A = [\mu\;\gamma\;e]^\top \Sigma^{-1} [\mu\;\gamma\;e].
 \]</div>
 <p>The map <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) \mapsto \rho\)</span> is the <strong>efficient surface</strong>.
-This tutorial reproduces Figures 8–9 of [Shi2016], then asks a question the
+This tutorial reproduces Figures 8–9 of <a class="reference internal" href="../../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>, then asks a question the
 thesis did not: <em>does the choice of mixture family change the answer?</em> We run
 the same optimization through the variance gamma, NIG, normal-inverse-gamma,
 and generalized hyperbolic models.</p>
@@ -964,8 +968,9 @@ allocations.</p></li>
 </ul>
 <p>For the mathematics — the monotonicity theorem and the reduction proof — see
 <a class="reference internal" href="../../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>. Transaction-cost rebalancing (local
-QP) is covered in <a class="reference internal" href="06_transaction_costs.html"><span class="doc">Transaction costs and local-quadratic rebalancing</span></a>; generalized diversification
-(effective number of bets) remains on the roadmap.</p>
+QP) is covered in <a class="reference internal" href="06_transaction_costs.html"><span class="doc">Transaction costs and local-quadratic rebalancing</span></a>. Effective number of bets is
+derived in <a class="reference internal" href="../../theory/enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a> and <a class="reference internal" href="../../theory/generalized_enb.html"><span class="doc">Generalized Effective Number of Bets</span></a>
+(an ENB tutorial is still future work).</p>
 </section>
 </section>
 

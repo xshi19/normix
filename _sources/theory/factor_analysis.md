@@ -1,7 +1,7 @@
 # Factor Analysis for Generalized Hyperbolic Distributions
 
 Another way to improve the conditioning of $\Sigma$ is the factor
-analysis approach [Tortora2013](#tortora2013). Instead of estimating a full covariance
+analysis approach {ref}`Tortora2013 <tortora2013>`. Instead of estimating a full covariance
 matrix, we assume the structure $\Sigma = F F^\top + D$ where
 $F \in \mathbb{R}^{d \times r}$ with $r < d$ and
 $D \in \mathbb{R}^{d \times d}$ is a positive definite diagonal matrix.
@@ -190,10 +190,3 @@ s_{10}^{(k)} &= I - \beta_k F_k
 
 The M-step then applies {eq}`fa-mstep` and {eq}`fa-aux` with
 $s = (s_1^{(k)}, \ldots, s_{10}^{(k)})$.
-
-## References
-
-```{eval-rst}
-.. [Tortora2013] Tortora, C., McNicholas, P. D., & Browne, R. P. (2013).
-   Mixtures of multivariate generalized hyperbolic distributions.
-```

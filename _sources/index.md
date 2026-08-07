@@ -61,7 +61,7 @@ Executable end-to-end tracks: core, distributions, EM, stats, finance.
 ```
 
 ```{grid-item-card} User guide
-:link: user_guide/exponential_family
+:link: user_guide/index
 :link-type: doc
 
 Concepts behind the API — exponential families, EM, divergences, finance.
@@ -97,11 +97,7 @@ getting_started/first_model
 :caption: User guide
 :hidden:
 
-user_guide/distributions
-user_guide/exponential_family
-user_guide/em_fitting
-user_guide/divergences
-user_guide/finance
+user_guide/index
 ```
 
 ```{toctree}
@@ -121,12 +117,13 @@ tutorials/index
 ```
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 :caption: Reference
 :hidden:
 
 theory/index
 design/index
 api/index
+references
 changelog
 ```

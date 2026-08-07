@@ -165,11 +165,14 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
 <ul class="nav bd-sidenav">
@@ -247,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
 </ul>
 </details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
 
@@ -451,7 +455,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
             </nav>
         </div>
@@ -512,7 +515,10 @@ density function can be written as:</p>
 <span class="eqno">(3)<a class="headerlink" href="#equation-gig-moments" title="Link to this equation">#</a></span>\[E[X^\alpha] = \left(\sqrt{\frac{b}{a}}\right)^\alpha
 \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
 = \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.\]</div>
-<p>This formula is implemented in the <code class="xref py py-meth docutils literal notranslate"><span class="pre">moment_alpha()</span></code> method.</p>
+<p>The same Bessel-ratio form is used for
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mean()</span></code></a>
+and
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var"><code class="xref py py-meth docutils literal notranslate"><span class="pre">var()</span></code></a>.</p>
 </section>
 <section id="tail-behavior">
 <h2>Tail Behavior<a class="headerlink" href="#tail-behavior" title="Link to this heading">#</a></h2>
@@ -629,10 +635,10 @@ replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\et
 </section>
 <section id="numerical-challenges">
 <h2>Numerical Challenges<a class="headerlink" href="#numerical-challenges" title="Link to this heading">#</a></h2>
-<p>As discussed in <a class="reference internal" href="#jorgensen2012">Jorgensen2012</a>, there is no analytical expression for
+<p>As discussed in <a class="reference internal" href="../references.html#jorgensen2012"><span class="std std-ref">Jorgensen2012</span></a>, there is no analytical expression for
 <span class="math notranslate nohighlight">\(\hat{p}\)</span> or even its partial derivatives. Most literature suggests fixing
 <span class="math notranslate nohighlight">\(p\)</span> when maximizing the log-likelihood function.</p>
-<p>Even when <span class="math notranslate nohighlight">\(p\)</span> is fixed, <a class="reference internal" href="gh.html#hu2005"><span class="std std-ref">Hu2005</span></a> reports that when <span class="math notranslate nohighlight">\(|p|\)</span> is large
+<p>Even when <span class="math notranslate nohighlight">\(p\)</span> is fixed, <a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a> reports that when <span class="math notranslate nohighlight">\(|p|\)</span> is large
 (say, above 10), there might be no solution for the first two equations in
 <a class="reference internal" href="#equation-gig-expectation-params">(8)</a>.</p>
 </section>
@@ -661,19 +667,10 @@ two distributions is given by:</p>
 </ul>
 <p>These special cases are implemented as separate classes in <code class="docutils literal notranslate"><span class="pre">normix</span></code>:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a></p></li>
+<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a></p></li>
 </ul>
-</section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
-<div role="list" class="citation-list">
-<div class="citation" id="jorgensen2012" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Jorgensen2012<span class="fn-bracket">]</span></span>
-<p>Jørgensen, B. (2012). <em>Statistical Properties of the Generalized Inverse Gaussian Distribution</em>. Springer.</p>
-</div>
-</div>
 </section>
 </section>
 
@@ -735,7 +732,6 @@ two distributions is given by:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

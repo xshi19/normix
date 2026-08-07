@@ -5,7 +5,7 @@ This section derives the key information-theoretic quantities implemented in
 entropy — for the exponential-family components and for the joint normal
 variance-mean mixtures. We derive only the formulas used by the code; for the
 general structural decomposition of varentropy and its properties we refer to
-[Stankyavichyus2026](#stankyavichyus2026).
+{ref}`Stankyavichyus2026 <stankyavichyus2026>`.
 
 **See also:** Monte Carlo validation and fat-tail comparisons in
 {doc}`../tutorials/stats/03_varentropy`.
@@ -111,7 +111,7 @@ When $\log h(x)$ is **not** constant on the support — as for
 {class}`~normix.distributions.inverse_gaussian.InverseGaussian`, whose
 $\log h(x) = -\tfrac12\log(2\pi) - \tfrac32\log x$ — formula
 {eq}`ve-ef-formulas` acquires base-measure covariance terms (see
-[Stankyavichyus2026](#stankyavichyus2026)). ``normix`` avoids them by evaluating the quantities
+{ref}`Stankyavichyus2026 <stankyavichyus2026>`). ``normix`` avoids them by evaluating the quantities
 on the exact GIG embedding $\mathrm{GIG}(-\tfrac12, \lambda/\mu^2,
 \lambda)$, where $\log h \equiv 0$ and the $\log x$ term becomes
 a sufficient statistic.
@@ -251,10 +251,3 @@ $p = -1/2$ cases; each is computed on its own subordinator's
 log-partition, with the Normal-Inverse Gaussian evaluated through its GH
 embedding so that the order $p$ varies faithfully along the density-power
 path.
-
-## References
-
-```{eval-rst}
-.. [Stankyavichyus2026] Stankyavichyus, A. V. (2026). *Varentropy: Overview,
-   Computational Routes, and Structural Decomposition*. Preprint.
-```

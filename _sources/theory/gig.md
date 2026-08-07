@@ -69,7 +69,10 @@ E[X^\alpha] = \left(\sqrt{\frac{b}{a}}\right)^\alpha
 = \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.
 ```
 
-This formula is implemented in the {meth}`~normix.distributions.univariate.GeneralizedInverseGaussian.moment_alpha` method.
+The same Bessel-ratio form is used for
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean`
+and
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var`.
 
 ## Tail Behavior
 
@@ -246,11 +249,11 @@ replaced by $(\hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3)$.
 
 ## Numerical Challenges
 
-As discussed in [Jorgensen2012](#jorgensen2012), there is no analytical expression for
+As discussed in {ref}`Jorgensen2012 <jorgensen2012>`, there is no analytical expression for
 $\hat{p}$ or even its partial derivatives. Most literature suggests fixing
 $p$ when maximizing the log-likelihood function.
 
-Even when $p$ is fixed, [Hu2005](#hu2005) reports that when $|p|$ is large
+Even when $p$ is fixed, {ref}`Hu2005 <hu2005>` reports that when $|p|$ is large
 (say, above 10), there might be no solution for the first two equations in
 {eq}`gig-expectation-params`.
 
@@ -283,12 +286,6 @@ There are several important special cases of the GIG distribution:
 
 These special cases are implemented as separate classes in ``normix``:
 
-- {class}`~normix.distributions.univariate.InverseGaussian`
-- {class}`~normix.distributions.univariate.Gamma`
-- {class}`~normix.distributions.univariate.InverseGamma`
-
-## References
-
-```{eval-rst}
-.. [Jorgensen2012] Jørgensen, B. (2012). *Statistical Properties of the Generalized Inverse Gaussian Distribution*. Springer.
-```
+- {class}`~normix.distributions.inverse_gaussian.InverseGaussian`
+- {class}`~normix.distributions.gamma.Gamma`
+- {class}`~normix.distributions.inverse_gamma.InverseGamma`

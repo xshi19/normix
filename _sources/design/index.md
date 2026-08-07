@@ -1,7 +1,7 @@
 # Design Rationale
 
 User-facing design documentation for normix — the **why** behind the API and
-algorithms. For class and method reference see the [API Reference](../api/index).
+algorithms. For class and method reference see the {doc}`API Reference <../api/index>`.
 
 ```{toctree}
 :maxdepth: 1
@@ -24,6 +24,6 @@ solvers_and_bessel
 
 ## See also
 
-- [Mathematical Background](../theory/index) — formal derivations
-- [API Reference](../api/index) — module and class reference
-- [Quickstart](../getting_started/quickstart) — install and first fit
+- {doc}`Mathematical Background <../theory/index>` — formal derivations
+- {doc}`API Reference <../api/index>` — module and class reference
+- {doc}`Quickstart <../getting_started/quickstart>` — install and first fit

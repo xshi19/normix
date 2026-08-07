@@ -5,7 +5,7 @@
 > consistent, and how these primitives plug into the η→θ Bregman solver.
 >
 > **Where things live.** Module hierarchy and the full triad table are in the
-> [API Reference](../api/index). This file records the rationale.
+> {doc}`API Reference <../api/index>`. This file records the rationale.
 
 ---
 
@@ -167,4 +167,4 @@ and are hard to override.
 ## 5. Cross-References
 
 - η→θ optimization for GIG: {doc}`solvers_and_bessel`.
-- Theory: [GIG distribution](../theory/gig), [EM algorithm](../theory/em_algorithm).
+- Theory: {doc}`GIG distribution <../theory/gig>`, {doc}`EM algorithm <../theory/em_algorithm>`.

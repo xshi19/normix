@@ -2,7 +2,7 @@
 
 This section reviews the effective number of bets (ENB) and the minimum
 torsion approach for measuring portfolio diversification, following
-[Meucci2010](#meucci2010) and [Meucci2014](#meucci2014).
+{ref}`Meucci2010 <meucci2010>` and {ref}`Meucci2014 <meucci2014>`.
 
 ## Variance-Based Risk Decomposition
 
@@ -94,7 +94,7 @@ Thus, the diagonalization $T$ must be chosen carefully.
 
 ## Minimum Torsion
 
-The **minimum torsion** approach [Meucci2014](#meucci2014) selects $T$ to minimize
+The **minimum torsion** approach {ref}`Meucci2014 <meucci2014>` selects $T$ to minimize
 the change from the original weights. The rationale is that if $w$ is
 close to equally weighted, then $v = (T^\top)^{-1} w$ should also be
 close to equally weighted.
@@ -126,17 +126,4 @@ T_{MT} = U S^{-1/2} U^\top
 ```
 
 For the general case (unconstrained $D$), an iterative algorithm that
-converges rapidly is described in [Meucci2014](#meucci2014).
-
-## References
-
-```{eval-rst}
-.. [Meucci2010] Meucci, A. (2010). Managing diversification.
-   *Risk Magazine*, 22(5), 74-79.
-```
-
-```{eval-rst}
-.. [Meucci2014] Meucci, A., Santangelo, A., & Deguest, R. (2014).
-   Measuring portfolio diversification based on optimized uncorrelated
-   factors. *SSRN Electronic Journal*.
-```
+converges rapidly is described in {ref}`Meucci2014 <meucci2014>`.

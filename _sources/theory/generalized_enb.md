@@ -9,7 +9,7 @@ risk measures by diagonalizing the Hessian of the risk function.
 $\tau$-**homogeneous** if $r(tw) = t^\tau r(w)$ for all
 $w \in \mathbb{R}^n$ and $t > 0$.
 
-**Proposition** (Tasche [Tasche1999b](#tasche1999b)). Let $r$ be a totally
+**Proposition** (Tasche {ref}`Tasche1999 <tasche1999>`). Let $r$ be a totally
 differentiable, $\tau$-homogeneous function with $\tau \neq 0$.
 Then:
 
@@ -132,10 +132,3 @@ variance-based ENB misses. For example, in a portfolio of independent assets
 where one has heavier tails, the variance-based ENB treats all assets equally
 (since the covariance is diagonal), while the CVaR-based ENB correctly
 assigns a larger risk contribution to the heavy-tailed asset.
-
-## References
-
-```{eval-rst}
-.. [Tasche1999b] Tasche, D. (1999). Risk contributions and performance
-   measurement. Report of the Lehrstuhl für mathematische Statistik, TU München.
-```
