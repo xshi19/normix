@@ -41,11 +41,10 @@ accepted proposal per sample.
 
 **Location:** `normix/utils/rvs.py` exposes the pure-JAX
 `build_pinv_table` + `rvs_pinv`; `GIG.rvs(method='pinv')` (and the
-shared `GIG.cdf` / `GIG.ppf`) call it inline with
-`log_kernel(w) = self.log_prob(exp(w)) + w` and seed it at
-`jnp.log(self.mode())`. The only GIG-specific helper that remains in
-`generalized_inverse_gaussian.py` is `_gig_rvs_pinv`, a thin alias of
-`rvs_pinv` kept for symmetry with `_gig_rvs_devroye`.
+shared `GIG.cdf` / `GIG.ppf`) go through `quantile_table()` with
+`log_kernel(w) = self.log_prob(exp(w)) + w` seeded at
+`jnp.log(self.mode())`. The remaining GIG-specific sampler helper is
+`_gig_rvs_devroye` (TDR).
 
 The PINV method builds $F^{-1}$ numerically:
 

@@ -83,6 +83,8 @@ Sigma = jnp.array([[1.0, 0.3], [0.3, 1.0]])
 nig = NormalInverseGaussian.from_classical(mu=mu, gamma=gamma, sigma=Sigma, mu_ig=1.0, lam=1.5)
 print("mean:", np.asarray(nig.mean()))
 print("cov:\n", np.asarray(nig.cov()))
+print("skewness:", np.asarray(nig.skewness()))
+print("excess kurtosis:", np.asarray(nig.kurtosis()))
 
 X = nig.rvs(2_000, seed=0)
 result = NormalInverseGaussian.default_init(X).fit(X, max_iter=50, tol=1e-3)

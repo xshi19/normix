@@ -102,6 +102,27 @@ class Gamma(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.alpha / self.beta**2
 
+    def raw_moment(self, k: jax.Array) -> jax.Array:
+        r"""Raw moment :math:`E[X^k] = \Gamma(\alpha+k)/(\Gamma(\alpha)\,\beta^k)`.
+
+        Finite for all :math:`k > -\alpha`.
+        """
+        k = jnp.asarray(k, dtype=jnp.float64)
+        return jnp.exp(
+            jax.scipy.special.gammaln(self.alpha + k)
+            - jax.scipy.special.gammaln(self.alpha)
+            - k * jnp.log(self.beta)
+        )
+
+    def raw_moments(self, ks: jax.Array) -> jax.Array:
+        r"""Vectorised :meth:`raw_moment` over orders ``ks``."""
+        ks = jnp.asarray(ks, dtype=jnp.float64)
+        return jnp.exp(
+            jax.scipy.special.gammaln(self.alpha + ks)
+            - jax.scipy.special.gammaln(self.alpha)
+            - ks * jnp.log(self.beta)
+        )
+
     def mode(self) -> jax.Array:
         r"""Mode :math:`(\alpha - 1)/\beta` for :math:`\alpha \ge 1`.
 

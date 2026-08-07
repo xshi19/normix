@@ -110,6 +110,27 @@ class InverseGamma(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.beta**2 / ((self.alpha - 1.0)**2 * (self.alpha - 2.0))
 
+    def raw_moment(self, k: jax.Array) -> jax.Array:
+        r"""Raw moment :math:`E[X^k] = \beta^k\,\Gamma(\alpha-k)/\Gamma(\alpha)`.
+
+        Finite for :math:`k < \alpha`.
+        """
+        k = jnp.asarray(k, dtype=jnp.float64)
+        return jnp.exp(
+            k * jnp.log(self.beta)
+            + jax.scipy.special.gammaln(self.alpha - k)
+            - jax.scipy.special.gammaln(self.alpha)
+        )
+
+    def raw_moments(self, ks: jax.Array) -> jax.Array:
+        r"""Vectorised :meth:`raw_moment` over orders ``ks``."""
+        ks = jnp.asarray(ks, dtype=jnp.float64)
+        return jnp.exp(
+            ks * jnp.log(self.beta)
+            + jax.scipy.special.gammaln(self.alpha - ks)
+            - jax.scipy.special.gammaln(self.alpha)
+        )
+
     def mode(self) -> jax.Array:
         r"""Mode :math:`\beta / (\alpha + 1)` (closed form, valid for all :math:`\alpha > 0`)."""
         return self.beta / (self.alpha + 1.0)
