@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; normix 0.2.7 documentation</title>
+    <title>Changelog &#8212; normix 0.3.0 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=ac67dabd"></script>
+    <script src="_static/documentation_options.js?v=6512192e"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>let toggleHintShow = 'Click to show';</script>
@@ -59,7 +59,7 @@
     <link rel="prev" title="Utilities" href="api/utils.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.2" />
+  <meta name="docsearch:version" content="0.3" />
   </head>
   
   
@@ -134,7 +134,7 @@
   
   
   
-    <p class="title logo__title">normix 0.2.7 documentation</p>
+    <p class="title logo__title">normix 0.3.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -437,41 +437,50 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.3.0 (2026-08-06)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#breaking-changes">⚠ BREAKING CHANGES</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#refactoring">Refactoring</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bug Fixes</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Bug Fixes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Refactoring</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Bug Fixes</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Bug Fixes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Bug Fixes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Refactoring</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">Documentation</a></li>
 </ul>
 </li>
 </ul>
@@ -488,16 +497,74 @@
   <section class="tex2jax_ignore mathjax_ignore" id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading">#</a></h1>
 <section id="id1">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7">0.2.7</a> (2026-06-25)<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.7...v0.3.0">0.3.0</a> (2026-08-06)<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<section id="breaking-changes">
+<h3>⚠ BREAKING CHANGES<a class="headerlink" href="#breaking-changes" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Phase 6 API consistency (D1–D4) (<a class="reference external" href="https://github.com/xshi19/normix/issues/89">#89</a>)</p></li>
+</ul>
+</section>
 <section id="features">
 <h3>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>add entropy, varentropy, and Renyi entropy to exponential families (<a class="reference external" href="https://github.com/xshi19/normix/issues/63">#63</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/559feaeac179dfdacab230341860faab43701cd0">559feae</a>)</p></li>
+<li><p><strong>finance:</strong> local-quadratic transaction-cost QP (<a class="reference external" href="https://github.com/xshi19/normix/issues/78">#78</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/986a7aa32d985e90cfa7afafe580be612b63fe23">986a7aa</a>)</p></li>
+<li><p><strong>finance:</strong> mean-risk optimization — efficient surface &amp; frontier (Phase E) (<a class="reference external" href="https://github.com/xshi19/normix/issues/61">#61</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/63e0a9bd9d6915ce28e601d8f0c4724cebe5bf71">63e0a9b</a>)</p></li>
+</ul>
+</section>
+<section id="bug-fixes">
+<h3>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>divergences:</strong> lift operands into gauge before H²/KL (B1, DEC-1) (<a class="reference external" href="https://github.com/xshi19/normix/issues/84">#84</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/6b2cf16695f1c7a3c2ebc50c0bbb0602962e0f4e">6b2cf16</a>)</p></li>
+<li><p><strong>docs:</strong> bust myst-nb cache on normix source changes (<a class="reference external" href="https://github.com/xshi19/normix/issues/68">#68</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/e03e9f444d9e91a0295fab64cb4fa295619b8655">e03e9f4</a>)</p></li>
+<li><p><strong>docs:</strong> remove nested double-border on inline code chips (<a class="reference external" href="https://github.com/xshi19/normix/issues/64">#64</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/74187aa95351a8c713f2d251a6f05620ced3308d">74187aa</a>)</p></li>
+<li><p><strong>docs:</strong> stop painting sphinx-design cards black (<a class="reference external" href="https://github.com/xshi19/normix/issues/74">#74</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/4a51f41f76fa4afab9129692121db1603dd37a8c">4a51f41</a>)</p></li>
+<li><p><strong>em:</strong> hybrid-scale EM convergence for near-zero μ (<a class="reference external" href="https://github.com/xshi19/normix/issues/75">#75</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/9ba2cb071837c9fed757bfdf5781c05aae357bc8">9ba2cb0</a>)</p></li>
+<li><p><strong>ninvg:</strong> floor GIG params consistently before log_kv in marginal pdf (<a class="reference external" href="https://github.com/xshi19/normix/issues/67">#67</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/9fea176f7589271eb9028bd00af1090eb5a35c19">9fea176</a>)</p></li>
+<li><p>Phase 3 correctness (B2–B8) from 2026-07-12 review (<a class="reference external" href="https://github.com/xshi19/normix/issues/86">#86</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/f159b324199a1bae4048433a80c854723b50a9d7">f159b32</a>)</p></li>
+<li><p>review roadmap Phase 3 correctness (B2–B8) (<a class="reference external" href="https://github.com/xshi19/normix/issues/85">#85</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/5b7237e6712fcf6eee33316b4bf0f48b27aa9fb2">5b7237e</a>)</p></li>
+</ul>
+</section>
+<section id="performance">
+<h3>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Phase 5 efficiency (E1–E7) from 2026-07-12 review (<a class="reference external" href="https://github.com/xshi19/normix/issues/88">#88</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/a8f9a8ca61580f93a0c23dea859fec02249a1d7e">a8f9a8c</a>)</p></li>
+</ul>
+</section>
+<section id="refactoring">
+<h3>Refactoring<a class="headerlink" href="#refactoring" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Phase 6 API consistency (D1–D4) (<a class="reference external" href="https://github.com/xshi19/normix/issues/89">#89</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/716214f4d44c78d4cc638277d103c62ab77b6199">716214f</a>)</p></li>
+</ul>
+</section>
+<section id="documentation">
+<h3>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>complete docs refactor Phases 4–5 (notebooks, API, changelog) (<a class="reference external" href="https://github.com/xshi19/normix/issues/66">#66</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/e368e3705818e562c7b7ae2d5e39db284073e9b9">e368e37</a>)</p></li>
+<li><p><strong>design:</strong> review-roadmap Phase 0 — record DEC-1…DEC-5 (<a class="reference external" href="https://github.com/xshi19/normix/issues/81">#81</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/7b6596677f55f5beec0ea3f5c5254062cce6aeff">7b65966</a>)</p></li>
+<li><p><strong>distributions:</strong> add Phase 6 per-distribution gallery (<a class="reference external" href="https://github.com/xshi19/normix/issues/69">#69</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fc770acdbdbf5c724b3529fd0099a9b341cc9f30">fc770ac</a>)</p></li>
+<li><p><strong>distributions:</strong> compare gauge-invariant EM outputs in gallery (<a class="reference external" href="https://github.com/xshi19/normix/issues/77">#77</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/4d0c046048b6bc4460e7ff298e014066b9be349a">4d0c046</a>)</p></li>
+<li><p>land Phase 8a + linkcheck fix on master (<a class="reference external" href="https://github.com/xshi19/normix/issues/73">#73</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/f68985f55423179b7445a6e70f97a07f931d2cf2">f68985f</a>)</p></li>
+<li><p><strong>plans:</strong> add roadmap for the 2026-07-12 package review (<a class="reference external" href="https://github.com/xshi19/normix/issues/80">#80</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/e275b5925b6e4679012ae25eb5dcb8d81e9bbd24">e275b59</a>)</p></li>
+<li><p><strong>plans:</strong> archive completed plans and refresh active-plan status (<a class="reference external" href="https://github.com/xshi19/normix/issues/59">#59</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fe6703a81a00fcf3ba2364150d20648e10d55617">fe6703a</a>)</p></li>
+<li><p>review roadmap Phase 2 agent docs &amp; rules sync (DOC1–DOC7) (<a class="reference external" href="https://github.com/xshi19/normix/issues/83">#83</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/1f47fe3b14a6eb4d86008fd7ee635dde638a2a6e">1f47fe3</a>)</p></li>
+<li><p><strong>reviews:</strong> add 2026-07-12 full package review (<a class="reference external" href="https://github.com/xshi19/normix/issues/79">#79</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/4c13a63c67cd6f8c9d13d4e481d41711e9c04cfc">4c13a63</a>)</p></li>
+<li><p><strong>rules:</strong> adopt pstack workflow skills and archive the survey (<a class="reference external" href="https://github.com/xshi19/normix/issues/76">#76</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/6c5f0d2aa129523463ed14fdd79d7159a054d597">6c5f0d2</a>)</p></li>
+<li><p><strong>tutorials:</strong> add entropy-varentropy frontier figures for GIG and GH (<a class="reference external" href="https://github.com/xshi19/normix/issues/65">#65</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/9a1fc69d7351b47c22c33957593ac522234ab6b7">9a1fc69</a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="id2">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.6...v0.2.7">0.2.7</a> (2026-06-25)<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h3>Features<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> EM fitter hardening + VG alpha_min bound (Phases 4–5) (<a class="reference external" href="https://github.com/xshi19/normix/issues/58">#58</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/8e9849983ace636768e7b8212121395ecc3f59c2">8e98499</a>)</p></li>
 <li><p><strong>em:</strong> Phase 4 fitter hardening — diverged guard, track_ll, stateless det target (<a class="reference external" href="https://github.com/xshi19/normix/issues/57">#57</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/dd32481bb74dfe977bc480fe9a3063722930dc41">dd32481</a>)</p></li>
 </ul>
 </section>
-<section id="bug-fixes">
-<h3>Bug Fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h3>Bug Fixes<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> distribution-specific floor for VG/NInvG prior moments (B2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/51">#51</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/5fa19f7739e90e9a075446f4ab2019ed8aa25487">5fa19f7</a>)</p></li>
 <li><p><strong>em:</strong> floor posterior b_post to prevent VG EM overflow (<a class="reference external" href="https://github.com/xshi19/normix/issues/45">#45</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/5a0ecfb54e9927d12db654084af218ebc8df1d32">5a0ecfb</a>)</p></li>
@@ -505,15 +572,15 @@
 <li><p><strong>em:</strong> preserve sign of M-step denominator near Gaussian limit (<a class="reference external" href="https://github.com/xshi19/normix/issues/50">#50</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/0d5ea29a0a11f9911d87ba223559ba3250fb2279">0d5ea29</a>)</p></li>
 </ul>
 </section>
-<section id="refactoring">
-<h3>Refactoring<a class="headerlink" href="#refactoring" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>Refactoring<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> complete Phase 3 — posterior-GIG consolidation + hardening tests (R1-R3, T1/T1b/T3) (<a class="reference external" href="https://github.com/xshi19/normix/issues/56">#56</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/ff1f46232ffad22bd14cfe99693b7855a94ca389">ff1f462</a>)</p></li>
 <li><p><strong>em:</strong> consolidate posterior GIG map and b_post floor (R1, R2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/55">#55</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/e0141514e71e38b6b48aa16bcae7c9fbd66545f9">e014151</a>)</p></li>
 </ul>
 </section>
-<section id="documentation">
-<h3>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h3>Documentation<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> complete D2 cross-link fix and mark M1/M2/B1/B2/D1 done (<a class="reference external" href="https://github.com/xshi19/normix/issues/52">#52</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/ef2e2a861724d5b965eaf29518d463d603752473">ef2e2a8</a>)</p></li>
 <li><p><strong>plans:</strong> add EM robustness follow-ups plan from b_post-floor review (<a class="reference external" href="https://github.com/xshi19/normix/issues/48">#48</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/fbb0ad0ecfab6ddd75475243c3097806ad62f924">fbb0ad0</a>)</p></li>
@@ -521,68 +588,68 @@
 </ul>
 </section>
 </section>
-<section id="id2">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.5...v0.2.6">0.2.6</a> (2026-06-05)<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
-<section id="id3">
-<h3>Bug Fixes<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<section id="id7">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.5...v0.2.6">0.2.6</a> (2026-06-05)<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h3>Bug Fixes<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>docs:</strong> flatten myst-nb cell_input inner highlight box (<a class="reference external" href="https://github.com/xshi19/normix/issues/43">#43</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/8f522f1613328c275bd1a6b16f20c3139d6ca501">8f522f1</a>)</p></li>
 </ul>
 </section>
 </section>
-<section id="id4">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.4...v0.2.5">0.2.5</a> (2026-06-03)<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
-<section id="id5">
-<h3>Bug Fixes<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id9">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.4...v0.2.5">0.2.5</a> (2026-06-03)<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h3>Bug Fixes<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>docs:</strong> remove nested box around code cells (<a class="reference external" href="https://github.com/xshi19/normix/issues/42">#42</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/6426e301c2125b6894c69125ef7de1e13c179a04">6426e30</a>)</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>Documentation<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<section id="id11">
+<h3>Documentation<a class="headerlink" href="#id11" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>address Phase 3 review (DJ30, VG NaN repro, cross-family divergences) (<a class="reference external" href="https://github.com/xshi19/normix/issues/41">#41</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/a1c37799f967312ebb6260ac68ed4e4055cc860d">a1c3779</a>)</p></li>
 <li><p>author Phase 3 tutorial tree and site navigation (<a class="reference external" href="https://github.com/xshi19/normix/issues/39">#39</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d637e7a3f31a1f37f2fae79ecef74cd5d245535a">d637e7a</a>)</p></li>
 </ul>
 </section>
 </section>
-<section id="id7">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.3...v0.2.4">0.2.4</a> (2026-05-28)<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
-<section id="id8">
-<h3>Documentation<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<section id="id12">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.3...v0.2.4">0.2.4</a> (2026-05-28)<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<section id="id13">
+<h3>Documentation<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>split internal knowledge into dev-notes/ (Phase 2) (<a class="reference external" href="https://github.com/xshi19/normix/issues/36">#36</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/7cbacbbf7624b9ab7eabfa2ddcf4a3cb46d0bf26">7cbacbb</a>)</p></li>
 </ul>
 </section>
 </section>
-<section id="id9">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.2...v0.2.3">0.2.3</a> (2026-05-27)<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
-<section id="id10">
-<h3>Features<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
+<section id="id14">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.2...v0.2.3">0.2.3</a> (2026-05-27)<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
+<section id="id15">
+<h3>Features<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>finance:</strong> Phase D CVaR layer with Univariate* projection (<a class="reference external" href="https://github.com/xshi19/normix/issues/33">#33</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/c1ed42247a82791c7bbf81eea697c5ba05d7aa59">c1ed422</a>)</p></li>
 </ul>
 </section>
-<section id="id11">
-<h3>Documentation<a class="headerlink" href="#id11" title="Link to this heading">#</a></h3>
+<section id="id16">
+<h3>Documentation<a class="headerlink" href="#id16" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>bootstrap MyST-nb infrastructure and Kami theme (Phase 1) (<a class="reference external" href="https://github.com/xshi19/normix/issues/35">#35</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/1c3563d08b39ab426ac742b10a4f1a2a1e791f17">1c3563d</a>)</p></li>
 </ul>
 </section>
 </section>
-<section id="id12">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.1...v0.2.2">0.2.2</a> (2026-05-24)<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
-<section id="id13">
-<h3>Features<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
+<section id="id17">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/compare/v0.2.1...v0.2.2">0.2.2</a> (2026-05-24)<a class="headerlink" href="#id17" title="Link to this heading">#</a></h2>
+<section id="id18">
+<h3>Features<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>distributions:</strong> add cdf/ppf with pure-JAX PINV (<a class="reference external" href="https://github.com/xshi19/normix/issues/31">#31</a>) (<a class="reference external" href="https://github.com/xshi19/normix/commit/d73c5fcfa7cdbd319e1d1119b8798606f6a163a2">d73c5fc</a>)</p></li>
 </ul>
 </section>
 </section>
-<section id="id14">
-<h2><a class="reference external" href="https://github.com/xshi19/normix/releases/tag/v0.2.1">0.2.1</a> (2026-05-17)<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
-<section id="id15">
-<h3>Features<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
+<section id="id19">
+<h2><a class="reference external" href="https://github.com/xshi19/normix/releases/tag/v0.2.1">0.2.1</a> (2026-05-17)<a class="headerlink" href="#id19" title="Link to this heading">#</a></h2>
+<section id="id20">
+<h3>Features<a class="headerlink" href="#id20" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>add data for testing (<a class="reference external" href="https://github.com/xshi19/normix/commit/5e2a0a8b06597810474c8f69e40517790ca41409">5e2a0a8</a>)</p></li>
 <li><p>add SP500 return sample for testing (<a class="reference external" href="https://github.com/xshi19/normix/commit/9a44bcbd705b81cf61c97facf68667e851cced7c">9a44bcb</a>)</p></li>
@@ -635,8 +702,8 @@
 <li><p><strong>utils:</strong> lazy-load plotting helpers so matplotlib is optional (<a class="reference external" href="https://github.com/xshi19/normix/commit/776bc7089bb8b0772b0dfa0ef9cc76cfc9083659">776bc70</a>)</p></li>
 </ul>
 </section>
-<section id="id16">
-<h3>Bug Fixes<a class="headerlink" href="#id16" title="Link to this heading">#</a></h3>
+<section id="id21">
+<h3>Bug Fixes<a class="headerlink" href="#id21" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> default m_step_backend to cpu, set cpu e_step for GH fit (<a class="reference external" href="https://github.com/xshi19/normix/commit/6e1429d0dd66bb1e5406a4b7def9215918fcc2b9">6e1429d</a>)</p></li>
 <li><p><strong>gh:</strong> stabilize EM and warm-start; perf(em) CPU E-step for VG/NInvG (<a class="reference external" href="https://github.com/xshi19/normix/commit/77d984198dd787a190432f324c2422642fa820b8">77d9841</a>)</p></li>
@@ -649,16 +716,16 @@
 <li><p><strong>variance_gamma:</strong> handle PDF at x=μ (q=0) correctly (<a class="reference external" href="https://github.com/xshi19/normix/commit/0712d00f83faeb356dfef7c8fc494a68e505db04">0712d00</a>)</p></li>
 </ul>
 </section>
-<section id="performance">
-<h3>Performance<a class="headerlink" href="#performance" title="Link to this heading">#</a></h3>
+<section id="id22">
+<h3>Performance<a class="headerlink" href="#id22" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>em:</strong> CPU digamma Newton for Gamma/InvGamma from_expectation (<a class="reference external" href="https://github.com/xshi19/normix/commit/56f079a2b24bd516f08e3508208f5265f62f39b5">56f079a</a>)</p></li>
 <li><p><strong>em:</strong> scan-based IncrementalEMFitter and Phase 5 benchmarks (<a class="reference external" href="https://github.com/xshi19/normix/commit/a9bf108b850a6f59611e179646c895a7df79a586">a9bf108</a>)</p></li>
 <li><p><strong>solver:</strong> stable jitted Newton for GIG warm-start and Gamma digamma (<a class="reference external" href="https://github.com/xshi19/normix/commit/1a9c5d5ea5ef6571bd553ea25fc1fb90a503a2ee">1a9c5d5</a>)</p></li>
 </ul>
 </section>
-<section id="id17">
-<h3>Refactoring<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
+<section id="id23">
+<h3>Refactoring<a class="headerlink" href="#id23" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>add theta0/maxiter/tol to fit_mle; remove long inline derivation comments (<a class="reference external" href="https://github.com/xshi19/normix/commit/db780acc980c3a6be840a46a43f298c66c766229">db780ac</a>)</p></li>
 <li><p><strong>AGENTS.md:</strong> streamline content and enhance design philosophy section; remove ROADMAP.md and project-overview.mdc (<a class="reference external" href="https://github.com/xshi19/normix/commit/cd16009b6b61204ecb16569f51eb44815dad1c54">cd16009</a>)</p></li>
@@ -716,8 +783,8 @@
 <li><p><strong>vg,nig,ninvg:</strong> replace GH delegation with analytical formulas (<a class="reference external" href="https://github.com/xshi19/normix/commit/836a214c58890f685732f7687c4191892f88258d">836a214</a>)</p></li>
 </ul>
 </section>
-<section id="id18">
-<h3>Documentation<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
+<section id="id24">
+<h3>Documentation<a class="headerlink" href="#id24" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>add AGENTS.md and update project documentation (<a class="reference external" href="https://github.com/xshi19/normix/commit/448a311c4266ea316fb345590d6dbce1c0f853a3">448a311</a>)</p></li>
 <li><p>add Appendix D — porting bessel.py to JAX without logbesselk (<a class="reference external" href="https://github.com/xshi19/normix/commit/2938d3185880cd9408e1ac0296358fd2356c4fa4">2938d31</a>)</p></li>
@@ -836,41 +903,50 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.3.0 (2026-08-06)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#breaking-changes">⚠ BREAKING CHANGES</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#refactoring">Refactoring</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Bug Fixes</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Bug Fixes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.2.7 (2026-06-25)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Refactoring</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.6 (2026-06-05)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Bug Fixes</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.5 (2026-06-03)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Bug Fixes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.4 (2026-05-28)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Documentation</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.2.3 (2026-05-27)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Bug Fixes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#performance">Performance</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Refactoring</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Documentation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">0.2.2 (2026-05-24)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Features</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">0.2.1 (2026-05-17)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">Performance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Refactoring</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">Documentation</a></li>
 </ul>
 </li>
 </ul>
