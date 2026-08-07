@@ -1,9 +1,9 @@
 # EM Algorithm for Generalized Hyperbolic Distributions
 
 The Expectation-Maximization (EM) algorithm is a classical iterative method for
-fitting data with hidden (latent) variables [Dempster1977](#dempster1977). This section
+fitting data with hidden (latent) variables {ref}`Dempster1977 <dempster1977>`. This section
 describes the EM algorithm for the Generalized Hyperbolic (GH) distribution,
-following the framework in [Hu2005](#hu2005) with some modifications.
+following the framework in {ref}`Hu2005 <hu2005>` with some modifications.
 
 ## Overview
 
@@ -199,7 +199,7 @@ applying these to {eq}`m-step`. ∎
 ## MCECM Algorithm
 
 An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
-algorithm [McNeil2010](#mcneil2010). Unlike the EM algorithm which updates all parameters
+algorithm {ref}`McNeil2010 <mcneil2010>`. Unlike the EM algorithm which updates all parameters
 via {eq}`m-step`, MCECM proceeds in two cycles:
 
 **Cycle 1:** Compute $\mu_{k+1}$, $\gamma_{k+1}$, $\Sigma_{k+1}$
@@ -386,7 +386,8 @@ likelihood methods) can help improve the conditioning of $\Sigma$.
 
 ## Implementation in normix
 
-In ``normix``, the EM algorithm is implemented in the {meth}`fit` method of
+In ``normix``, the EM algorithm is implemented in
+{meth}`~normix.mixtures.marginal.MarginalMixture.fit` on
 {class}`~normix.mixtures.marginal.NormalMixture` subclasses
 (e.g. {class}`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic`,
 {class}`~normix.distributions.variance_gamma.VarianceGamma`, etc.).
@@ -401,12 +402,11 @@ The key methods are:
   $\eta\to\theta$ map for the joint exponential family and is
   available in classmethod form as
   {meth}`~normix.mixtures.marginal.NormalMixture.from_expectation`
-  (and {meth}`~normix.mixtures.joint.JointNormalMixture.from_expectation`).
-  The normal-component update is closed-form
-  ({meth}`~normix.mixtures.joint.JointNormalMixture._mstep_normal_params`);
-  the subordinator update calls each subordinator's own
-  {meth}`from_expectation` (closed-form for Gamma, InverseGamma,
-  InverseGaussian; numerical via
+  (and
+  {meth}`~normix.mixtures.joint.JointNormalMixture.from_expectation`).
+  The normal-component update is closed-form; the subordinator update
+  calls each subordinator's own ``from_expectation`` (closed-form for
+  Gamma, InverseGamma, InverseGaussian; numerical via
   {func}`~normix.fitting.solvers.solve_bregman` for the GIG case).
   {meth}`~normix.mixtures.marginal.NormalMixture.m_step_subordinator`
   is the MCECM cycle-2 specialisation (subordinator only, normal block
@@ -414,11 +414,3 @@ The key methods are:
 - {meth}`~normix.mixtures.joint.JointNormalMixture.conditional_expectations`:
   Computes $E[\log Y|X=x]$, $E[Y^{-1}|X=x]$, $E[Y|X=x]$
   for a single observation, used inside the E-step.
-
-## References
-
-```{eval-rst}
-.. [Dempster1977] Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977).
-   Maximum likelihood from incomplete data via the EM algorithm.
-   *Journal of the Royal Statistical Society: Series B*, 39(1), 1-38.
-```

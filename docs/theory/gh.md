@@ -104,9 +104,9 @@ the GH distribution is singular.
 There are several ways to regularize the GH family:
 
 1. **Set** $\delta = 1$ (simplest approach)
-2. **Set** $b = 1$ in the EM algorithm [Protassov2004](#protassov2004)
-3. **Fix** $b$ when $p > -1$ and fix $a$ when $p < 1$ [Hu2005](#hu2005)
-4. **Fix the determinant** $|\Sigma| = 1$ [McNeil2010](#mcneil2010)
+2. **Set** $b = 1$ in the EM algorithm {ref}`Protassov2004 <protassov2004>`
+3. **Fix** $b$ when $p > -1$ and fix $a$ when $p < 1$ {ref}`Hu2005 <hu2005>`
+4. **Fix the determinant** $|\Sigma| = 1$ {ref}`McNeil2010 <mcneil2010>`
 
 ```{note}
 
@@ -279,20 +279,6 @@ Several important distributions are special cases of the GH family:
 
 These are implemented as separate classes in ``normix``:
 
-- {class}`~normix.distributions.mixtures.NormalInverseGaussian`
-- {class}`~normix.distributions.mixtures.VarianceGamma`
-- {class}`~normix.distributions.mixtures.NormalInverseGamma`
-
-## References
-
-```{eval-rst}
-.. [Protassov2004] Protassov, R. S. (2004). EM-based maximum likelihood parameter estimation for multivariate generalized hyperbolic distributions.
-```
-
-```{eval-rst}
-.. [Hu2005] Hu, W. (2005). Calibration of multivariate generalized hyperbolic distributions using the EM algorithm.
-```
-
-```{eval-rst}
-.. [McNeil2010] McNeil, A. J., Frey, R., & Embrechts, P. (2010). Quantitative Risk Management. Princeton University Press.
-```
+- {class}`~normix.distributions.normal_inverse_gaussian.NormalInverseGaussian`
+- {class}`~normix.distributions.variance_gamma.VarianceGamma`
+- {class}`~normix.distributions.normal_inverse_gamma.NormalInverseGamma`

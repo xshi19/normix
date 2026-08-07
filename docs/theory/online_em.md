@@ -1,7 +1,7 @@
 # Online EM Algorithm
 
 In this section we review the online EM algorithm for exponential families
-with hidden data [Cappe2009](#cappe2009), and apply it to the Generalized Hyperbolic
+with hidden data {ref}`Cappe2009 <cappe2009>`, and apply it to the Generalized Hyperbolic
 distribution.
 
 ## Online EM for Exponential Families
@@ -187,7 +187,7 @@ corresponds to starting with an initial weight of $\tau_0$ "pseudo-observations.
 
 ## Limitations for Curved Exponential Families
 
-The online EM algorithm of [Cappe2009](#cappe2009) may not converge for **curved
+The online EM algorithm of {ref}`Cappe2009 <cappe2009>` may not converge for **curved
 exponential families** of the form:
 
 ```{math}
@@ -214,11 +214,3 @@ while the online EM tends to solve:
 which may not have a solution when $\dim(u) < \dim(\theta)$. Therefore,
 the online EM algorithm cannot be directly applied to the factor analysis
 model described in {doc}`factor_analysis`.
-
-## References
-
-```{eval-rst}
-.. [Cappe2009] Cappé, O. & Moulines, E. (2009). On-line expectation-maximization
-   algorithm for latent data models. *Journal of the Royal Statistical Society:
-   Series B*, 71(3), 593-613.
-```

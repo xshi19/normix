@@ -21,6 +21,8 @@ machinery as ordinary maximum likelihood (see {doc}`exponential_family`).
 ## The quick path
 
 ```python
+from normix import NormalInverseGaussian
+
 model = NormalInverseGaussian.default_init(X)
 result = model.fit(X, max_iter=200, tol=1e-3)
 fitted = result.model

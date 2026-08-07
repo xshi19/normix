@@ -4,7 +4,7 @@
 > abstraction buys, how the `Shrinkage` combinator generalises penalised
 > EM, and what the four covariance-regularisation modes do.
 >
-> **Where things live.** Public API is in the [API Reference](../api/index).
+> **Where things live.** Public API is in the {doc}`API Reference <../api/index>`.
 > Parameter facade and `from_expectation` dispatch are in {doc}`mixtures`.
 > Solver internals are in {doc}`solvers_and_bessel`.
 
@@ -388,5 +388,6 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 ## 7. Cross-References
 
 - Solvers (η→θ): {doc}`solvers_and_bessel`.
-- Theory: [EM algorithm](../theory/em_algorithm), [Shrinkage](../theory/shrinkage),
-  [Factor analysis](../theory/factor_analysis).
+- Theory: {doc}`EM algorithm <../theory/em_algorithm>`,
+  {doc}`Shrinkage <../theory/shrinkage>`,
+  {doc}`Factor analysis <../theory/factor_analysis>`.

@@ -1,6 +1,6 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0–4 done; Phase 5 complete (2026-08-05).**
+> **ACTIVE — Phase 0–5 done; Phase 7 complete (2026-08-06); Phase 6 + 8 remain.**
 > Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
 > (1018 fast tests green; the mathematical core is verified correct — every
 > re-derived density, gradient, Hessian, and M-step formula matches the
@@ -87,13 +87,13 @@ Misleading agent-facing rules cost every future session; all fixes are edits.
 
 | ID | § | Finding | Fix | Pri |
 |----|---|---------|-----|-----|
-| W1 | 6.1 | Broken API roles in theory pages: `theory/gig.md:72,286-288` references `normix.distributions.univariate.*` (module doesn't exist) and `GeneralizedInverseGaussian.moment_alpha` (method doesn't exist); `theory/gh.md:282-284` references `normix.distributions.mixtures.*` (wrong module path). Silent dead links under `nitpicky=False`. | Point the roles at the real paths/symbols. | P1 |
-| W2 | 6.2 | Undefined citations: `[Hu2005]` cited on `theory/gig.md` and `theory/em_algorithm.md` but only defined on `theory/gh.md`; `[Shi2016]` used on `tutorials/em/04`, `tutorials/finance/05`, `user_guide/finance.md` without local definitions — masked by `suppress_warnings=['ref.citation']`. | Centralise citations in one included references page; drop the suppression. | P1 |
-| W3 | 6.3 | `tutorials/finance/05_mean_risk_optimization.md:325` says ENB "remains on the roadmap"; `theory/enb.md` and `theory/generalized_enb.md` exist. | Reword to link the theory pages (an ENB *tutorial* is still future work — see finance plan Phase F). | P2 |
-| W4 | 6.4 | Copy-paste hazards: `user_guide/finance.md:92-98` uses `jnp` without importing it; `user_guide/em_fitting.md:23-27` uses `NormalInverseGaussian` without an import; `CVaR(0.05)` commented as "95% level" (confidence-vs-tail wording). | Fix snippets and wording. | P2 |
-| W5 | 6.5 | Navigation polish: Reference toctree uses `maxdepth: 1` (theory/design/API subpages invisible in the sidebar); landing "User guide" card deep-links to `exponential_family` instead of a hub; `docs/changelog.md` renders a duplicated "Changelog" heading (wrapper + included file). | Fix all three. | P2 |
-| W6 | 6.6 | `docs/design/*.md` use raw relative markdown links (`../api/index`, `../theory/...`) instead of `{doc}` roles, bypassing Sphinx validation — the project's own cross-link rule. | Convert to `{doc}` roles. | P2 |
-| W7 | 6.7, 8.6 | Both classes of docs bug found here (W1, W2) fail silently in CI. | Enable `nitpicky` (or a `{py:*}`-role check) in docs CI — **after** W1/W2/W6, likely with a small `nitpick_ignore` allowlist for external references. | P2 |
+| W1 | 6.1 | Broken API roles in theory pages: `theory/gig.md:72,286-288` references `normix.distributions.univariate.*` (module doesn't exist) and `GeneralizedInverseGaussian.moment_alpha` (method doesn't exist); `theory/gh.md:282-284` references `normix.distributions.mixtures.*` (wrong module path). Silent dead links under `nitpicky=False`. | **DONE.** Roles point at real modules; moment formula cross-refs `mean`/`var`. | P1 |
+| W2 | 6.2 | Undefined citations: `[Hu2005]` cited on `theory/gig.md` and `theory/em_algorithm.md` but only defined on `theory/gh.md`; `[Shi2016]` used on `tutorials/em/04`, `tutorials/finance/05`, `user_guide/finance.md` without local definitions — masked by `suppress_warnings=['ref.citation']`. | **DONE.** Central `docs/references.md` with MyST `(key)=` targets; `{ref}`Key <key>`` everywhere; `suppress_warnings` removed. | P1 |
+| W3 | 6.3 | `tutorials/finance/05_mean_risk_optimization.md:325` says ENB "remains on the roadmap"; `theory/enb.md` and `theory/generalized_enb.md` exist. | **DONE.** Links theory ENB pages; notes tutorial still future work. | P2 |
+| W4 | 6.4 | Copy-paste hazards: `user_guide/finance.md:92-98` uses `jnp` without importing it; `user_guide/em_fitting.md:23-27` uses `NormalInverseGaussian` without an import; `CVaR(0.05)` commented as "95% level" (confidence-vs-tail wording). | **DONE.** Imports + "5% tail probability" wording. | P2 |
+| W5 | 6.5 | Navigation polish: Reference toctree uses `maxdepth: 1` (theory/design/API subpages invisible in the sidebar); landing "User guide" card deep-links to `exponential_family` instead of a hub; `docs/changelog.md` renders a duplicated "Changelog" heading (wrapper + included file). | **DONE.** Reference `maxdepth: 2`; `user_guide/index.md` hub; changelog is a bare include of root `CHANGELOG.md`. | P2 |
+| W6 | 6.6 | `docs/design/*.md` use raw relative markdown links (`../api/index`, `../theory/...`) instead of `{doc}` roles, bypassing Sphinx validation — the project's own cross-link rule. | **DONE.** All design cross-links use `{doc}`. | P2 |
+| W7 | 6.7, 8.6 | Both classes of docs bug found here (W1, W2) fail silently in CI. | **DONE.** `nitpicky=True` + focused `nitpick_ignore`/`_regex` (autodoc noise / private / optional matplotlib); wrong public paths still warn. | P2 |
 
 ### Test suite (T) — review §7
 
@@ -227,12 +227,13 @@ spellings in `normix/`, `docs/`, tutorials); `fit()` has one signature with
 `track_ll`/`eta_update`/`m_step_kwargs` reachable on VG/NInvG/GH; no
 forward-only projection module; `finance_architecture.md` updated.
 
-### Phase 7 — Website (W1–W6, then W7)
+### Phase 7 — Website (W1–W6, then W7) — **DONE (2026-08-06)**
 
 Fix content first, then turn on enforcement.
-**Exit:** `uv run make -C docs html` green with `nitpicky` (or the role
-check) enabled and `suppress_warnings=['ref.citation']` removed; linkcheck
-green; sidebar shows Reference subpages.
+**Exit met:** `uv run make -C docs html` green with `nitpicky=True` and
+`suppress_warnings=['ref.citation']` removed; linkcheck green; Reference
+toctree `maxdepth: 2` + `docs/references.md` + `user_guide/index` hub.
+Wrong public `{py:class}` paths still warn under nitpicky (probed).
 
 ### Phase 8 — Features (F1)
 
@@ -251,7 +252,7 @@ gallery/API docs updated.
 | 4 | Test hardening | T1–T5 | — ✅ |
 | 5 | Efficiency | E1–E7 | DEC-5 (E3 only) ✅ |
 | 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 |
-| 7 | Website | W1–W7 | W7 after W1/W2/W6 |
+| 7 | Website | W1–W7 | W7 after W1/W2/W6 ✅ |
 | 8 | Features | F1 | — |
 
 Suggested order: Phases 1 + 2 immediately (independent, zero-risk); DEC-1 →

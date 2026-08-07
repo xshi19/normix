@@ -1,7 +1,7 @@
 # CVaR Derivatives for Normal Mixture Distributions
 
 This section computes the first and second derivatives of CVaR for normal
-mixture distributions, following [RauHasanov2004](#rauhasanov2004) and [Tasche1999](#tasche1999).
+mixture distributions, following {ref}`RauHasanov2004 <rauhasanov2004>` and {ref}`Tasche1999 <tasche1999>`.
 
 ## General CVaR Derivatives
 
@@ -197,17 +197,4 @@ H_{r_{\operatorname{CVaR}_\alpha}}(w)
 &\quad + (w^\top \Sigma w)^{-3/2}
 (\Sigma \, w^\top \Sigma w - \Sigma w \, w^\top \Sigma)
 \frac{\partial r_{\operatorname{CVaR}_\alpha}}{\partial \sigma}.
-```
-
-## References
-
-```{eval-rst}
-.. [RauHasanov2004] Rau-Bredow, H. (2004). Value-at-risk, expected shortfall,
-   and marginal risk contribution. In *Risk Measures for the 21st Century*,
-   Wiley.
-```
-
-```{eval-rst}
-.. [Tasche1999] Tasche, D. (1999). Risk contributions and performance
-   measurement. Report of the Lehrstuhl für mathematische Statistik, TU München.
 ```

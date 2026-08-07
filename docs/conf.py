@@ -45,12 +45,11 @@ exclude_patterns = [
     'pdfs',
 ]
 
-# Enable after docstring cross-reference cleanup (post Phase 1).
-nitpicky = False
-# Theory pages use Markdown links to Sphinx citation anchors (MyST does not
-# parse RST ``[Key]_`` citation syntax), so Sphinx reports those citations as
-# unreferenced even though the HTML anchors resolve.
-suppress_warnings = ['ref.citation']
+# Fail unresolved cross-refs loudly (review roadmap W7). Content pages use
+# fully-qualified {py:*} / {doc} / {ref} roles; the allowlist covers autodoc
+# noise (Napoleon type prose, private helpers, optional plotting deps) and a
+# few external symbols whose inventories omit the name we cite.
+nitpicky = True
 nitpick_ignore = [
     ('py:class', 'jax.Array'),
     ('py:class', 'jaxtyping.Array'),
@@ -66,6 +65,31 @@ nitpick_ignore = [
     ('py:class', 'Literal'),
     ('py:class', 'Protocol'),
     ('py:obj', 'jax.Array'),
+    # Private mixin used in return annotations; not a public API page.
+    ('py:class', 'normix.mixtures.marginal._UnivariateNormalMixtureMixin'),
+    ('py:meth', 'normix.mixtures.marginal._UnivariateNormalMixtureMixin.ppf'),
+    # Optional plotting extra (matplotlib not always inventoriable).
+    ('py:class', 'matplotlib.figure.Figure'),
+    ('py:class', 'matplotlib.axes._axes.Axes'),
+    # External / inventory gaps.
+    ('py:func', 'scipy.special.gammaincinv'),
+    ('py:func', 'numpy.ndarray.ravel'),
+    ('py:func', 'jax.custom_jvp'),
+    ('py:func', 'jnp.where'),
+]
+# Napoleon often lexes Parameters prose as types; private helpers appear in
+# inherited docstrings. Regex keeps the allowlist small while still failing
+# on wrong public module paths (the W1 class of bug).
+nitpick_ignore_regex = [
+    (r'py:.*', r'.*\._[A-Za-z].*'),          # private members
+    (r'py:class', r'optional|callable|scalar|array|samples|dist|dicts?|scipy|ls|color\}|scipy\}|x_plot|1-D.*|n$|data array|dicts with keys.*|\{.*|\}|θ|→|−|K$|JIT-able|convex|convergence|iteration|initial|target|stats|used|must|and|not|e\.g\.|method=.*|\'.*\''),
+    (r'py:meth', r'^(log_prob|ppf|fit|from_expectation|quantile_table|to_gig|__call__)$'),
+    (r'py:meth', r'^[A-Za-z]+\.from_expectation$'),  # short class.method in docstrings
+    (r'py:meth', r'^JointNormalMixture\.'),
+    (r'py:class', r'^(Gamma|InverseGamma|InverseGaussian|VarianceGamma|NormalInverseGamma|NormalInverseGaussian|GeneralizedHyperbolic|JointGeneralizedHyperbolic|JointVarianceGamma|JointNormalInverseGamma|JointNormalInverseGaussian|JointNormalMixture|NormalMixture|NormalMixtureEta|FactorNormalMixture|FactorMixtureStats|EMResult|RiskMeasure)$'),
+    (r'py:class', r'^normix\.Univariate'),   # top-level re-export path
+    (r'py:data', r'^normix\.utils\.constants\.'),
+    (r'py:attr', r'^_'),
 ]
 
 # -- MyST settings -----------------------------------------------------------
