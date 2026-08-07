@@ -175,6 +175,7 @@ Key methods on `JointNormalMixture`:
 Key methods on `NormalMixture`:
 - `from_expectation(eta, **kw)` → marginal wrapper around the joint constructor; the canonical η→model map.
 - `mu`, `gamma`, `L_Sigma`, `sigma()`, `log_det_sigma()` — read-only forwarders to the joint.
+- `mean()`, `cov()`, `skewness()`, `kurtosis()` (excess) — marginal moments from subordinator raw moments; see `docs/theory/gh.md`.
 - Per-subclass subordinator forwarders: `alpha`/`beta` (VG, NInvG), `mu_ig`/`lam` (NIG), `p`/`a`/`b` (GH).
 - `replace(**updates)` — immutable update via `eqx.tree_at`. Accepts normal keys, subordinator keys (per `_subordinator_keys()`), and `sigma` as a Cholesky-converted alias for `L_Sigma`.
 - `m_step(eta) ≡ type(self).from_expectation(eta, **kw)` for VG / NInvG / NIG; `GeneralizedHyperbolic` overrides to inject a warm-start `theta0` for the GIG solver and a sanity-check fallback.

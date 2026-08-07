@@ -48,7 +48,8 @@ See {doc}`../tutorials/distributions/01_univariate_positive`,
 Each mixture comes in several layers; reach for the one that matches your task:
 
 - **Marginal** (e.g. `NormalInverseGaussian`) — the distribution of $X$. This is
-  what you usually fit and evaluate: `pdf`, `log_prob`, `mean`, `cov`, `rvs`.
+  what you usually fit and evaluate: `pdf`, `log_prob`, `mean`, `cov`,
+  `skewness`, `kurtosis`, `rvs`.
 - **Joint** (e.g. `JointNormalInverseGaussian`, via `model.joint`) — the pair
   $(X, Y)$ with the latent subordinator, used by the EM E-step and accessible
   for `joint.rvs` and `joint.conditional_expectations`.
@@ -82,6 +83,7 @@ model = NormalInverseGaussian.from_classical(
 
 model.pdf(x)            # density at one point (vmap to batch)
 model.mean(); model.cov()
+model.skewness(); model.kurtosis()   # component-wise; excess kurtosis
 model.rvs(1000, seed=0)
 result = model.fit(X)   # EM; result.model is the fit
 ```

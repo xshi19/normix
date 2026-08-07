@@ -29,6 +29,37 @@ from normix.utils.constants import SIGMA_INIT_REG
 from normix.utils.rvs import QuantileTable, build_pinv_table
 
 
+def _normal_mixture_skew_kurt(
+    gamma: jax.Array,
+    sigma_diag: jax.Array,
+    m1: jax.Array,
+    m2: jax.Array,
+    m3: jax.Array,
+    m4: jax.Array,
+) -> tuple[jax.Array, jax.Array]:
+    r"""Component-wise skewness and excess kurtosis of a normal variance-mean mixture.
+
+    For each coordinate :math:`X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i` with
+    :math:`Z_i\sim\mathcal{N}(0,\Sigma_{ii})` independent of the subordinator
+    :math:`Y`, condition on :math:`Y` and take Gaussian central moments.
+    ``m_k`` are the raw moments :math:`E[Y^k]`.
+    """
+    var_y = m2 - m1 ** 2
+    mu3_y = m3 - 3.0 * m1 * m2 + 2.0 * m1 ** 3
+    mu4_y = m4 - 4.0 * m1 * m3 + 6.0 * m1 ** 2 * m2 - 3.0 * m1 ** 4
+    e_c2_y = m3 - 2.0 * m1 * m2 + m1 ** 3  # E[(Y - m1)^2 Y]
+
+    g = gamma
+    s2 = sigma_diag
+    var_x = m1 * s2 + var_y * g ** 2
+    mu3_x = g ** 3 * mu3_y + 3.0 * g * s2 * var_y
+    mu4_x = g ** 4 * mu4_y + 6.0 * g ** 2 * s2 * e_c2_y + 3.0 * s2 ** 2 * m2
+    std_x = jnp.sqrt(var_x)
+    skew = mu3_x / (std_x ** 3)
+    kurt = mu4_x / (var_x ** 2) - 3.0
+    return skew, kurt
+
+
 class MarginalMixture(eqx.Module):
     r"""Abstract interface for marginal mixtures used by the EM fitters.
 
@@ -282,6 +313,38 @@ class NormalMixture(MarginalMixture):
         E_Y = j.subordinator().mean()
         Var_Y = j.subordinator().var()
         return E_Y * j.sigma() + Var_Y * jnp.outer(j.gamma, j.gamma)
+
+    def _y_raw_moments_1_to_4(self) -> jax.Array:
+        r"""Subordinator raw moments :math:`(E[Y], E[Y^2], E[Y^3], E[Y^4])`."""
+        return self.subordinator().raw_moments(
+            jnp.array([1.0, 2.0, 3.0, 4.0]))
+
+    def skewness(self) -> jax.Array:
+        r"""Component-wise skewness :math:`\gamma_1 = \mu_3 / \sigma^3` of :math:`X`.
+
+        Closed form from the normal variance-mean mixture representation and
+        subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.
+        Requires a finite fourth moment of the subordinator (e.g. InverseGamma
+        shape :math:`\alpha > 4` when :math:`\gamma \ne 0`).
+        """
+        m1, m2, m3, m4 = self._y_raw_moments_1_to_4()
+        sigma_diag = jnp.sum(self.L_Sigma ** 2, axis=1)
+        skew, _ = _normal_mixture_skew_kurt(
+            self.gamma, sigma_diag, m1, m2, m3, m4)
+        return skew
+
+    def kurtosis(self) -> jax.Array:
+        r"""Component-wise excess kurtosis :math:`\gamma_2 = \mu_4/\sigma^4 - 3` of :math:`X`.
+
+        Closed form from the normal variance-mean mixture representation and
+        subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.
+        Same moment conditions as :meth:`skewness`.
+        """
+        m1, m2, m3, m4 = self._y_raw_moments_1_to_4()
+        sigma_diag = jnp.sum(self.L_Sigma ** 2, axis=1)
+        _, kurt = _normal_mixture_skew_kurt(
+            self.gamma, sigma_diag, m1, m2, m3, m4)
+        return kurt
 
     # ------------------------------------------------------------------
     # Information-theoretic quantities of the joint (X, Y)
@@ -774,6 +837,14 @@ class _UnivariateNormalMixtureMixin:
     def std(self) -> jax.Array:
         r"""Scalar standard deviation."""
         return jnp.sqrt(self.var())
+
+    def skewness(self) -> jax.Array:
+        r"""Scalar skewness (unwraps the parent's ``(1,)`` return)."""
+        return super().skewness()[0]
+
+    def kurtosis(self) -> jax.Array:
+        r"""Scalar excess kurtosis (unwraps the parent's ``(1,)`` return)."""
+        return super().kurtosis()[0]
 
     def rvs(self, n: int, seed: int = 42) -> jax.Array:
         r"""Sample ``n`` scalars (shape ``(n,)``)."""

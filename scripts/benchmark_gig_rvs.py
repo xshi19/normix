@@ -24,10 +24,9 @@ import jax.numpy as jnp
 from scipy import stats
 
 from normix import GIG
-from normix.utils.rvs import build_pinv_table
+from normix.utils.rvs import build_pinv_table, rvs_pinv as gig_rvs_pinv
 from normix.distributions.generalized_inverse_gaussian import (
     _gig_rvs_devroye as gig_rvs_devroye,
-    _gig_rvs_pinv as gig_rvs_pinv,
 )
 
 

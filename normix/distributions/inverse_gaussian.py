@@ -147,6 +147,14 @@ class InverseGaussian(ExponentialFamily):
     def var(self) -> jax.Array:
         return self.mu**3 / self.lam
 
+    def raw_moment(self, k: jax.Array) -> jax.Array:
+        r"""Raw moment :math:`E[X^k]` via the exact GIG embedding."""
+        return self.to_gig().raw_moment(k)
+
+    def raw_moments(self, ks: jax.Array) -> jax.Array:
+        r"""Vectorised :meth:`raw_moment` over orders ``ks``."""
+        return self.to_gig().raw_moments(ks)
+
     def mode(self) -> jax.Array:
         r"""Mode :math:`\mu\bigl(\sqrt{1 + 9\mu^2/(4\lambda^2)} - 3\mu/(2\lambda)\bigr)`.
 
