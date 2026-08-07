@@ -77,8 +77,8 @@ cache) and turns linkcheck into a hard gate instead of a report:
    slower than the cached `docs.yml` build; budget for it.
 6. Separate concurrency group (`pages-release`, `cancel-in-progress: false`)
    so a routine push to `master` running `docs.yml` cannot cancel an
-   in-progress release build (they'd otherwise share `docs.yml`'s `pages`
-   group and `cancel-in-progress: true` would kill the release run).
+   in-progress release build. `docs.yml` is keyed per PR / ref for the same
+   reason — a global `pages` group was cancelling PR Docs checks.
 
 Use `workflow_dispatch` to manually force a full re-execution + republish
 without cutting a release (e.g. after suspecting a stale cached figure, or

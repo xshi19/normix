@@ -12,9 +12,7 @@ member of the *same* family, with parameters available in closed form. No
 re-fitting is needed:
 
 ```python
-from normix.finance import project_portfolio
-
-proj = project_portfolio(model, w)     # a Univariate* distribution of wᵀX
+proj = model.project(w)                # a Univariate* distribution of wᵀX
 proj.mean(); proj.std()
 proj.ppf(0.05)                         # 5% quantile (a VaR level)
 ```
@@ -30,8 +28,8 @@ probability `alpha`:
 ```python
 from normix.finance import CVaR
 
-cvar = CVaR(0.05)                       # 5% tail probability
-Y = proj.subordinator.rvs(100_000, seed=0)   # conditional-MC draws
+cvar = CVaR(0.05)                       # 95% level
+Y = proj.subordinator().rvs(100_000, seed=0)  # conditional-MC draws
 var_95 = cvar.var(proj)                 # deterministic quantile
 cvar_95 = cvar.value(proj, Y)           # conditional Monte Carlo over Y
 ```

@@ -508,21 +508,10 @@ class GeneralizedHyperbolic(NormalMixture):
             p=ps[best], a=a_s[best], b=bs[best],
         )
 
-    def fit(self, X, *, algorithm='em', verbose=0, max_iter=200, tol=1e-3,
-            regularization='det_sigma_one',
-            e_step_backend='cpu', m_step_backend='cpu',
-            m_step_method='newton'):
-        """Fit GH distribution using EM or MCECM.
-
-        Defaults to CPU backends and det_sigma_one regularization
-        (GH has scale non-identifiability requiring |Sigma| = 1).
-        """
-        return super().fit(
-            X, algorithm=algorithm,
-            verbose=verbose, max_iter=max_iter, tol=tol,
-            regularization=regularization,
-            e_step_backend=e_step_backend, m_step_backend=m_step_backend,
-            m_step_method=m_step_method)
+    @classmethod
+    def _fit_defaults(cls) -> dict:
+        """CPU E-step + :math:`|\\Sigma|=1` (scale non-identifiability)."""
+        return {'e_step_backend': 'cpu', 'regularization': 'det_sigma_one'}
 
 
 # ============================================================================
@@ -578,7 +567,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         object.__setattr__(self, 'gamma', gamma)
         object.__setattr__(self, 'F', F)
         object.__setattr__(self, 'D', D)
-        object.__setattr__(self, 'subordinator', sub)
+        object.__setattr__(self, '_subordinator', sub)
 
     @classmethod
     def from_classical(
@@ -588,15 +577,15 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
 
     @property
     def p(self) -> jax.Array:
-        return self.subordinator.p
+        return self._subordinator.p
 
     @property
     def a(self) -> jax.Array:
-        return self.subordinator.a
+        return self._subordinator.a
 
     @property
     def b(self) -> jax.Array:
-        return self.subordinator.b
+        return self._subordinator.b
 
     def log_prob(self, x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
@@ -623,7 +612,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                 + zw)
 
     def _subordinator_expectations(self):
-        eta = self.subordinator.expectation_params()
+        eta = self._subordinator.expectation_params()
         return eta[0], eta[1], eta[2]
 
     @classmethod
@@ -653,7 +642,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         maxiter = kwargs.get('maxiter', 20)
 
         gig_eta = jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y])
-        current_gig = self.subordinator
+        current_gig = self._subordinator
 
         if backend == 'cpu':
             try:

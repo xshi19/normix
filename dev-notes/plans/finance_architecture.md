@@ -45,7 +45,7 @@ Recommended dependency direction:
 
 ```text
 normix.distributions / normix.mixtures / normix.fitting
-    -> normix.finance.projection
+    -> NormalMixture.project(w)          # core; no finance-layer wrapper
     -> normix.finance.risk
     -> normix.finance.optimization
     -> normix.finance.diversification
@@ -99,13 +99,15 @@ Whether the projection lives as a helper function or a method on
 ```text
 normix/finance/
 ├── __init__.py
-├── projection.py        # PortfolioProjection, project_portfolio
 ├── risk.py              # RiskMeasure, CoherentRiskMeasure, CVaR
 ├── optimization.py      # mean-risk problems and efficient-surface solvers
 ├── transaction_costs.py # QP approximation builders and result objects
 ├── diversification.py   # ENB, minimum torsion, generalized ENB
 └── reports.py           # shared result dataclasses
 ```
+
+Portfolio projection is `NormalMixture.project(w)` on the mixture core
+(DEC-4 / roadmap D4); there is no `finance/projection.py`.
 
 ## Risk Measures
 
@@ -230,9 +232,11 @@ engine.
 
 ### Phase D: Finance foundation — **Implemented (2026-05-17, refactored 2026-05-24)**
 
-- `NormalMixture.project(w)` / `normix.finance.projection.project_portfolio` —
-  univariate-mixture projection of `wᵀ X` as a `Univariate*` instance
-  (`UnivariateVarianceGamma`, `UnivariateNormalInverseGamma`, etc.).
+- `NormalMixture.project(w)` — univariate-mixture projection of `wᵀ X` as a
+  `Univariate*` instance (`UnivariateVarianceGamma`,
+  `UnivariateNormalInverseGamma`, etc.). The former
+  `finance.projection.project_portfolio` wrapper was deleted in review-roadmap
+  Phase 6 (D4 / DEC-4).
 - `Univariate*` classes expose scalar `mean`/`var`/`std`, `pdf`/`log_prob`,
   `cdf`/`ppf` (deterministic PINV over the marginal Bessel density), and
   `(n,)`-shaped `rvs`.

@@ -27,7 +27,7 @@ import pandas as pd
 from pathlib import Path
 
 from normix import NormalInverseGaussian, UnivariateNormalInverseGaussian
-from normix.finance import project_portfolio, CVaR
+from normix.finance import CVaR
 from normix.utils.plotting import set_theme
 
 set_theme()
@@ -46,7 +46,7 @@ model = NormalInverseGaussian.default_init(X).fit(
     X, max_iter=120, tol=1e-4, e_step_backend="cpu").model
 
 w = jnp.array([0.4, 0.3, 0.2, 0.1])
-proj = project_portfolio(model, w)         # 1-D return distribution of wᵀX
+proj = model.project(w)                    # 1-D return distribution of wᵀX
 alpha = 0.05
 cvar = CVaR(alpha)
 print(f"portfolio mean {float(proj.mean()):+.5f}, std {float(proj.std()):.5f}")
@@ -59,7 +59,7 @@ Monte Carlo over the subordinator draws $Y$ — far lower variance than sampling
 returns directly:
 
 ```{code-cell} python
-Y = proj.subordinator.rvs(100_000, seed=0)
+Y = proj.subordinator().rvs(100_000, seed=0)
 var_a = float(cvar.var(proj))
 cvar_a = float(cvar.value(proj, Y))
 print(f"VaR_{1-alpha:.0%}  = {var_a:.5f}")
@@ -84,7 +84,7 @@ $(\tilde\mu, \tilde\gamma, \tilde\sigma)$. We check the gradient against a
 central finite difference using common random numbers (the same $Y$):
 
 ```{code-cell} python
-sub = proj.subordinator
+sub = proj.subordinator()
 mt, gt, st = float(proj._mu_scalar), float(proj._gamma_scalar), float(proj._sigma_scalar)
 
 def rebuild(m, g, s):

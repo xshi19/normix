@@ -209,7 +209,7 @@ def test_cvar_monotonicity_theorem_signs():
     uni = UnivariateGeneralizedHyperbolic.from_classical(
         mu=mt, gamma=gt, sigma=st ** 2, **_GH_SUBORDINATOR)
     cvar = CVaR(0.05)
-    Y = uni.subordinator.rvs(50_000, seed=0)
+    Y = uni.subordinator().rvs(50_000, seed=0)
 
     # (1) local sensitivity signs at the vertex (analytic gradient in (μ̃, γ̃, σ̃))
     d_mu, d_gamma, d_sigma = np.asarray(cvar.gradient_scalar(uni, Y))
