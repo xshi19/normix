@@ -37,7 +37,7 @@ A = [\mu\;\gamma\;e]^\top \Sigma^{-1} [\mu\;\gamma\;e].
 $$
 
 The map $(\tilde\mu, \tilde\gamma) \mapsto \rho$ is the **efficient surface**.
-This tutorial reproduces Figures 8–9 of [Shi2016], then asks a question the
+This tutorial reproduces Figures 8–9 of {ref}`Shi2016 <shi2016>`, then asks a question the
 thesis did not: *does the choice of mixture family change the answer?* We run
 the same optimization through the variance gamma, NIG, normal-inverse-gamma,
 and generalized hyperbolic models.
@@ -321,5 +321,6 @@ pd.DataFrame(weights, index=basket).round(3)
 
 For the mathematics — the monotonicity theorem and the reduction proof — see
 {doc}`../../theory/mean_risk_optimization`. Transaction-cost rebalancing (local
-QP) is covered in {doc}`06_transaction_costs`; generalized diversification
-(effective number of bets) remains on the roadmap.
+QP) is covered in {doc}`06_transaction_costs`. Effective number of bets is
+derived in {doc}`../../theory/enb` and {doc}`../../theory/generalized_enb`
+(an ENB tutorial is still future work).

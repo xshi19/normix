@@ -15,7 +15,7 @@ mystnb:
 
 # EM vs MCECM Algorithm Comparison
 
-This notebook replicates Table 4 from [Shi2016], comparing the EM and MCECM
+This notebook replicates Table 4 from {ref}`Shi2016 <shi2016>`, comparing the EM and MCECM
 algorithms for fitting Generalized Hyperbolic (GH) distributions.
 
 **Procedure** (following the thesis):

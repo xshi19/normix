@@ -6,7 +6,7 @@
 > forcing the joint hierarchy to lie about its EF signature.
 >
 > **Where things live.** Class diagram and storage table are in the
-> [API Reference](../api/index). EM details are in {doc}`em_framework`.
+> {doc}`API Reference <../api/index>`. EM details are in {doc}`em_framework`.
 
 ---
 
@@ -282,5 +282,6 @@ family.
 ## 8. Cross-References
 
 - EM machinery: {doc}`em_framework`.
-- Theory: [GH distribution](../theory/gh), [Factor analysis](../theory/factor_analysis),
-  [Shrinkage](../theory/shrinkage).
+- Theory: {doc}`GH distribution <../theory/gh>`,
+  {doc}`Factor analysis <../theory/factor_analysis>`,
+  {doc}`Shrinkage <../theory/shrinkage>`.

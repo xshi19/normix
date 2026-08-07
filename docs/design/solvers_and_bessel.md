@@ -251,4 +251,4 @@ Neither method evaluates the Bessel normalising constant.
 ## 6. Cross-References
 
 - Triad design: {doc}`exponential_family`.
-- Theory: [GIG distribution](../theory/gig), [EM algorithm](../theory/em_algorithm).
+- Theory: {doc}`GIG distribution <../theory/gig>`, {doc}`EM algorithm <../theory/em_algorithm>`.

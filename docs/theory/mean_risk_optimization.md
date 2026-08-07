@@ -10,7 +10,7 @@ to a two-dimensional problem.
 **Definition.** Let $(\Omega, \mathcal{F}, \mathbb{P})$ be a
 probability space and $\mathcal{L}(\Omega, \mathcal{F})$ the set of
 real-valued random variables. A **coherent risk measure** is a function
-$\rho : \mathcal{L} \to \mathbb{R}$ satisfying [Artzner1999](#artzner1999):
+$\rho : \mathcal{L} \to \mathbb{R}$ satisfying {ref}`Artzner1999 <artzner1999>`:
 
 1. *Monotonicity:* If $X \leq Y$, then $\rho(X) \geq \rho(Y)$.
 2. *Translation invariance:* $\rho(X + c) = \rho(X) - c$ for all $c \in \mathbb{R}$.
@@ -219,10 +219,3 @@ where $\preceq$ denotes element-wise inequality, the following holds:
 
 This follows directly from Theorem 1: the worst case uses the smallest
 $\mu$, smallest $\gamma$, and largest $\Sigma$.
-
-## References
-
-```{eval-rst}
-.. [Artzner1999] Artzner, P., Delbaen, F., Eber, J.-M., & Heath, D. (1999).
-   Coherent measures of risk. *Mathematical Finance*, 9(3), 203-228.
-```
