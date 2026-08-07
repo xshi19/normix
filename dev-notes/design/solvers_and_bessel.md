@@ -235,8 +235,8 @@ GIG-specific sampling is inlined in
 
 - `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$,
   batch-parallel (no `while_loop`).
-- `_gig_rvs_pinv(key, u_grid, x_grid, n)` — alias of `rvs_pinv` used by
-  `GIG.rvs(method='pinv')`.
+- `GIG.rvs(method='pinv')` — `quantile_table().rvs` via
+  `build_pinv_table` / `rvs_pinv` in `utils/rvs.py`.
 
 Neither method evaluates the Bessel normalising constant. See
 `../tech_notes/gig_rvs.md`.

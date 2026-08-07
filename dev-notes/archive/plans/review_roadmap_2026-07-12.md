@@ -1,13 +1,10 @@
 # Package Review Roadmap (2026-07-12)
 
-> **ACTIVE — Phase 0–6 done; Phase 7 complete (2026-08-06); Phase 8 remain.**
-> Based on [package_review_2026-07-12](../reviews/package_review_2026-07-12.md)
-> (1018 fast tests green; the mathematical core is verified correct — every
-> re-derived density, gradient, Hessian, and M-step formula matches the
-> implementation). The findings are edge-hardening, hygiene, efficiency, and
-> docs; nothing at the level of a wrong density or broken estimator.
-> Predecessor: the 2026-03-30 review roadmap, all 27 items resolved, archived
-> at [`../archive/plans/package_improvement_roadmap.md`](../archive/plans/package_improvement_roadmap.md).
+> **ARCHIVED — 2026-08-07.** All 44 review items resolved across Phases 0–8;
+> the review-driven cleanup is complete. Kept for historical context.
+> Based on [package_review_2026-07-12](../../reviews/package_review_2026-07-12.md).
+> Predecessor: the 2026-03-30 review roadmap, archived at
+> [`package_improvement_roadmap.md`](package_improvement_roadmap.md).
 
 ## Conventions
 
@@ -112,7 +109,7 @@ Genuinely new:
 
 | ID | § | Item | Pri |
 |----|---|------|-----|
-| F1 | 8.4 | `skewness()` / `kurtosis()` on marginal mixtures — closed forms exist for the GH family; standard finance need. Rounds out the scipy-like moment surface (`mean`/`cov`/`var`/`std` exist). Needs formulas in `docs/theory/`, implementation on `NormalMixture` + `Univariate*`, tests vs sample moments / quadrature. ~120 LOC. | P3 |
+| F1 | 8.4 | `skewness()` / `kurtosis()` on marginal mixtures — closed forms exist for the GH family; standard finance need. Rounds out the scipy-like moment surface (`mean`/`cov`/`var`/`std` exist). Needs formulas in `docs/theory/`, implementation on `NormalMixture` + `Univariate*`, tests vs sample moments / quadrature. ~120 LOC. | **DONE (2026-08-07).** Closed-form via subordinator `raw_moments` + mixture conditioning; theory in `docs/theory/gh.md`; tests in `tests/test_mixture_moments.py`. | P3 |
 
 ## Counts
 
@@ -243,25 +240,31 @@ Fix content first, then turn on enforcement.
 toctree `maxdepth: 2` + `docs/references.md` + `user_guide/index` hub.
 Wrong public `{py:class}` paths still warn under nitpicky (probed).
 
-### Phase 8 — Features (F1)
+### Phase 8 — Features (F1) — **DONE (2026-08-07)**
 
 `skewness()`/`kurtosis()` with theory-page derivations and moment tests.
-**Exit:** values match sample moments / quadrature across the four families;
-gallery/API docs updated.
+**Exit met:** closed forms match sample moments across VG/NIG/NInvG/GH;
+component-wise equals `project(e_i)`; theory in `docs/theory/gh.md`;
+gallery/user-guide/API surface updated; `tests/test_mixture_moments.py`
+(14 cases, including `contract` sample-moment checks).
+
+| Item | Status |
+|------|--------|
+| F1 | **DONE** — `NormalMixture` / `Univariate*` / `FactorNormalMixture` + subordinator `raw_moments` |
 
 ## Phase Summary
 
 | Phase | Theme | Items | Blocked by |
 |-------|-------|-------|------------|
-| 0 | Design decisions | DEC-1…5 | — |
+| 0 | Design decisions | DEC-1…5 | — ✅ |
 | 1 | Hygiene sweep | C1–C5 | — ✅ |
 | 2 | Agent docs & rules sync | DOC1–DOC7 | — ✅ |
-| 3 | Correctness | B1–B8 | DEC-1 (B1 only) |
+| 3 | Correctness | B1–B8 | DEC-1 (B1 only) ✅ |
 | 4 | Test hardening | T1–T5 | — ✅ |
 | 5 | Efficiency | E1–E7 | DEC-5 (E3 only) ✅ |
 | 6 | API consistency | D1–D4 | DEC-2/3/4; prefer after Phase 4 ✅ |
 | 7 | Website | W1–W7 | W7 after W1/W2/W6 ✅ |
-| 8 | Features | F1 | — |
+| 8 | Features | F1 | — ✅ |
 
 Suggested order: Phases 1 + 2 immediately (independent, zero-risk); DEC-1 →
 B1 and B2 next (the Medium-severity item and the cheapest wrong number);
