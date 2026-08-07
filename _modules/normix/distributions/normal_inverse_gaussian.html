@@ -748,7 +748,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;subordinator&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_subordinator&#39;</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian.from_classical">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.from_classical">[docs]</a>
@@ -761,11 +761,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mu_ig</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">mu</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator</span><span class="o">.</span><span class="n">mu</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">lam</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">lam</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator</span><span class="o">.</span><span class="n">lam</span>
 
 <div class="viewcode-block" id="FactorNormalInverseGaussian.log_prob">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.FactorNormalInverseGaussian.log_prob">[docs]</a>

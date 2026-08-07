@@ -549,7 +549,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.rvs"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.rvs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.d"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.dim"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.dim</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.sigma"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.sigma"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.sigma()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -570,7 +570,6 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.log_prob"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.log_prob()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.alpha"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.alpha</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.beta"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.beta</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.fit"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.fit()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.to_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.to_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>
@@ -602,7 +601,6 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.log_prob()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.alpha"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.alpha</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.beta</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.fit()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.to_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.to_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>
@@ -681,7 +679,6 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.to_normal_inverse_gamma()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.to_normal_inverse_gaussian()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.default_init()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.fit()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic"><code class="docutils literal notranslate"><span class="pre">UnivariateGeneralizedHyperbolic</span></code></a><ul class="nav section-nav flex-column">
@@ -720,9 +717,9 @@
 <nav class="contents local" id="modules">
 <p class="topic-title">Modules</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#univariate-distributions" id="id3">Univariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id4">Multivariate Distributions</a></p></li>
-<li><p><a class="reference internal" href="#mixture-distributions" id="id5">Mixture Distributions</a></p></li>
+<li><p><a class="reference internal" href="#univariate-distributions" id="id1">Univariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.distributions.normal" id="id2">Multivariate Distributions</a></p></li>
+<li><p><a class="reference internal" href="#mixture-distributions" id="id3">Mixture Distributions</a></p></li>
 </ul>
 </nav>
 <p>Each mixture family (Variance Gamma, Normal-Inverse Gamma, Normal-Inverse
@@ -730,7 +727,7 @@ Gaussian, Generalized Hyperbolic) documents four classes from one module: the
 joint <span class="math notranslate nohighlight">\((X,Y)\)</span> law, the marginal-of-<span class="math notranslate nohighlight">\(X\)</span> law, a scalar
 (<span class="math notranslate nohighlight">\(d=1\)</span>) convenience wrapper, and the factor-analysis variant.</p>
 <section id="univariate-distributions">
-<h2><a class="toc-backref" href="#id3" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Univariate Distributions</a><a class="headerlink" href="#univariate-distributions" title="Link to this heading">#</a></h2>
 <section id="module-normix.distributions.gamma">
 <span id="gamma"></span><h3>Gamma<a class="headerlink" href="#module-normix.distributions.gamma" title="Link to this heading">#</a></h3>
 <p>Gamma distribution as an exponential family.</p>
@@ -1772,7 +1769,7 @@ multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
 </section>
 </section>
 <section id="module-normix.distributions.normal">
-<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading">#</a></h2>
+<span id="multivariate-distributions"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Multivariate Distributions</a><a class="headerlink" href="#module-normix.distributions.normal" title="Link to this heading">#</a></h2>
 <p>Multivariate Normal distribution.</p>
 <p>Stored: <code class="docutils literal notranslate"><span class="pre">mu</span></code> (d,), <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> (d×d) lower-triangular Cholesky of <span class="math notranslate nohighlight">\(\Sigma\)</span>.
 All linear algebra via <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> — never form <span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> explicitly.</p>
@@ -1983,17 +1980,22 @@ then <span class="math notranslate nohighlight">\(\mu = \Lambda^{-1}\theta_1\)</
 <dd><p>Dimensionality (alias for <code class="docutils literal notranslate"><span class="pre">d</span></code>).</p>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.sigma">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sigma" title="Link to this definition">#</a></dt>
-<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span> (alias for <code class="docutils literal notranslate"><span class="pre">cov()</span></code>).</p>
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal.html#MultivariateNormal.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.sigma" title="Link to this definition">#</a></dt>
+<dd><p>Covariance matrix <span class="math notranslate nohighlight">\(\Sigma = L_\Sigma L_\Sigma^\top\)</span> (alias for <a class="reference internal" href="#normix.distributions.normal.MultivariateNormal.cov" title="normix.distributions.normal.MultivariateNormal.cov"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cov()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="mixture-distributions">
-<h2><a class="toc-backref" href="#id5" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Mixture Distributions</a><a class="headerlink" href="#mixture-distributions" title="Link to this heading">#</a></h2>
 <section id="module-normix.distributions.variance_gamma">
 <span id="variance-gamma"></span><h3>Variance Gamma<a class="headerlink" href="#module-normix.distributions.variance_gamma" title="Link to this heading">#</a></h3>
 <p>Variance Gamma (VG) distribution.</p>
@@ -2133,17 +2135,6 @@ floored value, breaking the cancellation needed for a finite limit.</p>
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.beta">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.beta" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\beta\)</span> — Gamma rate (forwarded from the joint).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.variance_gamma.VarianceGamma.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#VarianceGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.VarianceGamma.fit" title="Link to this definition">#</a></dt>
-<dd><p>Fit VG using EM or MCECM.  Defaults to CPU E-step (faster than JAX
-vmap for the degenerate-GIG posterior arising from the Gamma subordinator).</p>
-<p><code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> (float or <code class="docutils literal notranslate"><span class="pre">'density'</span></code> / <code class="docutils literal notranslate"><span class="pre">'inverse_moment'</span></code>) is the
-opt-in lower bound on the Gamma shape <span class="math notranslate nohighlight">\(\alpha\)</span> that keeps the VG
-marginal likelihood bounded; see
-<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.MarginalMixture.fit" title="normix.mixtures.marginal.MarginalMixture.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2390,14 +2381,6 @@ cancellation between the two that is needed for a finite limit.</p>
 <dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">beta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\beta\)</span> — InverseGamma rate (forwarded from the joint).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#NormalInverseGamma.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit" title="Link to this definition">#</a></dt>
-<dd><p>Fit NInvG using EM or MCECM.  Defaults to CPU E-step (faster than
-JAX vmap for the degenerate-GIG posterior arising from the InverseGamma
-subordinator).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -3066,14 +3049,6 @@ with the highest marginal log-likelihood.  A moment-based fallback
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'det_sigma_one'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit" title="Link to this definition">#</a></dt>
-<dd><p>Fit GH distribution using EM or MCECM.</p>
-<p>Defaults to CPU backends and det_sigma_one regularization
-(GH has scale non-identifiability requiring <a href="#id1"><span class="problematic" id="id2">|Sigma|</span></a> = 1).</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -3383,7 +3358,7 @@ candidate.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.rvs"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.rvs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.d"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.dim"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.dim</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.sigma"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal.MultivariateNormal.sigma"><code class="docutils literal notranslate"><span class="pre">MultivariateNormal.sigma()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -3404,7 +3379,6 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.log_prob"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.log_prob()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.alpha"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.alpha</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.beta"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.beta</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.fit"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.fit()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.VarianceGamma.to_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">VarianceGamma.to_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>
@@ -3436,7 +3410,6 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.log_prob"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.log_prob()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.alpha"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.alpha</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.beta"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.beta</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.fit"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.fit()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.NormalInverseGamma.to_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">NormalInverseGamma.to_generalized_hyperbolic()</span></code></a></li>
 </ul>
 </li>
@@ -3515,7 +3488,6 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gamma"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.to_normal_inverse_gamma()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_normal_inverse_gaussian"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.to_normal_inverse_gaussian()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.default_init()</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.fit"><code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.fit()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.UnivariateGeneralizedHyperbolic"><code class="docutils literal notranslate"><span class="pre">UnivariateGeneralizedHyperbolic</span></code></a><ul class="nav section-nav flex-column">

@@ -695,10 +695,12 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Dimensionality (alias for ``d``).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
 
-    <span class="nd">@property</span>
+<div class="viewcode-block" id="MultivariateNormal.sigma">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal.MultivariateNormal.sigma">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top` (alias for ``cov()``).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance matrix :math:`\Sigma = L_\Sigma L_\Sigma^\top` (alias for :meth:`cov`).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span></div>
+</div>
 
 </pre></div>
 

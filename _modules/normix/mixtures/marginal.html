@@ -516,9 +516,26 @@
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
 
+<div class="viewcode-block" id="MarginalMixture.subordinator">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.subordinator">[docs]</a>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the subordinator distribution :math:`Y`.&quot;&quot;&quot;</span></div>
+
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Convenience</span>
     <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fit_defaults</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Family-specific :class:`~normix.fitting.em.BatchEMFitter` defaults.</span>
+
+<span class="sd">        Merged **under** user kwargs in :meth:`fit`. Override in subclasses</span>
+<span class="sd">        that need non-``BatchEMFitter`` defaults (e.g. CPU E-step). Empty</span>
+<span class="sd">        dict means every knob falls through to ``BatchEMFitter.__init__``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="MarginalMixture.fit">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.fit">[docs]</a>
@@ -526,18 +543,17 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;em&#39;</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-        <span class="n">regularization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
-        <span class="n">e_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
-        <span class="n">m_step_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">,</span>
-        <span class="n">m_step_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;newton&#39;</span><span class="p">,</span>
         <span class="n">alpha_min</span><span class="p">:</span> <span class="s2">&quot;float | str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">fitter_kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit using ``self`` as initialisation. Returns</span>
 <span class="sd">        :class:`~normix.fitting.em.EMResult`.</span>
+
+<span class="sd">        Keyword arguments other than ``alpha_min`` are forwarded to</span>
+<span class="sd">        :class:`~normix.fitting.em.BatchEMFitter` (``algorithm``,</span>
+<span class="sd">        ``track_ll``, ``eta_update``, ``m_step_kwargs``, backends, …).</span>
+<span class="sd">        Family-specific defaults come from :meth:`_fit_defaults` and are</span>
+<span class="sd">        overridden by any explicitly supplied kwarg.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -554,22 +570,18 @@
 <span class="sd">            (``&#39;inverse_moment&#39;`` — :math:`E[1/Y\mid x]` also bounded), with</span>
 <span class="sd">            :math:`\varepsilon=` :data:`~normix.utils.constants.ALPHA_MIN_MARGIN`.</span>
 <span class="sd">            Has no effect on NInvG / NIG / GH (their prior :math:`b&gt;0` keeps</span>
-<span class="sd">            the likelihood bounded for every :math:`\alpha`).</span>
+<span class="sd">            the likelihood bounded for every :math:`\alpha`). When set, it is</span>
+<span class="sd">            merged into ``m_step_kwargs`` and wins over any</span>
+<span class="sd">            ``alpha_min`` already present there.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
-        <span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_fit_defaults</span><span class="p">(),</span> <span class="o">**</span><span class="n">fitter_kwargs</span><span class="p">}</span>
         <span class="n">resolved</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_alpha_min</span><span class="p">(</span><span class="n">alpha_min</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;alpha_min&#39;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">}</span>
-        <span class="n">fitter</span> <span class="o">=</span> <span class="n">BatchEMFitter</span><span class="p">(</span>
-            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
-            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
-            <span class="n">regularization</span><span class="o">=</span><span class="n">regularization</span><span class="p">,</span>
-            <span class="n">e_step_backend</span><span class="o">=</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="n">m_step_backend</span><span class="p">,</span>
-            <span class="n">m_step_method</span><span class="o">=</span><span class="n">m_step_method</span><span class="p">,</span>
-            <span class="n">m_step_kwargs</span><span class="o">=</span><span class="n">m_step_kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
+            <span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;m_step_kwargs&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="n">m_step_kwargs</span><span class="p">[</span><span class="s1">&#39;alpha_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolved</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;m_step_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">m_step_kwargs</span>
+        <span class="k">return</span> <span class="n">BatchEMFitter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_alpha_min</span><span class="p">(</span>
@@ -652,6 +664,13 @@
 <span class="sd">        :math:`E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NormalMixture.subordinator">
+<a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.subordinator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subordinator distribution :math:`Y` (forwarded from the joint).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.log_det_sigma">
@@ -1214,11 +1233,6 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires d=1, got d=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">joint</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">joint</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Subordinator distribution :math:`Y` (forwarded from the joint).&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_mu_scalar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>

@@ -473,7 +473,6 @@ basket and read off that latent factor.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">project_portfolio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchEMFitter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_theme</span>
 
@@ -534,8 +533,8 @@ market data:</p>
   Regularize   : none
   Tolerance    : 1.0e-04
   Max iters    : 150
-  Converged after 3 iterations (4.26s), final LL=15.077929
-converged True in 3 iters (4.3s)
+  Converged after 3 iterations (4.39s), final LL=15.077929
+converged True in 3 iters (4.4s)
 test mean log-lik: 14.3946
 </pre></div>
 </div>
@@ -601,12 +600,12 @@ absorbing the time-varying volatility into the mixing variable.</p>
 <section id="projecting-to-a-portfolio">
 <h2>Projecting to a portfolio<a class="headerlink" href="#projecting-to-a-portfolio" title="Link to this heading">#</a></h2>
 <p>Any linear combination of the assets is again a univariate member of the same
-family. <code class="docutils literal notranslate"><span class="pre">project_portfolio</span></code> returns that 1-D distribution in closed form — no
+family. <code class="docutils literal notranslate"><span class="pre">model.project(w)</span></code> returns that 1-D distribution in closed form — no
 re-fitting:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">basket</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">basket</span><span class="p">)</span>         <span class="c1"># equal weight</span>
-<span class="n">port</span> <span class="o">=</span> <span class="n">project_portfolio</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+<span class="n">port</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
 <span class="n">realized_port</span> <span class="o">=</span> <span class="n">R</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;portfolio mean  </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">  (empirical </span><span class="si">{</span><span class="n">realized_port</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;portfolio std   </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">port</span><span class="o">.</span><span class="n">std</span><span class="p">())</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">  (empirical </span><span class="si">{</span><span class="n">realized_port</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
@@ -630,7 +629,7 @@ portfolio std   0.01127  (empirical 0.01180)
 log-likelihood ascent and fitted correlation are standard sanity checks.</p></li>
 <li><p><span class="math notranslate nohighlight">\(\mathbb{E}[Y \mid X]\)</span> recovered via <code class="docutils literal notranslate"><span class="pre">joint.conditional_expectations</span></code> is an
 interpretable latent volatility that tracks turbulent days.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">project_portfolio(model,</span> <span class="pre">w)</span></code> gives the portfolio return distribution in
+<li><p><code class="docutils literal notranslate"><span class="pre">model.project(w)</span></code> gives the portfolio return distribution in
 closed form for any weights.</p></li>
 </ul>
 <p>Next: <a class="reference internal" href="03_factor_mixture_portfolios.html"><span class="doc">Factor mixtures for a Dow Jones 30 portfolio</span></a> scales this to 30 assets with a

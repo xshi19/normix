@@ -440,10 +440,6 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.projection">Portfolio Projection</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.projection.project_portfolio"><code class="docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.risk">Risk Measures</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure"><code class="docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value()</span></code></a></li>
@@ -584,46 +580,17 @@
 <nav class="contents local" id="modules">
 <p class="topic-title">Modules</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#module-normix.finance.projection" id="id5">Portfolio Projection</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.risk" id="id6">Risk Measures</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.optimization" id="id7">Mean-Risk Optimization</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.transaction_costs" id="id8">Transaction Costs</a></p></li>
-<li><p><a class="reference internal" href="#module-normix.finance.functional" id="id9">Weight Functional</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.risk" id="id5">Risk Measures</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.optimization" id="id6">Mean-Risk Optimization</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.transaction_costs" id="id7">Transaction Costs</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.finance.functional" id="id8">Weight Functional</a></p></li>
 </ul>
 </nav>
-<section id="module-normix.finance.projection">
-<span id="portfolio-projection"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Portfolio Projection</a><a class="headerlink" href="#module-normix.finance.projection" title="Link to this heading">#</a></h2>
-<p>Portfolio projection: bridge from multivariate normal mixtures to univariate.</p>
-<p>For a normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z\)</span> with
-<span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span> and weights <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>,
-the portfolio return is itself a univariate normal mixture:</p>
-<div class="math notranslate nohighlight">
-\[w^\top X \stackrel{d}{=} w^\top \mu
-    + w^\top \gamma \, Y + \sqrt{w^\top \Sigma w} \, \sqrt{Y} \, Z_1,\]</div>
-<p>where <span class="math notranslate nohighlight">\(Z_1 \sim \mathcal{N}(0, 1)\)</span>. <a class="reference internal" href="#normix.finance.projection.project_portfolio" title="normix.finance.projection.project_portfolio"><code class="xref py py-func docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a> returns
-the corresponding <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> distribution instance.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="normix.finance.projection.project_portfolio">
-<span class="sig-prename descclassname"><span class="pre">normix.finance.projection.</span></span><span class="sig-name descname"><span class="pre">project_portfolio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/projection.html#project_portfolio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.projection.project_portfolio" title="Link to this definition">#</a></dt>
-<dd><p>Project a multivariate normal mixture onto portfolio weights <code class="docutils literal notranslate"><span class="pre">w</span></code>.</p>
-<p>Returns a <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> instance (e.g. <code class="xref py py-class docutils literal notranslate"><span class="pre">UnivariateNormalInverseGaussian</span></code>)
-representing the distribution of <span class="math notranslate nohighlight">\(w^\top X\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
-<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>_UnivariateNormalMixtureMixin</em></p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
+<p>Portfolio projection lives on the mixture itself
+(<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture.project" title="normix.mixtures.marginal.NormalMixture.project"><code class="xref py py-meth docutils literal notranslate"><span class="pre">project()</span></code></a>); there is no
+separate finance-layer wrapper.</p>
 <section id="module-normix.finance.risk">
-<span id="risk-measures"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Risk Measures</a><a class="headerlink" href="#module-normix.finance.risk" title="Link to this heading">#</a></h2>
+<span id="risk-measures"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Risk Measures</a><a class="headerlink" href="#module-normix.finance.risk" title="Link to this heading">#</a></h2>
 <p>Coherent risk measures for univariate normal-mixture portfolio returns.</p>
 <p>The current implementation provides Conditional Value at Risk (CVaR), with
 value, first derivatives, and second derivatives in both the projected
@@ -880,7 +847,7 @@ conditional-MC CDF once.</p>
 
 </section>
 <section id="module-normix.finance.optimization">
-<span id="mean-risk-optimization"></span><h2><a class="toc-backref" href="#id7" role="doc-backlink">Mean-Risk Optimization</a><a class="headerlink" href="#module-normix.finance.optimization" title="Link to this heading">#</a></h2>
+<span id="mean-risk-optimization"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Mean-Risk Optimization</a><a class="headerlink" href="#module-normix.finance.optimization" title="Link to this heading">#</a></h2>
 <p>Mean-risk portfolio optimization for normal-mixture models.</p>
 <p>For a multivariate normal mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y
 + \sqrt{Y} Z\)</span> with <span class="math notranslate nohighlight">\(Z \sim \mathcal{N}(0, \Sigma)\)</span>, the mean-risk
@@ -1190,7 +1157,7 @@ line <span class="math notranslate nohighlight">\(\tilde\mu = m - \tilde\gamma E
 
 </section>
 <section id="module-normix.finance.transaction_costs">
-<span id="transaction-costs"></span><h2><a class="toc-backref" href="#id8" role="doc-backlink">Transaction Costs</a><a class="headerlink" href="#module-normix.finance.transaction_costs" title="Link to this heading">#</a></h2>
+<span id="transaction-costs"></span><h2><a class="toc-backref" href="#id7" role="doc-backlink">Transaction Costs</a><a class="headerlink" href="#module-normix.finance.transaction_costs" title="Link to this heading">#</a></h2>
 <p>Local-quadratic transaction-cost portfolio rebalancing.</p>
 <p>The mean-risk problem with an <span class="math notranslate nohighlight">\(\ell_1\)</span> turnover penalty</p>
 <div class="math notranslate nohighlight">
@@ -1699,7 +1666,7 @@ encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. lon
 
 </section>
 <section id="module-normix.finance.functional">
-<span id="weight-functional"></span><h2><a class="toc-backref" href="#id9" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
+<span id="weight-functional"></span><h2><a class="toc-backref" href="#id8" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
 <p>Risk measures as JIT-able functions of portfolio weights.</p>
 <p><a class="reference internal" href="#normix.finance.functional.WeightFunctional" title="normix.finance.functional.WeightFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a> bundles a <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>,
 a multivariate normal-mixture model, and a fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> into
@@ -1814,10 +1781,6 @@ for mean-risk optimisation (Phase E).</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.projection">Portfolio Projection</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.projection.project_portfolio"><code class="docutils literal notranslate"><span class="pre">project_portfolio()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.finance.risk">Risk Measures</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure"><code class="docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.RiskMeasure.value"><code class="docutils literal notranslate"><span class="pre">RiskMeasure.value()</span></code></a></li>

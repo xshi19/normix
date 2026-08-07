@@ -469,9 +469,7 @@ computable by a fast conditional Monte Carlo over <span class="math notranslate 
 <p>Any linear combination <span class="math notranslate nohighlight">\(w^\top X\)</span> of a mixture’s assets is again a univariate
 member of the <em>same</em> family, with parameters available in closed form. No
 re-fitting is needed:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">project_portfolio</span>
-
-<span class="n">proj</span> <span class="o">=</span> <span class="n">project_portfolio</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>     <span class="c1"># a Univariate* distribution of wᵀX</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>                <span class="c1"># a Univariate* distribution of wᵀX</span>
 <span class="n">proj</span><span class="o">.</span><span class="n">mean</span><span class="p">();</span> <span class="n">proj</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
 <span class="n">proj</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>                         <span class="c1"># 5% quantile (a VaR level)</span>
 </pre></div>
@@ -486,7 +484,7 @@ probability <code class="docutils literal notranslate"><span class="pre">alpha</
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">CVaR</span>
 
 <span class="n">cvar</span> <span class="o">=</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>                       <span class="c1"># 95% level</span>
-<span class="n">Y</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>   <span class="c1"># conditional-MC draws</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># conditional-MC draws</span>
 <span class="n">var_95</span> <span class="o">=</span> <span class="n">cvar</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>                 <span class="c1"># deterministic quantile</span>
 <span class="n">cvar_95</span> <span class="o">=</span> <span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>           <span class="c1"># conditional Monte Carlo over Y</span>
 </pre></div>
