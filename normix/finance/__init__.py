@@ -9,13 +9,26 @@ Given a multivariate normal-mixture model and weights :math:`w`,
 exposes risk as a JIT-able function of :math:`w` for optimisation.
 :class:`MeanRiskProblem` solves the reduced mean-risk surface;
 :class:`TransactionCostProblem` builds the local-quadratic turnover QP.
+:class:`VarianceENB` / :class:`GeneralizedENB` measure diversification
+via Meucci's effective number of bets.
 
 See ``docs/theory/cvar_derivatives.md``,
-``docs/theory/mean_risk_optimization.md``, and
-``docs/theory/transaction_costs.md``.
+``docs/theory/mean_risk_optimization.md``,
+``docs/theory/transaction_costs.md``,
+``docs/theory/enb.md``, and
+``docs/theory/generalized_enb.md``.
 """
 from __future__ import annotations
 
+from normix.finance.diversification import (
+    ENBResult,
+    GeneralizedENB,
+    MinimumTorsion,
+    PCATorsion,
+    Torsion,
+    TorsionDecomposition,
+    VarianceENB,
+)
 from normix.finance.functional import WeightFunctional
 from normix.finance.optimization import (
     EfficientFrontier, EfficientSurface, MeanRiskProblem)
@@ -38,4 +51,11 @@ __all__ = [
     "TransactionCostProblem",
     "TransactionCostQP",
     "TransactionCostResult",
+    "Torsion",
+    "TorsionDecomposition",
+    "MinimumTorsion",
+    "PCATorsion",
+    "ENBResult",
+    "VarianceENB",
+    "GeneralizedENB",
 ]

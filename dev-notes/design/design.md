@@ -166,6 +166,12 @@ the class as `@classmethod` or `@staticmethod`.
 | DEC-4 | `finance/projection.py` placement (gates D4) | **Delete** the module and `project_portfolio`; `model.project(w)` is the only spelling. | The function forwards to the method with zero added logic ("no wrapper that only forwards"). The finance plan's "start as a function, move into the core later" clause is resolved: `NormalMixture.project` landed in Phase D and is universally useful. Tutorials, user guide, tests, and `finance/__init__` update with D4 in roadmap Phase 6. |
 | DEC-5 | Quantile-table reuse (gates E3) | Frozen `QuantileTable(eqx.Module)` in `utils/rvs.py` — fields `u_grid`, `x_grid`; methods `cdf(x)`, `ppf(q)`, `rvs(n, seed)` — returned by `quantile_table()` on the PINV-backed distributions (`Univariate*` mixin, GIG, InverseGaussian). `build_pinv_table` stays the raw functional core; per-call `cdf`/`ppf` semantics unchanged (still stateless), repeated workloads hold the table. | Each `cdf`/`ppf` call today rebuilds a 4000-point Bessel-heavy table; modules are immutable (F1) so self-caching is out, but a small pytree table is jit/vmap-safe and closes over cleanly in scanned loops. Documented `(u_grid, x_grid)` tuple reuse rejected: no uniform accessor across GIG / IG / `Univariate*`, and it pushes `jnp.interp` bookkeeping (`left=0, right=1`) onto every caller. GIG's degenerate-regime `cdf`/`ppf` delegation is B4's concern and must not regress. `solvers_and_bessel.md` § 5.1 |
 
+### Finance
+
+| # | Decision | Choice | Why / Detail |
+|---|---|---|---|
+| FIN-1 | Diversification (ENB) shape | Two concrete measures, no `DiversificationMeasure` ABC: `VarianceENB(torsion)` (Y-free, diagonalizes `model.cov()`; also `evaluate_covariance` for bare matrices) and `GeneralizedENB(risk, torsion)` (mandatory `Y`; assembles $H_{r^2}=2\nabla r\nabla r^\top+2rH_r$ from **one** `value_grad_hess_w`, promoted to `RiskMeasure` as raising default). `Torsion` strategy ABC (`MinimumTorsion` closed-form $D{=}I$ default, `PCATorsion`; iterative unconstrained-$D$ MT deferred). Shared private core normalizes $p=d_kv_k^2/w^\top Hw$ (simplex by construction); `enb` is NaN on material indefiniteness or $r\le 0$. Result pytree `ENBResult(enb, p, risk, v, d, T, eigenvalues)`. Guards: `LOG_EPS` entropy clamp, relative `TORSION_SPECTRAL_FLOOR`; `HESSIAN_DAMPING` unused (bias). | Measure ABC has no polymorphic consumer and the two Y signatures honestly differ; `Torsion` has two polymorphic consumers. Amends the 2026-04 plan sketch. Arena synthesis: `../plans/finance_architecture.md` § Phase F; theory corrections in `docs/theory/enb.md` / `generalized_enb.md`. |
+
 ---
 
 ## Cross-References
@@ -179,4 +185,4 @@ the class as `@classmethod` or `@staticmethod`.
 - Theory: `../../docs/theory/`.
 - Tech notes: `../tech_notes/`.
 - Historical / archived design proposals: `../archive/design/`.
-- Unimplemented proposals: `../plans/finance_architecture.md`.
+- Finance roadmap (Phases D–F done): `../plans/finance_architecture.md`.

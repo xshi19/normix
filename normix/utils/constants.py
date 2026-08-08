@@ -92,3 +92,12 @@ RENYI_TAYLOR_EPS: float = 1e-6
 
 # z threshold below which small-z asymptotic is used in log_kv
 BESSEL_SMALLZ_THRESHOLD: float = 1e-6
+
+# ── Diversification / torsion constants ───────────────────────────────
+
+# Relative spectral floor for Meucci torsion diagonalizations. Before
+# correlation scaling, diag(H) is floored at TORSION_SPECTRAL_FLOOR·max(diag H);
+# eigenvalues more negative than −TORSION_SPECTRAL_FLOOR·‖S‖_∞ mark the
+# decomposition invalid (ENB → NaN), while roundoff-scale negatives are
+# projected to zero. Relative so daily vs annualized returns share one value.
+TORSION_SPECTRAL_FLOOR: float = 1e-12

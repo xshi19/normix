@@ -1,25 +1,27 @@
 # Finance Architecture: `normix.finance`
 
-> **IN PROGRESS — Phase D done; Phase E done (mean-risk + transaction costs); Phase F proposed.**
+> **DONE — Phase D + E + F shipped.**
 > Moved to `../plans/` on 2026-05-10 (previously in `../design/`).
 > Cross-references to the EM / covariance work now point to the archived proposal.
 
-**Date:** 2026-04-17 (status refreshed 2026-07-12)
-**Status:** Phase D (portfolio projection + CVaR) and Phase E (mean-risk
-efficient surface/frontier **and** local-quadratic transaction costs) are
-implemented and shipped; see the records below. Phase F (diversification)
-remains a design sketch. The EM / covariance
-prerequisites (Phases A–C / Phases 1–4 of the EM extensions plan) are in
-`master`, and the EM fitter the finance layer builds on has since been hardened
-(VG/NInvG prior-moment floors, posterior `b_post` floor, diverged guard — see
+**Date:** 2026-04-17 (status refreshed 2026-08-08)
+**Status:** Phases D–F are implemented and shipped. Phase F (diversification /
+ENB) landed as `finance/diversification.py` per design row FIN-1 (amends the
+2026-04 sketch below: no `DiversificationMeasure` ABC; minimum torsion is a
+strategy, not a measure). The EM / covariance prerequisites (Phases A–C /
+Phases 1–4 of the EM extensions plan) are in `master`, and the EM fitter the
+finance layer builds on has since been hardened (VG/NInvG prior-moment floors,
+posterior `b_post` floor, diverged guard — see
 `../archive/design/em_robustness_followups.md`).
-**Scope:** new top-level subpackage `normix/finance/`
+**Scope:** top-level subpackage `normix/finance/`
 **Theory:** `../../docs/theory/cvar_derivatives.md`,
 `../../docs/theory/mean_risk_optimization.md`,
 `../../docs/theory/transaction_costs.md`,
-`../../docs/theory/diversification.md` (where applicable)
+`../../docs/theory/enb.md`,
+`../../docs/theory/generalized_enb.md`
 **Living EM design:** `../design/em_framework.md`,
 `../design/mixtures.md`.
+**Decision:** `../design/design.md` § Finance FIN-1.
 
 ---
 
@@ -298,12 +300,27 @@ engine.
   - Tutorial: [`docs/tutorials/finance/06_transaction_costs.md`](../../docs/tutorials/finance/06_transaction_costs.md)
   - Tests: [`tests/finance/test_transaction_costs.py`](../../tests/finance/test_transaction_costs.py).
 
-### Phase F: Diversification analytics
+### Phase F: Diversification analytics — **Implemented (2026-08-08)**
 
-- implement variance ENB and minimum torsion;
-- implement generalized ENB based on squared coherent risk;
-- add comparative examples showing when CVaR-based ENB differs from
-  variance-based ENB.
+Amends the 2026-04 sketch above (see FIN-1): no `DiversificationMeasure` ABC;
+`MinimumTorsion` / `PCATorsion` are `Torsion` strategies shared by both ENBs.
+
+- `normix.finance.diversification` — shared `_enb_core`;
+  `VarianceENB(torsion).evaluate(model, w)` (Y-free; uses `model.cov()`, not
+  dispersion $\Sigma$) and `evaluate_covariance(Sigma_X, w)`;
+  `GeneralizedENB(risk, torsion).evaluate(model, w, Y)` assembles
+  $H_{r^2}=2\nabla r\nabla r^\top+2rH_r$ from **one**
+  `risk.value_grad_hess_w` call (promoted to `RiskMeasure` as a raising
+  default; the unreachable `getattr` fallback in `transaction_costs` removed).
+- Constrained minimum torsion (closed form $D=I$) is the default; PCA torsion
+  ships as an alternative. Full iterative unconstrained-$D$ Meucci MT is
+  deferred (strategy seam ready).
+- Result pytree `ENBResult(enb, p, risk, v, d, T, eigenvalues)`; `enb` is NaN
+  on material indefiniteness or $r\le 0$. Constant `TORSION_SPECTRAL_FLOOR`.
+- Theory fixes alongside: `enb.md` Lemma $S^{+1/2}$; `generalized_enb.md`
+  Taylor $1/2$, $\rho\ge 0$ domain, $H_{r^2}$ (not $H_r$) clarification.
+- Tutorial: [`docs/tutorials/finance/07_diversification.md`](../../docs/tutorials/finance/07_diversification.md)
+- Tests: [`tests/finance/test_diversification.py`](../../tests/finance/test_diversification.py).
 
 (Phases A–C were the EM / covariance work, now done — see
 `../archive/design/em_covariance_extensions.md`. The finance layer

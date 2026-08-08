@@ -24,8 +24,8 @@ interrogate skill's escalation tier points here.
 | Role | Model slug |
 |---|---|
 | Runner 1 | `claude-fable-5-thinking-max` |
-| Runner 2 | `gpt-5.6-sol-max` |
-| Runner 3 | `grok-4.5-fast-xhigh` |
+| Runner 2 | `gpt-5.6-sol-medium` |
+| Runner 3 | `cursor-grok-4.5-high-fast` |
 | Cross-judge | one model from the cheap trio (`composer-2.5-fast`, `claude-sonnet-5-thinking-high`, `gpt-5.6-terra-medium`), family different from the parent's |
 
 If a slug is rejected when spawning, pick the closest same-family slug from
