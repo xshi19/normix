@@ -37,7 +37,7 @@ Before committing:
 - **EM algorithm**: E-step computes conditional expectations $E[t(Y)|X]$, M-step converts $\eta \to \theta$ via `from_expectation`
 - **Immutable**: all distributions are `eqx.Module` pytrees; M-step returns a new model
 - **Unbatched core**: `log_prob`, `pdf`, `cdf` operate on single observations; batch via `jax.vmap`
-- **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`
+- **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`, `skewness`, `kurtosis` (excess)
 - **Information measures**: exponential families provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)` (autodiff of $R(\alpha)=\log\int p^\alpha$); marginal mixtures expose `joint_entropy/varentropy/renyi` (marginal-of-X versions are intractable)
 
 ## Core Dependencies
@@ -64,8 +64,8 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Published bibliography | `docs/references.md` (cite with `{ref}`Key <key>``) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`, `review_roadmap_2026-07-12.md`) |
-| 2026-07-12 review roadmap (44 items; Phases 0–4 done) | `dev-notes/plans/review_roadmap_2026-07-12.md` |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`) |
+| 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |
 | `normix.finance` roadmap (Phase D + Phase E done; Phase F diversification proposed) | `dev-notes/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
 | Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |

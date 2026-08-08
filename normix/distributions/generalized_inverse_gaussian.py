@@ -549,6 +549,32 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         r""":math:`E[X] = \eta_3` from expectation parameters."""
         return self.expectation_params()[2]
 
+    def raw_moment(self, k: jax.Array) -> jax.Array:
+        r"""Raw moment :math:`E[X^k] = (b/a)^{k/2}\,K_{p+k}(\sqrt{ab})/K_p(\sqrt{ab})`.
+
+        Requires :math:`a, b > 0`. For the Gamma / InverseGamma boundary
+        embeddings use those classes' own :meth:`raw_moment` instead.
+        """
+        k = jnp.asarray(k, dtype=jnp.float64)
+        a = jnp.maximum(self.a, LOG_EPS)
+        b = jnp.maximum(self.b, LOG_EPS)
+        z = jnp.sqrt(a * b)
+        return jnp.exp(
+            0.5 * k * (jnp.log(b) - jnp.log(a))
+            + log_kv(self.p + k, z)
+            - log_kv(self.p, z)
+        )
+
+    def raw_moments(self, ks: jax.Array) -> jax.Array:
+        r"""Vectorised :meth:`raw_moment` over orders ``ks`` (shared :math:`K_p`)."""
+        ks = jnp.asarray(ks, dtype=jnp.float64)
+        a = jnp.maximum(self.a, LOG_EPS)
+        b = jnp.maximum(self.b, LOG_EPS)
+        z = jnp.sqrt(a * b)
+        log_kp = log_kv(self.p, z)
+        log_k = jax.vmap(lambda k: log_kv(self.p + k, z))(ks)
+        return jnp.exp(0.5 * ks * (jnp.log(b) - jnp.log(a)) + log_k - log_kp)
+
     def var(self) -> jax.Array:
         r""":math:`\mathrm{Var}[X] = E[X^2] - E[X]^2` via three Bessel evaluations.
 
@@ -556,15 +582,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         :math:`E[X^r] = (b/a)^{r/2}\,K_{p+r}(\sqrt{ab})/K_p(\sqrt{ab})`
         rather than the full 11-Bessel Fisher Hessian entry ``[2, 2]``.
         """
-        a = jnp.maximum(self.a, LOG_EPS)
-        b = jnp.maximum(self.b, LOG_EPS)
-        z = jnp.sqrt(a * b)
-        orders = jnp.array([self.p, self.p + 1.0, self.p + 2.0])
-        L, L_p1, L_p2 = jax.vmap(log_kv)(orders, jnp.full(3, z))
-        ba = b / a
-        E_X = jnp.sqrt(ba) * jnp.exp(L_p1 - L)
-        E_X2 = ba * jnp.exp(L_p2 - L)
-        return E_X2 - E_X ** 2
+        m1, m2 = self.raw_moments(jnp.array([1.0, 2.0]))
+        return m2 - m1 ** 2
 
     def mode(self) -> jax.Array:
         r"""Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.

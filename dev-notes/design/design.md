@@ -154,9 +154,9 @@ the class as `@classmethod` or `@staticmethod`.
 
 ### 2026-07 review Phase 0 (DEC-1 … DEC-5)
 
-> Decisions gating the [2026-07-12 review roadmap](../plans/review_roadmap_2026-07-12.md);
-> row IDs deliberately keep the roadmap's DEC-n names. Recorded 2026-07-20;
-> implementation lands in roadmap Phases 3 (B1), 5 (E3), and 6 (D1–D4).
+> Decisions gating the [2026-07-12 review roadmap](../archive/plans/review_roadmap_2026-07-12.md)
+> (archived — Phases 0–8 complete). Row IDs keep the roadmap's DEC-n names.
+> Recorded 2026-07-20; implemented in Phases 3 (B1), 5 (E3), 6 (D1–D4), 8 (F1).
 
 | # | Decision | Choice | Why / Detail |
 |---|---|---|---|

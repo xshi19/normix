@@ -60,12 +60,15 @@ for name, m in models.items():
 
 The marginal layer reports the moments of $X$ (which fold in the variance-mean
 coupling through $\gamma$) and evaluates `log_prob` / `pdf` on single
-observations:
+observations. Skewness and excess kurtosis are closed form from the
+subordinator raw moments (see {doc}`../../theory/gh`):
 
 ```{code-cell} python
 nig = models["NormalInverseGaussian"]
 print("mean:\n", np.asarray(nig.mean()))
 print("cov:\n", np.asarray(nig.cov()))
+print("skewness:", np.asarray(nig.skewness()))
+print("excess kurtosis:", np.asarray(nig.kurtosis()))
 print("log_prob at origin:", float(nig.log_prob(jnp.zeros(2))))
 ```
 
