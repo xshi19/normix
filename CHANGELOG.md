@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/xshi19/normix/compare/v0.3.0...v0.3.1) (2026-08-08)
+
+
+### Features
+
+* **mixtures:** Phase 8 skewness/kurtosis; archive 2026-07-12 review roadmap ([#93](https://github.com/xshi19/normix/issues/93)) ([#94](https://github.com/xshi19/normix/issues/94)) ([d77b1ec](https://github.com/xshi19/normix/commit/d77b1ec6c4373d5ee53039576043df1abe73dd30))
+
+
+### Documentation
+
+* Phase 7 website fixes (W1–W7) from 2026-07-12 review ([#91](https://github.com/xshi19/normix/issues/91)) ([2e175bb](https://github.com/xshi19/normix/commit/2e175bba46a747d5de2ff2e75f6cc361d63ff201))
+
 ## [0.3.0](https://github.com/xshi19/normix/compare/v0.2.7...v0.3.0) (2026-08-06)
 
 
