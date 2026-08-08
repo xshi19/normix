@@ -565,6 +565,20 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lam</span></div>
 
 
+<div class="viewcode-block" id="InverseGaussian.raw_moment">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.raw_moment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_moment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Raw moment :math:`E[X^k]` via the exact GIG embedding.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span><span class="o">.</span><span class="n">raw_moment</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InverseGaussian.raw_moments">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.raw_moments">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_moments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ks</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Vectorised :meth:`raw_moment` over orders ``ks``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span><span class="o">.</span><span class="n">raw_moments</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="InverseGaussian.mode">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>

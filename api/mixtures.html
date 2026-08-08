@@ -491,6 +491,8 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.skewness"><code class="docutils literal notranslate"><span class="pre">NormalMixture.skewness()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kurtosis"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kurtosis()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
@@ -526,6 +528,8 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.log_det_sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.skewness"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.skewness()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.kurtosis"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.kurtosis()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.rvs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.e_step()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step()</span></code></a></li>
@@ -1130,6 +1134,35 @@ a new model with updated parameters (modules are immutable).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.skewness">
+<span class="sig-name descname"><span class="pre">skewness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.skewness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.skewness" title="Link to this definition">#</a></dt>
+<dd><p>Component-wise skewness <span class="math notranslate nohighlight">\(\gamma_1 = \mu_3 / \sigma^3\)</span> of <span class="math notranslate nohighlight">\(X\)</span>.</p>
+<p>Closed form from the normal variance-mean mixture representation and
+subordinator raw moments; see <a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>. Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.
+Requires a finite fourth moment of the subordinator (e.g. InverseGamma
+shape <span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span> when <span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.kurtosis">
+<span class="sig-name descname"><span class="pre">kurtosis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.kurtosis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.kurtosis" title="Link to this definition">#</a></dt>
+<dd><p>Component-wise excess kurtosis <span class="math notranslate nohighlight">\(\gamma_2 = \mu_4/\sigma^4 - 3\)</span> of <span class="math notranslate nohighlight">\(X\)</span>.</p>
+<p>Closed form from the normal variance-mean mixture representation and
+subordinator raw moments; see <a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>. Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.
+Same moment conditions as <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.skewness" title="normix.mixtures.marginal.NormalMixture.skewness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">skewness()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.joint_entropy">
 <span class="sig-name descname"><span class="pre">joint_entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.joint_entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.joint_entropy" title="Link to this definition">#</a></dt>
 <dd><p>Entropy of the joint <span class="math notranslate nohighlight">\((X, Y)\)</span>,
@@ -1588,6 +1621,28 @@ orthogonal rotation, so convergence is measured on
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.skewness">
+<span class="sig-name descname"><span class="pre">skewness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.skewness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.skewness" title="Link to this definition">#</a></dt>
+<dd><p>Component-wise skewness of <span class="math notranslate nohighlight">\(X\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.skewness()</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.kurtosis">
+<span class="sig-name descname"><span class="pre">kurtosis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.kurtosis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.kurtosis" title="Link to this definition">#</a></dt>
+<dd><p>Component-wise excess kurtosis of <span class="math notranslate nohighlight">\(X\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.kurtosis()</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.rvs">
 <span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.rvs" title="Link to this definition">#</a></dt>
 <dd><p>Sample <code class="docutils literal notranslate"><span class="pre">n</span></code> observations from the marginal <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
@@ -1904,6 +1959,8 @@ This keeps the contract narrow (one storage form per family).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.project"><code class="docutils literal notranslate"><span class="pre">NormalMixture.project()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.skewness"><code class="docutils literal notranslate"><span class="pre">NormalMixture.skewness()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.kurtosis"><code class="docutils literal notranslate"><span class="pre">NormalMixture.kurtosis()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_entropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_entropy()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_varentropy"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_varentropy()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.marginal.NormalMixture.joint_renyi"><code class="docutils literal notranslate"><span class="pre">NormalMixture.joint_renyi()</span></code></a></li>
@@ -1939,6 +1996,8 @@ This keeps the contract narrow (one storage form per family).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.log_det_sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.mean"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.mean()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.cov"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.cov()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.skewness"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.skewness()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.kurtosis"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.kurtosis()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.rvs"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.rvs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.e_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.e_step()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.factor.FactorNormalMixture.m_step"><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture.m_step()</span></code></a></li>

@@ -452,6 +452,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#marginal-gh-density">Marginal GH Density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-identifiability">Model Identifiability</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments-skewness-and-kurtosis">Moments, skewness, and kurtosis</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recovering-parameters-from-expectations">Recovering Parameters from Expectations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
@@ -562,6 +563,42 @@ will make <span class="math notranslate nohighlight">\(|\Sigma|\)</span> change 
 inversion would be intractable if <span class="math notranslate nohighlight">\(|\Sigma|\)</span> is too large or too small.</p>
 </div>
 </section>
+<section id="moments-skewness-and-kurtosis">
+<h2>Moments, skewness, and kurtosis<a class="headerlink" href="#moments-skewness-and-kurtosis" title="Link to this heading">#</a></h2>
+<p>Write <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,Z\)</span> with
+<span class="math notranslate nohighlight">\(Z\sim\mathcal{N}(0,\Sigma)\)</span> independent of the subordinator <span class="math notranslate nohighlight">\(Y\)</span>. The first
+two moments are immediate from the law of total expectation:</p>
+<div class="math notranslate nohighlight" id="equation-gh-mean-cov">
+<span class="eqno">(4)<a class="headerlink" href="#equation-gh-mean-cov" title="Link to this equation">#</a></span>\[\begin{split}E[X] &amp;= \mu + \gamma\,E[Y], \\
+\mathrm{Cov}[X] &amp;= E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top.\end{split}\]</div>
+<p>Higher central moments follow by conditioning on <span class="math notranslate nohighlight">\(Y\)</span>. For each coordinate
+<span class="math notranslate nohighlight">\(X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i\)</span> with <span class="math notranslate nohighlight">\(Z_i\sim\mathcal{N}(0,\Sigma_{ii})\)</span>,
+the centred variable <span class="math notranslate nohighlight">\(W = X_i - E[X_i]\)</span> satisfies
+<span class="math notranslate nohighlight">\(W\mid Y \sim \mathcal{N}\bigl(\gamma_i(Y-m_1),\; \Sigma_{ii} Y\bigr)\)</span>
+where <span class="math notranslate nohighlight">\(m_k = E[Y^k]\)</span>. The Gaussian moment formulae
+<span class="math notranslate nohighlight">\(E[W^3\mid Y] = a^3 + 3av\)</span> and <span class="math notranslate nohighlight">\(E[W^4\mid Y] = a^4 + 6a^2 v + 3v^2\)</span>
+with <span class="math notranslate nohighlight">\(a = \gamma_i(Y-m_1)\)</span> and <span class="math notranslate nohighlight">\(v = \Sigma_{ii} Y\)</span> then give</p>
+<div class="math notranslate nohighlight" id="equation-gh-skew-kurt">
+<span class="eqno">(5)<a class="headerlink" href="#equation-gh-skew-kurt" title="Link to this equation">#</a></span>\[\begin{split}\mu_3(X_i) &amp;= \gamma_i^3\,\mu_3(Y) + 3\,\gamma_i\,\Sigma_{ii}\,\mathrm{Var}[Y], \\
+\mu_4(X_i) &amp;= \gamma_i^4\,\mu_4(Y)
+  + 6\,\gamma_i^2\,\Sigma_{ii}\,E[(Y-m_1)^2 Y]
+  + 3\,\Sigma_{ii}^2\,E[Y^2],\end{split}\]</div>
+<p>and the standardised moments are the usual
+<span class="math notranslate nohighlight">\(\gamma_1 = \mu_3/\sigma^3\)</span> (skewness) and
+<span class="math notranslate nohighlight">\(\gamma_2 = \mu_4/\sigma^4 - 3\)</span> (excess kurtosis). The subordinator raw
+moments <span class="math notranslate nohighlight">\(m_k\)</span> are closed form for every member of the GIG tree
+(Gamma / InverseGamma rising factorials; GIG Bessel ratios
+<a class="reference internal" href="gig.html#equation-gig-moments">(3)</a>; InverseGaussian via its GIG embedding).</p>
+<p>Special cases check the algebra: when <span class="math notranslate nohighlight">\(\gamma = 0\)</span> one has <span class="math notranslate nohighlight">\(\gamma_1 = 0\)</span> and
+<span class="math notranslate nohighlight">\(\gamma_2 = 3\,E[Y^2]/E[Y]^2 - 3\)</span>, which reduces to <span class="math notranslate nohighlight">\(3/\alpha\)</span> for
+VarianceGamma and to <span class="math notranslate nohighlight">\(3/(\alpha-2)\)</span> for NormalInverseGamma (<span class="math notranslate nohighlight">\(\alpha &gt; 2\)</span>).
+When <span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>, the <span class="math notranslate nohighlight">\(\gamma_i^4\mu_4(Y)\)</span> term requires a finite fourth
+moment of <span class="math notranslate nohighlight">\(Y\)</span> (InverseGamma shape <span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span>).</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">normix</span></code> these formulae are
+<a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.skewness" title="normix.mixtures.marginal.NormalMixture.skewness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">skewness()</span></code></a> and
+<a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.kurtosis" title="normix.mixtures.marginal.NormalMixture.kurtosis"><code class="xref py py-meth docutils literal notranslate"><span class="pre">kurtosis()</span></code></a>
+(component-wise for <span class="math notranslate nohighlight">\(d&gt;1\)</span>; scalars on <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code>).</p>
+</section>
 <section id="exponential-family-form">
 <h2>Exponential Family Form<a class="headerlink" href="#exponential-family-form" title="Link to this heading">#</a></h2>
 <p>The joint-GH distribution <a class="reference internal" href="#equation-gh-joint">(2)</a> belongs to the exponential family with density:</p>
@@ -587,7 +624,7 @@ inversion would be intractable if <span class="math notranslate nohighlight">\(|
 &amp;\quad - \frac{1}{2} b \, y^{-1} - \frac{1}{2} a \, y\end{split}\]</div>
 <p>we identify the natural parameters:</p>
 <div class="math notranslate nohighlight" id="equation-gh-natural-params">
-<span class="eqno">(4)<a class="headerlink" href="#equation-gh-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1 - \frac{d}{2} \quad \text{(coefficient of } \log y \text{)} \\
+<span class="eqno">(6)<a class="headerlink" href="#equation-gh-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1 - \frac{d}{2} \quad \text{(coefficient of } \log y \text{)} \\
 \theta_2 &amp;= -\frac{1}{2}\left(b + \mu^\top \Sigma^{-1} \mu\right) \quad \text{(coefficient of } y^{-1} \text{)} \\
 \theta_3 &amp;= -\frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right) \quad \text{(coefficient of } y \text{)} \\
 \theta_4 &amp;= \Sigma^{-1} \gamma \quad \text{(coefficient of } x \text{)} \\
@@ -598,12 +635,12 @@ inversion would be intractable if <span class="math notranslate nohighlight">\(|
 \[h(x, y) = \frac{1}{(2\pi)^{d/2}} \mathbf{1}_{y &gt; 0}\]</div>
 <p><strong>Log Partition Function:</strong></p>
 <div class="math notranslate nohighlight" id="equation-gh-log-partition">
-<span class="eqno">(5)<a class="headerlink" href="#equation-gh-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \frac{1}{2} \log|\Sigma| + \log 2 + \log K_p(\sqrt{ab})
+<span class="eqno">(7)<a class="headerlink" href="#equation-gh-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \frac{1}{2} \log|\Sigma| + \log 2 + \log K_p(\sqrt{ab})
 + \frac{p}{2} \log\left(\frac{b}{a}\right) + \mu^\top \Sigma^{-1} \gamma\]</div>
 <p><strong>Expectation Parameters:</strong></p>
 <p>The expectation parameters <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X, Y)]\)</span> are:</p>
 <div class="math notranslate nohighlight" id="equation-gh-expectation">
-<span class="eqno">(6)<a class="headerlink" href="#equation-gh-expectation" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;:= E[\log Y] = \left.\frac{\partial}{\partial \alpha}
+<span class="eqno">(8)<a class="headerlink" href="#equation-gh-expectation" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;:= E[\log Y] = \left.\frac{\partial}{\partial \alpha}
 \left(\sqrt{\frac{b}{a}}\right)^\alpha \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
 \right|_{\alpha=0} \\
 \eta_2 &amp;:= E[Y^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
@@ -621,14 +658,14 @@ random variable <span class="math notranslate nohighlight">\(Y\)</span>.</p>
 <h2>Recovering Parameters from Expectations<a class="headerlink" href="#recovering-parameters-from-expectations" title="Link to this heading">#</a></h2>
 <p>Given all the expectation parameters, we can recover the original parameters as follows:</p>
 <div class="math notranslate nohighlight" id="equation-gh-m-step">
-<span class="eqno">(7)<a class="headerlink" href="#equation-gh-m-step" title="Link to this equation">#</a></span>\[\begin{split}\mu &amp;= \frac{\eta_4 - \eta_3 \eta_5}{1 - \eta_2 \eta_3}, \\
+<span class="eqno">(9)<a class="headerlink" href="#equation-gh-m-step" title="Link to this equation">#</a></span>\[\begin{split}\mu &amp;= \frac{\eta_4 - \eta_3 \eta_5}{1 - \eta_2 \eta_3}, \\
 \gamma &amp;= \frac{\eta_5 - \eta_2 \eta_4}{1 - \eta_2 \eta_3}, \\
 \Sigma &amp;= \eta_6 - \eta_5 \mu^\top - \mu \eta_5^\top + \eta_2 \mu \mu^\top - \eta_3 \gamma \gamma^\top, \\
 (p, a, b) &amp;= \arg\max_{p,a,b} L_{\text{GIG}}(p, a, b | \eta_1, \eta_2, \eta_3),\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(L_{\text{GIG}}\)</span> is the GIG log-likelihood function given in
 <a class="reference internal" href="gig.html#equation-gig-loglik">(10)</a>.</p>
 <p>These equations form the <strong>M-step</strong> in the EM algorithm, where the expectations in
-<a class="reference internal" href="#equation-gh-expectation">(6)</a> are replaced by conditional expectations.</p>
+<a class="reference internal" href="#equation-gh-expectation">(8)</a> are replaced by conditional expectations.</p>
 </section>
 <section id="hellinger-distance">
 <h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading">#</a></h2>
@@ -659,7 +696,7 @@ it provides an upper bound, so we can use it to measure how close two GH distrib
 </section>
 <section id="numerical-stability">
 <h2>Numerical Stability<a class="headerlink" href="#numerical-stability" title="Link to this heading">#</a></h2>
-<p>The computation of <a class="reference internal" href="#equation-gh-m-step">(7)</a> is not stable in terms of relative error under
+<p>The computation of <a class="reference internal" href="#equation-gh-m-step">(9)</a> is not stable in terms of relative error under
 certain conditions. However, it is relatively stable in terms of the Hellinger distance.</p>
 <p>Numerical experiments show that:</p>
 <ul class="simple">
@@ -744,6 +781,7 @@ discussed in the <a class="reference internal" href="gig.html"><span class="doc"
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#marginal-gh-density">Marginal GH Density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-identifiability">Model Identifiability</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments-skewness-and-kurtosis">Moments, skewness, and kurtosis</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recovering-parameters-from-expectations">Recovering Parameters from Expectations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>

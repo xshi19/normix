@@ -791,8 +791,8 @@ itself (<code class="docutils literal notranslate"><span class="pre">Gamma</span
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">_gig_rvs_devroye(key,</span> <span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">n)</span></code> — TDR on <span class="math notranslate nohighlight">\(w = \log x\)</span>,
 batch-parallel (no <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_gig_rvs_pinv(key,</span> <span class="pre">u_grid,</span> <span class="pre">x_grid,</span> <span class="pre">n)</span></code> — alias of <code class="docutils literal notranslate"><span class="pre">rvs_pinv</span></code> used by
-<code class="docutils literal notranslate"><span class="pre">GIG.rvs(method='pinv')</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GIG.rvs(method='pinv')</span></code> — <code class="docutils literal notranslate"><span class="pre">quantile_table().rvs</span></code> via
+<code class="docutils literal notranslate"><span class="pre">build_pinv_table</span></code> / <code class="docutils literal notranslate"><span class="pre">rvs_pinv</span></code> in <code class="docutils literal notranslate"><span class="pre">utils/rvs.py</span></code>.</p></li>
 </ul>
 <p>Neither method evaluates the Bessel normalising constant.</p>
 <section id="quantile-functions-cdf-ppf">

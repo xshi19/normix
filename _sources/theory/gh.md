@@ -116,6 +116,54 @@ will make $|\Sigma|$ change dramatically when $d$ is large. The matrix
 inversion would be intractable if $|\Sigma|$ is too large or too small.
 ```
 
+## Moments, skewness, and kurtosis
+
+Write $X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,Z$ with
+$Z\sim\mathcal{N}(0,\Sigma)$ independent of the subordinator $Y$. The first
+two moments are immediate from the law of total expectation:
+
+```{math}
+:label: gh-mean-cov
+
+E[X] &= \mu + \gamma\,E[Y], \\
+\mathrm{Cov}[X] &= E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top.
+```
+
+Higher central moments follow by conditioning on $Y$. For each coordinate
+$X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i$ with $Z_i\sim\mathcal{N}(0,\Sigma_{ii})$,
+the centred variable $W = X_i - E[X_i]$ satisfies
+$W\mid Y \sim \mathcal{N}\bigl(\gamma_i(Y-m_1),\; \Sigma_{ii} Y\bigr)$
+where $m_k = E[Y^k]$. The Gaussian moment formulae
+$E[W^3\mid Y] = a^3 + 3av$ and $E[W^4\mid Y] = a^4 + 6a^2 v + 3v^2$
+with $a = \gamma_i(Y-m_1)$ and $v = \Sigma_{ii} Y$ then give
+
+```{math}
+:label: gh-skew-kurt
+
+\mu_3(X_i) &= \gamma_i^3\,\mu_3(Y) + 3\,\gamma_i\,\Sigma_{ii}\,\mathrm{Var}[Y], \\
+\mu_4(X_i) &= \gamma_i^4\,\mu_4(Y)
+  + 6\,\gamma_i^2\,\Sigma_{ii}\,E[(Y-m_1)^2 Y]
+  + 3\,\Sigma_{ii}^2\,E[Y^2],
+```
+
+and the standardised moments are the usual
+$\gamma_1 = \mu_3/\sigma^3$ (skewness) and
+$\gamma_2 = \mu_4/\sigma^4 - 3$ (excess kurtosis). The subordinator raw
+moments $m_k$ are closed form for every member of the GIG tree
+(Gamma / InverseGamma rising factorials; GIG Bessel ratios
+{eq}`gig-moments`; InverseGaussian via its GIG embedding).
+
+Special cases check the algebra: when $\gamma = 0$ one has $\gamma_1 = 0$ and
+$\gamma_2 = 3\,E[Y^2]/E[Y]^2 - 3$, which reduces to $3/\alpha$ for
+VarianceGamma and to $3/(\alpha-2)$ for NormalInverseGamma ($\alpha > 2$).
+When $\gamma \ne 0$, the $\gamma_i^4\mu_4(Y)$ term requires a finite fourth
+moment of $Y$ (InverseGamma shape $\alpha > 4$).
+
+In ``normix`` these formulae are
+{meth}`~normix.mixtures.marginal.NormalMixture.skewness` and
+{meth}`~normix.mixtures.marginal.NormalMixture.kurtosis`
+(component-wise for $d>1$; scalars on `Univariate*`).
+
 ## Exponential Family Form
 
 The joint-GH distribution {eq}`gh-joint` belongs to the exponential family with density:

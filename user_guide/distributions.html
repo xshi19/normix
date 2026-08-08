@@ -549,7 +549,8 @@ Gaussian as limits, <code class="docutils literal notranslate"><span class="pre"
 <p>Each mixture comes in several layers; reach for the one that matches your task:</p>
 <ul class="simple">
 <li><p><strong>Marginal</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code>) — the distribution of <span class="math notranslate nohighlight">\(X\)</span>. This is
-what you usually fit and evaluate: <code class="docutils literal notranslate"><span class="pre">pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>, <code class="docutils literal notranslate"><span class="pre">mean</span></code>, <code class="docutils literal notranslate"><span class="pre">cov</span></code>, <code class="docutils literal notranslate"><span class="pre">rvs</span></code>.</p></li>
+what you usually fit and evaluate: <code class="docutils literal notranslate"><span class="pre">pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>, <code class="docutils literal notranslate"><span class="pre">mean</span></code>, <code class="docutils literal notranslate"><span class="pre">cov</span></code>,
+<code class="docutils literal notranslate"><span class="pre">skewness</span></code>, <code class="docutils literal notranslate"><span class="pre">kurtosis</span></code>, <code class="docutils literal notranslate"><span class="pre">rvs</span></code>.</p></li>
 <li><p><strong>Joint</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">JointNormalInverseGaussian</span></code>, via <code class="docutils literal notranslate"><span class="pre">model.joint</span></code>) — the pair
 <span class="math notranslate nohighlight">\((X, Y)\)</span> with the latent subordinator, used by the EM E-step and accessible
 for <code class="docutils literal notranslate"><span class="pre">joint.rvs</span></code> and <code class="docutils literal notranslate"><span class="pre">joint.conditional_expectations</span></code>.</p></li>
@@ -584,6 +585,7 @@ contains the others as special cases.</p></li>
 
 <span class="n">model</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>            <span class="c1"># density at one point (vmap to batch)</span>
 <span class="n">model</span><span class="o">.</span><span class="n">mean</span><span class="p">();</span> <span class="n">model</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">skewness</span><span class="p">();</span> <span class="n">model</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">()</span>   <span class="c1"># component-wise; excess kurtosis</span>
 <span class="n">model</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>   <span class="c1"># EM; result.model is the fit</span>
 </pre></div>

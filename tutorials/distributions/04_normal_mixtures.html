@@ -526,12 +526,15 @@ GeneralizedHyperbolic    mean=[ 0.3 -0.4]  d=2
 <h2>Mean, covariance, and density<a class="headerlink" href="#mean-covariance-and-density" title="Link to this heading">#</a></h2>
 <p>The marginal layer reports the moments of <span class="math notranslate nohighlight">\(X\)</span> (which fold in the variance-mean
 coupling through <span class="math notranslate nohighlight">\(\gamma\)</span>) and evaluates <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> / <code class="docutils literal notranslate"><span class="pre">pdf</span></code> on single
-observations:</p>
+observations. Skewness and excess kurtosis are closed form from the
+subordinator raw moments (see <a class="reference internal" href="../../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>):</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nig</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="s2">&quot;NormalInverseGaussian&quot;</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mean:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cov:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">cov</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;skewness:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">skewness</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;excess kurtosis:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">()))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;log_prob at origin:&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">))))</span>
 </pre></div>
 </div>
@@ -542,6 +545,8 @@ observations:</p>
 cov:
  [[1.06   0.22  ]
  [0.22   1.1067]]
+skewness: [ 0.5828 -0.7605]
+excess kurtosis: [2.4528 2.7711]
 log_prob at origin: -1.382585051529043
 </pre></div>
 </div>
@@ -638,7 +643,7 @@ from the NIG model and recover it:</p>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>converged : True
 iterations: 22
-elapsed   : 10.72s
+elapsed   : 9.88s
 fitted γ  : [ 0.3745 -0.3682]
 true   γ  : [ 0.3 -0.4]
 </pre></div>
