@@ -128,3 +128,5 @@ T_{MT} = U S^{-1/2} U^\top
 
 For the general case (unconstrained $D$), an iterative algorithm that
 converges rapidly is described in {ref}`Meucci2014 <meucci2014>`.
+
+Executable demo: {doc}`../tutorials/finance/07_diversification`.

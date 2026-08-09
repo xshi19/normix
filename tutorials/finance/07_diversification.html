@@ -445,9 +445,10 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synthetic-case-mathrm-cov-x-propto-i-one-skewed-name">Synthetic case: <span class="math notranslate nohighlight">\(\mathrm{Cov}[X] \propto I\)</span>, one skewed name</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion-factors">Minimum torsion factors</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-sketch">API sketch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synthetic-case-spirit-of-figs-1213">Synthetic case (spirit of Figs. 12–13)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dow-jones-study-spirit-of-fig-14-table-15">Dow Jones study (spirit of Fig. 14 / Table 15)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion">Minimum torsion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a></li>
 </ul>
             </nav>
         </div>
@@ -466,6 +467,14 @@ factors a portfolio is truly exposed to. The answer depends on which risk you
 diagonalize. Variance ENB uses <span class="math notranslate nohighlight">\(\mathrm{Cov}[X]\)</span>; generalized ENB uses the
 Hessian of squared coherent risk <span class="math notranslate nohighlight">\(\rho^2\)</span> — here CVaR — and can see
 tail concentrations that a second-moment measure misses.</p>
+<p>This page follows the spirit of Figures 12–14 and Table 15 of
+<a class="reference internal" href="../../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>: a synthetic case where variance ENB declares perfect
+diversification while CVaR ENB does not, then a Dow Jones study that builds
+four long-only portfolios (equal weight, max variance-ENB, min CVaR, max
+CVaR-ENB). The dissertation’s synthetic example used independent normals plus
+one Student-<span class="math notranslate nohighlight">\(t\)</span> with a sample Hessian; here the same qualitative gap appears
+inside the normix mixture API (shared subordinator, <span class="math notranslate nohighlight">\(\mathrm{Cov}[X]\propto I\)</span>).
+The Dow numbers use a recent panel window rather than 2005–2013.</p>
 <p>Formal derivations: <a class="reference internal" href="../../theory/enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a>,
 <a class="reference internal" href="../../theory/generalized_enb.html"><span class="doc">Generalized Effective Number of Bets</span></a>.</p>
 <div class="cell docutils container">
@@ -474,9 +483,12 @@ tail concentrations that a second-moment measure misses.</p>
 <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceGamma</span><span class="p">,</span> <span class="n">GeneralizedHyperbolic</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">CVaR</span><span class="p">,</span> <span class="n">VarianceENB</span><span class="p">,</span> <span class="n">GeneralizedENB</span><span class="p">,</span> <span class="n">MinimumTorsion</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_theme</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">,</span> <span class="n">COLOR_CYCLE</span>
 
@@ -486,37 +498,38 @@ tail concentrations that a second-moment measure misses.</p>
 </div>
 </div>
 </div>
-<section id="synthetic-case-mathrm-cov-x-propto-i-one-skewed-name">
-<h2>Synthetic case: <span class="math notranslate nohighlight">\(\mathrm{Cov}[X] \propto I\)</span>, one skewed name<a class="headerlink" href="#synthetic-case-mathrm-cov-x-propto-i-one-skewed-name" title="Link to this heading">#</a></h2>
-<p>Construct a four-asset VG portfolio whose <em>return covariance</em> is a multiple of
-the identity, but asset 0 carries all the skewness. Variance ENB must then
-report <span class="math notranslate nohighlight">\(N = 4\)</span> for equal weights; CVaR ENB should load more risk on asset 0.</p>
+<section id="synthetic-case-spirit-of-figs-1213">
+<h2>Synthetic case (spirit of Figs. 12–13)<a class="headerlink" href="#synthetic-case-spirit-of-figs-1213" title="Link to this heading">#</a></h2>
+<p>Five-asset VG with <span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = I\)</span> and all skewness on asset 0. Variance
+ENB of the equally weighted portfolio is then exactly <span class="math notranslate nohighlight">\(5\)</span>; CVaR ENB loads more
+risk on the skewed name.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">E_Y</span><span class="p">,</span> <span class="n">Var_Y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.2</span>
-<span class="n">g</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.2</span>
-<span class="n">beta</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">/</span> <span class="n">Var_Y</span>
-<span class="n">alpha</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">beta</span>
-<span class="n">s2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">g</span> <span class="o">/</span> <span class="n">E_Y</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">vg_cov_identity</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">Var_Y</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;VG with Cov[X] = I and skewness only on asset 0.&quot;&quot;&quot;</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">/</span> <span class="n">Var_Y</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">beta</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">g</span> <span class="o">/</span> <span class="n">E_Y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
+        <span class="n">gamma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">g</span><span class="p">),</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s2</span><span class="p">),</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+        <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">,</span>
+    <span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
-    <span class="n">mu</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
-    <span class="n">gamma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">g</span><span class="p">),</span>
-    <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s2</span><span class="p">),</span>
-    <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
-    <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cov[X] diagonals:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;off-diagonal max |entry|:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cov</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">)))))</span>
+<span class="n">g_star</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.2</span>
+<span class="n">model_syn</span> <span class="o">=</span> <span class="n">vg_cov_identity</span><span class="p">(</span><span class="n">g_star</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">model_syn</span><span class="o">.</span><span class="n">cov</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
 
-<span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
-<span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">40_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">w_eq</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">Y_syn</span> <span class="o">=</span> <span class="n">model_syn</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">40_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">cvar01</span> <span class="o">=</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
 
-<span class="n">res_var</span> <span class="o">=</span> <span class="n">VarianceENB</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-<span class="n">res_cvar</span> <span class="o">=</span> <span class="n">GeneralizedENB</span><span class="p">(</span><span class="n">CVaR</span><span class="p">(</span><span class="mf">0.01</span><span class="p">))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">res_var</span> <span class="o">=</span> <span class="n">VarianceENB</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model_syn</span><span class="p">,</span> <span class="n">w_eq</span><span class="p">)</span>
+<span class="n">res_cvar</span> <span class="o">=</span> <span class="n">GeneralizedENB</span><span class="p">(</span><span class="n">cvar01</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model_syn</span><span class="p">,</span> <span class="n">w_eq</span><span class="p">,</span> <span class="n">Y_syn</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;variance ENB = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">enb</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   vol = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">risk</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;variance ENB = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">enb</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   vol  = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">risk</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CVaR ENB     = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_cvar</span><span class="o">.</span><span class="n">enb</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">   CVaR = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">res_cvar</span><span class="o">.</span><span class="n">risk</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p_var :&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">p</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p_cvar:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_cvar</span><span class="o">.</span><span class="n">p</span><span class="p">))</span>
@@ -524,61 +537,307 @@ report <span class="math notranslate nohighlight">\(N = 4\)</span> for equal wei
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Cov[X] diagonals: [1. 1. 1. 1.]
-off-diagonal max |entry|: 0.0
-variance ENB = 4.000   vol = 0.5000
-CVaR ENB     = 3.711   CVaR = 1.8983
-p_var : [0.25 0.25 0.25 0.25]
-p_cvar: [0.4279 0.1907 0.1907 0.1907]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>variance ENB = 5.000   vol  = 0.4472
+CVaR ENB     = 4.590   CVaR = 1.6572
+p_var : [0.2 0.2 0.2 0.2 0.2]
+p_cvar: [0.3798 0.1551 0.1551 0.1551 0.1551]
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-<span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;variance&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLOR_CYCLE</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_cvar</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;CVaR&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;brick&quot;</span><span class="p">])</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;asset </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">])</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;normalized risk contribution $p_k$&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Where the risk lives&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- spirit of Shi2016 Figure 12 ---</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_var</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">COLOR_CYCLE</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Variance-based ENB&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res_cvar</span><span class="o">.</span><span class="n">p</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;brick&quot;</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;CVaR-based ENB&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;risky factors&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$p_k$&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Comparison of two ENB (spirit of Fig. 12)&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/2bae78677368f6e4bb304311e99b0e5a8f6c97caf2f23152c2e97df8f03abd9c.png" src="../../_images/2bae78677368f6e4bb304311e99b0e5a8f6c97caf2f23152c2e97df8f03abd9c.png" />
+<img alt="../../_images/6857ced2779656c8d26f2b6dc51be3fbdc2618109e209fb6ee269ee465487aa3.png" src="../../_images/6857ced2779656c8d26f2b6dc51be3fbdc2618109e209fb6ee269ee465487aa3.png" />
 </div>
 </div>
-<p>Variance treats the four names as exchangeable. CVaR assigns a larger share of
-tail risk to the skewed asset — the gap that justifies a second ENB.</p>
-</section>
-<section id="minimum-torsion-factors">
-<h2>Minimum torsion factors<a class="headerlink" href="#minimum-torsion-factors" title="Link to this heading">#</a></h2>
-<p>The default diagonalization is constrained minimum torsion
-(<code class="docutils literal notranslate"><span class="pre">MinimumTorsion</span></code>). The transform <span class="math notranslate nohighlight">\(T\)</span> itself is reusable for Meucci-style
-factor construction:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dec</span> <span class="o">=</span> <span class="n">MinimumTorsion</span><span class="p">()</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;T Cov T&#39; ≈ I?&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">dec</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span> <span class="o">@</span> <span class="n">dec</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;diag(D) =&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dec</span><span class="o">.</span><span class="n">d</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- spirit of Shi2016 Figure 13 ---</span>
+<span class="c1"># Skew strength |γ| plays the role of Student-t ν: larger |γ| ⇒ heavier</span>
+<span class="c1"># left-tail risk on asset 0. Weights of the other four assets stay equal.</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.24</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+<span class="n">gammas</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.4</span><span class="p">]</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$\gamma=0$ (symmetric)&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;$|\gamma|=0.6$&quot;</span><span class="p">,</span>
+          <span class="sa">r</span><span class="s2">&quot;$|\gamma|=1.0$&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;$|\gamma|=1.4$&quot;</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gammas</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">COLOR_CYCLE</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">vg_cov_identity</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">20_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">gen</span> <span class="o">=</span> <span class="n">GeneralizedENB</span><span class="p">(</span><span class="n">cvar01</span><span class="p">)</span>
+    <span class="n">Ns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">w0</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">:</span>
+        <span class="n">rem</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">w0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">4.0</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">rem</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">w0</span><span class="p">))</span>
+        <span class="n">Ns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">enb</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">Ns</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">lab</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lab</span><span class="si">}</span><span class="s2">: max ENB = </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">Ns</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> at w_0 = </span><span class="si">{</span><span class="n">weights</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Ns</span><span class="p">))]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;muted&quot;</span><span class="p">],</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;equal weight&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;weight of the skewed asset&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;CVaR-based ENB&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;ENB vs weight and skew (spirit of Fig. 13)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>$\gamma=0$ (symmetric): max ENB = 5.000 at w_0 = 0.200
+$|\gamma|=0.6$: max ENB = 5.000 at w_0 = 0.150
+$|\gamma|=1.0$: max ENB = 5.000 at w_0 = 0.120
+$|\gamma|=1.4$: max ENB = 4.991 at w_0 = 0.100
+</pre></div>
+</div>
+<img alt="../../_images/5190a5d2ea4f12cc2a77bcb9dd5a34f90f26c0437cb943249e72d6a835909731.png" src="../../_images/5190a5d2ea4f12cc2a77bcb9dd5a34f90f26c0437cb943249e72d6a835909731.png" />
+</div>
+</div>
+<p>When <span class="math notranslate nohighlight">\(\gamma=0\)</span> the CVaR ENB is flat at <span class="math notranslate nohighlight">\(5\)</span>. As <span class="math notranslate nohighlight">\(|\gamma|\)</span> grows, equal
+weight is no longer the most diversified CVaR portfolio — the curve peaks at a
+smaller allocation to the skewed name, the same qualitative message as varying
+Student-<span class="math notranslate nohighlight">\(t\)</span> degrees of freedom in the dissertation.</p>
+</section>
+<section id="dow-jones-study-spirit-of-fig-14-table-15">
+<h2>Dow Jones study (spirit of Fig. 14 / Table 15)<a class="headerlink" href="#dow-jones-study-spirit-of-fig-14-table-15" title="Link to this heading">#</a></h2>
+<p>Fit a GH model to recent Dow constituents, then build four long-only portfolios
+with unit budget: equal weight, maximum variance-ENB, minimum CVaR, and
+maximum CVaR-ENB. Optimizations use SciPy SLSQP (same pattern as the
+transaction-cost tutorial).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">DJ30</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;AAPL&quot;</span><span class="p">,</span> <span class="s2">&quot;AMGN&quot;</span><span class="p">,</span> <span class="s2">&quot;AXP&quot;</span><span class="p">,</span> <span class="s2">&quot;BA&quot;</span><span class="p">,</span> <span class="s2">&quot;CAT&quot;</span><span class="p">,</span> <span class="s2">&quot;CRM&quot;</span><span class="p">,</span> <span class="s2">&quot;CSCO&quot;</span><span class="p">,</span> <span class="s2">&quot;CVX&quot;</span><span class="p">,</span> <span class="s2">&quot;DIS&quot;</span><span class="p">,</span> <span class="s2">&quot;GS&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HD&quot;</span><span class="p">,</span> <span class="s2">&quot;HON&quot;</span><span class="p">,</span> <span class="s2">&quot;IBM&quot;</span><span class="p">,</span> <span class="s2">&quot;INTC&quot;</span><span class="p">,</span> <span class="s2">&quot;JNJ&quot;</span><span class="p">,</span> <span class="s2">&quot;JPM&quot;</span><span class="p">,</span> <span class="s2">&quot;KO&quot;</span><span class="p">,</span> <span class="s2">&quot;MCD&quot;</span><span class="p">,</span> <span class="s2">&quot;MMM&quot;</span><span class="p">,</span> <span class="s2">&quot;MRK&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MSFT&quot;</span><span class="p">,</span> <span class="s2">&quot;NKE&quot;</span><span class="p">,</span> <span class="s2">&quot;PG&quot;</span><span class="p">,</span> <span class="s2">&quot;TRV&quot;</span><span class="p">,</span> <span class="s2">&quot;UNH&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;VZ&quot;</span><span class="p">,</span> <span class="s2">&quot;WBA&quot;</span><span class="p">,</span> <span class="s2">&quot;WMT&quot;</span><span class="p">,</span> <span class="s2">&quot;XOM&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../../../data/sp500_returns.csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">panel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># Recent three-year window (paper used 2005–2007 for the in-sample fit).</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;2022-01-01&quot;</span><span class="p">:</span><span class="s2">&quot;2024-12-31&quot;</span><span class="p">]</span>
+<span class="n">tickers</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">DJ30</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">R</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="n">tickers</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">R</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tickers</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d = </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> DJ30 names (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">DJ30</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d</span><span class="si">}</span><span class="s2"> missing), &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;N = </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">)</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">R</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="p">(</span><span class="n">GeneralizedHyperbolic</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+         <span class="o">.</span><span class="n">regularize_a_eq_b</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mean log-likelihood </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">8_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">cvar</span> <span class="o">=</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+<span class="n">var_enb</span> <span class="o">=</span> <span class="n">VarianceENB</span><span class="p">()</span>
+<span class="n">cvar_enb</span> <span class="o">=</span> <span class="n">GeneralizedENB</span><span class="p">(</span><span class="n">cvar</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>d = 29 DJ30 names (1 missing), N = 753  (2022-01-03 → 2024-12-31)
+mean log-likelihood 88.2088
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">optimize_long_only</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SLSQP on the simplex w ≥ 0, 1ᵀw = 1.&quot;&quot;&quot;</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">d</span><span class="p">)</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sign</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">objective</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)))</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+        <span class="n">fun</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;SLSQP&quot;</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;eq&quot;</span><span class="p">,</span> <span class="s2">&quot;fun&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)},</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;maxiter&quot;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span> <span class="s2">&quot;ftol&quot;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="n">w_equal</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">d</span><span class="p">)</span>
+<span class="n">w_var</span> <span class="o">=</span> <span class="n">optimize_long_only</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">var_enb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">enb</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">w_min_cvar</span> <span class="o">=</span> <span class="n">optimize_long_only</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">d</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">w_cvar</span> <span class="o">=</span> <span class="n">optimize_long_only</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">cvar_enb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">enb</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">portfolios</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Equally weighted&quot;</span><span class="p">:</span> <span class="n">w_equal</span><span class="p">,</span>
+    <span class="s2">&quot;Best variance-ENB&quot;</span><span class="p">:</span> <span class="n">w_var</span><span class="p">,</span>
+    <span class="s2">&quot;Smallest CVaR&quot;</span><span class="p">:</span> <span class="n">w_min_cvar</span><span class="p">,</span>
+    <span class="s2">&quot;Best CVaR-ENB&quot;</span><span class="p">:</span> <span class="n">w_cvar</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- spirit of Shi2016 Figure 14 ---</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">styles</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Equally weighted&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">COLOR_CYCLE</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;Best variance-ENB&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;green&quot;</span><span class="p">]),</span>
+    <span class="s2">&quot;Smallest CVaR&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;-.&quot;</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;brick&quot;</span><span class="p">]),</span>
+    <span class="s2">&quot;Best CVaR-ENB&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;umber&quot;</span><span class="p">]),</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">portfolios</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ls</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">styles</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">),</span> <span class="n">ls</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Stock&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Weight&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Portfolio weights (spirit of Fig. 14)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/6d41ea07836931dc9c305bc9b06f18f797fa2b45533114f7532781d17c2d7c8e.png" src="../../_images/6d41ea07836931dc9c305bc9b06f18f797fa2b45533114f7532781d17c2d7c8e.png" />
+</div>
+</div>
+<p>Equal weight is the flat line. Min-CVaR concentrates on a smaller active set.
+The two ENB-maximizers stay near equal weight but tilt away from names that
+consume risk contributions.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- spirit of Shi2016 Table 15 ---</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">portfolios</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s2">&quot;Portfolio&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;Variance-ENB&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">var_enb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">enb</span><span class="p">),</span>
+        <span class="s2">&quot;CVaR-ENB&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar_enb</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">enb</span><span class="p">),</span>
+        <span class="s2">&quot;CVaR&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
+    <span class="p">})</span>
+<span class="n">table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;Portfolio&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="n">table</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                   Variance-ENB  CVaR-ENB    CVaR
+Portfolio                                        
+Equally weighted        27.2754   27.1350  0.0224
+Best variance-ENB       29.0000   28.9653  0.0201
+Smallest CVaR           18.8010   19.3081  0.0172
+Best CVaR-ENB           28.9645   29.0000  0.0199
+</pre></div>
+</div>
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Variance-ENB</th>
+      <th>CVaR-ENB</th>
+      <th>CVaR</th>
+    </tr>
+    <tr>
+      <th>Portfolio</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Equally weighted</th>
+      <td>27.2754</td>
+      <td>27.1350</td>
+      <td>0.0224</td>
+    </tr>
+    <tr>
+      <th>Best variance-ENB</th>
+      <td>29.0000</td>
+      <td>28.9653</td>
+      <td>0.0201</td>
+    </tr>
+    <tr>
+      <th>Smallest CVaR</th>
+      <td>18.8010</td>
+      <td>19.3081</td>
+      <td>0.0172</td>
+    </tr>
+    <tr>
+      <th>Best CVaR-ENB</th>
+      <td>28.9645</td>
+      <td>29.0000</td>
+      <td>0.0199</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<p>As in the dissertation, maximizing either ENB raises both diversification
+scores relative to equal weight while only modestly changing CVaR; minimizing
+CVaR cuts risk but roughly halves the effective number of bets.</p>
+</section>
+<section id="minimum-torsion">
+<h2>Minimum torsion<a class="headerlink" href="#minimum-torsion" title="Link to this heading">#</a></h2>
+<p>The default diagonalization is constrained minimum torsion. The transform
+<span class="math notranslate nohighlight">\(T\)</span> is reusable for Meucci-style factor construction:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dec</span> <span class="o">=</span> <span class="n">MinimumTorsion</span><span class="p">()</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">model_syn</span><span class="o">.</span><span class="n">cov</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;T Cov T&#39; ≈ I?&quot;</span><span class="p">,</span>
+      <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">dec</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">model_syn</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span> <span class="o">@</span> <span class="n">dec</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>T Cov T&#39; ≈ I? True
-diag(D) = [1. 1. 1. 1.]
 </pre></div>
 </div>
 </div>
 </div>
 </section>
-<section id="api-sketch">
-<h2>API sketch<a class="headerlink" href="#api-sketch" title="Link to this heading">#</a></h2>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">VarianceENB</span><span class="p">,</span> <span class="n">GeneralizedENB</span><span class="p">,</span> <span class="n">CVaR</span>
 
 <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>   <span class="c1"># once; common random numbers</span>
@@ -587,8 +846,7 @@ diag(D) = [1. 1. 1. 1.]
 </pre></div>
 </div>
 <p>Both return the same <code class="docutils literal notranslate"><span class="pre">ENBResult</span></code> pytree (<code class="docutils literal notranslate"><span class="pre">enb</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">risk</span></code>, <code class="docutils literal notranslate"><span class="pre">v</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">T</span></code>,
-<code class="docutils literal notranslate"><span class="pre">eigenvalues</span></code>). Swap the torsion with <code class="docutils literal notranslate"><span class="pre">VarianceENB(torsion=PCATorsion())</span></code> when
-you want a principal-component baseline.</p>
+<code class="docutils literal notranslate"><span class="pre">eigenvalues</span></code>).</p>
 </section>
 </section>
 
@@ -639,9 +897,10 @@ you want a principal-component baseline.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synthetic-case-mathrm-cov-x-propto-i-one-skewed-name">Synthetic case: <span class="math notranslate nohighlight">\(\mathrm{Cov}[X] \propto I\)</span>, one skewed name</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion-factors">Minimum torsion factors</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-sketch">API sketch</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#synthetic-case-spirit-of-figs-1213">Synthetic case (spirit of Figs. 12–13)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dow-jones-study-spirit-of-fig-14-table-15">Dow Jones study (spirit of Fig. 14 / Table 15)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimum-torsion">Minimum torsion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">API</a></li>
 </ul>
   </nav></div>
 
