@@ -53,8 +53,8 @@ system. Each trigger below tells you what to update and where.
 
 ### Advancing a Plan Phase
 
-1. Update the relevant plan under `dev-notes/plans/` (e.g. `docs_refactor.md`,
-   `finance_architecture.md`). Completed plans live in `dev-notes/archive/plans/`.
+1. Update the relevant plan under `dev-notes/plans/` (e.g. `docs_refactor.md`).
+   Completed plans live in `dev-notes/archive/plans/`.
 2. If modules were restructured → update `dev-notes/ARCHITECTURE.md`
 
 ### New Multi-Step Workflow Identified

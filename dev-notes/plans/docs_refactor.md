@@ -336,7 +336,8 @@ No hard exit criterion; remaining items as time allows.
 - [`../archive/plans/docs_refactor_phases_1_3.md`](../archive/plans/docs_refactor_phases_1_3.md)
   — archived Phases 1–3 (target architecture, visual style, cross-link
   discipline, tutorial content plan).
-- `finance_architecture.md` — Phase E merged (mean-risk optimization); F proposed.
+- [`../archive/plans/finance_architecture.md`](../archive/plans/finance_architecture.md)
+  — Phases D–F shipped; archived 2026-08-09.
 - `.cursor/skills/docs-publish/SKILL.md` — build/publish recipe; updated in
   Phase 4 (`notebooks/` gotcha) and Phase 7 (release publish path).
 - `.cursor/rules/notebook-guidelines.mdc` — rewritten in Phase 4.

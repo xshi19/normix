@@ -170,7 +170,7 @@ the class as `@classmethod` or `@staticmethod`.
 
 | # | Decision | Choice | Why / Detail |
 |---|---|---|---|
-| FIN-1 | Diversification (ENB) shape | Two concrete measures, no `DiversificationMeasure` ABC: `VarianceENB(torsion)` (Y-free, diagonalizes `model.cov()`; also `evaluate_covariance` for bare matrices) and `GeneralizedENB(risk, torsion)` (mandatory `Y`; assembles $H_{r^2}=2\nabla r\nabla r^\top+2rH_r$ from **one** `value_grad_hess_w`, promoted to `RiskMeasure` as raising default). `Torsion` strategy ABC (`MinimumTorsion` closed-form $D{=}I$ default, `PCATorsion`; iterative unconstrained-$D$ MT deferred). Shared private core normalizes $p=d_kv_k^2/w^\top Hw$ (simplex by construction); `enb` is NaN on material indefiniteness or $r\le 0$. Result pytree `ENBResult(enb, p, risk, v, d, T, eigenvalues)`. Guards: `LOG_EPS` entropy clamp, relative `TORSION_SPECTRAL_FLOOR`; `HESSIAN_DAMPING` unused (bias). | Measure ABC has no polymorphic consumer and the two Y signatures honestly differ; `Torsion` has two polymorphic consumers. Amends the 2026-04 plan sketch. Arena synthesis: `../plans/finance_architecture.md` § Phase F; theory corrections in `docs/theory/enb.md` / `generalized_enb.md`. |
+| FIN-1 | Diversification (ENB) shape | Two concrete measures, no `DiversificationMeasure` ABC: `VarianceENB(torsion)` (Y-free, diagonalizes `model.cov()`; also `evaluate_covariance` for bare matrices) and `GeneralizedENB(risk, torsion)` (mandatory `Y`; assembles $H_{r^2}=2\nabla r\nabla r^\top+2rH_r$ from **one** `value_grad_hess_w`, promoted to `RiskMeasure` as raising default). `Torsion` strategy ABC (`MinimumTorsion` closed-form $D{=}I$ default, `PCATorsion`; iterative unconstrained-$D$ MT deferred). Shared private core normalizes $p=d_kv_k^2/w^\top Hw$ (simplex by construction); `enb` is NaN on material indefiniteness or $r\le 0$. Result pytree `ENBResult(enb, p, risk, v, d, T, eigenvalues)`. Guards: `LOG_EPS` entropy clamp, relative `TORSION_SPECTRAL_FLOOR`; `HESSIAN_DAMPING` unused (bias). | Measure ABC has no polymorphic consumer and the two Y signatures honestly differ; `Torsion` has two polymorphic consumers. Amends the 2026-04 plan sketch. Arena synthesis: `../archive/plans/finance_architecture.md` § Phase F; theory corrections in `docs/theory/enb.md` / `generalized_enb.md`. |
 
 ---
 
@@ -185,4 +185,4 @@ the class as `@classmethod` or `@staticmethod`.
 - Theory: `../../docs/theory/`.
 - Tech notes: `../tech_notes/`.
 - Historical / archived design proposals: `../archive/design/`.
-- Finance roadmap (Phases D–F done): `../plans/finance_architecture.md`.
+- Finance roadmap (Phases D–F done, archived): `../archive/plans/finance_architecture.md`.
