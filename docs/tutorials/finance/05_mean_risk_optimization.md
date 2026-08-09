@@ -323,4 +323,4 @@ For the mathematics — the monotonicity theorem and the reduction proof — see
 {doc}`../../theory/mean_risk_optimization`. Transaction-cost rebalancing (local
 QP) is covered in {doc}`06_transaction_costs`. Effective number of bets is
 derived in {doc}`../../theory/enb` and {doc}`../../theory/generalized_enb`
-(an ENB tutorial is still future work).
+(see {doc}`07_diversification` for Meucci ENB).

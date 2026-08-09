@@ -10,9 +10,8 @@ practice; **Statistics** adds model comparison and goodness of fit; and
 **Finance** applies everything to real market data.
 
 Formal derivations live in the {doc}`../theory/index` — tutorials pull in the
-key formulas where they help, and link out for the full math. Some theory
-topics (shrinkage, ENB) are theory-only until matching
-tutorials land.
+key formulas where they help, and link out for the full math. Shrinkage remains
+theory-only until a matching tutorial lands.
 
 ```{toctree}
 :maxdepth: 1

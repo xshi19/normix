@@ -137,3 +137,6 @@ variance-based ENB misses. For example, in a portfolio of independent assets
 where one has heavier tails, the variance-based ENB treats all assets equally
 (since the covariance is diagonal), while the CVaR-based ENB correctly
 assigns a larger risk contribution to the heavy-tailed asset.
+
+Executable demo: {doc}`../tutorials/finance/07_diversification`.
+
