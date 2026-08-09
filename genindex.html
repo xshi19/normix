@@ -212,6 +212,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
 </ul>
 </details></li>
 </ul>
@@ -611,6 +612,10 @@
       <li><a href="api/distributions.html#normix.distributions.normal.MultivariateNormal.d">d (normix.distributions.normal.MultivariateNormal property)</a>
 
       <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.ENBResult.d">(normix.finance.diversification.ENBResult attribute)</a>
+</li>
+        <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition.d">(normix.finance.diversification.TorsionDecomposition attribute)</a>
+</li>
         <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP.d">(normix.finance.transaction_costs.TransactionCostQP property)</a>
 </li>
       </ul></li>
@@ -624,6 +629,16 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.d">(normix.mixtures.marginal.NormalMixture property)</a>
 </li>
       </ul></li>
+      <li><a href="api/finance.html#normix.finance.diversification.MinimumTorsion.decompose">decompose() (normix.finance.diversification.MinimumTorsion method)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.PCATorsion.decompose">(normix.finance.diversification.PCATorsion method)</a>
+</li>
+        <li><a href="api/finance.html#normix.finance.diversification.Torsion.decompose">(normix.finance.diversification.Torsion method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init">default_init() (normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic class method)</a>
 
       <ul>
@@ -636,8 +651,6 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.default_init">(normix.mixtures.marginal.NormalMixture class method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/distributions.html#normix.distributions.normal.MultivariateNormal.dim">dim (normix.distributions.normal.MultivariateNormal property)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.dispersion">dispersion() (normix.finance.optimization.MeanRiskProblem method)</a>
@@ -710,12 +723,18 @@
 </li>
       <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.efficient_surface">efficient_surface() (normix.finance.optimization.MeanRiskProblem method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/finance.html#normix.finance.optimization.EfficientFrontier">EfficientFrontier (class in normix.finance.optimization)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.optimization.EfficientSurface">EfficientSurface (class in normix.finance.optimization)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult.eigenvalues">eigenvalues (normix.finance.diversification.ENBResult attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition.eigenvalues">(normix.finance.diversification.TorsionDecomposition attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/fitting.html#normix.fitting.em.EMResult.elapsed_time">elapsed_time (normix.fitting.em.EMResult attribute)</a>
 
       <ul>
@@ -732,6 +751,10 @@
       </ul></li>
       <li><a href="api/fitting.html#normix.fitting.em.EMResult">EMResult (class in normix.fitting.em)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult.enb">enb (normix.finance.diversification.ENBResult attribute)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult">ENBResult (class in normix.finance.diversification)</a>
+</li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.entropy">entropy() (normix.exponential_family.ExponentialFamily method)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.Shrinkage.eta0">eta0 (normix.fitting.eta_rules.Shrinkage attribute)</a>
@@ -745,6 +768,14 @@
       <li><a href="api/fitting.html#normix.fitting.shrinkage_targets.eta0_with_sigma">eta0_with_sigma() (in module normix.fitting.shrinkage_targets)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.EtaUpdateRule">EtaUpdateRule (class in normix.fitting.eta_rules)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.GeneralizedENB.evaluate">evaluate() (normix.finance.diversification.GeneralizedENB method)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.VarianceENB.evaluate">(normix.finance.diversification.VarianceENB method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/finance.html#normix.finance.diversification.VarianceENB.evaluate_covariance">evaluate_covariance() (normix.finance.diversification.VarianceENB method)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.EWMAUpdate">EWMAUpdate (class in normix.fitting.eta_rules)</a>
 </li>
@@ -901,6 +932,8 @@
 </li>
       </ul></li>
       <li><a href="api/utils.html#normix.utils.gammainc.gammaincinv">gammaincinv() (in module normix.utils.gammainc)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.GeneralizedENB">GeneralizedENB (class in normix.finance.diversification)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1180,6 +1213,8 @@
 </li>
       <li><a href="api/finance.html#normix.finance.optimization.MeanRiskProblem.min_variance_point">min_variance_point() (normix.finance.optimization.MeanRiskProblem method)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.diversification.MinimumTorsion">MinimumTorsion (class in normix.finance.diversification)</a>
+</li>
       <li><a href="api/distributions.html#normix.distributions.gamma.Gamma.mode">mode() (normix.distributions.gamma.Gamma method)</a>
 
       <ul>
@@ -1225,6 +1260,8 @@
         <li><a href="api/index.html#module-normix.divergences">normix.divergences</a>
 </li>
         <li><a href="api/index.html#module-normix.exponential_family">normix.exponential_family</a>
+</li>
+        <li><a href="api/finance.html#module-normix.finance.diversification">normix.finance.diversification</a>
 </li>
         <li><a href="api/finance.html#module-normix.finance.functional">normix.finance.functional</a>
 </li>
@@ -1408,6 +1445,13 @@
         <li><a href="api/index.html#module-normix.exponential_family">module</a>
 </li>
       </ul></li>
+      <li>
+    normix.finance.diversification
+
+      <ul>
+        <li><a href="api/finance.html#module-normix.finance.diversification">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -1553,8 +1597,12 @@
 </li>
         <li><a href="api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.p">(normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian attribute)</a>
 </li>
+        <li><a href="api/finance.html#normix.finance.diversification.ENBResult.p">(normix.finance.diversification.ENBResult attribute)</a>
+</li>
       </ul></li>
       <li><a href="api/fitting.html#normix.fitting.em.EMResult.param_changes">param_changes (normix.fitting.em.EMResult attribute)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.PCATorsion">PCATorsion (class in normix.finance.diversification)</a>
 </li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.pdf">pdf() (normix.exponential_family.ExponentialFamily method)</a>
 
@@ -1568,10 +1616,10 @@
 </li>
       <li><a href="api/utils.html#normix.utils.plotting.plot_marginal_2d">plot_marginal_2d() (in module normix.utils.plotting)</a>
 </li>
-      <li><a href="api/utils.html#normix.utils.plotting.plot_mle_fit">plot_mle_fit() (in module normix.utils.plotting)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/utils.html#normix.utils.plotting.plot_mle_fit">plot_mle_fit() (in module normix.utils.plotting)</a>
+</li>
       <li><a href="api/utils.html#normix.utils.plotting.plot_pdf_cdf_comparison">plot_pdf_cdf_comparison() (in module normix.utils.plotting)</a>
 </li>
       <li><a href="api/utils.html#normix.utils.plotting.plot_sample_histograms">plot_sample_histograms() (in module normix.utils.plotting)</a>
@@ -1672,17 +1720,21 @@
       </ul></li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.renyi">renyi() (normix.exponential_family.ExponentialFamily method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.replace">replace() (normix.mixtures.factor.FactorNormalMixture method)</a>
 
       <ul>
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.replace">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
-      <li><a href="api/finance.html#normix.finance.functional.WeightFunctional.risk">risk (normix.finance.functional.WeightFunctional attribute)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult.risk">risk (normix.finance.diversification.ENBResult attribute)</a>
 
       <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.GeneralizedENB.risk">(normix.finance.diversification.GeneralizedENB attribute)</a>
+</li>
+        <li><a href="api/finance.html#normix.finance.functional.WeightFunctional.risk">(normix.finance.functional.WeightFunctional attribute)</a>
+</li>
         <li><a href="api/finance.html#normix.finance.optimization.EfficientFrontier.risk">(normix.finance.optimization.EfficientFrontier attribute)</a>
 </li>
         <li><a href="api/finance.html#normix.finance.optimization.EfficientSurface.risk">(normix.finance.optimization.EfficientSurface attribute)</a>
@@ -1818,6 +1870,14 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult.T">T (normix.finance.diversification.ENBResult attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition.T">(normix.finance.diversification.TorsionDecomposition attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition.T_inv_T">T_inv_T (normix.finance.diversification.TorsionDecomposition attribute)</a>
+</li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.Shrinkage.tau">tau (normix.fitting.eta_rules.Shrinkage attribute)</a>
 </li>
       <li><a href="api/fitting.html#normix.fitting.eta_rules.RobbinsMonroUpdate.tau0">tau0 (normix.fitting.eta_rules.RobbinsMonroUpdate attribute)</a>
@@ -1868,6 +1928,16 @@
 </li>
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.to_variance_gamma">to_variance_gamma() (normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic method)</a>
 </li>
+      <li><a href="api/finance.html#normix.finance.diversification.Torsion">Torsion (class in normix.finance.diversification)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.GeneralizedENB.torsion">torsion (normix.finance.diversification.GeneralizedENB attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.diversification.VarianceENB.torsion">(normix.finance.diversification.VarianceENB attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition">TorsionDecomposition (class in normix.finance.diversification)</a>
+</li>
       <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostProblem">TransactionCostProblem (class in normix.finance.transaction_costs)</a>
 </li>
       <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostQP">TransactionCostQP (class in normix.finance.transaction_costs)</a>
@@ -1902,7 +1972,13 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.v">v (normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+      <li><a href="api/finance.html#normix.finance.diversification.ENBResult.v">v (normix.finance.diversification.ENBResult attribute)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.transaction_costs.TransactionCostResult.v">(normix.finance.transaction_costs.TransactionCostResult attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api/finance.html#normix.finance.diversification.TorsionDecomposition.valid">valid (normix.finance.diversification.TorsionDecomposition attribute)</a>
 </li>
       <li><a href="api/utils.html#normix.utils.validation.validate_moments">validate_moments() (in module normix.utils.validation)</a>
 </li>
@@ -1915,7 +1991,11 @@
 </li>
       </ul></li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.value_grad_hess_w">value_grad_hess_w() (normix.finance.risk.CVaR method)</a>
+
+      <ul>
+        <li><a href="api/finance.html#normix.finance.risk.RiskMeasure.value_grad_hess_w">(normix.finance.risk.RiskMeasure method)</a>
 </li>
+      </ul></li>
       <li><a href="api/finance.html#normix.finance.risk.CVaR.value_reduced">value_reduced() (normix.finance.risk.CVaR method)</a>
 
       <ul>
@@ -1941,6 +2021,8 @@
 </li>
       </ul></li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.varentropy">varentropy() (normix.exponential_family.ExponentialFamily method)</a>
+</li>
+      <li><a href="api/finance.html#normix.finance.diversification.VarianceENB">VarianceENB (class in normix.finance.diversification)</a>
 </li>
       <li><a href="api/distributions.html#normix.distributions.variance_gamma.VarianceGamma">VarianceGamma (class in normix.distributions.variance_gamma)</a>
 </li>

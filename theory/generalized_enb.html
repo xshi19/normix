@@ -215,6 +215,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
 </ul>
 </details></li>
 </ul>
@@ -511,10 +512,12 @@ which ensures that the risk contributions are non-negative when
 <p>The Taylor expansion in the transformed coordinates is:</p>
 <div class="math notranslate nohighlight">
 \[r(w + \Delta w) &amp;\approx r(w) + \frac{1}{\tau - 1} \Delta v^\top D(w) \, v
-+ \frac{1}{\tau} \Delta v^\top D(w) \, \Delta v,\]</div>
-<p>where <span class="math notranslate nohighlight">\(\Delta v = (T(w)^\top)^{-1} \Delta w\)</span>. Each component of
-<span class="math notranslate nohighlight">\(\Delta v\)</span> has an approximately independent contribution to the change
-<span class="math notranslate nohighlight">\(r(w + \Delta w) - r(w)\)</span>, justifying the decomposition.</p>
++ \frac{1}{2} \Delta v^\top D(w) \, \Delta v,\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta v = (T(w)^\top)^{-1} \Delta w\)</span>. The quadratic coefficient is
+the ordinary Taylor factor <span class="math notranslate nohighlight">\(1/2\)</span> (not <span class="math notranslate nohighlight">\(1/\tau\)</span>; the two coincide only at
+<span class="math notranslate nohighlight">\(\tau = 2\)</span>). Each component of <span class="math notranslate nohighlight">\(\Delta v\)</span> has an approximately independent
+contribution to the change <span class="math notranslate nohighlight">\(r(w + \Delta w) - r(w)\)</span>, justifying the
+decomposition.</p>
 </section>
 </section>
 <section id="generalized-enb">
@@ -551,11 +554,14 @@ transformation is:</p>
 subadditivity, <span class="math notranslate nohighlight">\(r_\rho\)</span> is convex and <strong>1-homogeneous</strong>
 (<span class="math notranslate nohighlight">\(\tau = 1\)</span>).</p>
 <p>Since the generalized ENB requires <span class="math notranslate nohighlight">\(\tau &gt; 1\)</span>, we work with the
-<strong>squared risk</strong> <span class="math notranslate nohighlight">\(r_\rho^2(w)\)</span>, which is 2-homogeneous. This is
+<strong>squared risk</strong> <span class="math notranslate nohighlight">\(r_\rho^2(w)\)</span>, which is 2-homogeneous provided
+<span class="math notranslate nohighlight">\(r_\rho(w) \ge 0\)</span>. (Squaring a negative coherent risk is not generally
+convex; the ENB is undefined — reported as NaN — on that domain.) This is
 analogous to using variance (the square of standard deviation) in the
 original ENB framework.</p>
-<p>The Hessian of <span class="math notranslate nohighlight">\(r_\rho^2(w)\)</span> can be computed from the CVaR gradient
-and Hessian formulas in <a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>:</p>
+<p>The local diagonalization is applied to the Hessian of the squared risk
+<span class="math notranslate nohighlight">\(H_{r_\rho^2}\)</span>, not to <span class="math notranslate nohighlight">\(H_{r_\rho}\)</span> itself. That Hessian follows from the
+CVaR gradient and Hessian formulas in <a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>:</p>
 <div class="math notranslate nohighlight">
 \[H_{r_\rho^2}(w) = 2 \nabla r_\rho(w) \, \nabla r_\rho(w)^\top
 + 2 \, r_\rho(w) \, H_{r_\rho}(w).\]</div>

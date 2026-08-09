@@ -215,6 +215,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
 </ul>
 </details></li>
 </ul>
@@ -538,7 +539,7 @@ replacing <span class="math notranslate nohighlight">\(p_0\)</span> with <span c
   Regularize   : det_sigma_one
   Tolerance    : 1.0e-02
   Max iters    : 200
-  Converged after 7 iterations (4.60s), final LL=5.765238
+  Converged after 7 iterations (5.00s), final LL=5.765238
 
 Base model parameters:
   p = -0.8662,  a = 1819.0773,  b = 0.0002
@@ -610,92 +611,92 @@ Base model parameters:
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>p = -10
-[EM: 16 iters, 1.4s]
-[MCECM: 41 iters, 3.1s]
+[EM: 16 iters, 1.5s]
+[MCECM: 41 iters, 3.4s]
 
 p =  -9
-[EM: 17 iters, 0.6s]
-[MCECM: 66 iters, 3.5s]
+[EM: 17 iters, 0.7s]
+[MCECM: 66 iters, 4.0s]
 
 p =  -8
-[EM: 16 iters, 0.6s]
-[MCECM: 80 iters, 4.4s]
+[EM: 16 iters, 0.7s]
+[MCECM: 80 iters, 4.9s]
 
 p =  -7
 [EM: 12 iters, 0.5s]
-[MCECM: 200 iters, 11.0s]
+[MCECM: 200 iters, 11.9s]
 
 p =  -6
 [EM: 12 iters, 0.5s]
-[MCECM: 61 iters, 3.4s]
+[MCECM: 61 iters, 3.9s]
 
 p =  -5
-[EM: 11 iters, 0.5s]
-[MCECM: 25 iters, 1.5s]
+[EM: 11 iters, 0.6s]
+[MCECM: 25 iters, 1.8s]
 
 p =  -4
 [EM: 11 iters, 0.4s]
-[MCECM: 45 iters, 2.6s]
+[MCECM: 45 iters, 3.0s]
 
 p =  -3
 [EM: 11 iters, 0.4s]
-[MCECM: 113 iters, 6.6s]
+[MCECM: 113 iters, 7.6s]
 
 p =  -2
 [EM: 3 iters, 0.1s]
-[MCECM: 19 iters, 1.0s]
+[MCECM: 19 iters, 1.2s]
 
 p =  -1
 [EM: 5 iters, 0.2s]
-[MCECM: 29 iters, 1.6s]
+[MCECM: 29 iters, 1.8s]
 
 p =  +0
 [EM: 4 iters, 0.1s]
-[MCECM: 22 iters, 1.2s]
+[MCECM: 22 iters, 1.3s]
 
 p =  +1
 [EM: 6 iters, 0.2s]
-[MCECM: 28 iters, 1.5s]
+[MCECM: 28 iters, 1.7s]
 
 p =  +2
 [EM: 5 iters, 0.2s]
-[MCECM: 132 iters, 7.3s]
+[MCECM: 132 iters, 8.4s]
 
 p =  +3
 [EM: 2 iters, 0.1s]
-[MCECM: 32 iters, 2.0s]
+[MCECM: 32 iters, 2.3s]
 
 p =  +4
-[EM: 7 iters, 0.2s]
-[MCECM: 23 iters, 1.4s]
+[EM: 7 iters, 0.3s]
+[MCECM: 23 iters, 1.5s]
 
 p =  +5
 [EM: 5 iters, 0.2s]
-[MCECM: 30 iters, 2.2s]
+[MCECM: 30 iters, 2.6s]
 
 p =  +6
-[EM: 6 iters, 0.2s]
-[MCECM: 116 iters, 6.7s]
+[EM: 6 iters, 0.3s]
+[MCECM: 116 iters, 7.5s]
 
 p =  +7
-[EM: 8 iters, 0.4s]
-[MCECM: 36 iters, 2.7s]
+[EM: 8 iters, 0.5s]
+[MCECM: 36 iters, 3.2s]
 
 p =  +8
 [EM: 8 iters, 0.3s]
-[MCECM: 200 iters, 10.4s]
+[MCECM: 200 iters, 12.1s]
 
 p =  +9
 [EM: 1 iters, 0.0s]
-[MCECM: 200 iters, 10.1s]
+[MCECM: 200 iters, 11.9s]
 
 p = +10
-[EM: 11 iters, 0.5s]
-[MCECM: 43 iters, 3.3s]
+[EM: 11 iters, 0.7s]
+[MCECM: 43 iters, 4.0s]
 
 
-Total EM time:    7.7s
-Total MCECM time: 87.6s
+Total EM time:    8.7s
+Total MCECM time: 100.0s
 </pre></div>
 </div>
 </div>

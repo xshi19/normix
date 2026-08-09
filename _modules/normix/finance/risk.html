@@ -212,6 +212,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
 </ul>
 </details></li>
 </ul>
@@ -456,6 +457,24 @@
 <span class="sd">        :func:`jax.vmap`-ed across an efficient-surface grid that shares the</span>
 <span class="sd">        subordinator draws ``Y``.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="RiskMeasure.value_grad_hess_w">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.risk.RiskMeasure.value_grad_hess_w">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value_grad_hess_w</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fused :math:`(r(w), \nabla_w r, H_r(w))` under one CRN sample ``Y``.</span>
+
+<span class="sd">        Consumed by :mod:`~normix.finance.transaction_costs` and</span>
+<span class="sd">        :mod:`~normix.finance.diversification`. Concrete measures override</span>
+<span class="sd">        with an analytically fused implementation (CVaR shares one CMC VaR</span>
+<span class="sd">        solve); the base raises — a value-only measure cannot participate in</span>
+<span class="sd">        the derivative-consuming layers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not provide the fused derivative bundle&quot;</span>
+        <span class="p">)</span></div>
 </div>
 
 

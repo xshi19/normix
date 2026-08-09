@@ -215,6 +215,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
 </ul>
 </details></li>
 </ul>
@@ -517,10 +518,11 @@ orthogonal matrix <span class="math notranslate nohighlight">\(V\)</span> such t
 <span class="eqno">(2)<a class="headerlink" href="#equation-t-representation" title="Link to this equation">#</a></span>\[T = D^{1/2} V S^{-1/2} U^\top
 \operatorname{diag}(\Sigma)^{-1/2}.\]</div>
 <p><strong>Lemma.</strong> The ENB <span class="math notranslate nohighlight">\(N\)</span> is independent of the choice of <span class="math notranslate nohighlight">\(D\)</span>.</p>
-<p><em>Proof.</em> Let <span class="math notranslate nohighlight">\(u = V S^{-1/2} U^\top
+<p><em>Proof.</em> Let <span class="math notranslate nohighlight">\(u = V S^{+1/2} U^\top
 \operatorname{diag}(\Sigma)^{1/2} w\)</span> and <span class="math notranslate nohighlight">\(v = D^{-1/2} u\)</span>. Then
-<span class="math notranslate nohighlight">\(p_k = u_k^2 / (w^\top \Sigma w)\)</span>, which does not depend on
-<span class="math notranslate nohighlight">\(D\)</span>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<span class="math notranslate nohighlight">\(d_k v_k^2 = u_k^2\)</span> and <span class="math notranslate nohighlight">\(p_k = u_k^2 / (w^\top \Sigma w)\)</span>, which does not
+depend on <span class="math notranslate nohighlight">\(D\)</span>. (The exponent on <span class="math notranslate nohighlight">\(S\)</span> must be <span class="math notranslate nohighlight">\(+1/2\)</span>: only then does
+<span class="math notranslate nohighlight">\(\sum_k u_k^2 = w^\top \Sigma w\)</span>.) <span class="math notranslate nohighlight">\(\square\)</span></p>
 <p>Therefore, it suffices to choose only the orthogonal matrix <span class="math notranslate nohighlight">\(V\)</span>.
 Since <span class="math notranslate nohighlight">\(V\)</span> is a rotation, it can map the vector
 <span class="math notranslate nohighlight">\(S^{-1/2} U^\top \operatorname{diag}(\Sigma)^{1/2} w\)</span> to any
