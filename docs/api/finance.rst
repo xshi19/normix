@@ -40,3 +40,11 @@ Weight Functional
    :members:
    :undoc-members:
    :show-inheritance:
+
+Diversification
+---------------
+
+.. automodule:: normix.finance.diversification
+   :members:
+   :undoc-members:
+   :show-inheritance:

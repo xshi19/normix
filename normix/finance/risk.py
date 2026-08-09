@@ -52,6 +52,21 @@ class RiskMeasure(eqx.Module):
         subordinator draws ``Y``.
         """
 
+    def value_grad_hess_w(
+        self, model: NormalMixture, w: jax.Array, Y: jax.Array,
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        r"""Fused :math:`(r(w), \nabla_w r, H_r(w))` under one CRN sample ``Y``.
+
+        Consumed by :mod:`~normix.finance.transaction_costs` and
+        :mod:`~normix.finance.diversification`. Concrete measures override
+        with an analytically fused implementation (CVaR shares one CMC VaR
+        solve); the base raises — a value-only measure cannot participate in
+        the derivative-consuming layers.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not provide the fused derivative bundle"
+        )
+
 class CVaR(RiskMeasure):
     r"""Conditional Value at Risk at confidence :math:`\alpha \in (0, 1)`.
 

@@ -61,12 +61,14 @@ The Taylor expansion in the transformed coordinates is:
 
 ```{math}
 r(w + \Delta w) &\approx r(w) + \frac{1}{\tau - 1} \Delta v^\top D(w) \, v
-+ \frac{1}{\tau} \Delta v^\top D(w) \, \Delta v,
++ \frac{1}{2} \Delta v^\top D(w) \, \Delta v,
 ```
 
-where $\Delta v = (T(w)^\top)^{-1} \Delta w$. Each component of
-$\Delta v$ has an approximately independent contribution to the change
-$r(w + \Delta w) - r(w)$, justifying the decomposition.
+where $\Delta v = (T(w)^\top)^{-1} \Delta w$. The quadratic coefficient is
+the ordinary Taylor factor $1/2$ (not $1/\tau$; the two coincide only at
+$\tau = 2$). Each component of $\Delta v$ has an approximately independent
+contribution to the change $r(w + \Delta w) - r(w)$, justifying the
+decomposition.
 
 ## Generalized ENB
 
@@ -115,12 +117,15 @@ subadditivity, $r_\rho$ is convex and **1-homogeneous**
 ($\tau = 1$).
 
 Since the generalized ENB requires $\tau > 1$, we work with the
-**squared risk** $r_\rho^2(w)$, which is 2-homogeneous. This is
+**squared risk** $r_\rho^2(w)$, which is 2-homogeneous provided
+$r_\rho(w) \ge 0$. (Squaring a negative coherent risk is not generally
+convex; the ENB is undefined — reported as NaN — on that domain.) This is
 analogous to using variance (the square of standard deviation) in the
 original ENB framework.
 
-The Hessian of $r_\rho^2(w)$ can be computed from the CVaR gradient
-and Hessian formulas in {doc}`cvar_derivatives`:
+The local diagonalization is applied to the Hessian of the squared risk
+$H_{r_\rho^2}$, not to $H_{r_\rho}$ itself. That Hessian follows from the
+CVaR gradient and Hessian formulas in {doc}`cvar_derivatives`:
 
 ```{math}
 H_{r_\rho^2}(w) = 2 \nabla r_\rho(w) \, \nabla r_\rho(w)^\top

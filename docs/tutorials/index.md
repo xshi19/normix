@@ -64,4 +64,5 @@ finance/03_factor_mixture_portfolios
 finance/04_cvar_optimization
 finance/05_mean_risk_optimization
 finance/06_transaction_costs
+finance/07_diversification
 ```

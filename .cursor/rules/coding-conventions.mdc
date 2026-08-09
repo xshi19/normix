@@ -156,6 +156,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information (second-order) |
 | `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
+| `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
 
 ## Numerical Stability
 

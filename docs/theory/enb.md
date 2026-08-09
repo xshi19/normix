@@ -77,10 +77,11 @@ T = D^{1/2} V S^{-1/2} U^\top
 
 **Lemma.** The ENB $N$ is independent of the choice of $D$.
 
-*Proof.* Let $u = V S^{-1/2} U^\top
+*Proof.* Let $u = V S^{+1/2} U^\top
 \operatorname{diag}(\Sigma)^{1/2} w$ and $v = D^{-1/2} u$. Then
-$p_k = u_k^2 / (w^\top \Sigma w)$, which does not depend on
-$D$. $\square$
+$d_k v_k^2 = u_k^2$ and $p_k = u_k^2 / (w^\top \Sigma w)$, which does not
+depend on $D$. (The exponent on $S$ must be $+1/2$: only then does
+$\sum_k u_k^2 = w^\top \Sigma w$.) $\square$
 
 Therefore, it suffices to choose only the orthogonal matrix $V$.
 Since $V$ is a rotation, it can map the vector

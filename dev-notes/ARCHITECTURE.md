@@ -35,6 +35,7 @@ normix/                     # JAX implementation
 │   ├── functional.py       # WeightFunctional: risk as a JIT-able w ↦ ℝ with grad/hess
 │   ├── optimization.py     # MeanRiskProblem, EfficientSurface, EfficientFrontier (2-D reduction)
 │   ├── transaction_costs.py # local-quadratic turnover QP (TransactionCostProblem)
+│   ├── diversification.py  # VarianceENB / GeneralizedENB (Meucci ENB); Torsion strategies
 │   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over Y (object + raw vectorizable cores)
 │                           # portfolio projection: NormalMixture.project(w) → Univariate*
 └── utils/
@@ -265,6 +266,7 @@ from there. Never define magic numbers locally in distribution files.
 | `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
 | `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
+| `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
 
 ## GIG η→θ Optimization
 
@@ -301,5 +303,5 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch |
 | `docs/theory/` | Mathematical derivations (MyST `.md`) |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
-| `plans/finance_architecture.md` | `normix.finance` roadmap; Phase D + Phase E (mean-risk + transaction costs) implemented; Phase F still proposed |
+| `plans/finance_architecture.md` | `normix.finance` roadmap; Phases D–F implemented (Phase F: diversification / ENB) |
 | `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

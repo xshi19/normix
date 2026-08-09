@@ -1,9 +1,8 @@
 # Mathematical Background
 
 Formal derivations for the distributions and algorithms in `normix`, based on
-{ref}`Shi2016 <shi2016>`. Pages are grouped by topic; a few finance topics (ENB)
-remain theory-only until matching tutorials land. Bibliographic entries live in
-{doc}`../references`.
+{ref}`Shi2016 <shi2016>`. Pages are grouped by topic. Bibliographic entries live
+in {doc}`../references`.
 
 ```{toctree}
 :maxdepth: 1
