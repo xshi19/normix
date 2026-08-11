@@ -23,6 +23,7 @@ being edited. This is the primary mechanism for progressive disclosure.
 | `maintain-architecture-md.mdc` | `**/dev-notes/ARCHITECTURE.md` | ARCHITECTURE.md maintenance |
 | `maintain-design-docs.mdc` | `**/docs/design/**`, `**/dev-notes/design/**`, ... | Design docs, tech notes, references |
 | `maintain-theory-docs.mdc` | `**/docs/theory/**` | Mathematical derivations |
+| `docs-cross-links.mdc` | `docs/**`, `dev-notes/**`, … | Cross-links, `{ref}` citations, package URLs |
 | `maintain-cursor-rules.mdc` | `**/.cursor/rules/*.mdc` | This file — rules about rules |
 | `maintain-skills.mdc` | `**/.cursor/skills/**` | Skills maintenance |
 

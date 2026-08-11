@@ -32,8 +32,10 @@ distributions and algorithms implemented in normix.
 
 - **MyST Markdown** (`.md`). Prefer ` ```{math} ` with optional `:label:` for
   numbered equations; inline `:math:` roles and `:eq:` cross-refs are fine.
-- Citations live in `docs/references.md` (MyST `(key)=` targets). Cite with
-  `{ref}`Key <key>`` — do not redefine entries on individual theory pages.
+- Citations: see `.cursor/rules/docs-cross-links.mdc` (canonical bib
+  `docs/references.md`, `{ref}`Key <key>``). Cite foundational definitions,
+  named propositions/algorithms, and special-function identities; add new
+  `(key)=` entries when introducing a source.
 - `index.md` maintains the toctree, grouped by topic (Distributions / Fitting /
   Portfolio & risk).
 
@@ -61,6 +63,9 @@ code cells into theory pages, and do **not** collapse both into one mega-page.
 
 - **Don't put implementation details here.** Pure math only.
 - **Don't mix `.rst` and `.md`** — all theory content is MyST `.md`.
-- **Reference [Shi2016]** via `{ref}`Shi2016 <shi2016>`` (`docs/references.md`).
+- **Don't leave named math bare.** "Hankel asymptotic", "Olver expansion",
+  "MCECM", Hellinger propositions, etc. need `{ref}` (and DLMF section URLs
+  where applicable). Prefer the primary source; use Shi2016 when the
+  derivation lives there.
 - A one-shot converter lives at `scripts/rst_theory_to_myst.py` (historical;
   theory is already MyST).

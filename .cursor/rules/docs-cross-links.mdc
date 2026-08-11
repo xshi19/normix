@@ -1,5 +1,5 @@
 ---
-description: Cross-link conventions between docs/, dev-notes/, normix/ docstrings, and README
+description: Cross-link, citation, and external-package conventions for docs/, dev-notes/, and docstrings
 globs:
   - docs/**/*
   - dev-notes/**/*
@@ -22,6 +22,46 @@ normix has two doc trees:
   raw relative paths (so Sphinx can validate the link).
 - Cross-reference `normix.*` symbols via `{py:class}`, `{py:func}`, `{py:meth}`.
 - External URLs are fine; the linkcheck builder validates them in CI.
+
+## Citations (academic / technical)
+
+Canonical bibliography: `docs/references.md` (MyST `(key)=` targets).
+Cite with `{ref}`Key <key>`` — never redefine entries on content pages.
+
+**Cite when prose names** a paper, algorithm origin, asymptotic expansion,
+special-function identity, or foundational distribution result. Examples:
+
+- Hankel / Olver / small-$z$ Bessel regimes → `{ref}`DLMF <dlmf>`` + section URL
+  (e.g. https://dlmf.nist.gov/10.40.E2); quadrature → Takekawa2022
+- GIG Devroye TDR / PINV → Devroye2014 / HormannLeydold2011
+- EM / online EM / MCECM → Dempster1977 / Cappe2009 / MengRubin1993
+- GH / NIG / VG → BarndorffNielsen1977 / 1997 / MadanSeneta1990
+- Coherent risk / CVaR / ENB → Artzner1999 / RockafellarUryasev2000 / Meucci*
+
+**Do / don't**
+
+- DO add a new `(key)=` entry to `docs/references.md` when introducing a source
+- DO match wording to the implementation (e.g. Devroye is TDR, not ratio-of-uniforms;
+  MCECM is Multi-Cycle ECM, not Monte Carlo)
+- DON'T leave named expansions bare ("Hankel asymptotic…") without a cite/link
+- DON'T invent bibliography keys that aren't in `references.md`
+
+## External packages
+
+In published prose (install table, design rationale, tutorial intros), link the
+first meaningful mention of a dependency to its docs. Canonical URLs:
+
+| Package | URL |
+|---|---|
+| JAX | https://docs.jax.dev/en/latest/ |
+| Equinox | https://docs.kidger.site/equinox/ |
+| JAXopt | https://jaxopt.github.io/stable/ |
+| NumPy | https://numpy.org/doc/stable/ |
+| SciPy | https://docs.scipy.org/doc/scipy/ |
+| matplotlib | https://matplotlib.org/stable/ |
+
+Don't hyperlink every `import jax` in code cells. Keep dependency tables in
+`docs/getting_started/install.md` aligned with `pyproject.toml`.
 
 ## In `dev-notes/**` (internal)
 

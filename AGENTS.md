@@ -62,7 +62,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Agent instructions design | `dev-notes/design/agent_instructions_design.md` |
 | Full design doc index (internal) | `dev-notes/design/index.md` |
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
-| Published bibliography | `docs/references.md` (cite with `{ref}`Key <key>``) |
+| Published bibliography + citation/package-link rules | `docs/references.md`; `.cursor/rules/docs-cross-links.mdc` |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
 | Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`) |
 | 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |

@@ -32,6 +32,21 @@ system. Each trigger below tells you what to update and where.
 4. Add tests under `tests/` (see `.cursor/rules/testing-guidelines.mdc`)
 5. Add notebook under `notebooks/` (see `.cursor/rules/notebook-guidelines.mdc`)
 6. Add theory derivation under `docs/theory/` if mathematical background is needed
+7. If the theory/tutorial names a foundational paper or algorithm, add/cite it in
+   `docs/references.md` (see `.cursor/rules/docs-cross-links.mdc`)
+
+### Editing Published Docs (Tutorials / Theory / Design / User Guide)
+
+When prose names asymptotics, algorithms, samplers, risk measures, or external
+packages:
+
+1. Cite via `{ref}`Key <key>`` from `docs/references.md`; add a `(key)=` entry
+   if missing
+2. Link the first prose mention of JAX / Equinox / JAXopt / NumPy / SciPy /
+   matplotlib to the canonical docs URL
+3. Keep wording faithful to the code (Devroye = TDR; MCECM = Multi-Cycle ECM)
+4. Follow `.cursor/rules/docs-cross-links.mdc` (citations + package URLs) and the
+   relevant `maintain-theory-docs.mdc` / `maintain-design-docs.mdc` rule
 
 ### New Numerical Constant
 
@@ -109,6 +124,8 @@ Before updating anything, check that you're updating the **canonical location**:
 | Published design rationale | `docs/design/` |
 | Commands, context map | `AGENTS.md` |
 | Mathematical derivations | `docs/theory/` |
+| Published bibliography keys | `docs/references.md` |
+| Citation / package-link conventions | `.cursor/rules/docs-cross-links.mdc` |
 
 If the fact already exists elsewhere, **add a pointer**, don't duplicate.
 
