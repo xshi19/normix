@@ -11,7 +11,9 @@ mystnb:
 # Batch EM in practice
 
 Fitting a normal variance-mean mixture is a missing-data problem: the
-subordinator $Y$ is latent. The **EM algorithm** alternates
+subordinator $Y$ is latent. The **EM algorithm**
+({ref}`Dempster1977 <dempster1977>`; for GH mixtures,
+{ref}`Hu2005 <hu2005>`, {ref}`Shi2016 <shi2016>`) alternates
 
 - **E-step** — given the current model, compute the conditional expectations
   $\mathbb{E}[t(Y) \mid X]$ of the sufficient statistics, and
@@ -119,12 +121,13 @@ print("log|Σ|             :", float(res_reg.model.log_det_sigma()))
 ## CPU and JAX backends
 
 The E-step is dominated by Bessel evaluations and the M-step by the
-$\eta \mapsto \theta$ solve. Each can run on a JAX or a CPU/scipy backend
-independently:
+$\eta \mapsto \theta$ solve. Each can run on a [JAX](https://docs.jax.dev/en/latest/)
+or a CPU/[SciPy](https://docs.scipy.org/doc/scipy/) backend independently:
 
-- `e_step_backend="cpu"` routes Bessel through `scipy.special.kve` — a large
-  speedup for the GIG/NIG E-step on CPU.
-- `m_step_backend="cpu"` uses the numpy/scipy Newton solver for the
+- `e_step_backend="cpu"` routes Bessel through
+  [`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
+  — a large speedup for the GIG/NIG E-step on CPU.
+- `m_step_backend="cpu"` uses the NumPy/SciPy Newton solver for the
   subordinator update; `m_step_method` selects `"newton"`, `"lbfgs"`, or
   `"bfgs"`.
 

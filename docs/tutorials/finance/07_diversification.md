@@ -10,11 +10,12 @@ mystnb:
 
 # Diversification: variance ENB vs CVaR ENB
 
-Meucci's **effective number of bets** (ENB) asks how many uncorrelated risk
-factors a portfolio is truly exposed to. The answer depends on which risk you
-diagonalize. Variance ENB uses $\mathrm{Cov}[X]$; generalized ENB uses the
-Hessian of squared coherent risk $\rho^2$ — here CVaR — and can see
-tail concentrations that a second-moment measure misses.
+Meucci's **effective number of bets** (ENB;
+{ref}`Meucci2010 <meucci2010>`, {ref}`Meucci2014 <meucci2014>`) asks how many
+uncorrelated risk factors a portfolio is truly exposed to. The answer depends
+on which risk you diagonalize. Variance ENB uses $\mathrm{Cov}[X]$; generalized
+ENB uses the Hessian of squared coherent risk $\rho^2$ — here CVaR — and can
+see tail concentrations that a second-moment measure misses.
 
 This page follows the spirit of Figures 12–14 and Table 15 of
 {ref}`Shi2016 <shi2016>`: a synthetic case where variance ENB declares perfect

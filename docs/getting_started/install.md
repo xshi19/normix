@@ -55,18 +55,20 @@ If float64 is not enabled, normix emits a warning on import.
 
 | Package | Role |
 |---|---|
-| `jax` | Array computation, autodiff, JIT, `vmap` |
-| `equinox` | Immutable pytree modules |
-| `jaxopt` | L-BFGS/BFGS for the GIG $\eta \mapsto \theta$ solve |
-| `tensorflow-probability` | Reference Bessel functions |
-| `scipy` | CPU Bessel evaluation on the EM hot path |
-| `optax` *(optional)* | Gradient-based fitting experiments |
+| [JAX](https://docs.jax.dev/en/latest/) | Array computation, autodiff, JIT, `vmap` |
+| [Equinox](https://docs.kidger.site/equinox/) | Immutable pytree modules |
+| [JAXopt](https://jaxopt.github.io/stable/) | L-BFGS/BFGS for the GIG $\eta \mapsto \theta$ solve |
+| [NumPy](https://numpy.org/doc/stable/) | CPU array helpers alongside the JAX triad |
+| [SciPy](https://docs.scipy.org/doc/scipy/) | CPU Bessel evaluation (`kve`) on the EM hot path |
 
 ## Optional extras
 
 ```bash
-uv sync --extra docs --extra plotting   # Sphinx site + matplotlib helpers
+uv sync --extra docs --extra plotting
 ```
+
+The `docs` extra builds the Sphinx site; `plotting` adds
+[matplotlib](https://matplotlib.org/stable/) helpers used by the tutorials.
 
 Once installed, head to the {doc}`quickstart` for a 30-second example, or
 {doc}`first_model` for a guided walkthrough.

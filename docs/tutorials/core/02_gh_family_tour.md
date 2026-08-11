@@ -10,7 +10,8 @@ mystnb:
 
 # A tour of the GH family
 
-The Generalized Hyperbolic (GH) distribution and its relatives are all
+The Generalized Hyperbolic (GH) distribution
+({ref}`BarndorffNielsen1977 <barndorffnielsen1977>`) and its relatives are all
 **normal variance-mean mixtures**: a Gaussian whose mean and covariance are
 scaled by a positive latent variable $Y$,
 
@@ -18,8 +19,10 @@ $$
 X \mid Y \sim \mathcal{N}(\mu + \gamma\, Y,\; \Sigma\, Y), \qquad Y \sim \text{subordinator}.
 $$
 
-Different choices of the **subordinator** $Y$ produce the whole family. This
-tutorial maps that hierarchy and shows how the pieces fit together.
+Different choices of the **subordinator** $Y$ produce the whole family —
+Variance Gamma ({ref}`MadanSeneta1990 <madan1990>`), Normal-Inverse Gaussian
+({ref}`BarndorffNielsen1997 <barndorffnielsen1997>`), and the general GIG case.
+This tutorial maps that hierarchy and shows how the pieces fit together.
 
 ```{code-cell} python
 import jax

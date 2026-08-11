@@ -10,10 +10,12 @@ mystnb:
 
 # Mean-risk optimization and the efficient surface
 
-Markowitz traded expected return against *variance*. But variance is a poor
-proxy for what investors actually fear — large losses — and it is blind to
-skewness. Replacing variance with a **coherent risk measure** such as
-$\operatorname{CVaR}_\alpha$ gives the *mean-risk* problem
+{ref}`Markowitz1952 <markowitz1952>` traded expected return against *variance*.
+But variance is a poor proxy for what investors actually fear — large losses —
+and it is blind to skewness. Replacing variance with a **coherent risk measure**
+({ref}`Artzner1999 <artzner1999>`) such as $\operatorname{CVaR}_\alpha$
+({ref}`RockafellarUryasev2000 <rockafellaruryasev2000>`) gives the *mean-risk*
+problem
 
 $$
 \min_w\; \rho(w^\top X)

@@ -100,11 +100,11 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | backend | method | bounds | What runs |
 |---|---|---|---|
 | `jax` | `newton` | reparam | hand-rolled `while_loop`, autodiff or supplied `grad_fn`/`hess_fn` |
-| `jax` | `lbfgs` | native (LBFGSB) | `jaxopt.LBFGSB` |
-| `jax` | `bfgs`  | reparam | `jaxopt.BFGS` |
-| `cpu` | `newton`| reparam | `scipy.optimize.minimize(method='trust-exact')` |
-| `cpu` | `lbfgs` | native | `scipy.optimize.minimize(method='L-BFGS-B')` |
-| `cpu` | `bfgs`  | none   | `scipy.optimize.minimize(method='BFGS')` |
+| `jax` | `lbfgs` | native (LBFGSB) | [JAXopt](https://jaxopt.github.io/stable/) `LBFGSB` |
+| `jax` | `bfgs`  | reparam | [JAXopt](https://jaxopt.github.io/stable/) `BFGS` |
+| `cpu` | `newton`| reparam | [SciPy](https://docs.scipy.org/doc/scipy/) `minimize(method='trust-exact')` |
+| `cpu` | `lbfgs` | native | SciPy `minimize(method='L-BFGS-B')` |
+| `cpu` | `bfgs`  | none   | SciPy `minimize(method='BFGS')` |
 
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
 + `scipy.kve`) avoids GPU dispatch on this 3-D scalar problem.
@@ -133,10 +133,12 @@ Cholesky path (more efficient).
 
 ### 4.2 D4 — Keep `jaxopt` for now
 
-JAXopt is unmaintained (last release 0.8.3) and emits a `DeprecationWarning`
-on import. We keep it: it is the only pure-JAX library with a native box-
-constrained quasi-Newton (`LBFGSB`). Migrating to `optax.scale_by_lbfgs`
-loses the convergence loop; `optimistix.LBFGS` lacks box constraints.
+[JAXopt](https://jaxopt.github.io/stable/) is unmaintained (last release 0.8.3)
+and emits a `DeprecationWarning` on import. We keep it: it is the only pure-JAX
+library with a native box-constrained quasi-Newton (`LBFGSB`). Migrating to
+[`optax.scale_by_lbfgs`](https://optax.readthedocs.io/en/latest/) loses the
+convergence loop; [`optimistix.LBFGS`](https://docs.kidger.site/optimistix/)
+lacks box constraints.
 
 The deprecation warning is suppressed in `normix/__init__.py`. Migration
 recipe (when JAXopt breaks): wrap `optax.scale_by_lbfgs` in
