@@ -1,6 +1,8 @@
 # Empirical plan: subordinator tracking on the S&P 500 panel
 
-**Status:** plan, 2026-08-12. No code yet — this document sequences the study.
+**Status:** plan, 2026-08-12. Phase 0 implemented
+(`notebooks/subordinator_tracking/00_synthetic_validation.py`); findings in
+[`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Theory:** [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md);
 its notation is reused without redefinition: $e = E[Y]$, $v = \operatorname{Var}(Y)$,
 $\mu_3 = E[(Y-e)^3]$, $\tilde q = \gamma^\top\Sigma^{-1}\gamma$,
@@ -100,7 +102,9 @@ clock.
 - **Fitting.** `BatchEMFitter` per the finance tutorials
   (`docs/tutorials/finance/02_multivariate_stocks.md`); `default_init` cold
   start; `e_step_backend='cpu'` where profiling favours it at large $T\,d$.
-  $\kappa$ and $\kappa_{\mathrm{lev}}$ are gauge-invariant, so regularisation
+  Use `tol=1e-5` (not the package default $10^{-3}$): daily-equity $\gamma$ is
+  small enough that one EM step already meets $10^{-3}$. $\kappa$ and
+  $\kappa_{\mathrm{lev}}$ are gauge-invariant, so regularisation
   affects them not at all; $\tilde q$ is quoted in the $E[Y] = 1$ gauge that
   `'a_eq_b'` pins for NIG.
 - **Statistical error.** Two resampling tools, reused across phases:

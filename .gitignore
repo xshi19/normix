@@ -51,7 +51,8 @@ coverage.xml
 
 # Tier 1 (scratch) notebooks — see notebooks/README.md for the two-tier policy.
 # Tier 2 (preserved) notebooks are jupytext-paired .py files and ARE committed.
-notebooks/*.ipynb
+notebooks/**/*.ipynb
+notebooks/subordinator_tracking/_cache/
 
 # marimo session/layout cache
 __marimo__/

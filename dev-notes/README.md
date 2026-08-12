@@ -16,7 +16,7 @@ https://xshi19.github.io/normix/ — nothing in this tree is built by Sphinx.
 | [`design/`](design/) | Full design rationale (decision table, agent instructions, topical docs) |
 | [`plans/`](plans/) | Migration and roadmap plans |
 | [`tech_notes/`](tech_notes/) | Deep dives (Bessel, GIG solvers, EM profiling, conversions) |
-| [`research/`](research/) | Math research notes and empirical study plans (subordinator-tracking portfolios) |
+| [`research/`](research/) | Math research notes, empirical study plans, and findings (subordinator-tracking portfolios) |
 | [`investigations/`](investigations/) | One-off performance / test-suite investigations |
 | [`reviews/`](reviews/) | Package review notes |
 | [`references/`](references/) | External library surveys |
