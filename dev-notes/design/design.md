@@ -151,6 +151,7 @@ the class as `@classmethod` or `@staticmethod`.
 | C2 | Cholesky factors | always named `L_Sigma` | Single convention |
 | C3 | Sufficient statistics field naming | descriptive (`E_inv_Y`, `E_X_inv_Y`, …) in theory order | Heterogeneous shapes, `tree.map` works naturally |
 | C4 | Workflow skills (pstack adoption) | `architect`+`arena` (strong panel, Cursor-only), `interrogate` (cheap panel + strong escalation), `how`/`why` (single-agent), `tdd`, `unslop` (+ registers), `figure-it-out`, one consolidated `principles` skill; `reflect` merged into `agent-maintenance` | Survey and verdicts (archived): `../archive/references/pstack_skills_review.md`; learnings promoted to `agent_instructions_design.md`; remaining loops/orchestrator work: `../plans/loops_and_orchestration.md` |
+| C5 | Visual explanation skill (humanlayer `show-me`) | Adapted `show-me` skill: smallest-view hierarchy; HTML last resort; Cursor-aware delivery (desktop Open in Browser, cloud screenshot bridge, no iOS HTML). Conversation-scoped artifacts — promote to `docs/` or `dev-notes/` if they should last. | Survey: `../references/humanlayer_skills_review.md`; skill: `.cursor/skills/show-me/`; control-loop harvest: `../plans/loops_and_orchestration.md` |
 
 ### 2026-07 review Phase 0 (DEC-1 … DEC-5)
 

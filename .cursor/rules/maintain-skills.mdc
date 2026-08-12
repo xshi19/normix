@@ -41,6 +41,10 @@ and reference data. They encode multi-step workflows — recipes, not preference
   "Ensure all tests pass" not "run `pytest tests/test_gamma.py` then...".
 - **Rules ≠ Skills.** Skills encode recipes (how). Rules encode preferences (what/what not).
   A skill should reference a rule, not re-state it.
+- **Completion criterion per step.** Each numbered step or phase states
+  what "done" looks like in one line — a checkable predicate, not a
+  restatement of the step. See `architect` and `interrogate` for the
+  shape.
 
 ## Before Creating a New Skill
 
