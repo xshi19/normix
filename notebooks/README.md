@@ -29,10 +29,22 @@ uv run jupytext --sync notebooks/my_study.ipynb
   Anything demo-worthy graduates to `docs/tutorials/`, where outputs are
   produced fresh at build time.
 
-`varentropy_validation.py` (jupytext percent) is the current Tier 2
-notebook. `em_shrinkage_demo.py` is a marimo notebook — marimo's native
-format is already plain Python, so it needs no jupytext pairing; run it
-with `uv run marimo edit notebooks/em_shrinkage_demo.py`.
+`varentropy_validation.py` (jupytext percent) is a Tier 2 notebook.
+`em_shrinkage_demo.py` is a marimo notebook — marimo's native format is
+already plain Python, so it needs no jupytext pairing; run it with
+`uv run marimo edit notebooks/em_shrinkage_demo.py`.
+
+Subordinator-tracking study (plan:
+`dev-notes/research/subordinator_tracking_sp500_plan.md`):
+
+```
+notebooks/subordinator_tracking/
+├── lib.py
+├── 00_synthetic_validation.py   # Phase 0
+└── _cache/                      # gitignored fits / figures
+```
+
+Run Phase 0 with `uv run python notebooks/subordinator_tracking/00_synthetic_validation.py`.
 
 ## Why not delete this directory
 

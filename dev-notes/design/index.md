@@ -40,8 +40,9 @@
 - `../../docs/theory/` — mathematical derivations (MyST `.md`).
 - `../tech_notes/` — deep dives (Bessel survey, GIG benchmarks,
   EM profiling, JAX overhead).
-- `../plans/` — work not yet done. `finance_architecture.md` lives
-  there until implemented.
+- `../plans/` — work not yet done or in progress.
+- `../archive/plans/` — completed plans (JAX migration, review roadmap,
+  `finance_architecture.md`).
 - `../archive/design/` — implemented proposals retained for historical
   context (`em_covariance_extensions.md`, `penalised_em.md`,
   `log_partition_triad.md`, `solver_redesign.md`).

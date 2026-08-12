@@ -64,11 +64,11 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
 | Published bibliography | `docs/references.md` (cite with `{ref}`Key <key>``) |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `finance_architecture.md`, `loops_and_orchestration.md`) |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`) |
 | 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |
-| `normix.finance` roadmap (Phases D–F done) | `dev-notes/plans/finance_architecture.md` |
+| `normix.finance` roadmap (Phases D–F done; archived) | `dev-notes/archive/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
-| Completed/archived plans (JAX migration, review roadmap) | `dev-notes/archive/plans/` |
+| Completed/archived plans (JAX migration, review roadmap, finance) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
 | Technical notes | `dev-notes/tech_notes/` |
