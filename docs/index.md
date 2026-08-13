@@ -1,9 +1,10 @@
 # normix
 
-**normix** is a JAX package for Generalized Hyperbolic distributions and their
-relatives, implemented as exponential families. It is built on
-[Equinox](https://docs.kidger.site/equinox/) with float64 precision throughout,
-and is JIT-compiled, differentiable, and `vmap`-compatible end to end.
+**normix** is a [JAX](https://docs.jax.dev/en/latest/) package for Generalized
+Hyperbolic distributions and their relatives, implemented as exponential
+families. It is built on [Equinox](https://docs.kidger.site/equinox/) with
+float64 precision throughout, and is JIT-compiled, differentiable, and
+`vmap`-compatible end to end.
 
 ```python
 import jax
@@ -29,10 +30,11 @@ log_p = jax.vmap(result.model.log_prob)(X)
   Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, and Generalized
   Hyperbolic, plus univariate and factor variants.
 - **EM fitting** — batch and incremental/mini-batch EM with a hybrid CPU/JAX
-  backend (scipy Bessel on the hot path).
+  backend ([SciPy](https://docs.scipy.org/doc/scipy/) Bessel on the hot path).
 - **Closed-form divergences** — squared Hellinger and KL with no Monte Carlo.
 - **Finance toolkit** — portfolio projection and differentiable CVaR.
-- **Immutable** — all distributions are `equinox.Module` pytrees.
+- **Immutable** — all distributions are
+  [`equinox.Module`](https://docs.kidger.site/equinox/) pytrees.
 
 ## Where to start
 

@@ -6,7 +6,7 @@ does not guarantee that the matrix inversion is well-conditioned. The formula
 for $\Sigma_{k+1}$ in {eq}`m-step` has the same problem as the sample
 covariance: the condition number of $\Sigma_k$ can be huge when the
 sample size is relatively small. Shrinkage estimators based on penalized
-likelihood can improve the conditioning.
+likelihood ({ref}`Shi2016 <shi2016>`) can improve the conditioning.
 
 ## Penalized Likelihood Framework
 

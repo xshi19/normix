@@ -43,7 +43,8 @@ np.set_printoptions(precision=5, suppress=True)
 
 ## A distribution as a pytree
 
-A normix distribution is an immutable `equinox.Module`. We build a `Gamma` from
+A normix distribution is an immutable
+[`equinox.Module`](https://docs.kidger.site/equinox/). We build a `Gamma` from
 its classical shape/rate parameters $(\alpha, \beta)$:
 
 ```{code-cell} python

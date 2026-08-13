@@ -1,7 +1,8 @@
 # The Generalized Inverse Gaussian Distribution
 
 In this section we review the definition and statistical properties of the
-generalized inverse Gaussian (GIG) distribution.
+generalized inverse Gaussian (GIG) distribution; a standard reference is
+{ref}`Jorgensen2012 <jorgensen2012>`.
 
 **See also:** executable walkthrough in
 {doc}`../tutorials/distributions/02_gig`.
@@ -19,7 +20,7 @@ f(x|p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
 ```
 
 where $K_p(\cdot)$ is the modified Bessel function of the second kind
-and the parameters $(p, a, b)$ satisfy:
+({ref}`DLMF <dlmf>` §10) and the parameters $(p, a, b)$ satisfy:
 
 ```{math}
 \begin{cases}
@@ -260,7 +261,7 @@ Even when $p$ is fixed, {ref}`Hu2005 <hu2005>` reports that when $|p|$ is large
 ## Hellinger Distance
 
 To measure estimation errors, one good choice is the Hellinger distance between
-the true and estimated parameters.
+the true and estimated parameters ({ref}`Shi2016 <shi2016>`).
 
 **Proposition.** Let $(p_1, a_1, b_1)$ and $(p_2, a_2, b_2)$ be the
 parameters of two GIG distributions. The squared Hellinger distance between the

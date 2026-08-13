@@ -41,9 +41,11 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | $(\ell, h)$ | $\phi = \mathrm{logit}((\theta-\ell)/(h-\ell))$ | $\theta = \ell + (h-\ell)\sigma(\phi)$ |
 | $(-\infty, +\infty)$ | $\phi = \theta$ | $\theta = \phi$ |
 
-`backend='cpu'` passes `bounds` directly to `scipy.optimize.minimize`
-(native L-BFGS-B box constraints). `jaxopt.LBFGSB` also supports bounds
-natively. Other JAX backends reparameterise.
+`backend='cpu'` passes `bounds` directly to
+[`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html)
+(native L-BFGS-B box constraints).
+[`jaxopt.LBFGSB`](https://jaxopt.github.io/stable/_api/jaxopt.html#jaxopt.LBFGSB)
+also supports bounds natively. Other JAX backends reparameterise.
 
 ### 1.2 Newton: hand-rolled, JIT-cached
 
@@ -52,9 +54,9 @@ Hessian:
 
 | Library | Newton | Custom Hessian | Box constraints |
 |---|---|---|---|
-| Optimistix | root-finding only | no | no |
-| JAXopt | none | n/a | yes (LBFGSB only) |
-| Optax | none | n/a | n/a |
+| [Optimistix](https://docs.kidger.site/optimistix/) | root-finding only | no | no |
+| [JAXopt](https://jaxopt.github.io/stable/) | none | n/a | yes (LBFGSB only) |
+| [Optax](https://optax.readthedocs.io/en/latest/) | none | n/a | n/a |
 
 So we ship a hand-rolled Newton via `lax.while_loop` (true early
 stopping). For repeated warm-started solves on the same shape (the GIG
@@ -133,10 +135,10 @@ at runtime):
 
 | Regime | Trigger | Method |
 |---|---|---|
-| Hankel | $z > \max(25, v^2/4)$ | DLMF 10.40.2 asymptotic |
-| Olver | $\|v\| > 25$, not Hankel | DLMF 10.41.3-4 uniform expansion |
-| Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | leading asymptotic |
-| Quadrature | otherwise | 64-point Gauss–Legendre (Takekawa 2022) |
+| Hankel | $z > \max(25, v^2/4)$ | {ref}`DLMF <dlmf>` [10.40.2](https://dlmf.nist.gov/10.40.E2) asymptotic |
+| Olver | $\|v\| > 25$, not Hankel | {ref}`DLMF <dlmf>` [10.41.3–4](https://dlmf.nist.gov/10.41) uniform expansion |
+| Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | {ref}`DLMF <dlmf>` [10.30.2](https://dlmf.nist.gov/10.30.E2) leading asymptotic |
+| Quadrature | otherwise | 64-point Gauss–Legendre ({ref}`Takekawa2022 <takekawa2022>`) |
 
 Custom JVP via `@jax.custom_jvp` with
 `defjvp(..., symbolic_zeros=True)`:
@@ -150,7 +152,8 @@ Custom JVP via `@jax.custom_jvp` with
 
 ### 3.2 CPU backend (EM hot path)
 
-`scipy.special.kve`, fully vectorised NumPy. Not JIT-able. For large
+[`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
+({ref}`Amos1986 <amos1986>`), fully vectorised NumPy. Not JIT-able. For large
 $N$ a single `kve` C-call per element beats vmapping JAX's
 `lax.cond`-dispatched implementation, which causes separate kernel
 launches per condition check.
@@ -205,9 +208,9 @@ Default fitter settings reflect the hot path:
 
 ## 5. Random Variate Generation
 
-PINV (Polynomial-Interpolation-based Numerical Inversion) in
-`utils/rvs.py` is pure JAX and works for any univariate log-kernel — no
-normalising constant needed:
+PINV (Polynomial-Interpolation-based Numerical Inversion;
+{ref}`HormannLeydold2011 <hormannleydold2011>`) in `utils/rvs.py` is pure JAX
+and works for any univariate log-kernel — no normalising constant needed:
 
 - `build_pinv_table(log_kernel, mode, *, x_of_w, n_grid, tail_eps)`
   builds a quantile table in JAX. Tail bisection via `lax.fori_loop`,
@@ -225,8 +228,8 @@ itself (`Gamma`, `InverseGamma`, `InverseGaussian`, `GIG`).
 GIG-specific sampling is inlined in
 `distributions/generalized_inverse_gaussian.py`:
 
-- `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$,
-  batch-parallel (no `while_loop`).
+- `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$
+  ({ref}`Devroye2014 <devroye2014>`), batch-parallel (no `while_loop`).
 - `GIG.rvs(method='pinv')` — `quantile_table().rvs` via
   `build_pinv_table` / `rvs_pinv` in `utils/rvs.py`.
 
@@ -236,8 +239,9 @@ Neither method evaluates the Bessel normalising constant.
 
 - `Gamma.ppf` and `InverseGamma.ppf` invert the regularised incomplete
   gamma via `normix.utils.gammaincinv` — a pure-JAX Newton iteration on
-  `jax.scipy.special.gammainc` with a Wilson–Hilferty seed. This is the
-  JAX analogue of `scipy.special.gammaincinv`.
+  `jax.scipy.special.gammainc` with a Wilson–Hilferty seed
+  ({ref}`WilsonHilferty1931 <wilsonhilferty1931>`). This is the JAX analogue of
+  `scipy.special.gammaincinv`.
 - `InverseGaussian.ppf`, `GIG.cdf`, `GIG.ppf` build a PINV table from
   `log_prob` (above).
 - Univariate `Normal`-mixture marginals (`UnivariateVarianceGamma`,

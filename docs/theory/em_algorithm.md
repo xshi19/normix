@@ -199,8 +199,9 @@ applying these to {eq}`m-step`. ∎
 ## MCECM Algorithm
 
 An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
-algorithm {ref}`McNeil2010 <mcneil2010>`. Unlike the EM algorithm which updates all parameters
-via {eq}`m-step`, MCECM proceeds in two cycles:
+algorithm of {ref}`MengRubin1993 <mengrubbin1993>`, as applied to GH mixtures in
+{ref}`McNeil2010 <mcneil2010>`. Unlike the EM algorithm which updates all
+parameters via {eq}`m-step`, MCECM proceeds in two cycles:
 
 **Cycle 1:** Compute $\mu_{k+1}$, $\gamma_{k+1}$, $\Sigma_{k+1}$
 from the first three equations in {eq}`m-step`, then set

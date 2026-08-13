@@ -11,10 +11,11 @@ mystnb:
 # Bessel functions and `log_kv`
 
 The densities of the GIG and Generalized Hyperbolic distributions are written
-in terms of the **modified Bessel function of the second kind**, $K_\nu(z)$.
-Evaluating it naively overflows and underflows badly, and the standard library
-versions are neither JIT-able nor differentiable. normix provides `log_kv`, a
-log-space, four-regime, autodiff-friendly implementation:
+in terms of the **modified Bessel function of the second kind**, $K_\nu(z)$
+({ref}`DLMF <dlmf>` §10). Evaluating it naively overflows and underflows badly,
+and the standard library versions are neither JIT-able nor differentiable.
+normix provides `log_kv`, a log-space, four-regime, autodiff-friendly
+implementation:
 
 $$
 \texttt{log\_kv}(\nu, z) = \log K_\nu(z).
@@ -35,9 +36,12 @@ np.set_printoptions(precision=6, suppress=False)
 
 ## Two backends, one function
 
-`log_kv` has a JIT-able JAX backend (the default) and a numpy/scipy CPU
-backend. Both agree, and both match `scipy.special.kve` (the
-exponentially-scaled Bessel function, $K_\nu(z)\,e^{z}$):
+`log_kv` has a JIT-able [JAX](https://docs.jax.dev/en/latest/) backend (the
+default) and a [NumPy](https://numpy.org/doc/stable/)/[SciPy](https://docs.scipy.org/doc/scipy/)
+CPU backend. Both agree, and both match
+[`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
+(the exponentially-scaled Bessel function, $K_\nu(z)\,e^{z}$, via AMOS
+{ref}`Amos1986 <amos1986>`):
 
 ```{code-cell} python
 from scipy.special import kve
@@ -82,10 +86,16 @@ for z_big in [50.0, 200.0, 700.0]:
     print(f"z = {z_big:6.1f}   log(kv) = {naive:>10}   log_kv = {stable:.4f}")
 ```
 
-The four internal regimes — Hankel asymptotic ($z$ large), Olver uniform
-expansion ($|\nu|$ large), small-$z$ leading term, and Gauss–Legendre
-quadrature elsewhere — are selected automatically; you never choose one by
-hand.
+The four internal regimes are selected automatically; you never choose one by
+hand:
+
+- **Hankel asymptotic** ($z$ large) — {ref}`DLMF <dlmf>`
+  [10.40.2](https://dlmf.nist.gov/10.40.E2);
+- **Olver uniform expansion** ($|\nu|$ large) — {ref}`DLMF <dlmf>`
+  [10.41.3–4](https://dlmf.nist.gov/10.41);
+- **small-$z$ leading term** — {ref}`DLMF <dlmf>`
+  [10.30.2](https://dlmf.nist.gov/10.30.E2);
+- **Gauss–Legendre quadrature** elsewhere — {ref}`Takekawa2022 <takekawa2022>`.
 
 ```{code-cell} python
 import matplotlib.pyplot as plt

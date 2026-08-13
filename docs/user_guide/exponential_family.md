@@ -57,10 +57,12 @@ $$
 the second being the Fisher information. Each distribution therefore provides a
 **triad** — log-partition, gradient, Hessian — in two backends:
 
-- a **JAX** backend (`expectation_params()`, `fisher_information()`,
-  default `backend="jax"`) that is JIT-able, differentiable, and `vmap`-friendly;
-- a **CPU** backend (`backend="cpu"`) using numpy/scipy, used inside the EM hot
-  loop where scipy's Bessel routines are fastest.
+- a **[JAX](https://docs.jax.dev/en/latest/)** backend (`expectation_params()`,
+  `fisher_information()`, default `backend="jax"`) that is JIT-able,
+  differentiable, and `vmap`-friendly;
+- a **CPU** backend (`backend="cpu"`) using
+  [NumPy](https://numpy.org/doc/stable/)/[SciPy](https://docs.scipy.org/doc/scipy/),
+  used inside the EM hot loop where SciPy's Bessel routines are fastest.
 
 Defaults use `jax.grad` / `jax.hessian`; distributions with closed forms (e.g.
 `Gamma` via `digamma`/`trigamma`) override them. The two backends are
@@ -80,10 +82,10 @@ context.
 
 ## Immutability
 
-Distributions are `equinox.Module` pytrees: immutable, hashable, and traceable
-by JAX. Parameter updates return a *new* instance rather than mutating in place,
-which is what lets the EM loop, `jax.vmap`, and `jax.jit` treat models as plain
-data.
+Distributions are [`equinox.Module`](https://docs.kidger.site/equinox/) pytrees:
+immutable, hashable, and traceable by JAX. Parameter updates return a *new*
+instance rather than mutating in place, which is what lets the EM loop,
+`jax.vmap`, and `jax.jit` treat models as plain data.
 
 For the full mathematical development, see the {doc}`design rationale
 <../design/exponential_family>` and the {doc}`theory notes <../theory/index>`.

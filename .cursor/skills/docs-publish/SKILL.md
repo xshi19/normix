@@ -146,9 +146,18 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `docs/Makefile`
 - `docs/conf.py`
 - `docs/_static/normix.css`
+- `docs/references.md` — published bibliography (`{ref}`Key <key>``)
 - `scripts/check_doc_links.sh`
 - `.github/workflows/docs.yml`
 - `.github/workflows/docs-full.yml`
 - `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`
+- `.cursor/rules/docs-cross-links.mdc` — citations + external package URLs
 - `dev-notes/plans/docs_refactor.md` — migration status
 - `AGENTS.md`
+
+## Citation checklist (before merging doc edits)
+
+When tutorials/theory/design/user-guide prose names math techniques or
+dependencies, confirm `.cursor/rules/docs-cross-links.mdc` is satisfied:
+`{ref}` cites for named asymptotics/algorithms, and package docs links for
+first prose mentions of JAX/Equinox/JAXopt/NumPy/SciPy/matplotlib.

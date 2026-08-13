@@ -12,11 +12,13 @@ mystnb:
 
 The payoff of modelling returns with a normal variance-mean mixture is that
 **tail risk becomes tractable**. Conditional on the latent $Y$, a portfolio is
-Gaussian, so the Conditional Value-at-Risk $\operatorname{CVaR}_\alpha$ — and its
-gradient and Hessian in the portfolio weights — can be computed by a fast
-conditional Monte Carlo over $Y$ alone. This tutorial fits a mixture, computes
-CVaR, verifies the analytic derivatives, and takes a few gradient steps to
-reduce risk.
+Gaussian, so the Conditional Value-at-Risk $\operatorname{CVaR}_\alpha$
+({ref}`RockafellarUryasev2000 <rockafellaruryasev2000>`) — and its gradient and
+Hessian in the portfolio weights ({ref}`Tasche1999 <tasche1999>`,
+{ref}`RauHasanov2004 <rauhasanov2004>`) — can be computed by a fast conditional
+Monte Carlo over $Y$ alone. This tutorial fits a mixture, computes CVaR,
+verifies the analytic derivatives, and takes a few gradient steps to reduce
+risk. Formal derivations: {doc}`../../theory/cvar_derivatives`.
 
 ```{code-cell} python
 import jax

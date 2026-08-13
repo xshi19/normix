@@ -15,8 +15,11 @@ mystnb:
 
 # EM vs MCECM Algorithm Comparison
 
-This notebook replicates Table 4 from {ref}`Shi2016 <shi2016>`, comparing the EM and MCECM
-algorithms for fitting Generalized Hyperbolic (GH) distributions.
+This notebook replicates Table 4 from {ref}`Shi2016 <shi2016>`, comparing the
+EM algorithm and Multi-Cycle Expectation Conditional Maximization (MCECM;
+{ref}`MengRubin1993 <mengrubbin1993>`, as used for GH in
+{ref}`McNeil2010 <mcneil2010>`) for fitting Generalized Hyperbolic (GH)
+distributions.
 
 **Procedure** (following the thesis):
 1. Fit a 2D GH distribution to real stock return data via EM → base model
