@@ -1,6 +1,7 @@
 # Subordinator tracking on S&P 500 — empirical findings
 
-**Status:** Phases 0–2 done (2026-08-13). Phase 3 next.
+**Status:** Phases 0–3 done (2026-08-13). Report:
+[`subordinator_tracking_report.md`](subordinator_tracking_report.md).
 **Plan:** [`subordinator_tracking_sp500_plan.md`](subordinator_tracking_sp500_plan.md).
 **Code:** `notebooks/subordinator_tracking/` (`lib.py`, `00_*.py`, `01_static_sp500.py`).
 **Cache (gitignored):** `notebooks/subordinator_tracking/_cache/` (fits, tables, figures).
@@ -264,11 +265,56 @@ intended readings. There is no saturating market-skewness signal, and
 the growing $\tilde q_d$ is not recoverable idiosyncratic skewness — it
 is the $d$-dependent null. Cross-section does not buy a linear clock.
 
-## Phase 3 — online EM on real data (not started)
+## Phase 3 — online EM on real data
+
+Warm start: NIG on 2016–2017 (504 days), $d=50$ seed 0.
+Warm-window $\tilde q=0.368$, $\kappa=0.182$ — higher than the
+full-sample $0.075/0.048$. Online period: 2017-12-14 → 2026-02-09
+($T=2048$). No re-gauging.
+
+| $h$ | $\tau$ | $n_{\mathrm{eff}}$ | mean $\kappa_t$ | mean $e_t$ | turnover | $\cos_{21}$ | corr$(\hat Y,\mathrm{RV})$ | corr$(q_\perp,\mathrm{RV})$ | corr$(q_\perp,\mathrm{disp})$ |
+|---|---|---|---|---|---|---|---|---|---|
+| 21 | 0 | 61 | 1.06 | 4772 | 0.084 | 0.59 | $-0.14$ | 0.14 | 0.61 |
+| 63 | 0 | 182 | 0.41 | 27 | 0.055 | 0.79 | $-0.04$ | 0.01 | 0.44 |
+| 126 | 0 | 364 | 0.19 | 3.3 | 0.039 | 0.88 | $-0.05$ | 0.37 | 0.80 |
+| 252 | 0 | 727 | 0.11 | 1.9 | 0.027 | 0.94 | $-0.03$ | 0.55 | 0.90 |
+| 504 | 0 | 1454 | 0.084 | 1.6 | 0.017 | 0.98 | $-0.01$ | 0.60 | 0.93 |
+| 21 | 0.1 | 61 | 0.52 | 1.3 | 0.123 | 0.47 | $-0.22$ | 0.54 | 0.89 |
+| $1/t$ | 0 | 2552 | 0.079 | 1.5 | 0.010 | 0.99 | $0.00$ | 0.61 | 0.94 |
+
+$1/t$ terminal $\kappa=0.051$ vs static $0.048$ — consistency check holds.
+$d=20$ unshrunk: $h=21$ $q_\perp$ corr with RV $=-0.05$; $h=252$ gives $0.50$.
+
+H4 is right about noise, wrong as a recipe for the linear clock.
+
+- Short $h$ inflates gauge-invariant $\kappa_t$ ($22\times$ at $h=21$) and
+  explodes the gauge itself ($\bar e_t=4772$). Direction cosine over 21
+  days drops to $0.59$. The linear tracker stays uncorrelated (or
+  anti-correlated) with RV at every $h$.
+- Shrinkage $\tau=0.1$ at $h=21$ pins the gauge ($\bar e=1.3$) and
+  rescues $q_\perp$ (corr $0.54$) at the cost of turnover. It does not
+  rescue $\hat Y$.
+- Long $h$ or $1/t$: $\kappa_t$ near the static value, stable $w^\star$,
+  and $q_\perp$ matches the static posterior as a vol proxy
+  (corr with 21-day RV $0.55$–$0.61$; with cross-sectional dispersion
+  $0.90$–$0.94$). Smoothing $q_\perp$ at $h_s=5$ lifts RV-corr to
+  $\sim 0.71$–$0.75$.
+- Fairness vs RV: EWMA of $m_t^2$ at $h=21$ has corr $0.66$ with 21-day
+  RV (same window family). Unshrunk $h=21$ $q_\perp$ loses that
+  comparison ($0.14$). The model's quadratic channel is competitive
+  only once $n_{\mathrm{eff}}$ is hundreds of days — i.e. once it is
+  close to the static fit.
+
+Open problem (a) of the theory note, on this panel: the tracker plus
+online EM is **not** a real-time activity index comparable to realized
+variance. The posterior / $q_\perp$ is, and it does not need $\gamma_t$.
 
 ## Promotion candidates
 
-$\tilde q/\kappa$ diagnostics only with a matched null floor (sign-flip
-or $c=0$ synthetic). A tracker-vs-Bayes tutorial is still worth it, but
-the punchline on daily equities is the quadratic channel, not the
-portfolio. No package change.
+- $\tilde q/\kappa$ fitted-model diagnostics **only** with a matched
+  null floor (sign-flip or $c=0$ synthetic). A bare $\tilde q$ will be
+  misread as SNR.
+- Tracker-vs-Bayes tutorial: the punchline on daily equities is the
+  quadratic channel, not the portfolio.
+- No package change. The linear tracker is a clean theoretical object
+  that this panel does not support as a data-analysis tool.
