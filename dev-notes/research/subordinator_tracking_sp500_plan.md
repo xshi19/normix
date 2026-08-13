@@ -1,7 +1,7 @@
 # Empirical plan: subordinator tracking on the S&P 500 panel
 
-**Status:** plan, 2026-08-12. Phase 0 implemented
-(`notebooks/subordinator_tracking/00_synthetic_validation.py`); findings in
+**Status:** plan, 2026-08-13. Phase 0 done; Phase 1 in progress
+(`notebooks/subordinator_tracking/01_static_sp500.py`). Findings in
 [`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Theory:** [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md);
 its notation is reused without redefinition: $e = E[Y]$, $v = \operatorname{Var}(Y)$,
@@ -96,9 +96,11 @@ clock.
   i.e. exactly the identifiability gauge $E[Y] = 1$, so
   $\kappa_{\mathrm{lev}} = \tilde q$ and $\kappa = \tilde q\,v$ directly.
 - **Secondary: GH** (`GeneralizedHyperbolic`, `regularization='a_eq_b'`) at
-  $d \le 100$, to check sensitivity to the subordinator family and to evaluate
-  $t^\dagger \le 1/\tilde q$ where it is only conjectured. **VG** only at
-  $d \le 10$, as a boundary case.
+  $d \le 50$ (plan originally said $d \le 100$; GH M-step is a GIG solve, so
+  $d=100$ is deferred unless the $d=50$ continuation is cheap). Initialisation
+  is the fitted NIG's exact GH embedding (`to_generalized_hyperbolic`), then
+  free $(p,a,b)$ — nested continuation, not `default_init`. **VG** only at
+  $d \le 10$, with `alpha_min='density'`.
 - **Fitting.** `BatchEMFitter` per the finance tutorials
   (`docs/tutorials/finance/02_multivariate_stocks.md`); `default_init` cold
   start; `e_step_backend='cpu'` where profiling favours it at large $T\,d$.

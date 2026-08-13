@@ -12,17 +12,20 @@ from typing import Any, Callable
 
 import equinox as eqx
 import jax
+
+jax.config.update("jax_enable_x64", True)
+
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from jax.scipy.linalg import solve_triangular
+from scipy.optimize import minimize
+from scipy.stats import norm as gauss, spearmanr
 
-from normix import NormalInverseGaussian
+from normix import GeneralizedHyperbolic, NormalInverseGaussian, VarianceGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
-from normix.fitting.eta import affine_combine
+from normix.fitting.eta import NormalMixtureEta, affine_combine
 from normix.fitting.shrinkage_targets import eta0_from_model
-
-jax.config.update("jax_enable_x64", True)
 
 # Daily-equity γ is O(10^{-2}); the package default tol=1e-3 stops after one
 # EM step (rms(Δγ)/(1+rms(γ)) ≈ 10^{-3}). Tighter tol is a study choice,
@@ -36,7 +39,33 @@ NIG_FIT_KW: dict[str, Any] = dict(
     verbose=0,
 )
 
+# GH: nested continuation from a fitted NIG (exact interior embedding),
+# then free (p, a, b). Cheaper and a cleaner family-sensitivity test than
+# GH.default_init, which itself fits NIG/VG/NInvG for five EM steps each.
+GH_FIT_KW: dict[str, Any] = dict(
+    max_iter=80,
+    tol=1e-5,
+    regularization="a_eq_b",
+    e_step_backend="cpu",
+    m_step_backend="cpu",
+    verbose=0,
+)
+
+# VG: a_eq_b is a no-op (degenerate GIG). alpha_min='density' keeps the
+# marginal density bounded (α > d/2).
+VG_FIT_KW: dict[str, Any] = dict(
+    max_iter=80,
+    tol=1e-5,
+    e_step_backend="cpu",
+    m_step_backend="cpu",
+    verbose=0,
+    alpha_min="density",
+)
+
 QTILDE_FLOOR = 1e-18
+SIZES = [5, 10, 25, 50, 100, 200, 468]
+PRIMARY_D = 50
+PRIMARY_SEED = 0
 
 
 # ---------------------------------------------------------------------------
@@ -604,4 +633,489 @@ def refit_trial(true_model, n: int, seed: int) -> dict[str, float]:
         n_iter=float(result.n_iter),
         converged=float(bool(result.converged)),
         elapsed=float(result.elapsed_time),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GH / VG fit / serialize
+# ---------------------------------------------------------------------------
+
+def dump_gh(path: Path, model: GeneralizedHyperbolic, **meta: Any) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(
+        path,
+        mu=np.asarray(model.mu, dtype=np.float64),
+        gamma=np.asarray(model.gamma, dtype=np.float64),
+        sigma=np.asarray(model.sigma(), dtype=np.float64),
+        p=np.asarray(model.p, dtype=np.float64),
+        a=np.asarray(model.a, dtype=np.float64),
+        b=np.asarray(model.b, dtype=np.float64),
+    )
+    if meta:
+        path.with_suffix(".json").write_text(json.dumps(meta, indent=2, default=str))
+
+
+def load_gh(path: Path) -> GeneralizedHyperbolic:
+    with np.load(path) as z:
+        return GeneralizedHyperbolic.from_classical(
+            mu=z["mu"], gamma=z["gamma"], sigma=z["sigma"],
+            p=float(z["p"]), a=float(z["a"]), b=float(z["b"]),
+        )
+
+
+def dump_vg(path: Path, model: VarianceGamma, **meta: Any) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(
+        path,
+        mu=np.asarray(model.mu, dtype=np.float64),
+        gamma=np.asarray(model.gamma, dtype=np.float64),
+        sigma=np.asarray(model.sigma(), dtype=np.float64),
+        alpha=np.asarray(model.alpha, dtype=np.float64),
+        beta=np.asarray(model.beta, dtype=np.float64),
+    )
+    if meta:
+        path.with_suffix(".json").write_text(json.dumps(meta, indent=2, default=str))
+
+
+def load_vg(path: Path) -> VarianceGamma:
+    with np.load(path) as z:
+        return VarianceGamma.from_classical(
+            mu=z["mu"], gamma=z["gamma"], sigma=z["sigma"],
+            alpha=float(z["alpha"]), beta=float(z["beta"]),
+        )
+
+
+def fit_gh(X: jax.Array, init: GeneralizedHyperbolic | None = None, **kwargs) -> Any:
+    kw = {**GH_FIT_KW, **kwargs}
+    X = jnp.asarray(X, dtype=jnp.float64)
+    if init is None:
+        init = GeneralizedHyperbolic.default_init(X)
+    return init.fit(X, **kw)
+
+
+def fit_vg(X: jax.Array, **kwargs) -> Any:
+    kw = {**VG_FIT_KW, **kwargs}
+    X = jnp.asarray(X, dtype=jnp.float64)
+    init = VarianceGamma.default_init(X)
+    return init.fit(X, **kw)
+
+
+def load_or_fit_nig_named(
+    panel: pd.DataFrame,
+    tickers: list[str],
+    name: str,
+) -> tuple[NormalInverseGaussian, dict[str, Any]]:
+    path = cache_dir() / "fits" / name
+    meta_path = path.with_suffix(".json")
+    if path.exists():
+        model = load_nig(path)
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        return model, meta
+    X = jnp.asarray(panel[tickers].to_numpy(), dtype=np.float64)
+    t0 = time.perf_counter()
+    result = fit_nig(X)
+    meta = {
+        "tickers": list(tickers),
+        "family": "nig",
+        "n_iter": int(result.n_iter),
+        "converged": bool(result.converged),
+        "elapsed_sec": float(result.elapsed_time),
+        "wall_sec": time.perf_counter() - t0,
+        "n_obs": int(X.shape[0]),
+        "d": int(X.shape[1]),
+    }
+    dump_nig(path, result.model, **meta)
+    return result.model, meta
+
+
+def load_or_fit_gh_from_nig(
+    nig: NormalInverseGaussian,
+    X: jax.Array,
+    name: str,
+    tickers: list[str] | None = None,
+) -> tuple[GeneralizedHyperbolic, dict[str, Any]]:
+    """Continue EM in GH from the NIG embedding (nested-family warm start)."""
+    path = cache_dir() / "fits" / name
+    meta_path = path.with_suffix(".json")
+    if path.exists():
+        model = load_gh(path)
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        return model, meta
+    X = jnp.asarray(X, dtype=jnp.float64)
+    init = nig.to_generalized_hyperbolic()
+    t0 = time.perf_counter()
+    result = fit_gh(X, init=init)
+    meta = {
+        "tickers": list(tickers) if tickers is not None else [],
+        "family": "gh",
+        "init": "nig_embedding",
+        "n_iter": int(result.n_iter),
+        "converged": bool(result.converged),
+        "elapsed_sec": float(result.elapsed_time),
+        "wall_sec": time.perf_counter() - t0,
+        "n_obs": int(X.shape[0]),
+        "d": int(X.shape[1]),
+    }
+    dump_gh(path, result.model, **meta)
+    return result.model, meta
+
+
+def load_or_fit_vg_named(
+    panel: pd.DataFrame,
+    tickers: list[str],
+    name: str,
+) -> tuple[VarianceGamma, dict[str, Any]]:
+    path = cache_dir() / "fits" / name
+    meta_path = path.with_suffix(".json")
+    if path.exists():
+        model = load_vg(path)
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        return model, meta
+    X = jnp.asarray(panel[tickers].to_numpy(), dtype=np.float64)
+    t0 = time.perf_counter()
+    result = fit_vg(X)
+    meta = {
+        "tickers": list(tickers),
+        "family": "vg",
+        "n_iter": int(result.n_iter),
+        "converged": bool(result.converged),
+        "elapsed_sec": float(result.elapsed_time),
+        "wall_sec": time.perf_counter() - t0,
+        "n_obs": int(X.shape[0]),
+        "d": int(X.shape[1]),
+    }
+    dump_vg(path, result.model, **meta)
+    return result.model, meta
+
+
+# ---------------------------------------------------------------------------
+# SNR rows / moments / portfolios
+# ---------------------------------------------------------------------------
+
+def snr_row(model, *, family: str, d: int, seed: int = 0) -> dict[str, Any]:
+    st = tracker_stats(model)
+    q = st["q_tilde"]
+    k = st["kappa"]
+    return dict(
+        family=family,
+        d=int(d),
+        seed=int(seed),
+        q_tilde=q,
+        e=st["e"],
+        v=st["v"],
+        cv2=st["cv2"],
+        kappa_lev=st["kappa_lev"],
+        kappa=k,
+        corr_theory=st["corr_theory"],
+        mse_rel= (1.0 / k) if (np.isfinite(k) and k > 0) else float("inf"),
+        t_dagger=st["t_dagger"],
+        inv_q= (1.0 / q) if q > QTILDE_FLOOR else float("inf"),
+        t_star_le_inv_q=bool(st["t_dagger"] <= (1.0 / q) if q > QTILDE_FLOOR else True),
+        n_iter=np.nan,
+        converged=np.nan,
+    )
+
+
+def spearman(a, b) -> float:
+    a = np.asarray(a, dtype=np.float64).ravel()
+    b = np.asarray(b, dtype=np.float64).ravel()
+    m = np.isfinite(a) & np.isfinite(b)
+    if m.sum() < 3:
+        return float("nan")
+    r = spearmanr(a[m], b[m])
+    return float(r.statistic)
+
+
+def sample_central_moments(x: np.ndarray) -> dict[str, float]:
+    x = np.asarray(x, dtype=np.float64).ravel()
+    x = x[np.isfinite(x)]
+    x = x - x.mean()
+    m2 = float(np.mean(x ** 2))
+    m3 = float(np.mean(x ** 3))
+    m4 = float(np.mean(x ** 4))
+    skew = m3 / m2 ** 1.5 if m2 > 0 else float("nan")
+    kurt = m4 / m2 ** 2 - 3.0 if m2 > 0 else float("nan")
+    return dict(var=m2, skew=skew, kurt_excess=kurt)
+
+
+def sample_skew(w: np.ndarray, X: np.ndarray) -> float:
+    p = np.asarray(X, dtype=np.float64) @ np.asarray(w, dtype=np.float64).ravel()
+    return sample_central_moments(p)["skew"]
+
+
+def acf(x: np.ndarray, lags: int = 21) -> np.ndarray:
+    x = np.asarray(x, dtype=np.float64).ravel()
+    x = x[np.isfinite(x)]
+    x = x - x.mean()
+    var = float(np.mean(x ** 2))
+    out = np.empty(lags + 1)
+    out[0] = 1.0
+    if var <= 0:
+        out[1:] = np.nan
+        return out
+    for k in range(1, lags + 1):
+        out[k] = float(np.mean(x[k:] * x[:-k]) / var)
+    return out
+
+
+def rolling_sumsq(x: np.ndarray, window: int = 21) -> np.ndarray:
+    """Centered rolling sum of squares (realized variance proxy)."""
+    s = pd.Series(np.asarray(x, dtype=np.float64) ** 2)
+    return s.rolling(window, center=True, min_periods=max(5, window // 3)).sum().to_numpy()
+
+
+def t_of_weights(w: np.ndarray, Sigma: np.ndarray, gamma: np.ndarray) -> float:
+    w = np.asarray(w, dtype=np.float64).ravel()
+    g = float(w @ np.asarray(gamma, dtype=np.float64).ravel())
+    s2 = float(w @ (np.asarray(Sigma, dtype=np.float64) @ w))
+    if abs(g) < 1e-18:
+        return float("inf")
+    return s2 / (g * g)
+
+
+def min_var_weights(L: np.ndarray) -> np.ndarray:
+    L = np.asarray(L, dtype=np.float64)
+    ones = np.ones(L.shape[0])
+    z = np.linalg.solve(L, ones)
+    w = np.linalg.solve(L.T, z)
+    s = w.sum()
+    return w / s if s != 0 else w
+
+
+def pc1_weights(Sigma: np.ndarray) -> np.ndarray:
+    evals, evecs = np.linalg.eigh(np.asarray(Sigma, dtype=np.float64))
+    w = evecs[:, int(np.argmax(evals))]
+    return w / np.abs(w).sum()
+
+
+def model_skew_at_t(t: float, e: float, v: float, mu3: float) -> float:
+    den = (v + t * e) ** 1.5
+    if den <= 0 or not np.isfinite(den):
+        return float("nan")
+    return (mu3 + 3.0 * t * v) / den
+
+
+def gamma_market_split(gamma: np.ndarray) -> dict[str, float]:
+    """γ = g 1 + δ with 1ᵀδ = 0."""
+    gvec = np.asarray(gamma, dtype=np.float64).ravel()
+    g = float(gvec.mean())
+    delta = gvec - g
+    return dict(g=g, delta_l2=float(np.dot(delta, delta)), delta=delta)
+
+
+def gaussian_thin_bound(c: np.ndarray, q_tilde: float) -> np.ndarray:
+    """Proposition 2: P(Ŷ ≤ −c) ≤ 2 Φ(−2 √(c q̃))."""
+    c = np.asarray(c, dtype=np.float64)
+    z = -2.0 * np.sqrt(np.maximum(c, 0.0) * q_tilde)
+    return 2.0 * gauss.cdf(z)
+
+
+def empirical_left_tail(yhat: np.ndarray, c: np.ndarray) -> np.ndarray:
+    yhat = np.asarray(yhat, dtype=np.float64)
+    yhat = yhat[np.isfinite(yhat)]
+    c = np.asarray(c, dtype=np.float64)
+    return np.array([float(np.mean(yhat <= -cc)) for cc in c])
+
+
+def weight_anatomy(w: np.ndarray, tickers: list[str], n_top: int = 10) -> dict[str, Any]:
+    w = np.asarray(w, dtype=np.float64).ravel()
+    ug = unit_gross(w)
+    order = np.argsort(-np.abs(ug))
+    top = [(tickers[i], float(ug[i])) for i in order[:n_top]]
+    return dict(
+        n=int(w.size),
+        gross=float(np.abs(w).sum()),
+        net=float(w.sum()),
+        long_share=float(np.clip(ug, 0, None).sum()),
+        n_long=int((ug > 0).sum()),
+        n_short=int((ug < 0).sum()),
+        herfindahl=float(np.sum(ug ** 2)),
+        top=top,
+        unit_gross=ug,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Sample-skew maximisation (autodiff + multi-start)
+# ---------------------------------------------------------------------------
+
+def maximize_sample_skew(
+    X: np.ndarray,
+    *,
+    n_starts: int = 20,
+    seed: int = 0,
+    w0_extra: list[np.ndarray] | None = None,
+    maxiter: int = 200,
+) -> dict[str, Any]:
+    """Maximise sample skewness of wᵀX over directions (unit sphere)."""
+    Xj = jnp.asarray(X, dtype=jnp.float64)
+    d = int(Xj.shape[1])
+
+    def _obj(z):
+        w = z / jnp.linalg.norm(z)
+        p = Xj @ w
+        p = p - jnp.mean(p)
+        m2 = jnp.mean(p * p)
+        m3 = jnp.mean(p * p * p)
+        return -m3 / (m2 ** 1.5 + 1e-18)
+
+    val_and_grad = jax.jit(jax.value_and_grad(_obj))
+
+    def fun(z):
+        v, g = val_and_grad(jnp.asarray(z, dtype=jnp.float64))
+        return float(v), np.asarray(g, dtype=np.float64)
+
+    rng = np.random.default_rng(seed)
+    starts = [rng.normal(size=d) for _ in range(n_starts)]
+    if w0_extra:
+        starts.extend([np.asarray(w, dtype=np.float64).ravel() for w in w0_extra])
+
+    best_fun = np.inf
+    best_w = starts[0]
+    n_ok = 0
+    for z0 in starts:
+        z0 = np.asarray(z0, dtype=np.float64)
+        nrm = np.linalg.norm(z0)
+        if nrm < 1e-15:
+            continue
+        z0 = z0 / nrm
+        res = minimize(fun, z0, method="L-BFGS-B", jac=True, options={"maxiter": maxiter})
+        if not np.isfinite(res.fun):
+            continue
+        n_ok += 1
+        if res.fun < best_fun:
+            best_fun = float(res.fun)
+            best_w = np.asarray(res.x, dtype=np.float64)
+
+    w = best_w / np.linalg.norm(best_w)
+    skew = -best_fun if np.isfinite(best_fun) else float("nan")
+    return dict(w=w, skew=float(skew), n_ok=n_ok, n_starts=len(starts))
+
+
+# ---------------------------------------------------------------------------
+# Sign-flip null / block bootstrap (NIG, cached per trial)
+# ---------------------------------------------------------------------------
+
+def sign_flip_null_nig(
+    X: np.ndarray,
+    *,
+    B: int,
+    seed: int,
+    cache_stem: str,
+) -> dict[str, np.ndarray]:
+    """Refit NIG on day-wise sign-flips; return the null of q̃ and κ."""
+
+    def _run():
+        rec = {k: [] for k in ("rep", "q_tilde", "kappa", "n_iter", "converged", "elapsed")}
+        rng = np.random.default_rng(seed)
+        t0 = time.perf_counter()
+        for b in range(B):
+            name = f"{cache_stem}/b{b}.npz"
+
+            def _fn(b=b, rng_seed=int(rng.integers(0, 2 ** 31 - 1))):
+                Xb = sign_flip(X, np.random.default_rng(rng_seed))
+                result = fit_nig(jnp.asarray(Xb))
+                st = nig_fast_stats(result.model)
+                return dict(
+                    q_tilde=np.asarray(st["q_tilde"]),
+                    kappa=np.asarray(st["kappa"]),
+                    n_iter=np.asarray(result.n_iter, dtype=np.float64),
+                    converged=np.asarray(float(bool(result.converged))),
+                    elapsed=np.asarray(result.elapsed_time),
+                )
+
+            row = load_or_compute(name, _fn)
+            rec["rep"].append(b)
+            for k in ("q_tilde", "kappa", "n_iter", "converged", "elapsed"):
+                rec[k].append(np.asarray(row[k]).reshape(()))
+            if (b + 1) % 10 == 0:
+                jax.clear_caches()
+                print(f"    sign-flip {b+1}/{B}  ({time.perf_counter()-t0:.1f}s)")
+        return {k: np.asarray(v, dtype=np.float64) for k, v in rec.items()}
+
+    return load_or_compute(f"{cache_stem}/summary.npz", _run)
+
+
+def signflip_pvalue(obs: float, null: np.ndarray) -> float:
+    null = np.asarray(null, dtype=np.float64)
+    null = null[np.isfinite(null)]
+    if null.size == 0 or not np.isfinite(obs):
+        return float("nan")
+    return float((1.0 + np.sum(null >= obs)) / (null.size + 1.0))
+
+
+def block_bootstrap_nig(
+    X: np.ndarray,
+    *,
+    B: int,
+    block: int,
+    seed: int,
+    cache_stem: str,
+    w_star_ref: np.ndarray,
+) -> dict[str, np.ndarray]:
+    """Moving-block bootstrap of NIG fits; cosine cone and κ distribution."""
+
+    def _run():
+        rec = {k: [] for k in (
+            "rep", "q_tilde", "kappa", "cosine", "n_iter", "converged", "elapsed",
+        )}
+        rng = np.random.default_rng(seed)
+        t0 = time.perf_counter()
+        for b in range(B):
+            name = f"{cache_stem}/b{b}.npz"
+
+            def _fn(b=b, rng_seed=int(rng.integers(0, 2 ** 31 - 1))):
+                idx = block_bootstrap_indices(X.shape[0], block, np.random.default_rng(rng_seed))
+                result = fit_nig(jnp.asarray(X[idx]))
+                st = nig_fast_stats(result.model)
+                return dict(
+                    q_tilde=np.asarray(st["q_tilde"]),
+                    kappa=np.asarray(st["kappa"]),
+                    cosine=np.asarray(cosine(w_star_ref, st["w_star"])),
+                    n_iter=np.asarray(result.n_iter, dtype=np.float64),
+                    converged=np.asarray(float(bool(result.converged))),
+                    elapsed=np.asarray(result.elapsed_time),
+                )
+
+            row = load_or_compute(name, _fn)
+            rec["rep"].append(b)
+            for k in ("q_tilde", "kappa", "cosine", "n_iter", "converged", "elapsed"):
+                rec[k].append(np.asarray(row[k]).reshape(()))
+            if (b + 1) % 10 == 0:
+                jax.clear_caches()
+                print(f"    block-boot {b+1}/{B}  ({time.perf_counter()-t0:.1f}s)")
+        return {k: np.asarray(v, dtype=np.float64) for k, v in rec.items()}
+
+    return load_or_compute(f"{cache_stem}/summary.npz", _run)
+
+
+# ---------------------------------------------------------------------------
+# Eigen-attribution of q̃ (Phase 2)
+# ---------------------------------------------------------------------------
+
+def qtilde_eigen_attribution(model) -> dict[str, np.ndarray]:
+    """q̃ = Σ_k (u_kᵀγ)² / λ_k along eigenvectors of Σ."""
+    Sigma = np.asarray(model.sigma(), dtype=np.float64)
+    gamma = np.asarray(model.gamma, dtype=np.float64).ravel()
+    evals, evecs = np.linalg.eigh(Sigma)
+    evals = np.maximum(evals, 1e-18)
+    scores = (evecs.T @ gamma) ** 2 / evals
+    order = np.argsort(-evals)
+    return dict(
+        evals=evals[order],
+        contrib=scores[order],
+        share=scores[order] / scores.sum() if scores.sum() > 0 else scores[order],
+    )
+
+
+def sigma_only_tau(model, tau_sigma: float) -> NormalMixtureEta:
+    """Per-field τ that shrinks only E[XXᵀ/Y] (the Σ block)."""
+    d = int(np.asarray(model.mu).shape[0])
+    z = jnp.float64(0.0)
+    return NormalMixtureEta(
+        E_inv_Y=z, E_Y=z, E_log_Y=z,
+        E_X=jnp.zeros(d), E_X_inv_Y=jnp.zeros(d),
+        E_XXT_inv_Y=jnp.full((d, d), jnp.float64(tau_sigma)),
     )
