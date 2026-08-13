@@ -421,33 +421,48 @@ def _nig_online_step(model, eta, x, w, tau, eta0):
     return model_new, eta_new
 
 
+def _q_perp_one(st: dict[str, Any], L: np.ndarray, mu: np.ndarray, x: np.ndarray) -> tuple[float, float]:
+    yhat = _tracker_one(st, mu, x)
+    z = np.linalg.solve(np.asarray(L, dtype=np.float64), np.asarray(x - mu, dtype=np.float64))
+    q = float(z @ z)
+    qt = st["q_tilde"]
+    if not np.isfinite(yhat) or not np.isfinite(qt):
+        return yhat, float("nan")
+    return yhat, q - qt * yhat * yhat
+
+
 def online_em_path(
     model0,
     X: jax.Array,
     *,
-    half_life: float,
+    half_life: float | None = None,
     tau: float = 0.0,
     eta0=None,
+    sample_weighted: bool = False,
+    n0: int = 0,
 ) -> dict[str, np.ndarray]:
-    """Chronological EWMA online EM. ``tau=0`` is pure EWMA.
+    """Chronological online EM. EWMA if ``half_life`` is set; else $1/(n_0+t)$.
 
-    Records in-sample (``model_t``) and filtered (``model_{t-1}``) trackers.
-    Does **not** call ``regularize_a_eq_b`` (gauge-mixing; see the plan §12).
+    Records in-sample (``model_t``) and filtered (``model_{t-1}``) trackers
+    and $q_\\perp$. Does **not** call ``regularize_a_eq_b``.
     """
     X = jnp.asarray(X, dtype=jnp.float64)
     n = int(X.shape[0])
-    w = jnp.float64(ewma_weight(half_life))
     tau_arr = jnp.float64(tau)
     eta = model0.compute_eta_from_model()
     if eta0 is None:
         eta0 = eta0_from_model(model0) if tau > 0 else eta
     model = model0
+    w_ewma = jnp.float64(ewma_weight(half_life)) if (half_life is not None and not sample_weighted) else None
 
     q_t = np.empty(n)
     kappa_t = np.empty(n)
     e_t = np.empty(n)
     Y_in = np.empty(n)
     Y_filt = np.empty(n)
+    qp_in = np.empty(n)
+    qp_filt = np.empty(n)
+    P_filt = np.empty(n)
     cos_prev = np.empty(n)
     to_t = np.empty(n)
     invg_t = np.empty((n, int(X.shape[1])))
@@ -456,15 +471,21 @@ def online_em_path(
 
     for t in range(n):
         x = X[t]
-        st_prev = st
-        Y_filt[t] = _tracker_one(st_prev, np.asarray(model.mu), np.asarray(x))
+        mu_prev = np.asarray(model.mu)
+        L_prev = np.asarray(model.L_Sigma)
+        Y_filt[t], qp_filt[t] = _q_perp_one(st, L_prev, mu_prev, np.asarray(x))
+        P_filt[t] = float(st["w_star"] @ np.asarray(x)) if np.all(np.isfinite(st["w_star"])) else np.nan
+        if sample_weighted:
+            w = jnp.float64(1.0 / (n0 + t + 1))
+        else:
+            w = w_ewma
         model, eta = _nig_online_step(model, eta, x, w, tau_arr, eta0)
         st = nig_fast_stats(model)
         q_t[t] = st["q_tilde"]
         kappa_t[t] = st["kappa"]
         e_t[t] = st["e"]
         invg_t[t] = st["inv_sigma_gamma"]
-        Y_in[t] = _tracker_one(st, np.asarray(model.mu), np.asarray(x))
+        Y_in[t], qp_in[t] = _q_perp_one(st, np.asarray(model.L_Sigma), np.asarray(model.mu), np.asarray(x))
         if w_star_prev is None:
             to_t[t] = 0.0
             cos_prev[t] = 1.0
@@ -476,6 +497,8 @@ def online_em_path(
     return dict(
         q_tilde=q_t, kappa=kappa_t, e=e_t,
         Y_hat_in=Y_in, Y_hat_filt=Y_filt,
+        q_perp_in=qp_in, q_perp_filt=qp_filt,
+        P_filt=P_filt,
         turnover=to_t, cos_lag1=cos_prev,
         inv_sigma_gamma=invg_t,
     )
