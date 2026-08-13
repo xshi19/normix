@@ -1,6 +1,6 @@
 # Empirical plan: subordinator tracking on the S&P 500 panel
 
-**Status:** plan, 2026-08-13. Phases 0–1 done; Phase 2 next.
+**Status:** plan, 2026-08-13. Phases 0–2 done; Phase 3 next.
 Findings in [`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Theory:** [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md);
 its notation is reused without redefinition: $e = E[Y]$, $v = \operatorname{Var}(Y)$,

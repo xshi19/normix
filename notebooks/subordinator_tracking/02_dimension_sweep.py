@@ -220,7 +220,7 @@ axes[0].plot(dvals, agg["pc1_mean"], marker="o", color=COLORS["accent"], label="
 axes[0].plot(dvals, agg["top3_mean"], marker="s", color=COLORS["green"], label="top 3 PCs")
 axes[0].plot(
     dvals, agg["small_mean"], marker="D", color=COLORS["umber"],
-    label=r"smallest 10% of $\lambda$",
+    label="smallest 10% of eigenvalues",
 )
 axes[0].set_xlabel(r"$d$")
 axes[0].set_ylabel(r"share of $\tilde q$")
@@ -228,12 +228,12 @@ axes[0].set_ylim(0, 1.05)
 axes[0].set_title(r"eigen-attribution of $\tilde q$")
 axes[0].legend(frameon=False, fontsize=8)
 
-frac_delta = agg["delta_mean"] / (agg["delta_mean"] + (agg["d"] * agg["g_mean"] ** 2))
-axes[1].plot(dvals, frac_delta, marker="o", color=COLORS["accent"], label=r"$\lVert\delta\rVert^2 / \lVert\gamma\rVert^2$")
-axes[1].plot(dvals, agg["qsat_mean"], marker="s", color=COLORS["muted"], label=r"$g^2/(\bar\sigma^2\rho)$")
+frac_delta = agg["delta_mean"] / agg["gamma_l2_mean"]
+axes[1].plot(dvals, frac_delta, marker="o", color=COLORS["accent"], label="||delta||^2 / ||gamma||^2")
+axes[1].plot(dvals, agg["qsat_mean"], marker="s", color=COLORS["muted"], label="g^2 / (sigma^2 rho)")
 axes[1].set_xlabel(r"$d$")
 axes[1].set_ylabel("share / bound")
-axes[1].set_title(r"equicorrelation split $\gamma=g\mathbf{1}+\delta$")
+axes[1].set_title("equicorrelation split of gamma")
 axes[1].legend(frameon=False, fontsize=8)
 fig.tight_layout()
 fig.savefig(FIG / "02_attribution.png", dpi=110)

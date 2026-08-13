@@ -1,6 +1,6 @@
 # Subordinator tracking on S&P 500 — empirical findings
 
-**Status:** Phases 0–1 done (2026-08-13). Phases 2–3 next.
+**Status:** Phases 0–2 done (2026-08-13). Phase 3 next.
 **Plan:** [`subordinator_tracking_sp500_plan.md`](subordinator_tracking_sp500_plan.md).
 **Code:** `notebooks/subordinator_tracking/` (`lib.py`, `00_*.py`, `01_static_sp500.py`).
 **Cache (gitignored):** `notebooks/subordinator_tracking/_cache/` (fits, tables, figures).
@@ -231,7 +231,38 @@ market-aligned skewness — consistent with isotropic estimation noise.
    filtered posterior / $q_\perp$ vs RV. Do not expect $\hat Y_t$ to
    be a vol index.
 
-## Phase 2 — dimension sweep (not started)
+## Phase 2 — dimension sweep (H2)
+
+5 nested seeds. $d=468$ is the full panel, so all seeds coincide.
+
+| $d$ | mean $\hat{\tilde q}$ | se | sign-flip 95% | mean $\hat\kappa$ | mean $\kappa_{\mathrm{index}}$ | PC1 share | small-$\lambda$ 10% |
+|---|---|---|---|---|---|---|---|
+| 5 | 0.012 | 0.006 | 0.010 | 0.014 | 0.009 | 0.39 | 0.024 |
+| 10 | 0.020 | 0.004 | 0.018 | 0.019 | 0.011 | 0.27 | 0.024 |
+| 25 | 0.035 | 0.007 | 0.040 | 0.025 | 0.013 | 0.14 | 0.075 |
+| 50 | 0.060 | 0.015 | 0.085 | 0.039 | 0.012 | 0.086 | 0.085 |
+| 100 | 0.107 | 0.014 | 0.164 | 0.061 | 0.013 | 0.045 | 0.080 |
+| 200 | 0.217 | 0.011 | 0.298 | 0.111 | 0.013 | 0.019 | 0.095 |
+| 468 | 0.509 | 0 | 0.808 | 0.233 | 0.012 | 0.007 | 0.106 |
+
+$\hat{\tilde q}_d$ grows, roughly linearly in $d$, and **does not saturate**.
+That looks like the note's idiosyncratic-$\delta$ branch — except every
+point sits at or below the sign-flip floor (the $d=5,10$ means slightly
+exceed the *seed-0* null; they do not exceed a seed-matched null, and
+PC1 shares at $d=5$ range $0.001$–$0.76$ across seeds). The index
+ceiling $\kappa_{\mathrm{index}}\approx 0.01$ is flat in $d$.
+
+Attribution is the opposite of market-aligned skewness: PC1's share of
+$\tilde q$ *falls* from $0.39$ to $0.007$. The equicorrelation ceiling
+$g^2/(\bar\sigma^2\rho)$ is $0.004$–$0.011$, the same order as
+$\kappa_{\mathrm{index}}$. $\lVert\delta\rVert^2/\lVert\gamma\rVert^2$
+rises $0.18\to 0.41$: the extra $\tilde q$ lives in $\delta$, which is
+where $\gamma$-estimation noise lives.
+
+**H2 verdict.** The hypothesis as stated is false in both of its
+intended readings. There is no saturating market-skewness signal, and
+the growing $\tilde q_d$ is not recoverable idiosyncratic skewness — it
+is the $d$-dependent null. Cross-section does not buy a linear clock.
 
 ## Phase 3 — online EM on real data (not started)
 
