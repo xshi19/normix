@@ -10,7 +10,8 @@ mystnb:
 
 # Entropy, varentropy, and fat tails
 
-Every `normix` exponential family exposes three information-theoretic quantities:
+Every `normix` exponential family exposes three information-theoretic quantities
+({ref}`Renyi1961 <renyi1961>`; {ref}`Stankyavichyus2026 <stankyavichyus2026>`):
 
 - `entropy()` — the differential entropy $H = \mathbb{E}[-\log p(X)]$,
 - `varentropy()` — the **varentropy** $V_H = \operatorname{Var}[-\log p(X)]$,

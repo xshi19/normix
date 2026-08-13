@@ -532,10 +532,12 @@ produce a distribution. The walkthrough in
 <p>the second being the Fisher information. Each distribution therefore provides a
 <strong>triad</strong> — log-partition, gradient, Hessian — in two backends:</p>
 <ul class="simple">
-<li><p>a <strong>JAX</strong> backend (<code class="docutils literal notranslate"><span class="pre">expectation_params()</span></code>, <code class="docutils literal notranslate"><span class="pre">fisher_information()</span></code>,
-default <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code>) that is JIT-able, differentiable, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-friendly;</p></li>
-<li><p>a <strong>CPU</strong> backend (<code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code>) using numpy/scipy, used inside the EM hot
-loop where scipy’s Bessel routines are fastest.</p></li>
+<li><p>a <strong><a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a></strong> backend (<code class="docutils literal notranslate"><span class="pre">expectation_params()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fisher_information()</span></code>, default <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code>) that is JIT-able,
+differentiable, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-friendly;</p></li>
+<li><p>a <strong>CPU</strong> backend (<code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code>) using
+<a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a>/<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a>,
+used inside the EM hot loop where SciPy’s Bessel routines are fastest.</p></li>
 </ul>
 <p>Defaults use <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code>; distributions with closed forms (e.g.
 <code class="docutils literal notranslate"><span class="pre">Gamma</span></code> via <code class="docutils literal notranslate"><span class="pre">digamma</span></code>/<code class="docutils literal notranslate"><span class="pre">trigamma</span></code>) override them. The two backends are
@@ -557,10 +559,10 @@ evaluations of <span class="math notranslate nohighlight">\(\psi\)</span> — no
 </section>
 <section id="immutability">
 <h2>Immutability<a class="headerlink" href="#immutability" title="Link to this heading">#</a></h2>
-<p>Distributions are <code class="docutils literal notranslate"><span class="pre">equinox.Module</span></code> pytrees: immutable, hashable, and traceable
-by JAX. Parameter updates return a <em>new</em> instance rather than mutating in place,
-which is what lets the EM loop, <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, and <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> treat models as plain
-data.</p>
+<p>Distributions are <a class="reference external" href="https://docs.kidger.site/equinox/"><code class="docutils literal notranslate"><span class="pre">equinox.Module</span></code></a> pytrees:
+immutable, hashable, and traceable by JAX. Parameter updates return a <em>new</em>
+instance rather than mutating in place, which is what lets the EM loop,
+<code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, and <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> treat models as plain data.</p>
 <p>For the full mathematical development, see the <a class="reference internal" href="../design/exponential_family.html"><span class="doc">design rationale</span></a> and the <a class="reference internal" href="../theory/index.html"><span class="doc">theory notes</span></a>.</p>
 </section>
 </section>

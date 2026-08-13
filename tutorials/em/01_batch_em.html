@@ -465,7 +465,9 @@
   <section class="tex2jax_ignore mathjax_ignore" id="batch-em-in-practice">
 <h1>Batch EM in practice<a class="headerlink" href="#batch-em-in-practice" title="Link to this heading">#</a></h1>
 <p>Fitting a normal variance-mean mixture is a missing-data problem: the
-subordinator <span class="math notranslate nohighlight">\(Y\)</span> is latent. The <strong>EM algorithm</strong> alternates</p>
+subordinator <span class="math notranslate nohighlight">\(Y\)</span> is latent. The <strong>EM algorithm</strong>
+(<a class="reference internal" href="../../references.html#dempster1977"><span class="std std-ref">Dempster1977</span></a>; for GH mixtures,
+<a class="reference internal" href="../../references.html#hu2005"><span class="std std-ref">Hu2005</span></a>, <a class="reference internal" href="../../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>) alternates</p>
 <ul class="simple">
 <li><p><strong>E-step</strong> — given the current model, compute the conditional expectations
 <span class="math notranslate nohighlight">\(\mathbb{E}[t(Y) \mid X]\)</span> of the sufficient statistics, and</p></li>
@@ -633,12 +635,13 @@ log|Σ|             : -3.2526065174565133e-16
 <section id="cpu-and-jax-backends">
 <h2>CPU and JAX backends<a class="headerlink" href="#cpu-and-jax-backends" title="Link to this heading">#</a></h2>
 <p>The E-step is dominated by Bessel evaluations and the M-step by the
-<span class="math notranslate nohighlight">\(\eta \mapsto \theta\)</span> solve. Each can run on a JAX or a CPU/scipy backend
-independently:</p>
+<span class="math notranslate nohighlight">\(\eta \mapsto \theta\)</span> solve. Each can run on a <a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a>
+or a CPU/<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> backend independently:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code> routes Bessel through <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> — a large
-speedup for the GIG/NIG E-step on CPU.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">m_step_backend=&quot;cpu&quot;</span></code> uses the numpy/scipy Newton solver for the
+<li><p><code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code> routes Bessel through
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
+— a large speedup for the GIG/NIG E-step on CPU.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m_step_backend=&quot;cpu&quot;</span></code> uses the NumPy/SciPy Newton solver for the
 subordinator update; <code class="docutils literal notranslate"><span class="pre">m_step_method</span></code> selects <code class="docutils literal notranslate"><span class="pre">&quot;newton&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;lbfgs&quot;</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">&quot;bfgs&quot;</span></code>.</p></li>
 </ul>

@@ -470,7 +470,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="the-generalized-inverse-gaussian-distribution">
 <h1>The Generalized Inverse Gaussian Distribution<a class="headerlink" href="#the-generalized-inverse-gaussian-distribution" title="Link to this heading">#</a></h1>
 <p>In this section we review the definition and statistical properties of the
-generalized inverse Gaussian (GIG) distribution.</p>
+generalized inverse Gaussian (GIG) distribution; a standard reference is
+<a class="reference internal" href="../references.html#jorgensen2012"><span class="std std-ref">Jorgensen2012</span></a>.</p>
 <p><strong>See also:</strong> executable walkthrough in
 <a class="reference internal" href="../tutorials/distributions/02_gig.html"><span class="doc">The Generalized Inverse Gaussian</span></a>.</p>
 <section id="definition">
@@ -481,7 +482,7 @@ distribution with the density function:</p>
 <span class="eqno">(1)<a class="headerlink" href="#equation-gig-pdf" title="Link to this equation">#</a></span>\[f(x|p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
 \exp\left(-\frac{1}{2}(b x^{-1} + a x)\right), \quad x &gt; 0,\]</div>
 <p>where <span class="math notranslate nohighlight">\(K_p(\cdot)\)</span> is the modified Bessel function of the second kind
-and the parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> satisfy:</p>
+(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> §10) and the parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> satisfy:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{cases}
 b &gt; 0, \, a \geq 0 &amp; \text{if } p &lt; 0 \\
@@ -646,7 +647,7 @@ replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\et
 <section id="hellinger-distance">
 <h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading">#</a></h2>
 <p>To measure estimation errors, one good choice is the Hellinger distance between
-the true and estimated parameters.</p>
+the true and estimated parameters (<a class="reference internal" href="../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>).</p>
 <p><strong>Proposition.</strong> Let <span class="math notranslate nohighlight">\((p_1, a_1, b_1)\)</span> and <span class="math notranslate nohighlight">\((p_2, a_2, b_2)\)</span> be the
 parameters of two GIG distributions. The squared Hellinger distance between the
 two distributions is given by:</p>

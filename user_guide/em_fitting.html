@@ -465,8 +465,10 @@
   <section class="tex2jax_ignore mathjax_ignore" id="fitting-with-em">
 <h1>Fitting with EM<a class="headerlink" href="#fitting-with-em" title="Link to this heading">#</a></h1>
 <p>The subordinator <span class="math notranslate nohighlight">\(Y\)</span> in a normal variance-mean mixture is latent, so fitting is
-a missing-data problem solved by the <strong>EM algorithm</strong>. normix exposes it through
-a one-line convenience method and two configurable fitters.</p>
+a missing-data problem solved by the <strong>EM algorithm</strong>
+(<a class="reference internal" href="../references.html#dempster1977"><span class="std std-ref">Dempster1977</span></a>; for GH,
+<a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a>, <a class="reference internal" href="../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>). normix exposes it through a
+one-line convenience method and two configurable fitters.</p>
 <section id="the-algorithm">
 <h2>The algorithm<a class="headerlink" href="#the-algorithm" title="Link to this heading">#</a></h2>
 <p>EM alternates two steps until the likelihood stops improving:</p>
@@ -521,8 +523,8 @@ Bessel path is markedly faster for the GIG/NIG E-step on CPU.</p></li>
 <section id="incremental-mini-batch-em">
 <h2>Incremental (mini-batch) EM<a class="headerlink" href="#incremental-mini-batch-em" title="Link to this heading">#</a></h2>
 <p>For streaming or very large data, <code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code> updates from
-mini-batches, blending each batch estimate <span class="math notranslate nohighlight">\(\hat\eta\)</span> into a running <span class="math notranslate nohighlight">\(\eta_t\)</span>
-through an <strong><span class="math notranslate nohighlight">\(\eta\)</span>-update rule</strong>:</p>
+mini-batches (<a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>), blending each batch estimate
+<span class="math notranslate nohighlight">\(\hat\eta\)</span> into a running <span class="math notranslate nohighlight">\(\eta_t\)</span> through an <strong><span class="math notranslate nohighlight">\(\eta\)</span>-update rule</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncrementalEMFitter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">RobbinsMonroUpdate</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -556,8 +558,9 @@ reproduces a benchmark from the literature.</p>
 <section id="choosing-an-algorithm">
 <h2>Choosing an algorithm<a class="headerlink" href="#choosing-an-algorithm" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">fit</span></code> and the fitters accept <code class="docutils literal notranslate"><span class="pre">algorithm='em'</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">algorithm='mcecm'</span></code>
-(a Monte Carlo conditional variant). EM is the right choice for almost all
-cases; the two agree at the optimum.</p>
+(Multi-Cycle ECM; <a class="reference internal" href="../references.html#mengrubbin1993"><span class="std std-ref">MengRubin1993</span></a>,
+<a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a>). EM is the right choice for almost all cases;
+the two agree at the optimum.</p>
 </section>
 </section>
 

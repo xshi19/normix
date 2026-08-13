@@ -466,9 +466,9 @@
 <h1>Random sampling<a class="headerlink" href="#random-sampling" title="Link to this heading">#</a></h1>
 <p>Every normix distribution can generate samples through a uniform <code class="docutils literal notranslate"><span class="pre">rvs(n,</span> <span class="pre">seed)</span></code>
 interface. Under the hood the methods range from textbook inverse-CDF sampling
-to the Devroye ratio-of-uniforms rejection sampler for the GIG. This tutorial
-shows the interface, validates the samplers against references, and explains
-the GIG sampling options.</p>
+to Devroye’s transformed density rejection (TDR) sampler for the GIG
+(<a class="reference internal" href="../../references.html#devroye2014"><span class="std std-ref">Devroye2014</span></a>). This tutorial shows the interface, validates
+the samplers against references, and explains the GIG sampling options.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -548,11 +548,16 @@ The Kolmogorov–Smirnov statistic against the true CDF stays small:</p>
 <p>The GIG is the only distribution with a genuine sampling choice. <code class="docutils literal notranslate"><span class="pre">rvs</span></code> accepts a
 <code class="docutils literal notranslate"><span class="pre">method</span></code>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;devroye&quot;</span></code> (default) — Devroye’s ratio-of-uniforms rejection sampler; exact
-and the most robust across parameter regimes.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;pinv&quot;</span></code> — Polynomial inverse-CDF (numerical inversion); fast for repeated
-draws from a fixed parameter set.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;scipy&quot;</span></code> — delegates to <code class="docutils literal notranslate"><span class="pre">scipy.stats.geninvgauss</span></code> (reference / CPU only).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;devroye&quot;</span></code> (default) — Devroye’s TDR sampler on <span class="math notranslate nohighlight">\(w=\log x\)</span>
+(<a class="reference internal" href="../../references.html#devroye2014"><span class="std std-ref">Devroye2014</span></a>); exact and the most robust across parameter
+regimes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;pinv&quot;</span></code> — Polynomial-Interpolation-based Numerical Inversion (PINV;
+<a class="reference internal" href="../../references.html#hormannleydold2011"><span class="std std-ref">HormannLeydold2011</span></a>,
+<a class="reference internal" href="../../references.html#hormannleydold2014"><span class="std std-ref">HormannLeydold2014</span></a>); fast for repeated draws from
+a fixed parameter set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;scipy&quot;</span></code> — delegates to
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.geninvgauss.html"><code class="docutils literal notranslate"><span class="pre">scipy.stats.geninvgauss</span></code></a>
+(reference / CPU only).</p></li>
 </ul>
 <p>All three target the same distribution; their empirical moments agree:</p>
 <div class="cell docutils container">
@@ -658,7 +663,8 @@ moments <span class="math notranslate nohighlight">\(\mathbb{E}[\,\cdot \mid X]\
 <li><p><code class="docutils literal notranslate"><span class="pre">rvs(n,</span> <span class="pre">seed)</span></code> is the uniform, reproducible sampling interface; multivariate
 draws come back as <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
 <li><p>The GIG offers <code class="docutils literal notranslate"><span class="pre">method</span></code> ∈ <code class="docutils literal notranslate"><span class="pre">{&quot;devroye&quot;,</span> <span class="pre">&quot;pinv&quot;,</span> <span class="pre">&quot;scipy&quot;}</span></code>, all sampling the
-same law — <code class="docutils literal notranslate"><span class="pre">&quot;devroye&quot;</span></code> is the robust default.</p></li>
+same law — <code class="docutils literal notranslate"><span class="pre">&quot;devroye&quot;</span></code> (TDR; <a class="reference internal" href="../../references.html#devroye2014"><span class="std std-ref">Devroye2014</span></a>) is the robust
+default.</p></li>
 <li><p>Mixture marginals sample <span class="math notranslate nohighlight">\(X\)</span>; their <code class="docutils literal notranslate"><span class="pre">.joint</span></code> samples <span class="math notranslate nohighlight">\((X, Y)\)</span> including the
 latent subordinator.</p></li>
 </ul>

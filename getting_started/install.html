@@ -514,23 +514,20 @@ float32. Enable it <strong>before importing</strong> normix:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
+<tr class="row-even"><td><p><a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a></p></td>
 <td><p>Array computation, autodiff, JIT, <code class="docutils literal notranslate"><span class="pre">vmap</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equinox</span></code></p></td>
+<tr class="row-odd"><td><p><a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a></p></td>
 <td><p>Immutable pytree modules</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jaxopt</span></code></p></td>
+<tr class="row-even"><td><p><a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a></p></td>
 <td><p>L-BFGS/BFGS for the GIG <span class="math notranslate nohighlight">\(\eta \mapsto \theta\)</span> solve</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tensorflow-probability</span></code></p></td>
-<td><p>Reference Bessel functions</p></td>
+<tr class="row-odd"><td><p><a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a></p></td>
+<td><p>CPU array helpers alongside the JAX triad</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scipy</span></code></p></td>
-<td><p>CPU Bessel evaluation on the EM hot path</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">optax</span></code> <em>(optional)</em></p></td>
-<td><p>Gradient-based fitting experiments</p></td>
+<tr class="row-even"><td><p><a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a></p></td>
+<td><p>CPU Bessel evaluation (<code class="docutils literal notranslate"><span class="pre">kve</span></code>) on the EM hot path</p></td>
 </tr>
 </tbody>
 </table>
@@ -538,9 +535,11 @@ float32. Enable it <strong>before importing</strong> normix:</p>
 </section>
 <section id="optional-extras">
 <h2>Optional extras<a class="headerlink" href="#optional-extras" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>docs<span class="w"> </span>--extra<span class="w"> </span>plotting<span class="w">   </span><span class="c1"># Sphinx site + matplotlib helpers</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>docs<span class="w"> </span>--extra<span class="w"> </span>plotting
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">docs</span></code> extra builds the Sphinx site; <code class="docutils literal notranslate"><span class="pre">plotting</span></code> adds
+<a class="reference external" href="https://matplotlib.org/stable/">matplotlib</a> helpers used by the tutorials.</p>
 <p>Once installed, head to the <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> for a 30-second example, or
 <a class="reference internal" href="first_model.html"><span class="doc">Your first model, step by step</span></a> for a guided walkthrough.</p>
 </section>

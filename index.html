@@ -463,10 +463,11 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="normix">
 <h1>normix<a class="headerlink" href="#normix" title="Link to this heading">#</a></h1>
-<p><strong>normix</strong> is a JAX package for Generalized Hyperbolic distributions and their
-relatives, implemented as exponential families. It is built on
-<a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> with float64 precision throughout,
-and is JIT-compiled, differentiable, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible end to end.</p>
+<p><strong>normix</strong> is a <a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a> package for Generalized
+Hyperbolic distributions and their relatives, implemented as exponential
+families. It is built on <a class="reference external" href="https://docs.kidger.site/equinox/">Equinox</a> with
+float64 precision throughout, and is JIT-compiled, differentiable, and
+<code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible end to end.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -491,10 +492,11 @@ and is JIT-compiled, differentiable, and <code class="docutils literal notransla
 Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, and Generalized
 Hyperbolic, plus univariate and factor variants.</p></li>
 <li><p><strong>EM fitting</strong> — batch and incremental/mini-batch EM with a hybrid CPU/JAX
-backend (scipy Bessel on the hot path).</p></li>
+backend (<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> Bessel on the hot path).</p></li>
 <li><p><strong>Closed-form divergences</strong> — squared Hellinger and KL with no Monte Carlo.</p></li>
 <li><p><strong>Finance toolkit</strong> — portfolio projection and differentiable CVaR.</p></li>
-<li><p><strong>Immutable</strong> — all distributions are <code class="docutils literal notranslate"><span class="pre">equinox.Module</span></code> pytrees.</p></li>
+<li><p><strong>Immutable</strong> — all distributions are
+<a class="reference external" href="https://docs.kidger.site/equinox/"><code class="docutils literal notranslate"><span class="pre">equinox.Module</span></code></a> pytrees.</p></li>
 </ul>
 </section>
 <section id="where-to-start">

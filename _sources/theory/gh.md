@@ -1,7 +1,8 @@
 # The Generalized Hyperbolic Distribution
 
 In this section we briefly review the basic properties of the Generalized
-Hyperbolic (GH) distribution.
+Hyperbolic (GH) distribution, introduced by
+{ref}`BarndorffNielsen1977 <barndorffnielsen1977>`.
 
 ## Definition as Normal Mixture
 
@@ -272,7 +273,8 @@ These equations form the **M-step** in the EM algorithm, where the expectations 
 ## Hellinger Distance
 
 While there is no analytical formulation of the Hellinger distance between two GH
-distributions, the Hellinger distance of the joint-GH distributions is tractable.
+distributions, the Hellinger distance of the joint-GH distributions is tractable
+({ref}`Shi2016 <shi2016>`).
 
 **Proposition.** Let $\theta_1 = (\mu_1, \gamma_1, \Sigma_1, p_1, a_1, b_1)$ and
 $\theta_2 = (\mu_2, \gamma_2, \Sigma_2, p_2, a_2, b_2)$ be the parameters of two
@@ -319,8 +321,8 @@ discussed in the {doc}`gig` section.
 
 Several important distributions are special cases of the GH family:
 
-- **Normal-Inverse Gaussian (NIG)**: $p = -1/2$
-- **Variance-Gamma (VG)**: $b \to 0$ (Gamma mixing)
+- **Normal-Inverse Gaussian (NIG)** ({ref}`BarndorffNielsen1997 <barndorffnielsen1997>`): $p = -1/2$
+- **Variance-Gamma (VG)** ({ref}`MadanSeneta1990 <madan1990>`): $b \to 0$ (Gamma mixing)
 - **Normal-Inverse Gamma (NInvG)**: $a \to 0$ (Inverse-Gamma mixing)
 - **Student-t**: $p < 0$, $a = 0$, $\gamma = 0$
 - **Hyperbolic**: $p = 1$

@@ -463,15 +463,18 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="a-tour-of-the-gh-family">
 <h1>A tour of the GH family<a class="headerlink" href="#a-tour-of-the-gh-family" title="Link to this heading">#</a></h1>
-<p>The Generalized Hyperbolic (GH) distribution and its relatives are all
+<p>The Generalized Hyperbolic (GH) distribution
+(<a class="reference internal" href="../../references.html#barndorffnielsen1977"><span class="std std-ref">BarndorffNielsen1977</span></a>) and its relatives are all
 <strong>normal variance-mean mixtures</strong>: a Gaussian whose mean and covariance are
 scaled by a positive latent variable <span class="math notranslate nohighlight">\(Y\)</span>,</p>
 <div class="math notranslate nohighlight">
 \[
 X \mid Y \sim \mathcal{N}(\mu + \gamma\, Y,\; \Sigma\, Y), \qquad Y \sim \text{subordinator}.
 \]</div>
-<p>Different choices of the <strong>subordinator</strong> <span class="math notranslate nohighlight">\(Y\)</span> produce the whole family. This
-tutorial maps that hierarchy and shows how the pieces fit together.</p>
+<p>Different choices of the <strong>subordinator</strong> <span class="math notranslate nohighlight">\(Y\)</span> produce the whole family —
+Variance Gamma (<a class="reference internal" href="../../references.html#madan1990"><span class="std std-ref">MadanSeneta1990</span></a>), Normal-Inverse Gaussian
+(<a class="reference internal" href="../../references.html#barndorffnielsen1997"><span class="std std-ref">BarndorffNielsen1997</span></a>), and the general GIG case.
+This tutorial maps that hierarchy and shows how the pieces fit together.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>

@@ -627,8 +627,9 @@ applying these to <a class="reference internal" href="#equation-m-step">(3)</a>.
 <section id="mcecm-algorithm">
 <h2>MCECM Algorithm<a class="headerlink" href="#mcecm-algorithm" title="Link to this heading">#</a></h2>
 <p>An alternative is the Multi-Cycle Expectation Conditional Maximization (MCECM)
-algorithm <a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a>. Unlike the EM algorithm which updates all parameters
-via <a class="reference internal" href="#equation-m-step">(3)</a>, MCECM proceeds in two cycles:</p>
+algorithm of <a class="reference internal" href="../references.html#mengrubbin1993"><span class="std std-ref">MengRubin1993</span></a>, as applied to GH mixtures in
+<a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a>. Unlike the EM algorithm which updates all
+parameters via <a class="reference internal" href="#equation-m-step">(3)</a>, MCECM proceeds in two cycles:</p>
 <p><strong>Cycle 1:</strong> Compute <span class="math notranslate nohighlight">\(\mu_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\gamma_{k+1}\)</span>, <span class="math notranslate nohighlight">\(\Sigma_{k+1}\)</span>
 from the first three equations in <a class="reference internal" href="#equation-m-step">(3)</a>, then set
 <span class="math notranslate nohighlight">\(\Sigma_{k+1} \leftarrow \Sigma_{k+1} / |\Sigma_{k+1}|^{1/d}\)</span>.</p>

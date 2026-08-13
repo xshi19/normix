@@ -120,9 +120,11 @@ plt.show()
 
 ## Two exact samplers
 
-The GIG accepts a `method` for `rvs`. The Devroye ratio-of-uniforms sampler is
-the robust default; the PINV numerical inversion is competitive when drawing
-many samples from a fixed parameter set. Both reproduce the analytic moments:
+The GIG accepts a `method` for `rvs`. Devroye's TDR sampler on $w=\log x$
+({ref}`Devroye2014 <devroye2014>`) is the robust default; PINV numerical
+inversion ({ref}`HormannLeydold2011 <hormannleydold2011>`) is competitive when
+drawing many samples from a fixed parameter set. Both reproduce the analytic
+moments:
 
 ```{code-cell} python
 print(f"{'method':>9s}  {'mean':>8s}  {'var':>8s}")

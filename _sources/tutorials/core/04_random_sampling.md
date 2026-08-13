@@ -12,9 +12,9 @@ mystnb:
 
 Every normix distribution can generate samples through a uniform `rvs(n, seed)`
 interface. Under the hood the methods range from textbook inverse-CDF sampling
-to the Devroye ratio-of-uniforms rejection sampler for the GIG. This tutorial
-shows the interface, validates the samplers against references, and explains
-the GIG sampling options.
+to Devroye's transformed density rejection (TDR) sampler for the GIG
+({ref}`Devroye2014 <devroye2014>`). This tutorial shows the interface, validates
+the samplers against references, and explains the GIG sampling options.
 
 ```{code-cell} python
 import jax
@@ -77,11 +77,16 @@ plt.show()
 The GIG is the only distribution with a genuine sampling choice. `rvs` accepts a
 `method`:
 
-- `"devroye"` (default) — Devroye's ratio-of-uniforms rejection sampler; exact
-  and the most robust across parameter regimes.
-- `"pinv"` — Polynomial inverse-CDF (numerical inversion); fast for repeated
-  draws from a fixed parameter set.
-- `"scipy"` — delegates to `scipy.stats.geninvgauss` (reference / CPU only).
+- `"devroye"` (default) — Devroye's TDR sampler on $w=\log x$
+  ({ref}`Devroye2014 <devroye2014>`); exact and the most robust across parameter
+  regimes.
+- `"pinv"` — Polynomial-Interpolation-based Numerical Inversion (PINV;
+  {ref}`HormannLeydold2011 <hormannleydold2011>`,
+  {ref}`HormannLeydold2014 <hormannleydold2014>`); fast for repeated draws from
+  a fixed parameter set.
+- `"scipy"` — delegates to
+  [`scipy.stats.geninvgauss`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.geninvgauss.html)
+  (reference / CPU only).
 
 All three target the same distribution; their empirical moments agree:
 
@@ -146,7 +151,8 @@ plt.show()
 - `rvs(n, seed)` is the uniform, reproducible sampling interface; multivariate
   draws come back as `(n, d)`.
 - The GIG offers `method` ∈ `{"devroye", "pinv", "scipy"}`, all sampling the
-  same law — `"devroye"` is the robust default.
+  same law — `"devroye"` (TDR; {ref}`Devroye2014 <devroye2014>`) is the robust
+  default.
 - Mixture marginals sample $X$; their `.joint` samples $(X, Y)$ including the
   latent subordinator.
 

@@ -618,27 +618,27 @@ gradient/Hessian; bounds are handled by the solver via
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">lbfgs</span></code></p></td>
 <td><p>native (LBFGSB)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code></p></td>
+<td><p><a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a> <code class="docutils literal notranslate"><span class="pre">LBFGSB</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">bfgs</span></code></p></td>
 <td><p>reparam</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">jaxopt.BFGS</span></code></p></td>
+<td><p><a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a> <code class="docutils literal notranslate"><span class="pre">BFGS</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">newton</span></code></p></td>
 <td><p>reparam</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='trust-exact')</span></code></p></td>
+<td><p><a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> <code class="docutils literal notranslate"><span class="pre">minimize(method='trust-exact')</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">lbfgs</span></code></p></td>
 <td><p>native</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='L-BFGS-B')</span></code></p></td>
+<td><p>SciPy <code class="docutils literal notranslate"><span class="pre">minimize(method='L-BFGS-B')</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">bfgs</span></code></p></td>
 <td><p>none</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize(method='BFGS')</span></code></p></td>
+<td><p>SciPy <code class="docutils literal notranslate"><span class="pre">minimize(method='BFGS')</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -685,10 +685,12 @@ Cholesky path (more efficient).</p>
 </section>
 <section id="d4-keep-jaxopt-for-now">
 <h3>4.2 D4 — Keep <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code> for now<a class="headerlink" href="#d4-keep-jaxopt-for-now" title="Link to this heading">#</a></h3>
-<p>JAXopt is unmaintained (last release 0.8.3) and emits a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>
-on import. We keep it: it is the only pure-JAX library with a native box-
-constrained quasi-Newton (<code class="docutils literal notranslate"><span class="pre">LBFGSB</span></code>). Migrating to <code class="docutils literal notranslate"><span class="pre">optax.scale_by_lbfgs</span></code>
-loses the convergence loop; <code class="docutils literal notranslate"><span class="pre">optimistix.LBFGS</span></code> lacks box constraints.</p>
+<p><a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a> is unmaintained (last release 0.8.3)
+and emits a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code> on import. We keep it: it is the only pure-JAX
+library with a native box-constrained quasi-Newton (<code class="docutils literal notranslate"><span class="pre">LBFGSB</span></code>). Migrating to
+<a class="reference external" href="https://optax.readthedocs.io/en/latest/"><code class="docutils literal notranslate"><span class="pre">optax.scale_by_lbfgs</span></code></a> loses the
+convergence loop; <a class="reference external" href="https://docs.kidger.site/optimistix/"><code class="docutils literal notranslate"><span class="pre">optimistix.LBFGS</span></code></a>
+lacks box constraints.</p>
 <p>The deprecation warning is suppressed in <code class="docutils literal notranslate"><span class="pre">normix/__init__.py</span></code>. Migration
 recipe (when JAXopt breaks): wrap <code class="docutils literal notranslate"><span class="pre">optax.scale_by_lbfgs</span></code> in
 <code class="docutils literal notranslate"><span class="pre">jax.lax.while_loop</span></code> (~100 lines), then drop <code class="docutils literal notranslate"><span class="pre">jaxopt</span></code>.</p>

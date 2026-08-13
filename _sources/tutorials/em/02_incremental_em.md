@@ -11,11 +11,13 @@ mystnb:
 # Incremental (mini-batch) EM
 
 When data arrives in a stream, or is too large to sweep each iteration,
-`IncrementalEMFitter` updates the model from **mini-batches**. Each step
-computes the batch expectation parameters $\hat\eta$, then blends them into a
-running estimate $\eta_t$ through an **$\eta$-update rule** before the M-step.
-The choice of rule controls the bias/variance and the forgetting behaviour of
-the online estimate.
+`IncrementalEMFitter` updates the model from **mini-batches**, following the
+online EM framework of {ref}`Cappe2009 <cappe2009>`. Each step computes the
+batch expectation parameters $\hat\eta$, then blends them into a running
+estimate $\eta_t$ through an **$\eta$-update rule** before the M-step. The
+choice of rule controls the bias/variance and the forgetting behaviour of the
+online estimate — including Robbins–Monro step sizes
+({ref}`RobbinsMonro1951 <robbinsmonro1951>`).
 
 ```{code-cell} python
 import jax

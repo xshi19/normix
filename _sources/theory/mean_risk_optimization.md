@@ -28,7 +28,7 @@ $\alpha \in (0, 1)$:
 ```
 
 VaR is widely used but is **not** coherent (it lacks subadditivity). CVaR
-is coherent.
+is coherent ({ref}`RockafellarUryasev2000 <rockafellaruryasev2000>`).
 
 ## Risk Monotonicity for Normal Mixtures
 

@@ -466,11 +466,13 @@
 <h1>Portfolio CVaR and its derivatives<a class="headerlink" href="#portfolio-cvar-and-its-derivatives" title="Link to this heading">#</a></h1>
 <p>The payoff of modelling returns with a normal variance-mean mixture is that
 <strong>tail risk becomes tractable</strong>. Conditional on the latent <span class="math notranslate nohighlight">\(Y\)</span>, a portfolio is
-Gaussian, so the Conditional Value-at-Risk <span class="math notranslate nohighlight">\(\operatorname{CVaR}_\alpha\)</span> — and its
-gradient and Hessian in the portfolio weights — can be computed by a fast
-conditional Monte Carlo over <span class="math notranslate nohighlight">\(Y\)</span> alone. This tutorial fits a mixture, computes
-CVaR, verifies the analytic derivatives, and takes a few gradient steps to
-reduce risk.</p>
+Gaussian, so the Conditional Value-at-Risk <span class="math notranslate nohighlight">\(\operatorname{CVaR}_\alpha\)</span>
+(<a class="reference internal" href="../../references.html#rockafellaruryasev2000"><span class="std std-ref">RockafellarUryasev2000</span></a>) — and its gradient and
+Hessian in the portfolio weights (<a class="reference internal" href="../../references.html#tasche1999"><span class="std std-ref">Tasche1999</span></a>,
+<a class="reference internal" href="../../references.html#rauhasanov2004"><span class="std std-ref">RauHasanov2004</span></a>) — can be computed by a fast conditional
+Monte Carlo over <span class="math notranslate nohighlight">\(Y\)</span> alone. This tutorial fits a mixture, computes CVaR,
+verifies the analytic derivatives, and takes a few gradient steps to reduce
+risk. Formal derivations: <a class="reference internal" href="../../theory/cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>

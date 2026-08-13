@@ -464,11 +464,13 @@
   <section class="tex2jax_ignore mathjax_ignore" id="incremental-mini-batch-em">
 <h1>Incremental (mini-batch) EM<a class="headerlink" href="#incremental-mini-batch-em" title="Link to this heading">#</a></h1>
 <p>When data arrives in a stream, or is too large to sweep each iteration,
-<code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code> updates the model from <strong>mini-batches</strong>. Each step
-computes the batch expectation parameters <span class="math notranslate nohighlight">\(\hat\eta\)</span>, then blends them into a
-running estimate <span class="math notranslate nohighlight">\(\eta_t\)</span> through an <strong><span class="math notranslate nohighlight">\(\eta\)</span>-update rule</strong> before the M-step.
-The choice of rule controls the bias/variance and the forgetting behaviour of
-the online estimate.</p>
+<code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code> updates the model from <strong>mini-batches</strong>, following the
+online EM framework of <a class="reference internal" href="../../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>. Each step computes the
+batch expectation parameters <span class="math notranslate nohighlight">\(\hat\eta\)</span>, then blends them into a running
+estimate <span class="math notranslate nohighlight">\(\eta_t\)</span> through an <strong><span class="math notranslate nohighlight">\(\eta\)</span>-update rule</strong> before the M-step. The
+choice of rule controls the bias/variance and the forgetting behaviour of the
+online estimate — including Robbins–Monro step sizes
+(<a class="reference internal" href="../../references.html#robbinsmonro1951"><span class="std std-ref">RobbinsMonro1951</span></a>).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>

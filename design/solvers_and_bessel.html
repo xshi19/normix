@@ -559,9 +559,11 @@ takes <span class="math notranslate nohighlight">\(\psi\)</span> as a generic <c
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> passes <code class="docutils literal notranslate"><span class="pre">bounds</span></code> directly to <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>
-(native L-BFGS-B box constraints). <code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code> also supports bounds
-natively. Other JAX backends reparameterise.</p>
+<p><code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> passes <code class="docutils literal notranslate"><span class="pre">bounds</span></code> directly to
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html"><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code></a>
+(native L-BFGS-B box constraints).
+<a class="reference external" href="https://jaxopt.github.io/stable/_api/jaxopt.html#jaxopt.LBFGSB"><code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code></a>
+also supports bounds natively. Other JAX backends reparameterise.</p>
 </section>
 <section id="newton-hand-rolled-jit-cached">
 <h3>1.2 Newton: hand-rolled, JIT-cached<a class="headerlink" href="#newton-hand-rolled-jit-cached" title="Link to this heading">#</a></h3>
@@ -576,17 +578,17 @@ Hessian:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Optimistix</p></td>
+<tr class="row-even"><td><p><a class="reference external" href="https://docs.kidger.site/optimistix/">Optimistix</a></p></td>
 <td><p>root-finding only</p></td>
 <td><p>no</p></td>
 <td><p>no</p></td>
 </tr>
-<tr class="row-odd"><td><p>JAXopt</p></td>
+<tr class="row-odd"><td><p><a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a></p></td>
 <td><p>none</p></td>
 <td><p>n/a</p></td>
 <td><p>yes (LBFGSB only)</p></td>
 </tr>
-<tr class="row-even"><td><p>Optax</p></td>
+<tr class="row-even"><td><p><a class="reference external" href="https://optax.readthedocs.io/en/latest/">Optax</a></p></td>
 <td><p>none</p></td>
 <td><p>n/a</p></td>
 <td><p>n/a</p></td>
@@ -672,19 +674,19 @@ at runtime):</p>
 <tbody>
 <tr class="row-even"><td><p>Hankel</p></td>
 <td><p><span class="math notranslate nohighlight">\(z &gt; \max(25, v^2/4)\)</span></p></td>
-<td><p>DLMF 10.40.2 asymptotic</p></td>
+<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a> asymptotic</p></td>
 </tr>
 <tr class="row-odd"><td><p>Olver</p></td>
 <td><p><span class="math notranslate nohighlight">\(|v| &gt; 25\)</span>, not Hankel</p></td>
-<td><p>DLMF 10.41.3-4 uniform expansion</p></td>
+<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.41">10.41.3–4</a> uniform expansion</p></td>
 </tr>
 <tr class="row-even"><td><p>Small-<span class="math notranslate nohighlight">\(z\)</span></p></td>
 <td><p><span class="math notranslate nohighlight">\(z &lt; 10^{-6}\)</span>, <span class="math notranslate nohighlight">\(|v| &gt; 0.5\)</span></p></td>
-<td><p>leading asymptotic</p></td>
+<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.30.E2">10.30.2</a> leading asymptotic</p></td>
 </tr>
 <tr class="row-odd"><td><p>Quadrature</p></td>
 <td><p>otherwise</p></td>
-<td><p>64-point Gauss–Legendre (Takekawa 2022)</p></td>
+<td><p>64-point Gauss–Legendre (<a class="reference internal" href="../references.html#takekawa2022"><span class="std std-ref">Takekawa2022</span></a>)</p></td>
 </tr>
 </tbody>
 </table>
@@ -702,7 +704,8 @@ differentiation avoids the two extra Bessel evaluations).</p></li>
 </section>
 <section id="cpu-backend-em-hot-path">
 <h3>3.2 CPU backend (EM hot path)<a class="headerlink" href="#cpu-backend-em-hot-path" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>, fully vectorised NumPy. Not JIT-able. For large
+<p><a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
+(<a class="reference internal" href="../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>), fully vectorised NumPy. Not JIT-able. For large
 <span class="math notranslate nohighlight">\(N\)</span> a single <code class="docutils literal notranslate"><span class="pre">kve</span></code> C-call per element beats vmapping JAX’s
 <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>-dispatched implementation, which causes separate kernel
 launches per condition check.</p>
@@ -771,9 +774,9 @@ GPU-friendly).</p></li>
 <hr class="docutils" />
 <section id="random-variate-generation">
 <h2>5. Random Variate Generation<a class="headerlink" href="#random-variate-generation" title="Link to this heading">#</a></h2>
-<p>PINV (Polynomial-Interpolation-based Numerical Inversion) in
-<code class="docutils literal notranslate"><span class="pre">utils/rvs.py</span></code> is pure JAX and works for any univariate log-kernel — no
-normalising constant needed:</p>
+<p>PINV (Polynomial-Interpolation-based Numerical Inversion;
+<a class="reference internal" href="../references.html#hormannleydold2011"><span class="std std-ref">HormannLeydold2011</span></a>) in <code class="docutils literal notranslate"><span class="pre">utils/rvs.py</span></code> is pure JAX
+and works for any univariate log-kernel — no normalising constant needed:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">build_pinv_table(log_kernel,</span> <span class="pre">mode,</span> <span class="pre">*,</span> <span class="pre">x_of_w,</span> <span class="pre">n_grid,</span> <span class="pre">tail_eps)</span></code>
 builds a quantile table in JAX. Tail bisection via <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code>,
@@ -790,8 +793,8 @@ itself (<code class="docutils literal notranslate"><span class="pre">Gamma</span
 <p>GIG-specific sampling is inlined in
 <code class="docutils literal notranslate"><span class="pre">distributions/generalized_inverse_gaussian.py</span></code>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">_gig_rvs_devroye(key,</span> <span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">n)</span></code> — TDR on <span class="math notranslate nohighlight">\(w = \log x\)</span>,
-batch-parallel (no <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_gig_rvs_devroye(key,</span> <span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">n)</span></code> — TDR on <span class="math notranslate nohighlight">\(w = \log x\)</span>
+(<a class="reference internal" href="../references.html#devroye2014"><span class="std std-ref">Devroye2014</span></a>), batch-parallel (no <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">GIG.rvs(method='pinv')</span></code> — <code class="docutils literal notranslate"><span class="pre">quantile_table().rvs</span></code> via
 <code class="docutils literal notranslate"><span class="pre">build_pinv_table</span></code> / <code class="docutils literal notranslate"><span class="pre">rvs_pinv</span></code> in <code class="docutils literal notranslate"><span class="pre">utils/rvs.py</span></code>.</p></li>
 </ul>
@@ -801,8 +804,9 @@ batch-parallel (no <code class="docutils literal notranslate"><span class="pre">
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Gamma.ppf</span></code> and <code class="docutils literal notranslate"><span class="pre">InverseGamma.ppf</span></code> invert the regularised incomplete
 gamma via <code class="docutils literal notranslate"><span class="pre">normix.utils.gammaincinv</span></code> — a pure-JAX Newton iteration on
-<code class="docutils literal notranslate"><span class="pre">jax.scipy.special.gammainc</span></code> with a Wilson–Hilferty seed. This is the
-JAX analogue of <code class="docutils literal notranslate"><span class="pre">scipy.special.gammaincinv</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">jax.scipy.special.gammainc</span></code> with a Wilson–Hilferty seed
+(<a class="reference internal" href="../references.html#wilsonhilferty1931"><span class="std std-ref">WilsonHilferty1931</span></a>). This is the JAX analogue of
+<code class="docutils literal notranslate"><span class="pre">scipy.special.gammaincinv</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InverseGaussian.ppf</span></code>, <code class="docutils literal notranslate"><span class="pre">GIG.cdf</span></code>, <code class="docutils literal notranslate"><span class="pre">GIG.ppf</span></code> build a PINV table from
 <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> (above).</p></li>
 <li><p>Univariate <code class="docutils literal notranslate"><span class="pre">Normal</span></code>-mixture marginals (<code class="docutils literal notranslate"><span class="pre">UnivariateVarianceGamma</span></code>,

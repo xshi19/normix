@@ -1,8 +1,10 @@
 # Fitting with EM
 
 The subordinator $Y$ in a normal variance-mean mixture is latent, so fitting is
-a missing-data problem solved by the **EM algorithm**. normix exposes it through
-a one-line convenience method and two configurable fitters.
+a missing-data problem solved by the **EM algorithm**
+({ref}`Dempster1977 <dempster1977>`; for GH,
+{ref}`Hu2005 <hu2005>`, {ref}`Shi2016 <shi2016>`). normix exposes it through a
+one-line convenience method and two configurable fitters.
 
 ## The algorithm
 
@@ -61,8 +63,8 @@ See {doc}`../tutorials/em/01_batch_em` for diagnostics and worked examples.
 ## Incremental (mini-batch) EM
 
 For streaming or very large data, `IncrementalEMFitter` updates from
-mini-batches, blending each batch estimate $\hat\eta$ into a running $\eta_t$
-through an **$\eta$-update rule**:
+mini-batches ({ref}`Cappe2009 <cappe2009>`), blending each batch estimate
+$\hat\eta$ into a running $\eta_t$ through an **$\eta$-update rule**:
 
 ```python
 from normix.fitting.em import IncrementalEMFitter
@@ -97,5 +99,6 @@ reproduces a benchmark from the literature.
 ## Choosing an algorithm
 
 `fit` and the fitters accept `algorithm='em'` (default) or `algorithm='mcecm'`
-(a Monte Carlo conditional variant). EM is the right choice for almost all
-cases; the two agree at the optimum.
+(Multi-Cycle ECM; {ref}`MengRubin1993 <mengrubbin1993>`,
+{ref}`McNeil2010 <mcneil2010>`). EM is the right choice for almost all cases;
+the two agree at the optimum.

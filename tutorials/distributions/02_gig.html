@@ -611,9 +611,11 @@ MLE   (p, a, b): -0.7731514220201565 1.4578864600495594 2.5712599887273715
 </section>
 <section id="two-exact-samplers">
 <h2>Two exact samplers<a class="headerlink" href="#two-exact-samplers" title="Link to this heading">#</a></h2>
-<p>The GIG accepts a <code class="docutils literal notranslate"><span class="pre">method</span></code> for <code class="docutils literal notranslate"><span class="pre">rvs</span></code>. The Devroye ratio-of-uniforms sampler is
-the robust default; the PINV numerical inversion is competitive when drawing
-many samples from a fixed parameter set. Both reproduce the analytic moments:</p>
+<p>The GIG accepts a <code class="docutils literal notranslate"><span class="pre">method</span></code> for <code class="docutils literal notranslate"><span class="pre">rvs</span></code>. Devroye’s TDR sampler on <span class="math notranslate nohighlight">\(w=\log x\)</span>
+(<a class="reference internal" href="../../references.html#devroye2014"><span class="std std-ref">Devroye2014</span></a>) is the robust default; PINV numerical
+inversion (<a class="reference internal" href="../../references.html#hormannleydold2011"><span class="std std-ref">HormannLeydold2011</span></a>) is competitive when
+drawing many samples from a fixed parameter set. Both reproduce the analytic
+moments:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;method&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;mean&#39;</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;var&#39;</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
