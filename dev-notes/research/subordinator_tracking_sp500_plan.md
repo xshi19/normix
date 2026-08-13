@@ -1,8 +1,7 @@
 # Empirical plan: subordinator tracking on the S&P 500 panel
 
-**Status:** plan, 2026-08-13. Phase 0 done; Phase 1 in progress
-(`notebooks/subordinator_tracking/01_static_sp500.py`). Findings in
-[`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
+**Status:** plan, 2026-08-13. Phases 0–1 done; Phase 2 next.
+Findings in [`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Theory:** [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md);
 its notation is reused without redefinition: $e = E[Y]$, $v = \operatorname{Var}(Y)$,
 $\mu_3 = E[(Y-e)^3]$, $\tilde q = \gamma^\top\Sigma^{-1}\gamma$,
@@ -261,10 +260,12 @@ parameters rather than converging.
 - **Metrics vs $h$** (the responsiveness frontier):
   1. parameter paths $\tilde q_t$, $\kappa_t$ and direction stability —
      $\cos\angle(w^\star_t, w^\star_{t-21})$, daily unit-gross turnover;
-  2. extraction quality — corr of (smoothed) $\hat Y_t$ with the realized
-     proxies of §4, benchmarked against plain EWMA realized variance *at the
-     same half-life* (does the model add anything over RV? — the note's open
-     problem (a));
+  2. extraction quality — corr of (smoothed) $\hat Y_t$ **and of the
+     filtered posterior / $q_\perp$** with the realized proxies of §4,
+     benchmarked against plain EWMA realized variance *at the same
+     half-life*. Phase 1: static $\hat Y$ has ACF $\approx 0$ and
+     $\mathrm{corr}$ with 21-day RV $=0.07$; $E[Y\mid X]$ has corr $0.58$.
+     The linear tracker is not the clock; the quadratic channel is.
   3. skewness capture — sample skew of the rebalanced tracker return series
      $\{w^{\star\top}_t x_t\}$ (and the filtered variant) vs $h$, against the
      static Phase 1 value; descriptive financial stats (mean vs location,

@@ -101,7 +101,7 @@ TABLES.mkdir(exist_ok=True)
 D_NIG = list(SIZES)
 D_GH = [5, 10, 25, 50]
 D_VG = [5, 10]
-SIGNFLIP_B = {5: 50, 10: 50, 25: 50, 50: 50, 100: 20}
+SIGNFLIP_B = {5: 50, 10: 50, 25: 50, 50: 50, 100: 20, 200: 20, 468: 20}
 BLOCK_B = 30
 BLOCK_LEN = 21
 SKEW_D = (10, 50)
@@ -434,7 +434,7 @@ random_ws = [rng.normal(size=PRIMARY_D) for _ in range(8)]
 name_sk = [sample_skew(np.eye(PRIMARY_D)[i], X50) for i in range(PRIMARY_D)]
 top_names = np.argsort(-np.abs(name_sk))[:3]
 
-placements = [("w*", w_star), ("EW", w_eq), ("min-var", w_mv), ("PC1", w_pc)]
+placements = [("w*", w_star), ("eq-wt", w_eq), ("min-var", w_mv), ("PC1", w_pc)]
 for i, idx in enumerate(top_names):
     placements.append((tickers50[idx], np.eye(PRIMARY_D)[idx]))
 for i, w in enumerate(random_ws):
@@ -457,7 +457,7 @@ skew_curve = np.array([model_skew_at_t(t, st50["e"], st50["v"], st50["mu3"]) for
 
 fig, ax = plt.subplots(figsize=(FIG_W * 0.7, FIG_H * 0.55))
 ax.plot(t_grid, skew_curve, color=COLORS["ink"], lw=1.2, label=r"model skew$(t)$")
-marked = place_tbl[place_tbl["name"].isin(["w*", "EW", "min-var", "PC1"])]
+marked = place_tbl[place_tbl["name"].isin(["w*", "eq-wt", "min-var", "PC1"])]
 ax.scatter(marked["t"], marked["model_skew"], color=COLORS["accent"], zorder=3, label="model at portfolio")
 ax.scatter(marked["t"], marked["sample_skew"], color=COLORS["umber"], marker="s", zorder=3, label="sample skew")
 for _, r in marked.iterrows():
@@ -563,7 +563,7 @@ fig, ax = plt.subplots(figsize=(FIG_W * 0.6, FIG_H * 0.5))
 ax.plot(c_grid, emp_tail, color=COLORS["accent"], label="empirical")
 ax.plot(c_grid, bnd, color=COLORS["muted"], ls="--", label=r"$2\Phi(-2\sqrt{c\tilde q})$")
 ax.set_xlabel(r"$c$")
-ax.set_ylabel(r"$P(\hat Y \le -c)$")
+ax.set_ylabel(r"$P(\hat Y \leq -c)$")
 ax.set_title("Prop. 2 left-tail bound vs tracker")
 ax.legend(frameon=False, fontsize=9)
 fig.tight_layout()

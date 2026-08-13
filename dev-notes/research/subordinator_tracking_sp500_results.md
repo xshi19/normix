@@ -1,8 +1,8 @@
 # Subordinator tracking on S&P 500 — empirical findings
 
-**Status:** Phase 0 done (2026-08-12). Phases 1–3 not started.
+**Status:** Phases 0–1 done (2026-08-13). Phases 2–3 next.
 **Plan:** [`subordinator_tracking_sp500_plan.md`](subordinator_tracking_sp500_plan.md).
-**Code:** `notebooks/subordinator_tracking/` (`lib.py`, `00_synthetic_validation.py`).
+**Code:** `notebooks/subordinator_tracking/` (`lib.py`, `00_*.py`, `01_static_sp500.py`).
 **Cache (gitignored):** `notebooks/subordinator_tracking/_cache/` (fits, tables, figures).
 
 Generator: NIG, `regularization='a_eq_b'`, nested $d=50$ subset of
@@ -130,7 +130,106 @@ ones.
 - `IncrementalEMFitter` was not used (random batches); the loop is
   `e_step` → EWMA → `m_step`, JIT-ed, no `regularize_a_eq_b`.
 
-## Phase 1 — static S&P 500 (not started)
+## Phase 1 — static S&P 500
+
+Nested seed-0 universes; NIG at all $d$; GH nested continuation from the
+NIG embedding at $d\le 50$; VG with `alpha_min='density'` at $d\le 10$.
+Sign-flip null: $B=50$ for $d\le 50$, $B=20$ for $d\in\{100,200,468\}$.
+Hygiene: 12 days with $|r|>0.5$ (kept); no zero-variance columns.
+
+### H1 — no linear extraction
+
+| $d$ | $\hat{\tilde q}$ | null 95% | $p$ | $\hat\kappa$ | $\sqrt{\kappa/(1+\kappa)}$ | $1/\kappa$ |
+|---|---|---|---|---|---|---|
+| 5 | 0.0043 | 0.0098 | 0.41 | 0.0082 | 0.090 | 122 |
+| 10 | 0.018 | 0.018 | 0.078 | 0.020 | 0.139 | 51 |
+| 25 | 0.036 | 0.040 | 0.12 | 0.029 | 0.167 | 35 |
+| 50 | 0.075 | 0.085 | 0.20 | 0.048 | 0.214 | 21 |
+| 100 | 0.127 | 0.164 | 0.52 | 0.071 | 0.258 | 14 |
+| 200 | 0.219 | 0.298 | 0.81 | 0.115 | 0.321 | 8.7 |
+| 468 | 0.509 | 0.808 | 1.00 | 0.233 | 0.435 | 4.3 |
+
+Equal-weight univariate NIG: $\kappa_{\mathrm{ew50}}=0.0093$,
+$\kappa_{\mathrm{ew468}}=0.0125$. The $d=50$ panel $\hat\kappa=0.048$
+exceeds the index but sits inside the sign-flip floor. $\hat{\tilde q}$
+grows with $d$; the null grows faster. At $d=468$, $p=1$: the fit is
+*less* skewed than a typical sign-flip. H1 holds.
+
+GH $\kappa_{\mathrm{lev}}$ at $d=50$ is $0.069$ vs NIG $0.075$ (gauge-invariant
+level SNR agrees); GH $\kappa=0.097$ is a bit higher via a smaller $e$
+($0.10$ vs $1$). VG $\kappa$ is smaller ($0.009$ at $d=10$). Extra
+subordinator flexibility does not create a linear signal.
+
+### Tracker vs quadratic channel ($d=50$)
+
+| | sample | model / sim |
+|---|---|---|
+| $\mathrm{Var}(\hat Y)$ | 14.67 | $v+e/\tilde q=13.99$ |
+| $\mathrm{skew}(\hat Y)$ | 0.79 | 0.51 |
+| ACF$_1$, ACF$_{21}$ of $\hat Y$ | 0.012, 0.005 | 0 |
+| $\mathrm{corr}(\hat Y, E[Y\mid X])$ | 0.203 | 0.205 |
+| $\mathrm{corr}(E[Y\mid X], q_\perp)$ | 0.989 | 0.998 |
+| $\mathrm{corr}(E[Y\mid X], \mathrm{x\text{-}sec.\ disp.})$ | 0.933 | — |
+| $\mathrm{corr}(E[Y\mid X], 21\mathrm{d\ RV})$ | 0.580 | — |
+| $\mathrm{corr}(\hat Y, 21\mathrm{d\ RV})$ | 0.071 | — |
+
+The linear tracker is consistent with the i.i.d. mixture (moments, ACF,
+channel split) and is **uncorrelated with realized vol**. The posterior
+mean is essentially $q_\perp$ and **is** the volatility clock. Phase 0's
+quadratic-channel story on synthetic data repeats on the panel.
+
+The ACF of $\hat Y$ being ~0 is a plan adjustment: i.i.d. misspecification
+does *not* show up in the tracker. It shows up in $E[Y\mid X]$. Phase 3
+should score the quadratic channel against RV, not expect a clustered
+$\hat Y_t$.
+
+### H3 — max-skewness
+
+$t^\dagger < 0$ for every NIG and GH fit; $t^\dagger \approx 0$ for VG
+(Gamma equality). Model max-skewness $= w^\star$ in all cases, including
+the GIG conjecture on these four GH fits.
+
+Sample third moments do not recover it. Direct skew maximisation
+(20 L-BFGS starts):
+
+| $d$ | in-sample max skew | tracker sample skew | $\cos\angle$ | OOS max | OOS tracker |
+|---|---|---|---|---|---|
+| 10 | 3.24 | 0.59 | 0.13 | $-0.023$ | 0.24 |
+| 50 | 8.31 | 0.79 | $-0.20$ | 0.20 | $-0.047$ |
+
+Equal-weight / min-var / PC1 all have $w^\top\gamma < 0$ and *negative*
+sample skew (index leverage). The tracker is the only listed portfolio
+with positive sample skew, but it is not the sample maximiser — third
+moments overfit.
+
+### Anatomy ($d=50$)
+
+Unit-gross long/short, 24 long / 26 short, long share $0.45$, HHI $0.032$.
+$\mathrm{corr}(w, \beta_{\mathrm{mkt}})=0.065$. $\mathrm{corr}(\hat Y, m_t)=-0.37$.
+Location $(w^\star)^\top\mu=-0.987$; sample $E[P^\star]=0.013$, so
+$E[\hat Y]=1=e$. The location term eats the $Y$-premium; raw tracker
+return is near zero. Block-bootstrap cosine 5/50/95 =
+$0.58/0.73/0.82$ — a moderately tight cone around a direction the
+sign-flip says is odd-moment noise. Prop. 2 bound is vacuous
+($\tilde q$ small: $P(\hat Y\le -1)=0.28$ vs bound $0.58$).
+CVaR$_{5\%}$ long/short tracker $= 7.50 / 9.14$ on the $\hat Y$ scale
+(std $\approx 3.8$). Mild asymmetry, Gaussian residual, not a GIG floor.
+
+$\gamma = g\mathbf 1 + \delta$: $g=-8.5\cdot 10^{-4}$,
+$\lVert\delta\rVert^2 = 2.1\cdot 10^{-5}$ vs $\lVert\gamma\rVert^2=5.7\cdot 10^{-5}$.
+PC1 carries $5.6\%$ of $\tilde q$; the rest is spread. Not
+market-aligned skewness — consistent with isotropic estimation noise.
+
+### Phase 1 implications for 2–3
+
+1. Treat $\hat{\tilde q}_d$ growth as a race against the null, not as
+   diversification of $Y$. Phase 2 overlay is the sign-flip 95% curve
+   above; 5-seed error bars on the fit.
+2. Eigen-attribution should load on small $\lambda$ if the "signal" is
+   $\gamma$-noise.
+3. Phase 3: keep the $h$-grid as a *parameter*-tracking study. Add the
+   filtered posterior / $q_\perp$ vs RV. Do not expect $\hat Y_t$ to
+   be a vol index.
 
 ## Phase 2 — dimension sweep (not started)
 
@@ -138,5 +237,7 @@ ones.
 
 ## Promotion candidates
 
-Deferred until Phase 1 exists. Phase 0 already suggests $\tilde q/\kappa$
-diagnostics are only useful with a null floor attached.
+$\tilde q/\kappa$ diagnostics only with a matched null floor (sign-flip
+or $c=0$ synthetic). A tracker-vs-Bayes tutorial is still worth it, but
+the punchline on daily equities is the quadratic channel, not the
+portfolio. No package change.
