@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>show-me · HTML reports on Cursor — viability for normix</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}]});"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#faf9f5', primaryTextColor: '#141413', primaryBorderColor: '#1b365d',
+      lineColor: '#6b6a64', fontFamily: 'Charter, Georgia, serif', fontSize: '14px'
+    }
+  });
+</script>
+<style>
+  :root {
+    --paper: #f5f4ed; --surface: #faf9f5; --sand: #e8e6dc; --ink: #141413;
+    --muted: #6b6a64; --accent: #1b365d; --accent-light: #2d5a8a; --rule: #d8d4c8;
+    --code-surface: #f0eee6; --good: #28724f; --warn: #9b6a1f; --bad: #9b3a34;
+    --serif: Charter, Georgia, "Palatino Linotype", Palatino, serif;
+    --mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 52rem; margin: 0 auto; padding: 2.2rem 1.4rem 3rem; }
+  header.doc { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; margin-bottom: 1.6rem; }
+  .kicker { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--accent); margin: 0 0 0.4rem; }
+  h1 { font-size: 1.9rem; font-weight: 500; margin: 0 0 0.35rem; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 0; font-size: 0.98rem; }
+  h2 { font-size: 1.35rem; font-weight: 500; margin: 2rem 0 0.7rem;
+       border-top: 1px solid var(--rule); padding-top: 1.1rem; }
+  p { max-width: 74ch; }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--code-surface);
+         border: 1px solid var(--rule); border-radius: 4px; padding: 0.08em 0.28em; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.4rem;
+          font-size: 0.92em; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 0.45rem 0.6rem; vertical-align: top;
+           border-bottom: 1px solid var(--rule); }
+  thead tr { background: var(--surface); border-bottom: 1.5px solid var(--rule); }
+  th { font-weight: 500; }
+  .ok   { color: var(--good); font-weight: 500; }
+  .part { color: var(--warn); font-weight: 500; }
+  .no   { color: var(--bad); font-weight: 500; }
+  .verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+              gap: 0.7rem; margin: 1.1rem 0 0.4rem; }
+  .card { background: var(--surface); border: 1px solid var(--rule);
+          border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; }
+  .card h3 { margin: 0 0 0.25rem; font-size: 0.98rem; font-weight: 500; }
+  .card p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+  .card .tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.05em;
+               text-transform: uppercase; }
+  .math-block { background: var(--surface); border: 1px solid var(--rule);
+                border-left: 3px solid var(--accent); border-radius: 6px;
+                padding: 0.6rem 1rem; margin: 1rem 0; overflow-x: auto; }
+  .mermaid { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+             padding: 0.8rem; margin: 1rem 0; display: flex; justify-content: center; }
+  .footnote { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--rule);
+              margin-top: 2rem; padding-top: 0.8rem; }
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    main { padding: 1.4rem 1rem 2rem; }
+    h1 { font-size: 1.45rem; }
+    .wide-table { overflow-x: auto; }
+    .wide-table table { min-width: 560px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="doc">
+    <p class="kicker">show-me specimen · normix agent framework</p>
+    <h1>Can HTML reports work as a review surface on Cursor?</h1>
+    <p class="sub">Worked example of the show-me skill: one self-contained file,
+       normix docs tokens, KaTeX, Mermaid UMD. Conversation artifact from the
+       2026-08 humanlayer survey — the durable write-up is
+       <code>dev-notes/references/humanlayer_skills_review.md</code>.</p>
+  </header>
+
+  <h2>Where an HTML report renders</h2>
+  <div class="wide-table">
+  <table>
+    <thead><tr><th>Surface</th><th>Rendered HTML?</th><th>Path</th></tr></thead>
+    <tbody>
+      <tr><td>Cursor desktop, file in repo</td><td class="ok">Yes</td>
+          <td>Right-click file → <code>Open in Browser</code> (built-in Chromium tab; Design-Mode annotations work)</td></tr>
+      <tr><td>Cursor desktop, omnibar <code>file://</code></td><td class="part">Buggy</td>
+          <td>Omnibar rewrites <code>file://</code> → <code>https://</code>; serve via <code>python -m http.server</code> instead</td></tr>
+      <tr><td>Cloud agent VM → you</td><td class="part">Bridge</td>
+          <td>Agent renders in its own Chrome → ships PNG/video artifact; the HTML itself must be committed to be opened locally</td></tr>
+      <tr><td>Cursor iOS app</td><td class="no">No</td>
+          <td>No file browser or preview — diffs, logs, screenshots, videos only. Screenshot artifacts do render.</td></tr>
+      <tr><td>Any phone browser</td><td class="ok">Yes</td>
+          <td>Publish durable notes to the existing GitHub Pages site (gh-pages, <code>docs-publish</code> skill)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Math survives the trip</h2>
+  <p>A research-note specimen — the GIG density, typeset by KaTeX inside this file:</p>
+  <div class="math-block">
+    $$ f(y \mid p, a, b) \;=\; \frac{(a/b)^{p/2}}{2\,K_p\!\left(\sqrt{ab}\right)}\; y^{\,p-1} \exp\!\left(-\tfrac{1}{2}\!\left(a y + \tfrac{b}{y}\right)\right), \qquad y > 0 $$
+  </div>
+  <p>with sufficient statistics \(t(y) = (\log y,\; y,\; 1/y)\) and log-partition
+     \(\psi(\theta) = \log 2 + \tfrac{p}{2}\log(b/a) + \log K_p(\sqrt{ab})\) —
+     the same formulas as <code>docs/theory/</code>, no Sphinx build required.</p>
+
+  <h2>Two delivery paths, one artifact</h2>
+  <div class="mermaid">
+flowchart LR
+    A["agent writes<br/>report.html"] --> B["desktop: Open in Browser<br/>(interactive, annotatable)"]
+    A --> C["cloud VM: headless Chrome<br/>→ PNG / video artifact"]
+    C --> D["chat · PR body · iOS app<br/>(static image)"]
+  </div>
+
+  <h2>The five humanlayer skills, triaged</h2>
+  <div class="verdicts">
+    <div class="card"><h3>show-me <span class="tag ok">adapt</span></h3>
+      <p>“Smallest view that makes the point” hierarchy; HTML artifact as last resort. Needs a Cursor-aware viewing section.</p></div>
+    <div class="card"><h3>design-control-loop <span class="tag ok">harvest</span></h3>
+      <p>Sensor/controller/actuator taxonomy, memory file, PR bounding → feeds <code>loops_and_orchestration.md</code>.</p></div>
+    <div class="card"><h3>build-iterated-agentic-loop <span class="tag part">reference</span></h3>
+      <p>GitHub-Actions + headless-CLI shape; normix already chose Cursor automations. Keep the checklist ideas only.</p></div>
+    <div class="card"><h3>improve-claude-md <span class="tag no">skip</span></h3>
+      <p>Compensates for Claude Code's CLAUDE.md disclaimer. Cursor's glob-scoped rules already solve this mechanically.</p></div>
+    <div class="card"><h3>narrow-react-prop-types <span class="tag no">skip</span></h3>
+      <p>React-specific. Useful only as the reference specimen of a well-shaped loop-task skill.</p></div>
+  </div>
+
+  <p class="footnote">Worked example of <code>.cursor/skills/show-me/</code> ·
+     paper <code>#f5f4ed</code>, ink <code>#141413</code>, accent <code>#1b365d</code>
+     per <code>docs/_static/normix.css</code></p>
+</main>
+</body>
+</html>

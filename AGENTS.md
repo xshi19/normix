@@ -80,10 +80,12 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | One-way-door design workflow (→ design.md row) | `.cursor/skills/architect/` (calls `arena`, the strong model panel) |
 | Adversarial diff review (Bessel/solver/EM/`custom_jvp`) | `.cursor/skills/interrogate/` |
 | Walkthroughs & design history | `.cursor/skills/how/`, `.cursor/skills/why/` |
+| Visual explanations (diagrams, HTML review artifacts) | `.cursor/skills/show-me/` |
 | TDD bug fixes / novel-work playbooks | `.cursor/skills/tdd/`, `.cursor/skills/figure-it-out/` |
 | Engineering principles library | `.cursor/skills/principles/` |
 | Prose style + writing registers | `.cursor/skills/unslop/` |
 | pstack skill survey (archived; implemented) | `dev-notes/archive/references/pstack_skills_review.md` |
+| humanlayer skill survey (`show-me`, control-loop harvest) | `dev-notes/references/humanlayer_skills_review.md` |
 
 ## Design Philosophy
 

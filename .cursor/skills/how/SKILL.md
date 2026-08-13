@@ -48,6 +48,10 @@ Adapt — not every section is needed for every question:
 - **Gotchas** — non-obvious traps (both-branch `jnp.where` evaluation, the
   CPU/JAX backend split, static vs traced fields, historical residue)
 
+Visual-first explanations — a diagram denser than chat mermaid, a
+side-by-side math comparison — go to the show-me skill. This skill
+stays prose-and-citation.
+
 ## Critique mode
 
 Explain first — you cannot critique what you don't understand. Then the

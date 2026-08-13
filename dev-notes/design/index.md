@@ -32,6 +32,7 @@
 | Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 4 |
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |
+| Visual explanation artifacts (show-me HTML)? | `agent_instructions_design.md` § Visual artifacts; skill `.cursor/skills/show-me/` |
 
 ## See also
 
