@@ -209,10 +209,11 @@ One NIG (and GH) fit per universe on all 2552 days.
 ## 7. Phase 2 — dimension sweep: does $\tilde q_d$ saturate? (H2)
 
 1. $\hat{\tilde q}_d$ and $\hat\kappa_d$ vs $d$ over the nested universes
-   (5 seeds → error bars), **with the Phase 0 noise floor
-   $\hat{\tilde q}_{\,0}(d, T)$ overlaid** — estimation noise grows with $d$
-   and fake growth must be subtracted before calling the curve saturating or
-   not.
+   (5 seeds → error bars), **with the Phase 1 sign-flip 95% overlay**
+   (and the Phase 0 synthetic $c=0$ floor at $d\le 50$). Estimation noise
+   grows with $d$; Phase 1 seed 0 already has $\hat{\tilde q}$ *below* the
+   null at $d\ge 100$. Fake growth must be subtracted before calling the
+   curve saturating or not.
 2. **Ceiling comparison.** Univariate $\kappa_{\mathrm{index}}$ from the
    equal-weight market fit = the $\delta = 0$ ceiling; the gap
    $\hat\kappa_d - \hat\kappa_{\mathrm{index}}$ is the cross-sectional gain.
