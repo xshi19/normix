@@ -41,10 +41,13 @@ Subordinator-tracking study (plan:
 notebooks/subordinator_tracking/
 ├── lib.py
 ├── 00_synthetic_validation.py   # Phase 0
+├── 01_static_sp500.py           # Phase 1
+├── 02_dimension_sweep.py        # Phase 2
+├── 03_online_em.py              # Phase 3
 └── _cache/                      # gitignored fits / figures
 ```
 
-Run Phase 0 with `uv run python notebooks/subordinator_tracking/00_synthetic_validation.py`.
+Run with `uv run python notebooks/subordinator_tracking/0N_*.py`.
 
 ## Why not delete this directory
 

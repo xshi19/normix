@@ -1,8 +1,8 @@
 # Empirical plan: subordinator tracking on the S&P 500 panel
 
-**Status:** plan, 2026-08-12. Phase 0 implemented
-(`notebooks/subordinator_tracking/00_synthetic_validation.py`); findings in
-[`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
+**Status:** plan, 2026-08-13. Phases 0–3 done. Report:
+[`subordinator_tracking_report.md`](subordinator_tracking_report.md).
+Findings in [`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Theory:** [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md);
 its notation is reused without redefinition: $e = E[Y]$, $v = \operatorname{Var}(Y)$,
 $\mu_3 = E[(Y-e)^3]$, $\tilde q = \gamma^\top\Sigma^{-1}\gamma$,
@@ -96,9 +96,11 @@ clock.
   i.e. exactly the identifiability gauge $E[Y] = 1$, so
   $\kappa_{\mathrm{lev}} = \tilde q$ and $\kappa = \tilde q\,v$ directly.
 - **Secondary: GH** (`GeneralizedHyperbolic`, `regularization='a_eq_b'`) at
-  $d \le 100$, to check sensitivity to the subordinator family and to evaluate
-  $t^\dagger \le 1/\tilde q$ where it is only conjectured. **VG** only at
-  $d \le 10$, as a boundary case.
+  $d \le 50$ (plan originally said $d \le 100$; GH M-step is a GIG solve, so
+  $d=100$ is deferred unless the $d=50$ continuation is cheap). Initialisation
+  is the fitted NIG's exact GH embedding (`to_generalized_hyperbolic`), then
+  free $(p,a,b)$ — nested continuation, not `default_init`. **VG** only at
+  $d \le 10$, with `alpha_min='density'`.
 - **Fitting.** `BatchEMFitter` per the finance tutorials
   (`docs/tutorials/finance/02_multivariate_stocks.md`); `default_init` cold
   start; `e_step_backend='cpu'` where profiling favours it at large $T\,d$.
@@ -208,10 +210,11 @@ One NIG (and GH) fit per universe on all 2552 days.
 ## 7. Phase 2 — dimension sweep: does $\tilde q_d$ saturate? (H2)
 
 1. $\hat{\tilde q}_d$ and $\hat\kappa_d$ vs $d$ over the nested universes
-   (5 seeds → error bars), **with the Phase 0 noise floor
-   $\hat{\tilde q}_{\,0}(d, T)$ overlaid** — estimation noise grows with $d$
-   and fake growth must be subtracted before calling the curve saturating or
-   not.
+   (5 seeds → error bars), **with the Phase 1 sign-flip 95% overlay**
+   (and the Phase 0 synthetic $c=0$ floor at $d\le 50$). Estimation noise
+   grows with $d$; Phase 1 seed 0 already has $\hat{\tilde q}$ *below* the
+   null at $d\ge 100$. Fake growth must be subtracted before calling the
+   curve saturating or not.
 2. **Ceiling comparison.** Univariate $\kappa_{\mathrm{index}}$ from the
    equal-weight market fit = the $\delta = 0$ ceiling; the gap
    $\hat\kappa_d - \hat\kappa_{\mathrm{index}}$ is the cross-sectional gain.
@@ -259,10 +262,12 @@ parameters rather than converging.
 - **Metrics vs $h$** (the responsiveness frontier):
   1. parameter paths $\tilde q_t$, $\kappa_t$ and direction stability —
      $\cos\angle(w^\star_t, w^\star_{t-21})$, daily unit-gross turnover;
-  2. extraction quality — corr of (smoothed) $\hat Y_t$ with the realized
-     proxies of §4, benchmarked against plain EWMA realized variance *at the
-     same half-life* (does the model add anything over RV? — the note's open
-     problem (a));
+  2. extraction quality — corr of (smoothed) $\hat Y_t$ **and of the
+     filtered posterior / $q_\perp$** with the realized proxies of §4,
+     benchmarked against plain EWMA realized variance *at the same
+     half-life*. Phase 1: static $\hat Y$ has ACF $\approx 0$ and
+     $\mathrm{corr}$ with 21-day RV $=0.07$; $E[Y\mid X]$ has corr $0.58$.
+     The linear tracker is not the clock; the quadratic channel is.
   3. skewness capture — sample skew of the rebalanced tracker return series
      $\{w^{\star\top}_t x_t\}$ (and the filtered variant) vs $h$, against the
      static Phase 1 value; descriptive financial stats (mean vs location,

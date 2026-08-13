@@ -1,9 +1,10 @@
 # Subordinator-tracking portfolios in normal mean–variance mixtures
 
-**Status:** research note, 2026-08-10. Math and literature only — no implementation.
-**Empirical follow-up:** S&P 500 test plan in
+**Status:** research note, 2026-08-10. Math and literature.
+**Empirical report:** [`subordinator_tracking_report.md`](subordinator_tracking_report.md)
+(Phases 0–3 on the S&P 500 panel). Plan:
 [`subordinator_tracking_sp500_plan.md`](subordinator_tracking_sp500_plan.md);
-Phase 0 findings in
+running log:
 [`subordinator_tracking_sp500_results.md`](subordinator_tracking_sp500_results.md).
 **Question posed:** in GH/VG/NIG models the subordinator $Y$ is hidden; besides the
 Bayes estimate $E[Y \mid X]$, can a portfolio weight $w$ that maximises
