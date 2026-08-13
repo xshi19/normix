@@ -22,6 +22,7 @@ discipline for our agent-facing knowledge system.
 | [Lessons from Building Claude Code: How We Use Skills (Anthropic, Mar 2026)](https://x.com/trq212/status/2033949937936085378) | Skills are folders, not just files; progressive disclosure via file system; gotchas sections are highest signal; don't state the obvious; don't railroad the agent |
 | [pstack plugin (poteto, 2026)](https://github.com/cursor/plugins/tree/main/pstack) | Workflow skills with narrow triggers; a principles library cited by name from workflows; multi-model panels for design and review. Adapted into normix skills 2026-07 — survey, verdicts, and adaptations archived at `../archive/references/pstack_skills_review.md` (decision row C4 in `design.md`) |
 | [poteto, *Loops You Can Trust* (Jun 2026)](https://x.com/poteto/article/2069824386283319343) | Verification is the limiting step — build it before the loop; demand artifacts, not claims; build the lever; loops earn autonomy only after they earn trust. Drives `../plans/loops_and_orchestration.md` |
+| [humanlayer/skills (2026)](https://github.com/humanlayer/skills) | Smallest-view visual explanations (`show-me`); control-loop vocabulary (sensor / controller / actuator, memory file, PR bounding). Adapted 2026-08 — survey at `../references/humanlayer_skills_review.md` (decision row C5 in `design.md`) |
 
 ---
 
@@ -160,6 +161,25 @@ by the workflows that own those moments.
   doors get a human checkpoint (architect Phase C). Human attention is
   spent exactly where reversal is expensive.
 
+### Visual artifacts (show-me, 2026-08)
+
+Conversation-scoped explanations that chat mermaid / LaTeX can't carry
+— a side-by-side parametrization, a layout, a research-note page —
+go through the `show-me` skill (row C5). Smallest view first; HTML
+is the last resort, matching `docs/_static/normix.css` tokens.
+
+HTML is not a third documentation system. Desktop: right-click →
+Open in Browser. Cloud / iOS: headless-Chrome screenshot (the iOS
+app has no file browser). Durable notes still land in `docs/` or
+`dev-notes/`. Survey: `../references/humanlayer_skills_review.md`.
+
+### Completion criteria in skill bodies
+
+Each numbered step or phase of a workflow skill states what "done"
+looks like in one line. Borrowed from humanlayer's loop skills;
+encoded in `.cursor/rules/maintain-skills.mdc`. The criterion is a
+checkable predicate, not a restatement of the step.
+
 ---
 
 ## Structure
@@ -219,7 +239,9 @@ Git commit conventions for docs and all other changes are codified in the
    skill's "New Distribution Added" trigger list
 5. Proposes a new ABC layer → `architect` skill (checkpoint, then a
    `design.md` row)
-6. Commits → uses `git-conventions` skill
+6. Needs a side-by-side math comparison → `show-me` skill (HTML last
+   resort; screenshot on cloud / iOS)
+7. Commits → uses `git-conventions` skill
 
 At no point does the agent load everything. Context grows only as needed.
 

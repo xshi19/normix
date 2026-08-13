@@ -41,6 +41,7 @@ Use the most specific scope that applies:
 | `design` | `docs/design/` or `dev-notes/design/` updates |
 | `tech` | `dev-notes/tech_notes/` updates |
 | `theory` | docs/theory/ updates |
+| `skills` | `.cursor/skills/` updates |
 | `notebook` | Notebook changes |
 
 ### Examples
@@ -53,6 +54,7 @@ docs(rules): add gotcha about jnp.where vs lax.cond
 docs(design): record decision on Cholesky naming convention
 docs(tech): add tech note on EM convergence profiling
 docs(theory): add NIG distribution derivation
+docs(skills): add show-me visual-explanation skill
 test(gamma): add edge case tests for alpha near zero
 refactor(solver): extract eta-rescaling into shared helper
 perf(em): switch E-step to CPU backend for large N

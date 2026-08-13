@@ -36,6 +36,9 @@ If the design redefines ownership or layering, run the why skill on the
 existing shape first: superseded rationale in `dev-notes/archive/design/`
 is a constraint, not trivia.
 
+Completion criterion: you can name the `design.md` rows, topical docs,
+and code that constrain the sketch.
+
 ## Phase B: Sketch (arena)
 
 Run `.cursor/skills/arena/SKILL.md` with the design task and the Phase A
@@ -44,6 +47,9 @@ design package shaped per `references/rationale-template.md` — caller's
 usage first, then the field sketch, classmethod signatures with
 `NotImplementedError` bodies, module map, and rationale. Arena returns one
 synthesized package with its synthesis decision filled in.
+
+Completion criterion: a synthesized design package exists, shaped per
+`references/rationale-template.md`, with rejected alternatives recorded.
 
 ## Phase C: Agree (checkpoint by default)
 
@@ -56,6 +62,9 @@ the checkpoint only when the user asked for design-and-implement in one go.
 For extra adversarial pressure on a high-stakes sketch, run the interrogate
 skill on the design package before implementing.
 
+Completion criterion: the user approved the package and draft `design.md`
+row, or the user asked for design-and-implement in one go.
+
 ## Phase D: Implement against the sketch
 
 The sketch is the contract; replace `NotImplementedError` bodies with code.
@@ -63,6 +72,9 @@ A deviation — a signature needing a parameter the sketch missed, an extra
 field — is signal worth surfacing, not friction to absorb silently. Ask
 whether the sketch was wrong, a requirement was missed, or the
 implementation is overreaching.
+
+Completion criterion: the implementation matches the sketch; every
+deviation was surfaced, not absorbed.
 
 ## Phase E: Scrap when the architecture is wrong
 
@@ -75,6 +87,10 @@ complexity in the math is not complexity in the design.
 When scrapping: re-ground with the implementation lessons as inputs,
 subtract before adding (the new sketch should be smaller before it grows),
 and re-run Phase B.
+
+Completion criterion: the new sketch is smaller than the one that
+failed, and the implementation lessons are inputs to Phase B, not
+footnotes.
 
 ## Output — landing the decision
 
@@ -89,6 +105,9 @@ Follow the agent-maintenance skill's "Design Decision Made" trigger:
 
 The rejected alternatives from arena go into the rationale doc. That nuance
 is a large part of why architect was run at all.
+
+Completion criterion: a new or amended `design.md` row exists, with
+rationale in the topical doc (or a plan file for subsystem-scale work).
 
 ## Gotchas
 

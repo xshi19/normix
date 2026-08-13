@@ -41,17 +41,29 @@ note the reduced diversity.
    and for numerical work the relevant `docs/theory/` or
    `dev-notes/tech_notes/` page (without it every model re-derives the
    math, badly).
+
+   Completion criterion: reviewers receive the diff plus the class/base
+   and the theory or tech-note page the change depends on.
 2. **Intent.** One paragraph derived from the user's message, commits, and
    the code: what is this change trying to accomplish? Reviewers challenge
    the execution, never the intent. If the intent is unclear, ask before
    spawning.
+
+   Completion criterion: one intent paragraph exists; reviewers will
+   challenge execution against it, not the goal.
 3. **Spawn.** One reviewer per panel model in a single message,
    `subagent_type: generalPurpose`, `readonly: true`. Fill
    `references/reviewer-prompt.md` with the intent, the diff plus context,
    and pass it identically to every reviewer.
+
+   Completion criterion: every panel model is running (or a same-family
+   fallback noted) on the identical prompt.
 4. **Synthesize.** Deduplicate findings described differently by different
    models; mark consensus findings (2+ models); note explicit
    disagreements — they are useful context for the verdict.
+
+   Completion criterion: consensus findings are marked; disagreements
+   are listed, not averaged away.
 5. **Lead judgment.** You are a pragmatic lead, not an aggregator.
    Reviewers saw a slice; you have `design.md`, the conversation, and the
    call sites. Filter: hypotheticals whose input path can't occur (trace
@@ -60,6 +72,9 @@ note the reduced diversity.
    cite the row. Be slow to dismiss numerical-correctness findings — when
    a reviewer claims a formula error, check against the theory page or the
    cited reference before ruling.
+
+   Completion criterion: every finding is in Act on / Consider / Noted /
+   Dismissed; dismissals that a `design.md` row settles cite the row.
 
 ## Output
 
@@ -74,6 +89,9 @@ note the reduced diversity.
   lets the user override your judgment
 - **Agreement map** — where models agreed and diverged, and what the
   pattern says
+
+Completion criterion: the user can act on the Act-on list without
+re-reading the reviewer transcripts.
 
 ## Gotchas
 
