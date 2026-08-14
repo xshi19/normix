@@ -120,6 +120,7 @@ After push, check the GitHub Pages run for `gh-pages` and verify the live URL:
 - `https://xshi19.github.io/normix/index.html`
 - Tutorials landing: `https://xshi19.github.io/normix/tutorials/index.html`
 - EM vs MCECM tutorial: `https://xshi19.github.io/normix/tutorials/em/04_em_vs_mcecm.html`
+- Research notes: `https://xshi19.github.io/normix/research/index.html`
 
 Do not assume the site is updated until the `pages build and deployment` run on
 `gh-pages` is complete.

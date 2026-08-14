@@ -1,5 +1,6 @@
 # Subordinator tracking in normal mean–variance mixtures
 
+**Published MyST:** `docs/research/` (readable on the docs website).
 **A research report.** Theory 2026-08-10; S&P 500 empirics Phases 0–3, 2026-08-13.
 Working notes: [`subordinator_tracking_portfolio.md`](subordinator_tracking_portfolio.md)
 (full derivations and literature),

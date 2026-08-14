@@ -1,5 +1,6 @@
 # Subordinator-tracking portfolios in normal mean–variance mixtures
 
+**Published MyST:** `docs/research/subordinator_tracking.md`.
 **Status:** research note, 2026-08-10. Math and literature.
 **Empirical report:** [`subordinator_tracking_report.md`](subordinator_tracking_report.md)
 (Phases 0–3 on the S&P 500 panel). Plan:

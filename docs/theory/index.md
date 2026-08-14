@@ -33,3 +33,5 @@ transaction_costs
 enb
 generalized_enb
 ```
+
+Related research (not a library contract): {doc}`../research/index`.
