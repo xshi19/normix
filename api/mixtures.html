@@ -846,7 +846,7 @@ implementation lives in the sibling class <code class="xref py py-class docutils
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.mixtures.marginal.</span></span><span class="sig-name descname"><span class="pre">MarginalMixture</span></span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Abstract interface for marginal mixtures used by the EM fitters.</p>
 <p>Concrete subclasses pick the storage of the Gaussian dispersion (full
 Cholesky in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a>, low-rank-plus-diagonal in
@@ -1377,7 +1377,7 @@ Cholesky (mutually exclusive with <code class="docutils literal notranslate"><sp
 <code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code> for GH).</p></li>
 </ul>
 <p>The actual storage lives in <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.joint" title="normix.mixtures.marginal.NormalMixture.joint"><code class="xref py py-attr docutils literal notranslate"><span class="pre">joint</span></code></a>; this method does an
-immutable update via <code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code>.</p>
+immutable update via <a class="reference external" href="https://docs.kidger.site/equinox/api/manipulation/#equinox.tree_at" title="(in Equinox v0.0.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">equinox.tree_at()</span></code></a>.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vg2</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">new_mu</span><span class="p">)</span>                    <span class="c1"># change μ</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vg3</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>          <span class="c1"># change subordinator</span>
