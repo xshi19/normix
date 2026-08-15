@@ -1,5 +1,6 @@
 # Subordinator tracking on S&P 500 — empirical findings
 
+**Published MyST:** `docs/research/subordinator_tracking_empirics.md`.
 **Status:** Phases 0–3 done (2026-08-13). Report:
 [`subordinator_tracking_report.md`](subordinator_tracking_report.md).
 **Plan:** [`subordinator_tracking_sp500_plan.md`](subordinator_tracking_sp500_plan.md).

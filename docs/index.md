@@ -82,6 +82,13 @@ Formal derivations for the GH family, EM, and portfolio mathematics.
 
 Autodoc for every public module — distributions, mixtures, fitting, finance.
 ```
+
+```{grid-item-card} Research
+:link: research/index
+:link-type: doc
+
+Working notes: subordinator-tracking portfolios on the S&P 500.
+```
 ````
 
 ```{toctree}
@@ -125,6 +132,7 @@ tutorials/index
 
 theory/index
 design/index
+research/index
 api/index
 references
 changelog

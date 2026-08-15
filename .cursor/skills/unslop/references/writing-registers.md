@@ -46,6 +46,13 @@ editing. The unslop patterns and carve-outs apply to all four.
 - Pure math: implementation details go to `dev-notes/tech_notes/`, per
   `.cursor/rules/maintain-theory-docs.mdc`.
 
+## `docs/research/` — published research notes
+
+- Theory-page voice for derivations; report voice for empirics (hypotheses,
+  metrics glossary, what held and what failed).
+- Not a library contract. Do not imply a package feature.
+- Cite via `{ref}`; never link `dev-notes/` from these pages.
+
 ## Quick test
 
 Read the paragraph aloud: would a careful human author *of this register*
