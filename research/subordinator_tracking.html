@@ -1,0 +1,1088 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Subordinator-tracking portfolios &#8212; normix 0.3.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6512192e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'research/subordinator_tracking';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Subordinator tracking on the S&amp;P 500" href="subordinator_tracking_empirics.html" />
+    <link rel="prev" title="Research notes" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.3.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fresearch/subordinator_tracking.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/research/subordinator_tracking.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Subordinator-tracking portfolios</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-tracking-portfolio">The tracking portfolio</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-invariant-signal-to-noise-ratios">Two invariant signal-to-noise ratios</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-tracker-as-one-synthetic-asset">The tracker as one synthetic asset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#three-estimators-of-y">Three estimators of <span class="math notranslate nohighlight">\(Y\)</span></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#three-meanings-of-dominated-by-y">Three meanings of “dominated by <span class="math notranslate nohighlight">\(Y\)</span>”</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-same-direction-from-four-angles">The same direction from four angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#when-can-tilde-q-be-large">When can <span class="math notranslate nohighlight">\(\tilde q\)</span> be large?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#open-problems">Open problems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#literature">Literature</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="subordinator-tracking-portfolios">
+<h1>Subordinator-tracking portfolios<a class="headerlink" href="#subordinator-tracking-portfolios" title="Link to this heading">#</a></h1>
+<p>In a generalized hyperbolic (GH) model the latent subordinator <span class="math notranslate nohighlight">\(Y\)</span> is
+the volatility clock: conditionally on <span class="math notranslate nohighlight">\(Y=y\)</span>, returns are Gaussian with
+covariance <span class="math notranslate nohighlight">\(y\Sigma\)</span> and mean <span class="math notranslate nohighlight">\(\mu + \gamma y\)</span>. The Bayes estimate
+<span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> is already computed in the EM E-step. This note asks a
+different question: can a <em>portfolio</em> <span class="math notranslate nohighlight">\(w^\top X\)</span> be dominated by <span class="math notranslate nohighlight">\(Y\)</span>,
+so that the portfolio itself reveals the clock?</p>
+<p>The answer in the model is yes, and the analysis is closed-form. The
+optimal direction is <span class="math notranslate nohighlight">\(w \propto \Sigma^{-1}\gamma\)</span>. The achievable
+signal-to-noise is the scalar <span class="math notranslate nohighlight">\(\tilde q = \gamma^\top\Sigma^{-1}\gamma\)</span>
+that already appears in the GH marginal density and the conditional GIG
+posterior. “Dominated by <span class="math notranslate nohighlight">\(Y\)</span>” can be made precise in three inequivalent
+ways. We did not find this <em>tracking</em> reading in the literature, but
+each ingredient exists separately.</p>
+<p>Background: <a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>, <a class="reference internal" href="../theory/gig.html"><span class="doc">The Generalized Inverse Gaussian Distribution</span></a>,
+<a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM Algorithm for Generalized Hyperbolic Distributions</span></a>, <a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>.
+The S&amp;P 500 measurement is <a class="reference internal" href="subordinator_tracking_empirics.html"><span class="doc">Subordinator tracking on the S&amp;P 500</span></a>.</p>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(X\in\mathbb{R}^d\)</span> be a normal mean–variance mixture
+<a class="reference internal" href="../references.html#barndorffnielsen1977"><span class="std std-ref">BarndorffNielsen1977</span></a>
+<a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a></p>
+<div class="math notranslate nohighlight">
+\[
+X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\, Z,
+\qquad Z\sim N(0,\Sigma)\perp Y\ge 0,
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(\mu,\gamma\in\mathbb{R}^d\)</span> and <span class="math notranslate nohighlight">\(\Sigma\succ 0\)</span>. The mixing law
+of <span class="math notranslate nohighlight">\(Y\)</span> is GIG<span class="math notranslate nohighlight">\((p,a,b)\)</span> for GH, Gamma for variance-gamma (VG)
+<a class="reference internal" href="../references.html#madan1990"><span class="std std-ref">MadanSeneta1990</span></a>, InverseGaussian for
+normal-inverse-Gaussian (NIG)
+<a class="reference internal" href="../references.html#barndorffnielsen1997"><span class="std std-ref">BarndorffNielsen1997</span></a>, or InverseGamma
+for normal-inverse-gamma (NInvG). Write</p>
+<div class="math notranslate nohighlight">
+\[
+q(x) = (x-\mu)^\top\Sigma^{-1}(x-\mu),
+\qquad
+\tilde q = \gamma^\top\Sigma^{-1}\gamma,
+\qquad
+\mu_3 = E\bigl[(Y-E[Y])^3\bigr]
+\]</div>
+<p>for the Mahalanobis radius, the <span class="math notranslate nohighlight">\(\gamma\)</span>-energy in the <span class="math notranslate nohighlight">\(\Sigma\)</span> metric,
+and the third central moment of <span class="math notranslate nohighlight">\(Y\)</span>. The model has the scaling gauge
+<span class="math notranslate nohighlight">\((\gamma,\Sigma,Y)\mapsto(\gamma/c,\,\Sigma/c,\,cY)\)</span>; quantities below
+are flagged when they are invariant.</p>
+<p>Three standing facts.</p>
+<ol class="arabic simple">
+<li><p><strong>Projection.</strong> For any <span class="math notranslate nohighlight">\(w\)</span>, the portfolio <span class="math notranslate nohighlight">\(P_w = w^\top X\)</span> is a
+univariate mixture with the same <span class="math notranslate nohighlight">\(Y\)</span> and parameters
+<span class="math notranslate nohighlight">\((w^\top\mu,\, w^\top\gamma,\, w^\top\Sigma w)\)</span>
+<a class="reference internal" href="../references.html#blaesild1981"><span class="std std-ref">Blaesild1981</span></a>. This is
+<a class="reference internal" href="../theory/mean_risk_optimization.html#equation-nm-portfolio">(2)</a> in <a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>,
+implemented as <a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.project" title="normix.mixtures.marginal.NormalMixture.project"><code class="xref py py-meth docutils literal notranslate"><span class="pre">project()</span></code></a>.</p></li>
+<li><p><strong>Posterior.</strong> <span class="math notranslate nohighlight">\(Y\mid X=x\)</span> is GIG with updated parameters
+<span class="math notranslate nohighlight">\((p-d/2,\, a+\tilde q,\, b+q(x))\)</span>
+(<a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM Algorithm for Generalized Hyperbolic Distributions</span></a>). The posterior depends on <span class="math notranslate nohighlight">\(x\)</span> only
+through <span class="math notranslate nohighlight">\(q(x)\)</span>. The linear statistic
+<span class="math notranslate nohighlight">\(s(x)=\gamma^\top\Sigma^{-1}(x-\mu)\)</span> enters the joint density as a
+<span class="math notranslate nohighlight">\(y\)</span>-free tilt <span class="math notranslate nohighlight">\(e^{s(x)}\)</span> and cancels from the conditional.</p></li>
+<li><p><strong>Bayes optimality.</strong> <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> minimises mean-squared error
+among measurable functions of <span class="math notranslate nohighlight">\(X\)</span>. Normix computes it via
+<a class="reference internal" href="../api/mixtures.html#normix.mixtures.joint.JointNormalMixture.conditional_expectations" title="normix.mixtures.joint.JointNormalMixture.conditional_expectations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">conditional_expectations()</span></code></a>.</p></li>
+</ol>
+</section>
+<section id="the-tracking-portfolio">
+<h2>The tracking portfolio<a class="headerlink" href="#the-tracking-portfolio" title="Link to this heading">#</a></h2>
+<p>Assume <span class="math notranslate nohighlight">\(\gamma\neq 0\)</span> and take any <span class="math notranslate nohighlight">\(w\)</span> with <span class="math notranslate nohighlight">\(m=w^\top\gamma\neq 0\)</span>.
+Define the <strong>tracker</strong></p>
+<div class="math notranslate nohighlight">
+\[
+\hat Y_w
+= \frac{P_w - w^\top\mu}{w^\top\gamma}
+= Y + \sqrt{Y}\,\varepsilon_w,
+\qquad
+\varepsilon_w\sim N(0,t_w)\perp Y,
+\qquad
+t_w = \frac{w^\top\Sigma w}{(w^\top\gamma)^2}.
+\]</div>
+<p>Conditionally on <span class="math notranslate nohighlight">\(Y\)</span>, <span class="math notranslate nohighlight">\(\hat Y_w\sim N(Y,\, t_w Y)\)</span>: an unbiased
+observation of <span class="math notranslate nohighlight">\(Y\)</span> whose noise variance is proportional to the signal
+level. The mean-squared error is therefore</p>
+<div class="math notranslate nohighlight">
+\[
+E\bigl[(\hat Y_w - Y)^2\bigr]
+= E\bigl[\mathrm{Var}(\hat Y_w\mid Y)\bigr]
+= E[Y]\, t_w.
+\]</div>
+<p><strong>Proposition 1 (optimal direction).</strong> <span class="math notranslate nohighlight">\(t_w \ge 1/\tilde q\)</span> for all
+<span class="math notranslate nohighlight">\(w\)</span>, with equality if and only if <span class="math notranslate nohighlight">\(w\propto\Sigma^{-1}\gamma\)</span>.</p>
+<p><em>Proof.</em> Cauchy–Schwarz in the <span class="math notranslate nohighlight">\(\Sigma\)</span> inner product:</p>
+<div class="math notranslate nohighlight">
+\[
+(w^\top\gamma)^2
+= \bigl((\Sigma^{1/2}w)^\top(\Sigma^{-1/2}\gamma)\bigr)^2
+\le (w^\top\Sigma w)\,\tilde q,
+\]</div>
+<p>with equality iff <span class="math notranslate nohighlight">\(\Sigma^{1/2}w\)</span> is parallel to
+<span class="math notranslate nohighlight">\(\Sigma^{-1/2}\gamma\)</span>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>Two remarks on the informal recipe “maximise <span class="math notranslate nohighlight">\(w^\top\gamma\)</span>, minimise
+<span class="math notranslate nohighlight">\(w^\top\Sigma w\)</span>”.</p>
+<ul class="simple">
+<li><p>The Pareto frontier of that bi-objective problem is exactly the ray
+<span class="math notranslate nohighlight">\(\{c\,\Sigma^{-1}\gamma : c&gt;0\}\)</span>. No other direction improves one
+objective without hurting the other.</p></li>
+<li><p>The degree-1 ratio <span class="math notranslate nohighlight">\(w^\top\Sigma w/w^\top\gamma\)</span> is <em>not</em> a
+dominance measure: scaling <span class="math notranslate nohighlight">\(w\)</span> down sends it to <span class="math notranslate nohighlight">\(0\)</span>. The
+scale-invariant objective is <span class="math notranslate nohighlight">\(t_w\)</span>. The degree-1 ratio does have an
+exact meaning — it is four times the expected pathwise floor of the
+portfolio below its location (Proposition 2).</p></li>
+</ul>
+<p>Fix the normalisation <span class="math notranslate nohighlight">\(m=1\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+w^\star = \frac{\Sigma^{-1}\gamma}{\tilde q},
+\qquad
+\hat Y = \frac{s(X)}{\tilde q},
+\qquad
+E\bigl[(\hat Y-Y)^2\bigr] = \frac{E[Y]}{\tilde q}.
+\]</div>
+<p>Computing <span class="math notranslate nohighlight">\(w^\star\)</span> from a fitted model is two triangular solves
+against the stored Cholesky factor <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>.</p>
+<section id="two-invariant-signal-to-noise-ratios">
+<h3>Two invariant signal-to-noise ratios<a class="headerlink" href="#two-invariant-signal-to-noise-ratios" title="Link to this heading">#</a></h3>
+<p>Under the gauge <span class="math notranslate nohighlight">\(c\)</span>: <span class="math notranslate nohighlight">\(\tilde q\mapsto\tilde q/c\)</span>,
+<span class="math notranslate nohighlight">\(E[Y]\mapsto c\,E[Y]\)</span>, <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\mapsto c^2\mathrm{Var}(Y)\)</span>.
+Two dimensionless, gauge-invariant ratios control everything below:</p>
+<div class="math notranslate nohighlight">
+\[
+\kappa_{\mathrm{lev}} = \tilde q\, E[Y]
+\qquad\text{(level SNR)},
+\qquad
+\kappa = \frac{\tilde q\,\mathrm{Var}(Y)}{E[Y]}
+\qquad\text{(fluctuation SNR)}.
+\]</div>
+<p>Their ratio <span class="math notranslate nohighlight">\(\kappa/\kappa_{\mathrm{lev}} = \mathrm{Var}(Y)/E[Y]^2\)</span> is
+the squared coefficient of variation of <span class="math notranslate nohighlight">\(Y\)</span>. Then</p>
+<div class="math notranslate nohighlight">
+\[
+\frac{E[(\hat Y-Y)^2]}{E[Y]^2} = \frac{1}{\kappa_{\mathrm{lev}}},
+\qquad
+\frac{E[(\hat Y-Y)^2]}{\mathrm{Var}(Y)} = \frac{1}{\kappa}.
+\]</div>
+<p><span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\gg 1\)</span> means the portfolio <em>level</em> is dominated
+by the subordinator term. <span class="math notranslate nohighlight">\(\kappa\gg 1\)</span> means the tracker resolves
+<span class="math notranslate nohighlight">\(Y\)</span>’s <em>fluctuations</em>, which is the estimation-relevant statement. In
+the identifiability gauge <span class="math notranslate nohighlight">\(E[Y]=1\)</span> they collapse to
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}=\tilde q\)</span> and <span class="math notranslate nohighlight">\(\kappa=\tilde q\,\mathrm{Var}(Y)\)</span>.</p>
+<p>The correlation of the tracker with <span class="math notranslate nohighlight">\(Y\)</span> follows at once from the
+fluctuation SNR:</p>
+<div class="math notranslate nohighlight">
+\[
+\mathrm{corr}(\hat Y, Y) = \sqrt{\frac{\kappa}{1+\kappa}}.
+\]</div>
+<p>At <span class="math notranslate nohighlight">\(\kappa=0.05\)</span> this is about <span class="math notranslate nohighlight">\(0.22\)</span>; at <span class="math notranslate nohighlight">\(\kappa=1\)</span> it is
+<span class="math notranslate nohighlight">\(1/\sqrt{2}\approx 0.71\)</span>. Daily-equity <span class="math notranslate nohighlight">\(\kappa\)</span> in the <span class="math notranslate nohighlight">\(10^{-2}\)</span>
+range is a prior, not a theorem — see the empirics.</p>
+</section>
+<section id="the-tracker-as-one-synthetic-asset">
+<h3>The tracker as one synthetic asset<a class="headerlink" href="#the-tracker-as-one-synthetic-asset" title="Link to this heading">#</a></h3>
+<p><span class="math notranslate nohighlight">\(P^\star=(w^\star)^\top X\)</span> is the univariate mixture with parameters
+<span class="math notranslate nohighlight">\(((w^\star)^\top\mu,\, 1,\, 1/\tilde q)\)</span>. The <span class="math notranslate nohighlight">\(d=1\)</span> posterior on the
+tracker alone is</p>
+<div class="math notranslate nohighlight">
+\[
+Y\mid\hat Y=\hat y
+\sim \mathrm{GIG}\Bigl(p-\tfrac12,\; a+\tilde q,\; b+\tilde q\,\hat y^2\Bigr),
+\]</div>
+<p>to be compared with the full-information posterior
+<span class="math notranslate nohighlight">\(\mathrm{GIG}(p-d/2,\, a+\tilde q,\, b+q(x))\)</span>. The <span class="math notranslate nohighlight">\(a\)</span>-updates agree.
+The information lost by compressing <span class="math notranslate nohighlight">\(X\)</span> into the scalar <span class="math notranslate nohighlight">\(\hat Y\)</span> sits
+in the <span class="math notranslate nohighlight">\(b\)</span>-slot and the GIG order.</p>
+<p>Decompose <span class="math notranslate nohighlight">\(x-\mu\)</span> into its <span class="math notranslate nohighlight">\(\gamma\)</span>-component and its
+<span class="math notranslate nohighlight">\(\Sigma\)</span>-orthogonal complement:</p>
+<div class="math notranslate nohighlight">
+\[
+q(x)
+= \frac{s(x)^2}{\tilde q} + q_\perp(x)
+= \tilde q\,\hat y^2 + q_\perp(x),
+\qquad q_\perp(x)\ge 0.
+\]</div>
+<p>The full posterior sees the <em>squared tracker</em> plus the orthogonal
+Mahalanobis radius <span class="math notranslate nohighlight">\(q_\perp\)</span> — a realized-dispersion statistic that is
+informative about <span class="math notranslate nohighlight">\(Y\)</span> even when <span class="math notranslate nohighlight">\(\gamma=0\)</span>. Two channels:</p>
+<ul class="simple">
+<li><p><strong>Linear (drift).</strong> The tracker, strength <span class="math notranslate nohighlight">\(\tilde q\)</span>. Requires
+<span class="math notranslate nohighlight">\(\gamma\neq 0\)</span>. Tradable: it is a portfolio.</p></li>
+<li><p><strong>Quadratic (dispersion).</strong> The radius, strength of order <span class="math notranslate nohighlight">\(d\)</span> (one
+<span class="math notranslate nohighlight">\(\chi^2_1\)</span> observation of scale <span class="math notranslate nohighlight">\(Y\)</span> per orthogonal direction,
+visible in the posterior order <span class="math notranslate nohighlight">\(p-d/2\)</span>). Alive even for elliptical
+models. Not a linear payoff — in market terms it is a
+variance-swap-like object.</p></li>
+</ul>
+</section>
+</section>
+<section id="three-estimators-of-y">
+<h2>Three estimators of <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#three-estimators-of-y" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Estimator</p></th>
+<th class="head"><p>Form</p></th>
+<th class="head"><p>Needs</p></th>
+<th class="head"><p>MSE / <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Tracker</p></td>
+<td><p><span class="math notranslate nohighlight">\(\hat Y = s(X)/\tilde q\)</span></p></td>
+<td><p>direction <span class="math notranslate nohighlight">\(\Sigma^{-1}\gamma\)</span>, location <span class="math notranslate nohighlight">\(\mu\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(1/\kappa\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Linear Bayes</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[Y] + \frac{\kappa}{1+\kappa}(\hat Y-E[Y])\)</span></p></td>
+<td><p>also <span class="math notranslate nohighlight">\(E[Y]\)</span>, <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(1/(1+\kappa)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Posterior mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[Y\mid X]\)</span></p></td>
+<td><p>full model</p></td>
+<td><p><span class="math notranslate nohighlight">\(\le 1/(1+\kappa)\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The linear-Bayes row is the best affine function of <span class="math notranslate nohighlight">\(X\)</span>. With
+<span class="math notranslate nohighlight">\(\mathrm{Cov}(X)=E[Y]\,\Sigma + \mathrm{Var}(Y)\,\gamma\gamma^\top\)</span>
+and <span class="math notranslate nohighlight">\(\mathrm{Cov}(X,Y)=\mathrm{Var}(Y)\,\gamma\)</span>, the Sherman–Morrison
+formula gives</p>
+<div class="math notranslate nohighlight">
+\[
+\mathrm{Cov}(X)^{-1}\gamma
+= \frac{\Sigma^{-1}\gamma}{E[Y] + \mathrm{Var}(Y)\,\tilde q}
+\]</div>
+<p>— the same direction again — and the usual credibility shrinkage
+<span class="math notranslate nohighlight">\(\kappa/(1+\kappa)\)</span> toward <span class="math notranslate nohighlight">\(E[Y]\)</span>, with MSE
+<span class="math notranslate nohighlight">\(\mathrm{Var}(Y)/(1+\kappa)\)</span>. The posterior mean improves on every
+affine rule because it also uses <span class="math notranslate nohighlight">\(q_\perp\)</span>. It has no closed form
+(Bessel ratios), but
+<span class="math notranslate nohighlight">\(E[\mathrm{Var}(Y\mid X)]\le \mathrm{Var}(Y)/(1+\kappa)\)</span> is a usable
+upper bound. Even at <span class="math notranslate nohighlight">\(\kappa=0\)</span> the posterior remains consistent for
+<span class="math notranslate nohighlight">\(Y\)</span> as <span class="math notranslate nohighlight">\(d\to\infty\)</span> under the model.</p>
+<p>The tracker therefore costs a factor <span class="math notranslate nohighlight">\((1+\kappa)/\kappa\)</span> in MSE
+relative to linear Bayes. That factor is negligible when
+<span class="math notranslate nohighlight">\(\kappa\gg 1\)</span> and ruinous when <span class="math notranslate nohighlight">\(\kappa\ll 1\)</span>: unbiasedness is
+expensive when the signal is weak. The tracker’s compensations: it is
+a portfolio (tradable, holdable, a return series), it is linear (no
+Bessel evaluations), and it needs only the direction
+<span class="math notranslate nohighlight">\(\Sigma^{-1}\gamma\)</span> — not the mixing law, and not even <span class="math notranslate nohighlight">\(\tilde q\)</span> if
+only relative movements matter.</p>
+</section>
+<section id="three-meanings-of-dominated-by-y">
+<h2>Three meanings of “dominated by <span class="math notranslate nohighlight">\(Y\)</span>”<a class="headerlink" href="#three-meanings-of-dominated-by-y" title="Link to this heading">#</a></h2>
+<p><strong>(i) Observation-level.</strong> In <span class="math notranslate nohighlight">\(\hat Y_w = Y + \sqrt{Y}\,\varepsilon_w\)</span>,
+the signal exceeds the noise on the event <span class="math notranslate nohighlight">\(Y\gg t_w\)</span>. For the optimal
+tracker, <span class="math notranslate nohighlight">\(t_w=1/\tilde q\)</span>. Typical observations are
+subordinator-dominated iff <span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\gg 1\)</span>.</p>
+<p><strong>(ii) <span class="math notranslate nohighlight">\(L^2\)</span> / distributional.</strong> Along any sequence of models with
+<span class="math notranslate nohighlight">\(\tilde q\to\infty\)</span> and the mixing law of <span class="math notranslate nohighlight">\(Y\)</span> held fixed,
+<span class="math notranslate nohighlight">\(\hat Y\to Y\)</span> in <span class="math notranslate nohighlight">\(L^2\)</span>, so the law of the portfolio converges to the
+mixing law shifted by the location:</p>
+<ul class="simple">
+<li><p>VG: <span class="math notranslate nohighlight">\(P^\star - (w^\star)^\top\mu \Rightarrow \mathrm{Gamma}\)</span>;</p></li>
+<li><p>NIG: <span class="math notranslate nohighlight">\(\Rightarrow\)</span> InverseGaussian;</p></li>
+<li><p>GH: <span class="math notranslate nohighlight">\(\Rightarrow\)</span> GIG.</p></li>
+</ul>
+<p>The portfolio <em>becomes</em> its mixing distribution. At finite <span class="math notranslate nohighlight">\(\tilde q\)</span>
+the tracker is the univariate mixture with residual variance
+<span class="math notranslate nohighlight">\(1/\tilde q\)</span>: the minimal Gaussian blur of <span class="math notranslate nohighlight">\(Y\)</span> achievable by any
+portfolio.</p>
+<p><strong>(iii) Pathwise floor.</strong></p>
+<p><strong>Proposition 2.</strong> For <span class="math notranslate nohighlight">\(m=w^\top\gamma&gt;0\)</span> and
+<span class="math notranslate nohighlight">\(\varepsilon\sim N(0,t_w)\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+P_w - w^\top\mu
+= m\bigl(Y + \sqrt{Y}\,\varepsilon\bigr)
+\ge -\frac{m\,\varepsilon^2}{4}
+\]</div>
+<p>pathwise, because <span class="math notranslate nohighlight">\(y+\sqrt{y}\,\varepsilon \ge -\varepsilon^2/4\)</span> for
+all <span class="math notranslate nohighlight">\(y\ge 0\)</span> (minimise the quadratic in <span class="math notranslate nohighlight">\(\sqrt{y}\)</span>). Hence the
+expected worst-case shortfall below location is at most
+<span class="math notranslate nohighlight">\(m\,t_w/4\)</span>, which is the degree-1 ratio
+<span class="math notranslate nohighlight">\(w^\top\Sigma w/(4\,w^\top\gamma)\)</span>. For the optimal tracker the left
+tail below location is Gaussian-thin:</p>
+<div class="math notranslate nohighlight">
+\[
+P\bigl(P^\star-(w^\star)^\top\mu \le -c\bigr)
+\le 2\Phi\bigl(-2\sqrt{c\tilde q}\bigr),
+\qquad c&gt;0,
+\]</div>
+<p>since the event requires <span class="math notranslate nohighlight">\(\varepsilon^2\ge 4c\)</span>. The tracker is the
+model’s maximally asymmetric portfolio: GIG (semi-heavy, <span class="math notranslate nohighlight">\(e^{-ay/2}\)</span>)
+upside inherited from <span class="math notranslate nohighlight">\(Y\)</span>, downside below location bounded by
+<span class="math notranslate nohighlight">\(\chi^2_1/(4\tilde q)\)</span>. Shorting it is the model’s linear
+“short-volatility” trade.</p>
+<p><strong>No-near-arbitrage.</strong> As <span class="math notranslate nohighlight">\(\tilde q\to\infty\)</span> the tracker converges to
+a non-negative payoff above location — a limiting free lunch unless
+<span class="math notranslate nohighlight">\((w^\star)^\top\mu\)</span> is pushed negative. In an economy where such
+portfolios are priced, either <span class="math notranslate nohighlight">\(\tilde q\)</span> stays moderate or the
+location term compensates. Empirically relevant <span class="math notranslate nohighlight">\(\kappa\)</span> should
+therefore be <span class="math notranslate nohighlight">\(O(1)\)</span> or smaller. That is a prior about markets, not a
+theorem.</p>
+</section>
+<section id="the-same-direction-from-four-angles">
+<h2>The same direction from four angles<a class="headerlink" href="#the-same-direction-from-four-angles" title="Link to this heading">#</a></h2>
+<p>The ray <span class="math notranslate nohighlight">\(\Sigma^{-1}\gamma\)</span> is canonical for the family, not just for
+tracking.</p>
+<ol class="arabic">
+<li><p><strong>Max-SNR</strong> (Proposition 1).</p></li>
+<li><p><strong>Best linear predictor</strong> of <span class="math notranslate nohighlight">\(Y\)</span> given <span class="math notranslate nohighlight">\(X\)</span> (Sherman–Morrison above).</p></li>
+<li><p><strong>Maximal skewness.</strong> Portfolio skewness depends on <span class="math notranslate nohighlight">\(w\)</span> only through
+<span class="math notranslate nohighlight">\(t=w^\top\Sigma w/(w^\top\gamma)^2\)</span>. For <span class="math notranslate nohighlight">\(m&gt;0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+   \mathrm{skew}(P_w)
+   = \frac{\mu_3 + 3t\,\mathrm{Var}(Y)}
+          {\bigl(\mathrm{Var}(Y) + t\,E[Y]\bigr)^{3/2}}.
+   \]</div>
+<p>Differentiating in <span class="math notranslate nohighlight">\(t\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+   \frac{d}{dt}\mathrm{skew} \gtrless 0
+   \iff
+   t \lessgtr t^\dagger
+   := \frac{2\,\mathrm{Var}(Y)}{E[Y]} - \frac{\mu_3}{\mathrm{Var}(Y)}.
+   \]</div>
+<p>Skewness is unimodal on the feasible interval
+<span class="math notranslate nohighlight">\([1/\tilde q,\infty)\)</span>. The maximiser is <span class="math notranslate nohighlight">\(w^\star\)</span> if and only if
+<span class="math notranslate nohighlight">\(t^\dagger\le 1/\tilde q\)</span>; in particular for all <span class="math notranslate nohighlight">\(\tilde q\)</span> whenever</p>
+<div class="math notranslate nohighlight">
+\[
+   E[Y]\,\mu_3 \ge 2\,\mathrm{Var}(Y)^2
+   \]</div>
+<p>(equivalently <span class="math notranslate nohighlight">\(\kappa_1\kappa_3\ge 2\kappa_2^2\)</span> in cumulants of
+<span class="math notranslate nohighlight">\(Y\)</span>). This holds with <em>equality</em> for Gamma mixing (VG) — both sides
+equal <span class="math notranslate nohighlight">\(2\alpha^2/\beta^4\)</span> — and strictly for InverseGaussian
+(<span class="math notranslate nohighlight">\(E[Y]\,\mu_3 = 3\,\mathrm{Var}(Y)^2\)</span>) and InverseGamma
+(<span class="math notranslate nohighlight">\(E[Y]\,\mu_3 = \frac{4(\alpha-2)}{\alpha-3}\mathrm{Var}(Y)^2 &gt; 2\,\mathrm{Var}(Y)^2\)</span>
+for <span class="math notranslate nohighlight">\(\alpha&gt;3\)</span>). For general GIG we use the inequality as a
+per-fit check; Cauchy–Schwarz on the Lévy measure gives only the
+weaker <span class="math notranslate nohighlight">\(\kappa_1\kappa_3\ge\kappa_2^2\)</span>. When
+<span class="math notranslate nohighlight">\(t^\dagger&gt;1/\tilde q\)</span>, the maximiser sits at the interior point
+<span class="math notranslate nohighlight">\(t=t^\dagger\)</span> and is a whole cone of weights, so max-skewness and
+max-SNR decouple.</p>
+</li>
+<li><p><strong>Markowitz tangency under a pure volatility premium.</strong> In the
+model, <span class="math notranslate nohighlight">\(E[X]-\mu = \gamma\,E[Y]\)</span>: all expected return beyond the
+location is compensation for subordinator exposure. If the location
+is common and riskless, <span class="math notranslate nohighlight">\(\mu=r\mathbf{1}\)</span>, the tangency weights
+<a class="reference internal" href="../references.html#markowitz1952"><span class="std std-ref">Markowitz1952</span></a> are
+<span class="math notranslate nohighlight">\(\mathrm{Cov}(X)^{-1}(E[X]-r\mathbf{1})\propto\Sigma^{-1}\gamma\)</span>.
+In general this is the skewness–variance fund of
+<a class="reference internal" href="../references.html#mencasentana2009"><span class="std std-ref">MenciaSentana2009</span></a>: riskless +
+mean–variance fund + a third fund that loads on the skewness
+vector. That third fund is the minimum-dispersion portfolio per
+unit of <span class="math notranslate nohighlight">\(w^\top\gamma\)</span> — the tracker, subject to their budget
+constraint.</p></li>
+</ol>
+<p>Item 4 is already in the efficient-surface reduction of
+<a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>: portfolios are parametrised
+by <span class="math notranslate nohighlight">\((\tilde\mu,\tilde\gamma)\)</span> with minimal dispersion
+<span class="math notranslate nohighlight">\(g(\tilde\mu,\tilde\gamma)\)</span>. The constrained tracker is the
+<span class="math notranslate nohighlight">\(\tilde\gamma\)</span>-extreme of that surface.</p>
+</section>
+<section id="when-can-tilde-q-be-large">
+<h2>When can <span class="math notranslate nohighlight">\(\tilde q\)</span> be large?<a class="headerlink" href="#when-can-tilde-q-be-large" title="Link to this heading">#</a></h2>
+<p>Cross-sectional growth of <span class="math notranslate nohighlight">\(\tilde q_d=\gamma_d^\top\Sigma_d^{-1}\gamma_d\)</span>
+depends on how skewness aligns with the covariance factors.</p>
+<p><strong>Equicorrelation.</strong> Let
+<span class="math notranslate nohighlight">\(\Sigma=\sigma^2\bigl[(1-\rho)I+\rho\mathbf{1}\mathbf{1}^\top\bigr]\)</span>
+with <span class="math notranslate nohighlight">\(0&lt;\rho&lt;1\)</span>, and split <span class="math notranslate nohighlight">\(\gamma=g\mathbf{1}+\delta\)</span> with
+<span class="math notranslate nohighlight">\(\mathbf{1}^\top\delta=0\)</span>. Then</p>
+<div class="math notranslate nohighlight">
+\[
+\tilde q_d
+= \frac{g^2 d}{\sigma^2(1-\rho+\rho d)}
++ \frac{\lVert\delta\rVert^2}{\sigma^2(1-\rho)}
+\;\xrightarrow[d\to\infty]{}\;
+\frac{g^2}{\sigma^2\rho}
++ \lim_d\frac{\lVert\delta\rVert^2}{\sigma^2(1-\rho)}.
+\]</div>
+<ul class="simple">
+<li><p>If skewness loads only on the market (<span class="math notranslate nohighlight">\(\delta=0\)</span>) — the usual
+first-order description of equities, where the index carries the
+leverage asymmetry — <span class="math notranslate nohighlight">\(\tilde q_d\)</span> <strong>saturates</strong> at
+<span class="math notranslate nohighlight">\(g^2/(\sigma^2\rho)\)</span>. Diversification cannot separate <span class="math notranslate nohighlight">\(Y\)</span> from
+market noise, because the market factor is exactly the direction
+where the Gaussian component refuses to average out. The
+<span class="math notranslate nohighlight">\(d\to\infty\)</span> tracker is the index itself, and the ceiling is the
+index’s own <span class="math notranslate nohighlight">\(\kappa\)</span>.</p></li>
+<li><p>Unbounded recovery needs <em>idiosyncratic skewness dispersion</em>:
+<span class="math notranslate nohighlight">\(\lVert\delta\rVert^2\asymp d\)</span>. Then the tracker is a long–short
+in the <span class="math notranslate nohighlight">\(\delta\)</span> direction, and recovery of <span class="math notranslate nohighlight">\(Y\)</span> is a
+law-of-large-numbers effect across names.</p></li>
+</ul>
+<p><strong>Contrast with the Bayes channel.</strong> Conditionally on <span class="math notranslate nohighlight">\(Y=y\)</span>, the
+whitened residuals
+<span class="math notranslate nohighlight">\(\Sigma^{-1/2}(X-\mu-\gamma y)/\sqrt{y}\)</span> are i.i.d. standard normal
+in every direction. The Mahalanobis radius per dimension therefore
+concentrates at <span class="math notranslate nohighlight">\(Y\)</span> as <span class="math notranslate nohighlight">\(d\to\infty\)</span>, even for bounded <span class="math notranslate nohighlight">\(\tilde q\)</span> and
+even for <span class="math notranslate nohighlight">\(\gamma=0\)</span>. The quadratic channel does not saturate. It does
+need a well-estimated <span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> (serious at large <span class="math notranslate nohighlight">\(d\)</span>; see
+<a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a> and <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>), it
+is quadratic in returns rather than a position, and it leans on exact
+conditional Gaussianity. The tracker degrades more gracefully on all
+three counts — when the linear signal is actually there.</p>
+</section>
+<section id="open-problems">
+<h2>Open problems<a class="headerlink" href="#open-problems" title="Link to this heading">#</a></h2>
+<p>(a) <strong>Time series.</strong> Per-period <span class="math notranslate nohighlight">\(Y_t\)</span> with dependence (subordinated
+Lévy or stochastic-volatility dynamics). Does the tracker plus online
+EM (<a class="reference internal" href="../theory/online_em.html"><span class="doc">Online EM Algorithm</span></a>, <a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>) yield a
+real-time activity index comparable to realized variance? The empirics
+answer this in the negative on daily US large caps: the object that
+tracks volatility is <span class="math notranslate nohighlight">\(q_\perp\)</span>, not <span class="math notranslate nohighlight">\(\hat Y\)</span>.</p>
+<p>(b) <strong>Nonlinear tradable payoffs.</strong> Among payoffs <span class="math notranslate nohighlight">\(\phi(w^\top X)\)</span>
+(options on the tracker), what closes the gap to the quadratic
+channel?</p>
+<p>(c) <strong>Several subordinators.</strong> Common plus idiosyncratic clocks
+<a class="reference internal" href="../references.html#semeraro2008"><span class="std std-ref">Semeraro2008</span></a>. Which linear combinations track
+the <em>common</em> clock, and is the answer again a generalised eigenvector
+problem?</p>
+<p>A GIG cumulant sweep for <span class="math notranslate nohighlight">\(\kappa_1\kappa_3\ge 2\kappa_2^2\)</span> is also
+open. The Gamma boundary is tight; the four GH fits in the empirics
+all satisfy <span class="math notranslate nohighlight">\(t^\dagger\le 1/\tilde q\)</span>.</p>
+</section>
+<section id="literature">
+<h2>Literature<a class="headerlink" href="#literature" title="Link to this heading">#</a></h2>
+<p>We did not find the statement “the minimum-variance-per-unit-skewness
+portfolio of a normal mean–variance mixture is an optimal linear
+estimator of the latent subordinator, with conditional law
+<span class="math notranslate nohighlight">\(N(Y,\,Y/\tilde q)\)</span>”. The surrounding pieces sit in five strands.</p>
+<p><strong>GH structure and the posterior.</strong>
+<a class="reference internal" href="../references.html#barndorffnielsen1977"><span class="std std-ref">BarndorffNielsen1977</span></a> introduced GH;
+<a class="reference internal" href="../references.html#blaesild1981"><span class="std std-ref">Blaesild1981</span></a> proved closure under affine maps;
+<a class="reference internal" href="../references.html#madan1990"><span class="std std-ref">MadanSeneta1990</span></a> (VG) and
+<a class="reference internal" href="../references.html#barndorffnielsen1997"><span class="std std-ref">BarndorffNielsen1997</span></a> (NIG) are the
+workhorse special cases; <a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a> Ch. 6 is the
+standard mixture treatment. The GIG posterior and its Bessel-ratio
+moments drive the EM algorithms of
+<a class="reference internal" href="../references.html#protassov2004"><span class="std std-ref">Protassov2004</span></a> and <a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a> —
+normix’s E-step. What EM uses as a latent-variable imputation, this
+note reads as a volatility measurement.</p>
+<p><strong>Portfolio selection in mixtures.</strong>
+<a class="reference internal" href="../references.html#mencasentana2009"><span class="std std-ref">MenciaSentana2009</span></a> is the closest work: for
+location-scale mixtures of normals, any portfolio law is determined
+by (mean, variance, skewness), the mean–variance–skewness frontier is
+closed-form, and its efficient part is spanned by three funds, the
+third loading on the skewness vector. Section 5(4) above is the
+observation that their skewness fund <em>is</em> a mimicking portfolio for
+the latent mixing variable — an interpretation they do not pursue
+(their <span class="math notranslate nohighlight">\(\xi\)</span> is integrated out, not estimated). The repo’s own
+mean-risk reduction (<a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>, after
+<a class="reference internal" href="../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>) contains the same
+<span class="math notranslate nohighlight">\((\tilde\mu,\tilde\gamma,\tilde\sigma)\)</span> geometry.</p>
+<p><strong>Skewness-maximising projections.</strong>
+<a class="reference internal" href="../references.html#loperfido2010"><span class="std std-ref">Loperfido2010</span></a> posed projection pursuit by
+skewness for skew-normal families;
+<a class="reference internal" href="../references.html#arevalillo2020"><span class="std std-ref">ArevalilloNavarro2020</span></a>
+<a class="reference internal" href="../references.html#arevalillo2021"><span class="std std-ref">ArevalilloNavarro2021</span></a> prove that for scale
+mixtures of skew-normal vectors the max-skewness direction is
+proportional to the shape vector (scaled by the scatter inverse).
+Structurally identical to the <span class="math notranslate nohighlight">\(t^\dagger\)</span> calculation, with a
+truncated-normal latent instead of a subordinator. The
+feasibility boundary <span class="math notranslate nohighlight">\(t^\dagger\le 1/\tilde q\)</span> and the Gamma case
+sitting exactly on it appear to be new for GH-type mixtures. The
+canonical-form literature for skew-elliptical families
+<a class="reference internal" href="../references.html#azzalini2014"><span class="std std-ref">AzzaliniCapitanio2014</span></a> makes the same point that
+one linear combination carries all the asymmetry.</p>
+<p><strong>Mimicking / tracking portfolios.</strong>
+<a class="reference internal" href="../references.html#huberman1987"><span class="std std-ref">HubermanKandelStambaugh1987</span></a> characterise
+portfolios that can replace factors in pricing relations;
+<a class="reference internal" href="../references.html#breeden1989"><span class="std std-ref">BreedenGibbonsLitzenberger1989</span></a> build the
+consumption-mimicking maximum-correlation portfolio;
+<a class="reference internal" href="../references.html#lamont2001"><span class="std std-ref">Lamont2001</span></a> tracks macro variables. The
+subordinator tracker is a maximum-correlation mimicking portfolio
+where the “factor” is the model’s own latent activity. The mixture
+structure supplies in closed form what that literature estimates by
+regression.</p>
+<p><strong>Time-change recovery and traded volatility.</strong>
+<a class="reference internal" href="../references.html#clark1973"><span class="std std-ref">Clark1973</span></a> began the subordinated-returns program;
+<a class="reference internal" href="../references.html#anegeman2000"><span class="std std-ref">AneGeman2000</span></a> claimed recovery of the
+transaction clock’s moments (contested:
+<a class="reference internal" href="../references.html#murphy2010"><span class="std std-ref">MurphyIzzeldin2010</span></a>; see also
+<a class="reference internal" href="../references.html#richardson1994"><span class="std std-ref">RichardsonSmith1994</span></a>). Realized variance
+estimates the integrated clock from high-frequency data
+<a class="reference internal" href="../references.html#barndorffnielsenshephard2002"><span class="std std-ref">BarndorffNielsenShephard2002</span></a> —
+the quadratic channel, done across time instead of across assets.
+Variance swaps <a class="reference internal" href="../references.html#carrwu2009"><span class="std std-ref">CarrWu2009</span></a> are the traded
+quadratic instrument. Multivariate subordination with common plus
+idiosyncratic clocks
+<a class="reference internal" href="../references.html#semeraro2008"><span class="std std-ref">Semeraro2008</span></a>
+<a class="reference internal" href="../references.html#lucianosemeraro2010"><span class="std std-ref">LucianoSemeraro2010</span></a>
+<a class="reference internal" href="../references.html#luciano2016"><span class="std std-ref">LucianoMarenaSemeraro2016</span></a>
+<a class="reference internal" href="../references.html#ballotta2016"><span class="std std-ref">BallottaBonfiglioli2016</span></a> is the natural setting
+for open problem (c).</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Research notes</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="subordinator_tracking_empirics.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Subordinator tracking on the S&amp;P 500</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-tracking-portfolio">The tracking portfolio</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#two-invariant-signal-to-noise-ratios">Two invariant signal-to-noise ratios</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-tracker-as-one-synthetic-asset">The tracker as one synthetic asset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#three-estimators-of-y">Three estimators of <span class="math notranslate nohighlight">\(Y\)</span></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#three-meanings-of-dominated-by-y">Three meanings of “dominated by <span class="math notranslate nohighlight">\(Y\)</span>”</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-same-direction-from-four-angles">The same direction from four angles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#when-can-tilde-q-be-large">When can <span class="math notranslate nohighlight">\(\tilde q\)</span> be large?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#open-problems">Open problems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#literature">Literature</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

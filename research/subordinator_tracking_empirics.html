@@ -1,0 +1,1669 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Subordinator tracking on the S&amp;P 500 &#8212; normix 0.3.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6512192e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'research/subordinator_tracking_empirics';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="Subordinator-tracking portfolios" href="subordinator_tracking.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.3.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Subordinator tracking on the S&amp;P 500</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fresearch/subordinator_tracking_empirics.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/research/subordinator_tracking_empirics.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Subordinator tracking on the S&P 500</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-was-asked">What was asked</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-and-cohorts">Data and cohorts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#models-and-fitting">Models and fitting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#metrics-glossary">Metrics glossary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#signal-to-noise">Signal-to-noise</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimators-of-y">Estimators of <span class="math notranslate nohighlight">\(Y\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#volatility-proxies">Volatility proxies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nulls-and-geometry">Nulls and geometry</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-0-synthetic-validation">Phase 0 — synthetic validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mse-and-correlation-laws-true-parameters">MSE and correlation laws (true parameters)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimation-noise-of-hat-tilde-q">Estimation noise of <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#online-em-rehearsal-h4-with-known-y">Online EM rehearsal (H4, with known <span class="math notranslate nohighlight">\(Y\)</span>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-static-s-p-500-h1-h3">Phase 1 — static S&amp;P 500 (H1, H3)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#h1-no-linear-extraction">H1 — no linear extraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tracker-versus-quadratic-channel-d-50">Tracker versus quadratic channel (<span class="math notranslate nohighlight">\(d=50\)</span>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#h3-max-skewness">H3 — max-skewness</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#anatomy-of-w-star-at-d-50">Anatomy of <span class="math notranslate nohighlight">\(w^\star\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-2-dimension-sweep-h2">Phase 2 — dimension sweep (H2)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-online-em-h4">Phase 3 — online EM (H4)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worked-did-not-work">Worked / did not work</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations">Limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-is-not-asking-normix-to-do">What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="subordinator-tracking-on-the-s-p-500">
+<h1>Subordinator tracking on the S&amp;P 500<a class="headerlink" href="#subordinator-tracking-on-the-s-p-500" title="Link to this heading">#</a></h1>
+<p>Phases 0–3, 2026-08-13. Derivations:
+<a class="reference internal" href="subordinator_tracking.html"><span class="doc">Subordinator-tracking portfolios</span></a>. Code lives in
+<code class="docutils literal notranslate"><span class="pre">notebooks/subordinator_tracking/</span></code> and uses only the public API;
+<code class="docutils literal notranslate"><span class="pre">normix</span></code> is unchanged.</p>
+<p>The mathematics says a unique portfolio direction is the least-noisy
+linear readout of the latent clock <span class="math notranslate nohighlight">\(Y\)</span>, and that a second,
+non-tradable quadratic statistic can read <span class="math notranslate nohighlight">\(Y\)</span> even when that
+direction carries no signal. This page measures both claims on daily
+US large-cap returns. The algebra holds. The linear channel is not
+there. The quadratic channel is.</p>
+<section id="what-was-asked">
+<h2>What was asked<a class="headerlink" href="#what-was-asked" title="Link to this heading">#</a></h2>
+<p>Two study modes, written down before the fits.</p>
+<ol class="arabic simple">
+<li><p><strong>Static.</strong> Fit one distribution to the full history. Report the
+signal-to-noise numbers <span class="math notranslate nohighlight">\(\tilde q\)</span> and <span class="math notranslate nohighlight">\(\kappa\)</span>, test them against
+a null that kills odd moments, and check whether the model’s
+max-skewness portfolio is the tracker.</p></li>
+<li><p><strong>Dynamic.</strong> Update the model daily with EWMA-weighted online EM
+and rebalance <span class="math notranslate nohighlight">\(w^\star_t\)</span>. The question is extraction of a latent
+clock from existing data, not prediction. Evaluation is in-sample
+by design.</p></li>
+</ol>
+<p>Four pre-registered hypotheses.</p>
+<ul>
+<li><p><strong>H1 (partial revelation).</strong> Fitted <span class="math notranslate nohighlight">\(\kappa\ll 1\)</span>: daily equity
+portfolios are residual-dominated. A back-of-envelope from
+univariate skew and excess kurtosis in the gauge <span class="math notranslate nohighlight">\(E[Y]=1\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+  \kappa
+  \approx \frac{\mathrm{skew}(X)^2}{3\,\mathrm{kurt}(X)},
+  \]</div>
+<p>with daily-index <span class="math notranslate nohighlight">\(\mathrm{skew}\approx -0.5\)</span> and excess kurtosis
+<span class="math notranslate nohighlight">\(5\)</span>–<span class="math notranslate nohighlight">\(15\)</span>, gives <span class="math notranslate nohighlight">\(\kappa\sim 10^{-2}\)</span>. Per-day tracker correlation
+would then be <span class="math notranslate nohighlight">\(\sqrt{\kappa/(1+\kappa)}\approx 0.1\)</span>. The open
+question is how much the cross-section adds.</p>
+</li>
+<li><p><strong>H2 (saturation).</strong> <span class="math notranslate nohighlight">\(\tilde q_d\)</span> saturates as <span class="math notranslate nohighlight">\(d\)</span> grows because
+fitted <span class="math notranslate nohighlight">\(\gamma\)</span> aligns with the market covariance factor. Under
+market-only skewness the <span class="math notranslate nohighlight">\(d\to\infty\)</span> tracker is the index, so the
+ceiling is the index’s own <span class="math notranslate nohighlight">\(\kappa\)</span>. Any excess must come from
+idiosyncratic skewness dispersion <span class="math notranslate nohighlight">\(\lVert\delta\rVert^2\)</span>.</p></li>
+<li><p><strong>H3 (max-skew = tracker).</strong> For fitted VG/NIG,
+<span class="math notranslate nohighlight">\(t^\dagger\le 0\le 1/\tilde q\)</span> analytically, so the model’s
+max-skewness portfolio is exactly <span class="math notranslate nohighlight">\(w^\star\)</span>. For GH the inequality
+is checked numerically. On <em>sample</em> third moments, the direct skew
+maximiser should point near <span class="math notranslate nohighlight">\(\hat\Sigma^{-1}\hat\gamma\)</span> up to
+estimation noise.</p></li>
+<li><p><strong>H4 (responsiveness).</strong> Short EWMA half-lives track volatility
+regimes faster but inject noise into <span class="math notranslate nohighlight">\(\hat\gamma_t\)</span> — direction
+churn, turnover, and upward-biased <span class="math notranslate nohighlight">\(\hat\kappa_t\)</span> — while long
+half-lives approach the static fit. There should be an interior
+optimum tied to the persistence of <span class="math notranslate nohighlight">\(Y_t\)</span>.</p></li>
+</ul>
+<p><strong>Verdicts, up front.</strong> H1 accepted. H2 rejected in both of its
+intended readings. H3 split: true on every fitted model, false on
+sample third moments. H4 split: short half-lives do inflate <span class="math notranslate nohighlight">\(\kappa_t\)</span>
+and churn <span class="math notranslate nohighlight">\(w^\star\)</span>; they do not produce a better <span class="math notranslate nohighlight">\(\hat Y\)</span>.</p>
+</section>
+<section id="data-and-cohorts">
+<h2>Data and cohorts<a class="headerlink" href="#data-and-cohorts" title="Link to this heading">#</a></h2>
+<p><strong>Panel.</strong> <code class="docutils literal notranslate"><span class="pre">data/sp500_returns.csv</span></code>: daily log returns,
+2015-12-15 → 2026-02-09 (<span class="math notranslate nohighlight">\(T=2552\)</span> days), <span class="math notranslate nohighlight">\(d=468\)</span> current
+constituents with near-complete history. The window covers the 2018
+Volmageddon, the 2020-03 COVID crash, and the 2022 hiking cycle.</p>
+<p><strong>Hygiene.</strong> No winsorisation — tails are the signal. Twelve
+observations with <span class="math notranslate nohighlight">\(|r|&gt;0.5\)</span> were flagged and kept. No zero-variance
+columns. Survivorship bias is accepted: this is a current-constituent
+panel of large caps, not an investable point-in-time universe. Fine
+for a mechanism study; not a trading backtest.</p>
+<p><strong>Nested universes.</strong> For each random seed we draw a permutation of
+the 468 tickers and take prefixes of size
+<span class="math notranslate nohighlight">\(d\in\{5,10,25,50,100,200,468\}\)</span>. Nesting means the size-<span class="math notranslate nohighlight">\(10\)</span> set
+contains the size-<span class="math notranslate nohighlight">\(5\)</span> set, and so on, so <span class="math notranslate nohighlight">\(\tilde q_d\)</span> comparisons
+along a seed are monotone in the name list rather than in a fresh
+draw. Five seeds. At <span class="math notranslate nohighlight">\(d=468\)</span> every seed is the full panel, so the
+five runs coincide.</p>
+<p><strong>Primary working universe.</strong> <span class="math notranslate nohighlight">\(d=50\)</span>, seed 0. Small enough that a
+full <span class="math notranslate nohighlight">\(\Sigma\)</span> is well conditioned (<span class="math notranslate nohighlight">\(T/d\approx 51\)</span>), large enough
+that the quadratic channel has something to do. Headline claims use
+this universe; the <span class="math notranslate nohighlight">\(d\)</span>-sweep is the robustness check. Fits at
+<span class="math notranslate nohighlight">\(d=468\)</span> have <span class="math notranslate nohighlight">\(T/d\approx 5.5\)</span> and are stress cases, not the basis of
+the punchline.</p>
+<p><strong>Market proxy.</strong> Equal-weight panel mean
+<span class="math notranslate nohighlight">\(m_t=\frac1d\sum_i x_{t,i}\)</span>. A univariate NIG fit of <span class="math notranslate nohighlight">\(m_t\)</span> is the
+index baseline <span class="math notranslate nohighlight">\(\kappa_{\mathrm{index}}\)</span> — the <span class="math notranslate nohighlight">\(\delta=0\)</span> ceiling
+from the equicorrelation calculation.</p>
+<p><strong>What “cohort” means here.</strong> A cohort is one <span class="math notranslate nohighlight">\((d,\mathrm{seed})\)</span>
+universe: a fixed list of names, the full <span class="math notranslate nohighlight">\(T=2552\)</span> days on those
+names, one fitted model (and, in Phase 3, one online path). Phase 1
+reports seed 0 at every <span class="math notranslate nohighlight">\(d\)</span>. Phase 2 averages the five seeds and
+puts a standard error on <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span>. Phase 3 is seed 0,
+<span class="math notranslate nohighlight">\(d=50\)</span> only, plus a secondary <span class="math notranslate nohighlight">\(d=20\)</span> unshrunk check.</p>
+</section>
+<section id="models-and-fitting">
+<h2>Models and fitting<a class="headerlink" href="#models-and-fitting" title="Link to this heading">#</a></h2>
+<p><strong>Primary: NIG</strong>,
+<a class="reference internal" href="../api/distributions.html#normix.distributions.normal_inverse_gaussian.NormalInverseGaussian" title="normix.distributions.normal_inverse_gaussian.NormalInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGaussian</span></code></a>.
+No unbounded-likelihood boundary (unlike VG, whose density requires
+Gamma shape <span class="math notranslate nohighlight">\(\alpha&gt;d/2\)</span>), closed-form InverseGaussian M-step, and
+<code class="docutils literal notranslate"><span class="pre">regularization='a_eq_b'</span></code> pins <span class="math notranslate nohighlight">\(\mu_{\mathrm{IG}}=1\)</span>, which is
+exactly the identifiability gauge <span class="math notranslate nohighlight">\(E[Y]=1\)</span>. Then
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}=\tilde q\)</span> and <span class="math notranslate nohighlight">\(\kappa=\tilde q\,\mathrm{Var}(Y)\)</span>
+directly.</p>
+<p><strong>Secondary: GH</strong> at <span class="math notranslate nohighlight">\(d\le 50\)</span>, started from the fitted NIG’s exact
+GH embedding (<code class="docutils literal notranslate"><span class="pre">to_generalized_hyperbolic</span></code>) and then freeing
+<span class="math notranslate nohighlight">\((p,a,b)\)</span>. Nested continuation, not a cold start. <strong>VG</strong> only at
+<span class="math notranslate nohighlight">\(d\le 10\)</span>, with <code class="docutils literal notranslate"><span class="pre">alpha_min='density'</span></code> so the marginal stays bounded.</p>
+<p><strong>EM.</strong> <a class="reference internal" href="../api/fitting.html#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a>, <code class="docutils literal notranslate"><span class="pre">default_init</span></code>
+cold start, <code class="docutils literal notranslate"><span class="pre">tol=1e-5</span></code>. The package default <span class="math notranslate nohighlight">\(10^{-3}\)</span> stops after one
+iteration on this panel: daily-equity <span class="math notranslate nohighlight">\(\gamma\)</span> is small enough that
+<span class="math notranslate nohighlight">\(\mathrm{rms}(\Delta\gamma)/(1+\mathrm{rms}(\gamma))\)</span> already meets
+it. <span class="math notranslate nohighlight">\(\kappa\)</span> and <span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span> are gauge-invariant, so the
+regularisation does not create them.</p>
+<p><strong>Online loop (Phase 3).</strong> Hand-rolled from the public E-step / M-step
+and <a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.EWMAUpdate" title="normix.fitting.eta_rules.EWMAUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">EWMAUpdate</span></code></a>.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.IncrementalEMFitter" title="normix.fitting.em.IncrementalEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a> draws random
+batches, so it is the wrong tool for a chronological clock.
+<a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a> online EM with a constant step — the
+EWMA regime that tracks slowly-varying parameters rather than
+converging. No <code class="docutils literal notranslate"><span class="pre">regularize_a_eq_b</span></code> inside the loop: re-gauging every
+step would mix <span class="math notranslate nohighlight">\(Y\)</span>-gauges inside the EWMA <span class="math notranslate nohighlight">\(\eta\)</span> recursion. Report
+gauge-invariant <span class="math notranslate nohighlight">\(\kappa_t\)</span>; <span class="math notranslate nohighlight">\(\tilde q_t\)</span> is not comparable across
+half-lives without a gauge.</p>
+</section>
+<section id="metrics-glossary">
+<h2>Metrics glossary<a class="headerlink" href="#metrics-glossary" title="Link to this heading">#</a></h2>
+<p>Every number in the tables below is one of these.</p>
+<section id="signal-to-noise">
+<h3>Signal-to-noise<a class="headerlink" href="#signal-to-noise" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Symbol</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\tilde q=\gamma^\top\Sigma^{-1}\gamma\)</span></p></td>
+<td><p>Energy of <span class="math notranslate nohighlight">\(\gamma\)</span> in the <span class="math notranslate nohighlight">\(\Sigma\)</span> metric. Scale-dependent: under <span class="math notranslate nohighlight">\(Y\mapsto cY\)</span> it maps to <span class="math notranslate nohighlight">\(\tilde q/c\)</span>. Quoted in the <span class="math notranslate nohighlight">\(E[Y]=1\)</span> gauge that <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> pins for NIG.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}=\tilde q\,E[Y]\)</span></p></td>
+<td><p>Level SNR. Tracker MSE relative to <span class="math notranslate nohighlight">\(E[Y]^2\)</span> is <span class="math notranslate nohighlight">\(1/\kappa_{\mathrm{lev}}\)</span>. Gauge-invariant.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\kappa=\tilde q\,\mathrm{Var}(Y)/E[Y]\)</span></p></td>
+<td><p>Fluctuation SNR. Tracker MSE relative to <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\)</span> is <span class="math notranslate nohighlight">\(1/\kappa\)</span>. Gauge-invariant. This is the headline “can a portfolio read <span class="math notranslate nohighlight">\(Y\)</span>?” number.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\sqrt{\kappa/(1+\kappa)}\)</span></p></td>
+<td><p>Model correlation <span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,Y)\)</span> if the mixture is well specified and <span class="math notranslate nohighlight">\(Y\)</span> were observed.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(1/\kappa\)</span></p></td>
+<td><p>Relative tracker MSE. At <span class="math notranslate nohighlight">\(\kappa=0.05\)</span> this is <span class="math notranslate nohighlight">\(20\)</span>: the unbiased portfolio is twenty times noisier than <span class="math notranslate nohighlight">\(Y\)</span>’s own variance.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\kappa_{\mathrm{index}}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\kappa\)</span> from a univariate NIG fit of the equal-weight mean <span class="math notranslate nohighlight">\(m_t\)</span>. The <span class="math notranslate nohighlight">\(\delta=0\)</span> ceiling.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="estimators-of-y">
+<h3>Estimators of <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#estimators-of-y" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Object</p></th>
+<th class="head"><p>What it is</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\hat Y_t=(w^\star)^\top(x_t-\hat\mu)\)</span></p></td>
+<td><p>Linear tracker. A portfolio, after subtracting location. Conditionally unbiased for <span class="math notranslate nohighlight">\(Y\)</span> in the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linear Bayes</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[Y]+\frac{\kappa}{1+\kappa}(\hat Y-E[Y])\)</span>. Best affine rule. Same direction, shrunk toward the prior mean.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(E[Y\mid x_t]\)</span></p></td>
+<td><p>Posterior mean from the fitted joint. Uses <span class="math notranslate nohighlight">\(q(x_t)\)</span>, hence both the squared tracker and <span class="math notranslate nohighlight">\(q_\perp\)</span>. MMSE among functions of <span class="math notranslate nohighlight">\(X\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(q_\perp(x_t)=q(x_t)-\tilde q\,\hat Y_t^2\)</span></p></td>
+<td><p>Orthogonal Mahalanobis radius. The part of the quadratic statistic that is invisible to any portfolio.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>On real data <span class="math notranslate nohighlight">\(Y_t\)</span> is latent, so we cannot score <span class="math notranslate nohighlight">\(\hat Y\)</span> against
+truth. We score it against volatility <em>proxies</em> (next block) and
+against the model’s own moment laws (variance of <span class="math notranslate nohighlight">\(\hat Y\)</span> should be
+<span class="math notranslate nohighlight">\(\mathrm{Var}(Y)+E[Y]/\tilde q\)</span>; ACF of <span class="math notranslate nohighlight">\(\hat Y\)</span> should be <span class="math notranslate nohighlight">\(0\)</span> under
+i.i.d. mixing).</p>
+</section>
+<section id="volatility-proxies">
+<h3>Volatility proxies<a class="headerlink" href="#volatility-proxies" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Proxy</p></th>
+<th class="head"><p>Construction</p></th>
+<th class="head"><p>Role</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>21-day RV</p></td>
+<td><p>Centered 21-day realized variance of <span class="math notranslate nohighlight">\(m_t\)</span></p></td>
+<td><p>Slow, model-free clock. The comparison the plan treats as primary.</p></td>
+</tr>
+<tr class="row-odd"><td><p>EWMA RV</p></td>
+<td><p>EWMA of <span class="math notranslate nohighlight">\(m_t^2\)</span> at a matched half-life</p></td>
+<td><p>Fairness check: same smoother family as the online model.</p></td>
+</tr>
+<tr class="row-even"><td><p>Cross-sectional dispersion</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac1d\sum_i(x_{t,i}-m_t)^2/\hat\sigma_i^2\)</span></p></td>
+<td><p>Model-free cousin of <span class="math notranslate nohighlight">\(q_\perp\)</span>. A day when names disagree after scaling is a high-<span class="math notranslate nohighlight">\(Y\)</span> day under the mixture.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Correlations are Pearson unless stated. A number such as
+“corr<span class="math notranslate nohighlight">\((\hat Y,\mathrm{RV})=0.07\)</span>” means the linear tracker does not
+move with the 21-day RV series. “corr<span class="math notranslate nohighlight">\((E[Y\mid X],\mathrm{RV})=0.58\)</span>”
+means the posterior does.</p>
+</section>
+<section id="nulls-and-geometry">
+<h3>Nulls and geometry<a class="headerlink" href="#nulls-and-geometry" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Object</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Sign-flip null</p></td>
+<td><p>For each day <span class="math notranslate nohighlight">\(t\)</span>, multiply the <em>whole</em> demeaned cross-section by an independent <span class="math notranslate nohighlight">\(S_t=\pm 1\)</span>. Kills every odd joint moment (including all skewness) and preserves <span class="math notranslate nohighlight">\(\Sigma\)</span> and the mixing structure. Refitting produces the distribution of <span class="math notranslate nohighlight">\(\hat{\tilde q}&gt;0\)</span> that estimation noise alone can generate. The 95% quantile of that distribution is the floor in the tables; the <span class="math notranslate nohighlight">\(p\)</span>-value is the fraction of null fits with <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> at least as large as the real fit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(c=0\)</span> synthetic floor</p></td>
+<td><p>Phase 0 analogue: draw from the fitted NIG with <span class="math notranslate nohighlight">\(\gamma\)</span> set to <span class="math notranslate nohighlight">\(0\)</span>, refit, collect <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span>. Same idea, with known truth.</p></td>
+</tr>
+<tr class="row-even"><td><p>Direction cosine</p></td>
+<td><p><span class="math notranslate nohighlight">\(\cos\angle(\hat w^\star, w^\star)\)</span> in the <span class="math notranslate nohighlight">\(\Sigma\)</span> metric, or <span class="math notranslate nohighlight">\(\cos\angle(w^\star_t, w^\star_{t-21})\)</span> for stability. <span class="math notranslate nohighlight">\(1\)</span> is parallel, <span class="math notranslate nohighlight">\(0\)</span> is orthogonal, negative is flipped.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Block-bootstrap cone</p></td>
+<td><p>Moving-block bootstrap with 21-day blocks, to respect volatility clustering. The 5/50/95 percentiles of the cosine of <span class="math notranslate nohighlight">\(\hat w^\star\)</span> against the full-sample <span class="math notranslate nohighlight">\(w^\star\)</span> are a confidence cone on the direction.</p></td>
+</tr>
+<tr class="row-even"><td><p>PC1 share of <span class="math notranslate nohighlight">\(\tilde q\)</span></p></td>
+<td><p>Write <span class="math notranslate nohighlight">\(\Sigma=\sum_k\lambda_k u_k u_k^\top\)</span> and <span class="math notranslate nohighlight">\(\tilde q=\sum_k(u_k^\top\gamma)^2/\lambda_k\)</span>. The <span class="math notranslate nohighlight">\(k=1\)</span> term is the fraction of <span class="math notranslate nohighlight">\(\tilde q\)</span> that lives on the market eigenvector. High and stable <span class="math notranslate nohighlight">\(\Rightarrow\)</span> market-aligned skewness (H2’s saturation story). Falling with <span class="math notranslate nohighlight">\(d\)</span> <span class="math notranslate nohighlight">\(\Rightarrow\)</span> the extra <span class="math notranslate nohighlight">\(\tilde q\)</span> is in small-<span class="math notranslate nohighlight">\(\lambda\)</span> directions, which is also where <span class="math notranslate nohighlight">\(\gamma\)</span>-estimation noise lives.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(g\mathbf{1}+\delta\)</span> split</p></td>
+<td><p><span class="math notranslate nohighlight">\(\gamma=g\mathbf{1}+\delta\)</span> with <span class="math notranslate nohighlight">\(\mathbf{1}^\top\delta=0\)</span>. Market loading versus idiosyncratic residual. <span class="math notranslate nohighlight">\(\lVert\delta\rVert^2/\lVert\gamma\rVert^2\)</span> rising with <span class="math notranslate nohighlight">\(d\)</span> is the idiosyncratic-dispersion branch — or noise.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(t^\dagger\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(2\mathrm{Var}(Y)/E[Y]-\mu_3/\mathrm{Var}(Y)\)</span>. Model max-skewness equals <span class="math notranslate nohighlight">\(w^\star\)</span> iff <span class="math notranslate nohighlight">\(t^\dagger\le 1/\tilde q\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span></p></td>
+<td><p>EWMA effective sample size <span class="math notranslate nohighlight">\((2-w)/w\approx 2.9\,h\)</span> for half-life <span class="math notranslate nohighlight">\(h\)</span>. A full <span class="math notranslate nohighlight">\(\Sigma\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span> wants <span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\gtrsim 150\)</span>; half-lives below <span class="math notranslate nohighlight">\(\sim 63\)</span> days are under-determined without shrinkage.</p></td>
+</tr>
+<tr class="row-even"><td><p>Turnover</p></td>
+<td><p>Daily unit-gross turnover of <span class="math notranslate nohighlight">\(w^\star_t\)</span>. How much the tracker portfolio is being rewritten.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tau\)</span></p></td>
+<td><p>Shrinkage weight toward a static <span class="math notranslate nohighlight">\(\eta_0\)</span> in the online <span class="math notranslate nohighlight">\(\eta\)</span> update. <span class="math notranslate nohighlight">\(\tau=0\)</span> is pure EWMA; <span class="math notranslate nohighlight">\(\tau=0.1\)</span> pins the gauge and conditions <span class="math notranslate nohighlight">\(\Sigma_t\)</span>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="phase-0-synthetic-validation">
+<h2>Phase 0 — synthetic validation<a class="headerlink" href="#phase-0-synthetic-validation" title="Link to this heading">#</a></h2>
+<p>Truth is available. Generator: the Phase 1 NIG at <span class="math notranslate nohighlight">\(d=50\)</span>
+(<span class="math notranslate nohighlight">\(E[Y]=1\)</span>, <span class="math notranslate nohighlight">\(\tilde q=0.0749\)</span>, <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)=0.638\)</span>,
+<span class="math notranslate nohighlight">\(\kappa=0.0478\)</span>), with <span class="math notranslate nohighlight">\(\gamma\mapsto c\gamma\)</span> for
+<span class="math notranslate nohighlight">\(c\in\{0,1,3,10\}\)</span>. That sweeps
+<span class="math notranslate nohighlight">\(\kappa\in\{0,\,0.0478,\,0.430,\,4.78\}\)</span>. <span class="math notranslate nohighlight">\(T=2552\)</span>, <span class="math notranslate nohighlight">\(R=20\)</span> i.i.d.
+draws. MSE and correlation laws use the true parameters (no refit).
+<span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> and direction recovery use cold-start EM.</p>
+<section id="mse-and-correlation-laws-true-parameters">
+<h3>MSE and correlation laws (true parameters)<a class="headerlink" href="#mse-and-correlation-laws-true-parameters" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(c\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\kappa\)</span></p></th>
+<th class="head"><p>Tracker MSE rel. err.</p></th>
+<th class="head"><p>Linear-Bayes MSE rel. err.</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,Y)\)</span> rel. err.</p></th>
+<th class="head"><p>Post. MSE <span class="math notranslate nohighlight">\(/\)</span> linear-Bayes bound</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathrm{corr}(E[Y\mid X],Y)\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>—</p></td>
+<td><p>1.1%</p></td>
+<td><p>—</p></td>
+<td><p>0.089</p></td>
+<td><p>0.954</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>0.0478</p></td>
+<td><p>0.63%</p></td>
+<td><p>0.84%</p></td>
+<td><p>6.5%</p></td>
+<td><p>0.095</p></td>
+<td><p>0.954</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>0.430</p></td>
+<td><p>0.74%</p></td>
+<td><p>0.10%</p></td>
+<td><p>1.6%</p></td>
+<td><p>0.125</p></td>
+<td><p>0.956</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>4.78</p></td>
+<td><p>0.19%</p></td>
+<td><p>0.06%</p></td>
+<td><p>0.05%</p></td>
+<td><p>0.336</p></td>
+<td><p>0.970</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>What worked.</strong> Tracker MSE <span class="math notranslate nohighlight">\(E[Y]/\tilde q\)</span> and linear-Bayes MSE
+<span class="math notranslate nohighlight">\(\mathrm{Var}(Y)/(1+\kappa)\)</span> hold to <span class="math notranslate nohighlight">\(&lt;1\%\)</span> relative error. The
+correlation law <span class="math notranslate nohighlight">\(\sqrt{\kappa/(1+\kappa)}\)</span> is within <span class="math notranslate nohighlight">\(2\%\)</span> at
+<span class="math notranslate nohighlight">\(\kappa\ge 0.43\)</span>.</p>
+<p><strong>What is already the empirics’ punchline, in simulation.</strong> Even at
+<span class="math notranslate nohighlight">\(c=0\)</span> (no drift channel) the posterior mean has
+<span class="math notranslate nohighlight">\(\mathrm{corr}(E[Y\mid X],Y)=0.95\)</span> and MSE <span class="math notranslate nohighlight">\(0.09\times\)</span> the
+linear-Bayes bound. At <span class="math notranslate nohighlight">\(d=50\)</span> the quadratic channel saturates. A
+<em>portfolio</em> cannot dominate <span class="math notranslate nohighlight">\(Y\)</span> in this regime; <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> still
+can.</p>
+<p><strong>A small miss.</strong> At the weakest nonzero point (<span class="math notranslate nohighlight">\(c=1\)</span>, the
+generator’s own <span class="math notranslate nohighlight">\(\kappa\)</span>) sample <span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,Y)\)</span> is
+<span class="math notranslate nohighlight">\(0.228\)</span> vs <span class="math notranslate nohighlight">\(0.214\)</span> (<span class="math notranslate nohighlight">\(6.5\%\)</span> relative). Twenty replications of <span class="math notranslate nohighlight">\(2552\)</span>
+days: this is a small systematic, not Monte Carlo noise. The <span class="math notranslate nohighlight">\(5\%\)</span>
+acceptance flag fails only there.</p>
+</section>
+<section id="estimation-noise-of-hat-tilde-q">
+<h3>Estimation noise of <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span><a class="headerlink" href="#estimation-noise-of-hat-tilde-q" title="Link to this heading">#</a></h3>
+<p>Null floor at <span class="math notranslate nohighlight">\(c=0\)</span>, <span class="math notranslate nohighlight">\(T=2552\)</span>, <span class="math notranslate nohighlight">\(R=20\)</span>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(d\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\hat{\tilde q}_0\)</span></p></th>
+<th class="head"><p>95% quantile</p></th>
+<th class="head"><p>Std</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>0.0130</p></td>
+<td><p>0.0206</p></td>
+<td><p>0.0043</p></td>
+</tr>
+<tr class="row-odd"><td><p>25</p></td>
+<td><p>0.0261</p></td>
+<td><p>0.0395</p></td>
+<td><p>0.0091</p></td>
+</tr>
+<tr class="row-even"><td><p>50</p></td>
+<td><p>0.0578</p></td>
+<td><p>0.0775</p></td>
+<td><p>0.0100</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The floor grows with <span class="math notranslate nohighlight">\(d\)</span>. At <span class="math notranslate nohighlight">\(d=50\)</span> the generator’s own
+<span class="math notranslate nohighlight">\(\tilde q=0.0749\)</span> sits on the null 95% quantile: a full-history NIG
+fit on this panel is <em>not</em> distinguishable from <span class="math notranslate nohighlight">\(\gamma=0\)</span>.</p>
+<p>Bias at <span class="math notranslate nohighlight">\(T=2552\)</span>, <span class="math notranslate nohighlight">\(d=50\)</span>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(c\)</span></p></th>
+<th class="head"><p>True <span class="math notranslate nohighlight">\(\tilde q\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\cos\angle\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0.058</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>0.075</p></td>
+<td><p>0.138</p></td>
+<td><p>0.76</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>0.674</p></td>
+<td><p>0.750</p></td>
+<td><p>0.94</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>7.49</p></td>
+<td><p>7.90</p></td>
+<td><p>0.98</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>What failed as a point estimate.</strong> <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> is
+upward-biased. At <span class="math notranslate nohighlight">\(c=1\)</span> the bias is the whole signal: you would
+report <span class="math notranslate nohighlight">\(\tilde q\approx 0.14\)</span> for a true <span class="math notranslate nohighlight">\(0.075\)</span>. Direction recovery
+is still usable at <span class="math notranslate nohighlight">\(\kappa=0.05\)</span> given <span class="math notranslate nohighlight">\(T=2552\)</span> (cosine <span class="math notranslate nohighlight">\(0.76\)</span>) and
+essentially exact at <span class="math notranslate nohighlight">\(\kappa=4.8\)</span>. Cutting <span class="math notranslate nohighlight">\(T\)</span> to <span class="math notranslate nohighlight">\(500\)</span> drops the
+<span class="math notranslate nohighlight">\(c=1\)</span> cosine to <span class="math notranslate nohighlight">\(0.40\)</span>.</p>
+<p>Every later <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> is therefore reported against this
+floor (or its sign-flip sibling), not as a raw SNR.</p>
+</section>
+<section id="online-em-rehearsal-h4-with-known-y">
+<h3>Online EM rehearsal (H4, with known <span class="math notranslate nohighlight">\(Y\)</span>)<a class="headerlink" href="#online-em-rehearsal-h4-with-known-y" title="Link to this heading">#</a></h3>
+<p>Path: <span class="math notranslate nohighlight">\(\gamma_t\)</span> rotates by <span class="math notranslate nohighlight">\(\pi/4\)</span> in the <span class="math notranslate nohighlight">\(\Sigma\)</span> metric over
+<span class="math notranslate nohighlight">\(T=2552\)</span>; InverseGaussian scale jumps <span class="math notranslate nohighlight">\(\times 3\)</span> at <span class="math notranslate nohighlight">\(t=T/2\)</span>. Oracle
+start at the true <span class="math notranslate nohighlight">\(t=0\)</span> model. Filtered tracker (using
+<span class="math notranslate nohighlight">\(\theta_{t-1}\)</span> on <span class="math notranslate nohighlight">\(x_t\)</span>) versus true <span class="math notranslate nohighlight">\(Y\)</span>. EWMA realized variance of
+the equal-weight mean is the RV baseline. True <span class="math notranslate nohighlight">\(\kappa=0.096\)</span> on
+this path.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(h\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\tau\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span></p></th>
+<th class="head"><p>corr<span class="math notranslate nohighlight">\((\hat Y^{\mathrm{filt}},Y)\)</span></p></th>
+<th class="head"><p>After <span class="math notranslate nohighlight">\(h_s=21\)</span></p></th>
+<th class="head"><p>corr RV</p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\kappa_t\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\cos\angle\)</span></p></th>
+<th class="head"><p>Turnover</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>21</p></td>
+<td><p>0</p></td>
+<td><p>61</p></td>
+<td><p>0.32</p></td>
+<td><p>0.46</p></td>
+<td><p>0.47</p></td>
+<td><p>1.36</p></td>
+<td><p>0.18</p></td>
+<td><p>0.084</p></td>
+</tr>
+<tr class="row-odd"><td><p>21</p></td>
+<td><p>0.1</p></td>
+<td><p>61</p></td>
+<td><p>0.14</p></td>
+<td><p>0.09</p></td>
+<td><p>0.47</p></td>
+<td><p>0.50</p></td>
+<td><p>0.47</p></td>
+<td><p>0.139</p></td>
+</tr>
+<tr class="row-even"><td><p>63</p></td>
+<td><p>0</p></td>
+<td><p>182</p></td>
+<td><p>0.26</p></td>
+<td><p>0.30</p></td>
+<td><p>0.48</p></td>
+<td><p>0.64</p></td>
+<td><p>0.31</p></td>
+<td><p>0.054</p></td>
+</tr>
+<tr class="row-odd"><td><p>252</p></td>
+<td><p>0</p></td>
+<td><p>727</p></td>
+<td><p>0.30</p></td>
+<td><p>0.38</p></td>
+<td><p>0.46</p></td>
+<td><p>0.23</p></td>
+<td><p>0.57</p></td>
+<td><p>0.024</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>What H4 got right.</strong> Short <span class="math notranslate nohighlight">\(h\)</span> inflates gauge-invariant <span class="math notranslate nohighlight">\(\kappa_t\)</span>
+(<span class="math notranslate nohighlight">\(14\times\)</span> at <span class="math notranslate nohighlight">\(h=21\)</span>) and raises turnover.</p>
+<p><strong>What H4 got wrong as a recipe.</strong> Short <span class="math notranslate nohighlight">\(h\)</span> does <em>not</em> recover the
+rotating direction — mean cosine is <em>worse</em> (<span class="math notranslate nohighlight">\(0.18\)</span> vs <span class="math notranslate nohighlight">\(0.57\)</span> at
+<span class="math notranslate nohighlight">\(h=252\)</span>). The rotation is slow (<span class="math notranslate nohighlight">\(\pi/4\)</span> over ten years); estimation
+noise in <span class="math notranslate nohighlight">\(\hat\gamma_t\)</span> dominates the tracking benefit. Shrinkage
+<span class="math notranslate nohighlight">\(\tau=0.1\)</span> at <span class="math notranslate nohighlight">\(h=21\)</span> buys cosine (<span class="math notranslate nohighlight">\(0.47\)</span>) and spends <span class="math notranslate nohighlight">\(Y\)</span>-tracking
+and turnover. The smoothed <span class="math notranslate nohighlight">\(h=21\)</span> tracker matches EWMA RV (both
+<span class="math notranslate nohighlight">\(\approx 0.46\)</span>) and does not beat it. A frozen true-model
+<em>posterior</em> on the same path still has corr <span class="math notranslate nohighlight">\(0.96\)</span> — again the
+quadratic channel, which does not need <span class="math notranslate nohighlight">\(\gamma_t\)</span>.</p>
+<p>In-sample <span class="math notranslate nohighlight">\(\hat Y\)</span> (using <span class="math notranslate nohighlight">\(\theta_t\)</span> on <span class="math notranslate nohighlight">\(x_t\)</span>) has corr <span class="math notranslate nohighlight">\(0.63\)</span>–<span class="math notranslate nohighlight">\(0.89\)</span>.
+That is same-day overfit. The filtered numbers above are the honest
+ones.</p>
+</section>
+</section>
+<section id="phase-1-static-s-p-500-h1-h3">
+<h2>Phase 1 — static S&amp;P 500 (H1, H3)<a class="headerlink" href="#phase-1-static-s-p-500-h1-h3" title="Link to this heading">#</a></h2>
+<p>Nested seed-0 universes. NIG at all <span class="math notranslate nohighlight">\(d\)</span>; GH nested continuation at
+<span class="math notranslate nohighlight">\(d\le 50\)</span>; VG at <span class="math notranslate nohighlight">\(d\le 10\)</span>. Sign-flip <span class="math notranslate nohighlight">\(B=50\)</span> for <span class="math notranslate nohighlight">\(d\le 50\)</span>, <span class="math notranslate nohighlight">\(B=20\)</span>
+for <span class="math notranslate nohighlight">\(d\in\{100,200,468\}\)</span>.</p>
+<section id="h1-no-linear-extraction">
+<h3>H1 — no linear extraction<a class="headerlink" href="#h1-no-linear-extraction" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(d\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span></p></th>
+<th class="head"><p>Null 95%</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(p\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\hat\kappa\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\sqrt{\kappa/(1+\kappa)}\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(1/\kappa\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>0.0043</p></td>
+<td><p>0.0098</p></td>
+<td><p>0.41</p></td>
+<td><p>0.0082</p></td>
+<td><p>0.090</p></td>
+<td><p>122</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>0.018</p></td>
+<td><p>0.018</p></td>
+<td><p>0.078</p></td>
+<td><p>0.020</p></td>
+<td><p>0.139</p></td>
+<td><p>51</p></td>
+</tr>
+<tr class="row-even"><td><p>25</p></td>
+<td><p>0.036</p></td>
+<td><p>0.040</p></td>
+<td><p>0.12</p></td>
+<td><p>0.029</p></td>
+<td><p>0.167</p></td>
+<td><p>35</p></td>
+</tr>
+<tr class="row-odd"><td><p>50</p></td>
+<td><p>0.075</p></td>
+<td><p>0.085</p></td>
+<td><p>0.20</p></td>
+<td><p>0.048</p></td>
+<td><p>0.214</p></td>
+<td><p>21</p></td>
+</tr>
+<tr class="row-even"><td><p>100</p></td>
+<td><p>0.127</p></td>
+<td><p>0.164</p></td>
+<td><p>0.52</p></td>
+<td><p>0.071</p></td>
+<td><p>0.258</p></td>
+<td><p>14</p></td>
+</tr>
+<tr class="row-odd"><td><p>200</p></td>
+<td><p>0.219</p></td>
+<td><p>0.298</p></td>
+<td><p>0.81</p></td>
+<td><p>0.115</p></td>
+<td><p>0.321</p></td>
+<td><p>8.7</p></td>
+</tr>
+<tr class="row-even"><td><p>468</p></td>
+<td><p>0.509</p></td>
+<td><p>0.808</p></td>
+<td><p>1.00</p></td>
+<td><p>0.233</p></td>
+<td><p>0.435</p></td>
+<td><p>4.3</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Read a row as: “the fit produced this <span class="math notranslate nohighlight">\(\tilde q\)</span>; a sign-flip that
+kills all skewness produces a larger <span class="math notranslate nohighlight">\(\tilde q\)</span> this often; the
+implied fluctuation SNR and the correlation you would get <em>if</em> <span class="math notranslate nohighlight">\(Y\)</span>
+were observed and the model were true.”</p>
+<p>Equal-weight univariate NIG:
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{ew50}}=0.0093\)</span>, <span class="math notranslate nohighlight">\(\kappa_{\mathrm{ew468}}=0.0125\)</span>.
+The <span class="math notranslate nohighlight">\(d=50\)</span> panel <span class="math notranslate nohighlight">\(\hat\kappa=0.048\)</span> exceeds the index but sits
+inside the sign-flip floor. <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> grows with <span class="math notranslate nohighlight">\(d\)</span>; the
+null grows faster. At <span class="math notranslate nohighlight">\(d=468\)</span>, <span class="math notranslate nohighlight">\(p=1\)</span>: the fit is <em>less</em> skewed than
+a typical sign-flip.</p>
+<p>GH <span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span> is <span class="math notranslate nohighlight">\(0.069\)</span> vs NIG <span class="math notranslate nohighlight">\(0.075\)</span>
+(gauge-invariant level SNR agrees). GH <span class="math notranslate nohighlight">\(\kappa=0.097\)</span> is a bit
+higher via a smaller <span class="math notranslate nohighlight">\(E[Y]\)</span> (<span class="math notranslate nohighlight">\(0.10\)</span> vs <span class="math notranslate nohighlight">\(1\)</span>). VG <span class="math notranslate nohighlight">\(\kappa\)</span> is smaller
+(<span class="math notranslate nohighlight">\(0.009\)</span> at <span class="math notranslate nohighlight">\(d=10\)</span>). Extra subordinator flexibility does not create
+a linear signal.</p>
+<p><strong>H1 holds.</strong> Point estimates sit in <span class="math notranslate nohighlight">\(10^{-2}\)</span> to <span class="math notranslate nohighlight">\(10^{-1}\)</span> and are
+indistinguishable from odd-moment noise.</p>
+</section>
+<section id="tracker-versus-quadratic-channel-d-50">
+<h3>Tracker versus quadratic channel (<span class="math notranslate nohighlight">\(d=50\)</span>)<a class="headerlink" href="#tracker-versus-quadratic-channel-d-50" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>Sample</p></th>
+<th class="head"><p>Model / simulation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathrm{Var}(\hat Y)\)</span></p></td>
+<td><p>14.67</p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{Var}(Y)+E[Y]/\tilde q=13.99\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathrm{skew}(\hat Y)\)</span></p></td>
+<td><p>0.79</p></td>
+<td><p>0.51</p></td>
+</tr>
+<tr class="row-even"><td><p>ACF<span class="math notranslate nohighlight">\(_1\)</span>, ACF<span class="math notranslate nohighlight">\(_{21}\)</span> of <span class="math notranslate nohighlight">\(\hat Y\)</span></p></td>
+<td><p>0.012, 0.005</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,\,E[Y\mid X])\)</span></p></td>
+<td><p>0.203</p></td>
+<td><p>0.205</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(E[Y\mid X],\,q_\perp)\)</span></p></td>
+<td><p>0.989</p></td>
+<td><p>0.998</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(E[Y\mid X],\,\text{x-sec. disp.})\)</span></p></td>
+<td><p>0.933</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(E[Y\mid X],\,\text{21-day RV})\)</span></p></td>
+<td><p>0.580</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,\,\text{21-day RV})\)</span></p></td>
+<td><p>0.071</p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>What worked (model side).</strong> The linear tracker is consistent with
+the i.i.d. mixture: variance, ACF near zero, and the split between
+<span class="math notranslate nohighlight">\(\hat Y\)</span> and <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> match a draw from the fitted model.</p>
+<p><strong>What failed (as a clock).</strong> <span class="math notranslate nohighlight">\(\hat Y\)</span> is uncorrelated with realized
+vol. The posterior mean is essentially <span class="math notranslate nohighlight">\(q_\perp\)</span>
+(corr <span class="math notranslate nohighlight">\(0.99\)</span>) and <em>is</em> the volatility clock (corr <span class="math notranslate nohighlight">\(0.58\)</span> with 21-day
+RV, <span class="math notranslate nohighlight">\(0.93\)</span> with cross-sectional dispersion).</p>
+<p>The i.i.d. misspecification the plan expected to see in <span class="math notranslate nohighlight">\(\hat Y\)</span>
+(clustered tracker residuals) is not there. It lives in
+<span class="math notranslate nohighlight">\(E[Y\mid X]\)</span>, which inherits the persistence of realized vol. Phase 3
+therefore scores the quadratic channel against RV, and does not
+expect a clustered <span class="math notranslate nohighlight">\(\hat Y_t\)</span>.</p>
+</section>
+<section id="h3-max-skewness">
+<h3>H3 — max-skewness<a class="headerlink" href="#h3-max-skewness" title="Link to this heading">#</a></h3>
+<p><span class="math notranslate nohighlight">\(t^\dagger&lt;0\)</span> for every NIG and GH fit; <span class="math notranslate nohighlight">\(t^\dagger\approx 0\)</span> for VG
+(Gamma equality). Model max-skewness is <span class="math notranslate nohighlight">\(w^\star\)</span> in all cases,
+including the GIG check on these four GH fits.</p>
+<p>Sample third moments do not recover it. Direct skew maximisation,
+20 L-BFGS starts:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(d\)</span></p></th>
+<th class="head"><p>In-sample max skew</p></th>
+<th class="head"><p>Tracker sample skew</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\cos\angle\)</span></p></th>
+<th class="head"><p>OOS max</p></th>
+<th class="head"><p>OOS tracker</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>3.24</p></td>
+<td><p>0.59</p></td>
+<td><p>0.13</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.023\)</span></p></td>
+<td><p>0.24</p></td>
+</tr>
+<tr class="row-odd"><td><p>50</p></td>
+<td><p>8.31</p></td>
+<td><p>0.79</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.20\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.047\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Equal-weight, min-variance, and PC1 all have <span class="math notranslate nohighlight">\(w^\top\gamma&lt;0\)</span> and
+<em>negative</em> sample skew (index leverage). The tracker is the only
+listed portfolio with positive sample skew, and it is not the sample
+maximiser. In-sample skew <span class="math notranslate nohighlight">\(8.3\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span> collapses out of sample.
+Third moments overfit.</p>
+<p><strong>H3 split.</strong> True on the model. False as a sample-moment recipe.</p>
+</section>
+<section id="anatomy-of-w-star-at-d-50">
+<h3>Anatomy of <span class="math notranslate nohighlight">\(w^\star\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span><a class="headerlink" href="#anatomy-of-w-star-at-d-50" title="Link to this heading">#</a></h3>
+<p>Unit-gross long/short, 24 long / 26 short, long share <span class="math notranslate nohighlight">\(0.45\)</span>,
+Herfindahl <span class="math notranslate nohighlight">\(0.032\)</span>. Correlation of weights with market beta is
+<span class="math notranslate nohighlight">\(0.065\)</span> — not a market tilt. <span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y, m_t)=-0.37\)</span>.
+Location <span class="math notranslate nohighlight">\((w^\star)^\top\mu=-0.987\)</span> against sample
+<span class="math notranslate nohighlight">\(E[P^\star]=0.013\)</span>, so <span class="math notranslate nohighlight">\(E[\hat Y]=1=E[Y]\)</span>: the location term eats
+the <span class="math notranslate nohighlight">\(Y\)</span>-premium and the raw tracker return is near zero. That is the
+no-near-arbitrage sign from Proposition 2, in a regime where the
+proposition’s tail bound is vacuous (<span class="math notranslate nohighlight">\(\tilde q\)</span> is small:
+<span class="math notranslate nohighlight">\(P(\hat Y\le -1)=0.28\)</span> vs bound <span class="math notranslate nohighlight">\(0.58\)</span>).</p>
+<p>Block-bootstrap cosine 5/50/95 <span class="math notranslate nohighlight">\(=0.58/0.73/0.82\)</span>: a moderately tight
+cone around a direction the sign-flip calls odd-moment noise. CVaR
+at <span class="math notranslate nohighlight">\(5\%\)</span> on the <span class="math notranslate nohighlight">\(\hat Y\)</span> scale is <span class="math notranslate nohighlight">\(7.50\)</span> long / <span class="math notranslate nohighlight">\(9.14\)</span> short
+(std <span class="math notranslate nohighlight">\(\approx 3.8\)</span>). Mild asymmetry, Gaussian residual, not a GIG
+floor.</p>
+<p>Split <span class="math notranslate nohighlight">\(\gamma=g\mathbf{1}+\delta\)</span>: <span class="math notranslate nohighlight">\(g=-8.5\cdot 10^{-4}\)</span>,
+<span class="math notranslate nohighlight">\(\lVert\delta\rVert^2=2.1\cdot 10^{-5}\)</span> vs
+<span class="math notranslate nohighlight">\(\lVert\gamma\rVert^2=5.7\cdot 10^{-5}\)</span>. PC1 carries <span class="math notranslate nohighlight">\(5.6\%\)</span> of
+<span class="math notranslate nohighlight">\(\tilde q\)</span>. Not market-aligned skewness — consistent with isotropic
+estimation noise.</p>
+</section>
+</section>
+<section id="phase-2-dimension-sweep-h2">
+<h2>Phase 2 — dimension sweep (H2)<a class="headerlink" href="#phase-2-dimension-sweep-h2" title="Link to this heading">#</a></h2>
+<p>Five nested seeds. <span class="math notranslate nohighlight">\(d=468\)</span> is the full panel, so seeds coincide.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(d\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span></p></th>
+<th class="head"><p>SE</p></th>
+<th class="head"><p>Sign-flip 95%</p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\hat\kappa\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\kappa_{\mathrm{index}}\)</span></p></th>
+<th class="head"><p>PC1 share</p></th>
+<th class="head"><p>Small-<span class="math notranslate nohighlight">\(\lambda\)</span> 10%</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>0.012</p></td>
+<td><p>0.006</p></td>
+<td><p>0.010</p></td>
+<td><p>0.014</p></td>
+<td><p>0.009</p></td>
+<td><p>0.39</p></td>
+<td><p>0.024</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>0.020</p></td>
+<td><p>0.004</p></td>
+<td><p>0.018</p></td>
+<td><p>0.019</p></td>
+<td><p>0.011</p></td>
+<td><p>0.27</p></td>
+<td><p>0.024</p></td>
+</tr>
+<tr class="row-even"><td><p>25</p></td>
+<td><p>0.035</p></td>
+<td><p>0.007</p></td>
+<td><p>0.040</p></td>
+<td><p>0.025</p></td>
+<td><p>0.013</p></td>
+<td><p>0.14</p></td>
+<td><p>0.075</p></td>
+</tr>
+<tr class="row-odd"><td><p>50</p></td>
+<td><p>0.060</p></td>
+<td><p>0.015</p></td>
+<td><p>0.085</p></td>
+<td><p>0.039</p></td>
+<td><p>0.012</p></td>
+<td><p>0.086</p></td>
+<td><p>0.085</p></td>
+</tr>
+<tr class="row-even"><td><p>100</p></td>
+<td><p>0.107</p></td>
+<td><p>0.014</p></td>
+<td><p>0.164</p></td>
+<td><p>0.061</p></td>
+<td><p>0.013</p></td>
+<td><p>0.045</p></td>
+<td><p>0.080</p></td>
+</tr>
+<tr class="row-odd"><td><p>200</p></td>
+<td><p>0.217</p></td>
+<td><p>0.011</p></td>
+<td><p>0.298</p></td>
+<td><p>0.111</p></td>
+<td><p>0.013</p></td>
+<td><p>0.019</p></td>
+<td><p>0.095</p></td>
+</tr>
+<tr class="row-even"><td><p>468</p></td>
+<td><p>0.509</p></td>
+<td><p>0</p></td>
+<td><p>0.808</p></td>
+<td><p>0.233</p></td>
+<td><p>0.012</p></td>
+<td><p>0.007</p></td>
+<td><p>0.106</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span class="math notranslate nohighlight">\(\hat{\tilde q}_d\)</span> grows, roughly linearly in <span class="math notranslate nohighlight">\(d\)</span>, and <strong>does not
+saturate</strong>. That is the shape of the idiosyncratic-<span class="math notranslate nohighlight">\(\delta\)</span> branch
+in the theory note — except every point sits at or below the
+sign-flip floor. (The <span class="math notranslate nohighlight">\(d=5,10\)</span> means slightly exceed the <em>seed-0</em>
+null; they do not exceed a seed-matched null, and PC1 shares at
+<span class="math notranslate nohighlight">\(d=5\)</span> range <span class="math notranslate nohighlight">\(0.001\)</span>–<span class="math notranslate nohighlight">\(0.76\)</span> across seeds.) The index ceiling
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{index}}\approx 0.01\)</span> is flat in <span class="math notranslate nohighlight">\(d\)</span>.</p>
+<p>Attribution is the opposite of market-aligned skewness: PC1’s share
+of <span class="math notranslate nohighlight">\(\tilde q\)</span> <em>falls</em> from <span class="math notranslate nohighlight">\(0.39\)</span> to <span class="math notranslate nohighlight">\(0.007\)</span>. The equicorrelation
+ceiling <span class="math notranslate nohighlight">\(g^2/(\bar\sigma^2\rho)\)</span> is <span class="math notranslate nohighlight">\(0.004\)</span>–<span class="math notranslate nohighlight">\(0.011\)</span>, the same order
+as <span class="math notranslate nohighlight">\(\kappa_{\mathrm{index}}\)</span>.
+<span class="math notranslate nohighlight">\(\lVert\delta\rVert^2/\lVert\gamma\rVert^2\)</span> rises <span class="math notranslate nohighlight">\(0.18\to 0.41\)</span>:
+the extra <span class="math notranslate nohighlight">\(\tilde q\)</span> lives in <span class="math notranslate nohighlight">\(\delta\)</span>, which is where
+<span class="math notranslate nohighlight">\(\gamma\)</span>-estimation noise lives. The small-<span class="math notranslate nohighlight">\(\lambda\)</span> <span class="math notranslate nohighlight">\(10\%\)</span> column
+is the share of <span class="math notranslate nohighlight">\(\tilde q\)</span> on the weakest tenth of the spectrum; it
+rises, slowly, as one would expect if the “signal” is noise in
+ill-conditioned directions.</p>
+<p><strong>H2 is false in both intended readings.</strong> There is no saturating
+market-skewness signal, and the growing <span class="math notranslate nohighlight">\(\tilde q_d\)</span> is not
+recoverable idiosyncratic skewness. It is the <span class="math notranslate nohighlight">\(d\)</span>-dependent null.
+Cross-section does not buy a linear clock.</p>
+</section>
+<section id="phase-3-online-em-h4">
+<h2>Phase 3 — online EM (H4)<a class="headerlink" href="#phase-3-online-em-h4" title="Link to this heading">#</a></h2>
+<p>Warm start: NIG on 2016–2017 (504 days), <span class="math notranslate nohighlight">\(d=50\)</span> seed 0. Warm-window
+<span class="math notranslate nohighlight">\(\tilde q=0.368\)</span>, <span class="math notranslate nohighlight">\(\kappa=0.182\)</span> — already higher than the
+full-sample <span class="math notranslate nohighlight">\(0.075/0.048\)</span>. Online period 2017-12-14 → 2026-02-09
+(<span class="math notranslate nohighlight">\(T=2048\)</span>). No re-gauging. Half-life <span class="math notranslate nohighlight">\(h\)</span> with
+<span class="math notranslate nohighlight">\(w=1-2^{-1/h}\)</span>; <span class="math notranslate nohighlight">\(1/t\)</span> is the consistency check
+(<a class="reference internal" href="../theory/online_em.html"><span class="doc">Online EM Algorithm</span></a>).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(h\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\tau\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(\kappa_t\)</span></p></th>
+<th class="head"><p>Mean <span class="math notranslate nohighlight">\(E[Y]_t\)</span></p></th>
+<th class="head"><p>Turnover</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\cos_{21}\)</span></p></th>
+<th class="head"><p>corr<span class="math notranslate nohighlight">\((\hat Y,\mathrm{RV})\)</span></p></th>
+<th class="head"><p>corr<span class="math notranslate nohighlight">\((q_\perp,\mathrm{RV})\)</span></p></th>
+<th class="head"><p>corr<span class="math notranslate nohighlight">\((q_\perp,\mathrm{disp})\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>21</p></td>
+<td><p>0</p></td>
+<td><p>61</p></td>
+<td><p>1.06</p></td>
+<td><p>4772</p></td>
+<td><p>0.084</p></td>
+<td><p>0.59</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.14\)</span></p></td>
+<td><p>0.14</p></td>
+<td><p>0.61</p></td>
+</tr>
+<tr class="row-odd"><td><p>63</p></td>
+<td><p>0</p></td>
+<td><p>182</p></td>
+<td><p>0.41</p></td>
+<td><p>27</p></td>
+<td><p>0.055</p></td>
+<td><p>0.79</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.04\)</span></p></td>
+<td><p>0.01</p></td>
+<td><p>0.44</p></td>
+</tr>
+<tr class="row-even"><td><p>126</p></td>
+<td><p>0</p></td>
+<td><p>364</p></td>
+<td><p>0.19</p></td>
+<td><p>3.3</p></td>
+<td><p>0.039</p></td>
+<td><p>0.88</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.05\)</span></p></td>
+<td><p>0.37</p></td>
+<td><p>0.80</p></td>
+</tr>
+<tr class="row-odd"><td><p>252</p></td>
+<td><p>0</p></td>
+<td><p>727</p></td>
+<td><p>0.11</p></td>
+<td><p>1.9</p></td>
+<td><p>0.027</p></td>
+<td><p>0.94</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.03\)</span></p></td>
+<td><p>0.55</p></td>
+<td><p>0.90</p></td>
+</tr>
+<tr class="row-even"><td><p>504</p></td>
+<td><p>0</p></td>
+<td><p>1454</p></td>
+<td><p>0.084</p></td>
+<td><p>1.6</p></td>
+<td><p>0.017</p></td>
+<td><p>0.98</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.01\)</span></p></td>
+<td><p>0.60</p></td>
+<td><p>0.93</p></td>
+</tr>
+<tr class="row-odd"><td><p>21</p></td>
+<td><p>0.1</p></td>
+<td><p>61</p></td>
+<td><p>0.52</p></td>
+<td><p>1.3</p></td>
+<td><p>0.123</p></td>
+<td><p>0.47</p></td>
+<td><p><span class="math notranslate nohighlight">\(-0.22\)</span></p></td>
+<td><p>0.54</p></td>
+<td><p>0.89</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(1/t\)</span></p></td>
+<td><p>0</p></td>
+<td><p>2552</p></td>
+<td><p>0.079</p></td>
+<td><p>1.5</p></td>
+<td><p>0.010</p></td>
+<td><p>0.99</p></td>
+<td><p><span class="math notranslate nohighlight">\(0.00\)</span></p></td>
+<td><p>0.61</p></td>
+<td><p>0.94</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The <span class="math notranslate nohighlight">\(1/t\)</span> schedule ends at <span class="math notranslate nohighlight">\(\kappa=0.051\)</span> vs static <span class="math notranslate nohighlight">\(0.048\)</span> —
+consistency holds. A secondary <span class="math notranslate nohighlight">\(d=20\)</span> unshrunk run:
+<span class="math notranslate nohighlight">\(h=21\)</span> <span class="math notranslate nohighlight">\(q_\perp\)</span> corr with RV <span class="math notranslate nohighlight">\(=-0.05\)</span>; <span class="math notranslate nohighlight">\(h=252\)</span> gives <span class="math notranslate nohighlight">\(0.50\)</span>. Same
+pattern, smaller panel.</p>
+<p><strong>What H4 got right.</strong> Short <span class="math notranslate nohighlight">\(h\)</span> inflates gauge-invariant <span class="math notranslate nohighlight">\(\kappa_t\)</span>
+(<span class="math notranslate nohighlight">\(22\times\)</span> at <span class="math notranslate nohighlight">\(h=21\)</span>) and explodes the gauge itself
+(<span class="math notranslate nohighlight">\(\overline{E[Y]}_t=4772\)</span>). Direction cosine over 21 days drops to
+<span class="math notranslate nohighlight">\(0.59\)</span>. The linear tracker stays uncorrelated (or anti-correlated)
+with RV at every <span class="math notranslate nohighlight">\(h\)</span>.</p>
+<p><strong>What H4 got wrong as a clock recipe.</strong> Shrinkage <span class="math notranslate nohighlight">\(\tau=0.1\)</span> at
+<span class="math notranslate nohighlight">\(h=21\)</span> pins the gauge (<span class="math notranslate nohighlight">\(\overline{E[Y]}=1.3\)</span>) and rescues <span class="math notranslate nohighlight">\(q_\perp\)</span>
+(corr <span class="math notranslate nohighlight">\(0.54\)</span>) at the cost of turnover. It does not rescue <span class="math notranslate nohighlight">\(\hat Y\)</span>.
+Long <span class="math notranslate nohighlight">\(h\)</span> or <span class="math notranslate nohighlight">\(1/t\)</span>: <span class="math notranslate nohighlight">\(\kappa_t\)</span> near the static value, stable
+<span class="math notranslate nohighlight">\(w^\star\)</span>, and <span class="math notranslate nohighlight">\(q_\perp\)</span> matches the static posterior as a vol proxy
+(corr with 21-day RV <span class="math notranslate nohighlight">\(0.55\)</span>–<span class="math notranslate nohighlight">\(0.61\)</span>; with cross-sectional dispersion
+<span class="math notranslate nohighlight">\(0.90\)</span>–<span class="math notranslate nohighlight">\(0.94\)</span>). Smoothing <span class="math notranslate nohighlight">\(q_\perp\)</span> at half-life <span class="math notranslate nohighlight">\(5\)</span> lifts RV-corr
+to <span class="math notranslate nohighlight">\(\sim 0.71\)</span>–<span class="math notranslate nohighlight">\(0.75\)</span>.</p>
+<p><strong>Fairness versus RV.</strong> EWMA of <span class="math notranslate nohighlight">\(m_t^2\)</span> at <span class="math notranslate nohighlight">\(h=21\)</span> has corr <span class="math notranslate nohighlight">\(0.66\)</span>
+with 21-day RV (same window family). Unshrunk <span class="math notranslate nohighlight">\(h=21\)</span> <span class="math notranslate nohighlight">\(q_\perp\)</span> loses
+that comparison (<span class="math notranslate nohighlight">\(0.14\)</span>). The model’s quadratic channel is
+competitive only once <span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span> is hundreds of days — once
+the online model is close to the static fit.</p>
+<p>Open problem (a) of the theory note, on this panel: the tracker plus
+online EM is <strong>not</strong> a real-time activity index comparable to
+realized variance. <span class="math notranslate nohighlight">\(q_\perp\)</span> is, and it does not need <span class="math notranslate nohighlight">\(\gamma_t\)</span>.</p>
+</section>
+<section id="worked-did-not-work">
+<h2>Worked / did not work<a class="headerlink" href="#worked-did-not-work" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Claim</p></th>
+<th class="head"><p>Result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Tracker MSE <span class="math notranslate nohighlight">\(=E[Y]/\tilde q\)</span> in simulation</p></td>
+<td><p>Holds to <span class="math notranslate nohighlight">\(&lt;1\%\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linear-Bayes MSE <span class="math notranslate nohighlight">\(=\mathrm{Var}(Y)/(1+\kappa)\)</span></p></td>
+<td><p>Holds to <span class="math notranslate nohighlight">\(&lt;1\%\)</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathrm{corr}(\hat Y,Y)=\sqrt{\kappa/(1+\kappa)}\)</span></p></td>
+<td><p>Holds at <span class="math notranslate nohighlight">\(\kappa\ge 0.43\)</span>; <span class="math notranslate nohighlight">\(6.5\%\)</span> high at the panel’s own <span class="math notranslate nohighlight">\(\kappa\approx 0.05\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Posterior mean tracks <span class="math notranslate nohighlight">\(Y\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span> even if <span class="math notranslate nohighlight">\(\gamma=0\)</span></p></td>
+<td><p>Holds (corr <span class="math notranslate nohighlight">\(0.95\)</span> in simulation).</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span> is a usable point SNR</p></td>
+<td><p>Fails. Upward-biased; at the panel’s <span class="math notranslate nohighlight">\(\kappa\)</span> the bias is the whole signal. Always report a matched null.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Fitted <span class="math notranslate nohighlight">\(\kappa\ll 1\)</span> on daily equities (H1)</p></td>
+<td><p>Holds. Indistinguishable from sign-flip.</p></td>
+</tr>
+<tr class="row-even"><td><p>Cross-section lifts <span class="math notranslate nohighlight">\(\kappa\)</span> above the index (H2, first reading)</p></td>
+<td><p>Point estimates do; the null does too, faster.</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tilde q_d\)</span> saturates on the market factor (H2, second reading)</p></td>
+<td><p>Fails. Grows linearly; PC1 share <em>falls</em>.</p></td>
+</tr>
+<tr class="row-even"><td><p>Growing <span class="math notranslate nohighlight">\(\tilde q_d\)</span> is recoverable idiosyncratic skewness</p></td>
+<td><p>Fails. It is the <span class="math notranslate nohighlight">\(d\)</span>-dependent null.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Model max-skewness <span class="math notranslate nohighlight">\(=w^\star\)</span> (H3, model)</p></td>
+<td><p>Holds on every VG/NIG/GH fit, including the GIG check.</p></td>
+</tr>
+<tr class="row-even"><td><p>Sample skew maximiser recovers <span class="math notranslate nohighlight">\(w^\star\)</span> (H3, sample)</p></td>
+<td><p>Fails. Cosine <span class="math notranslate nohighlight">\(0.13\)</span> / <span class="math notranslate nohighlight">\(-0.20\)</span>; OOS collapse.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tracker has positive sample skew; index portfolios do not</p></td>
+<td><p>Holds, and is the only listed portfolio that does.</p></td>
+</tr>
+<tr class="row-even"><td><p>Short online half-life inflates <span class="math notranslate nohighlight">\(\kappa_t\)</span> and churns <span class="math notranslate nohighlight">\(w^\star\)</span> (H4, noise)</p></td>
+<td><p>Holds, including gauge explosion at <span class="math notranslate nohighlight">\(h=21\)</span>, <span class="math notranslate nohighlight">\(\tau=0\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Short half-life extracts a better linear clock (H4, recipe)</p></td>
+<td><p>Fails. <span class="math notranslate nohighlight">\(\hat Y\)</span> uncorrelated with RV at every <span class="math notranslate nohighlight">\(h\)</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(q_\perp\)</span> / <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> tracks realized vol</p></td>
+<td><p>Holds, once <span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span> is hundreds of days (corr <span class="math notranslate nohighlight">\(0.55\)</span>–<span class="math notranslate nohighlight">\(0.61\)</span> with 21-day RV; <span class="math notranslate nohighlight">\(0.90\)</span>–<span class="math notranslate nohighlight">\(0.94\)</span> with dispersion).</p></td>
+</tr>
+<tr class="row-odd"><td><p>Online EM + tracker is a real-time activity index</p></td>
+<td><p>Fails on this panel.</p></td>
+</tr>
+<tr class="row-even"><td><p>Proposition 2 tail bound is informative at fitted <span class="math notranslate nohighlight">\(\tilde q\)</span></p></td>
+<td><p>Fails (vacuous). Location sign is consistent with no-near-arbitrage.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Extra GIG parameters (GH vs NIG) create a linear signal</p></td>
+<td><p>Fails. <span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span> agrees.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>None of this is a failure of the mathematics. Fitted daily-equity
+<span class="math notranslate nohighlight">\(\gamma\)</span> is small, the sign-flip says it is consistent with zero, and
+Proposition 1 then says no linear payoff can reveal <span class="math notranslate nohighlight">\(Y\)</span>. That is
+partial revelation in the <span class="math notranslate nohighlight">\(\kappa=O(10^{-2})\)</span> regime the
+no-near-arbitrage heuristic predicted, taken all the way to “no
+linear revelation.”</p>
+<p>Mencía &amp; Sentana’s skewness fund is, on this panel, a noisy
+long–short with no clock content. The EM E-step’s <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span>
+remains a usable latent-vol diagnostic, as the finance tutorials
+already treat it.</p>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Link to this heading">#</a></h2>
+<p>Current-constituent panel (survivorship); large caps only; a single
+common subordinator; i.i.d. GH (the ACF of <span class="math notranslate nohighlight">\(\hat Y\)</span> being
+<span class="math notranslate nohighlight">\(\approx 0\)</span> is consistent with that, the ACF of <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span> is
+not). Full-<span class="math notranslate nohighlight">\(\Sigma\)</span> at <span class="math notranslate nohighlight">\(d=468\)</span> has <span class="math notranslate nohighlight">\(T/d\approx 5.5\)</span>. Sign-flip
+nulls at <span class="math notranslate nohighlight">\(d\ge 100\)</span> use <span class="math notranslate nohighlight">\(B=20\)</span>. GH was a nested continuation, not a
+cold start, and was not run at <span class="math notranslate nohighlight">\(d&gt;50\)</span>. VIX and high-frequency RV
+were not used; panel-based proxies suffice for the mechanism
+question. Multi-subordinator models and nonlinear payoffs (open
+problems (b), (c) in <a class="reference internal" href="subordinator_tracking.html"><span class="doc">Subordinator-tracking portfolios</span></a>) were out of
+scope.</p>
+</section>
+<section id="what-this-is-not-asking-normix-to-do">
+<h2>What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do<a class="headerlink" href="#what-this-is-not-asking-normix-to-do" title="Link to this heading">#</a></h2>
+<p>Report <span class="math notranslate nohighlight">\(\tilde q\)</span> and <span class="math notranslate nohighlight">\(\kappa\)</span> on fitted models only with a matched
+null floor. A tracker-versus-Bayes notebook is still worth teaching
+the channel split; the equity punchline is <span class="math notranslate nohighlight">\(q_\perp\)</span>, not <span class="math notranslate nohighlight">\(w^\star\)</span>.
+No package change. The linear tracker is a clean theoretical object
+that this panel does not support as a data-analysis tool.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="subordinator_tracking.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Subordinator-tracking portfolios</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../api/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API Reference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-was-asked">What was asked</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-and-cohorts">Data and cohorts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#models-and-fitting">Models and fitting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#metrics-glossary">Metrics glossary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#signal-to-noise">Signal-to-noise</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimators-of-y">Estimators of <span class="math notranslate nohighlight">\(Y\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#volatility-proxies">Volatility proxies</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nulls-and-geometry">Nulls and geometry</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-0-synthetic-validation">Phase 0 — synthetic validation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mse-and-correlation-laws-true-parameters">MSE and correlation laws (true parameters)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimation-noise-of-hat-tilde-q">Estimation noise of <span class="math notranslate nohighlight">\(\hat{\tilde q}\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#online-em-rehearsal-h4-with-known-y">Online EM rehearsal (H4, with known <span class="math notranslate nohighlight">\(Y\)</span>)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-static-s-p-500-h1-h3">Phase 1 — static S&amp;P 500 (H1, H3)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#h1-no-linear-extraction">H1 — no linear extraction</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tracker-versus-quadratic-channel-d-50">Tracker versus quadratic channel (<span class="math notranslate nohighlight">\(d=50\)</span>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#h3-max-skewness">H3 — max-skewness</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#anatomy-of-w-star-at-d-50">Anatomy of <span class="math notranslate nohighlight">\(w^\star\)</span> at <span class="math notranslate nohighlight">\(d=50\)</span></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-2-dimension-sweep-h2">Phase 2 — dimension sweep (H2)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-online-em-h4">Phase 3 — online EM (H4)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worked-did-not-work">Worked / did not work</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations">Limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-is-not-asking-normix-to-do">What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
