@@ -270,8 +270,11 @@ H1 holds. Equal-weight univariate NIG gives
 $\kappa_{\mathrm{ew50}}=0.0093$, $\kappa_{\mathrm{ew468}}=0.0125$,
 matching the $10^{-2}$ envelope. Panel $\hat\kappa$ exceeds the index
 but not the null; at $d=468$, $p=1$. GH $\kappa_{\mathrm{lev}}$ agrees
-with NIG at $d=50$ ($0.069$ vs $0.075$); extra GIG parameters do not
-create a linear signal.
+with NIG at $d=50$ ($0.069$ vs $0.075$); GH $\kappa$ is higher via
+$\mathrm{cv}^2$, not the $a=b$ gauge $e=0.10$. VG $\kappa=0.009$ at
+$d=10$ is the binding density clamp on $\alpha$, not leftover scale
+(unconstrained VG recovers NIG $\gamma$-energy). Extra subordinator
+flexibility does not create a linear signal.
 
 The tracker at $d=50$ is consistent with the i.i.d. mixture
 ($\mathrm{Var}(\hat Y)=14.67$ vs $13.99$; ACF$_1=0.012$) and is
