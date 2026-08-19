@@ -346,28 +346,50 @@ EM or simulation artifact.
 
 The mixture has the orbit
 $(\gamma,\Sigma,Y)\mapsto(\gamma/c,\Sigma/c,cY)$. Under it
-$\tilde q\mapsto\tilde q/c$, $e\mapsto ce$, $v\mapsto c^2 v$, so
-raw $\tilde q$ and raw $e$ are not comparable across families.
-Two invariants factor $\kappa$:
+$\tilde q\mapsto\tilde q/c$,
+$E[Y]\mapsto c\,E[Y]$,
+$\mathrm{Var}(Y)\mapsto c^2\mathrm{Var}(Y)$, so raw $\tilde q$
+and raw $E[Y]$ are not comparable across families. Two invariants
+factor $\kappa$:
 
 $$
-\kappa_{\mathrm{lev}} = \tilde q\, e,
+\kappa_{\mathrm{lev}} = \tilde q\, E[Y],
 \qquad
-\mathrm{cv}^2 = v/e^2,
+\mathrm{cv}^2 = \mathrm{Var}(Y)/E[Y]^2,
 \qquad
 \kappa = \kappa_{\mathrm{lev}}\,\mathrm{cv}^2.
 $$
 
-$\kappa_{\mathrm{lev}}$ is $\tilde q$ in the $e=1$ gauge (scale-free
-$\gamma$-energy). $\mathrm{cv}^2$ is $\mathrm{Var}(Y)$ in that same
-gauge. `'a_eq_b'` pins those gauges differently:
-NIG gets $e=\mu_{\mathrm{IG}}=1$; GH gets $a=b$, hence
-$e=K_{p+1}(a)/K_p(a)$ ($0.10$ at $d=50$, $p\approx-2.47$); VG is
-a degenerate GIG ($b=0$) and the flag is a no-op.
+$\kappa_{\mathrm{lev}}$ is $\tilde q$ after $E[Y]=1$ (scale-free
+$\gamma$-energy). $\mathrm{cv}^2$ is $\mathrm{Var}(Y)$ in that
+same gauge.
 
-Seed-0 secondary fits on the same universes as the H1 table:
+**Recommended gauge for cross-family display: pin $E[Y]=1$.**
+`'a_eq_b'` does that only for NIG ($\mu_{\mathrm{IG}}=1$). On GH
+it sets $a=b$, so
+$E[Y]=K_{p+1}(a)/K_p(a)$, which is $0.10$ at $d=50$
+($p\approx-2.47$). On VG ($b=0$) the flag is a no-op.
+$|\Sigma|=1$ is the classical GH convention and also fails to
+align $E[Y]$. The representative that puts every family on the
+same $Y$-scale is a post-fit rescale
+$s=1/E[Y]$ along the existing orbit
+(`NormalMixture._rescale`; notebook helper `pin_mean_y`):
 
-| $d$ | Family | $\tilde q$ | $e$ | $\kappa_{\mathrm{lev}}$ | $\mathrm{cv}^2$ | $\kappa$ |
+| Family | $Y\mapsto sY$ rule | After $E[Y]=1$ |
+|---|---|---|
+| NIG | $\mu_{\mathrm{IG}}\mapsto s\mu_{\mathrm{IG}}$, $\lambda\mapsto s\lambda$ | same as `'a_eq_b'` |
+| GH | $a\mapsto a/s$, $b\mapsto sb$, $p$ fixed | $a\neq b$ in general |
+| VG | $\beta\mapsto\beta/s$, $\alpha$ fixed | $\beta=\alpha$ |
+
+The marginal law of $X$ is unchanged. $\kappa$ and
+$\kappa_{\mathrm{lev}}$ are invariant; raw $\tilde q$ and
+$\mathrm{Var}(Y)$ become the two numbers to compare.
+
+Seed-0 secondary fits. Columns $\tilde q$ and $E[Y]$ are as
+stored (NIG already at $E[Y]=1$); $\kappa_{\mathrm{lev}}$ and
+$\mathrm{cv}^2$ are the $E[Y]=1$ numbers.
+
+| $d$ | Family | $\tilde q$ | $E[Y]$ | $\kappa_{\mathrm{lev}}$ | $\mathrm{cv}^2$ | $\kappa$ |
 |---|---|---|---|---|---|---|
 | 5 | NIG | 0.0043 | 1 | 0.0043 | 1.91 | 0.0082 |
 | 5 | GH | 0.014 | 0.25 | 0.0034 | 5.24 | 0.018 |
@@ -378,7 +400,7 @@ Seed-0 secondary fits on the same universes as the H1 table:
 | 50 | NIG | 0.075 | 1 | 0.075 | 0.638 | 0.048 |
 | 50 | GH | 0.688 | 0.10 | 0.069 | 1.39 | 0.097 |
 
-**Not a leftover scale.** After the $e=1$ gauge, GH and NIG
+**Not a leftover scale.** After $E[Y]=1$, GH and NIG
 $\gamma$-energy agree at every overlapping $d$
 ($0.0034$ vs $0.0043$, $0.014$ vs $0.018$, $0.069$ vs $0.075$).
 Directions agree too: $\cos\angle(\gamma_{\mathrm{NIG}},\gamma_{\mathrm{GH}})\ge 0.999$
@@ -391,26 +413,54 @@ numbers are full-history EM on the same real panel. Mean
 log-likelihood at $d=10$: GH $27.06$, NIG $27.05$, VG $26.73$.
 VG is a *worse* fit, not a different random draw.
 
-**GH $\kappa$ is not higher because $e=0.10$.** $\kappa$ is
-gauge-invariant. The $e=0.10$ vs $1$ contrast is the $a=b$ gauge.
+**GH $\kappa$ is not higher because $E[Y]=0.10$.** $\kappa$ is
+gauge-invariant. The $0.10$ vs $1$ contrast is the $a=b$ gauge.
 GH $\kappa$ is higher because GIG puts more relative variance on
 $Y$ ($\mathrm{cv}^2=1.39$ vs NIG $0.64$ at $d=50$).
 $\kappa_{\mathrm{lev}}$ agrees; extra $(p,a,b)$ flexibility
 does not create a linear signal.
 
 **VG $\kappa$ is smaller because the density clamp binds.**
-Gamma mixing has $\mathrm{cv}^2=1/\alpha$.
-`alpha_min='density'` is $\alpha\ge d/2+\varepsilon$
-($\varepsilon=0.1$), so
-$\mathrm{cv}^2\le 2/(d+0.2)$. The fitted $\alpha$ sits
-*exactly* on that floor: $2.6$ at $d=5$, $5.1$ at $d=10$.
+This is not the moment floor that keeps $E[Y]$ finite. For
+Gamma mixing, $E[Y]=\alpha/\beta$ is finite for every
+$\alpha,\beta>0$. The clamp restricts the *marginal density of
+$X$*. Near $x=\mu$,
+
+$$
+f(x)\;\propto\; q(x)^{\alpha-d/2},
+\qquad
+q(x)=(x-\mu)^\top\Sigma^{-1}(x-\mu).
+$$
+
+When $\alpha\le d/2$ this diverges at the mode — an unbounded
+likelihood, the same degeneracy as a Gaussian mixture with a
+vanishing component ({ref}`Day1969 <day1969>`).
+`alpha_min='density'` is
+$\alpha\ge d/2+\varepsilon$ ($\varepsilon=0.1$), so the
+density stays bounded. It is an estimand restriction, not an
+arithmetic floor.
+
+Three other VG guards are easy to confuse with it:
+
+| Guard | Where | What it does | What it does *not* do |
+|---|---|---|---|
+| `ALPHA_MOMENT_MARGIN` | prior $E[1/Y]=\beta/(\alpha-1)$ | keeps that *inverse* moment finite when $\alpha\le 1$ | does not touch $E[Y]=\alpha/\beta$; does not bound $f(x)$ |
+| `B_POST_FLOOR` | E-step $b_{\mathrm{post}}$ | keeps $E[1/Y\mid x]$ from overflowing | leaves the likelihood unbounded; EM can still park at a spike |
+| `alpha_min='inverse_moment'` | M-step $\alpha\ge d/2+1+\varepsilon$ | density *and* $E[1/Y\mid x]$ classically bounded | tighter than `'density'`; not used in this study |
+| `alpha_min='density'` | M-step $\alpha\ge d/2+\varepsilon$ | $f(x)$ bounded at $\mu$ | does not pin $E[Y]$ |
+
+The finite-mean constraint $E[Y]=\beta/(\alpha-1)$ ($\alpha>1$)
+belongs to InverseGamma / NInvG, not to VG.
+
+Gamma mixing has $\mathrm{cv}^2=1/\alpha$. The density clamp
+therefore caps $\mathrm{cv}^2\le 2/(d+0.2)$. Fitted $\alpha$
+sits *exactly* on that floor: $2.6$ at $d=5$, $5.1$ at $d=10$.
 Hence $\mathrm{cv}^2=0.385$ and $0.196$, against NIG $1.91$
 and $1.11$. VG then inflates $\kappa_{\mathrm{lev}}$
 ($0.048$ vs NIG $0.018$ at $d=10$) to recover some skewness;
 $\kappa=\kappa_{\mathrm{lev}}\,\mathrm{cv}^2$ still comes out
 about half of NIG. Matching NIG's $\mathrm{cv}^2\approx 1.11$
-at $d=10$ would need $\alpha\approx 0.9$, which is illegal for
-a bounded VG density ($d/2=5$).
+at $d=10$ would need $\alpha\approx 0.9$, below $d/2=5$.
 
 Cold-start VG with `alpha_min=None` on the same universes
 drops below the floor and the $\gamma$-energy lines up with
@@ -421,14 +471,14 @@ NIG:
 | 5 | 1.16 | $<2.5$ | 0.0046 (NIG $0.0043$) | 0.86 | 0.0040 |
 | 10 | 1.56 | $<5$ | 0.022 (NIG $0.018$) | 0.64 | 0.014 |
 
-After the gauge, unconstrained VG $\gamma$-energy matches NIG and
-$\mathrm{Var}(Y)$ is in the same order. The residual $\mathrm{cv}^2$
-gap (Gamma vs InverseGaussian tails) is a family difference, not a
-scale bug. Those fits have an unbounded density at $x=\mu$, which
-is why the study clamped $\alpha$. The reported
-$\kappa_{\mathrm{VG}}=0.009$ at $d=10$ is the clamped estimand.
-Compare it to NIG at the same $d$ ($\kappa=0.020$), not to the
-$d=50$ NIG headline.
+After $E[Y]=1$, unconstrained VG $\gamma$-energy matches NIG and
+$\mathrm{Var}(Y)$ is in the same order. The residual
+$\mathrm{cv}^2$ gap (Gamma vs InverseGaussian tails) is a family
+difference, not a scale bug. Those fits have an unbounded
+density at $x=\mu$, which is why the study clamped $\alpha$.
+The reported $\kappa_{\mathrm{VG}}=0.009$ at $d=10$ is the
+clamped estimand. Compare it to NIG at the same $d$
+($\kappa=0.020$), not to the $d=50$ NIG headline.
 
 None of the three families clears the sign-flip floor. Extra
 subordinator flexibility still does not create a linear signal.
