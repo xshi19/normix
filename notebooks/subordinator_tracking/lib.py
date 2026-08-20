@@ -233,6 +233,22 @@ def load_or_fit_generator(
 # Tracker / SNR
 # ---------------------------------------------------------------------------
 
+def pin_mean_y(model, target: float = 1.0):
+    """Rescale onto the orbit so ``E[Y] = target``.
+
+    Uses :meth:`~normix.mixtures.marginal.NormalMixture._rescale`
+    ($Y\\mapsto sY$, $\\gamma\\mapsto\\gamma/s$, $\\Sigma\\mapsto\\Sigma/s$).
+    For NIG this is the same representative as ``a_eq_b``
+    ($\\mu_{\\mathrm{IG}}=1$). For GH it is *not* $a=b$ unless $p=-1/2$.
+    VG sets $\\beta=\\alpha/\\mathrm{target}$. The marginal law of $X$
+    is unchanged; $\\kappa$ and $\\kappa_{\\mathrm{lev}}$ are invariant.
+    """
+    mean_y = float(model.subordinator().mean())
+    if mean_y == 0.0:
+        raise ValueError("subordinator mean is 0; cannot pin E[Y]")
+    return model._rescale(target / mean_y)
+
+
 def _whiten(L: jax.Array, v: jax.Array) -> jax.Array:
     return solve_triangular(L, v, lower=True)
 

@@ -115,8 +115,13 @@ directly.
 
 **Secondary: GH** at $d\le 50$, started from the fitted NIG's exact
 GH embedding (`to_generalized_hyperbolic`) and then freeing
-$(p,a,b)$. Nested continuation, not a cold start. **VG** only at
-$d\le 10$, with `alpha_min='density'` so the marginal stays bounded.
+$(p,a,b)$. Nested continuation, not a cold start. The same
+`regularization='a_eq_b'` flag now pins $a=b$ on the GIG, which is
+*not* $E[Y]=1$ unless $p=-1/2$. Report $\kappa_{\mathrm{lev}}$ and
+$\kappa$, not raw $\tilde q$. **VG** only at $d\le 10$, with
+`alpha_min='density'` so the marginal stays bounded
+($\alpha\ge d/2+\varepsilon$). That clamp is a different estimand
+from unconstrained VG; see the family comparison below.
 
 **EM.** {py:class}`~normix.fitting.em.BatchEMFitter`, `default_init`
 cold start, `tol=1e-5`. The package default $10^{-3}$ stops after one
@@ -327,14 +332,156 @@ inside the sign-flip floor. $\hat{\tilde q}$ grows with $d$; the
 null grows faster. At $d=468$, $p=1$: the fit is *less* skewed than
 a typical sign-flip.
 
-GH $\kappa_{\mathrm{lev}}$ at $d=50$ is $0.069$ vs NIG $0.075$
-(gauge-invariant level SNR agrees). GH $\kappa=0.097$ is a bit
-higher via a smaller $E[Y]$ ($0.10$ vs $1$). VG $\kappa$ is smaller
-($0.009$ at $d=10$). Extra subordinator flexibility does not create
-a linear signal.
-
 **H1 holds.** Point estimates sit in $10^{-2}$ to $10^{-1}$ and are
-indistinguishable from odd-moment noise.
+indistinguishable from odd-moment noise. Secondary GH/VG fits do
+not create a linear signal either; the VG $\kappa$ gap is a
+constraint, not leftover scale — next subsection.
+
+### Family comparison — why VG $\kappa$ is smaller
+
+The H1 table is NIG. The question is whether the secondary families
+disagree on $\gamma$-energy or on $\mathrm{Var}(Y)$ after the
+scaling gauge is removed, and whether a smaller VG $\kappa$ is an
+EM or simulation artifact.
+
+The mixture has the orbit
+$(\gamma,\Sigma,Y)\mapsto(\gamma/c,\Sigma/c,cY)$. Under it
+$\tilde q\mapsto\tilde q/c$,
+$E[Y]\mapsto c\,E[Y]$,
+$\mathrm{Var}(Y)\mapsto c^2\mathrm{Var}(Y)$, so raw $\tilde q$
+and raw $E[Y]$ are not comparable across families. Two invariants
+factor $\kappa$:
+
+$$
+\kappa_{\mathrm{lev}} = \tilde q\, E[Y],
+\qquad
+\mathrm{cv}^2 = \mathrm{Var}(Y)/E[Y]^2,
+\qquad
+\kappa = \kappa_{\mathrm{lev}}\,\mathrm{cv}^2.
+$$
+
+$\kappa_{\mathrm{lev}}$ is $\tilde q$ after $E[Y]=1$ (scale-free
+$\gamma$-energy). $\mathrm{cv}^2$ is $\mathrm{Var}(Y)$ in that
+same gauge.
+
+**Recommended gauge for cross-family display: pin $E[Y]=1$.**
+`'a_eq_b'` does that only for NIG ($\mu_{\mathrm{IG}}=1$). On GH
+it sets $a=b$, so
+$E[Y]=K_{p+1}(a)/K_p(a)$, which is $0.10$ at $d=50$
+($p\approx-2.47$). On VG ($b=0$) the flag is a no-op.
+$|\Sigma|=1$ is the classical GH convention and also fails to
+align $E[Y]$. The representative that puts every family on the
+same $Y$-scale is a post-fit rescale
+$s=1/E[Y]$ along the existing orbit
+(`NormalMixture._rescale`; notebook helper `pin_mean_y`):
+
+| Family | $Y\mapsto sY$ rule | After $E[Y]=1$ |
+|---|---|---|
+| NIG | $\mu_{\mathrm{IG}}\mapsto s\mu_{\mathrm{IG}}$, $\lambda\mapsto s\lambda$ | same as `'a_eq_b'` |
+| GH | $a\mapsto a/s$, $b\mapsto sb$, $p$ fixed | $a\neq b$ in general |
+| VG | $\beta\mapsto\beta/s$, $\alpha$ fixed | $\beta=\alpha$ |
+
+The marginal law of $X$ is unchanged. $\kappa$ and
+$\kappa_{\mathrm{lev}}$ are invariant; raw $\tilde q$ and
+$\mathrm{Var}(Y)$ become the two numbers to compare.
+
+Seed-0 secondary fits. Columns $\tilde q$ and $E[Y]$ are as
+stored (NIG already at $E[Y]=1$); $\kappa_{\mathrm{lev}}$ and
+$\mathrm{cv}^2$ are the $E[Y]=1$ numbers.
+
+| $d$ | Family | $\tilde q$ | $E[Y]$ | $\kappa_{\mathrm{lev}}$ | $\mathrm{cv}^2$ | $\kappa$ |
+|---|---|---|---|---|---|---|
+| 5 | NIG | 0.0043 | 1 | 0.0043 | 1.91 | 0.0082 |
+| 5 | GH | 0.014 | 0.25 | 0.0034 | 5.24 | 0.018 |
+| 5 | VG | 0.0085 | 0.99 | 0.0084 | 0.385 | 0.0032 |
+| 10 | NIG | 0.018 | 1 | 0.018 | 1.11 | 0.020 |
+| 10 | GH | 0.105 | 0.14 | 0.014 | 3.39 | 0.049 |
+| 10 | VG | 0.056 | 0.85 | 0.048 | 0.196 | 0.0094 |
+| 50 | NIG | 0.075 | 1 | 0.075 | 0.638 | 0.048 |
+| 50 | GH | 0.688 | 0.10 | 0.069 | 1.39 | 0.097 |
+
+**Not a leftover scale.** After $E[Y]=1$, GH and NIG
+$\gamma$-energy agree at every overlapping $d$
+($0.0034$ vs $0.0043$, $0.014$ vs $0.018$, $0.069$ vs $0.075$).
+Directions agree too: $\cos\angle(\gamma_{\mathrm{NIG}},\gamma_{\mathrm{GH}})\ge 0.999$
+in the NIG $\Sigma$-metric;
+$\cos\angle(\gamma_{\mathrm{NIG}},\gamma_{\mathrm{VG}})\ge 0.988$.
+The families are reading the same skewness axis.
+
+**Not a simulation issue.** Phase 0 draws were NIG-only. These
+numbers are full-history EM on the same real panel. Mean
+log-likelihood at $d=10$: GH $27.06$, NIG $27.05$, VG $26.73$.
+VG is a *worse* fit, not a different random draw.
+
+**GH $\kappa$ is not higher because $E[Y]=0.10$.** $\kappa$ is
+gauge-invariant. The $0.10$ vs $1$ contrast is the $a=b$ gauge.
+GH $\kappa$ is higher because GIG puts more relative variance on
+$Y$ ($\mathrm{cv}^2=1.39$ vs NIG $0.64$ at $d=50$).
+$\kappa_{\mathrm{lev}}$ agrees; extra $(p,a,b)$ flexibility
+does not create a linear signal.
+
+**VG $\kappa$ is smaller because the density clamp binds.**
+This is not the moment floor that keeps $E[Y]$ finite. For
+Gamma mixing, $E[Y]=\alpha/\beta$ is finite for every
+$\alpha,\beta>0$. The clamp restricts the *marginal density of
+$X$*. Near $x=\mu$,
+
+$$
+f(x)\;\propto\; q(x)^{\alpha-d/2},
+\qquad
+q(x)=(x-\mu)^\top\Sigma^{-1}(x-\mu).
+$$
+
+When $\alpha\le d/2$ this diverges at the mode — an unbounded
+likelihood, the same degeneracy as a Gaussian mixture with a
+vanishing component ({ref}`Day1969 <day1969>`).
+`alpha_min='density'` is
+$\alpha\ge d/2+\varepsilon$ ($\varepsilon=0.1$), so the
+density stays bounded. It is an estimand restriction, not an
+arithmetic floor.
+
+Three other VG guards are easy to confuse with it:
+
+| Guard | Where | What it does | What it does *not* do |
+|---|---|---|---|
+| `ALPHA_MOMENT_MARGIN` | prior $E[1/Y]=\beta/(\alpha-1)$ | keeps that *inverse* moment finite when $\alpha\le 1$ | does not touch $E[Y]=\alpha/\beta$; does not bound $f(x)$ |
+| `B_POST_FLOOR` | E-step $b_{\mathrm{post}}$ | keeps $E[1/Y\mid x]$ from overflowing | leaves the likelihood unbounded; EM can still park at a spike |
+| `alpha_min='inverse_moment'` | M-step $\alpha\ge d/2+1+\varepsilon$ | density *and* $E[1/Y\mid x]$ classically bounded | tighter than `'density'`; not used in this study |
+| `alpha_min='density'` | M-step $\alpha\ge d/2+\varepsilon$ | $f(x)$ bounded at $\mu$ | does not pin $E[Y]$ |
+
+The finite-mean constraint $E[Y]=\beta/(\alpha-1)$ ($\alpha>1$)
+belongs to InverseGamma / NInvG, not to VG.
+
+Gamma mixing has $\mathrm{cv}^2=1/\alpha$. The density clamp
+therefore caps $\mathrm{cv}^2\le 2/(d+0.2)$. Fitted $\alpha$
+sits *exactly* on that floor: $2.6$ at $d=5$, $5.1$ at $d=10$.
+Hence $\mathrm{cv}^2=0.385$ and $0.196$, against NIG $1.91$
+and $1.11$. VG then inflates $\kappa_{\mathrm{lev}}$
+($0.048$ vs NIG $0.018$ at $d=10$) to recover some skewness;
+$\kappa=\kappa_{\mathrm{lev}}\,\mathrm{cv}^2$ still comes out
+about half of NIG. Matching NIG's $\mathrm{cv}^2\approx 1.11$
+at $d=10$ would need $\alpha\approx 0.9$, below $d/2=5$.
+
+Cold-start VG with `alpha_min=None` on the same universes
+drops below the floor and the $\gamma$-energy lines up with
+NIG:
+
+| $d$ | $\alpha$ | vs $d/2$ | $\kappa_{\mathrm{lev}}$ | $\mathrm{cv}^2$ | $\kappa$ |
+|---|---|---|---|---|---|
+| 5 | 1.16 | $<2.5$ | 0.0046 (NIG $0.0043$) | 0.86 | 0.0040 |
+| 10 | 1.56 | $<5$ | 0.022 (NIG $0.018$) | 0.64 | 0.014 |
+
+After $E[Y]=1$, unconstrained VG $\gamma$-energy matches NIG and
+$\mathrm{Var}(Y)$ is in the same order. The residual
+$\mathrm{cv}^2$ gap (Gamma vs InverseGaussian tails) is a family
+difference, not a scale bug. Those fits have an unbounded
+density at $x=\mu$, which is why the study clamped $\alpha$.
+The reported $\kappa_{\mathrm{VG}}=0.009$ at $d=10$ is the
+clamped estimand. Compare it to NIG at the same $d$
+($\kappa=0.020$), not to the $d=50$ NIG headline.
+
+None of the three families clears the sign-flip floor. Extra
+subordinator flexibility still does not create a linear signal.
 
 ### Tracker versus quadratic channel ($d=50$)
 
@@ -518,7 +665,8 @@ realized variance. $q_\perp$ is, and it does not need $\gamma_t$.
 | $q_\perp$ / $E[Y\mid X]$ tracks realized vol | Holds, once $n_{\mathrm{eff}}$ is hundreds of days (corr $0.55$–$0.61$ with 21-day RV; $0.90$–$0.94$ with dispersion). |
 | Online EM + tracker is a real-time activity index | Fails on this panel. |
 | Proposition 2 tail bound is informative at fitted $\tilde q$ | Fails (vacuous). Location sign is consistent with no-near-arbitrage. |
-| Extra GIG parameters (GH vs NIG) create a linear signal | Fails. $\kappa_{\mathrm{lev}}$ agrees. |
+| Extra GIG parameters (GH vs NIG) create a linear signal | Fails. $\kappa_{\mathrm{lev}}$ agrees; GH $\kappa$ is higher via $\mathrm{cv}^2$, not via the $a=b$ gauge $e=0.10$. |
+| VG $\kappa$ smaller than NIG is leftover scale or a simulation bug | Fails as a diagnosis. $\kappa_{\mathrm{lev}}$ and $\gamma$-direction agree once the gauge is removed; the gap is the binding `alpha_min='density'` clamp ($\alpha=d/2+\varepsilon$). Unconstrained VG recovers NIG $\gamma$-energy and a closer $\kappa$, at the cost of an unbounded density. |
 
 None of this is a failure of the mathematics. Fitted daily-equity
 $\gamma$ is small, the sign-flip says it is consistent with zero, and
@@ -539,7 +687,9 @@ common subordinator; i.i.d. GH (the ACF of $\hat Y$ being
 $\approx 0$ is consistent with that, the ACF of $E[Y\mid X]$ is
 not). Full-$\Sigma$ at $d=468$ has $T/d\approx 5.5$. Sign-flip
 nulls at $d\ge 100$ use $B=20$. GH was a nested continuation, not a
-cold start, and was not run at $d>50$. VIX and high-frequency RV
+cold start, and was not run at $d>50$. VG was $d\le 10$ only, and
+the reported $\kappa$ uses `alpha_min='density'` (the unconstrained
+MLE wants $\alpha<d/2$). VIX and high-frequency RV
 were not used; panel-based proxies suffice for the mechanism
 question. Multi-subordinator models and nonlinear payoffs (open
 problems (b), (c) in {doc}`subordinator_tracking`) were out of

@@ -158,9 +158,15 @@ grows with $d$; the null grows faster. At $d=468$, $p=1$: the fit is
 *less* skewed than a typical sign-flip. H1 holds.
 
 GH $\kappa_{\mathrm{lev}}$ at $d=50$ is $0.069$ vs NIG $0.075$ (gauge-invariant
-level SNR agrees); GH $\kappa=0.097$ is a bit higher via a smaller $e$
-($0.10$ vs $1$). VG $\kappa$ is smaller ($0.009$ at $d=10$). Extra
-subordinator flexibility does not create a linear signal.
+level SNR agrees). GH $\kappa=0.097$ is higher via $\mathrm{cv}^2=1.39$ vs
+$0.64$, not via $e=0.10$ (`a_eq_b` on GH is $a=b$, not $E[Y]=1$). VG
+$\kappa=0.009$ at $d=10$ is the binding `alpha_min='density'` clamp
+($\alpha=5.1=d/2+\varepsilon$, $\mathrm{cv}^2=0.196$ vs NIG $1.11$);
+unconstrained VG recovers $\kappa_{\mathrm{lev}}\approx$ NIG and
+$\kappa=0.014$. Same-$d$ comparison, not $d=50$. Extra subordinator
+flexibility does not create a linear signal. Details:
+[`docs/research/subordinator_tracking_empirics.md`](../../docs/research/subordinator_tracking_empirics.md)
+(family comparison).
 
 ### Tracker vs quadratic channel ($d=50$)
 

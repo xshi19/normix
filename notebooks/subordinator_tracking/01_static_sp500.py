@@ -73,6 +73,7 @@ from lib import (  # noqa: E402
     nig_fast_stats,
     pc1_weights,
     pearson,
+    pin_mean_y,
     rolling_sumsq,
     sample_central_moments,
     sample_skew,
@@ -87,6 +88,7 @@ from lib import (  # noqa: E402
     weight_anatomy,
     y_estimators,
 )
+from normix.distributions import VarianceGamma
 from normix.finance.risk import CVaR
 from normix.utils.plotting import COLORS, FIG_H, FIG_W, set_theme
 
@@ -262,6 +264,51 @@ cols = [
     "t_dagger", "t_star_le_inv_q", "n_iter",
 ]
 print(snr_tbl[cols].to_string(index=False))
+
+# %% [markdown]
+# ### Family comparison at matched $d$ (gauge-normalized)
+#
+# Raw $\tilde q$ and $E[Y]$ are not comparable: NIG `a_eq_b` pins
+# $E[Y]=1$; GH `a_eq_b` pins $a=b$; VG has $b=0$. Use `pin_mean_y`
+# to put every family on $E[Y]=1$. The invariants are
+# $\kappa_{\mathrm{lev}}=\tilde q\,E[Y]$ and
+# $\mathrm{cv}^2=\mathrm{Var}(Y)/E[Y]^2$.
+
+# %%
+fam = snr_tbl[snr_tbl["family"].isin(["nig", "gh", "vg"])].copy()
+print(fam[["family", "d", "q_tilde", "e", "v", "cv2", "kappa_lev", "kappa"]].to_string(index=False))
+print("\nAfter pin_mean_y (E[Y]=1); κ and κ_lev unchanged:")
+for fam_name, models in (("nig", nig_models), ("gh", gh_models), ("vg", vg_models)):
+    for d, model in sorted(models.items()):
+        if d > 50:
+            continue
+        m1 = pin_mean_y(model)
+        st = tracker_stats(m1)
+        print(
+            f"  {fam_name:3s} d={d:2d}  E[Y]={st['e']:.4g}  "
+            f"q̃={st['q_tilde']:.4g}  Var(Y)={st['v']:.4g}  "
+            f"κ_lev={st['kappa_lev']:.4g}  κ={st['kappa']:.4g}"
+        )
+print("\nVG α vs density floor d/2+0.1:")
+for d, model in vg_models.items():
+    floor = d / 2.0 + 0.1
+    alpha = float(model.alpha)
+    print(f"  d={d}  α={alpha:.4g}  floor={floor:.4g}  at_bound={np.isclose(alpha, floor)}")
+
+# unconstrained VG: does the MLE want α below the floor?
+print("\nunconstrained VG (alpha_min=None), same universes:")
+for d in D_VG:
+    X = jnp.asarray(panel[universe[d]].to_numpy(), dtype=np.float64)
+    res = VarianceGamma.default_init(X).fit(
+        X, max_iter=40, tol=1e-5, alpha_min=None,
+        e_step_backend="cpu", m_step_backend="cpu",
+    )
+    st = tracker_stats(res.model)
+    print(
+        f"  d={d}  α={float(res.model.alpha):.4g}  "
+        f"κ_lev={st['kappa_lev']:.4g}  cv2={st['cv2']:.4g}  κ={st['kappa']:.4g}"
+    )
+    jax.clear_caches()
 
 # %%
 fig, ax = plt.subplots(figsize=(FIG_W * 0.7, FIG_H * 0.55))
