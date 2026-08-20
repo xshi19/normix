@@ -246,6 +246,7 @@
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
 <li class="toctree-l2"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -451,6 +452,7 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subordinator-tracking-one-page-summary">Subordinator tracking — one-page summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gauges-study-plan">Gauges — study plan</a></li>
 </ul>
             </nav>
         </div>
@@ -473,6 +475,7 @@ that claim on daily S&amp;P 500 returns.</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
 <li class="toctree-l1"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
 </ul>
 </div>
 <section id="subordinator-tracking-one-page-summary">
@@ -502,6 +505,22 @@ each metric and cohort, and the results that held and the ones that
 did not.</p>
 <p><strong>Status.</strong> Theory 2026-08-10; S&amp;P 500 Phases 0–3, 2026-08-13. No
 package change.</p>
+</section>
+<section id="gauges-study-plan">
+<h2>Gauges — study plan<a class="headerlink" href="#gauges-study-plan" title="Link to this heading">#</a></h2>
+<p>The mixture has a scaling orbit
+<span class="math notranslate nohighlight">\((\gamma,\Sigma,Y)\mapsto(\gamma/s,\Sigma/s,sY)\)</span>; every fitted
+<span class="math notranslate nohighlight">\((\gamma,\Sigma,E[Y],\mathrm{Var}(Y))\)</span> is quoted in a gauge.
+<a class="reference internal" href="mixture_gauges.html"><span class="doc">Gauges for normal mean–variance mixtures</span></a> classifies gauges by two requirements —
+comparable parameters <em>across families</em> fitted to the same data,
+and comparable subordinator moments <em>across dimensions</em> (including
+against an ensemble of univariate fits) — shows that <span class="math notranslate nohighlight">\(E[Y]=1\)</span> is
+the only candidate satisfying both (with <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> failing the
+first and <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> the second), proves batch EM is
+gauge-equivariant so the choice is post-estimation reporting except
+through floors, stopping rules, and the online-EM η recursion, and
+pre-registers the numerical phases.</p>
+<p><strong>Status.</strong> Plan, 2026-08-19. Not yet executed.</p>
 </section>
 </section>
 
@@ -553,6 +572,7 @@ package change.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subordinator-tracking-one-page-summary">Subordinator tracking — one-page summary</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gauges-study-plan">Gauges — study plan</a></li>
 </ul>
   </nav></div>
 

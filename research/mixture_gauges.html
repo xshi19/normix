@@ -1,0 +1,1078 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Gauges for normal mean–variance mixtures &#8212; normix 0.3.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6512192e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'research/mixture_gauges';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="Subordinator tracking on the S&amp;P 500" href="subordinator_tracking_empirics.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.3.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Gauges for normal mean–variance mixtures</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fresearch/mixture_gauges.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/research/mixture_gauges.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Gauges for normal mean–variance mixtures</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-orbit-and-its-invariants">1. The orbit and its invariants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-sections-satisfy-which-invariance">2. Which sections satisfy which invariance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-invariance">2.1 Distribution invariance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-invariance">2.2 Dimension invariance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">2.3 Summary</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#in-em-or-post-estimation">3. In EM or post estimation?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hypotheses">4. Hypotheses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#study-plan">5. Study plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decision-gates">6. Decision gates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-is-not-asking-normix-to-do">7. What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="gauges-for-normal-meanvariance-mixtures">
+<h1>Gauges for normal mean–variance mixtures<a class="headerlink" href="#gauges-for-normal-meanvariance-mixtures" title="Link to this heading">#</a></h1>
+<p><strong>Status: study plan, 2026-08-19.</strong> Companion to
+<a class="reference internal" href="subordinator_tracking_empirics.html"><span class="doc">Subordinator tracking on the S&amp;P 500</span></a>, whose VG/NIG/GH <span class="math notranslate nohighlight">\(\kappa\)</span>
+comparison motivated it. Planned code: <code class="docutils literal notranslate"><span class="pre">notebooks/gauges/</span></code> (public
+API only; no package change is presumed).</p>
+<p>Every normal mean–variance mixture</p>
+<div class="math notranslate nohighlight">
+\[
+X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,Z,
+\qquad Z\sim N(0,\Sigma)\perp Y\ge 0,
+\]</div>
+<p>carries a one-parameter family of observationally equivalent
+parametrizations: for <span class="math notranslate nohighlight">\(s&gt;0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+(\mu,\;\gamma,\;\Sigma,\;Y)\;\longmapsto\;
+(\mu,\;\gamma/s,\;\Sigma/s,\;sY)
+\]</div>
+<p>leaves the law of <span class="math notranslate nohighlight">\(X\)</span> unchanged. Fitted <span class="math notranslate nohighlight">\((\gamma,\Sigma)\)</span> and the
+subordinator moments <span class="math notranslate nohighlight">\(E[Y]\)</span>, <span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\)</span> are therefore quoted
+in a <em>gauge</em> — a rule that picks one representative per orbit. This
+page asks which gauges make two comparisons meaningful:</p>
+<ol class="arabic simple">
+<li><p><strong>Distribution-invariant.</strong> Fits of GH, VG, NIG, NInvG to the
+<em>same data</em> should display <span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(\Sigma\)</span> on the same
+scale.</p></li>
+<li><p><strong>Dimension-invariant.</strong> A fit at <span class="math notranslate nohighlight">\(d=100\)</span> should display <span class="math notranslate nohighlight">\(E[Y]\)</span>,
+<span class="math notranslate nohighlight">\(\mathrm{Var}(Y)\)</span> on the same scale as a fit to a <span class="math notranslate nohighlight">\(d=50\)</span> column
+subsample — and as the ensemble of <span class="math notranslate nohighlight">\(100\)</span> univariate (<span class="math notranslate nohighlight">\(d=1\)</span>) fits,
+with the multivariate estimate sitting inside the ensemble spread
+rather than on a different scale.</p></li>
+</ol>
+<p>It then separates two places a gauge can act: <em>inside EM</em> (re-gauge
+each iteration, as <code class="docutils literal notranslate"><span class="pre">regularization=</span></code> does now) versus <em>post
+estimation</em> (fit in any gauge, re-gauge once for display), states
+hypotheses about when the choice affects estimation at all, and
+pre-registers a numerical plan.</p>
+<section id="the-orbit-and-its-invariants">
+<h2>1. The orbit and its invariants<a class="headerlink" href="#the-orbit-and-its-invariants" title="Link to this heading">#</a></h2>
+<p><span class="math notranslate nohighlight">\(\mu\)</span> is untouched by the orbit: location is identified, and every
+gauge below reports the same <span class="math notranslate nohighlight">\(\mu\)</span>. The one-dimensional freedom
+lives in <span class="math notranslate nohighlight">\((\gamma, \Sigma, Y)\)</span>. A maximal invariant is</p>
+<div class="math notranslate nohighlight">
+\[
+\bar\gamma = E[Y]\,\gamma,
+\qquad
+\bar\Sigma = E[Y]\,\Sigma,
+\qquad
+\bar Y = Y / E[Y],
+\]</div>
+<p>i.e. the parameters of the representative with <span class="math notranslate nohighlight">\(E[\bar Y]=1\)</span>,
+together with the <em>shape</em> of the normalized subordinator. The
+observable moments are functions of invariants only:</p>
+<div class="math notranslate nohighlight">
+\[
+E[X] = \mu + \bar\gamma,
+\qquad
+\mathrm{Cov}(X) = \bar\Sigma
+  + \mathrm{cv}^2\,\bar\gamma\bar\gamma^\top,
+\qquad
+\mathrm{cv}^2 = \frac{\mathrm{Var}(Y)}{E[Y]^2} = \mathrm{Var}(\bar Y),
+\]</div>
+<p>and the tracking-page SNRs are
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}=\bar\gamma^\top\bar\Sigma^{-1}\bar\gamma\)</span> and
+<span class="math notranslate nohighlight">\(\kappa=\kappa_{\mathrm{lev}}\,\mathrm{cv}^2\)</span>.</p>
+<p>A gauge is a <em>section</em>: a scale functional <span class="math notranslate nohighlight">\(T(\theta)&gt;0\)</span> with
+<span class="math notranslate nohighlight">\(T(g_s\theta) = s\,T(\theta)\)</span>, applied as <span class="math notranslate nohighlight">\(s = 1/T(\theta)\)</span> so that
+the representative satisfies <span class="math notranslate nohighlight">\(T=1\)</span>. Candidates, existing and
+proposed:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Gauge</p></th>
+<th class="head"><p>Condition</p></th>
+<th class="head"><p>Reads off</p></th>
+<th class="head"><p>Exists</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(a=b\)</span> on the GIG</p></td>
+<td><p>subordinator coordinates</p></td>
+<td><p>GH, NIG (no-op for VG, NInvG)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\Sigma\)</span></p></td>
+<td><p>always</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\log\lvert\Sigma\rvert\)</span> = initial model’s</p></td>
+<td><p><span class="math notranslate nohighlight">\(\Sigma\)</span></p></td>
+<td><p>always</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(E[Y]=1\)</span> (proposed; <code class="docutils literal notranslate"><span class="pre">pin_mean_y</span></code>)</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[Y]=1\)</span></p></td>
+<td><p>subordinator law</p></td>
+<td><p>needs <span class="math notranslate nohighlight">\(E[Y]&lt;\infty\)</span> (NInvG: <span class="math notranslate nohighlight">\(\alpha&gt;1\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>geometric (proposed)</p></td>
+<td><p><span class="math notranslate nohighlight">\(\exp E[\log Y]=1\)</span></p></td>
+<td><p>subordinator law</p></td>
+<td><p>always</p></td>
+</tr>
+<tr class="row-odd"><td><p>median (proposed)</p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{med}(Y)=1\)</span></p></td>
+<td><p>subordinator law</p></td>
+<td><p>always</p></td>
+</tr>
+<tr class="row-even"><td><p>trace (considered)</p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathrm{tr}(\Sigma)=d\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\Sigma\)</span></p></td>
+<td><p>always</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Call a section <em><span class="math notranslate nohighlight">\(Y\)</span>-side</em> if its condition involves only the law of
+<span class="math notranslate nohighlight">\(Y\)</span> (<span class="math notranslate nohighlight">\(a=b\)</span>, <span class="math notranslate nohighlight">\(E[Y]=1\)</span>, geometric, median) and <em><span class="math notranslate nohighlight">\(\Sigma\)</span>-side</em> if it
+involves <span class="math notranslate nohighlight">\(\Sigma\)</span> (both determinant modes, trace).</p>
+</section>
+<section id="which-sections-satisfy-which-invariance">
+<h2>2. Which sections satisfy which invariance<a class="headerlink" href="#which-sections-satisfy-which-invariance" title="Link to this heading">#</a></h2>
+<section id="distribution-invariance">
+<h3>2.1 Distribution invariance<a class="headerlink" href="#distribution-invariance" title="Link to this heading">#</a></h3>
+<p>Fits of two families to the same data land on nearby laws of <span class="math notranslate nohighlight">\(X\)</span>
+but on <em>different orbits in different parameter spaces</em>. The gauged
+<span class="math notranslate nohighlight">\((\gamma,\Sigma)\)</span> are functions of the fitted invariants
+<span class="math notranslate nohighlight">\((\bar\gamma, \bar\Sigma, \mathrm{cv}^2)\)</span>; two families display
+comparable parameters exactly when the section is pinned by
+functionals of the <span class="math notranslate nohighlight">\(X\)</span>-law that both families are forced to match.</p>
+<p><span class="math notranslate nohighlight">\(E[X]\)</span> and <span class="math notranslate nohighlight">\(\mathrm{Cov}(X)\)</span> are matched by every reasonable fit,
+and they identify <span class="math notranslate nohighlight">\(\bar\gamma\)</span> (through the skewness direction and
+<span class="math notranslate nohighlight">\(E[X]-\mu\)</span>) and <span class="math notranslate nohighlight">\(\bar\Sigma = \mathrm{Cov}(X) -
+\mathrm{cv}^2\bar\gamma\bar\gamma^\top\)</span> up to a correction that is
+second order in <span class="math notranslate nohighlight">\(\bar\gamma\)</span> (negligible on equity panels where
+<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\sim 10^{-2}\)</span>). Hence:</p>
+<ul class="simple">
+<li><p><strong><span class="math notranslate nohighlight">\(E[Y]=1\)</span>: distribution-invariant.</strong> The displayed
+<span class="math notranslate nohighlight">\((\bar\gamma,\bar\Sigma)\)</span> are the moment-pinned invariants
+themselves. There is a second, EM-specific reason it is the
+natural <span class="math notranslate nohighlight">\(Y\)</span>-side choice: at an EM fixed point each family matches
+the <em>prior</em> subordinator moments in its sufficient set to the
+posterior averages, and <span class="math notranslate nohighlight">\(E[Y]\)</span> is in that set for VG
+(<span class="math notranslate nohighlight">\(E[\log Y], E[Y]\)</span>), NIG (<span class="math notranslate nohighlight">\(E[Y], E[1/Y]\)</span>), and GH (all three).
+Only NInvG (<span class="math notranslate nohighlight">\(E[1/Y], E[\log Y]\)</span>) treats <span class="math notranslate nohighlight">\(E[Y]\)</span> as an
+extrapolation — and its <span class="math notranslate nohighlight">\(E[Y]=\beta/(\alpha-1)\)</span> may not exist
+(<span class="math notranslate nohighlight">\(\alpha\le 1\)</span>; <code class="docutils literal notranslate"><span class="pre">normix</span></code> floors the denominator at
+<code class="docutils literal notranslate"><span class="pre">ALPHA_MOMENT_MARGIN</span></code>, so a pinned “<span class="math notranslate nohighlight">\(E[Y]\)</span>” would silently use
+the floored surrogate). The geometric gauge <span class="math notranslate nohighlight">\(\exp E[\log Y]=1\)</span>
+is the mirror image: matched for VG, NInvG, GH, extrapolated for
+NIG, and it always exists.</p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span>, <span class="math notranslate nohighlight">\(\mathrm{tr}(\Sigma)=d\)</span>:
+distribution-invariant.</strong> Both are functionals of <span class="math notranslate nohighlight">\(\bar\Sigma\)</span>
+alone.</p></li>
+<li><p><strong><span class="math notranslate nohighlight">\(a=b\)</span>: not distribution-invariant.</strong> The condition lives in
+GIG coordinates; the implied mean <span class="math notranslate nohighlight">\(E[Y]=K_{p+1}(a)/K_p(a)\)</span>
+depends on the index <span class="math notranslate nohighlight">\(p\)</span>, which differs across families
+(<span class="math notranslate nohighlight">\(p=-1/2\)</span> for NIG, free for GH, degenerate for VG/NInvG).
+Measured on the S&amp;P panel: after <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>, <span class="math notranslate nohighlight">\(E[Y]=1\)</span> for NIG
+but <span class="math notranslate nohighlight">\(0.25/0.14/0.10\)</span> for GH at <span class="math notranslate nohighlight">\(d=5/10/50\)</span>
+(<a class="reference internal" href="subordinator_tracking_empirics.html"><span class="doc">Subordinator tracking on the S&amp;P 500</span></a>, family-comparison
+section).</p></li>
+</ul>
+<p>One caveat applies to all of them: distribution invariance holds
+only to the extent the families fit comparable laws. A clamped VG
+(<code class="docutils literal notranslate"><span class="pre">alpha_min='density'</span></code>) is a different estimand by construction and
+will disagree on <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> under any gauge.</p>
+</section>
+<section id="dimension-invariance">
+<h3>2.2 Dimension invariance<a class="headerlink" href="#dimension-invariance" title="Link to this heading">#</a></h3>
+<p>For <span class="math notranslate nohighlight">\(S\subseteq\{1,\dots,d\}\)</span> the sub-vector <span class="math notranslate nohighlight">\(X_S\)</span> is a mixture
+with the <em>same</em> <span class="math notranslate nohighlight">\(Y\)</span> and restricted <span class="math notranslate nohighlight">\((\mu_S,\gamma_S,\Sigma_{SS})\)</span>
+— closure under affine maps,
+<a class="reference internal" href="../references.html#blaesild1981"><span class="std std-ref">Blaesild1981</span></a>. This gives a clean criterion:</p>
+<p><strong>Proposition.</strong> A section commutes with coordinate marginalization
+— gauging the <span class="math notranslate nohighlight">\(d\)</span>-model and then restricting equals restricting and
+then gauging — if and only if its condition is a functional of the
+law of <span class="math notranslate nohighlight">\(Y\)</span> alone. <span class="math notranslate nohighlight">\(Y\)</span>-side sections pick the same <span class="math notranslate nohighlight">\(s\)</span> for the model
+and every sub-model; a <span class="math notranslate nohighlight">\(\Sigma\)</span>-side section picks
+<span class="math notranslate nohighlight">\(s=T(\Sigma_{SS})\)</span>, which moves with <span class="math notranslate nohighlight">\(S\)</span>.</p>
+<p>So <span class="math notranslate nohighlight">\(E[Y]=1\)</span>, geometric, median, and also <span class="math notranslate nohighlight">\(a=b\)</span> are
+dimension-invariant at the population level; the determinant and
+trace gauges are not. The failure of the determinant gauge is not
+small. Under equicorrelation
+<span class="math notranslate nohighlight">\(\Sigma = \sigma^2[(1-\rho)I + \rho\mathbf 1\mathbf 1^\top]\)</span>, the
+<span class="math notranslate nohighlight">\(E[Y]\)</span> displayed by the <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> gauge is</p>
+<div class="math notranslate nohighlight">
+\[
+E[Y]\Big|_{\det}
+= \det(\bar\Sigma)^{1/d}
+= \sigma^2\,(1-\rho)^{(d-1)/d}\bigl(1+(d-1)\rho\bigr)^{1/d}
+\;\xrightarrow{d\to\infty}\; \sigma^2(1-\rho):
+\]</div>
+<p>at <span class="math notranslate nohighlight">\(\rho=0.35\)</span> the same data displays an <span class="math notranslate nohighlight">\(E[Y]\)</span> about <span class="math notranslate nohighlight">\(32\%\)</span>
+smaller at <span class="math notranslate nohighlight">\(d=100\)</span> than at <span class="math notranslate nohighlight">\(d=1\)</span> — pure gauge artifact. The trace
+gauge is exact <em>in expectation</em> under uniformly random column
+subsets (<span class="math notranslate nohighlight">\(E[\mathrm{tr}(\Sigma_{SS})/k] = \mathrm{tr}(\Sigma)/d\)</span>)
+but noisy per draw.</p>
+<p>Two caveats separate the population statement from what the
+proposed experiment will see.</p>
+<p>First, once a <span class="math notranslate nohighlight">\(Y\)</span>-side gauge is fixed, <span class="math notranslate nohighlight">\(E[Y]\equiv 1\)</span> across <span class="math notranslate nohighlight">\(d\)</span> is
+trivial, and the entire content of dimension invariance moves into
+<span class="math notranslate nohighlight">\(\mathrm{Var}(Y)=\mathrm{cv}^2\)</span> — which is <em>gauge-free</em>. Whether
+<span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> is stable across <span class="math notranslate nohighlight">\(d\)</span> is then a statistical question
+about the data and the model, not about the gauge. The existing
+NIG fits already answer it for this panel: in the <span class="math notranslate nohighlight">\(E[Y]=1\)</span> gauge,</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(d\)</span></p></th>
+<th class="head"><p>5</p></th>
+<th class="head"><p>10</p></th>
+<th class="head"><p>25</p></th>
+<th class="head"><p>50</p></th>
+<th class="head"><p>100</p></th>
+<th class="head"><p>200</p></th>
+<th class="head"><p>468</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span></p></td>
+<td><p>1.91</p></td>
+<td><p>1.11</p></td>
+<td><p>0.79</p></td>
+<td><p>0.64</p></td>
+<td><p>0.56</p></td>
+<td><p>0.52</p></td>
+<td><p>0.46</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>a monotone decline, while the univariate NIG fits of the
+equal-weight index give <span class="math notranslate nohighlight">\(\mathrm{cv}^2 = 2.19\)</span> (<span class="math notranslate nohighlight">\(d=50\)</span> universe)
+and <span class="math notranslate nohighlight">\(2.32\)</span> (full panel) — <em>above every multivariate point</em>. The
+mechanism: each coordinate carries common plus idiosyncratic
+excess kurtosis; a univariate fit reads the total, while the
+<span class="math notranslate nohighlight">\(d\)</span>-dimensional fit identifies <span class="math notranslate nohighlight">\(Y\)</span> from cross-sectional
+co-movement only, and the posterior concentrates via <span class="math notranslate nohighlight">\(q(x)/d\)</span>. On
+data with idiosyncratic volatility clocks, the shared-<span class="math notranslate nohighlight">\(Y\)</span> model
+<em>should</em> report <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> falling with <span class="math notranslate nohighlight">\(d\)</span>. No gauge can
+remove this; a dimension-invariant gauge is what makes it visible
+as a model property instead of a scale artifact.</p>
+<p>Second, VG under <code class="docutils literal notranslate"><span class="pre">alpha_min='density'</span></code> has
+<span class="math notranslate nohighlight">\(\mathrm{cv}^2 = 1/\alpha \le 2/(d+0.2)\)</span>: the clamp forces a <span class="math notranslate nohighlight">\(1/d\)</span>
+decay of the estimand itself. Cross-<span class="math notranslate nohighlight">\(d\)</span> VG comparisons are
+structurally broken under the <span class="math notranslate nohighlight">\(d\)</span>-aware clamp; a <span class="math notranslate nohighlight">\(d\)</span>-independent
+absolute <code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> restores comparability of the estimand but
+abandons density boundedness for <span class="math notranslate nohighlight">\(d &gt; 2\,\alpha_{\min}\)</span>.</p>
+</section>
+<section id="summary">
+<h3>2.3 Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Section</p></th>
+<th class="head"><p>Distribution-invariant</p></th>
+<th class="head"><p>Dimension-invariant</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(E[Y]=1\)</span></p></td>
+<td><p>yes (moment-pinned; matched for VG/NIG/GH)</p></td>
+<td><p>yes (<span class="math notranslate nohighlight">\(Y\)</span>-side)</p></td>
+</tr>
+<tr class="row-odd"><td><p>geometric <span class="math notranslate nohighlight">\(\exp E[\log Y]=1\)</span></p></td>
+<td><p>yes, weaker (matched for VG/NInvG/GH)</p></td>
+<td><p>yes (<span class="math notranslate nohighlight">\(Y\)</span>-side)</p></td>
+</tr>
+<tr class="row-even"><td><p>median<span class="math notranslate nohighlight">\((Y)=1\)</span></p></td>
+<td><p>weakest (not moment-matched)</p></td>
+<td><p>yes (<span class="math notranslate nohighlight">\(Y\)</span>-side)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code></p></td>
+<td><p><strong>no</strong> (GH vs NIG <span class="math notranslate nohighlight">\(E[Y]\)</span>: <span class="math notranslate nohighlight">\(0.10\)</span> vs <span class="math notranslate nohighlight">\(1\)</span>)</p></td>
+<td><p>yes (<span class="math notranslate nohighlight">\(Y\)</span>-side)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> / <code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code></p></td>
+<td><p>yes</p></td>
+<td><p><strong>no</strong> (<span class="math notranslate nohighlight">\(\approx 1-\rho\)</span> drift)</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathrm{tr}(\Sigma)=d\)</span></p></td>
+<td><p>yes</p></td>
+<td><p>in expectation only</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code></p></td>
+<td><p>no (init- and path-dependent)</p></td>
+<td><p>no</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span class="math notranslate nohighlight">\(E[Y]=1\)</span> is the only candidate satisfying both, with the NInvG
+existence caveat; the geometric gauge is the robust fallback that
+always exists. Both are cheap post-fit rescales along the existing
+orbit (<code class="docutils literal notranslate"><span class="pre">NormalMixture._rescale</span></code>).</p>
+</section>
+</section>
+<section id="in-em-or-post-estimation">
+<h2>3. In EM or post estimation?<a class="headerlink" href="#in-em-or-post-estimation" title="Link to this heading">#</a></h2>
+<p>The batch EM map is <em>gauge-equivariant</em>. Under <span class="math notranslate nohighlight">\(g_s\)</span> the posterior
+is a relabeling, <span class="math notranslate nohighlight">\(Y\mid x \mapsto sY\mid x\)</span>
+(GIG<span class="math notranslate nohighlight">\((p-\tfrac d2,\,a+\tilde q,\,b+q(x))\)</span> with
+<span class="math notranslate nohighlight">\(a\mapsto a/s\)</span>, <span class="math notranslate nohighlight">\(b\mapsto sb\)</span>, <span class="math notranslate nohighlight">\(\tilde q\mapsto\tilde q/s\)</span>,
+<span class="math notranslate nohighlight">\(q(x)\mapsto s\,q(x)\)</span>), and every family’s M-step commutes with the
+orbit because the subordinator families are closed under
+<span class="math notranslate nohighlight">\(Y\mapsto sY\)</span>. Hence, in exact arithmetic, re-gauging after each
+M-step does not change the sequence of <em>orbits</em> EM visits — only
+the representative reported at the end. <strong>Gauging inside batch EM
+and gauging once after it are the same estimator.</strong> Equivalently:
+the orbit is a zero-information direction of the marginal
+likelihood; batch EM neither pushes along it nor restores it.</p>
+<p>The equivalence leaks through exactly four channels, which is
+where the hypotheses live:</p>
+<ol class="arabic">
+<li><p><strong>Absolute floors and clamps are not equivariant.</strong>
+<code class="docutils literal notranslate"><span class="pre">B_POST_FLOOR</span></code> (<span class="math notranslate nohighlight">\(b_{\mathrm{post}}\ge 10^{-6}\)</span>), <code class="docutils literal notranslate"><span class="pre">SIGMA_REG</span></code>,
+<code class="docutils literal notranslate"><span class="pre">GIG_CLAMP_LO/HI</span></code> are fixed constants while <span class="math notranslate nohighlight">\(q(x)\)</span> and the GIG
+parameters scale with the gauge. On daily equities the
+<span class="math notranslate nohighlight">\(E[Y]=1\)</span> gauge puts <span class="math notranslate nohighlight">\(q(x)\approx d\)</span> (Mahalanobis scale); the
+<span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> gauge puts <span class="math notranslate nohighlight">\(q(x)\sim 10^{-4}d\)</span> — four
+orders closer to the <span class="math notranslate nohighlight">\(b_{\mathrm{post}}\)</span> floor. VG, the only
+family whose E-step actually leans on that floor, is the family
+where the in-EM gauge can plausibly change the fitted <em>orbit</em>.</p></li>
+<li><p><strong>The stopping rule is gauge-dependent.</strong> Convergence is
+measured on changes of <span class="math notranslate nohighlight">\((\mu,\gamma,L_\Sigma)\)</span>
+(<code class="docutils literal notranslate"><span class="pre">em_convergence_params</span></code>). A gauged loop quotients out the flat
+direction; an ungauged loop lets float-level drift along the
+orbit contaminate the metric. This changes <em>when EM stops</em>, not
+where the orbit goes.</p></li>
+<li><p><strong>Data scale interacts with (1).</strong> Fitting returns in natural
+units versus percent (<span class="math notranslate nohighlight">\(\times 100\)</span>) moves every floor’s bite
+point. Gauge-invariants should be unchanged; any change
+quantifies channel (1).</p></li>
+<li><p><strong>Online EM averages η across iterations.</strong> The EWMA recursion
+<span class="math notranslate nohighlight">\(\eta_t = (1-w)\eta_{t-1} + w\,t(x_t)\)</span>
+(<a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>) is an average of sufficient
+statistics <em>in a fixed gauge</em>. Re-gauging the model each step
+without transforming the running <span class="math notranslate nohighlight">\(\eta\)</span> mixes incompatible
+scales — that is why the tracking study ran Phase 3 without
+re-gauging. But with no re-gauge the stochastic updates
+random-walk along the zero-information direction: at <span class="math notranslate nohighlight">\(h=21\)</span> the
+gauge exploded to <span class="math notranslate nohighlight">\(\overline{E[Y]}_t = 4772\)</span>. Neither option is
+right. The consistent third option transforms the running η
+with the same orbit map: under <span class="math notranslate nohighlight">\(Y\mapsto sY\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+   \eta_1 \mapsto \eta_1 + \log s,\quad
+   \eta_2 \mapsto \eta_2/s,\quad
+   \eta_3 \mapsto s\,\eta_3,\quad
+   \eta_4 \mapsto \eta_4,\quad
+   \eta_5 \mapsto \eta_5/s,\quad
+   \eta_6 \mapsto \eta_6/s,
+   \]</div>
+<p>for <span class="math notranslate nohighlight">\(\eta = (E[\log Y], E[1/Y], E[Y], E[X], E[X/Y],
+E[XX^\top/Y])\)</span>. This is the one place a gauge plausibly
+<em>improves estimation</em> rather than reporting, and the one
+concrete package-change candidate.</p>
+</li>
+</ol>
+</section>
+<section id="hypotheses">
+<h2>4. Hypotheses<a class="headerlink" href="#hypotheses" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>G1 (distribution invariance).</strong> Under the <span class="math notranslate nohighlight">\(E[Y]=1\)</span> display
+gauge, NIG/GH (and unclamped VG) fits of the same universe agree
+on <span class="math notranslate nohighlight">\(\gamma\)</span> and <span class="math notranslate nohighlight">\(\Sigma\)</span> to within estimation error (target:
+<span class="math notranslate nohighlight">\(\le 10\%\)</span> relative <span class="math notranslate nohighlight">\(\ell_2\)</span>/Frobenius at <span class="math notranslate nohighlight">\(d\le 10\)</span>); under
+<code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> the displayed <span class="math notranslate nohighlight">\(E[Y]\)</span> disperses by <span class="math notranslate nohighlight">\(\ge 5\times\)</span>
+(already observed). <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> also aligns families.</p></li>
+<li><p><strong>G2 (dimension invariance of sections).</strong> On the same data,
+<span class="math notranslate nohighlight">\(E[Y]\)</span> displayed by the <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> gauge drifts
+across nested <span class="math notranslate nohighlight">\(d\)</span> by a factor consistent with the
+equicorrelation prediction <span class="math notranslate nohighlight">\(\approx(1-\rho)\)</span>; <span class="math notranslate nohighlight">\(Y\)</span>-side gauges
+show no drift by construction.</p></li>
+<li><p><strong>G3 (well-specified unbiasedness).</strong> On synthetic single-clock
+data (fitted NIG generator, matched <span class="math notranslate nohighlight">\(T\)</span>), <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span>
+estimates are unbiased across <span class="math notranslate nohighlight">\(d\in\{1,\dots,100\}\)</span> and the
+<span class="math notranslate nohighlight">\(d=100\)</span> estimate falls inside the interquartile range of the
+<span class="math notranslate nohighlight">\(100\)</span> univariate estimates.</p></li>
+<li><p><strong>G4 (real-data decline is misspecification).</strong> On the S&amp;P
+panel the univariate ensemble of <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> sits above the
+multivariate estimate at every <span class="math notranslate nohighlight">\(d\)</span>, and the multivariate
+<span class="math notranslate nohighlight">\(\mathrm{cv}^2(d)\)</span> declines monotonically. The ensemble
+mid-range is <em>not</em> recovered by any gauge; the gap is an
+idiosyncratic-clock measure.</p></li>
+<li><p><strong>G5 (VG clamp).</strong> With <code class="docutils literal notranslate"><span class="pre">alpha_min='density'</span></code>, VG
+<span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> tracks the forced ceiling <span class="math notranslate nohighlight">\(2/(d+0.2)\)</span> across
+<span class="math notranslate nohighlight">\(d\)</span>; with a fixed absolute <code class="docutils literal notranslate"><span class="pre">alpha_min</span></code>, the cross-<span class="math notranslate nohighlight">\(d\)</span> profile
+parallels NIG’s.</p></li>
+<li><p><strong>G6 (batch equivalence).</strong> For NIG/GH/NInvG, fitting with
+<code class="docutils literal notranslate"><span class="pre">'none'</span></code>, <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> and re-gauging
+post-fit gives identical gauge-invariants
+(<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span>, mean log-likelihood)
+up to float noise (target: <span class="math notranslate nohighlight">\(10^{-8}\)</span> relative for NIG’s
+closed-form M-step, <span class="math notranslate nohighlight">\(10^{-6}\)</span> for GH’s solver path).</p></li>
+<li><p><strong>G7 (the leaks).</strong> VG violates G6 measurably through
+<code class="docutils literal notranslate"><span class="pre">B_POST_FLOOR</span></code> when the in-EM gauge compresses <span class="math notranslate nohighlight">\(q(x)\)</span>
+(<span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> on raw returns); iteration counts differ
+across in-EM gauges through the stopping metric even where
+invariants agree; rescaling the data <span class="math notranslate nohighlight">\(\times 100\)</span> leaves
+invariants unchanged except where floors bind.</p></li>
+<li><p><strong>G8 (online EM).</strong> Per-step re-gauging <em>with</em> the η transform
+of §3(4) reproduces the no-regauge orbit path (gauge-invariant
+<span class="math notranslate nohighlight">\(\kappa_t\)</span> within Monte Carlo bands) while keeping
+<span class="math notranslate nohighlight">\(\overline{E[Y]}_t\in[0.5,2]\)</span>; per-step re-gauging <em>without</em>
+the transform biases <span class="math notranslate nohighlight">\(\kappa_t\)</span>.</p></li>
+</ul>
+</section>
+<section id="study-plan">
+<h2>5. Study plan<a class="headerlink" href="#study-plan" title="Link to this heading">#</a></h2>
+<p>Each phase states its completion criterion. All code in
+<code class="docutils literal notranslate"><span class="pre">notebooks/gauges/</span></code> on the public API; NIG/GH/VG (+NInvG where
+noted); the S&amp;P panel and universes of
+<a class="reference internal" href="subordinator_tracking_empirics.html"><span class="doc">Subordinator tracking on the S&amp;P 500</span></a>.</p>
+<p><strong>Phase A — equivariance audit (G6, G7).</strong> Synthetic NIG/GH data,
+<span class="math notranslate nohighlight">\(d\in\{2,10\}\)</span>, one seed. Fit from a common <code class="docutils literal notranslate"><span class="pre">default_init</span></code> under
+each in-EM gauge; record per-iteration <em>invariants</em>
+(<span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span>, <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span>, mean log-likelihood) and
+floor-hit counters (<span class="math notranslate nohighlight">\(b_{\mathrm{post}}\)</span> at floor, GIG clamps).
+<em>Done when:</em> invariant trajectories overlaid per family with
+agreement tolerances measured, and VG’s floor-driven divergence (or
+its absence) quantified.</p>
+<p><strong>Phase B — distribution invariance (G1).</strong> Real panel,
+<span class="math notranslate nohighlight">\(d\in\{5,10,25,50\}\)</span>, seed 0: NIG, GH, VG (clamped and absolute
+<code class="docutils literal notranslate"><span class="pre">alpha_min</span></code>), NInvG. Display each fit under <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>,
+<span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span>, <span class="math notranslate nohighlight">\(E[Y]=1\)</span>, geometric. Report cross-family
+relative distances of <span class="math notranslate nohighlight">\(\gamma\)</span> (ℓ2), <span class="math notranslate nohighlight">\(\Sigma\)</span> (Frobenius and
+log-det), and the displayed <span class="math notranslate nohighlight">\(E[Y]\)</span> table. <em>Done when:</em> the §2.3
+table’s distribution-invariance column is confirmed or amended
+with measured numbers.</p>
+<p><strong>Phase C — dimension invariance (G2–G5).</strong> (i) Synthetic: draw
+from the fitted <span class="math notranslate nohighlight">\(d=100\)</span> NIG generator, <span class="math notranslate nohighlight">\(T=2552\)</span>, <span class="math notranslate nohighlight">\(R=10\)</span>; fit at
+nested <span class="math notranslate nohighlight">\(d\in\{1,5,10,25,50,100\}\)</span> and fit all <span class="math notranslate nohighlight">\(100\)</span> univariate
+margins on one replicate; compare <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> point estimates
+to truth and the univariate ensemble quantiles. (ii) Real panel:
+same design, NIG (+GH at <span class="math notranslate nohighlight">\(d\le 50\)</span>; VG both clamp variants);
+additionally display <span class="math notranslate nohighlight">\(E[Y]\)</span> under <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> across
+<span class="math notranslate nohighlight">\(d\)</span> to measure the G2 drift against the equicorrelation
+prediction. <em>Done when:</em> synthetic bias/SE table across <span class="math notranslate nohighlight">\(d\)</span> and
+the real-data ensemble-vs-multivariate figure exist, with the G4
+gap quantified.</p>
+<p><strong>Phase D — scale robustness (G7).</strong> Refit Phase B’s NIG/GH/VG at
+<span class="math notranslate nohighlight">\(d\in\{10,50\}\)</span> with returns in natural units and <span class="math notranslate nohighlight">\(\times 100\)</span>.
+Compare gauge-invariants and floor-hit counters. <em>Done when:</em> the
+invariants’ sensitivity to data scale is tabulated per family ×
+in-EM gauge, and any discrepancy is attributed to a named
+constant.</p>
+<p><strong>Phase E — online EM gauge handling (G8).</strong> Rerun the Phase 3
+online loop (<span class="math notranslate nohighlight">\(d=50\)</span>, <span class="math notranslate nohighlight">\(h\in\{21,63\}\)</span>) under three policies: no
+re-gauge (baseline), per-step re-gauge without η transform,
+per-step re-gauge with the §3(4) η transform. Track
+<span class="math notranslate nohighlight">\(\overline{E[Y]}_t\)</span>, gauge-invariant <span class="math notranslate nohighlight">\(\kappa_t\)</span>, direction cosine,
+and terminal-vs-static consistency. <em>Done when:</em> the three
+policies are compared on one figure and G8 is accepted or
+rejected.</p>
+</section>
+<section id="decision-gates">
+<h2>6. Decision gates<a class="headerlink" href="#decision-gates" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>If G6 holds and G7 is confined to VG: the in-EM <code class="docutils literal notranslate"><span class="pre">regularization</span></code>
+flag is a reporting/stopping convenience for batch EM. Keep
+<code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> as a cheap dimension-invariant loop gauge, add a
+<code class="docutils literal notranslate"><span class="pre">'mean_y_one'</span></code> mode (or promote <code class="docutils literal notranslate"><span class="pre">pin_mean_y</span></code>) as the recommended
+<em>display</em> gauge, and standardize all cross-family and cross-<span class="math notranslate nohighlight">\(d\)</span>
+tables on it.</p></li>
+<li><p>If G7 shows VG orbit-level sensitivity: recommend fitting VG in
+the gauge that keeps <span class="math notranslate nohighlight">\(q(x) = O(d)\)</span> (the <span class="math notranslate nohighlight">\(E[Y]=1\)</span> scale) and
+record it as a design row.</p></li>
+<li><p>If G8 holds: the η-consistent re-gauge is the package-change
+candidate — an online-EM option that re-gauges model and running
+η together, closing the Phase 3 gauge-explosion problem without
+biasing the recursion.</p></li>
+<li><p>NInvG: if the <span class="math notranslate nohighlight">\(E[Y]=1\)</span> gauge is adopted, its display must fall
+back to the geometric gauge when <span class="math notranslate nohighlight">\(\alpha\le 1+\)</span> margin rather
+than silently using the floored moment.</p></li>
+</ul>
+</section>
+<section id="what-this-is-not-asking-normix-to-do">
+<h2>7. What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do<a class="headerlink" href="#what-this-is-not-asking-normix-to-do" title="Link to this heading">#</a></h2>
+<p>No change to fitting defaults before Phases A–E report. The
+invariants <span class="math notranslate nohighlight">\(\kappa_{\mathrm{lev}}\)</span>, <span class="math notranslate nohighlight">\(\kappa\)</span>, <span class="math notranslate nohighlight">\(\mathrm{cv}^2\)</span> need
+no gauge at all and remain the preferred comparison quantities;
+the gauge question is about displaying <span class="math notranslate nohighlight">\((\gamma, \Sigma, E[Y],
+\mathrm{Var}(Y))\)</span> themselves, about warm starts that cross
+families or dimensions, and about the online-EM η recursion.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="subordinator_tracking_empirics.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Subordinator tracking on the S&amp;P 500</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../api/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API Reference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-orbit-and-its-invariants">1. The orbit and its invariants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-sections-satisfy-which-invariance">2. Which sections satisfy which invariance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-invariance">2.1 Distribution invariance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-invariance">2.2 Dimension invariance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">2.3 Summary</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#in-em-or-post-estimation">3. In EM or post estimation?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hypotheses">4. Hypotheses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#study-plan">5. Study plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decision-gates">6. Decision gates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-is-not-asking-normix-to-do">7. What this is not asking <code class="docutils literal notranslate"><span class="pre">normix</span></code> to do</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -12,6 +12,7 @@ that claim on daily S&P 500 returns.
 
 subordinator_tracking
 subordinator_tracking_empirics
+mixture_gauges
 ```
 
 ## Subordinator tracking — one-page summary
@@ -45,3 +46,20 @@ did not.
 
 **Status.** Theory 2026-08-10; S&P 500 Phases 0–3, 2026-08-13. No
 package change.
+
+## Gauges — study plan
+
+The mixture has a scaling orbit
+$(\gamma,\Sigma,Y)\mapsto(\gamma/s,\Sigma/s,sY)$; every fitted
+$(\gamma,\Sigma,E[Y],\mathrm{Var}(Y))$ is quoted in a gauge.
+{doc}`mixture_gauges` classifies gauges by two requirements —
+comparable parameters *across families* fitted to the same data,
+and comparable subordinator moments *across dimensions* (including
+against an ensemble of univariate fits) — shows that $E[Y]=1$ is
+the only candidate satisfying both (with `'a_eq_b'` failing the
+first and $\lvert\Sigma\rvert=1$ the second), proves batch EM is
+gauge-equivariant so the choice is post-estimation reporting except
+through floors, stopping rules, and the online-EM η recursion, and
+pre-registers the numerical phases.
+
+**Status.** Plan, 2026-08-19. Not yet executed.

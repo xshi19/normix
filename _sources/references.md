@@ -74,6 +74,10 @@ Financial Studies*, 22(3), 1311–1341.
 **Clark1973.** Clark, P. K. (1973). A subordinated stochastic process model
 with finite variance for speculative prices. *Econometrica*, 41(1), 135–155.
 
+(day1969)=
+**Day1969.** Day, N. E. (1969). Estimating the components of a mixture of
+normal distributions. *Biometrika*, 56(3), 463–474.
+
 (dempster1977)=
 **Dempster1977.** Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977).
 Maximum likelihood from incomplete data via the EM algorithm.
