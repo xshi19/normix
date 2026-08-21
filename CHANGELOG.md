@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.1](https://github.com/xshi19/normix/compare/v0.3.0...v0.3.1) (2026-08-21)
+
+
+### Features
+
+* **finance:** Phase F diversification analytics (variance and CVaR ENB) ([#95](https://github.com/xshi19/normix/issues/95)) ([814b8f3](https://github.com/xshi19/normix/commit/814b8f3465080ab4708965d064213d8292268a07))
+* **mixtures:** Phase 8 skewness/kurtosis; archive 2026-07-12 review roadmap ([#93](https://github.com/xshi19/normix/issues/93)) ([#94](https://github.com/xshi19/normix/issues/94)) ([d77b1ec](https://github.com/xshi19/normix/commit/d77b1ec6c4373d5ee53039576043df1abe73dd30))
+
+
+### Documentation
+
+* add academic citations and external package links ([#98](https://github.com/xshi19/normix/issues/98)) ([cbf4cb9](https://github.com/xshi19/normix/commit/cbf4cb9a57f428244da08aff4d6deeed8100e422))
+* complete subordinator-tracking empirical study (Phases 1–3) ([#101](https://github.com/xshi19/normix/issues/101)) ([5f644c8](https://github.com/xshi19/normix/commit/5f644c859da10beb2099e5e23ef131f8bf0d3b01))
+* **dev-notes:** S&P 500 subordinator-tracking plan + Phase 0 ([#99](https://github.com/xshi19/normix/issues/99)) ([2a8d5a1](https://github.com/xshi19/normix/commit/2a8d5a1c683b1ded82051c08756f296e0022b704))
+* **finance:** expand ENB tutorial with Shi2016 Fig. 12–14 spirit demos ([#96](https://github.com/xshi19/normix/issues/96)) ([a27613c](https://github.com/xshi19/normix/commit/a27613c1cb06fa391fd0b87ad2d332f9dcc297d2))
+* Phase 7 website fixes (W1–W7) from 2026-07-12 review ([#91](https://github.com/xshi19/normix/issues/91)) ([2e175bb](https://github.com/xshi19/normix/commit/2e175bba46a747d5de2ff2e75f6cc361d63ff201))
+* **references:** add GPJax review with lessons for normix ([#105](https://github.com/xshi19/normix/issues/105)) ([48cc052](https://github.com/xshi19/normix/commit/48cc0527fa205397e7750c0a6f155013d1addf83))
+* **research:** publish subordinator-tracking note as MyST ([#103](https://github.com/xshi19/normix/issues/103)) ([73098dd](https://github.com/xshi19/normix/commit/73098dd409e40c8be6005eb49127e0c1ecfeb247))
+* **research:** subordinator-tracking S&P 500 study (Phases 0–3) ([#102](https://github.com/xshi19/normix/issues/102)) ([ef77f13](https://github.com/xshi19/normix/commit/ef77f1391cd58869e810ff699aaa4346e7c6f6cb))
+* **research:** VG κ diagnosis + gauge invariance study plan ([#104](https://github.com/xshi19/normix/issues/104)) ([282fa15](https://github.com/xshi19/normix/commit/282fa15d3221699994964633b1b7561be8131cc9))
+* **skills:** add show-me skill and harvest humanlayer loop mechanics ([#100](https://github.com/xshi19/normix/issues/100)) ([ab5d992](https://github.com/xshi19/normix/commit/ab5d992039419b1a6d896d17b8b5714bc0ec0395))
+
 ## [0.3.0](https://github.com/xshi19/normix/compare/v0.2.7...v0.3.0) (2026-08-06)
 
 
