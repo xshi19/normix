@@ -304,5 +304,6 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `docs/theory/` | Mathematical derivations (MyST `.md`) |
 | `docs/research/` | Published research notes (subordinator tracking); working notes in `research/` |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
+| `references/gpjax_review.md` | GPJax survey: design, JAX usage, lessons for normix |
 | `archive/plans/finance_architecture.md` | `normix.finance` roadmap; Phases D–F implemented (Phase F: diversification / ENB); archived 2026-08-09 |
 | `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

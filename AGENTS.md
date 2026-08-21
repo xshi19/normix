@@ -72,6 +72,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Completed/archived plans (JAX migration, review roadmap, finance) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
+| GPJax review (design, JAX usage, adoption candidates) | `dev-notes/references/gpjax_review.md` |
 | Technical notes | `dev-notes/tech_notes/` |
 | Benchmarks (`benchmarks/`) | `benchmarks/` — EM, Bessel, GIG solvers, JIT solvers, incremental EM, GH path comparison (`bench_gh_paths.py`); `run_all.py` orchestrator; `compare.py` diff tool |
 | Git conventions | `.cursor/skills/git-conventions/` |
