@@ -40,7 +40,7 @@
   numerical constants table.
 - `../../docs/theory/` — mathematical derivations (MyST `.md`).
 - `../tech_notes/` — deep dives (Bessel survey, GIG benchmarks,
-  EM profiling, JAX overhead).
+  EM profiling, JAX overhead, gradient-fitting vs EM/MLE).
 - `../plans/` — work not yet done or in progress.
 - `../archive/plans/` — completed plans (JAX migration, review roadmap,
   `finance_architecture.md`).
