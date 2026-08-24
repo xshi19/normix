@@ -10,7 +10,8 @@ alwaysApply: false
 
 ## docs/design/ — Published subset
 
-Four user-facing rationale docs plus `index.md`. **No links to `dev-notes/`.**
+Four user-facing rationale docs plus `index.md` became **five** with
+`why_not_gradient_descent.md`. **No links to `dev-notes/`.**
 Cross-reference via MyST `{doc}` roles only. When naming asymptotics,
 solvers, samplers, or dependencies (DLMF regimes, Devroye/PINV, JAXopt,
 SciPy, …), follow citation/package-link rules in

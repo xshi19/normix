@@ -110,6 +110,7 @@ the class as `@classmethod` or `@staticmethod`.
 | E9 | Sufficient statistics | Pytree (`NormalMixtureEta`, `FactorMixtureStats`) in **theory order** | Readable; first 6 fields shared across families |
 | E10 | `lax.scan` EM | Both backends JAX, low verbosity, no `eta_update` | JIT-friendly; otherwise Python loop |
 | E11 | Cold vs warm η→θ | `from_expectation(theta0=None)` defaults to `jnp.zeros_like(eta)`; instance `fit` uses `natural_params()` | GIG overrides cold start with multistart |
+| E15 | Default likelihood fitter | EM + constrained Bregman $\eta\to\theta$. No first-class Adam / L-BFGS NLL fitter. | Interior GIG: L-BFGS+softplus matches `fit_mle` at $\sim 5$–$14\times$ cost; Adam lags. Degenerate GIG: NLL methods collapse $b\to 0$; η-rescaling does not. GH $d=2$: EM matches L-BFGS NLL, $\sim 10$–$25\times$ faster. `log_kv` $\partial_\nu$ is *not* the blocker (CPU FD rel. err. $\sim 10^{-9}$; `tests/test_gig_properties.py`). Reopen if a caller must co-optimise NLL with non-normix parameters, or if a full E-step is infeasible (streaming). Then expose `nll(params, X)`, not an optimiser. Public: `../../docs/design/why_not_gradient_descent.md`. Internal: `../tech_notes/gradient_fitting_comparison.md`. |
 
 ### EM numerical robustness (VG inverse-moment / unbounded-likelihood)
 
@@ -152,6 +153,7 @@ the class as `@classmethod` or `@staticmethod`.
 | C3 | Sufficient statistics field naming | descriptive (`E_inv_Y`, `E_X_inv_Y`, …) in theory order | Heterogeneous shapes, `tree.map` works naturally |
 | C4 | Workflow skills (pstack adoption) | `architect`+`arena` (strong panel, Cursor-only), `interrogate` (cheap panel + strong escalation), `how`/`why` (single-agent), `tdd`, `unslop` (+ registers), `figure-it-out`, one consolidated `principles` skill; `reflect` merged into `agent-maintenance` | Survey and verdicts (archived): `../archive/references/pstack_skills_review.md`; learnings promoted to `agent_instructions_design.md`; remaining loops/orchestrator work: `../plans/loops_and_orchestration.md` |
 | C5 | Visual explanation skill (humanlayer `show-me`) | Adapted `show-me` skill: smallest-view hierarchy; HTML last resort; Cursor-aware delivery (desktop Open in Browser, cloud screenshot bridge, no iOS HTML). Conversation-scoped artifacts — promote to `docs/` or `dev-notes/` if they should last. | Survey: `../references/humanlayer_skills_review.md`; skill: `.cursor/skills/show-me/`; control-loop harvest: `../plans/loops_and_orchestration.md` |
+| C6 | JAX version for this repo | uv `constraint-dependencies`: `jax==0.9.1`, `jaxlib==0.9.1`. Published dep stays `jax>=0.4.38`. | Stops `uv lock --upgrade` / ASV from silently moving JAX. Not an ASV `matrix.req` axis. Bump the constraints on a deliberate upgrade. `../plans/asv_benchmarking.md` |
 
 ### 2026-07 review Phase 0 (DEC-1 … DEC-5)
 

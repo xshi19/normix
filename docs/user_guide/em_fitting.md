@@ -102,3 +102,7 @@ reproduces a benchmark from the literature.
 (Multi-Cycle ECM; {ref}`MengRubin1993 <mengrubbin1993>`,
 {ref}`McNeil2010 <mcneil2010>`). EM is the right choice for almost all cases;
 the two agree at the optimum.
+
+Adam or L-BFGS on the observed-data likelihood is not a supported fitter.
+The comparison, and a bring-your-own-optimiser snippet for surrounding
+models, is in {doc}`../design/why_not_gradient_descent`.

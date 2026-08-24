@@ -305,6 +305,7 @@ three obvious methods attached.
 - Triad design: `exponential_family.md`.
 - Tech notes: `../tech_notes/bessel_implementations_survey.md`,
   `../tech_notes/gig_eta_to_theta.md`,
+  `../tech_notes/gradient_fitting_comparison.md`,
   `../tech_notes/em_gpu_profiling.md`,
   `../tech_notes/jax_overhead_diagnosis.md`,
   `../tech_notes/gig_rvs.md`.

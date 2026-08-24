@@ -255,4 +255,5 @@ Neither method evaluates the Bessel normalising constant.
 ## 6. Cross-References
 
 - Triad design: {doc}`exponential_family`.
+- Why EM / `fit_mle` rather than NLL gradient descent: {doc}`why_not_gradient_descent`.
 - Theory: {doc}`GIG distribution <../theory/gig>`, {doc}`EM algorithm <../theory/em_algorithm>`.
