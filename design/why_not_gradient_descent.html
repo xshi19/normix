@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Research notes &#8212; normix 0.3.0 documentation</title>
+    <title>Why not gradient descent &#8212; normix 0.3.0 documentation</title>
   
   
   
@@ -55,11 +55,11 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'research/index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'design/why_not_gradient_descent';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Subordinator-tracking portfolios" href="subordinator_tracking.html" />
-    <link rel="prev" title="Why not gradient descent" href="../design/why_not_gradient_descent.html" />
+    <link rel="next" title="Research notes" href="../research/index.html" />
+    <link rel="prev" title="Solvers and Bessel Functions" href="solvers_and_bessel.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.3" />
@@ -236,18 +236,18 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Why not gradient descent</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
-<li class="toctree-l2"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -336,7 +336,7 @@
       
       
       
-      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fresearch/index.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fdesign/why_not_gradient_descent.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -366,7 +366,7 @@
       
       
       
-      <li><a href="../_sources/research/index.md" target="_blank"
+      <li><a href="../_sources/design/why_not_gradient_descent.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -442,7 +442,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Research notes</h1>
+    <h1>Why not gradient descent</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -452,8 +452,12 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subordinator-tracking-one-page-summary">Subordinator tracking — one-page summary</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gauges-study-plan">Gauges — study plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-supported-fitters">1. The supported fitters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-was-compared">2. What was compared</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-comparison-shows">3. What the comparison shows</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-does-not-show">4. What this does not show</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bring-your-own-optimiser">5. Bring your own optimiser</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">6. Cross-references</a></li>
 </ul>
             </nav>
         </div>
@@ -465,63 +469,173 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="research-notes">
-<h1>Research notes<a class="headerlink" href="#research-notes" title="Link to this heading">#</a></h1>
-<p>Working notes that are not part of the library contract. They use the
-public API only; nothing here changes <code class="docutils literal notranslate"><span class="pre">normix</span></code>.</p>
-<p>The first note asks whether a <em>portfolio</em> can reveal the latent
-subordinator <span class="math notranslate nohighlight">\(Y\)</span> in a normal mean–variance mixture, and then measures
-that claim on daily S&amp;P 500 returns.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
-<li class="toctree-l1"><a class="reference internal" href="subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
-</ul>
-</div>
-<section id="subordinator-tracking-one-page-summary">
-<h2>Subordinator tracking — one-page summary<a class="headerlink" href="#subordinator-tracking-one-page-summary" title="Link to this heading">#</a></h2>
-<p>In the mixture <span class="math notranslate nohighlight">\(X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,Z\)</span>, the
-linear functional of <span class="math notranslate nohighlight">\(X\)</span> with the least Gaussian noise per unit of
-<span class="math notranslate nohighlight">\(Y\)</span>-loading is unique: <span class="math notranslate nohighlight">\(w^\star \propto \Sigma^{-1}\gamma\)</span>. The
-achievable signal-to-noise is the scalar
-<span class="math notranslate nohighlight">\(\tilde q = \gamma^\top\Sigma^{-1}\gamma\)</span> that already appears in the
-GH density and the GIG posterior. That direction is also the best
-linear predictor of <span class="math notranslate nohighlight">\(Y\)</span>, the model’s max-skewness portfolio (for VG,
-NIG, and NInvG; for GH under a cumulant check), and the Markowitz
-tangency fund when the whole risk premium is compensation for <span class="math notranslate nohighlight">\(Y\)</span>.</p>
-<p>A second, non-tradable channel learns <span class="math notranslate nohighlight">\(Y\)</span> from the orthogonal
-Mahalanobis radius <span class="math notranslate nohighlight">\(q_\perp(x)\)</span>. It does not need <span class="math notranslate nohighlight">\(\gamma\)</span>, and it
-gets stronger with dimension.</p>
-<p>On the S&amp;P 500 current-constituent panel (2015–2026, <span class="math notranslate nohighlight">\(d\le 468\)</span>) the
-algebra is not contradicted — the MSE laws hold in simulation, and
-every fitted VG/NIG/GH model has the tracker as its max-skewness
-direction — but the linear channel is absent. Fitted fluctuation SNR
-sits at or below a day-wise sign-flip null at every <span class="math notranslate nohighlight">\(d\)</span>. The posterior
-mean <span class="math notranslate nohighlight">\(E[Y\mid X]\)</span>, which uses <span class="math notranslate nohighlight">\(q_\perp\)</span>, tracks realized volatility.
-Online EM does not turn the tracker into a clock.</p>
-<p><strong>Read next.</strong> <a class="reference internal" href="subordinator_tracking.html"><span class="doc">Subordinator-tracking portfolios</span></a> for the derivations;
-<a class="reference internal" href="subordinator_tracking_empirics.html"><span class="doc">Subordinator tracking on the S&amp;P 500</span></a> for the design, the meaning of
-each metric and cohort, and the results that held and the ones that
-did not.</p>
-<p><strong>Status.</strong> Theory 2026-08-10; S&amp;P 500 Phases 0–3, 2026-08-13. No
-package change.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="why-not-gradient-descent">
+<h1>Why not gradient descent<a class="headerlink" href="#why-not-gradient-descent" title="Link to this heading">#</a></h1>
+<blockquote>
+<div><p><strong>Scope.</strong> Why the supported fitters are exponential-family MLE and EM,
+not Adam or L-BFGS on the observed-data negative log-likelihood (NLL).
+Why <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> is still differentiable, and how to plug in an external
+optimiser if a surrounding model requires it.</p>
+<p><strong>Where things live.</strong> <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> on exponential families and
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> for mixtures. The η→θ
+solve is in <a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a>. EM structure is in
+<a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a>.</p>
+</div></blockquote>
+<hr class="docutils" />
+<section id="the-supported-fitters">
+<h2>1. The supported fitters<a class="headerlink" href="#the-supported-fitters" title="Link to this heading">#</a></h2>
+<p>For a regular exponential family the MLE is the mean sufficient statistic
+followed by a constrained Bregman inversion:</p>
+<div class="math notranslate nohighlight">
+\[
+\hat\eta = n^{-1}\sum_{i=1}^n t(x_i),\qquad
+\hat\theta = \arg\min_\theta\bigl[\psi(\theta)-\theta\cdot\hat\eta\bigr].
+\]</div>
+<p><a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GIG" title="normix.distributions.generalized_inverse_gaussian.GIG"><code class="xref py py-class docutils literal notranslate"><span class="pre">GIG</span></code></a>
+implements that as <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code>. The inversion is a 3-D convex problem after
+one <span class="math notranslate nohighlight">\(O(n)\)</span> reduction; it does not re-evaluate <span class="math notranslate nohighlight">\(K_\nu\)</span> on every observation
+at every step. The GIG Fisher information can have condition number
+<span class="math notranslate nohighlight">\(10^{30}\)</span> at extreme <span class="math notranslate nohighlight">\((a,b)\)</span>; the solve η-rescales before walking in
+<span class="math notranslate nohighlight">\(\theta\)</span> (<a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a> § 2).</p>
+<p>Normal variance-mean mixtures
+(<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code></a>
+and special cases) are not exponential families in <span class="math notranslate nohighlight">\(x\)</span> alone. Fitting is
+EM (<a class="reference internal" href="../references.html#dempster1977"><span class="std std-ref">Dempster1977</span></a>): the E-step returns
+<span class="math notranslate nohighlight">\(\mathbb{E}[t(Y)\mid X]\)</span>, the M-step is the same <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> map.
+Complete-data likelihood is monotone; the normal M-step is closed form.</p>
+<p>That is the supported path. The rest of this page is why a
+<a class="reference external" href="https://github.com/thomaspinder/GPJax">GPJax</a> /
+<a class="reference external" href="https://github.com/danielward27/flowjax">FlowJAX</a>-style loop — store
+unconstrained parameters, apply <code class="docutils literal notranslate"><span class="pre">softplus</span></code>, run Adam or L-BFGS on the
+marginal NLL — is not a second public fitter.</p>
 </section>
-<section id="gauges-study-plan">
-<h2>Gauges — study plan<a class="headerlink" href="#gauges-study-plan" title="Link to this heading">#</a></h2>
-<p>The mixture has a scaling orbit
-<span class="math notranslate nohighlight">\((\gamma,\Sigma,Y)\mapsto(\gamma/s,\Sigma/s,sY)\)</span>; every fitted
-<span class="math notranslate nohighlight">\((\gamma,\Sigma,E[Y],\mathrm{Var}(Y))\)</span> is quoted in a gauge.
-<a class="reference internal" href="mixture_gauges.html"><span class="doc">Gauges for normal mean–variance mixtures</span></a> classifies gauges by two requirements —
-comparable parameters <em>across families</em> fitted to the same data,
-and comparable subordinator moments <em>across dimensions</em> (including
-against an ensemble of univariate fits) — shows that <span class="math notranslate nohighlight">\(E[Y]=1\)</span> is
-the only candidate satisfying both (with <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> failing the
-first and <span class="math notranslate nohighlight">\(\lvert\Sigma\rvert=1\)</span> the second), proves batch EM is
-gauge-equivariant so the choice is post-estimation reporting except
-through floors, stopping rules, and the online-EM η recursion, and
-pre-registers the numerical phases.</p>
-<p><strong>Status.</strong> Plan, 2026-08-19. Not yet executed.</p>
+<hr class="docutils" />
+<section id="what-was-compared">
+<h2>2. What was compared<a class="headerlink" href="#what-was-compared" title="Link to this heading">#</a></h2>
+<p>On GIG and Gamma, NLL methods store <span class="math notranslate nohighlight">\(\phi=(p,\,\varphi_a,\,\varphi_b)\)</span>
+with <span class="math notranslate nohighlight">\(a=\mathrm{softplus}(\varphi_a)\)</span>, <span class="math notranslate nohighlight">\(b=\mathrm{softplus}(\varphi_b)\)</span>,
+and minimise <span class="math notranslate nohighlight">\(-\frac1n\sum_i\log p(x_i\mid p,a,b)\)</span>. GH uses an analogous
+softplus on <span class="math notranslate nohighlight">\((a,b)\)</span> and a Cholesky factor of <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>What it optimises</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> / EM</p></td>
+<td><p><span class="math notranslate nohighlight">\(\hat\eta\to\theta\)</span> (GIG: η-rescaled Bregman; GH: EM)</p></td>
+</tr>
+<tr class="row-odd"><td><p>L-BFGS + softplus</p></td>
+<td><p>observed NLL in unconstrained <span class="math notranslate nohighlight">\(\phi\)</span> (<a class="reference external" href="https://jaxopt.github.io/stable/">JAXopt</a> L-BFGS)</p></td>
+</tr>
+<tr class="row-even"><td><p>Adam + softplus</p></td>
+<td><p>same NLL, first-order (hand-rolled; <a class="reference external" href="https://optax.readthedocs.io/en/latest/">Optax</a> is not a dependency)</p></td>
+</tr>
+<tr class="row-odd"><td><p>L-BFGS-B box NLL</p></td>
+<td><p>GIG only: <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html">SciPy</a> <code class="docutils literal notranslate"><span class="pre">L-BFGS-B</span></code> bounds <span class="math notranslate nohighlight">\(a,b&gt;0\)</span>, no softplus</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Reproduction: <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">python</span> <span class="pre">benchmarks/bench_gradient_fitting.py</span></code>.
+CPU, <a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a> 0.9.1, <span class="math notranslate nohighlight">\(n=2000\)</span> (Gamma, GIG),
+<span class="math notranslate nohighlight">\(n=600\)</span> (GH, <span class="math notranslate nohighlight">\(d=2\)</span>).</p>
+</section>
+<hr class="docutils" />
+<section id="what-the-comparison-shows">
+<h2>3. What the comparison shows<a class="headerlink" href="#what-the-comparison-shows" title="Link to this heading">#</a></h2>
+<p><strong>Gamma</strong> <span class="math notranslate nohighlight">\((\alpha,\beta)=(2,1.5)\)</span> — no Bessel, well-conditioned control.
+L-BFGS + softplus matches <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> in NLL and in <span class="math notranslate nohighlight">\((\hat\alpha,\hat\beta)\)</span>.
+Adam reaches the same NLL in 1500 steps. The optimiser harness works; Gamma
+does not need it (<code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> is a 2-D convex solve after one mean of
+<span class="math notranslate nohighlight">\(t(x)=(\log x,\,x)\)</span>).</p>
+<p><strong>Interior GIG</strong> <span class="math notranslate nohighlight">\((p,a,b)=(1,2,1)\)</span>. L-BFGS + softplus reproduces <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code>
+to working precision (<span class="math notranslate nohighlight">\(\Delta\)</span>NLL <span class="math notranslate nohighlight">\(= -4.7\times 10^{-4}\)</span> for both;
+parameters agree to printed digits). Wall-clock: <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> <span class="math notranslate nohighlight">\(0.19\,\mathrm{s}\)</span>,
+L-BFGS <span class="math notranslate nohighlight">\(2.57\,\mathrm{s}\)</span> (<span class="math notranslate nohighlight">\(\sim 14\times\)</span>). Adam after 1500 steps is still
+<span class="math notranslate nohighlight">\(0.275\)</span> in hybrid parameter error and slightly <em>worse</em> NLL than the MLE.</p>
+<p><strong>Degenerate GIG.</strong> At large <span class="math notranslate nohighlight">\(\sqrt{ab}\)</span> or <span class="math notranslate nohighlight">\(a/b\)</span> extremes, the NLL ridge
+is nearly flat in <span class="math notranslate nohighlight">\((p,a,b)\)</span> and the MLE in classical coordinates is
+weakly identified. η-rescaled Bregman stays in a reasonable neighbourhood.
+L-BFGS + softplus matches that neighbourhood when the point is only mildly
+asymmetric, and drives <span class="math notranslate nohighlight">\(b\)</span> to underflow (<span class="math notranslate nohighlight">\(10^{-37}\)</span>) at
+<span class="math notranslate nohighlight">\((p,a,b)=(1,10^4,10^{-3})\)</span>. Box-constrained NLL collapses <span class="math notranslate nohighlight">\(b\)</span> onto the
+bound. Adam can flip the sign of <span class="math notranslate nohighlight">\(p\)</span>. Softplus cannot represent the
+Variance-Gamma boundary <span class="math notranslate nohighlight">\(b=0\)</span> <em>exactly</em>; EM’s degenerate-GIG branches can.</p>
+<p><strong>GH, <span class="math notranslate nohighlight">\(d=2\)</span>.</strong> EM and L-BFGS reach the same NLL to <span class="math notranslate nohighlight">\(\sim 10^{-4}\)</span>
+(<span class="math notranslate nohighlight">\(\Delta\)</span>NLL <span class="math notranslate nohighlight">\(\approx -0.013\)</span> vs the truth on the interior draw). EM:
+<span class="math notranslate nohighlight">\(0.45\)</span>–<span class="math notranslate nohighlight">\(1.0\,\mathrm{s}\)</span> (25 iterations). L-BFGS: <span class="math notranslate nohighlight">\(11\)</span>–<span class="math notranslate nohighlight">\(13\,\mathrm{s}\)</span>
+(40 iterations), <span class="math notranslate nohighlight">\(\sim 10\)</span>–<span class="math notranslate nohighlight">\(25\times\)</span> slower. Adam at 200 steps (already
+<span class="math notranslate nohighlight">\(4\)</span>–<span class="math notranslate nohighlight">\(8\times\)</span> EM wall-clock) is <span class="math notranslate nohighlight">\(0.09\)</span>–<span class="math notranslate nohighlight">\(0.19\)</span> nats <em>worse</em> than the truth
+and has not left the initialisation neighbourhood. Subordinator
+<span class="math notranslate nohighlight">\((p,a,b)\)</span> differs across EM and L-BFGS at matched NLL (GH scale gauge).</p>
+<p>The ML recipe is a valid MLE on well-conditioned interiors. It is the
+wrong default here: cost, first-order lag, GIG-boundary collapse, and
+the exact <span class="math notranslate nohighlight">\(b=0\)</span> boundary that VG occupies.</p>
+</section>
+<hr class="docutils" />
+<section id="what-this-does-not-show">
+<h2>4. What this does not show<a class="headerlink" href="#what-this-does-not-show" title="Link to this heading">#</a></h2>
+<p>A historical reason for avoiding gradient descent was
+<span class="math notranslate nohighlight">\(\partial_\nu\log K_\nu\)</span>: older JAX Bessel wrappers (TensorFlow
+Probability’s <code class="docutils literal notranslate"><span class="pre">log_besselk</span></code>) returned a <strong>zero</strong> <span class="math notranslate nohighlight">\(\nu\)</span>-tangent, so Adam
+could not move <span class="math notranslate nohighlight">\(p\)</span>. That bug is gone.
+<code class="docutils literal notranslate"><span class="pre">log_kv</span></code> uses <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code> (exact
+<span class="math notranslate nohighlight">\(\partial_z\)</span> recurrence; central difference <span class="math notranslate nohighlight">\(\partial_\nu\)</span> at
+<span class="math notranslate nohighlight">\(10^{-5}\)</span>). On the same GIG grid, <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> of the observed NLL with
+respect to <span class="math notranslate nohighlight">\((p,a,b)\)</span> matches a CPU finite difference that never touches
+the custom JVP, relative error <span class="math notranslate nohighlight">\(\sim 10^{-9}\)</span> (<code class="docutils literal notranslate"><span class="pre">tests/test_gig_properties.py</span></code>).</p>
+<p>Quasi-Newton on the GIG NLL <em>can</em> recover the interior MLE. We still do
+not lead with it, for the reasons in § 3, not because autodiff through
+<span class="math notranslate nohighlight">\(K_\nu\)</span> is broken.</p>
+</section>
+<hr class="docutils" />
+<section id="bring-your-own-optimiser">
+<h2>5. Bring your own optimiser<a class="headerlink" href="#bring-your-own-optimiser" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">log_prob</span></code> is JIT-able and differentiable. If a surrounding model must
+co-optimise GIG parameters with non-normix parameters, the density is
+the primitive — not a <code class="docutils literal notranslate"><span class="pre">method=&quot;adam&quot;</span></code> fitter. Interior <span class="math notranslate nohighlight">\((p,a,b)\)</span> only;
+the caveats in § 3 still apply.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">softplus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">unpack</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">softplus</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">softplus</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">nll</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">GIG</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">))</span>
+
+<span class="c1"># jax.grad(nll)(phi, X)  — plug into JAXopt L-BFGS, Optax, or a custom loop</span>
+</pre></div>
+</div>
+<p>Adam and L-BFGS remain unsupported as public fitters: there is no grid
+point where they beat <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> / EM, and shipping them means owning
+<span class="math notranslate nohighlight">\(b\to 0\)</span> collapse, the GH gauge, and step-count / learning-rate knobs
+whose only documented advice would be “prefer <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code>”.</p>
+<p>Reopen the decision if a concrete caller needs one of:</p>
+<ul class="simple">
+<li><p><strong>streaming / minibatch</strong> where a full E-step over <span class="math notranslate nohighlight">\(n\)</span> is infeasible;</p></li>
+<li><p><strong>joint NLL</strong> with parameters that are not a normix exponential family.</p></li>
+</ul>
+<p>The first abstraction in either case is a documented <code class="docutils literal notranslate"><span class="pre">nll(params,</span> <span class="pre">X)</span></code>
+helper, not an in-tree Adam.</p>
+</section>
+<hr class="docutils" />
+<section id="cross-references">
+<h2>6. Cross-references<a class="headerlink" href="#cross-references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="exponential_family.html"><span class="doc">Exponential Family Core</span></a> — <span class="math notranslate nohighlight">\(\psi\)</span>, <span class="math notranslate nohighlight">\(\eta=\nabla\psi\)</span>, clamp vs bijections.</p></li>
+<li><p><a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a> — model / fitter split, M-step as <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>.</p></li>
+<li><p><a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a> — η-rescaling, <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> JVP, CPU/GPU hybrid.</p></li>
+<li><p><a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM algorithm</span></a>,
+<a class="reference internal" href="../theory/gig.html"><span class="doc">GIG distribution</span></a>.</p></li>
+<li><p><a class="reference internal" href="../user_guide/em_fitting.html"><span class="doc">Fitting with EM</span></a>.</p></li>
+</ul>
 </section>
 </section>
 
@@ -537,20 +651,20 @@ pre-registers the numerical phases.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../design/why_not_gradient_descent.html"
+       href="solvers_and_bessel.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Why not gradient descent</p>
+        <p class="prev-next-title">Solvers and Bessel Functions</p>
       </div>
     </a>
     <a class="right-next"
-       href="subordinator_tracking.html"
+       href="../research/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Subordinator-tracking portfolios</p>
+        <p class="prev-next-title">Research notes</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -572,8 +686,12 @@ pre-registers the numerical phases.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subordinator-tracking-one-page-summary">Subordinator tracking — one-page summary</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gauges-study-plan">Gauges — study plan</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-supported-fitters">1. The supported fitters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-was-compared">2. What was compared</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-comparison-shows">3. What the comparison shows</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-does-not-show">4. What this does not show</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bring-your-own-optimiser">5. Bring your own optimiser</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">6. Cross-references</a></li>
 </ul>
   </nav></div>
 

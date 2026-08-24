@@ -11,6 +11,7 @@ exponential_family
 mixtures
 em_framework
 solvers_and_bessel
+why_not_gradient_descent
 ```
 
 ## Quick lookups
@@ -21,6 +22,7 @@ solvers_and_bessel
 | Why three classmethod tiers for the log-partition? | {doc}`exponential_family` § 2 |
 | What does `'det_sigma_x'` regularisation do? | {doc}`em_framework` § 5 |
 | Why CPU backend for Bessel and GIG solve? | {doc}`solvers_and_bessel` § 4 |
+| Why not Adam / L-BFGS on the observed NLL? | {doc}`why_not_gradient_descent` |
 
 ## See also
 

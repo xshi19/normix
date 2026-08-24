@@ -241,6 +241,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -567,6 +568,9 @@ reproduces a benchmark from the literature.</p>
 (Multi-Cycle ECM; <a class="reference internal" href="../references.html#mengrubbin1993"><span class="std std-ref">MengRubin1993</span></a>,
 <a class="reference internal" href="../references.html#mcneil2010"><span class="std std-ref">McNeil2010</span></a>). EM is the right choice for almost all cases;
 the two agree at the optimum.</p>
+<p>Adam or L-BFGS on the observed-data likelihood is not a supported fitter.
+The comparison, and a bring-your-own-optimiser snippet for surrounding
+models, is in <a class="reference internal" href="../design/why_not_gradient_descent.html"><span class="doc">Why not gradient descent</span></a>.</p>
 </section>
 </section>
 
