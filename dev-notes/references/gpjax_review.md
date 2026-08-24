@@ -345,6 +345,10 @@ single-maintainer project) but **consider** wiring `benchmarks/compare.py`
 into CI as an opt-in PR check, and keep compile-vs-steady-state separation as
 a stated convention in `benchmarks/`.
 
+> **Superseded 2026-08-23:** ASV adopted as a scoped trend-tracking layer
+> alongside the deep-dive scripts — see
+> [`../plans/asv_benchmarking.md`](../plans/asv_benchmarking.md).
+
 ### 6.3 Documentation
 
 The docs are GPJax's strongest artefact. Concretely:
