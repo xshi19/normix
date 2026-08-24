@@ -57,7 +57,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Distribution code (`normix/`) | `.cursor/rules/coding-conventions.mdc` |
 | Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
 | Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
-| Published design rationale | `docs/design/` (exponential_family, mixtures, em_framework, solvers_and_bessel) |
+| Published design rationale | `docs/design/` (exponential_family, mixtures, em_framework, solvers_and_bessel, why_not_gradient_descent) |
 | Design decisions table (internal) | `dev-notes/design/design.md` |
 | Agent instructions design | `dev-notes/design/agent_instructions_design.md` |
 | Full design doc index (internal) | `dev-notes/design/index.md` |

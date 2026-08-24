@@ -486,19 +486,22 @@ at essentially identical NLL.
 ## 9. Recommendation
 
 Keep **EM + constrained Bregman $\eta\to\theta$** as the supported fitter.
-Record the decision as: *correct and cheaper on the problem we actually
-solve; the ML recipe is a valid MLE on the interior and a poor default
-at the GIG boundary / GH gauge.*
+Recorded as row E15 in `../design/design.md`: *correct and cheaper on the
+problem we actually solve; the ML recipe is a valid MLE on the interior
+and a poor default at the GIG boundary / GH gauge.*
 
-User-facing `docs/design/` page (next, not this note): lead with the
-exponential-family identity and the timing table in § 7.3–7.5; mention
-Bessel $\partial_\nu$ only as historical context (TFP returned 0; we
-fixed it; it is no longer the blocker).
+User-facing page: [`docs/design/why_not_gradient_descent.md`](../../docs/design/why_not_gradient_descent.md).
+It leads with the exponential-family identity and the timing numbers in
+§ 7.3–7.5; Bessel $\partial_\nu$ is historical context only (TFP returned
+0; we fixed it; it is no longer the blocker). The H1 autodiff contract is
+`tests/test_gig_properties.py::TestGIGNLLAutodiff`.
 
-Optional later: a `GradientFitter` was reserved in the 2026-03-07 fit
-design (`git show 5c679e8:docs/jax_normix_fit_design.md` § 5.3 item 6)
-and never built. This study does not motivate building it for GIG/GH.
-Gamma-like interiors would not benefit either (`fit_mle` is already
+No in-tree Adam / L-BFGS fitter. A `GradientFitter` was reserved in the
+2026-03-07 fit design (`git show 5c679e8:docs/jax_normix_fit_design.md`
+§ 5.3 item 6) and never built. Reopen E15 if a caller must co-optimise
+NLL with non-normix parameters, or if a full E-step is infeasible
+(streaming); the first abstraction then is `nll(params, X)`, not an
+optimiser. Gamma-like interiors would not benefit (`fit_mle` is already
 closed form).
 
 ---

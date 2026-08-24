@@ -293,7 +293,7 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 
 | Document | Content |
 |---|---|
-| `design/index.md` | TOC of all living design docs (internal); public subset at `docs/design/` |
+| `design/index.md` | TOC of all living design docs (internal); public subset at `docs/design/` (includes `why_not_gradient_descent.md`) |
 | `design/design.md` | Philosophy + canonical decision table |
 | `design/exponential_family.md` | EF base class, log-partition triad, Bregman solver interface |
 | `design/mixtures.md` | Joint vs Marginal, parameter facade, factor-analysis sibling family |

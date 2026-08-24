@@ -227,3 +227,64 @@ class TestGIGExtremeParameters:
         assert_allclose(
             float(gig.var()), float(gig.fisher_information()[2, 2]), rtol=1e-10,
         )
+
+
+def _gig_nll_jax(p, a, b, X):
+    dist = GIG(p=p, a=a, b=b)
+    return -jnp.mean(jax.vmap(dist.log_prob)(X))
+
+
+def _gig_nll_cpu(p, a, b, X_np):
+    """Mean NLL via the CPU log-partition (scipy kve), not the JAX custom JVP."""
+    theta = np.asarray(GIG(p=p, a=a, b=b).natural_params(), dtype=np.float64)
+    t = np.stack([np.log(X_np), 1.0 / X_np, X_np], axis=1)
+    psi = float(GIG._log_partition_cpu(theta))
+    return float(psi - np.mean(t @ theta))
+
+
+class TestGIGNLLAutodiff:
+    """H1: jax.grad of the GIG NLL matches a CPU finite difference that
+    never touches ``log_kv``'s custom JVP.
+
+    Pins the contract that gradient-based NLL fitting is *possible*. It does
+    not make Adam / L-BFGS a supported fitter (see
+    ``docs/design/why_not_gradient_descent.md``).
+    """
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize("p,a,b", [
+        (1.0, 2.0, 1.0),
+        (5.0, 1.0, 1.0),
+        (-0.5, 2.0, 1.0),
+    ])
+    def test_nll_grad_matches_cpu_fd(self, p, a, b):
+        n = 64
+        X = np.asarray(GIG(p=p, a=a, b=b).rvs(n, seed=0), dtype=np.float64)
+        Xj = jnp.asarray(X)
+        pab = jnp.array([p, a, b], dtype=jnp.float64)
+
+        def nll(params):
+            return _gig_nll_jax(params[0], params[1], params[2], Xj)
+
+        g_jax = np.asarray(jax.grad(nll)(pab), dtype=np.float64)
+
+        eps = 1e-6
+        g_fd = np.empty(3, dtype=np.float64)
+        pab0 = np.array([p, a, b], dtype=np.float64)
+        for i in range(3):
+            delta = np.zeros(3, dtype=np.float64)
+            delta[i] = eps
+            plus = pab0 + delta
+            minus = pab0 - delta
+            g_fd[i] = (
+                _gig_nll_cpu(plus[0], plus[1], plus[2], X)
+                - _gig_nll_cpu(minus[0], minus[1], minus[2], X)
+            ) / (2.0 * eps)
+
+        assert_allclose(
+            g_jax, g_fd, rtol=1e-6, atol=1e-8,
+            err_msg=(
+                f"jax.grad(NLL) != CPU FD at (p,a,b)=({p},{a},{b}): "
+                f"jax={g_jax}, fd={g_fd}"
+            ),
+        )

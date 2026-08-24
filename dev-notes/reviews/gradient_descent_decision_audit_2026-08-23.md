@@ -191,15 +191,15 @@ than folklore (the user proposed exactly this sequencing):
    Adam lags; degenerate $(a,b)$ still needs η-rescaling; `log_kv`
    $\partial_\nu$ is *not* the blocker (rel. err. $\sim 10^{-9}$).
    VG $\alpha\le d/2$ unbounded-likelihood was left out (separate note).
-2. **Publish the rationale.** A section in `docs/design/em_framework.md`
-   (or a sibling page) titled "Why not gradient descent", written from the
-   study's numbers: exponential-family identity + timing tables. Do **not**
-   lead with a stale Bessel-$\partial_\nu$ story (H1 was rejected). Natural
-   home for GPJax-review adoption item #1 (sharp-bits / method-selection).
-   Follow `.cursor/rules/docs-cross-links.mdc`.
-3. **Add the design.md row** (EM section): decision "EM + constrained
-   Bregman η→θ, not likelihood gradient descent", linking the tech note
-   and the docs page.
+2. **Publish the rationale.** **Done (2026-08-23):**
+   [`docs/design/why_not_gradient_descent.md`](../../docs/design/why_not_gradient_descent.md).
+   Leads with the exponential-family identity and the timing numbers; Bessel
+   $\partial_\nu$ is historical context only (H1 rejected). H1 contract:
+   `tests/test_gig_properties.py::TestGIGNLLAutodiff`.
+3. **Add the design.md row.** **Done:** row E15 (EM section). Reopen if a
+   caller must co-optimise NLL with non-normix parameters, or if a full
+   E-step is infeasible (streaming); then expose `nll(params, X)`, not an
+   optimiser.
 4. **Archive the founding docs**: copy the two git-only fit-design docs
    into `dev-notes/archive/design/` with an archival header, so the
    rationale is browsable without git archaeology.

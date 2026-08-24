@@ -169,4 +169,5 @@ and are hard to override.
 ## 5. Cross-References
 
 - η→θ optimization for GIG: {doc}`solvers_and_bessel`.
+- Why not likelihood gradient descent: {doc}`why_not_gradient_descent`.
 - Theory: {doc}`GIG distribution <../theory/gig>`, {doc}`EM algorithm <../theory/em_algorithm>`.

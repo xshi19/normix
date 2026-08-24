@@ -30,6 +30,7 @@
 | Why is `Shrinkage` a combinator, not subclasses? | `em_framework.md` § 4.3 |
 | Why hand-rolled Newton instead of `optimistix`? | `solvers_and_bessel.md` § 1.2 |
 | Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 4 |
+| Why not Adam / L-BFGS on the observed NLL? | `../../docs/design/why_not_gradient_descent.md`; row E15 |
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |
 | Visual explanation artifacts (show-me HTML)? | `agent_instructions_design.md` § Visual artifacts; skill `.cursor/skills/show-me/` |

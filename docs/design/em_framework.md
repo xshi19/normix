@@ -388,6 +388,7 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 ## 7. Cross-References
 
 - Solvers (η→θ): {doc}`solvers_and_bessel`.
+- Why EM rather than NLL gradient descent: {doc}`why_not_gradient_descent`.
 - Theory: {doc}`EM algorithm <../theory/em_algorithm>`,
   {doc}`Shrinkage <../theory/shrinkage>`,
   {doc}`Factor analysis <../theory/factor_analysis>`.
