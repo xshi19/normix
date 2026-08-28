@@ -1,6 +1,6 @@
 # ASV Benchmarking: trend tracking for normix
 
-> **PROPOSED — 2026-08-23.**
+> **IN PROGRESS — Phase 1 done 2026-08-28.** Drafted 2026-08-23.
 > **Supersedes:** the "skip ASV" verdict in
 > [`../references/gpjax_review.md`](../references/gpjax_review.md) §6.2/§8.
 > That verdict weighed ASV as a replacement for the ad-hoc scripts; this plan
@@ -221,6 +221,10 @@ class GIGFromExpectation:
     "env_dir": ".asv/env",
     "results_dir": "results",
     "html_dir": ".asv/html",
+    "build_command": [
+        "python -m pip install build",
+        "python -m build --wheel -o {build_cache_dir} {build_dir}"
+    ],
     "matrix": {
         "req": {
             "jax": ["0.9.1"],
@@ -247,10 +251,13 @@ Notes:
   dev machine or CI, override `env_nobuild` to `{"JAX_PLATFORMS": ["cpu"]}`.
 - x64 is enabled by normix at import; no env var needed.
 - Smoke-test loop while authoring: `asv run --python=same --quick`.
+- `build_command` must leave **one** wheel in `{build_cache_dir}`.
+  `pip wheel` without `--no-deps` dumps every dependency and `{wheel_file}`
+  is ambiguous.
 
 ### JAX timing rules (adapted from GPJax's five rules)
 
-Record these in `asv_bench/README.md` when scaffolding:
+Recorded in `asv_bench/README.md`:
 
 1. Every `time_*` body ends in `block_until_ready` — otherwise dispatch is
    timed, not work.
@@ -292,15 +299,23 @@ Record these in `asv_bench/README.md` when scaffolding:
 
 ## Phases
 
-### Phase 1 — Scaffold (local, CPU only)
+### Phase 1 — Scaffold (local, CPU only) ✅
 
-- [ ] `uv add --dev asv`
-- [ ] Create `asv_bench/{asv.conf.json, benchmarks/__init__.py, README.md}`
+- [x] `uv add --dev asv`
+- [x] Create `asv_bench/{asv.conf.json, benchmarks/__init__.py, README.md}`
       (timing rules in the README)
-- [ ] `asv machine` profile on the desktop
-- [ ] Port `Bessel` + `GIGFromExpectation` (backend params)
-- [ ] Verify with `asv run --python=same --quick`, then a real
-      `asv run master^!`; `asv preview` the dashboard
+- [x] `asv machine` profile on the desktop
+- [x] Port `Bessel` + `GIGFromExpectation` (backend params)
+- [x] Verify with `asv run --python=same --quick`, then a real
+      `asv run 'HEAD^!'` (PR branch; `master^!` after merge); `asv preview`
+      the dashboard
+
+Gotchas from the first isolated run:
+
+- Quote `'HEAD^!'` / `'master^!'` so bash history expansion does not
+  swallow `!`.
+- `asv publish` on a non-master commit warns `Couldn't find HASH in
+  branches (master)`. Expected until the suite is on master.
 
 ### Phase 2 — Device matrix (desktop)
 
