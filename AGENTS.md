@@ -65,7 +65,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Published research notes | `docs/research/` (subordinator tracking); working notes in `dev-notes/research/` |
 | Published bibliography + citation/package-link rules | `docs/references.md`; `.cursor/rules/docs-cross-links.mdc` |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`) |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`, `asv_benchmarking.md`) |
 | 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |
 | `normix.finance` roadmap (Phases D–F done; archived) | `dev-notes/archive/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |

@@ -157,3 +157,10 @@ required-environments = [
     "sys_platform == 'darwin' and platform_machine == 'arm64'",
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
+# Pin JAX for this repo's resolver (uv.lock, ASV, tests). Not a published
+# requirement — `dependencies` stays `jax>=0.4.38` so pip users are not
+# forced onto 0.9.1. Bump both pins together when deliberately upgrading.
+constraint-dependencies = [
+    "jax==0.9.1",
+    "jaxlib==0.9.1",
+]
