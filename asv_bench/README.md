@@ -11,7 +11,7 @@ cd asv_bench
 uv run asv machine --yes                 # once per machine
 uv run asv check --python=same
 uv run asv run --python=same --quick     # working tree; results not saved
-uv run asv run HEAD^!                    # isolated uv env, this commit only
+uv run asv run 'HEAD^!'                  # isolated uv env, this commit only (quote so bash does not eat `!`)
 uv run asv publish
 uv run asv preview
 ```
