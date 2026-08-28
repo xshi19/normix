@@ -257,7 +257,7 @@ Notes:
 
 ### JAX timing rules (adapted from GPJax's five rules)
 
-Record these in `asv_bench/README.md` when scaffolding:
+Recorded in `asv_bench/README.md`:
 
 1. Every `time_*` body ends in `block_until_ready` — otherwise dispatch is
    timed, not work.
