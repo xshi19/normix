@@ -1,0 +1,45 @@
+{
+    // airspeed velocity config for the curated trend suite.
+    // Paths are relative to cwd — run asv from this directory (`asv_bench/`).
+    // Plan: ../dev-notes/plans/asv_benchmarking.md
+    "version": 1,
+    "project": "normix",
+    "project_url": "https://xshi19.github.io/normix/",
+    "repo": "..",
+    "dvcs": "git",
+    "branches": ["master"],
+    "show_commit_url": "https://github.com/xshi19/normix/commit/",
+
+    "environment_type": "uv",
+    "pythons": ["3.12"],
+    "benchmark_dir": "benchmarks",
+    "env_dir": ".asv/env",
+    "results_dir": "results",
+    "html_dir": ".asv/html",
+    "build_cache_size": 8,
+    "install_timeout": 900.0,
+    "default_benchmark_timeout": 180.0,
+    "launch_method": "spawn",
+
+    // PEP 517 / hatchling. pip wheel uses build isolation (hatchling comes
+    // from pyproject.toml's build-system.requires).
+    "build_command": [
+        "python -m pip wheel -w {build_cache_dir} {build_dir}"
+    ],
+
+    "matrix": {
+        // Single-valued pin, lockstep with [tool.uv] constraint-dependencies.
+        // Not a version-comparison matrix. ASV's uv plugin pip-installs and
+        // does not read uv.lock.
+        "req": {
+            "jaxlib": ["0.9.1"],
+            "jax": ["0.9.1"]
+        },
+        // Phase 1: CPU only. Phase 2 adds "cuda" to JAX_PLATFORMS and an
+        // install_command with the cuda12 extra.
+        "env_nobuild": {
+            "JAX_PLATFORMS": ["cpu"],
+            "XLA_PYTHON_CLIENT_PREALLOCATE": ["false"]
+        }
+    }
+}

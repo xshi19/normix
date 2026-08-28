@@ -1,0 +1,4 @@
+# Result JSON is committed from Phase 4 (release cadence on the desktop).
+# Smoke runs on throwaway machines must not land here.
+*
+!.gitignore
