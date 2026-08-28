@@ -137,6 +137,7 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "asv>=0.6.6",
     "marimo>=0.23.2",
     "nbconvert>=7.17.0",
     "pandas>=2.0.0",
