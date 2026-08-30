@@ -22,6 +22,10 @@ from normix.distributions.generalized_inverse_gaussian import (
     GeneralizedInverseGaussian as GIG,
 )
 
+_RVS_N = 10_000
+_RVS_SEED = 0
+_REPEAT = (1, 3, 3.0)
+
 _CASES = {
     "easy": (0.5, 1.0, 1.0),
     "hard": (0.5, 10.0, 0.1),
@@ -56,3 +60,33 @@ class GIGFromExpectation:
             self.eta, theta0=self.theta0, backend=backend
         )
         jax.block_until_ready(gig.p)
+
+
+class Sampling:
+    """Steady-state Devroye TDR ``GIG.rvs`` (default method), n=10_000.
+
+    Source: ``scripts/benchmark_gig_rvs.py``. Jitted in ``setup`` so the
+    timed body is the kernel, not dispatch.
+    """
+
+    timeout = 180.0
+    warmup_time = 0.0
+    rounds = 1
+    repeat = _REPEAT
+
+    def setup(self) -> None:
+        require_requested_device()
+        gig = GIG(
+            p=jnp.asarray(0.5, dtype=jnp.float64),
+            a=jnp.asarray(1.0, dtype=jnp.float64),
+            b=jnp.asarray(1.0, dtype=jnp.float64),
+        )
+
+        def _rvs():
+            return gig.rvs(_RVS_N, seed=_RVS_SEED, method="devroye")
+
+        self._rvs = jax.jit(_rvs)
+        self._rvs().block_until_ready()
+
+    def time_gig_rvs(self) -> None:
+        self._rvs().block_until_ready()

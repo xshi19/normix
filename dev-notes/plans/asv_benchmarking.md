@@ -1,6 +1,6 @@
 # ASV Benchmarking: trend tracking for normix
 
-> **IN PROGRESS — Phase 1 done 2026-08-28.** Drafted 2026-08-23.
+> **IN PROGRESS — Phase 3 done 2026-08-30.** Drafted 2026-08-23.
 > **Supersedes:** the "skip ASV" verdict in
 > [`../references/gpjax_review.md`](../references/gpjax_review.md) §6.2/§8.
 > That verdict weighed ASV as a replacement for the ad-hoc scripts; this plan
@@ -110,7 +110,7 @@ envs.
 | Command | Purpose |
 |---|---|
 | `asv run NEW` | benchmark commits since the last run on this machine |
-| `asv run v0.1.0..master` / `asv run TAGS` | backfill history |
+| `asv run v0.1.0..master` / `asv run HASHFILE:tags` | backfill history (asv 0.6.6 `TAGS` stores tag names; resolve to SHAs) |
 | `asv continuous master mybranch --factor 1.1` | PR regression check (fails on >10% slowdown) |
 | `asv compare A B` | table diff of two commits |
 | `asv publish` + `asv preview` | build and serve the dashboard |
@@ -357,13 +357,36 @@ Verified on wukong (RTX 4090, WSL2): `jax-cuda12-plugin==0.9.1` in the
 ASV env; `JAX_PLATFORMS=cuda` → `CudaDevice(id=0)`; `asv publish`
 `params.env-JAX_PLATFORMS = ["cpu", "cuda"]`.
 
-### Phase 3 — Suite build-out + first history
+### Phase 3 — Suite build-out + first history ✅
 
-- [ ] Port `EStep`, `EMIteration`, `Compile` (`timeraw_*`), `Sampling`
-- [ ] Backfill **tags only** (matches the per-release cadence):
+- [x] Port `EStep`, `EMIteration`, `Compile` (`timeraw_*`), `Sampling`
+- [x] Backfill **tags only** (matches the per-release cadence):
       `asv run TAGS`. Do not time every commit on master.
-- [ ] Wall-clock budget check: full suite ≤ ~10 min/commit on the desktop;
+- [x] Wall-clock budget check: full suite ≤ ~10 min/commit on the desktop;
       shrink Ns if over
+
+Gotchas:
+
+- Wall clock is ASV's repeat fill, not N. Default `repeat` spends ~20 s per
+  param even on µs kernels. New classes use `rounds=1`,
+  `repeat=(1, 3, 3.0)` so E-step/EM/compile/sampling add ~1.5 min on cpu.
+  Bessel/GIG keep the Phase 1 defaults. Isolated v0.3.0 on wukong:
+  cpu 2.87 min, cuda 5.39 min, ~9.4 min/commit including install. Eight
+  tags × both devices: 68 min. N ∈ {1000, 10000} stayed.
+- `timeraw_*` returns `(stmt, setup)` strings; the child interpreter must
+  re-enable x64. `setup()` of the class still runs in the parent (device
+  skip) and does **not** leak into the timed process.
+- `GH.default_init` is three nested 5-iter EM fits. `EMIteration` uses
+  the parent moment init (`_from_init_params`) so setup stays seconds.
+- `asv_bench/benchmarks/` is relative to the config file, not the
+  historical checkout. TAGS runs the current suite against each tag's
+  wheel. All eight tags (v0.2.1–v0.3.0) succeeded on both devices.
+- asv 0.6.6 `TAGS` records **tag names** as `commit_hash`, and
+  `asv publish` cannot place those on master. Resolve to SHAs:
+  `git tag | while read t; do git rev-list -n 1 "$t"; done > /tmp/asv-tags`
+  then `asv run HASHFILE:/tmp/asv-tags`. The Phase 3 JSON on disk was
+  rewritten to SHAs after a raw `TAGS` run. Results stay gitignored
+  until Phase 4.
 
 ### Phase 4 — Publishing
 
@@ -405,5 +428,5 @@ ASV env; `JAX_PLATFORMS=cuda` → `CudaDevice(id=0)`; `asv publish`
   `asv_bench/results/`, publish the dashboard. For a suspected
   performance-sensitive PR, optionally run `asv continuous master HEAD`
   locally before merging — that is a two-commit compare, not a history
-  backfill. Phase 3 still backfills tags once so the dashboard has a
-  trend line on day one.
+  backfill. Phase 3 backfilled v0.2.1–v0.3.0 (SHA-keyed JSON) so the
+  dashboard has a trend line on day one.

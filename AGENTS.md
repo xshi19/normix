@@ -75,7 +75,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
 | GPJax review (design, JAX usage, adoption candidates) | `dev-notes/references/gpjax_review.md` |
 | Technical notes | `dev-notes/tech_notes/` |
-| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; Bessel + GIG, cpu/cuda). Plan: `dev-notes/plans/asv_benchmarking.md` |
+| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; Bessel, GIG, E-step, EM, compile, sampling; cpu/cuda). Plan: `dev-notes/plans/asv_benchmarking.md` |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
