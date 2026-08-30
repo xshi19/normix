@@ -29,6 +29,14 @@
         "python -m build --wheel -o {build_cache_dir} {build_dir}"
     ],
 
+    // Default ASV install is `{wheel_file} --force-reinstall`. We add the
+    // cuda12 extra and, on Linux, `jax[cuda12]==0.9.1` so the plugin
+    // lands (see `_asv_install.py`). env_nobuild does not rebuild: cpu
+    // and cuda series share that install.
+    "install_command": [
+        "in-dir={env_dir} python {conf_dir}/_asv_install.py {wheel_file}"
+    ],
+
     "matrix": {
         // Single-valued pin, lockstep with [tool.uv] constraint-dependencies.
         // Not a version-comparison matrix. ASV's uv plugin pip-installs and
@@ -37,11 +45,18 @@
             "jaxlib": ["0.9.1"],
             "jax": ["0.9.1"]
         },
-        // Phase 1: CPU only. Phase 2 adds "cuda" to JAX_PLATFORMS and an
-        // install_command with the cuda12 extra.
+        // Device axis: same install, two runtime series. Non-linux has
+        // no jax[cuda12] wheels; drop the cuda series there.
         "env_nobuild": {
-            "JAX_PLATFORMS": ["cpu"],
+            "JAX_PLATFORMS": ["cpu", "cuda"],
             "XLA_PYTHON_CLIENT_PREALLOCATE": ["false"]
         }
-    }
+    },
+
+    "exclude": [
+        {
+            "sys_platform": "(?!linux).*",
+            "env_nobuild": {"JAX_PLATFORMS": "cuda"}
+        }
+    ]
 }

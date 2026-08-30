@@ -225,6 +225,9 @@ class GIGFromExpectation:
         "python -m pip install build",
         "python -m build --wheel -o {build_cache_dir} {build_dir}"
     ],
+    "install_command": [
+        "in-dir={env_dir} python {conf_dir}/_asv_install.py {wheel_file}"
+    ],
     "matrix": {
         "req": {
             "jax": ["0.9.1"],
@@ -245,10 +248,12 @@ Notes:
   ASV gets the same pin as `[tool.uv] constraint-dependencies`. One
   version, not a version-comparison matrix; bump it in lockstep with
   the uv constraints.
-- GPU series need CUDA-enabled JAX inside the ASV-managed env: set
-  `install_command` to install with the existing `cuda12` extra
-  (`pyproject.toml` already defines `jax[cuda12]` for linux). On the Mac
-  dev machine or CI, override `env_nobuild` to `{"JAX_PLATFORMS": ["cpu"]}`.
+- GPU series need CUDA-enabled JAX inside the ASV-managed env.
+  `install_command` runs `_asv_install.py`: `{wheel_file}[cuda12]` plus,
+  on Linux, `jax[cuda12]==0.9.1` (lockstep with `matrix.req`). The extra
+  in `pyproject.toml` is Linux-only; non-linux `exclude` drops the cuda
+  `env_nobuild` series. `--python=same` on a CPU-only interpreter skips
+  cuda via `NotImplementedError` in setup.
 - x64 is enabled by normix at import; no env var needed.
 - Smoke-test loop while authoring: `asv run --python=same --quick`.
 - `build_command` must leave **one** wheel in `{build_cache_dir}`.
@@ -317,13 +322,40 @@ Gotchas from the first isolated run:
 - `asv publish` on a non-master commit warns `Couldn't find HASH in
   branches (master)`. Expected until the suite is on master.
 
-### Phase 2 — Device matrix (desktop)
+### Phase 2 — Device matrix (desktop) ✅
 
-- [ ] `install_command` with the `cuda12` extra; confirm CUDA jax inside the
+- [x] `install_command` with the `cuda12` extra; confirm CUDA jax inside the
       ASV env
-- [ ] `env_nobuild: JAX_PLATFORMS = ["cpu", "cuda"]`; confirm two environment
+- [x] `env_nobuild: JAX_PLATFORMS = ["cpu", "cuda"]`; confirm two environment
       series appear in the dashboard
-- [ ] Sanity-check GPU numbers against `benchmarks/results/` history
+- [x] Sanity-check GPU numbers against `benchmarks/results/` history
+
+Gotchas:
+
+- `matrix.req` installs `jax==0.9.1` *without* extras. `{wheel_file}[cuda12]`
+  alone does not grow extras on an already-installed jax. `_asv_install.py`
+  then does `jax[cuda12]==0.9.1` on Linux. Keep `--force-reinstall` on the
+  wheel (ASV default; versions may not change between commits).
+- `JAX_PLATFORMS=cuda` with CPU-only jax fails at first device placement
+  (`normix.utils.bessel` module-level `jnp.asarray`). `benchmarks/__init__.py`
+  falls back to `JAX_PLATFORMS=cpu` *before* importing jax when
+  `jax_cuda12_plugin` is missing; `setup` then skips. Isolated Linux GPU
+  runs do not take that path.
+- Non-linux: `exclude` on `sys_platform` drops the cuda series (no
+  `jax[cuda12]` wheels).
+- cpu and cuda share one `.asv/env/<hash>/` (`env_nobuild` is not in the
+  build key). Result filenames and the dashboard still split on
+  `env-JAX_PLATFORMS`.
+- Micro-suite GPU is slower than CPU (kernel launch vs a 90 μs CPU
+  `log_kv`). Historical `bench_bessel.py` / `bench_gig_solvers.py` GPU
+  scalars (~345 ms / ~2.4 s) were unjitted; ASV's jitted cuda scalar
+  `log_kv` is ~0.3 ms and GIG jax-Newton ~260–710 ms. Direction matches
+  (jax ≫ cpu on this problem size); do not compare the old milliseconds
+  to ASV μs.
+
+Verified on wukong (RTX 4090, WSL2): `jax-cuda12-plugin==0.9.1` in the
+ASV env; `JAX_PLATFORMS=cuda` → `CudaDevice(id=0)`; `asv publish`
+`params.env-JAX_PLATFORMS = ["cpu", "cuda"]`.
 
 ### Phase 3 — Suite build-out + first history
 
