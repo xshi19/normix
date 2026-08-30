@@ -12,6 +12,7 @@ import os
 
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
+from benchmarks import require_requested_device
 import jax
 
 jax.config.update("jax_enable_x64", True)
@@ -42,6 +43,7 @@ class Bessel:
     warmup_time = 0.0
 
     def setup(self, regime: str) -> None:
+        require_requested_device()
         v, z, z_lo, z_hi = _REGIMES[regime]
         self.v = jnp.asarray(v, dtype=jnp.float64)
         self.z = jnp.asarray(z, dtype=jnp.float64)
