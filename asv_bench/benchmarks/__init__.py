@@ -41,3 +41,10 @@ def require_requested_device() -> None:
         raise NotImplementedError(
             f"JAX_PLATFORMS=cuda but jax.devices() has no gpu: {jax.devices()!r}"
         )
+
+
+def block_pytree(tree) -> None:
+    """``block_until_ready`` on every array leaf (η pytrees, fitted models)."""
+    for leaf in jax.tree_util.tree_leaves(tree):
+        if hasattr(leaf, "block_until_ready"):
+            leaf.block_until_ready()

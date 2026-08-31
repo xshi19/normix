@@ -12,12 +12,15 @@ uv run asv machine --yes                 # once per machine
 uv run asv check --python=same
 uv run asv run --python=same --quick     # working tree; results not saved
 uv run asv run 'HEAD^!'                  # isolated uv env, this commit only (quote so bash does not eat `!`)
+# Tag backfill: asv 0.6.6 `TAGS` records tag names, not SHAs. Resolve first:
+git tag | while read t; do git rev-list -n 1 "$t"; done > /tmp/asv-tags
+uv run asv run HASHFILE:/tmp/asv-tags
 uv run asv publish
 uv run asv preview
 ```
 
 `--python=same --quick` is the authoring loop. Historical / release runs
-(`asv run TAGS`, `asv run <prev>..<new>`) always go through isolated envs.
+(`asv run HASHFILE:…` of tag SHAs, `asv run <prev>..<new>`) always go through isolated envs.
 Canonical numbers come from the maintainer's Linux desktop at each GitHub
 release — not from CI, not from this smoke path.
 
@@ -38,7 +41,7 @@ cd asv_bench && uv run asv run --python=same --quick
 
 1. Every `time_*` body ends in `block_until_ready` — otherwise dispatch is timed, not work.
 2. Steady-state benchmarks: jit warm-up call in `setup()`.
-3. Compile-time benchmarks: `timeraw_*` methods (fresh subprocess per measurement). Phase 3.
+3. Compile-time benchmarks: `timeraw_*` methods (fresh subprocess per measurement).
 4. Synthetic data only, fixed seeds — no SP500 CSV, so any machine can run the suite.
 5. Machine identity pinned via `asv machine`; never benchmark on battery or thermally throttled hardware.
 
@@ -50,7 +53,9 @@ cd asv_bench && uv run asv run --python=same --quick
 | `_asv_install.py` | `install_command`: wheel `[cuda12]` + Linux `jax[cuda12]==0.9.1` |
 | `benchmarks/__init__.py` | skip cuda series when `jax_cuda12_plugin` is missing |
 | `benchmarks/bessel.py` | `Bessel`: `log_kv` scalar / batch / grad × regime |
-| `benchmarks/gig.py` | `GIGFromExpectation`: backend jax/cpu × easy/hard η |
+| `benchmarks/gig.py` | `GIGFromExpectation` (backend × easy/hard η); `Sampling` (`GIG.rvs` Devroye) |
+| `benchmarks/em.py` | `EStep` (dist × backend × N); `EMIteration` (dist, 5 steps) |
+| `benchmarks/compile.py` | `Compile`: `timeraw_from_expectation` GIG Newton / Gamma digamma |
 | `results/` | JSON keyed by (machine, env, commit). Committed from Phase 4 |
 | `.asv/` | isolated envs + published HTML. gitignored |
 
