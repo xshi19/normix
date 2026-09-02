@@ -1,14 +1,14 @@
 # ASV Benchmarking: trend tracking for normix
 
-> **IN PROGRESS — Phase 3 done 2026-08-30.** Drafted 2026-08-23.
+> **IN PROGRESS — Phase 4 done 2026-09-01.** Drafted 2026-08-23.
 > **Supersedes:** the "skip ASV" verdict in
 > [`../references/gpjax_review.md`](../references/gpjax_review.md) §6.2/§8.
 > That verdict weighed ASV as a replacement for the ad-hoc scripts; this plan
 > adopts it as a *separate layer* (curated micro-suite for trends) while the
 > existing deep-dive scripts stay.
 > **Scope:** new `asv_bench/` tree, `pyproject.toml` dev deps,
-> `.github/workflows/` (Phase 5 only), AGENTS.md context map,
-> eventual pruning of `scripts/benchmark_*.py`.
+> docs CI (Phase 4 dashboard copy), `.github/workflows/` (Phase 5 tripwire),
+> AGENTS.md context map, eventual pruning of `scripts/benchmark_*.py`.
 > **Does not touch:** `normix/` source, `tests/`, the deep-dive scripts in
 > `benchmarks/` (they remain the investigation layer).
 
@@ -388,11 +388,24 @@ Gotchas:
   rewritten to SHAs after a raw `TAGS` run. Results stay gitignored
   until Phase 4.
 
-### Phase 4 — Publishing
+### Phase 4 — Publishing ✅
 
-- [ ] Commit `asv_bench/results/`; `asv publish` output wired into the docs
+- [x] Commit `asv_bench/results/`; `asv publish` output wired into the docs
       site under `/benchmarks/` (update the docs-publish skill)
-- [ ] AGENTS.md context map: benchmarks row → mention both layers
+- [x] AGENTS.md context map: benchmarks row → mention both layers
+
+Gotchas:
+
+- `asv publish` **rmtree's** `html_dir`. Copy from `.asv/html` into
+  `docs/_build/html/benchmarks/` (`scripts/publish_asv_html.sh`). Never
+  `--html-dir` the Sphinx root. Never `asv gh-pages` (clobbers the site).
+- Docs CI needs `fetch-depth: 0`. A shallow clone cannot place tag SHAs
+  on `master`, and `asv publish` drops those points (warns, empty graph).
+- Do not add `docs/benchmarks.md`: GitHub Pages `/benchmarks` vs
+  `/benchmarks/` clash. Landing page is `docs/asv.md` → `/asv.html`.
+- `results/.gitignore` un-ignores `wukong/` + `benchmarks.json` only.
+  Smoke runs on other machines stay untracked.
+- `asv publish --no-pull` in CI so the hidden clone is not fetched.
 
 ### Phase 5 — CI tripwire (optional; decide after Phase 3)
 

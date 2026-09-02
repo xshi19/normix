@@ -305,6 +305,6 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `docs/research/` | Published research notes (subordinator tracking); working notes in `research/` |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `references/gpjax_review.md` | GPJax survey: design, JAX usage, lessons for normix |
-| `asv_bench/` | ASV trend-tracking micro-suite (Bessel, GIG, E-step, EM, compile, sampling; cpu+cuda via `JAX_PLATFORMS`). Deep-dive scripts stay in `benchmarks/`. Plan: `plans/asv_benchmarking.md` |
+| `asv_bench/` | ASV trend-tracking micro-suite (Bessel, GIG, E-step, EM, compile, sampling; cpu+cuda via `JAX_PLATFORMS`). Dashboard published at `/benchmarks/`. Deep-dive scripts stay in `benchmarks/`. Plan: `plans/asv_benchmarking.md` |
 | `archive/plans/finance_architecture.md` | `normix.finance` roadmap; Phases D–F implemented (Phase F: diversification / ENB); archived 2026-08-09 |
 | `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

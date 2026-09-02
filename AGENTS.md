@@ -11,6 +11,7 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotli
 - Single test: `uv run pytest tests/test_gamma.py -v`
 - Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
 - ASV smoke: `cd asv_bench && uv run asv run --python=same --quick`
+- ASV dashboard: `bash scripts/publish_asv_html.sh` (from committed `asv_bench/results/`)
 - Docs (cached build): `uv run make -C docs html`
 - Docs (full re-execute): `uv run make -C docs html-strict`
 - Docs clean: `uv run make -C docs clean` / `uv run make -C docs clean-cache`
@@ -75,7 +76,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
 | GPJax review (design, JAX usage, adoption candidates) | `dev-notes/references/gpjax_review.md` |
 | Technical notes | `dev-notes/tech_notes/` |
-| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; Bessel, GIG, E-step, EM, compile, sampling; cpu/cuda). Plan: `dev-notes/plans/asv_benchmarking.md` |
+| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; dashboard `/benchmarks/`). Plan: `dev-notes/plans/asv_benchmarking.md` |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |

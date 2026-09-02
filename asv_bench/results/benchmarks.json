@@ -1,0 +1,197 @@
+{
+    "bessel.Bessel.time_grad_log_kv": {
+        "code": "class Bessel:\n    def time_grad_log_kv(self, regime: str) -> None:\n        gv, gz = self._grad(self.v, self.z)\n        gv.block_until_ready()\n        gz.block_until_ready()\n\n    def setup(self, regime: str) -> None:\n        require_requested_device()\n        v, z, z_lo, z_hi = _REGIMES[regime]\n        self.v = jnp.asarray(v, dtype=jnp.float64)\n        self.z = jnp.asarray(z, dtype=jnp.float64)\n        self.v_batch = jnp.full(_BATCH, v, dtype=jnp.float64)\n        self.z_batch = jnp.linspace(z_lo, z_hi, _BATCH, dtype=jnp.float64)\n    \n        self._eval = jax.jit(_log_kv)\n        self._eval_batch = jax.jit(jax.vmap(_log_kv))\n        self._grad = jax.jit(jax.grad(_log_kv, argnums=(0, 1)))\n    \n        self._eval(self.v, self.z).block_until_ready()\n        self._eval_batch(self.v_batch, self.z_batch).block_until_ready()\n        gv, gz = self._grad(self.v, self.z)\n        gv.block_until_ready()\n        gz.block_until_ready()",
+        "min_run_count": 2,
+        "name": "bessel.Bessel.time_grad_log_kv",
+        "number": 0,
+        "param_names": [
+            "regime"
+        ],
+        "params": [
+            [
+                "'smallz'",
+                "'mid'",
+                "'hankel'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "timeout": 120.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "f8e317acb71285549898d60fceb423fbfd8c64ccb3dc2a04f5a90cad8160df07",
+        "warmup_time": 0.0
+    },
+    "bessel.Bessel.time_log_kv_batch": {
+        "code": "class Bessel:\n    def time_log_kv_batch(self, regime: str) -> None:\n        self._eval_batch(self.v_batch, self.z_batch).block_until_ready()\n\n    def setup(self, regime: str) -> None:\n        require_requested_device()\n        v, z, z_lo, z_hi = _REGIMES[regime]\n        self.v = jnp.asarray(v, dtype=jnp.float64)\n        self.z = jnp.asarray(z, dtype=jnp.float64)\n        self.v_batch = jnp.full(_BATCH, v, dtype=jnp.float64)\n        self.z_batch = jnp.linspace(z_lo, z_hi, _BATCH, dtype=jnp.float64)\n    \n        self._eval = jax.jit(_log_kv)\n        self._eval_batch = jax.jit(jax.vmap(_log_kv))\n        self._grad = jax.jit(jax.grad(_log_kv, argnums=(0, 1)))\n    \n        self._eval(self.v, self.z).block_until_ready()\n        self._eval_batch(self.v_batch, self.z_batch).block_until_ready()\n        gv, gz = self._grad(self.v, self.z)\n        gv.block_until_ready()\n        gz.block_until_ready()",
+        "min_run_count": 2,
+        "name": "bessel.Bessel.time_log_kv_batch",
+        "number": 0,
+        "param_names": [
+            "regime"
+        ],
+        "params": [
+            [
+                "'smallz'",
+                "'mid'",
+                "'hankel'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "timeout": 120.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "0d8ed459668878366ed14c22839e63991a90ebcbedaeaed6035c6599f08034cc",
+        "warmup_time": 0.0
+    },
+    "bessel.Bessel.time_log_kv_scalar": {
+        "code": "class Bessel:\n    def time_log_kv_scalar(self, regime: str) -> None:\n        self._eval(self.v, self.z).block_until_ready()\n\n    def setup(self, regime: str) -> None:\n        require_requested_device()\n        v, z, z_lo, z_hi = _REGIMES[regime]\n        self.v = jnp.asarray(v, dtype=jnp.float64)\n        self.z = jnp.asarray(z, dtype=jnp.float64)\n        self.v_batch = jnp.full(_BATCH, v, dtype=jnp.float64)\n        self.z_batch = jnp.linspace(z_lo, z_hi, _BATCH, dtype=jnp.float64)\n    \n        self._eval = jax.jit(_log_kv)\n        self._eval_batch = jax.jit(jax.vmap(_log_kv))\n        self._grad = jax.jit(jax.grad(_log_kv, argnums=(0, 1)))\n    \n        self._eval(self.v, self.z).block_until_ready()\n        self._eval_batch(self.v_batch, self.z_batch).block_until_ready()\n        gv, gz = self._grad(self.v, self.z)\n        gv.block_until_ready()\n        gz.block_until_ready()",
+        "min_run_count": 2,
+        "name": "bessel.Bessel.time_log_kv_scalar",
+        "number": 0,
+        "param_names": [
+            "regime"
+        ],
+        "params": [
+            [
+                "'smallz'",
+                "'mid'",
+                "'hankel'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "timeout": 120.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "e4069e1f804590f210ba446cf4acc7a5e53a04027c5ba0bbb7abe815cca6fbf7",
+        "warmup_time": 0.0
+    },
+    "compile.Compile.timeraw_from_expectation": {
+        "code": "class Compile:\n    def timeraw_from_expectation(self, dist: str) -> tuple[str, str]:\n        stmt, setup = _TIMERAW[dist]\n        return stmt, setup\n\n    def setup(self, dist: str) -> None:\n        require_requested_device()",
+        "min_run_count": 2,
+        "name": "compile.Compile.timeraw_from_expectation",
+        "number": 1,
+        "param_names": [
+            "dist"
+        ],
+        "params": [
+            [
+                "'gig'",
+                "'gamma'"
+            ]
+        ],
+        "repeat": 3,
+        "rounds": 1,
+        "sample_time": 0.01,
+        "timeout": 180.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "37b7b9fc3d8028cf6e10f4409e13ec9f1c9a321e90e47ac3ade0412953230d0a",
+        "warmup_time": 0.0
+    },
+    "em.EMIteration.time_fit": {
+        "code": "class EMIteration:\n    def time_fit(self, dist: str) -> None:\n        result = self.init.fit(self.X, max_iter=_ITERS, tol=0.0)\n        block_pytree(result.model)\n\n    def setup(self, dist: str) -> None:\n        require_requested_device()\n        truth = _DISTS[dist]()\n        X = truth.rvs(_EM_N, seed=_EM_SEED)\n        block_pytree(X)\n        init = _moment_init(type(truth), X)\n        self.init = init\n        self.X = X\n        result = init.fit(X, max_iter=_ITERS, tol=0.0)\n        block_pytree(result.model)",
+        "min_run_count": 2,
+        "name": "em.EMIteration.time_fit",
+        "number": 0,
+        "param_names": [
+            "dist"
+        ],
+        "params": [
+            [
+                "'VG'",
+                "'NIG'",
+                "'GH'"
+            ]
+        ],
+        "rounds": 1,
+        "sample_time": 0.01,
+        "timeout": 180.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "c2adf5d12e03301757d9d59e5052b74be1b1c4ef1e8848e33ff079efba734b77",
+        "warmup_time": 0.0
+    },
+    "em.EStep.time_conditional_expectations": {
+        "code": "class EStep:\n    def time_conditional_expectations(\n        self, dist: str, backend: str, n: int\n    ) -> None:\n        eta = self.model.e_step(self.X, backend=backend)\n        block_pytree(eta)\n\n    def setup(self, dist: str, backend: str, n: int) -> None:\n        require_requested_device()\n        model = _DISTS[dist]()\n        X = model.rvs(int(n), seed=_EM_SEED)\n        block_pytree(X)\n        self.model = model\n        self.X = X\n        eta = model.e_step(X, backend=backend)\n        block_pytree(eta)",
+        "min_run_count": 2,
+        "name": "em.EStep.time_conditional_expectations",
+        "number": 0,
+        "param_names": [
+            "dist",
+            "backend",
+            "n"
+        ],
+        "params": [
+            [
+                "'VG'",
+                "'NIG'",
+                "'GH'"
+            ],
+            [
+                "'jax'",
+                "'cpu'"
+            ],
+            [
+                "1000",
+                "10000"
+            ]
+        ],
+        "rounds": 1,
+        "sample_time": 0.01,
+        "timeout": 180.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "17ef56b1f6ca595e744c168512a0aada97acb97844e528306689fc8cebde6941",
+        "warmup_time": 0.0
+    },
+    "gig.GIGFromExpectation.time_from_expectation": {
+        "code": "class GIGFromExpectation:\n    def time_from_expectation(self, backend: str, case: str) -> None:\n        gig = GIG.from_expectation(\n            self.eta, theta0=self.theta0, backend=backend\n        )\n        jax.block_until_ready(gig.p)\n\n    def setup(self, backend: str, case: str) -> None:\n        require_requested_device()\n        p, a, b = _CASES[case]\n        gig = GIG(\n            p=jnp.asarray(p, dtype=jnp.float64),\n            a=jnp.asarray(a, dtype=jnp.float64),\n            b=jnp.asarray(b, dtype=jnp.float64),\n        )\n        self.eta = gig.expectation_params()\n        self.theta0 = gig.natural_params()\n        warm = GIG.from_expectation(\n            self.eta, theta0=self.theta0, backend=backend\n        )\n        jax.block_until_ready(warm.p)",
+        "min_run_count": 2,
+        "name": "gig.GIGFromExpectation.time_from_expectation",
+        "number": 0,
+        "param_names": [
+            "backend",
+            "case"
+        ],
+        "params": [
+            [
+                "'jax'",
+                "'cpu'"
+            ],
+            [
+                "'easy'",
+                "'hard'"
+            ]
+        ],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "timeout": 180.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "bdd85e4005ad06f07e76cb1a4a0b2a3abeb67ac958ab4ffc3068c4e81a8616e9",
+        "warmup_time": 0.0
+    },
+    "gig.Sampling.time_gig_rvs": {
+        "code": "class Sampling:\n    def time_gig_rvs(self) -> None:\n        self._rvs().block_until_ready()\n\n    def setup(self) -> None:\n        require_requested_device()\n        gig = GIG(\n            p=jnp.asarray(0.5, dtype=jnp.float64),\n            a=jnp.asarray(1.0, dtype=jnp.float64),\n            b=jnp.asarray(1.0, dtype=jnp.float64),\n        )\n    \n        def _rvs():\n            return gig.rvs(_RVS_N, seed=_RVS_SEED, method=\"devroye\")\n    \n        self._rvs = jax.jit(_rvs)\n        self._rvs().block_until_ready()",
+        "min_run_count": 2,
+        "name": "gig.Sampling.time_gig_rvs",
+        "number": 0,
+        "param_names": [],
+        "params": [],
+        "rounds": 1,
+        "sample_time": 0.01,
+        "timeout": 180.0,
+        "type": "time",
+        "unit": "seconds",
+        "version": "462154ba1eeaeb0a2cc0d717f20b89718efa71fe6747e1b6cc25e23a2832b56c",
+        "warmup_time": 0.0
+    },
+    "version": 2
+}
