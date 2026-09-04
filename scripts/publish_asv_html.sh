@@ -28,6 +28,17 @@ if [[ ! -e "${jsons[0]}" ]]; then
   exit 1
 fi
 
+# asv publish walks asv.conf.json "branches" via
+# `git rev-list --first-parent master`. actions/checkout with fetch-depth: 0
+# still has no local `master` on PRs (origin/master only) — that is
+# `fatal: bad revision 'master'`. Create the ref without checking it out.
+if ! git rev-parse --verify --quiet refs/heads/master >/dev/null; then
+  if ! git rev-parse --verify --quiet refs/remotes/origin/master >/dev/null; then
+    git fetch --no-tags origin master:refs/remotes/origin/master
+  fi
+  git branch master refs/remotes/origin/master
+fi
+
 cd "$ROOT/asv_bench"
 uv run asv publish --no-pull
 

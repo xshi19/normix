@@ -60,6 +60,8 @@ to `master` / `main`. The workflow:
 
 Checkout uses `fetch-depth: 0` so `asv publish` can place tag SHAs on
 `master`. A shallow clone drops every historical point from the dashboard.
+PR checkouts are still detached: they have `origin/master` but no local
+`master` branch. `publish_asv_html.sh` creates that ref before `asv publish`.
 
 **Do not run the local publish script unless CI is broken or you need to
 publish from a non-default branch.**
@@ -169,6 +171,12 @@ Do not assume the site is updated until the `pages build and deployment` run on
   to `.asv/html` then copies. Never point `--html-dir` at `docs/_build/html`.
 - **Shallow clone**: `asv publish` drops commits it cannot find on `master`.
   Docs workflows must use `fetch-depth: 0`.
+- **PR checkout has no local `master`**: `asv publish` runs
+  `git rev-list --first-parent master`. `actions/checkout` even with
+  `fetch-depth: 0` only creates `origin/master`. The publish script
+  materializes a local `master` ref when missing. Do not rename
+  `asv.conf.json` `branches` to `origin/master` — local `asv run` /
+  `asv continuous` use the same name.
 
 ## Related files
 

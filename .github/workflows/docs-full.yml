@@ -23,6 +23,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           # asv publish maps result JSON onto git history (tag SHAs).
+          # fetch-depth: 0 fetches origin/master; the publish script still
+          # needs a local `master` ref (tag checkouts are detached HEAD).
           fetch-depth: 0
           fetch-tags: true
 

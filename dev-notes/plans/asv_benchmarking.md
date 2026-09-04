@@ -401,6 +401,9 @@ Gotchas:
   `--html-dir` the Sphinx root. Never `asv gh-pages` (clobbers the site).
 - Docs CI needs `fetch-depth: 0`. A shallow clone cannot place tag SHAs
   on `master`, and `asv publish` drops those points (warns, empty graph).
+- PR checkouts still have no local `master` (`origin/master` only).
+  `asv publish` then fails with `fatal: bad revision 'master'`.
+  `scripts/publish_asv_html.sh` creates the local ref.
 - Do not add `docs/benchmarks.md`: GitHub Pages `/benchmarks` vs
   `/benchmarks/` clash. Landing page is `docs/asv.md` → `/asv.html`.
 - `results/.gitignore` un-ignores `wukong/` + `benchmarks.json` only.
