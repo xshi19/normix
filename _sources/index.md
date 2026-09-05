@@ -89,6 +89,13 @@ Autodoc for every public module — distributions, mixtures, fitting, finance.
 
 Working notes: subordinator-tracking portfolios on the S&P 500.
 ```
+
+```{grid-item-card} Benchmarks
+:link: asv
+:link-type: doc
+
+ASV trend dashboard — Bessel, GIG, EM, compile; CPU and CUDA.
+```
 ````
 
 ```{toctree}
@@ -134,6 +141,7 @@ theory/index
 design/index
 research/index
 api/index
+asv
 references
 changelog
 ```
