@@ -1,0 +1,9 @@
+{
+    "arch": "x86_64",
+    "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "machine": "wukong",
+    "num_cpu": "16",
+    "os": "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "ram": "33239486464",
+    "version": 1
+}

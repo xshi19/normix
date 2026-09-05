@@ -165,6 +165,12 @@ linkcheck_allowed_redirects = {
         r'https://github\.com/xshi19/normix/pull/\d+',
 }
 
+# ASV HTML is copied into _build/html/benchmarks/ after sphinx-build, so
+# the relative dashboard href is not a Sphinx source path.
+linkcheck_ignore = [
+    r'benchmarks/',
+]
+
 # myst-nb hide-input / hide-output prompts (sphinx-togglebutton)
 nb_code_prompt_show = 'Show code cell {type}'
 nb_code_prompt_hide = 'Hide code cell {type}'

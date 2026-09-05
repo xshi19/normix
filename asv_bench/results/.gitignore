@@ -1,4 +1,7 @@
-# Result JSON is committed from Phase 4 (release cadence on the desktop).
-# Smoke runs on throwaway machines must not land here.
+# Track JSON from the canonical desktop (wukong) only. Other machine
+# directories stay ignored so a smoke run cannot `git add` itself.
 *
 !.gitignore
+!benchmarks.json
+!wukong/
+!wukong/**

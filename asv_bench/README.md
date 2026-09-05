@@ -56,8 +56,12 @@ cd asv_bench && uv run asv run --python=same --quick
 | `benchmarks/gig.py` | `GIGFromExpectation` (backend × easy/hard η); `Sampling` (`GIG.rvs` Devroye) |
 | `benchmarks/em.py` | `EStep` (dist × backend × N); `EMIteration` (dist, 5 steps) |
 | `benchmarks/compile.py` | `Compile`: `timeraw_from_expectation` GIG Newton / Gamma digamma |
-| `results/` | JSON keyed by (machine, env, commit). Committed from Phase 4 |
+| `results/` | JSON keyed by (machine, env, commit). `wukong/` + `benchmarks.json` committed |
 | `.asv/` | isolated envs + published HTML. gitignored |
 
 `environment_type` is `uv` (asv ≥ 0.6.6). Fall back to `virtualenv` only if
 the installed asv is older. No conda.
+
+Docs CI / `make html` copies `.asv/html` into `_build/html/benchmarks/`
+(`scripts/publish_asv_html.sh`). Never `asv gh-pages`. Do not add
+`docs/benchmarks.md` (GitHub Pages `/benchmarks` vs `/benchmarks/` clash).

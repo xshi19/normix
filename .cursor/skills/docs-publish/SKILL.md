@@ -20,6 +20,8 @@ Use this skill when the task is to build or publish the `normix` docs website.
 - Build command is from `docs/Makefile` (runs `scripts/check_doc_links.sh` first)
 - Build output is `docs/_build/html`
 - myst-nb execution cache: `docs/_build/.jupyter_cache`
+- ASV dashboard: `asv_bench/results/` (committed JSON) → `asv publish` →
+  `docs/_build/html/benchmarks/` (`scripts/publish_asv_html.sh`; after Sphinx)
 - Public URL `https://xshi19.github.io/normix/` is served from the **`normix` repo `gh-pages` branch**
 - It is **not** served from the `xshi19.github.io` repo
 
@@ -27,8 +29,9 @@ Use this skill when the task is to build or publish the `normix` docs website.
 
 ```bash
 uv sync --extra docs --extra plotting
-uv run make -C docs html          # cached tutorial execution (fast)
+uv run make -C docs html          # cached tutorial execution (fast); copies ASV dashboard
 uv run make -C docs html-strict   # NB_EXECUTION_MODE=force, -W (full re-execute)
+uv run make -C docs asv-html      # dashboard only, from committed asv_bench/results/
 uv run make -C docs clean         # drop html/doctrees
 uv run make -C docs clean-cache   # also drop .jupyter_cache
 ```
@@ -50,8 +53,15 @@ to `master` / `main`. The workflow:
    `pyproject.toml` (the `normix/**` component forces re-execution when library
    source changes)
 3. Builds HTML via `uv run sphinx-build -b html docs docs/_build/html`
-4. Runs linkcheck (report-only, `continue-on-error`)
-5. Deploys to `gh-pages` on push to default branch
+4. Runs `scripts/publish_asv_html.sh` (`asv publish --no-pull` into
+   `docs/_build/html/benchmarks/`)
+5. Runs linkcheck (report-only, `continue-on-error`)
+6. Deploys to `gh-pages` on push to default branch
+
+Checkout uses `fetch-depth: 0` so `asv publish` can place tag SHAs on
+`master`. A shallow clone drops every historical point from the dashboard.
+PR checkouts are still detached: they have `origin/master` but no local
+`master` branch. `publish_asv_html.sh` creates that ref before `asv publish`.
 
 **Do not run the local publish script unless CI is broken or you need to
 publish from a non-default branch.**
@@ -69,13 +79,14 @@ cache) and turns linkcheck into a hard gate instead of a report:
    Actions tab, any ref).
 2. Builds with `NB_EXECUTION_MODE=force` — no cache restore/save step, so a
    stale cached figure can never slip into a release build.
-3. Runs `sphinx-build -b linkcheck` **without** `continue-on-error`: a broken
+3. Same ASV dashboard copy as `docs.yml` (`scripts/publish_asv_html.sh`).
+4. Runs `sphinx-build -b linkcheck` **without** `continue-on-error`: a broken
    external link fails the workflow.
-4. Deploys to `gh-pages` unconditionally (tag push or manual dispatch both
+5. Deploys to `gh-pages` unconditionally (tag push or manual dispatch both
    deploy).
-5. `timeout-minutes: 360` — full re-execution of the tutorial tree is much
+6. `timeout-minutes: 360` — full re-execution of the tutorial tree is much
    slower than the cached `docs.yml` build; budget for it.
-6. Separate concurrency group (`pages-release`, `cancel-in-progress: false`)
+7. Separate concurrency group (`pages-release`, `cancel-in-progress: false`)
    so a routine push to `master` running `docs.yml` cannot cancel an
    in-progress release build. `docs.yml` is keyed per PR / ref for the same
    reason — a global `pages` group was cancelling PR Docs checks.
@@ -100,6 +111,10 @@ uv run make -C docs clean
 uv run make -C docs html
 ```
 
+`make html` copies the ASV dashboard into `_build/html/benchmarks/`. If you
+ran `sphinx-build` by hand, run `bash scripts/publish_asv_html.sh` before
+publishing.
+
 Build warnings do not necessarily block publishing. If HTML is produced under
 `docs/_build/html`, the site can still be deployed unless the user asked to fix
 warnings first.
@@ -121,6 +136,8 @@ After push, check the GitHub Pages run for `gh-pages` and verify the live URL:
 - Tutorials landing: `https://xshi19.github.io/normix/tutorials/index.html`
 - EM vs MCECM tutorial: `https://xshi19.github.io/normix/tutorials/em/04_em_vs_mcecm.html`
 - Research notes: `https://xshi19.github.io/normix/research/index.html`
+- ASV dashboard: `https://xshi19.github.io/normix/benchmarks/`
+- Benchmarks landing: `https://xshi19.github.io/normix/asv.html`
 
 Do not assume the site is updated until the `pages build and deployment` run on
 `gh-pages` is complete.
@@ -141,14 +158,36 @@ Do not assume the site is updated until the `pages build and deployment` run on
   library fix, use `uv run make -C docs html-strict` (force) or `clean-cache` first.
 - **Tutorial runtime**: the full tutorial tree (`docs/tutorials/**`, 18 executable pages) runs in a few minutes on a fresh build; `em/04_em_vs_mcecm` is the long pole (~2 min, sweeps 21 values of $p$ with EM + MCECM). CI restores the myst-nb cache from prior master builds.
 - **`notebooks/` is not published**: it's a personal research workspace (two-tier `.ipynb`-scratch / jupytext-`.py`-preserved policy, see `notebooks/README.md`), not built by Sphinx.
+- **ASV `gh-pages` trap**: never run `asv gh-pages`. That command replaces the
+  Sphinx site with only the dashboard. The dashboard is a subdirectory of the
+  Sphinx tree (`/benchmarks/`), copied after `sphinx-build`.
+- **ASV results vs HTML**: commit `asv_bench/results/wukong/*.json` (release
+  cadence on the desktop). Do not commit `.asv/html`. Docs CI / `make html`
+  regenerate the dashboard. `results/.gitignore` tracks wukong only.
+- **Do not add `docs/benchmarks.md`**: GitHub Pages would clash `/benchmarks`
+  (Sphinx page) with `/benchmarks/` (ASV `index.html`). Landing page is
+  `docs/asv.md` → `/asv.html`.
+- **`asv publish` rmtree's `html_dir`**: `scripts/publish_asv_html.sh` writes
+  to `.asv/html` then copies. Never point `--html-dir` at `docs/_build/html`.
+- **Shallow clone**: `asv publish` drops commits it cannot find on `master`.
+  Docs workflows must use `fetch-depth: 0`.
+- **PR checkout has no local `master`**: `asv publish` runs
+  `git rev-list --first-parent master`. `actions/checkout` even with
+  `fetch-depth: 0` only creates `origin/master`. The publish script
+  materializes a local `master` ref when missing. Do not rename
+  `asv.conf.json` `branches` to `origin/master` — local `asv run` /
+  `asv continuous` use the same name.
 
 ## Related files
 
 - `docs/Makefile`
 - `docs/conf.py`
 - `docs/_static/normix.css`
+- `docs/asv.md` — published landing page; dashboard is `/benchmarks/`
 - `docs/references.md` — published bibliography (`{ref}`Key <key>``)
 - `scripts/check_doc_links.sh`
+- `scripts/publish_asv_html.sh` — `asv publish --no-pull` → `_build/html/benchmarks/`
+- `asv_bench/` — suite, `asv.conf.json`, committed `results/wukong/`
 - `.github/workflows/docs.yml`
 - `.github/workflows/docs-full.yml`
 - `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`
