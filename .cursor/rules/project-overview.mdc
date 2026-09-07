@@ -25,6 +25,6 @@ Exponential families also provide `entropy`, `varentropy`, `renyi(alpha)`, `log_
 Joint mixtures provide `rvs(n, seed) → (X, Y)`. Marginals provide `rvs`, `mean`, `cov`,
 `skewness`, `kurtosis` (excess), `joint_entropy`, `joint_varentropy`, `joint_renyi(alpha)`.
 
-Bessel: `log_kv(v, z)` with `@jax.custom_jvp` in `normix/utils/bessel.py`.
+Bessel: `log_kv(v, z)` / `log_kv_moments` — one centered whole-line kernel (`normix/utils/bessel.py`).
 Architecture: `dev-notes/ARCHITECTURE.md`. Published design: `docs/design/`.
 Tech notes: `dev-notes/tech_notes/`.

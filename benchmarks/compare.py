@@ -112,6 +112,50 @@ def compare_bessel(old: dict, new: dict):
     print(f"{'=' * W}")
 
 
+def compare_gig(old: dict, new: dict):
+    """Compare GIG solver warm-start time, iterations, and grad_norm."""
+    W = 120
+    hdr("GIG Solver Comparison (warm start)", W)
+    old_rows = {r["case"]: r for r in old.get("warm_start", [])}
+    new_rows = {r["case"]: r for r in new.get("warm_start", [])}
+    cases = list(dict.fromkeys([*old_rows, *new_rows]))
+    print(
+        f"  {'Case':<32} {'Solver':<12} "
+        f"{'Old ms':>8} {'New ms':>8} {'Δ':>8}  "
+        f"{'Old n':>5} {'New n':>5}  "
+        f"{'Old |g|':>10} {'New |g|':>10}"
+    )
+    sep(W)
+    for case in cases:
+        o = old_rows.get(case, {}).get("solvers", {})
+        n = new_rows.get(case, {}).get("solvers", {})
+        for sname in ("jax/newton", "cpu/newton", "cpu/lbfgs"):
+            os_ = o.get(sname, {})
+            ns_ = n.get(sname, {})
+            if os_.get("error") or ns_.get("error") or os_.get("time_ms") is None:
+                print(f"  {case:<32} {sname:<12}  SKIP/ERR")
+                continue
+            print(
+                f"  {case:<32} {sname:<12} "
+                f"{os_['time_ms']:>8.1f} {ns_['time_ms']:>8.1f} "
+                f"{delta_str(os_['time_ms'], ns_['time_ms']):>8}  "
+                f"{os_.get('num_steps', '-'):>5} {ns_.get('num_steps', '-'):>5}  "
+                f"{float(os_.get('grad_norm', float('nan'))):>10.2e} "
+                f"{float(ns_.get('grad_norm', float('nan'))):>10.2e}"
+            )
+    ob = old.get("expectation_batch", {})
+    nb = new.get("expectation_batch", {})
+    if ob and nb:
+        sep(W)
+        ocpu, ncpu = ob.get("cpu_ms"), nb.get("cpu_ms")
+        if ocpu and ncpu:
+            print(
+                f"  E-step batch CPU: {ocpu:.1f}→{ncpu:.1f} ms "
+                f"({delta_str(ocpu, ncpu)})"
+            )
+    print(f"{'=' * W}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Compare two benchmark result files")
@@ -136,8 +180,7 @@ def main():
     elif bench_type == "bessel":
         compare_bessel(old, new)
     elif bench_type == "gig_solvers":
-        print("\n  GIG solver comparison not yet implemented "
-              "(inspect JSON files directly).")
+        compare_gig(old, new)
     else:
         print(f"\n  Unknown benchmark type: {bench_type}")
         print("  Dumping system info diff only.")

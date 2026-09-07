@@ -89,15 +89,74 @@ def print_results(scalar_results, batch_result):
     print(f"{'=' * W}")
 
 
+def bench_accuracy() -> list[dict]:
+    """Sweep (n, D, T) against tests/data/bessel_reference.json (CPU kernel)."""
+    import json
+    from pathlib import Path
+    from normix.utils.bessel import _moments_xp
+
+    ref_path = Path(__file__).resolve().parent.parent / "tests" / "data" / "bessel_reference.json"
+    table = json.loads(ref_path.read_text())
+    rows = [r for r in table["points"] if r["z"] >= 1e-10]
+    keys = [
+        ("log_k", "log_k"), ("d_order", "d_v"), ("d_arg", "d_z"),
+        ("d2_order", "d_vv"), ("d2_order_arg", "d_vz"), ("d2_arg", "d_zz"),
+    ]
+
+    def err(got, ref, v, key):
+        if abs(v) == 0.0 and key in ("d_v", "d_vz"):
+            return abs(got - ref)
+        return abs(got - ref) / max(1.0, abs(ref))
+
+    results = []
+    print("\nAccuracy sweep vs mpmath table (z ≥ 1e-10)", flush=True)
+    print(f"  {'n':>4} {'D':>4} {'T':>3} {'worst':>10}  at", flush=True)
+    for n in (64, 96, 128, 192, 256):
+        for D in (40, 50, 60):
+            for T in (1, 2, 3):
+                worst = 0.0
+                where = None
+                for row in rows:
+                    m = _moments_xp(
+                        row["v"], row["z"], np,
+                        n_nodes=n, log_drop=float(D), tilt=T,
+                    )
+                    for attr, key in keys:
+                        got = float(np.asarray(
+                            m.log_k if attr == "log_k" else getattr(m, attr)
+                        ))
+                        e = err(got, row[key], row["v"], key)
+                        if e > worst:
+                            worst = e
+                            where = f"{key}({row['v']:g},{row['z']:g})"
+                rec = {"n": n, "D": D, "T": T, "worst": worst, "where": where}
+                results.append(rec)
+                print(f"  {n:4d} {D:4d} {T:3d} {worst:10.3e}  {where}", flush=True)
+    best = min(results, key=lambda r: r["worst"])
+    print(f"best: n={best['n']} D={best['D']} T={best['T']}  {best['worst']:.3e}",
+          flush=True)
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bessel log_kv benchmark")
     parser.add_argument("--save", action="store_true",
                         help="Save results to benchmarks/results/")
+    parser.add_argument("--accuracy", action="store_true",
+                        help="Sweep quadrature constants against the mpmath table")
     args = parser.parse_args()
 
     print(f"\nnormix Bessel Benchmark", flush=True)
     print(f"Python {sys.version.split()[0]}, JAX {jax.__version__}", flush=True)
     print(f"Devices: {jax.devices()}", flush=True)
+
+    if args.accuracy:
+        acc = bench_accuracy()
+        if args.save:
+            path = save_result("bessel_accuracy", {"benchmark": "bessel_accuracy",
+                                                  "rows": acc})
+            print(f"\nResults saved to {path}")
+        return
 
     scalar_results = bench_scalar()
     batch_result = bench_batch()

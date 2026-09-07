@@ -1,5 +1,5 @@
 """
-Tests for the CPU backend implementation (design doc: docs/design/cpu_bessel_design.md).
+Tests for the CPU backend implementation (`docs/design/solvers_and_bessel.md` § 3).
 
 Covers:
   Phase 1: log_kv(v, z, backend='cpu') accuracy vs JAX path
@@ -90,14 +90,14 @@ def test_log_kv_jax_path_still_jit_able():
     assert np.isfinite(result)
 
 def test_log_kv_jax_path_still_differentiable():
-    """The JAX path (default) still has custom JVP — gradients work."""
+    """The JAX path (default) remains differentiable via ordinary autodiff."""
     grad_z = jax.grad(lambda z: log_kv(jnp.array(1.0), z))(jnp.array(2.0))
     assert jnp.isfinite(grad_z)
     grad_v = jax.grad(lambda v: log_kv(v, jnp.array(2.0)))(jnp.array(1.0))
     assert jnp.isfinite(grad_v)
 
 def test_log_kv_small_z_cpu():
-    """CPU backend handles z near zero (inf_mask fix)."""
+    """CPU backend handles z near zero (no clip to LOG_EPS)."""
     for v in [0.5, 1.0, 2.0]:
         for z in [1e-10, 1e-20, 1e-50]:
             result = float(log_kv(v, z, backend='cpu'))

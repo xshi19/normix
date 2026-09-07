@@ -23,13 +23,12 @@ interrogate skill's escalation tier points here.
 
 | Role | Model slug |
 |---|---|
-| Runner 1 | `claude-fable-5-thinking-max` |
-| Runner 2 | `gpt-5.6-sol-medium` |
-| Runner 3 | `cursor-grok-4.5-high-fast` |
-| Cross-judge | one model from the cheap trio (`composer-2.5-fast`, `claude-sonnet-5-thinking-high`, `gpt-5.6-terra-medium`), family different from the parent's |
+| Runner 1 | `claude-opus-5-thinking-xhigh` |
+| Runner 2 | `cursor-grok-4.6-xhigh` |
+| Runner 3 | `claude-fable-5-1-thinking-high` |
+| Cross-judge | one model from the cheap trio (`composer-2.5-fast`, `claude-sonnet-5-thinking-high`), family different from the parent's |
 
-If a slug is rejected when spawning, pick the closest same-family slug from
-the Task tool's error message, proceed, and update this table afterwards.
+GPT-family runners were not available in this harness (S10 arena used two Claude + one Grok). If a slug is rejected when spawning, pick the closest same-family slug from the Task tool's error message, proceed, and update this table afterwards.
 Other harnesses (Claude Code, Codex) cannot spawn cross-family subagents;
 there, run N candidates on the models available and note the reduced
 diversity in the synthesis note.

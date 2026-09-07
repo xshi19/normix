@@ -59,7 +59,7 @@ If float64 is not enabled, normix emits a warning on import.
 | [Equinox](https://docs.kidger.site/equinox/) | Immutable pytree modules |
 | [JAXopt](https://jaxopt.github.io/stable/) | L-BFGS/BFGS for the GIG $\eta \mapsto \theta$ solve |
 | [NumPy](https://numpy.org/doc/stable/) | CPU array helpers alongside the JAX triad |
-| [SciPy](https://docs.scipy.org/doc/scipy/) | CPU Bessel evaluation (`kve`) on the EM hot path |
+| [SciPy](https://docs.scipy.org/doc/scipy/) | CPU solvers (`trust-exact`, L-BFGS-B); `kve` is a Bessel test oracle |
 
 ## Optional extras
 

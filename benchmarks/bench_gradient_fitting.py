@@ -42,7 +42,6 @@ from normix.distributions.generalized_inverse_gaussian import (
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic as GH
 from normix.fitting.em import BatchEMFitter
 from normix.utils.bessel import log_kv
-from normix.utils.constants import BESSEL_EPS_V
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -359,7 +358,7 @@ def _gig_nll_jax(p, a, b, X):
 
 
 def _gig_nll_cpu(p, a, b, X_np):
-    """NLL via the CPU log-partition (scipy kve), not the JAX custom_jvp path."""
+    """NLL via the CPU log-partition (same quadrature in NumPy)."""
     gig = GIG(p=jnp.array(p), a=jnp.array(a), b=jnp.array(b))
     theta = np.asarray(gig.natural_params())
     t = np.stack([np.log(X_np), 1.0 / X_np, X_np], axis=1)
@@ -397,9 +396,7 @@ def run_grad_diag(n: int = 2000) -> dict:
         def logkve(v, zz):
             return np.log(np.maximum(kve(v, zz), 1e-300)) - zz  # kve = K e^{+z}
         # Actually kve(v,z) = exp(z) K_v(z), so log K = log kve - z
-        fd_kv = (logkve(p0 + BESSEL_EPS_V, z) - logkve(p0 - BESSEL_EPS_V, z)) / (
-            2.0 * BESSEL_EPS_V
-        )
+        fd_kv = (logkve(p0 + 1e-5, z) - logkve(p0 - 1e-5, z)) / (2.0 * 1e-5)
 
         rows.append({
             "p": p0, "a": a0, "b": b0, "sqrt_ab": z,
@@ -410,7 +407,7 @@ def run_grad_diag(n: int = 2000) -> dict:
             "dlogkv_dv_fd_kve": float(fd_kv),
             "dlogkv_rel_err": abs(dlogkv_dv - fd_kv) / (1.0 + abs(fd_kv)),
         })
-    return {"n": n, "eps_nll": 1e-6, "eps_kv": BESSEL_EPS_V, "rows": rows}
+    return {"n": n, "eps_nll": 1e-6, "eps_kv": 1e-5, "rows": rows}
 
 
 # ===========================================================================
@@ -620,7 +617,7 @@ def print_gig(cases):
 def print_grad(res):
     hdr("Gradient quality: jax.grad(NLL) vs CPU finite difference")
     print(f"  n = {res['n']}   FD ε_NLL = {res['eps_nll']}   "
-          f"BESSEL_EPS_V = {res['eps_kv']}")
+          f"kve FD ε = {res['eps_kv']}")
     print(f"  {'(p,a,b)':<28} {'∂NLL/∂p jax':>14} {'∂NLL/∂p cpu':>14} "
           f"{'rel':>10} {'∂logK/∂ν rel':>12}")
     for r in res["rows"]:

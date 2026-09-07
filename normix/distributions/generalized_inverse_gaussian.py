@@ -45,11 +45,11 @@ Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
 **Log-Partition Triad Overrides:**
 
 - ``_log_partition_from_theta`` : JAX, uses ``log_kv(backend='jax')``
-- ``_grad_log_partition``       : analytical Bessel ratios (5 :math:`K_\\nu` calls)
-- ``_hessian_log_partition``    : analytical 11-Bessel Hessian in :math:`\\theta`-space
+- ``_grad_log_partition``       : affine image of one ``log_kv_moments`` call
+- ``_hessian_log_partition``    : :math:`H = D\\,\\mathrm{cov}\\,D` from the same bundle
 - ``_log_partition_cpu``        : numpy + ``log_kv(backend='cpu')``
-- ``_grad_log_partition_cpu``   : analytical Bessel ratios via ``scipy.kve``
-- ``_hessian_log_partition_cpu``: central FD on ``_log_partition_cpu``
+- ``_grad_log_partition_cpu`` : same affine image, NumPy backend
+- ``_hessian_log_partition_cpu``: same covariance, NumPy backend
 """
 from __future__ import annotations
 
@@ -59,12 +59,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from normix.utils.bessel import log_kv
+from normix.utils.bessel import log_kv, log_kv_moments
 from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
-    LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD,
-    THETA_FLOOR, FD_EPS_FISHER, GIG_THETA_PERTURB,
+    LOG_EPS, TINY, GIG_DEGEN_THRESHOLD,
+    THETA_FLOOR, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
     solve_bregman, solve_bregman_multistart,
@@ -295,118 +295,89 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return jnp.where(x > 0, jnp.zeros((), jnp.float64), -jnp.inf)
 
     # ------------------------------------------------------------------
-    # Tier 2: Analytical gradient + Hessian (Bessel ratios in θ-space)
+    # Tier 2: η and Fisher as an affine image of one Bessel moment bundle
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _unpack_safe(theta, xp, floor: float):
+        r"""``p, a_safe, b_safe, z=\sqrt{ab}, \tfrac12\log(b/a)``."""
+        theta = xp.asarray(theta, dtype=xp.float64)
+        p = theta[0] + 1.0
+        b_safe = xp.maximum(-2.0 * theta[1], floor)
+        a_safe = xp.maximum(-2.0 * theta[2], floor)
+        tiny = xp.asarray(np.finfo(np.float64).tiny, dtype=xp.float64)
+        z = xp.sqrt(xp.maximum(a_safe * b_safe, tiny))
+        log_sqrt_ba = 0.5 * (xp.log(b_safe) - xp.log(a_safe))
+        return p, a_safe, b_safe, z, log_sqrt_ba
+
+    @staticmethod
+    def _eta_H_from_moments(m, a_safe, b_safe, log_sqrt_ba, xp):
+        r"""GIG :math:`\eta` and :math:`H=\mathrm{Cov}[t(X)]` from one bundle.
+
+        With :math:`u = \log X - \tfrac12\log(b/a)` identified with the
+        Bessel coordinate and :math:`s=(x,\mathrm{expm1}(-x),\mathrm{expm1}(x))`,
+
+        .. math::
+
+            \eta = \bigl(u_0+\tfrac12\log(b/a)+E[x],\;
+            s_{-}(1+E[s_1]),\; s_{+}(1+E[s_2])\bigr),
+            \qquad H = D\,\mathrm{cov}(s)\,D,
+
+        where :math:`s_{\mp}=\exp(\tfrac12\log(a/b)\mp u_0)` and
+        :math:`D=\mathrm{diag}(1,s_{-},s_{+})`. No Bessel ratios, no
+        :math:`p\pm 1` evaluations.
+        """
+        u0 = m.u0
+        scale_minus = xp.exp(0.5 * (xp.log(a_safe) - xp.log(b_safe)) - u0)
+        scale_plus = xp.exp(log_sqrt_ba + u0)
+        eta0 = u0 + log_sqrt_ba + m.mean[..., 0]
+        eta1 = scale_minus * (1.0 + m.mean[..., 1])
+        eta2 = scale_plus * (1.0 + m.mean[..., 2])
+        eta = xp.stack([eta0, eta1, eta2], axis=-1)
+        scales = xp.stack(
+            [xp.ones_like(scale_minus), scale_minus, scale_plus], axis=-1,
+        )
+        H = m.cov * scales[..., :, None] * scales[..., None, :]
+        return eta, H
 
     @classmethod
     def _grad_log_partition(cls, theta: jax.Array) -> jax.Array:
         r"""
-        :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via analytical Bessel ratios.
+        :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` from
+        one :func:`~normix.utils.bessel.log_kv_moments` call.
 
-        Uses 5 :math:`\log K_\nu` evaluations (at orders :math:`p, p\pm 1, p\pm\varepsilon`)
-        and the identities:
-
-        .. math::
-
-            E[1/X] = \sqrt{a/b}\cdot K_{p-1}(\sqrt{ab}) / K_p(\sqrt{ab}), \quad
-            E[X]   = \sqrt{b/a}\cdot K_{p+1}(\sqrt{ab}) / K_p(\sqrt{ab})
-
-        .. math::
-
-            E[\log X] = \partial_p \log K_p(\sqrt{ab}) + \tfrac{1}{2}\log(b/a)
-
-        Clamping :math:`a, b` to ``LOG_EPS`` ensures Bessel small-:math:`z` asymptotics
-        handle the degenerate Gamma/InvGamma limits. The default ``jax.grad`` path
-        fails because ``jnp.where`` evaluates all branches and
+        Clamping :math:`a, b` to ``LOG_EPS`` keeps the Bessel kernel in its
+        stated domain. The default ``jax.grad`` path fails because
+        ``jnp.where`` evaluates all branches and
         :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.
         """
-        p = theta[0] + 1.0
-        b_safe = jnp.maximum(-2.0 * theta[1], LOG_EPS)
-        a_safe = jnp.maximum(-2.0 * theta[2], LOG_EPS)
-        sqrt_ab = jnp.sqrt(a_safe * b_safe)
-        log_sqrt_ba = 0.5 * (jnp.log(b_safe) - jnp.log(a_safe))
-
-        orders = jnp.array([p, p - 1.0, p + 1.0,
-                            p - BESSEL_EPS_V, p + BESSEL_EPS_V])
-        evals = jax.vmap(log_kv)(orders, jnp.full(5, sqrt_ab))
-        L, L_m1, L_p1, L_vm, L_vp = evals
-
-        E_inv_X = jnp.exp(L_m1 - L - log_sqrt_ba)
-        E_X     = jnp.exp(L_p1 - L + log_sqrt_ba)
-        E_log_X = (L_vp - L_vm) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
-
-        return jnp.array([E_log_X, E_inv_X, E_X])
+        p, a_safe, b_safe, z, log_sqrt_ba = cls._unpack_safe(
+            theta, jnp, LOG_EPS,
+        )
+        m = log_kv_moments(p, z, backend='jax')
+        eta, _ = cls._eta_H_from_moments(m, a_safe, b_safe, log_sqrt_ba, jnp)
+        return eta
 
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
         r"""
-        :math:`\nabla^2\psi(\theta)` — analytical 11-Bessel Hessian in :math:`\theta`-space.
+        :math:`\nabla^2\psi(\theta)=\mathrm{Cov}[t(X)]`, PSD by construction.
 
-        Uses exact Bessel recurrences for :math:`z`-derivatives and central
-        finite differences (step ``BESSEL_EPS_V``) for :math:`\nu`-derivatives.
-        11 :math:`\log K_\nu` evaluations total.
-
-        The mixed derivative :math:`\partial^2\log K_\nu/\partial\nu\partial z`
-        uses :math:`L_z` at orders :math:`p\pm\varepsilon` (four extra Bessel
-        evals at :math:`p\pm\varepsilon\pm 1`). At moderate :math:`z` this
-        matches ``jax.hessian`` to ~1e-11 on the mixed Fisher entries (the
-        integer-shift FD it replaces was ~2–4.5% off). Accuracy degrades
-        for very large :math:`z` or when :math:`p\pm\varepsilon` straddles a
-        ``log_kv`` regime seam.
-
-        Note: :math:`H_\theta` may have small negative eigenvalues (from the
-        :math:`L_{vv}` FD or near degeneracy); the Newton solver applies
-        ``HESSIAN_DAMPING`` before solving.
-
-        Valid in the non-degenerate regime (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``).
+        One :func:`~normix.utils.bessel.log_kv_moments` call; the GIG
+        sufficient statistic is an affine image of
+        :math:`(x, e^{-x}-1, e^{x}-1)`. Valid in the non-degenerate regime
+        (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``). The Newton solver
+        still applies ``HESSIAN_DAMPING``.
         """
-        p = theta[0] + 1.0
-        b = jnp.maximum(-2.0 * theta[1], LOG_EPS)
-        a = jnp.maximum(-2.0 * theta[2], LOG_EPS)
-        z = jnp.sqrt(jnp.maximum(a * b, jnp.finfo(jnp.float64).tiny))
-        eps = BESSEL_EPS_V
-
-        # 11 Bessel evaluations: base + ν-FD neighbours for L_vv and L_vz
-        orders = jnp.array([
-            p, p - 1.0, p + 1.0, p - 2.0, p + 2.0,
-            p - eps, p + eps,
-            p + eps - 1.0, p + eps + 1.0,
-            p - eps - 1.0, p - eps + 1.0,
-        ])
-        evals = jax.vmap(log_kv)(orders, jnp.full(11, z))
-        (L, L_m1, L_p1, L_m2, L_p2, L_vm, L_vp,
-         L_pe_m1, L_pe_p1, L_me_m1, L_me_p1) = evals
-
-        r_m1 = jnp.exp(L_m1 - L)
-        r_p1 = jnp.exp(L_p1 - L)
-        r_m2 = jnp.exp(L_m2 - L)
-        r_p2 = jnp.exp(L_p2 - L)
-
-        L_z  = -0.5 * (r_m1 + r_p1)
-        L_zz = 0.25 * (r_m2 + 2.0 + r_p2) - 0.25 * (r_m1 + r_p1) ** 2
-        L_vv = (L_vp - 2.0 * L + L_vm) / (eps ** 2)
-
-        # Central FD on L_z(ν) at ν = p ± ε (exact z-recurrence at each order)
-        L_z_pe = -0.5 * (jnp.exp(L_pe_m1 - L_vp) + jnp.exp(L_pe_p1 - L_vp))
-        L_z_me = -0.5 * (jnp.exp(L_me_m1 - L_vm) + jnp.exp(L_me_p1 - L_vm))
-        L_vz = (L_z_pe - L_z_me) / (2.0 * eps)
-
-        a_over_z = a / z
-        b_over_z = b / z
-
-        H11 = L_vv
-        H12 = -L_vz * a_over_z - 1.0 / b
-        H13 = -L_vz * b_over_z + 1.0 / a
-        H22 = a_over_z ** 2 * L_zz - a_over_z ** 2 / z * L_z - 2.0 * p / b ** 2
-        H23 = L_zz + L_z / z
-        H33 = b_over_z ** 2 * L_zz - b_over_z ** 2 / z * L_z + 2.0 * p / a ** 2
-
-        return jnp.array([[H11, H12, H13],
-                           [H12, H22, H23],
-                           [H13, H23, H33]])
+        p, a_safe, b_safe, z, log_sqrt_ba = cls._unpack_safe(
+            theta, jnp, LOG_EPS,
+        )
+        m = log_kv_moments(p, z, backend='jax')
+        _, H = cls._eta_H_from_moments(m, a_safe, b_safe, log_sqrt_ba, jnp)
+        return H
 
     # ------------------------------------------------------------------
-    # Tier 3: CPU overrides (numpy + scipy Bessel, no JAX dispatch)
+    # Tier 3: CPU overrides (numpy, same kernel)
     # ------------------------------------------------------------------
 
     @classmethod
@@ -437,54 +408,23 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def _grad_log_partition_cpu(cls, theta) -> np.ndarray:
-        r""":math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` via ``scipy.kve``. Pure CPU."""
-        theta = np.asarray(theta, dtype=np.float64)
-        p = theta[0] + 1.0
-        b_safe = max(-2.0 * theta[1], TINY)
-        a_safe = max(-2.0 * theta[2], TINY)
-        sqrt_ab = np.sqrt(a_safe * b_safe)
-        log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
-
-        log_kp    = float(log_kv(p,         sqrt_ab, backend='cpu'))
-        log_kp_m1 = float(log_kv(p - 1.0,  sqrt_ab, backend='cpu'))
-        log_kp_p1 = float(log_kv(p + 1.0,  sqrt_ab, backend='cpu'))
-
-        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
-        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
-
-        log_kp_pe = float(log_kv(p + BESSEL_EPS_V, sqrt_ab, backend='cpu'))
-        log_kp_me = float(log_kv(p - BESSEL_EPS_V, sqrt_ab, backend='cpu'))
-        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
-
-        return np.array([E_log_X, E_inv_X, E_X])
+        r""":math:`\nabla\psi(\theta)` via ``log_kv_moments(backend='cpu')``."""
+        p, a_safe, b_safe, z, log_sqrt_ba = cls._unpack_safe(
+            theta, np, TINY,
+        )
+        m = log_kv_moments(p, z, backend='cpu')
+        eta, _ = cls._eta_H_from_moments(m, a_safe, b_safe, log_sqrt_ba, np)
+        return np.asarray(eta, dtype=np.float64)
 
     @classmethod
     def _hessian_log_partition_cpu(cls, theta) -> np.ndarray:
-        r""":math:`\nabla^2\psi(\theta)` via central finite differences on ``_log_partition_cpu``."""
-        theta = np.asarray(theta, dtype=np.float64)
-        n = len(theta)
-        H = np.zeros((n, n))
-        eps = FD_EPS_FISHER
-        f0 = cls._log_partition_cpu(theta)
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    th_p = theta.copy(); th_p[i] += eps
-                    th_m = theta.copy(); th_m[i] -= eps
-                    fp = cls._log_partition_cpu(th_p)
-                    fm = cls._log_partition_cpu(th_m)
-                    H[i, i] = (fp - 2.0 * f0 + fm) / eps ** 2
-                elif j > i:
-                    th_pp = theta.copy(); th_pp[i] += eps; th_pp[j] += eps
-                    th_pm = theta.copy(); th_pm[i] += eps; th_pm[j] -= eps
-                    th_mp = theta.copy(); th_mp[i] -= eps; th_mp[j] += eps
-                    th_mm = theta.copy(); th_mm[i] -= eps; th_mm[j] -= eps
-                    fpp = cls._log_partition_cpu(th_pp)
-                    fpm = cls._log_partition_cpu(th_pm)
-                    fmp = cls._log_partition_cpu(th_mp)
-                    fmm = cls._log_partition_cpu(th_mm)
-                    H[i, j] = H[j, i] = (fpp - fpm - fmp + fmm) / (4.0 * eps ** 2)
-        return H
+        r""":math:`\nabla^2\psi(\theta)` via the same CPU moment bundle."""
+        p, a_safe, b_safe, z, log_sqrt_ba = cls._unpack_safe(
+            theta, np, TINY,
+        )
+        m = log_kv_moments(p, z, backend='cpu')
+        _, H = cls._eta_H_from_moments(m, a_safe, b_safe, log_sqrt_ba, np)
+        return np.asarray(H, dtype=np.float64)
 
     # ------------------------------------------------------------------
     # Batch CPU expectation parameters (used by JointNormalMixture E-step)
@@ -499,7 +439,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Returns (N, 3) array where columns are [E_log_X, E_inv_X, E_X].
 
         backend='jax' : vmap over scalar JAX grad
-        backend='cpu' : vectorized scipy.kve (6 C-level array calls)
+        backend='cpu' : one batched ``log_kv_moments`` call (NumPy kernel)
         """
         if backend == 'cpu':
             return GeneralizedInverseGaussian._expectation_params_batch_cpu(p, a, b)
@@ -514,32 +454,21 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @staticmethod
     def _expectation_params_batch_cpu(p, a, b) -> jax.Array:
-        """Vectorized CPU path — 6 scipy.kve calls on (N,) arrays."""
+        """Vectorized CPU path — one ``log_kv_moments`` call on (N,) arrays."""
         p = np.asarray(p, dtype=np.float64)
         a = np.asarray(a, dtype=np.float64)
         b = np.asarray(b, dtype=np.float64)
 
         a_safe = np.maximum(a, TINY)
         b_safe = np.maximum(b, TINY)
-        sqrt_ab = np.sqrt(a_safe * b_safe)
+        tiny = np.finfo(np.float64).tiny
+        z = np.sqrt(np.maximum(a_safe * b_safe, tiny))
         log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
-
-        log_kp    = log_kv(p,         sqrt_ab, backend='cpu')
-        log_kp_m1 = log_kv(p - 1.0,  sqrt_ab, backend='cpu')
-        log_kp_p1 = log_kv(p + 1.0,  sqrt_ab, backend='cpu')
-
-        E_inv_X = np.exp(log_kp_m1 - log_kp - log_sqrt_ba)
-        E_X     = np.exp(log_kp_p1 - log_kp + log_sqrt_ba)
-
-        log_kp_pe = log_kv(p + BESSEL_EPS_V, sqrt_ab, backend='cpu')
-        log_kp_me = log_kv(p - BESSEL_EPS_V, sqrt_ab, backend='cpu')
-        E_log_X = (log_kp_pe - log_kp_me) / (2.0 * BESSEL_EPS_V) + log_sqrt_ba
-
-        return jnp.column_stack([
-            jnp.asarray(E_log_X),
-            jnp.asarray(E_inv_X),
-            jnp.asarray(E_X),
-        ])
+        m = log_kv_moments(p, z, backend='cpu')
+        eta, _ = GeneralizedInverseGaussian._eta_H_from_moments(
+            m, a_safe, b_safe, log_sqrt_ba, np,
+        )
+        return jnp.asarray(eta, dtype=jnp.float64)
 
     # ------------------------------------------------------------------
     # Moments and sampling

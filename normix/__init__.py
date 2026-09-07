@@ -42,7 +42,7 @@ warnings.filterwarnings(
 )
 
 from normix.exponential_family import ExponentialFamily
-from normix.utils.bessel import log_kv
+from normix.utils.bessel import log_kv, log_kv_moments
 
 from normix.distributions.gamma import Gamma
 from normix.distributions.inverse_gamma import InverseGamma
@@ -102,6 +102,7 @@ __all__ = [
     "ExponentialFamily",
     # Bessel
     "log_kv",
+    "log_kv_moments",
     # Univariate distributions
     "Gamma",
     "InverseGamma",

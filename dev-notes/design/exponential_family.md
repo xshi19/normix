@@ -108,7 +108,7 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | `cpu` | `bfgs`  | none   | `scipy.optimize.minimize(method='BFGS')` |
 
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
-+ `scipy.kve`) avoids GPU dispatch on this 3-D scalar problem. See
++ numpy `log_kv`) avoids GPU dispatch on this 3-D scalar problem. See
 `../tech_notes/gig_eta_to_theta.md` for the η-rescaling derivation and
 benchmarks.
 

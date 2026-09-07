@@ -219,7 +219,12 @@ class TestMstepDenominatorSign:
             assert np.all(np.sign(np.array(a)) == np.sign(np.array(b)))
 
     def test_positive_D_roundoff_uses_negative_floor(self):
-        """Real e_step near the Gaussian limit can yield D > 0 from cancellation."""
+        """Near-Gaussian VG e-step: M-step μ keeps the data sign (B1).
+
+        Correct Bessel moments make D ≤ 0 here (Cauchy–Schwarz). The
+        synthetic D > 0 roundoff case lives in
+        ``TestMStepDenominatorSign`` in ``test_jax_distributions.py``.
+        """
         key = jax.random.PRNGKey(7)
         d, n = 2, 5000
         mu_true = jnp.array([1.5, -0.7])
@@ -232,9 +237,8 @@ class TestMstepDenominatorSign:
             sigma=Sigma, alpha=1e9, beta=1e9)
         eta = model.e_step(X, backend="jax")
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
-        assert D > 0.0
+        assert D < 1e-6
         mu, _, _ = JointNormalMixture._mstep_normal_params(eta)
-        # Pre-B1: +D in the denominator flipped mu[0] to negative (~-3.56).
         assert float(mu[0]) * float(mu_true[0]) > 0
 
     @pytest.mark.parametrize(

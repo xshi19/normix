@@ -133,7 +133,7 @@ plt.show()
 
 ## GIG varentropy vs Monte Carlo
 
-`varentropy()` routes autodiff through the accurate `log_kv` custom JVP, so it
+`varentropy()` differentiates $\psi$ through the `log_kv` quadrature, so it
 matches an independent Monte Carlo estimate across the parameter range. Here we
 vary the order $p$ at $a=b=1$:
 

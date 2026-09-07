@@ -107,9 +107,8 @@ class TestGIGEFContract:
         (1.0, 2.0, 2.0), (-0.5, 1.0, 1.0), (2.0, 1.0, 1.0), (-1.0, 2.0, 1.0),
     ])
     def test_hessian_spd_moderate(self, p, a, b):
-        """Fisher information must be positive semidefinite (moderate params, CPU Hessian)."""
+        """Fisher information must be positive semidefinite."""
         gig = GIG(p=p, a=a, b=b)
-        # Use CPU backend for more accurate Hessian (analytical Bessel derivatives)
         FI = gig.fisher_information(backend='cpu')
         eigvals = np.linalg.eigvalsh(np.array(FI))
         assert np.all(eigvals > -1e-8), (
@@ -235,7 +234,7 @@ def _gig_nll_jax(p, a, b, X):
 
 
 def _gig_nll_cpu(p, a, b, X_np):
-    """Mean NLL via the CPU log-partition (scipy kve), not the JAX custom JVP."""
+    """Mean NLL via the CPU log-partition (same quadrature in NumPy)."""
     theta = np.asarray(GIG(p=p, a=a, b=b).natural_params(), dtype=np.float64)
     t = np.stack([np.log(X_np), 1.0 / X_np, X_np], axis=1)
     psi = float(GIG._log_partition_cpu(theta))
@@ -243,8 +242,7 @@ def _gig_nll_cpu(p, a, b, X_np):
 
 
 class TestGIGNLLAutodiff:
-    """H1: jax.grad of the GIG NLL matches a CPU finite difference that
-    never touches ``log_kv``'s custom JVP.
+    """H1: jax.grad of the GIG NLL matches a CPU finite difference.
 
     Pins the contract that gradient-based NLL fitting is *possible*. It does
     not make Adam / L-BFGS a supported fitter (see
@@ -288,3 +286,71 @@ class TestGIGNLLAutodiff:
                 f"jax={g_jax}, fd={g_fd}"
             ),
         )
+
+
+_HESSIAN_GRID = _PARAM_GRID + [
+    (25.0, 1.0, 1.0),
+    (25.0, 0.1, 0.1),
+    (1.0, 1e4, 1e4),
+    (2.0, 1.0, 1e-6),
+    (-3.0, 1e-6, 1.0),
+]
+
+_H11_PROBES = [
+    (25.0, 1.0, 1.0),
+    (25.0, 0.1, 0.1),
+    (1.0, 1e4, 1e4),
+    (2.0, 1.0, 1e-6),
+]
+
+
+class TestGIGMomentHessian:
+    """GIG Fisher as affine image of the Bessel moment bundle (S10)."""
+
+    @pytest.mark.slow
+    def test_hessian_matches_jax_hessian_grid(self):
+        hess_ad = jax.jit(jax.hessian(GIG._log_partition_from_theta))
+        hess_an = jax.jit(GIG._hessian_log_partition)
+        try:
+            for p, a, b in _HESSIAN_GRID:
+                theta = GIG(p=p, a=a, b=b).natural_params()
+                H = np.asarray(hess_an(theta))
+                H_ad = np.asarray(hess_ad(theta))
+                # Mixed-scale Hessian: H22 can be ~1e-7 while H33 is 1e4.
+                assert_allclose(
+                    H, H_ad, rtol=1e-9, atol=1e-9,
+                    err_msg=f"H vs jax.hessian(ψ) at p={p},a={a},b={b}",
+                )
+                eig = np.linalg.eigvalsh(H)
+                assert np.all(eig > -1e-12), (
+                    f"H not PSD at p={p},a={a},b={b}: {eig}"
+                )
+        finally:
+            jax.clear_caches()
+
+    @pytest.mark.parametrize("p,a,b", _HESSIAN_GRID)
+    def test_hessian_psd(self, p, a, b):
+        H = np.asarray(GIG(p=p, a=a, b=b).fisher_information())
+        eig = np.linalg.eigvalsh(H)
+        assert np.all(eig > -1e-12), f"H not PSD at p={p},a={a},b={b}: {eig}"
+
+    @pytest.mark.parametrize("p,a,b", _HESSIAN_GRID)
+    def test_cpu_hessian_matches_jax(self, p, a, b):
+        theta = GIG(p=p, a=a, b=b).natural_params()
+        H_jax = np.asarray(GIG._hessian_log_partition(theta))
+        H_cpu = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
+        assert_allclose(H_jax, H_cpu, rtol=1e-10, atol=1e-12)
+
+    @pytest.mark.parametrize("p,a,b", _H11_PROBES)
+    def test_H11_positive(self, p, a, b):
+        H = np.asarray(GIG(p=p, a=a, b=b).fisher_information())
+        assert H[0, 0] > 0, f"H11={H[0, 0]} at p={p},a={a},b={b}"
+
+    def test_hessian_matches_sample_cov(self):
+        gig = GIG(p=1.0, a=1.0, b=1.0)
+        x = np.asarray(gig.rvs(20000, seed=0))
+        t = np.stack([np.log(x), 1.0 / x, x], axis=1)
+        C = np.cov(t, rowvar=False)
+        H = np.asarray(gig.fisher_information())
+        assert_allclose(np.diag(H), np.diag(C), rtol=0.08)
+        assert_allclose(H, C, rtol=0.15, atol=0.05)

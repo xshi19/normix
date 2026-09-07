@@ -25,8 +25,8 @@ clarity > Simplicity.**
 - **Numerical efficiency & robustness.** normix targets the same
   standard as professional scientific-computing libraries: exploit
   Cholesky structure, `assume_a` flags for triangular / PSD solves,
-  log-space arithmetic where magnitudes vary widely, large-$z$
-  asymptotics for `log_kv`, etc.
+  log-space arithmetic where magnitudes vary widely, cancellation-free
+  quadrature for `log_kv`, etc.
 - **Mathematical clarity.** Maintain a clean correspondence between
   symbols and code variables ($\theta \leftrightarrow$ `theta`,
   $\eta \leftrightarrow$ `eta`, $\psi \leftrightarrow$
@@ -54,7 +54,7 @@ updates go through `eqx.tree_at` or the `replace(**)` facade.
 | `equinox` | Pytree-based modules (immutable, filterable) |
 | `jaxopt` | L-BFGS-B for GIG η→θ constrained optimization |
 | `numpy` | Array host; CPU triad / scipy interop |
-| `scipy` | CPU Bessel evaluation via `kve` (EM hot path); optimizers |
+| `scipy` | CPU triad / numpy interop; `kve` is a Bessel *test* oracle |
 | `matplotlib` | optional (`plotting` extra; notebooks) |
 
 Module-level functions are forbidden. Distribution behaviour lives on
@@ -73,7 +73,7 @@ the class as `@classmethod` or `@staticmethod`.
 |---|---|---|---|
 | F1 | Base module | `eqx.Module` (not Flax NNX) | Immutable matches math; no mutable state |
 | F2 | Parametrizations | One class, three constructors | `from_classical`, `from_natural`, `from_expectation` — see `exponential_family.md` |
-| F3 | Autodiff | `jax.grad` on `_log_partition_from_theta` | Single source of truth |
+| F3 | Autodiff | `jax.grad` on `_log_partition_from_theta` | Single source of truth. Extends to `log_kv` (S10): frozen quadrature, no `custom_jvp`. |
 | F4 | Triad classmethods | `_grad_log_partition`, `_hessian_log_partition`, plus CPU triad | `exponential_family.md` § 2 |
 | F5 | Unbatched core | `log_prob(x)` for single obs | Clean; batch via `jax.vmap` |
 | F6 | Constraints | `jnp.maximum(x, LOG_EPS)` (clamp) | `exponential_family.md` § 4.3 |
@@ -110,7 +110,7 @@ the class as `@classmethod` or `@staticmethod`.
 | E9 | Sufficient statistics | Pytree (`NormalMixtureEta`, `FactorMixtureStats`) in **theory order** | Readable; first 6 fields shared across families |
 | E10 | `lax.scan` EM | Both backends JAX, low verbosity, no `eta_update` | JIT-friendly; otherwise Python loop |
 | E11 | Cold vs warm η→θ | `from_expectation(theta0=None)` defaults to `jnp.zeros_like(eta)`; instance `fit` uses `natural_params()` | GIG overrides cold start with multistart |
-| E15 | Default likelihood fitter | EM + constrained Bregman $\eta\to\theta$. No first-class Adam / L-BFGS NLL fitter. | Interior GIG: L-BFGS+softplus matches `fit_mle` at $\sim 5$–$14\times$ cost; Adam lags. Degenerate GIG: NLL methods collapse $b\to 0$; η-rescaling does not. GH $d=2$: EM matches L-BFGS NLL, $\sim 10$–$25\times$ faster. `log_kv` $\partial_\nu$ is *not* the blocker (CPU FD rel. err. $\sim 10^{-9}$; `tests/test_gig_properties.py`). Reopen if a caller must co-optimise NLL with non-normix parameters, or if a full E-step is infeasible (streaming). Then expose `nll(params, X)`, not an optimiser. Public: `../../docs/design/why_not_gradient_descent.md`. Internal: `../tech_notes/gradient_fitting_comparison.md`. |
+| E15 | Default likelihood fitter | EM + constrained Bregman $\eta\to\theta$. No first-class Adam / L-BFGS NLL fitter. | Interior GIG: L-BFGS+softplus matches `fit_mle` at $\sim 5$–$14\times$ cost; Adam lags. Degenerate GIG: NLL methods collapse $b\to 0$; η-rescaling does not. GH $d=2$: EM matches L-BFGS NLL, $\sim 10$–$25\times$ faster. The old claim "`log_kv` $\partial_\nu$ is not the blocker" was true only for CPU first-order FD away from seams; Hessians were wrong on every path (S10). Fitter decision unchanged. Reopen if a caller must co-optimise NLL with non-normix parameters, or if a full E-step is infeasible (streaming). Then expose `nll(params, X)`, not an optimiser. Public: `../../docs/design/why_not_gradient_descent.md`. Internal: `../tech_notes/gradient_fitting_comparison.md`. |
 
 ### EM numerical robustness (VG inverse-moment / unbounded-likelihood)
 
@@ -141,8 +141,9 @@ the class as `@classmethod` or `@staticmethod`.
 | S5 | GIG η→θ | η-rescaled + CPU L-BFGS-B; warm-start defaults to `cpu/lbfgs` | Ill-conditioning + GPU dispatch overhead |
 | S6 | `BregmanResult` typing | Loose `Any` for scalars | Survives `lax.scan` carries |
 | S7 (D4) | `jaxopt` migration | Keep for now; `DeprecationWarning` suppressed at import | LBFGSB is uniquely useful — `exponential_family.md` § 4.2 |
-| S8 | Bessel | Pure-JAX (4 regimes) + CPU `scipy.kve` backend | JAX for JIT/autodiff; CPU for EM throughput |
-| S9 | Hybrid backend | Quad forms in JAX, Bessel + GIG solve on CPU | 15× E-step, ~500× M-step on SP500 GH benchmark |
+| S8 | Bessel | Single moment-quadrature kernel, JAX and numpy backends (S10); `backend='jax'\|'cpu'` API unchanged | `kve` overflow fallback was also wrong. `kve` is a test oracle. |
+| S9 | Hybrid backend | Quad forms in JAX, Bessel + GIG solve on CPU | Still available. E-step re-measured under S10 (no `cond` under `vmap`). CPU E-step is slower than AMOS `kve` (~18× on $N=2552$); Newton iterations / LL do not regress. `_fit_defaults` flip is a separate DEC-3 decision. |
+| S10 | Bessel derivative oracle | Centered whole-line GL kernel; geometry frozen under `stop_gradient`; `log_kv_moments → BesselMoments`; GIG $\eta,H$ = affine image of one bundle. No regimes, no `custom_jvp`, no FD. | Three FD stencils sampled shifted orders across seams → $L_{\nu\nu}=-600$ at GIG$(25,1,1)$. Ratio/θ-chain forms cancel at small $z$. Verified $10^{-14}$–$10^{-16}$ on the mpmath table. Wall-time $\le 1.2\times$ vs `kve` missed (192 nodes required for the 1e-12 contract; Hankel/Olver do not fire on SP500 E-step $z=O(1)$). `../tech_notes/bessel_moment_kernel.md`. Public: `../../docs/design/solvers_and_bessel.md` § 3. |
 
 ### Conventions
 
