@@ -347,7 +347,7 @@ a stated convention in `benchmarks/`.
 
 > **Superseded 2026-08-23:** ASV adopted as a scoped trend-tracking layer
 > alongside the deep-dive scripts — see
-> [`../plans/asv_benchmarking.md`](../plans/asv_benchmarking.md).
+> [`../archive/plans/asv_benchmarking.md`](../archive/plans/asv_benchmarking.md).
 
 ### 6.3 Documentation
 

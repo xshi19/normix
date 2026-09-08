@@ -11,6 +11,7 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotli
 - Single test: `uv run pytest tests/test_gamma.py -v`
 - Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
 - ASV smoke: `cd asv_bench && uv run asv run --python=same --quick`
+- ASV tripwire (local): `cd asv_bench && uv run asv continuous --factor 1.5 -b 'Bessel|GIGFromExpectation' master HEAD`
 - ASV dashboard: `bash scripts/publish_asv_html.sh` (from committed `asv_bench/results/`)
 - Docs (cached build): `uv run make -C docs html`
 - Docs (full re-execute): `uv run make -C docs html-strict`
@@ -67,16 +68,16 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Published research notes | `docs/research/` (subordinator tracking); working notes in `dev-notes/research/` |
 | Published bibliography + citation/package-link rules | `docs/references.md`; `.cursor/rules/docs-cross-links.mdc` |
 | Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`, `asv_benchmarking.md`) |
+| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`) |
 | 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |
 | `normix.finance` roadmap (Phases D–F done; archived) | `dev-notes/archive/plans/finance_architecture.md` |
 | Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
-| Completed/archived plans (JAX migration, review roadmap, finance) | `dev-notes/archive/plans/` |
+| Completed/archived plans (JAX migration, review roadmap, finance, ASV) | `dev-notes/archive/plans/` |
 | Archived design proposals (already implemented) | `dev-notes/archive/design/` |
 | Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
 | GPJax review (design, JAX usage, adoption candidates) | `dev-notes/references/gpjax_review.md` |
 | Technical notes | `dev-notes/tech_notes/` |
-| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; dashboard `/benchmarks/`). Plan: `dev-notes/plans/asv_benchmarking.md` |
+| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; dashboard `/benchmarks/`; PR tripwire `.github/workflows/asv.yml`). Plan: `dev-notes/archive/plans/asv_benchmarking.md` |
 | Git conventions | `.cursor/skills/git-conventions/` |
 | Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |

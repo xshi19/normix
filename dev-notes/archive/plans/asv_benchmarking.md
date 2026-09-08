@@ -1,16 +1,18 @@
 # ASV Benchmarking: trend tracking for normix
 
-> **IN PROGRESS — Phase 4 done 2026-09-01.** Drafted 2026-08-23.
+> **DONE — Phases 1–6 complete. Archived 2026-09-08.**
+> Drafted 2026-08-23. Phase 4 done 2026-09-01. Phases 5–6 2026-09-08.
 > **Supersedes:** the "skip ASV" verdict in
-> [`../references/gpjax_review.md`](../references/gpjax_review.md) §6.2/§8.
+> [`../../references/gpjax_review.md`](../../references/gpjax_review.md) §6.2/§8.
 > That verdict weighed ASV as a replacement for the ad-hoc scripts; this plan
 > adopts it as a *separate layer* (curated micro-suite for trends) while the
 > existing deep-dive scripts stay.
-> **Scope:** new `asv_bench/` tree, `pyproject.toml` dev deps,
-> docs CI (Phase 4 dashboard copy), `.github/workflows/` (Phase 5 tripwire),
-> AGENTS.md context map, eventual pruning of `scripts/benchmark_*.py`.
-> **Does not touch:** `normix/` source, `tests/`, the deep-dive scripts in
-> `benchmarks/` (they remain the investigation layer).
+> **Scope:** `asv_bench/` tree, `pyproject.toml` dev deps,
+> docs CI (Phase 4 dashboard copy), `.github/workflows/asv.yml` (Phase 5
+> tripwire), AGENTS.md context map, `scripts/benchmark_*.py` retired
+> (Phase 6).
+> **Does not touch:** `normix/` source, `tests/`. Deep-dive scripts in
+> `benchmarks/` stay (Phase 6 added `benchmarks/README.md`).
 
 ---
 
@@ -284,7 +286,7 @@ Recorded in `asv_bench/README.md`:
 | `EStep` (`time_conditional_expectations`) | `bench_em_mixture.py` | dist VG/NIG/GH × e_backend jax/cpu × N ∈ {1e3, 1e4} |
 | `EMIteration` (small synthetic fit, fixed iters) | `bench_em_mixture.py` | dist |
 | `Compile` (`timeraw_*` jit solver first call) | `bench_jit_solvers.py` | dist |
-| `Sampling` (`time_gig_rvs`) | `bench_gig_solvers.py` / `scripts/benchmark_gig_rvs.py` | — |
+| `Sampling` (`time_gig_rvs`) | `bench_gig_solvers.py` / historical `scripts/benchmark_gig_rvs.py` | — |
 
 ## Recommendations (summary)
 
@@ -292,8 +294,8 @@ Recorded in `asv_bench/README.md`:
    investigation tool. Do not port the SP500/MCECM benchmarks.
 2. **Desktop is the canonical machine.** Run `asv run` locally **at each
    GitHub release** (plus an optional `asv run NEW` before a suspected
-   performance-sensitive merge). Commit results with the release. CI is
-   optional and never authoritative.
+   performance-sensitive merge). Commit results with the release. CI is a
+   coarse PR tripwire (`.github/workflows/asv.yml`), never the trend source.
 3. **Backend via `params`, device via `env_nobuild`, machine via
    `asv machine`** — per the axis table above.
 4. **Results committed to master** under `asv_bench/results/` (small JSON).
@@ -410,19 +412,49 @@ Gotchas:
   Smoke runs on other machines stay untracked.
 - `asv publish --no-pull` in CI so the hidden clone is not fetched.
 
-### Phase 5 — CI tripwire (optional; decide after Phase 3)
+### Phase 5 — CI tripwire ✅
 
-- [ ] PR workflow: `asv continuous master HEAD --factor 1.5` on a CPU-only
-      subset (`-b` regex selecting Bessel/GIG micro-benchmarks)
-- [ ] Loose threshold on purpose — shared runners jitter ±20%; this is a
+- [x] PR workflow: `asv continuous <base.sha> HEAD --factor 1.5` on a
+      CPU-only subset (`-b` regex selecting Bessel / GIGFromExpectation)
+- [x] Loose threshold on purpose — shared runners jitter ±20%; this is a
       smoke check, not the trend source
 
-### Phase 6 — Consolidation
+Gotchas:
 
-- [ ] Retire `scripts/benchmark_*.py` where the ASV suite or
+- `--python=same` cannot compare two commits.
+  `ExistingEnvironment.install_project` is a no-op, and `asv run`
+  refuses a range spec in an existing env. Isolated uv envs are
+  required. `.github/workflows/asv.yml`.
+- `_asv_install.py` must not install `jax[cuda12]` on CPU-only Linux
+  (GHA is Linux, so the extra would otherwise pull CUDA jax). Skip when
+  `/dev/nvidia0` and `nvidia-smi` are both absent.
+  `benchmarks/__init__.py` remaps `JAX_PLATFORMS=cuda` before importing
+  jax in the same case, then `setup` skips.
+- Do not use `--quick`. One sample sets `repeat==1` and disables ASV's
+  t-test; μs kernels on shared runners would false-positive at factor
+  1.5. Default Bessel/GIG repeats + stats + factor 1.5.
+- `asv.conf.json` `"repo": ".."` is a local path, so `repo.pull()` in
+  `asv continuous` is a no-op (that command has no `--no-pull`).
+- Compare SHAs (`pull_request.base.sha` / `github.sha`), not
+  `master HEAD` — PR checkouts have no local `master`.
+- CI results go to `results/<runner-hostname>/` (gitignored). Do not
+  commit them. Cache `asv_bench/.asv/{env,cache}`.
+
+### Phase 6 — Consolidation ✅
+
+- [x] Retire `scripts/benchmark_*.py` where the ASV suite or
       `benchmarks/bench_*.py` covers them (`benchmark_comprehensive.py`,
       `benchmark_gig_rvs.py`, `benchmark_mixture_em.py`)
-- [ ] State the two-layer split in `benchmarks/` (docstring or short README)
+- [x] State the two-layer split in `benchmarks/README.md`
+
+Gotchas:
+
+- PINV vs SciPy numbers live in `tech_notes/gig_rvs.md`. ASV `Sampling`
+  only times Devroye. Do not port the comparison unless someone is
+  re-investigating.
+- `benchmark_comprehensive.py` / `benchmark_mixture_em.py` were earlier
+  drafts of `benchmarks/bench_*.py` (`bench_bessel`, `bench_gig_solvers`,
+  `bench_em_mixture`, `bench_jit_solvers`).
 
 ## Decisions (was: open questions)
 
@@ -445,4 +477,5 @@ Gotchas:
   performance-sensitive PR, optionally run `asv continuous master HEAD`
   locally before merging — that is a two-commit compare, not a history
   backfill. Phase 3 backfilled v0.2.1–v0.3.0 (SHA-keyed JSON) so the
-  dashboard has a trend line on day one.
+  dashboard has a trend line on day one. Phase 5 added a CPU-only PR
+  tripwire; Phase 6 retired `scripts/benchmark_*.py`.

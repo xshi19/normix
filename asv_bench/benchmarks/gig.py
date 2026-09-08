@@ -65,8 +65,7 @@ class GIGFromExpectation:
 class Sampling:
     """Steady-state Devroye TDR ``GIG.rvs`` (default method), n=10_000.
 
-    Source: ``scripts/benchmark_gig_rvs.py``. Jitted in ``setup`` so the
-    timed body is the kernel, not dispatch.
+    Jitted in ``setup`` so the timed body is the kernel, not dispatch.
     """
 
     timeout = 180.0

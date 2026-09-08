@@ -1,0 +1,85 @@
+name: ASV
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - "normix/**"
+      - "asv_bench/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/asv.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tripwire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Isolated asv continuous checks out both SHAs from this clone.
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Cache ASV environments
+        uses: actions/cache@v4
+        with:
+          path: |
+            asv_bench/.asv/env
+            asv_bench/.asv/cache
+          key: asv-${{ runner.os }}-py3.12-${{ hashFiles('asv_bench/asv.conf.json', 'asv_bench/_asv_install.py', 'pyproject.toml', 'uv.lock') }}
+
+      - name: Record machine
+        working-directory: asv_bench
+        run: uv run asv machine --yes
+
+      - name: ASV tripwire
+        working-directory: asv_bench
+        run: |
+          set -o pipefail
+          # Isolated envs: --python=same cannot install two commits.
+          # No --quick: one sample disables ASV's t-test; μs kernels on
+          # shared runners would false-positive at factor 1.5.
+          # cuda env_nobuild skips (no GPU); results stay gitignored.
+          set +e
+          uv run asv continuous \
+            --factor 1.5 \
+            --split \
+            --show-stderr \
+            -b 'Bessel|GIGFromExpectation' \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.sha }}" \
+            | tee /tmp/asv-tripwire.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          {
+            echo '## ASV tripwire'
+            echo
+            echo 'CPU-only Bessel / GIGFromExpectation; factor 1.5. Not the trend source.'
+            echo
+            echo '```'
+            cat /tmp/asv-tripwire.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

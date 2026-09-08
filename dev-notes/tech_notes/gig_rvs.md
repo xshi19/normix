@@ -99,7 +99,9 @@ All 18 parameter × method combinations pass the Kolmogorov-Smirnov test at
 α = 0.01 (n = 10 000).  Sample means match analytical means to < 2 % relative
 error.
 
-Benchmark script: `scripts/benchmark_gig_rvs.py`.
+Numbers above are from a one-off Devroye vs PINV vs SciPy sweep. Devroye
+trend tracking is `asv_bench/benchmarks/gig.py` (`Sampling`). Re-run a
+method comparison from the deep-dive layer if these numbers go stale.
 
 ## Design Decisions
 
