@@ -465,10 +465,9 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bessel-functions">3. Bessel Functions</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pure-jax-backend-default">3.1 Pure-JAX backend (default)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-backend-em-hot-path">3.2 CPU backend (EM hot path)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-backend-is-a-python-level-string">3.3 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.4 CPU triad for Bessel-dependent distributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-kernel">3.1 The kernel</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-backend-is-a-python-level-string">3.2 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.3 CPU triad for Bessel-dependent distributions</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a></li>
@@ -492,8 +491,9 @@
 <h1>Solvers and Bessel Functions<a class="headerlink" href="#solvers-and-bessel-functions" title="Link to this heading">#</a></h1>
 <blockquote>
 <div><p><strong>Scope.</strong> Why the Bregman solver is decoupled from <code class="docutils literal notranslate"><span class="pre">ExponentialFamily</span></code>,
-why Bessel evaluation has two backends and four numerical regimes,
-and why the EM hot path runs on a CPU/GPU hybrid.</p>
+why Bessel evaluation is one moment-quadrature kernel with two array
+backends, and why the EM hot path still splits quad forms (JAX) from
+the GIG solve (CPU).</p>
 <p><strong>Where things live.</strong> The <code class="docutils literal notranslate"><span class="pre">backend</span> <span class="pre">×</span> <span class="pre">method</span></code> matrix is in
 <a class="reference internal" href="exponential_family.html"><span class="doc">Exponential Family Core</span></a> § 3. This file owns the deeper rationale.</p>
 </div></blockquote>
@@ -653,7 +653,7 @@ symmetric Fisher matrix. After solving for <span class="math notranslate nohighl
 <section id="solver-choice-in-em">
 <h3>2.2 Solver choice in EM<a class="headerlink" href="#solver-choice-in-em" title="Link to this heading">#</a></h3>
 <p>Default: <code class="docutils literal notranslate"><span class="pre">backend='cpu',</span> <span class="pre">method='lbfgs'</span></code> — <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>
-with <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>. This avoids GPU kernel dispatch overhead on a
+with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
 3-D scalar problem.</p>
 <p>For the warm-started Newton path (<code class="docutils literal notranslate"><span class="pre">backend='jax',</span> <span class="pre">method='newton'</span></code>),
 the cached <code class="docutils literal notranslate"><span class="pre">_gig_jax_newton_jit</span></code> keeps a single XLA executable across
@@ -666,66 +666,57 @@ from the Gamma / InverseGamma / InverseGaussian special cases.</p>
 <hr class="docutils" />
 <section id="bessel-functions">
 <h2>3. Bessel Functions<a class="headerlink" href="#bessel-functions" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">log_kv(v,</span> <span class="pre">z,</span> <span class="pre">backend='jax'|'cpu')</span></code> is the unified entry point in
-<code class="docutils literal notranslate"><span class="pre">normix/utils/bessel.py</span></code>.</p>
-<section id="pure-jax-backend-default">
-<h3>3.1 Pure-JAX backend (default)<a class="headerlink" href="#pure-jax-backend-default" title="Link to this heading">#</a></h3>
-<p>Four-regime dispatch via <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> (only the selected branch executes
-at runtime):</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Regime</p></th>
-<th class="head"><p>Trigger</p></th>
-<th class="head"><p>Method</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Hankel</p></td>
-<td><p><span class="math notranslate nohighlight">\(z &gt; \max(25, v^2/4)\)</span></p></td>
-<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a> asymptotic</p></td>
-</tr>
-<tr class="row-odd"><td><p>Olver</p></td>
-<td><p><span class="math notranslate nohighlight">\(|v| &gt; 25\)</span>, not Hankel</p></td>
-<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.41">10.41.3–4</a> uniform expansion</p></td>
-</tr>
-<tr class="row-even"><td><p>Small-<span class="math notranslate nohighlight">\(z\)</span></p></td>
-<td><p><span class="math notranslate nohighlight">\(z &lt; 10^{-6}\)</span>, <span class="math notranslate nohighlight">\(|v| &gt; 0.5\)</span></p></td>
-<td><p><a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.30.E2">10.30.2</a> leading asymptotic</p></td>
-</tr>
-<tr class="row-odd"><td><p>Quadrature</p></td>
-<td><p>otherwise</p></td>
-<td><p>64-point Gauss–Legendre (<a class="reference internal" href="../references.html#takekawa2022"><span class="std std-ref">Takekawa2022</span></a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Custom JVP via <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code> with
-<code class="docutils literal notranslate"><span class="pre">defjvp(...,</span> <span class="pre">symbolic_zeros=True)</span></code>:</p>
-<ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(\partial/\partial z\)</span>: exact recurrence
-<span class="math notranslate nohighlight">\(K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2\)</span>; skipped when the <span class="math notranslate nohighlight">\(z\)</span>-tangent
-is a symbolic zero.</p></li>
-<li><p><span class="math notranslate nohighlight">\(\partial/\partial v\)</span>: central FD with <span class="math notranslate nohighlight">\(\varepsilon = 10^{-5}\)</span>;
-skipped when the <span class="math notranslate nohighlight">\(v\)</span>-tangent is a symbolic zero (z-only
-differentiation avoids the two extra Bessel evaluations).</p></li>
-</ul>
-</section>
-<section id="cpu-backend-em-hot-path">
-<h3>3.2 CPU backend (EM hot path)<a class="headerlink" href="#cpu-backend-em-hot-path" title="Link to this heading">#</a></h3>
-<p><a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
-(<a class="reference internal" href="../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>), fully vectorised NumPy. Not JIT-able. For large
-<span class="math notranslate nohighlight">\(N\)</span> a single <code class="docutils literal notranslate"><span class="pre">kve</span></code> C-call per element beats vmapping JAX’s
-<code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>-dispatched implementation, which causes separate kernel
-launches per condition check.</p>
+<p><a class="reference internal" href="../api/utils.html#normix.utils.bessel.log_kv" title="normix.utils.bessel.log_kv"><code class="xref py py-func docutils literal notranslate"><span class="pre">normix.utils.bessel.log_kv()</span></code></a> is the unified entry point.</p>
+<p>One centered whole-line Gauss–Legendre kernel implements both <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>
+and <a class="reference internal" href="../api/utils.html#normix.utils.bessel.log_kv_moments" title="normix.utils.bessel.log_kv_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">normix.utils.bessel.log_kv_moments()</span></code></a>. Geometry is frozen
+under <code class="docutils literal notranslate"><span class="pre">stop_gradient</span></code>; autodiff of <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> yields cumulants of that
+discrete measure. No regimes, no <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>, no <code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code>, no finite
+differences.</p>
+<section id="the-kernel">
+<h3>3.1 The kernel<a class="headerlink" href="#the-kernel" title="Link to this heading">#</a></h3>
+<div class="math notranslate nohighlight">
+\[
+2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z&gt;0
+\]</div>
+<p>(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.32.E9">10.32.9</a>). Production
+<code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is this integral as a <strong>192-point Gauss–Legendre sum</strong> (96 nodes
+on each side of the peak). That is the kernel: a weighted sum, not a
+library Bessel call and not a finite-difference stencil.</p>
+<p>The integrand peaks at <span class="math notranslate nohighlight">\(u_0=\operatorname{asinh}(\nu/z)\)</span>. The code shifts
+<span class="math notranslate nohighlight">\(x=u-u_0\)</span> so the mass sits at the origin. Node locations are frozen
+(<code class="docutils literal notranslate"><span class="pre">stop_gradient</span></code>); only the weights depend on <span class="math notranslate nohighlight">\((\nu,z)\)</span>.</p>
+<p><strong>Autodiff</strong> here means <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code> of that sum.
+Because the nodes are constants,</p>
+<div class="math notranslate nohighlight">
+\[
+\partial_z\log K_\nu=-E[\cosh u],\qquad
+\partial_\nu\log K_\nu=E[u].
+\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">log_kv_moments(v,</span> <span class="pre">z).d_arg</span></code> is the first identity written out;
+<code class="docutils literal notranslate"><span class="pre">jax.grad(lambda</span> <span class="pre">z:</span> <span class="pre">log_kv(v,</span> <span class="pre">z))(z)</span></code> is the same identity by differentiating
+the log-sum-exp. They agree to <span class="math notranslate nohighlight">\(\sim 10^{-13}\)</span>
+(<code class="docutils literal notranslate"><span class="pre">tests/test_bessel_contract.py::test_ad_equals_bundle</span></code>). GIG <span class="math notranslate nohighlight">\(\eta\)</span> and
+<span class="math notranslate nohighlight">\(H=D\,\mathrm{cov}\,D\)</span> use the moment bundle so both come from one pass.</p>
+<p><code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> and <code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> are the same sums in JAX and NumPy.
+The exponent uses <span class="math notranslate nohighlight">\(\mathrm{expm1}\)</span> with <span class="math notranslate nohighlight">\(\kappa-\nu=z^2/(\kappa+\nu)\)</span>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> returns <code class="docutils literal notranslate"><span class="pre">BesselMoments(log_k,</span> <span class="pre">u0,</span> <span class="pre">mean,</span> <span class="pre">cov)</span></code> of
+<span class="math notranslate nohighlight">\((x, e^{-x}-1, e^{x}-1)\)</span>. <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
+(<a class="reference internal" href="../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>) is a test oracle, not a runtime path.</p>
+<p>Hankel / Olver / small-<span class="math notranslate nohighlight">\(z\)</span> formulae ( <a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
+<a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a>,
+<a class="reference external" href="https://dlmf.nist.gov/10.41">10.41.3–4</a>,
+<a class="reference external" href="https://dlmf.nist.gov/10.30.E2">10.30.2</a> ) are identities in the
+contract tests, not production branches. The old four-regime <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>
+plus FD <span class="math notranslate nohighlight">\(\partial_\nu\)</span> produced <span class="math notranslate nohighlight">\(L_{\nu\nu}&lt;0\)</span> at GIG<span class="math notranslate nohighlight">\((25,1,1)\)</span>.</p>
 </section>
 <section id="why-backend-is-a-python-level-string">
-<h3>3.3 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string<a class="headerlink" href="#why-backend-is-a-python-level-string" title="Link to this heading">#</a></h3>
+<h3>3.2 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string<a class="headerlink" href="#why-backend-is-a-python-level-string" title="Link to this heading">#</a></h3>
 <p>Resolved before JAX tracing begins. <code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> keeps the code
 traceable; <code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> runs eagerly — appropriate because EM loops
 are already Python <code class="docutils literal notranslate"><span class="pre">for</span></code> loops at the CPU end.</p>
 </section>
 <section id="cpu-triad-for-bessel-dependent-distributions">
-<h3>3.4 CPU triad for Bessel-dependent distributions<a class="headerlink" href="#cpu-triad-for-bessel-dependent-distributions" title="Link to this heading">#</a></h3>
+<h3>3.3 CPU triad for Bessel-dependent distributions<a class="headerlink" href="#cpu-triad-for-bessel-dependent-distributions" title="Link to this heading">#</a></h3>
 <p><strong>Design rule:</strong> any distribution that calls <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> must override the
 Tier 3 CPU classmethods so the CPU solver path
 (<code class="docutils literal notranslate"><span class="pre">solve_bregman(backend='cpu')</span></code>) avoids JAX dispatch entirely. The
@@ -738,7 +729,7 @@ InverseGaussian) inherit the default wrappers. They pay nothing.</p>
 <hr class="docutils" />
 <section id="cpu-gpu-hybrid-backend">
 <h2>4. CPU/GPU Hybrid Backend<a class="headerlink" href="#cpu-gpu-hybrid-backend" title="Link to this heading">#</a></h2>
-<p>EM timing on 468 stocks, 2552 observations (GH distribution):</p>
+<p>EM timing on 468 stocks, 2552 observations (GH; pre-S10, <code class="docutils literal notranslate"><span class="pre">kve</span></code> on CPU):</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Phase</p></th>
@@ -761,6 +752,9 @@ InverseGaussian) inherit the default wrappers. They pay nothing.</p>
 </tbody>
 </table>
 </div>
+<p>After S10 the CPU E-step is the same 192-node kernel in NumPy, not
+<code class="docutils literal notranslate"><span class="pre">kve</span></code>; it is slower than AMOS on <span class="math notranslate nohighlight">\(N=2552\)</span>. The split (quad forms in JAX,
+GIG solve on CPU) is unchanged. <code class="docutils literal notranslate"><span class="pre">_fit_defaults</span></code> is a separate decision.</p>
 <p><strong>Hybrid strategy:</strong></p>
 <ul class="simple">
 <li><p>Quad forms (<span class="math notranslate nohighlight">\(L_\Sigma^{-1}(x-\mu)\)</span> etc.) stay in JAX (d-dimensional,
@@ -772,7 +766,8 @@ GPU-friendly).</p></li>
 <ul class="simple">
 <li><p>Quad forms (<code class="docutils literal notranslate"><span class="pre">L⁻¹(x−μ)</span></code>, <code class="docutils literal notranslate"><span class="pre">‖z‖²</span></code>, <code class="docutils literal notranslate"><span class="pre">‖w‖²</span></code>) stay in JAX <code class="docutils literal notranslate"><span class="pre">vmap</span></code>
 (GPU-friendly).</p></li>
-<li><p>Bessel calls go to CPU via <code class="docutils literal notranslate"><span class="pre">GIG.expectation_params_batch(backend='cpu')</span></code>.</p></li>
+<li><p>Bessel calls go to CPU via <code class="docutils literal notranslate"><span class="pre">GIG.expectation_params_batch(backend='cpu')</span></code>
+(same quadrature as JAX, NumPy backend).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_posterior_gig_params(z2,</span> <span class="pre">w2)</span></code> lives on each
 <code class="docutils literal notranslate"><span class="pre">JointNormalMixture</span></code> subclass.</p></li>
 </ul>
@@ -895,10 +890,9 @@ with <code class="docutils literal notranslate"><span class="pre">log_kernel(w)<
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bessel-functions">3. Bessel Functions</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pure-jax-backend-default">3.1 Pure-JAX backend (default)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-backend-em-hot-path">3.2 CPU backend (EM hot path)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-backend-is-a-python-level-string">3.3 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.4 CPU triad for Bessel-dependent distributions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-kernel">3.1 The kernel</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-backend-is-a-python-level-string">3.2 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.3 CPU triad for Bessel-dependent distributions</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a></li>

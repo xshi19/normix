@@ -520,7 +520,7 @@ Gamma (<span class="math notranslate nohighlight">\(p &gt; 0\)</span>, <span cla
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mean = 2.0490381056766616  var = 1.674038105676659  std = 1.2938462449907482
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mean = 2.0490381056766602  var = 1.6740381056766491  std = 1.2938462449907444
 quantiles: [0.72363 1.74949 3.7666 ]
 </pre></div>
 </div>
@@ -570,9 +570,10 @@ E[t(X)] (MC)    : [0.52941 0.73031 2.05684]
 </div>
 </div>
 </div>
-<p>Because the gradient threads through <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>, the derivative recurrences of
-the Bessel function (see <a class="reference internal" href="../core/03_bessel_and_log_kv.html"><span class="doc">Bessel functions and log_kv</span></a>) are what make this
-exact and differentiable.</p>
+<p>Because <code class="docutils literal notranslate"><span class="pre">GIG.expectation_params</span></code> reads <span class="math notranslate nohighlight">\(\eta\)</span> from <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code>
+(see <a class="reference internal" href="../core/03_bessel_and_log_kv.html"><span class="doc">Bessel functions and log_kv</span></a>), the gradient is an expectation
+under the same quadrature that evaluates <span class="math notranslate nohighlight">\(\log K_p\)</span>, not a finite
+difference.</p>
 </section>
 <section id="inverting-eta-mapsto-theta-with-multi-start">
 <h2>Inverting <span class="math notranslate nohighlight">\(\eta \mapsto \theta\)</span> with multi-start<a class="headerlink" href="#inverting-eta-mapsto-theta-with-multi-start" title="Link to this heading">#</a></h2>
@@ -593,7 +594,7 @@ moment-matching with this solve:</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>true  (p, a, b): -0.7 1.5 2.5
-MLE   (p, a, b): -0.7731514220201565 1.4578864600495594 2.5712599887273715
+MLE   (p, a, b): -0.7731513513222452 1.4578865960463 2.571259953455072
 </pre></div>
 </div>
 </div>
@@ -647,8 +648,8 @@ moments:</p>
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>The <code class="docutils literal notranslate"><span class="pre">GIG</span></code> log-partition is Bessel-valued, evaluated via <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>; its gradient
-gives <span class="math notranslate nohighlight">\(\eta = (\mathbb{E}[\log X], \mathbb{E}[1/X], \mathbb{E}[X])\)</span>.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">GIG</span></code> log-partition is Bessel-valued, evaluated via <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>;
+<code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> supplies <span class="math notranslate nohighlight">\(\eta = (\mathbb{E}[\log X], \mathbb{E}[1/X], \mathbb{E}[X])\)</span>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> uses an <span class="math notranslate nohighlight">\(\eta\)</span>-rescaled multi-start Newton solver to invert
 moments robustly; <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code> wraps it.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">rvs</span></code> offers <code class="docutils literal notranslate"><span class="pre">&quot;devroye&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;pinv&quot;</span></code> exact samplers.</p></li>

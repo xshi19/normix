@@ -457,7 +457,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-log-partition-triad">2. The Log-Partition Triad</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian">2.3 Why we don’t share Bessel calls between gradient and Hessian</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>
@@ -532,11 +532,11 @@ collapses into derivatives and Bregman minimisation of a single function.</p>
 </tr>
 <tr class="row-odd"><td><p>2: <code class="docutils literal notranslate"><span class="pre">_grad_*</span></code>, <code class="docutils literal notranslate"><span class="pre">_hessian_*</span></code> (JAX)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code></p></td>
-<td><p>analytical formula avoids recompilation or saves Bessel calls</p></td>
+<td><p>closed form, or one <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> bundle (GIG)</p></td>
 </tr>
 <tr class="row-even"><td><p>3: <code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code> etc.</p></td>
 <td><p>numpy wrappers around the JAX version</p></td>
-<td><p>distribution calls <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> (Bessel) and EM hot path needs CPU evaluation</p></td>
+<td><p>Bessel-dependent distributions need the same kernel in NumPy</p></td>
 </tr>
 </tbody>
 </table>
@@ -550,20 +550,23 @@ implementation. <code class="docutils literal notranslate"><span class="pre">&#6
 </section>
 <section id="why-the-cpu-tier-exists">
 <h3>2.2 Why the CPU tier exists<a class="headerlink" href="#why-the-cpu-tier-exists" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> is <strong>fast</strong> for vectorised Bessel evaluation in the
-EM hot path; a <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over JAX’s <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>-dispatched <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> triggers
-separate kernel launches per regime check and is much slower. Distributions
-that don’t call <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> (Gamma, InverseGamma, InverseGaussian) inherit
-the default <code class="docutils literal notranslate"><span class="pre">np.asarray(jax_version(...))</span></code> wrappers — they pay nothing for
-the CPU tier.</p>
+<p>The CPU tier exists so <code class="docutils literal notranslate"><span class="pre">solve_bregman(backend='cpu')</span></code> never dispatches
+through JAX. GIG’s CPU triad is the same moment-quadrature kernel in
+NumPy (<a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a> § 3). Distributions that don’t call
+<code class="docutils literal notranslate"><span class="pre">log_kv</span></code> (Gamma, InverseGamma, InverseGaussian) inherit the default
+<code class="docutils literal notranslate"><span class="pre">np.asarray(jax_version(...))</span></code> wrappers — they pay nothing for the CPU
+tier.</p>
 </section>
-<section id="why-we-don-t-share-bessel-calls-between-gradient-and-hessian">
-<h3>2.3 Why we don’t share Bessel calls between gradient and Hessian<a class="headerlink" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian" title="Link to this heading">#</a></h3>
-<p>A combined <code class="docutils literal notranslate"><span class="pre">_grad_hess</span></code> could share Bessel evaluations (≈ 7 calls vs
-12 for separate). We keep them separate anyway: the saving is small,
-and combining them re-introduces a phi-space chain rule the <em>distribution</em>
-must understand. Keeping <code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code> and <code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>
-as θ-space-only lets the solver (§3) own the chain rule generically.</p>
+<section id="fusion-vs-coordinate-separation">
+<h3>2.3 Fusion vs coordinate separation<a class="headerlink" href="#fusion-vs-coordinate-separation" title="Link to this heading">#</a></h3>
+<p>Sharing Bessel work between <span class="math notranslate nohighlight">\(\nabla\psi\)</span> and <span class="math notranslate nohighlight">\(\nabla^2\psi\)</span> happens
+<em>inside</em> <a class="reference internal" href="../api/utils.html#normix.utils.bessel.log_kv_moments" title="normix.utils.bessel.log_kv_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">normix.utils.bessel.log_kv_moments()</span></code></a>, below the triad.
+GIG’s <code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code> and <code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code> are affine images
+of one <code class="docutils literal notranslate"><span class="pre">BesselMoments</span></code> bundle (<span class="math notranslate nohighlight">\(\eta\)</span> = scaled mean, <span class="math notranslate nohighlight">\(H = D\,\mathrm{cov}\,D\)</span>).
+The triad remains three θ-space classmethods; the solver still applies the
+φ↔θ chain rule (S2). A combined <code class="docutils literal notranslate"><span class="pre">_grad_hess</span></code> on the distribution would
+re-introduce a φ-space chain rule the distribution must understand, and is
+not used.</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -653,7 +656,7 @@ gradient/Hessian; bounds are handled by the solver via
 </div>
 <p>GIG warm-start hot path: <code class="docutils literal notranslate"><span class="pre">backend='cpu',</span> <span class="pre">method='lbfgs'</span></code> (scipy’s L-BFGS-B</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">scipy.kve</span></code>) avoids GPU dispatch on this 3-D scalar problem.</p></li>
+<li><p>numpy <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>) avoids GPU dispatch on this 3-D scalar problem.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -786,7 +789,7 @@ and are hard to override.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-log-partition-triad">2. The Log-Partition Triad</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-we-don-t-share-bessel-calls-between-gradient-and-hessian">2.3 Why we don’t share Bessel calls between gradient and Hessian</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>

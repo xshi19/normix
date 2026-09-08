@@ -456,7 +456,8 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#two-backends-one-function">Two backends, one function</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#symmetry-and-vectorization">Symmetry and vectorization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-stability-in-the-tails">Numerical stability in the tails</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exact-derivatives">Exact derivatives</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-log-kv-is-computed">How <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is computed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-autodiff-and-log-kv-moments">Derivatives: autodiff and <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-backend-should-i-use">Which backend should I use?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#takeaways">Takeaways</a></li>
 </ul>
@@ -476,12 +477,14 @@
 in terms of the <strong>modified Bessel function of the second kind</strong>, <span class="math notranslate nohighlight">\(K_\nu(z)\)</span>
 (<a class="reference internal" href="../../references.html#dlmf"><span class="std std-ref">DLMF</span></a> §10). Evaluating it naively overflows and underflows badly,
 and the standard library versions are neither JIT-able nor differentiable.
-normix provides <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>, a log-space, four-regime, autodiff-friendly
-implementation:</p>
+normix provides <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>, a log-space implementation of <span class="math notranslate nohighlight">\(K_\nu\)</span> as a
+192-point quadrature (two array backends):</p>
 <div class="math notranslate nohighlight">
 \[
 \texttt{log\_kv}(\nu, z) = \log K_\nu(z).
 \]</div>
+<p><code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> differentiates that sum; <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> writes the same
+derivatives as expectations (shown below).</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -489,7 +492,7 @@ implementation:</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span><span class="p">,</span> <span class="n">log_kv_moments</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_theme</span>
 
 <span class="n">set_theme</span><span class="p">()</span>
@@ -501,11 +504,11 @@ implementation:</p>
 <section id="two-backends-one-function">
 <h2>Two backends, one function<a class="headerlink" href="#two-backends-one-function" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">log_kv</span></code> has a JIT-able <a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a> backend (the
-default) and a <a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a>/<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a>
-CPU backend. Both agree, and both match
+default) and a <a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a> CPU backend. Both agree,
+and both match
 <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
 (the exponentially-scaled Bessel function, <span class="math notranslate nohighlight">\(K_\nu(z)\,e^{z}\)</span>, via AMOS
-<a class="reference internal" href="../../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>):</p>
+<a class="reference internal" href="../../references.html#amos1986"><span class="std std-ref">Amos1986</span></a> — used here as a reference, not a runtime path):</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">kve</span>
@@ -578,17 +581,6 @@ z =  700.0   log(kv) =       -inf   log_kv = -703.0497
 </div>
 </div>
 </div>
-<p>The four internal regimes are selected automatically; you never choose one by
-hand:</p>
-<ul class="simple">
-<li><p><strong>Hankel asymptotic</strong> (<span class="math notranslate nohighlight">\(z\)</span> large) — <a class="reference internal" href="../../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
-<a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a>;</p></li>
-<li><p><strong>Olver uniform expansion</strong> (<span class="math notranslate nohighlight">\(|\nu|\)</span> large) — <a class="reference internal" href="../../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
-<a class="reference external" href="https://dlmf.nist.gov/10.41">10.41.3–4</a>;</p></li>
-<li><p><strong>small-<span class="math notranslate nohighlight">\(z\)</span> leading term</strong> — <a class="reference internal" href="../../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
-<a class="reference external" href="https://dlmf.nist.gov/10.30.E2">10.30.2</a>;</p></li>
-<li><p><strong>Gauss–Legendre quadrature</strong> elsewhere — <a class="reference internal" href="../../references.html#takekawa2022"><span class="std std-ref">Takekawa2022</span></a>.</p></li>
-</ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -598,56 +590,97 @@ hand:</p>
 <span class="k">for</span> <span class="n">nu</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">]:</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zgrid</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">zgrid</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;$</span><span class="se">\\</span><span class="s2">nu=</span><span class="si">{</span><span class="n">nu</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">$&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\log K_\nu(z)$&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;log_kv across orders and regimes&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;log_kv across orders&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d8e8db40eb33a4d91c98c66a334abc5759b977ab2ef463385ccad9be32a4780f.png" src="../../_images/d8e8db40eb33a4d91c98c66a334abc5759b977ab2ef463385ccad9be32a4780f.png" />
+<img alt="../../_images/7ab387a73bb4a845c383c2dde0094d1249f3a2fd7b004bd83b58906c0676abae.png" src="../../_images/7ab387a73bb4a845c383c2dde0094d1249f3a2fd7b004bd83b58906c0676abae.png" />
 </div>
 </div>
 </section>
-<section id="exact-derivatives">
-<h2>Exact derivatives<a class="headerlink" href="#exact-derivatives" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">log_kv</span></code> carries a <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code>, so it is differentiable. The derivative in
-<span class="math notranslate nohighlight">\(z\)</span> uses the exact recurrence <span class="math notranslate nohighlight">\(K_\nu'(z) = -\tfrac12\big(K_{\nu-1}(z) +
-K_{\nu+1}(z)\big)\)</span>, which we can verify against autodiff:</p>
+<section id="how-log-kv-is-computed">
+<h2>How <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is computed<a class="headerlink" href="#how-log-kv-is-computed" title="Link to this heading">#</a></h2>
+<p><span class="math notranslate nohighlight">\(K_\nu(z)\)</span> has the whole-line integral representation
+(<a class="reference internal" href="../../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.32.E9">10.32.9</a>)</p>
+<div class="math notranslate nohighlight">
+\[
+2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z&gt;0.
+\]</div>
+<p>normix does not call a library Bessel routine. It replaces that integral by a
+<strong>weighted sum of 192 function values</strong> (Gauss–Legendre quadrature, two panels).
+That sum is the 192-node kernel. Both <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code>
+evaluate the same sum; there is no regime dispatch.</p>
+<p>The integrand of <span class="math notranslate nohighlight">\(u \mapsto e^{\nu u-z\cosh u}\)</span> peaks at</p>
+<div class="math notranslate nohighlight">
+\[
+u_0=\operatorname{asinh}(\nu/z).
+\]</div>
+<p>The code shifts <span class="math notranslate nohighlight">\(x=u-u_0\)</span> so the mass sits at <span class="math notranslate nohighlight">\(x=0\)</span>, then places 96 nodes on
+each side of the peak. Node locations are treated as constants
+(<code class="docutils literal notranslate"><span class="pre">stop_gradient</span></code>); only the weights still depend on <span class="math notranslate nohighlight">\((\nu,z)\)</span>.</p>
+</section>
+<section id="derivatives-autodiff-and-log-kv-moments">
+<h2>Derivatives: autodiff and <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code><a class="headerlink" href="#derivatives-autodiff-and-log-kv-moments" title="Link to this heading">#</a></h2>
+<p><strong>Autodiff</strong> (automatic differentiation) is <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>: it differentiates the
+JAX expression for <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>. It is not a finite-difference stencil. Because the
+nodes are frozen, that derivative is exactly an expectation under the 192-point
+discrete measure:</p>
+<div class="math notranslate nohighlight">
+\[
+\partial_z\log K_\nu = -E[\cosh u], \qquad
+\partial_\nu\log K_\nu = E[u].
+\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">log_kv_moments(v,</span> <span class="pre">z)</span></code> evaluates those expectations from the same weights and
+stores them as <code class="docutils literal notranslate"><span class="pre">d_arg</span></code> and <code class="docutils literal notranslate"><span class="pre">d_order</span></code>. So</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">))(</span><span class="n">z</span><span class="p">)</span>   <span class="c1"># autodiff of the sum</span>
+<span class="n">log_kv_moments</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">d_arg</span>            <span class="c1"># the same expectation, written out</span>
+</pre></div>
+</div>
+<p>are the same calculation, two ways to read one quadrature:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">v0</span><span class="p">,</span> <span class="n">z0</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">,</span> <span class="mf">2.5</span>
-<span class="n">ad</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">z</span><span class="p">))(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z0</span><span class="p">)))</span>
+<span class="n">z_arr</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z0</span><span class="p">)</span>
+<span class="n">ad_z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">z</span><span class="p">))(</span><span class="n">z_arr</span><span class="p">))</span>
+<span class="n">ad_v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z0</span><span class="p">))(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v0</span><span class="p">)))</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">log_kv_moments</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span>
 
-<span class="c1"># d/dz log K_v = K_v&#39;/K_v = -(K_{v-1} + K_{v+1}) / (2 K_v)</span>
-<span class="n">recur</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;jax.grad d/dz  = </span><span class="si">{</span><span class="n">ad_z</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d_arg          = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">d_arg</span><span class="p">)</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;jax.grad d/dv  = </span><span class="si">{</span><span class="n">ad_v</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d_order        = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">d_order</span><span class="p">)</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>jax.grad d/dz  = -1.283063098092
+d_arg          = -1.283063098092
+jax.grad d/dv  = 0.434938882251
+d_order        = 0.434938882251
+</pre></div>
+</div>
+</div>
+</div>
+<p>GIG’s <span class="math notranslate nohighlight">\(\eta=\nabla\psi\)</span> and Fisher <span class="math notranslate nohighlight">\(H\)</span> use <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> so the mean and the
+<span class="math notranslate nohighlight">\(3\times 3\)</span> covariance come from one pass. Ordinary <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> code can keep
+using <code class="docutils literal notranslate"><span class="pre">jax.grad(log_kv)</span></code>.</p>
+<p>The <span class="math notranslate nohighlight">\(z\)</span>-derivative also matches the classical recurrence
+<span class="math notranslate nohighlight">\(K_\nu'(z)=-\tfrac12\big(K_{\nu-1}(z)+K_{\nu+1}(z)\big)\)</span>:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">recur</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span>
     <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">z0</span><span class="p">)))</span>
     <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">z0</span><span class="p">)))</span>
 <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;autodiff   d/dz log_kv = </span><span class="si">{</span><span class="n">ad</span><span class="si">:</span><span class="s2">.10f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recurrence d/dz log_kv = </span><span class="si">{</span><span class="n">recur</span><span class="si">:</span><span class="s2">.10f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recurrence d/dz = </span><span class="si">{</span><span class="n">recur</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>autodiff   d/dz log_kv = -1.2830630981
-recurrence d/dz log_kv = -1.2830630981
-</pre></div>
-</div>
-</div>
-</div>
-<p>The derivative in the order <span class="math notranslate nohighlight">\(\nu\)</span> (needed for the GIG log-partition gradient) is
-a finite difference on <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> itself, and is available through the same
-<code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>:</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dv</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z0</span><span class="p">))(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v0</span><span class="p">)))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;d/dv log_kv at (v=</span><span class="si">{</span><span class="n">v0</span><span class="si">}</span><span class="s2">, z=</span><span class="si">{</span><span class="n">z0</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">dv</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>d/dv log_kv at (v=1.3, z=2.5) = 0.434939
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>recurrence d/dz = -1.283063098092
 </pre></div>
 </div>
 </div>
@@ -659,9 +692,8 @@ a finite difference on <code class="docutils literal notranslate"><span class="p
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code></strong> (default) — use inside anything that is JIT-compiled,
 differentiated with <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>, or vectorized with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, and on GPU.
 This is what distribution <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> methods call.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code></strong> — routes through <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code>. It is faster for
-large batches on CPU and is the path the EM E-step takes
-(<code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code>), where Bessel evaluation dominates the runtime.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code></strong> — the same sums in NumPy. Use it from Python EM
+loops (<code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code>) that should not dispatch through JAX.</p></li>
 </ul>
 <p>The two are numerically interchangeable; the choice is purely about
 performance and the surrounding execution context.</p>
@@ -669,12 +701,15 @@ performance and the surrounding execution context.</p>
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">log_kv(v,</span> <span class="pre">z)</span></code> returns <span class="math notranslate nohighlight">\(\log K_\nu(z)\)</span> in log space, stable across the full
-range of arguments.</p></li>
-<li><p>It is symmetric in <span class="math notranslate nohighlight">\(\nu\)</span>, broadcasts/<code class="docutils literal notranslate"><span class="pre">vmap</span></code>s, and is differentiable in both
-arguments via <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code>.</p></li>
-<li><p>Pick <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code> for JIT/grad/vmap/GPU; <code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code> for the
-scipy-accelerated EM hot loop.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log_kv(v,</span> <span class="pre">z)</span></code> is a 192-point quadrature for <span class="math notranslate nohighlight">\(\log K_\nu(z)\)</span>, not a call
+to <code class="docutils literal notranslate"><span class="pre">scipy.special.kv</span></code>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(u_0=\operatorname{asinh}(\nu/z)\)</span> is the mode of the integrand; nodes sit
+around that peak.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">jax.grad(log_kv)</span></code> is autodiff of that sum. <code class="docutils literal notranslate"><span class="pre">log_kv_moments(v,</span> <span class="pre">z).d_arg</span></code>
+is the same <span class="math notranslate nohighlight">\(\partial_z\)</span> as an explicit average; <code class="docutils literal notranslate"><span class="pre">d_order</span></code> is
+<span class="math notranslate nohighlight">\(\partial_\nu\)</span>. Neither is a finite difference.</p></li>
+<li><p>Pick <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code> for JIT/grad/vmap/GPU; <code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code> for a NumPy
+EM loop that should not enter JAX.</p></li>
 </ul>
 <p>Next: <a class="reference internal" href="04_random_sampling.html"><span class="doc">Random sampling</span></a> uses these densities to draw and validate
 samples from every distribution.</p>
@@ -731,7 +766,8 @@ samples from every distribution.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#two-backends-one-function">Two backends, one function</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#symmetry-and-vectorization">Symmetry and vectorization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-stability-in-the-tails">Numerical stability in the tails</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exact-derivatives">Exact derivatives</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-log-kv-is-computed">How <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is computed</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-autodiff-and-log-kv-moments">Derivatives: autodiff and <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-backend-should-i-use">Which backend should I use?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#takeaways">Takeaways</a></li>
 </ul>

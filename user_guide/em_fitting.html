@@ -523,7 +523,8 @@ a split between <span class="math notranslate nohighlight">\(\Sigma\)</span> and
 (<span class="math notranslate nohighlight">\(\lvert\Sigma\rvert = 1\)</span>), <code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> (<span class="math notranslate nohighlight">\(\lvert\Sigma\rvert\)</span> held at its
 initial value), or <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code> (GIG with <span class="math notranslate nohighlight">\(a = b\)</span>).</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">e_step_backend</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step_backend</span></code></strong> select <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>. The CPU
-Bessel path is markedly faster for the GIG/NIG E-step on CPU.</p></li>
+path is the same <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> kernel in NumPy (no JAX dispatch on the 3-D GIG
+problem).</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">m_step_method</span></code></strong> is <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
 </ul>
 <p>See <a class="reference internal" href="../tutorials/em/01_batch_em.html"><span class="doc">Batch EM in practice</span></a> for diagnostics and worked examples.</p>

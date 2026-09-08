@@ -46,8 +46,8 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | Tier | Default | Override when |
 |------|---------|---------------|
 | 1: `_log_partition_from_theta` | abstract | always (it *is* the distribution) |
-| 2: `_grad_*`, `_hessian_*` (JAX) | `jax.grad` / `jax.hessian` | analytical formula avoids recompilation or saves Bessel calls |
-| 3: `_log_partition_cpu` etc.    | numpy wrappers around the JAX version | distribution calls `log_kv` (Bessel) and EM hot path needs CPU evaluation |
+| 2: `_grad_*`, `_hessian_*` (JAX) | `jax.grad` / `jax.hessian` | closed form, or one `log_kv_moments` bundle (GIG) |
+| 3: `_log_partition_cpu` etc.    | numpy wrappers around the JAX version | Bessel-dependent distributions need the same kernel in NumPy |
 
 ### 2.1 Why `@classmethod` for the triad
 
@@ -58,20 +58,23 @@ implementation. `@staticmethod` cannot — it would always call the parent.
 
 ### 2.2 Why the CPU tier exists
 
-`scipy.special.kve` is **fast** for vectorised Bessel evaluation in the
-EM hot path; a `vmap` over JAX's `lax.cond`-dispatched `log_kv` triggers
-separate kernel launches per regime check and is much slower. Distributions
-that don't call `log_kv` (Gamma, InverseGamma, InverseGaussian) inherit
-the default `np.asarray(jax_version(...))` wrappers — they pay nothing for
-the CPU tier.
+The CPU tier exists so `solve_bregman(backend='cpu')` never dispatches
+through JAX. GIG's CPU triad is the same moment-quadrature kernel in
+NumPy ({doc}`solvers_and_bessel` § 3). Distributions that don't call
+`log_kv` (Gamma, InverseGamma, InverseGaussian) inherit the default
+`np.asarray(jax_version(...))` wrappers — they pay nothing for the CPU
+tier.
 
-### 2.3 Why we don't share Bessel calls between gradient and Hessian
+### 2.3 Fusion vs coordinate separation
 
-A combined `_grad_hess` could share Bessel evaluations (≈ 7 calls vs
-12 for separate). We keep them separate anyway: the saving is small,
-and combining them re-introduces a phi-space chain rule the *distribution*
-must understand. Keeping `_grad_log_partition` and `_hessian_log_partition`
-as θ-space-only lets the solver (§3) own the chain rule generically.
+Sharing Bessel work between $\nabla\psi$ and $\nabla^2\psi$ happens
+*inside* {py:func}`normix.utils.bessel.log_kv_moments`, below the triad.
+GIG's `_grad_log_partition` and `_hessian_log_partition` are affine images
+of one `BesselMoments` bundle ($\eta$ = scaled mean, $H = D\,\mathrm{cov}\,D$).
+The triad remains three θ-space classmethods; the solver still applies the
+φ↔θ chain rule (S2). A combined `_grad_hess` on the distribution would
+re-introduce a φ-space chain rule the distribution must understand, and is
+not used.
 
 ---
 
@@ -107,7 +110,7 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | `cpu` | `bfgs`  | none   | SciPy `minimize(method='BFGS')` |
 
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
-+ `scipy.kve`) avoids GPU dispatch on this 3-D scalar problem.
++ numpy `log_kv`) avoids GPU dispatch on this 3-D scalar problem.
 
 ---
 

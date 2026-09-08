@@ -86,9 +86,10 @@ print("eta  (analytic) :", np.asarray(eta))
 print("E[t(X)] (MC)    :", np.asarray(t.mean(axis=0)))
 ```
 
-Because the gradient threads through `log_kv`, the derivative recurrences of
-the Bessel function (see {doc}`../core/03_bessel_and_log_kv`) are what make this
-exact and differentiable.
+Because `GIG.expectation_params` reads $\eta$ from `log_kv_moments`
+(see {doc}`../core/03_bessel_and_log_kv`), the gradient is an expectation
+under the same quadrature that evaluates $\log K_p$, not a finite
+difference.
 
 ## Inverting $\eta \mapsto \theta$ with multi-start
 
@@ -136,8 +137,8 @@ for method in ["devroye", "pinv"]:
 
 ## Takeaways
 
-- The `GIG` log-partition is Bessel-valued, evaluated via `log_kv`; its gradient
-  gives $\eta = (\mathbb{E}[\log X], \mathbb{E}[1/X], \mathbb{E}[X])$.
+- The `GIG` log-partition is Bessel-valued, evaluated via `log_kv`;
+  `log_kv_moments` supplies $\eta = (\mathbb{E}[\log X], \mathbb{E}[1/X], \mathbb{E}[X])$.
 - `from_expectation` uses an $\eta$-rescaled multi-start Newton solver to invert
   moments robustly; `fit_mle` wraps it.
 - `rvs` offers `"devroye"` and `"pinv"` exact samplers.

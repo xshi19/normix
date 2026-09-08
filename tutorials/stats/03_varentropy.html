@@ -566,7 +566,7 @@ information measures on the exact <code class="docutils literal notranslate"><sp
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>InverseGaussian:  entropy = 1.248139  (scipy 1.248139)
-                  varentropy = 1.082825  (= GIG embedding 1.082825)
+                  varentropy = 1.082828  (= GIG embedding 1.082828)
 </pre></div>
 </div>
 </div>
@@ -597,7 +597,7 @@ slope of the Rényi spectrum. All three agree:</p>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>GIG(-0.5, 2, 3)
    entropy():    0.913535   -R&#39;(1): 0.913535
-   varentropy(): 0.824629   R&#39;&#39;(1): 0.824629   -2·H_α&#39;(1): 0.824625
+   varentropy(): 0.824625   R&#39;&#39;(1): 0.824625   -2·H_α&#39;(1): 0.824625
 Gamma(2, 3)
    entropy():    0.478603   -R&#39;(1): 0.478603
    varentropy(): 0.644934   R&#39;&#39;(1): 0.644934   -2·H_α&#39;(1): 0.644934
@@ -628,13 +628,13 @@ Shannon entropy at <span class="math notranslate nohighlight">\(\alpha=1\)</span
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/7164bebd1854ebff9a580332756ec07183a538320217b8688436a0ae899f0795.png" src="../../_images/7164bebd1854ebff9a580332756ec07183a538320217b8688436a0ae899f0795.png" />
+<img alt="../../_images/9d0ba004dae5576e1380f9a6e3d89211ad737e45206436fdb54586e248e96d51.png" src="../../_images/9d0ba004dae5576e1380f9a6e3d89211ad737e45206436fdb54586e248e96d51.png" />
 </div>
 </div>
 </section>
 <section id="gig-varentropy-vs-monte-carlo">
 <h2>GIG varentropy vs Monte Carlo<a class="headerlink" href="#gig-varentropy-vs-monte-carlo" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">varentropy()</span></code> routes autodiff through the accurate <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> custom JVP, so it
+<p><code class="docutils literal notranslate"><span class="pre">varentropy()</span></code> differentiates <span class="math notranslate nohighlight">\(\psi\)</span> through the <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> quadrature, so it
 matches an independent Monte Carlo estimate across the parameter range. Here we
 vary the order <span class="math notranslate nohighlight">\(p\)</span> at <span class="math notranslate nohighlight">\(a=b=1\)</span>:</p>
 <div class="cell docutils container">
@@ -664,7 +664,7 @@ vary the order <span class="math notranslate nohighlight">\(p\)</span> at <span 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/3cfb5ba4c24b847b0e2203c5bd81d39e6a9d41bc29c94ca6176c2f2b96d344bd.png" src="../../_images/3cfb5ba4c24b847b0e2203c5bd81d39e6a9d41bc29c94ca6176c2f2b96d344bd.png" />
+<img alt="../../_images/24479d17695a48689d9eafb1db2a65fcc0ccd4610e04acef816fce26f1db0d86.png" src="../../_images/24479d17695a48689d9eafb1db2a65fcc0ccd4610e04acef816fce26f1db0d86.png" />
 </div>
 </div>
 </section>
@@ -705,7 +705,7 @@ only through the dimension <span class="math notranslate nohighlight">\(d\)</spa
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f0936258e57cd3703c3134b4987e2103a271c24da12f4557844f7dd3ffa65541.png" src="../../_images/f0936258e57cd3703c3134b4987e2103a271c24da12f4557844f7dd3ffa65541.png" />
+<img alt="../../_images/3809f399b3b2e3e394aaed3c7b6e4c92c75c8ba289eae5a91165864f09848831.png" src="../../_images/3809f399b3b2e3e394aaed3c7b6e4c92c75c8ba289eae5a91165864f09848831.png" />
 </div>
 </div>
 <p>Independence from the Gaussian block is exact, as the formula predicts:</p>
@@ -722,8 +722,8 @@ only through the dimension <span class="math notranslate nohighlight">\(d\)</spa
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mu=[0.0, 0.0], gamma=[0.0, 0.0]:  joint_varentropy = 2.9024204306
-mu=[5.0, -3.0], gamma=[2.0, 1.0]:  joint_varentropy = 2.9024204306
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mu=[0.0, 0.0], gamma=[0.0, 0.0]:  joint_varentropy = 2.9024081263
+mu=[5.0, -3.0], gamma=[2.0, 1.0]:  joint_varentropy = 2.9024081263
 </pre></div>
 </div>
 </div>
@@ -771,7 +771,7 @@ order <span class="math notranslate nohighlight">\(p\)</span>:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a3a33a49dfca5abb37863a156d33dd183309f9b40ee5fc6ca8672b68d8d5c9ce.png" src="../../_images/a3a33a49dfca5abb37863a156d33dd183309f9b40ee5fc6ca8672b68d8d5c9ce.png" />
+<img alt="../../_images/05421949a9672f655a45a3aa917a6fe4ee38077a24aa89b6b0fb2713bc5541f5.png" src="../../_images/05421949a9672f655a45a3aa917a6fe4ee38077a24aa89b6b0fb2713bc5541f5.png" />
 </div>
 </div>
 <p>The contrast appears in the <strong>inverse-gamma limit</strong> (<span class="math notranslate nohighlight">\(a\to0\)</span>, <span class="math notranslate nohighlight">\(p&lt;0\)</span>), where the
@@ -879,7 +879,7 @@ a region with a sloping efficient boundary:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/d5197a90e3c9ae82df8b6637956361786bd596329886b26c1f382f4a1d893d8e.png" src="../../_images/d5197a90e3c9ae82df8b6637956361786bd596329886b26c1f382f4a1d893d8e.png" />
+<img alt="../../_images/37d403a8ae638ece9e2e38b340421f45bd8f87ff0de807c59d8410310934d3fb.png" src="../../_images/37d403a8ae638ece9e2e38b340421f45bd8f87ff0de807c59d8410310934d3fb.png" />
 </div>
 </div>
 <p>The only genuine boundary is a <strong>horizontal floor</strong>: as <span class="math notranslate nohighlight">\(z = \sqrt{ab}\to\infty\)</span>
@@ -905,7 +905,7 @@ Removing the scale degree of freedom (fixing <span class="math notranslate nohig
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/20219a0ffffb01695efa69158e419e7e5659d865178cca2450cd34b009f393e5.png" src="../../_images/20219a0ffffb01695efa69158e419e7e5659d865178cca2450cd34b009f393e5.png" />
+<img alt="../../_images/48e73ae2570ed18d8003c6a058ba56351e7a2e4afd31489cf30463383b99ed27.png" src="../../_images/48e73ae2570ed18d8003c6a058ba56351e7a2e4afd31489cf30463383b99ed27.png" />
 </div>
 </div>
 <p>Each curve peaks at a moderate <span class="math notranslate nohighlight">\(|p|\)</span> and descends toward the Gaussian floor as

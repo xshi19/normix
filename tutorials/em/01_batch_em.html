@@ -537,10 +537,10 @@ returns an <code class="docutils literal notranslate"><span class="pre">EMResult
   Regularize   : none
   Tolerance    : 1.0e-04
   Max iters    : 150
-  Converged after 31 iterations (10.92s), final LL=-4.129249
+  Converged after 31 iterations (55.10s), final LL=-4.129249
 converged : True
 iterations: 31
-elapsed   : 10.92s
+elapsed   : 55.10s
 </pre></div>
 </div>
 </div>
@@ -633,8 +633,8 @@ subordinator. <code class="docutils literal notranslate"><span class="pre">Batch
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 0.9999999999999999
-log|Σ|             : -3.2526065174565133e-16
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 1.0000000000000002
+log|Σ|             : 3.681950577760773e-16
 </pre></div>
 </div>
 </div>
@@ -646,9 +646,8 @@ log|Σ|             : -3.2526065174565133e-16
 <span class="math notranslate nohighlight">\(\eta \mapsto \theta\)</span> solve. Each can run on a <a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a>
 or a CPU/<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> backend independently:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code> routes Bessel through
-<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
-— a large speedup for the GIG/NIG E-step on CPU.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">e_step_backend=&quot;cpu&quot;</span></code> routes Bessel through the NumPy <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> kernel
+(same quadrature as JAX; no GPU dispatch on the 3-D GIG problem).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">m_step_backend=&quot;cpu&quot;</span></code> uses the NumPy/SciPy Newton solver for the
 subordinator update; <code class="docutils literal notranslate"><span class="pre">m_step_method</span></code> selects <code class="docutils literal notranslate"><span class="pre">&quot;newton&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;lbfgs&quot;</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">&quot;bfgs&quot;</span></code>.</p></li>

@@ -1571,11 +1571,11 @@ and ignored.</p>
 <p><strong>Log-Partition Triad Overrides:</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> : JAX, uses <code class="docutils literal notranslate"><span class="pre">log_kv(backend='jax')</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code>       : analytical Bessel ratios (5 <span class="math notranslate nohighlight">\(K_\nu\)</span> calls)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>    : analytical 11-Bessel Hessian in <span class="math notranslate nohighlight">\(\theta\)</span>-space</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition</span></code>       : affine image of one <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> call</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition</span></code>    : <span class="math notranslate nohighlight">\(H = D\,\mathrm{cov}\,D\)</span> from the same bundle</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code>        : numpy + <code class="docutils literal notranslate"><span class="pre">log_kv(backend='cpu')</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition_cpu</span></code>   : analytical Bessel ratios via <code class="docutils literal notranslate"><span class="pre">scipy.kve</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition_cpu</span></code>: central FD on <code class="docutils literal notranslate"><span class="pre">_log_partition_cpu</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_grad_log_partition_cpu</span></code> : same affine image, NumPy backend</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_hessian_log_partition_cpu</span></code>: same covariance, NumPy backend</p></li>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian">
@@ -1671,7 +1671,7 @@ the shared prior-to-posterior conjugacy map in the EM E-step (see
 <dd><p>Vectorized η for arrays of (p, a, b), each shape (N,).
 Returns (N, 3) array where columns are [E_log_X, E_inv_X, E_X].</p>
 <p>backend=’jax’ : vmap over scalar JAX grad
-backend=’cpu’ : vectorized scipy.kve (6 C-level array calls)</p>
+backend=’cpu’ : one batched <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> call (NumPy kernel)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>

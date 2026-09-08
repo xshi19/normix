@@ -582,11 +582,12 @@ the exact <span class="math notranslate nohighlight">\(b=0\)</span> boundary tha
 <span class="math notranslate nohighlight">\(\partial_\nu\log K_\nu\)</span>: older JAX Bessel wrappers (TensorFlow
 Probability’s <code class="docutils literal notranslate"><span class="pre">log_besselk</span></code>) returned a <strong>zero</strong> <span class="math notranslate nohighlight">\(\nu\)</span>-tangent, so Adam
 could not move <span class="math notranslate nohighlight">\(p\)</span>. That bug is gone.
-<code class="docutils literal notranslate"><span class="pre">log_kv</span></code> uses <code class="docutils literal notranslate"><span class="pre">&#64;jax.custom_jvp</span></code> (exact
-<span class="math notranslate nohighlight">\(\partial_z\)</span> recurrence; central difference <span class="math notranslate nohighlight">\(\partial_\nu\)</span> at
-<span class="math notranslate nohighlight">\(10^{-5}\)</span>). On the same GIG grid, <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> of the observed NLL with
-respect to <span class="math notranslate nohighlight">\((p,a,b)\)</span> matches a CPU finite difference that never touches
-the custom JVP, relative error <span class="math notranslate nohighlight">\(\sim 10^{-9}\)</span> (<code class="docutils literal notranslate"><span class="pre">tests/test_gig_properties.py</span></code>).</p>
+<code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is an ordinary JAX function (frozen whole-line quadrature; no
+<code class="docutils literal notranslate"><span class="pre">custom_jvp</span></code>). On the same GIG grid, <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> of the observed NLL with
+respect to <span class="math notranslate nohighlight">\((p,a,b)\)</span> matches a CPU finite difference of the same kernel,
+relative error <span class="math notranslate nohighlight">\(\sim 10^{-9}\)</span> (<code class="docutils literal notranslate"><span class="pre">tests/test_gig_properties.py</span></code>). Hessians
+of <span class="math notranslate nohighlight">\(\log K_\nu\)</span> are now <span class="math notranslate nohighlight">\(\mathrm{Var}(u)&gt;0\)</span> (S10); the first-order NLL
+check was never the blocker.</p>
 <p>Quasi-Newton on the GIG NLL <em>can</em> recover the interior MLE. We still do
 not lead with it, for the reasons in § 3, not because autodiff through
 <span class="math notranslate nohighlight">\(K_\nu\)</span> is broken.</p>
@@ -632,7 +633,7 @@ helper, not an in-tree Adam.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="exponential_family.html"><span class="doc">Exponential Family Core</span></a> — <span class="math notranslate nohighlight">\(\psi\)</span>, <span class="math notranslate nohighlight">\(\eta=\nabla\psi\)</span>, clamp vs bijections.</p></li>
 <li><p><a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a> — model / fitter split, M-step as <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code>.</p></li>
-<li><p><a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a> — η-rescaling, <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> JVP, CPU/GPU hybrid.</p></li>
+<li><p><a class="reference internal" href="solvers_and_bessel.html"><span class="doc">Solvers and Bessel Functions</span></a> — η-rescaling, <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> quadrature, CPU/GPU hybrid.</p></li>
 <li><p><a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM algorithm</span></a>,
 <a class="reference internal" href="../theory/gig.html"><span class="doc">GIG distribution</span></a>.</p></li>
 <li><p><a class="reference internal" href="../user_guide/em_fitting.html"><span class="doc">Fitting with EM</span></a>.</p></li>
