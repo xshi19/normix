@@ -21,7 +21,8 @@ why_not_gradient_descent
 | Why two classes for each mixture distribution? | {doc}`mixtures` § 1 |
 | Why three classmethod tiers for the log-partition? | {doc}`exponential_family` § 2 |
 | What does `'det_sigma_x'` regularisation do? | {doc}`em_framework` § 5 |
-| Why CPU backend for Bessel and GIG solve? | {doc}`solvers_and_bessel` § 4 |
+| Why CPU backend for Bessel and GIG solve? | {doc}`solvers_and_bessel` § 3–4 |
+| Is `jax.grad(log_kv)` the same as `log_kv_moments.d_arg`? | {doc}`solvers_and_bessel` § 3.1; {doc}`../tutorials/core/03_bessel_and_log_kv` |
 | Why not Adam / L-BFGS on the observed NLL? | {doc}`why_not_gradient_descent` |
 
 ## See also

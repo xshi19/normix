@@ -12,7 +12,7 @@
 | [`exponential_family.md`](exponential_family.md) | EF base class, log-partition triad, Bregman solver interface, MVN promotion (D3), `jaxopt` migration (D4) |
 | [`mixtures.md`](mixtures.md) | Joint vs Marginal split (D2), `MarginalMixture` ABC, parameter facade, `from_expectation` η→model map, factor-analysis sibling family |
 | [`em_framework.md`](em_framework.md) | Model/Fitter separation, η-update rule layers, `Shrinkage` combinator + penalised EM theory, the four covariance regularisations (`none` / `det_sigma_one` / `det_sigma_x` / `a_eq_b`) |
-| [`solvers_and_bessel.md`](solvers_and_bessel.md) | Bregman solver internals, GIG η-rescaling, Bessel regimes and CPU/GPU hybrid, RVS generation |
+| [`solvers_and_bessel.md`](solvers_and_bessel.md) | Bregman solver internals, GIG η-rescaling, Bessel moment kernel and CPU/GPU hybrid, RVS generation |
 | [`agent_instructions_design.md`](agent_instructions_design.md) | How AGENTS.md, rules, skills, and design docs work together to give coding agents the right context |
 
 ## Quick lookups
@@ -29,7 +29,8 @@
 | Why does `'a_eq_b'` matter beyond `'det_sigma_one'`? | `em_framework.md` § 5.2 |
 | Why is `Shrinkage` a combinator, not subclasses? | `em_framework.md` § 4.3 |
 | Why hand-rolled Newton instead of `optimistix`? | `solvers_and_bessel.md` § 1.2 |
-| Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 4 |
+| Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 3–4 |
+| Is `jax.grad(log_kv)` the same as `log_kv_moments.d_arg`? | `solvers_and_bessel.md` § 3.1; `../../docs/tutorials/core/03_bessel_and_log_kv.md` |
 | Why not Adam / L-BFGS on the observed NLL? | `../../docs/design/why_not_gradient_descent.md`; row E15 |
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |

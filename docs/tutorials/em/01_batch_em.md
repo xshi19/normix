@@ -124,9 +124,8 @@ The E-step is dominated by Bessel evaluations and the M-step by the
 $\eta \mapsto \theta$ solve. Each can run on a [JAX](https://docs.jax.dev/en/latest/)
 or a CPU/[SciPy](https://docs.scipy.org/doc/scipy/) backend independently:
 
-- `e_step_backend="cpu"` routes Bessel through
-  [`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
-  — a large speedup for the GIG/NIG E-step on CPU.
+- `e_step_backend="cpu"` routes Bessel through the NumPy `log_kv` kernel
+  (same quadrature as JAX; no GPU dispatch on the 3-D GIG problem).
 - `m_step_backend="cpu"` uses the NumPy/SciPy Newton solver for the
   subordinator update; `m_step_method` selects `"newton"`, `"lbfgs"`, or
   `"bfgs"`.

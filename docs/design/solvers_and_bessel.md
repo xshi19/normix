@@ -1,8 +1,9 @@
 # Solvers and Bessel Functions
 
 > **Scope.** Why the Bregman solver is decoupled from `ExponentialFamily`,
-> why Bessel evaluation has two backends and four numerical regimes,
-> and why the EM hot path runs on a CPU/GPU hybrid.
+> why Bessel evaluation is one moment-quadrature kernel with two array
+> backends, and why the EM hot path still splits quad forms (JAX) from
+> the GIG solve (CPU).
 >
 > **Where things live.** The `backend × method` matrix is in
 > {doc}`exponential_family` § 3. This file owns the deeper rationale.
@@ -110,7 +111,7 @@ $$
 ### 2.2 Solver choice in EM
 
 Default: `backend='cpu', method='lbfgs'` — `scipy.optimize.minimize`
-with `scipy.special.kve`. This avoids GPU kernel dispatch overhead on a
+with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
 3-D scalar problem.
 
 For the warm-started Newton path (`backend='jax', method='newton'`),
@@ -125,46 +126,64 @@ from the Gamma / InverseGamma / InverseGaussian special cases.
 
 ## 3. Bessel Functions
 
-`log_kv(v, z, backend='jax'|'cpu')` is the unified entry point in
-`normix/utils/bessel.py`.
+{py:func}`normix.utils.bessel.log_kv` is the unified entry point.
 
-### 3.1 Pure-JAX backend (default)
+One centered whole-line Gauss–Legendre kernel implements both `log_kv`
+and {py:func}`normix.utils.bessel.log_kv_moments`. Geometry is frozen
+under `stop_gradient`; autodiff of `log_kv` yields cumulants of that
+discrete measure. No regimes, no `lax.cond`, no `custom_jvp`, no finite
+differences.
 
-Four-regime dispatch via `lax.cond` (only the selected branch executes
-at runtime):
+### 3.1 The kernel
 
-| Regime | Trigger | Method |
-|---|---|---|
-| Hankel | $z > \max(25, v^2/4)$ | {ref}`DLMF <dlmf>` [10.40.2](https://dlmf.nist.gov/10.40.E2) asymptotic |
-| Olver | $\|v\| > 25$, not Hankel | {ref}`DLMF <dlmf>` [10.41.3–4](https://dlmf.nist.gov/10.41) uniform expansion |
-| Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | {ref}`DLMF <dlmf>` [10.30.2](https://dlmf.nist.gov/10.30.E2) leading asymptotic |
-| Quadrature | otherwise | 64-point Gauss–Legendre ({ref}`Takekawa2022 <takekawa2022>`) |
+$$
+2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z>0
+$$
 
-Custom JVP via `@jax.custom_jvp` with
-`defjvp(..., symbolic_zeros=True)`:
+({ref}`DLMF <dlmf>` [10.32.9](https://dlmf.nist.gov/10.32.E9)). Production
+`log_kv` is this integral as a **192-point Gauss–Legendre sum** (96 nodes
+on each side of the peak). That is the kernel: a weighted sum, not a
+library Bessel call and not a finite-difference stencil.
 
-- $\partial/\partial z$: exact recurrence
-  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$; skipped when the $z$-tangent
-  is a symbolic zero.
-- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$;
-  skipped when the $v$-tangent is a symbolic zero (z-only
-  differentiation avoids the two extra Bessel evaluations).
+The integrand peaks at $u_0=\operatorname{asinh}(\nu/z)$. The code shifts
+$x=u-u_0$ so the mass sits at the origin. Node locations are frozen
+(`stop_gradient`); only the weights depend on $(\nu,z)$.
 
-### 3.2 CPU backend (EM hot path)
+**Autodiff** here means `jax.grad` / `jax.hessian` of that sum.
+Because the nodes are constants,
 
-[`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
-({ref}`Amos1986 <amos1986>`), fully vectorised NumPy. Not JIT-able. For large
-$N$ a single `kve` C-call per element beats vmapping JAX's
-`lax.cond`-dispatched implementation, which causes separate kernel
-launches per condition check.
+$$
+\partial_z\log K_\nu=-E[\cosh u],\qquad
+\partial_\nu\log K_\nu=E[u].
+$$
 
-### 3.3 Why `backend` is a Python-level string
+`log_kv_moments(v, z).d_arg` is the first identity written out;
+`jax.grad(lambda z: log_kv(v, z))(z)` is the same identity by differentiating
+the log-sum-exp. They agree to $\sim 10^{-13}$
+(`tests/test_bessel_contract.py::test_ad_equals_bundle`). GIG $\eta$ and
+$H=D\,\mathrm{cov}\,D$ use the moment bundle so both come from one pass.
+
+`backend='jax'` and `backend='cpu'` are the same sums in JAX and NumPy.
+The exponent uses $\mathrm{expm1}$ with $\kappa-\nu=z^2/(\kappa+\nu)$.
+
+`log_kv_moments` returns `BesselMoments(log_k, u0, mean, cov)` of
+$(x, e^{-x}-1, e^{x}-1)$. [`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
+({ref}`Amos1986 <amos1986>`) is a test oracle, not a runtime path.
+
+Hankel / Olver / small-$z$ formulae ( {ref}`DLMF <dlmf>`
+[10.40.2](https://dlmf.nist.gov/10.40.E2),
+[10.41.3–4](https://dlmf.nist.gov/10.41),
+[10.30.2](https://dlmf.nist.gov/10.30.E2) ) are identities in the
+contract tests, not production branches. The old four-regime `lax.cond`
+plus FD $\partial_\nu$ produced $L_{\nu\nu}<0$ at GIG$(25,1,1)$.
+
+### 3.2 Why `backend` is a Python-level string
 
 Resolved before JAX tracing begins. `backend='jax'` keeps the code
 traceable; `backend='cpu'` runs eagerly — appropriate because EM loops
 are already Python `for` loops at the CPU end.
 
-### 3.4 CPU triad for Bessel-dependent distributions
+### 3.3 CPU triad for Bessel-dependent distributions
 
 **Design rule:** any distribution that calls `log_kv` must override the
 Tier 3 CPU classmethods so the CPU solver path
@@ -179,12 +198,16 @@ InverseGaussian) inherit the default wrappers. They pay nothing.
 
 ## 4. CPU/GPU Hybrid Backend
 
-EM timing on 468 stocks, 2552 observations (GH distribution):
+EM timing on 468 stocks, 2552 observations (GH; pre-S10, `kve` on CPU):
 
 | Phase | JAX (GPU) | CPU hybrid | Speedup |
 |---|---|---|---|
 | E-step | ~1.1 s | ~0.07 s | ~15× |
 | M-step (GIG solve) | ~5–7 s | ~0.01 s | ~500× |
+
+After S10 the CPU E-step is the same 192-node kernel in NumPy, not
+`kve`; it is slower than AMOS on $N=2552$. The split (quad forms in JAX,
+GIG solve on CPU) is unchanged. `_fit_defaults` is a separate decision.
 
 **Hybrid strategy:**
 
@@ -197,7 +220,8 @@ EM timing on 468 stocks, 2552 observations (GH distribution):
 
 - Quad forms (`L⁻¹(x−μ)`, `‖z‖²`, `‖w‖²`) stay in JAX `vmap`
   (GPU-friendly).
-- Bessel calls go to CPU via `GIG.expectation_params_batch(backend='cpu')`.
+- Bessel calls go to CPU via `GIG.expectation_params_batch(backend='cpu')`
+  (same quadrature as JAX, NumPy backend).
 - `_posterior_gig_params(z2, w2)` lives on each
   `JointNormalMixture` subclass.
 

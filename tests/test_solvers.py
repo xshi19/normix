@@ -496,18 +496,16 @@ class TestLogPartitionTriad:
         np.testing.assert_allclose(H_analytical, H_jax, rtol=1e-7)
 
     def test_gig_hessian_matches_fd(self):
-        """GIG analytical Hessian vs CPU FD / jax.hessian (B3 mixed-term fix)."""
+        """GIG moment-bundle Hessian vs CPU twin / jax.hessian."""
         from normix import GIG
         gig = GIG(p=0.7, a=1.4, b=0.9)
         theta = gig.natural_params()
         H_analytical = np.asarray(GIG._hessian_log_partition(theta))
-        H_fd = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
+        H_cpu = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
         try:
             H_ad = np.asarray(jax.hessian(GIG._log_partition_from_theta)(theta))
-            np.testing.assert_allclose(H_analytical, H_fd, rtol=1e-4)
-            np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-5)
-            np.testing.assert_allclose(H_analytical[0, 1], H_ad[0, 1], rtol=1e-10)
-            np.testing.assert_allclose(H_analytical[0, 2], H_ad[0, 2], rtol=1e-10)
+            np.testing.assert_allclose(H_analytical, H_cpu, rtol=1e-10)
+            np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-9)
         finally:
             # Full jax.hessian through log_kv poisons later GH varentropy compiles.
             jax.clear_caches()
@@ -532,13 +530,7 @@ class TestLogPartitionTriad:
         np.testing.assert_allclose(grad_cpu, grad_jax, rtol=1e-8)
 
     def test_fisher_information_backends_agree_gig(self):
-        """GIG fisher_information jax/cpu agree, including mixed entries (B3).
-
-        JAX uses central FD (step BESSEL_EPS_V) for L_vz; CPU uses
-        FD_EPS_FISHER on ψ. Both match jax.hessian on the review point
-        (p=0.7, a=1.4, b=0.9) that previously showed 4.5%/2.2% mixed-entry
-        errors under the integer-shift approximation.
-        """
+        """GIG fisher_information jax/cpu agree (same moment bundle)."""
         from normix import GIG
         gig = GIG(p=0.7, a=1.4, b=0.9)
         FI_jax = np.asarray(gig.fisher_information(backend='jax'))
@@ -546,12 +538,8 @@ class TestLogPartitionTriad:
         try:
             H_ad = np.asarray(
                 jax.hessian(GIG._log_partition_from_theta)(gig.natural_params()))
-            np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-4)
-            # L_vv (H11) retains O(ε²) central-FD error vs forward-mode hessian;
-            # mixed entries (the review bug) match to ~1e-12.
-            np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-5)
-            np.testing.assert_allclose(FI_jax[0, 1], H_ad[0, 1], rtol=1e-10)
-            np.testing.assert_allclose(FI_jax[0, 2], H_ad[0, 2], rtol=1e-10)
+            np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-10)
+            np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-9)
         finally:
             jax.clear_caches()
 

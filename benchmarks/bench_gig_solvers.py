@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from benchmarks.utils import timeit, save_result, fmt_time, hdr, sep
 
 from normix.distributions.generalized_inverse_gaussian import GeneralizedInverseGaussian as GIG
+from normix.fitting.solvers import solve_bregman
 
 
 # ---------------------------------------------------------------------------
@@ -40,6 +41,16 @@ TEST_CASES = [
      GIG(p=jnp.array(-1.0), a=jnp.array(0.1), b=jnp.array(10.0))),
     ("InvGauss limit (p=-½)",
      GIG(p=jnp.array(-0.5), a=jnp.array(2.0), b=jnp.array(1.0))),
+    ("seam (p=25, a=b=1)",
+     GIG(p=jnp.array(25.0), a=jnp.array(1.0), b=jnp.array(1.0))),
+    ("seam (p=25, a=b=0.1)",
+     GIG(p=jnp.array(25.0), a=jnp.array(0.1), b=jnp.array(0.1))),
+    ("large-z (p=1, a=b=1e4)",
+     GIG(p=jnp.array(1.0), a=jnp.array(1e4), b=jnp.array(1e4))),
+    ("small-b (p=2, a=1, b=1e-6)",
+     GIG(p=jnp.array(2.0), a=jnp.array(1.0), b=jnp.array(1e-6))),
+    ("large-|p| (p=-250, a=3, b=400)",
+     GIG(p=jnp.array(-250.0), a=jnp.array(3.0), b=jnp.array(400.0))),
 ]
 
 
@@ -52,6 +63,42 @@ WARM_SOLVERS = [
     ("cpu/lbfgs",    dict(backend="cpu", method="lbfgs")),
     ("cpu/newton",   dict(backend="cpu", method="newton")),
 ]
+
+
+def _solve_once(gig, skw):
+    """Warm-start solve; returns fitted GIG and BregmanResult stats."""
+    eta = gig.expectation_params()
+    theta0 = gig.natural_params()
+    backend = skw["backend"]
+    method = skw["method"]
+    maxiter = skw.get("maxiter", 20 if method == "newton" else 500)
+    if backend == "cpu":
+        f, g, h = (
+            GIG._log_partition_cpu,
+            GIG._grad_log_partition_cpu,
+            GIG._hessian_log_partition_cpu,
+        )
+    else:
+        f, g, h = (
+            GIG._log_partition_from_theta,
+            GIG._grad_log_partition,
+            GIG._hessian_log_partition,
+        )
+    result = solve_bregman(
+        f, eta, theta0,
+        backend=backend, method=method,
+        bounds=GIG._theta_bounds(),
+        max_steps=maxiter,
+        grad_fn=g, hess_fn=h,
+    )
+    fitted = GIG.from_natural(result.theta)
+    err = float(jnp.max(jnp.abs(fitted.expectation_params() - eta)))
+    return {
+        "roundtrip_err": err,
+        "num_steps": int(result.num_steps),
+        "grad_norm": float(result.grad_norm),
+        "converged": bool(result.converged),
+    }
 
 
 def bench_warm_start() -> list[dict]:
@@ -69,12 +116,10 @@ def bench_warm_start() -> list[dict]:
                 t = timeit(
                     lambda: GIG.from_expectation(eta, theta0=theta0, **skw),
                     n_runs=10, warmup=2)
-                result = GIG.from_expectation(eta, theta0=theta0, **skw)
-                eta_check = result.expectation_params()
-                err = float(jnp.max(jnp.abs(eta_check - eta)))
-                row["solvers"][sname] = {"time_ms": t * 1e3, "roundtrip_err": err}
+                stats = _solve_once(gig, skw)
+                row["solvers"][sname] = {"time_ms": t * 1e3, **stats}
             except Exception as e:
-                row["solvers"][sname] = {"time_ms": None, "error": str(e)[:50]}
+                row["solvers"][sname] = {"time_ms": None, "error": str(e)[:80]}
 
         results.append(row)
     return results
@@ -149,10 +194,16 @@ def print_results(warm_results, cold_results, batch_result):
             info = row["solvers"].get(sn, {})
             t = info.get("time_ms")
             if t is not None:
-                parts += f" {fmt_time(t / 1e3):>14}"
+                n = info.get("num_steps")
+                gn = info.get("grad_norm")
+                extra = ""
+                if n is not None and gn is not None:
+                    extra = f" {n}/{gn:.1e}"
+                parts += f" {fmt_time(t / 1e3)+extra:>18}"
             else:
-                parts += f" {'ERR':>14}"
+                parts += f" {'ERR':>18}"
         print(parts)
+    print("  (time, then iterations/grad_norm)")
     print(f"{'=' * W}")
 
     hdr("GIG η→θ Solvers — Cold Start (no theta0)", W)

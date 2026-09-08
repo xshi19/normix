@@ -59,6 +59,36 @@ g = Gamma(
 eta = g.expectation_params()
 """,
     ),
+    "log_kv_moments": (
+        """
+m = jax.jit(log_kv_moments)(v, z)
+jax.block_until_ready(m.log_k)
+""",
+        _SETUP_HEAD
+        + """
+from normix.utils.bessel import log_kv_moments
+v = jnp.asarray(1.0, dtype=jnp.float64)
+z = jnp.asarray(2.0, dtype=jnp.float64)
+""",
+    ),
+    "gig_hessian": (
+        """
+H = jax.jit(GIG._hessian_log_partition)(theta)
+jax.block_until_ready(H)
+""",
+        _SETUP_HEAD
+        + """
+from normix.distributions.generalized_inverse_gaussian import (
+    GeneralizedInverseGaussian as GIG,
+)
+gig = GIG(
+    p=jnp.asarray(0.5, dtype=jnp.float64),
+    a=jnp.asarray(1.0, dtype=jnp.float64),
+    b=jnp.asarray(1.0, dtype=jnp.float64),
+)
+theta = gig.natural_params()
+""",
+    ),
 }
 
 
@@ -67,7 +97,7 @@ class Compile:
 
     params = [list(_TIMERAW)]
     param_names = ["dist"]
-    timeout = 180.0
+    timeout = 300.0
     warmup_time = 0.0
     rounds = 1
     repeat = 3

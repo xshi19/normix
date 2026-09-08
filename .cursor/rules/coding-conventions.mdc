@@ -12,7 +12,7 @@ alwaysApply: false
 - `from jax import Array` for type hints
 - `from jax.scipy.special import gammaln, digamma`
 - No `import scipy as sp` aliases
-- Bessel: `from normix.utils.bessel import log_kv`
+- Bessel: `from normix.utils.bessel import log_kv, log_kv_moments`
 - Shared constants: `from normix.utils.constants import LOG_EPS, TINY, ...` (see table below)
 
 ## Type Hints
@@ -138,7 +138,6 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 |---|---|---|
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping (`jnp.maximum(x, LOG_EPS)`) |
 | `TINY` | `1e-300` | Smallest positive floor for numpy-side log (prevents exact zero) |
-| `BESSEL_EPS_V` | `1e-5` | FD step for Bessel order derivative ∂log K_v/∂v |
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for Gamma/InverseGamma limit in GIG |
 | `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping for Newton Hessian |
@@ -154,8 +153,10 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for denominator D = 1 − E[1/Y]·E[Y] in M-step |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
-| `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information (second-order) |
-| `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
+| `BESSEL_QUAD_NODES` | `192` | GL nodes for the whole-line `log_kv` kernel (two panels) |
+| `BESSEL_QUAD_LOG_DROP` | `40` | Target log-density drop at each window edge |
+| `BESSEL_WINDOW_TILT` | `2` | Largest \|k\| the window must cover |
+| `BESSEL_WINDOW_ITERS` | `40` | Bisection steps per window edge |
 | `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
 
 ## Numerical Stability
@@ -164,7 +165,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 - `jnp.maximum(x, LOG_EPS)` clamping for positivity constraints (import `LOG_EPS` from `normix.utils.constants`)
 - Float64 everywhere — `jax.config.update("jax_enable_x64", True)` at init
 - Cholesky-based linear algebra: `solve_triangular` and `cho_solve`, never `jnp.linalg.inv`
-- Bessel functions: use `log_kv` from `normix.utils.bessel`, never raw `kv`
+- Bessel functions: use `log_kv` / `log_kv_moments` from `normix.utils.bessel`, never raw `kv`
 
 ## Things to Avoid
 
@@ -177,6 +178,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 - isinstance-based dispatch over distribution types — add methods to the base/subclass instead
 - Putting all code in `__init__.py` — split into logical modules
 - Defining numerical constants locally (e.g. `_EPS = 1e-30`, `eps = 1e-5`) — import from `normix.utils.constants`
+- Finite differences for Bessel order derivatives — use `log_kv_moments`
 - **Unnecessary aliases or wrapper functions.** Do not create module-level aliases like `_foo = SomeClass.method` just to shorten a reference. Call the method directly (e.g. `cls._log_partition_from_theta`). Wrappers that only convert types or forward arguments without adding logic should be inlined at the call site.
 
 ## Method Placement

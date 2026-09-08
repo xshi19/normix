@@ -39,8 +39,8 @@ normix/                     # JAX implementation
 │   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over Y (object + raw vectorizable cores)
 │                           # portfolio projection: NormalMixture.project(w) → Univariate*
 └── utils/
-    ├── bessel.py            # log_kv(v, z, backend='jax'|'cpu')
-    ├── constants.py         # LOG_EPS, TINY, BESSEL_EPS_V, GIG_DEGEN_THRESHOLD, ...
+    ├── bessel.py            # log_kv, log_kv_moments (one kernel, jax|cpu)
+    ├── constants.py         # LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_*, ...
     ├── gammainc.py          # gammaincinv (JAX equivalent of scipy.special.gammaincinv)
     ├── rvs.py               # Generic RVS: QuantileTable, build_pinv_table, rvs_pinv
     ├── plotting.py          # notebook plotting helpers (golden-ratio figures)
@@ -74,16 +74,16 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 
 **Tier 2** (JAX grad/Hessian) defaults to `jax.grad` / `jax.hessian`; subclasses override with analytical formulas when available.
 
-**Tier 3** (CPU) defaults to wrapping the JAX versions; Bessel-dependent distributions (GIG) override with native numpy/scipy implementations.
+**Tier 3** (CPU) defaults to wrapping the JAX versions; Bessel-dependent distributions (GIG) override with the same moment kernel in NumPy.
 
 | Method | Gamma | InverseGamma | InverseGaussian | GIG |
 |---|---|---|---|---|
 | `_log_partition_from_theta` | ✓ | ✓ | ✓ | ✓ |
-| `_grad_log_partition` | analytical | analytical | analytical | inherits (`jax.grad`) |
-| `_hessian_log_partition` | analytical | analytical | analytical | analytical (11-Bessel) |
-| `_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
-| `_grad_log_partition_cpu` | inherits | inherits | inherits | scipy Bessel |
-| `_hessian_log_partition_cpu` | inherits | inherits | inherits | central FD on CPU ψ |
+| `_grad_log_partition` | analytical | analytical | analytical | `log_kv_moments` affine image |
+| `_hessian_log_partition` | analytical | analytical | analytical | `H = D cov D` (same bundle) |
+| `_log_partition_cpu` | inherits | inherits | inherits | same kernel, numpy |
+| `_grad_log_partition_cpu` | inherits | inherits | inherits | same kernel, numpy |
+| `_hessian_log_partition_cpu` | inherits | inherits | inherits | same kernel, numpy |
 
 Everything else is derived automatically:
 
@@ -187,7 +187,7 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 - **E-step**: `model.e_step(X, backend='jax'|'cpu') -> NormalMixtureEta`
   - `backend='jax'` (default): `jax.vmap(joint.conditional_expectations)(X)` — JIT-able
-  - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via `scipy.kve` — ~15× faster for large N
+  - `backend='cpu'`: quad forms stay in JAX (vmapped), Bessel on CPU via the same moment kernel in NumPy
   - Returns a `NormalMixtureEta` pytree (6 aggregated expectation fields), not raw per-observation dicts.
 - **M-step**: `model.m_step(eta: NormalMixtureEta, **kwargs) -> NormalMixture` — full update from aggregated η. MCECM uses `m_step_normal(eta)` and `m_step_subordinator(eta, **kwargs)` separately. The closed-form `μ, γ, Σ` update uses `E[1/Y|x]`, which diverges for near-mode observations when the subordinator has `b=0` (VG only); the E-step floors `b_post` at `B_POST_FLOOR` to bound it. The floor keeps EM *finite* but not *bounded* — for `α ≤ d/2` the VG density itself diverges at `x=μ`; the opt-in `fit(alpha_min=…)` (VG only) clamps the Gamma shape to restrict the estimand to the bounded-likelihood region (threaded as a static `BatchEMFitter(m_step_kwargs=…)` entry). See `tech_notes/vg_em_inverse_moment_singularity.md`.
 - **`compute_eta_from_model() -> NormalMixtureEta`**: reconstruct η from model parameters (initialises incremental EM running average).
@@ -209,14 +209,12 @@ The model knows math; the fitter knows iteration (following GMMX).
 
 ## Bessel Functions (`utils/bessel.py`)
 
-`log_kv(v, z, backend='jax')` — unified entry point:
-
-- **`backend='jax'` (default)**: pure-JAX, `@jax.custom_jvp`, JIT-able, differentiable.
-  4-regime `lax.cond` dispatch: Hankel / Olver / small-z / Gauss-Legendre quadrature.
-  Derivatives: exact recurrence for ∂/∂z; central FD (ε=10⁻⁵) for ∂/∂ν.
-
-- **`backend='cpu'`**: `scipy.special.kve`, fully vectorized NumPy. Not JIT-able.
-  Fast for EM hot path. Overflow handled via asymptotic Γ-function formula.
+`log_kv(v, z, backend='jax')` — unified entry point. One centered
+whole-line Gauss–Legendre kernel (S10). Geometry frozen under
+`stop_gradient`; `jax.grad` / `jax.hessian` of `log_kv` are cumulants.
+`log_kv_moments` returns `BesselMoments`; GIG $\eta,H$ are an affine
+image of one bundle. `backend='cpu'` is the same sums in NumPy.
+`scipy.kve` is a test oracle. Detail: `tech_notes/bessel_moment_kernel.md`.
 
 ### CPU Versions for Bessel-Dependent Functions
 
@@ -248,7 +246,6 @@ from there. Never define magic numbers locally in distribution files.
 |---|---|---|
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping |
 | `TINY` | `1e-300` | Floor for numpy-side log |
-| `BESSEL_EPS_V` | `1e-5` | FD step for ∂log K_v/∂v |
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
 | `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
@@ -263,9 +260,13 @@ from there. Never define magic numbers locally in distribution files.
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
-| `FD_EPS_FISHER` | `1e-4` | FD step for Fisher information |
 | `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
-| `BESSEL_SMALLZ_THRESHOLD` | `1e-6` | z threshold for small-z asymptotic in `log_kv` |
+| `BESSEL_QUAD_NODES` | `192` | GL nodes for the whole-line `log_kv` kernel (two panels) |
+| `BESSEL_QUAD_LOG_DROP` | `40` | Target log-density drop at each window edge |
+| `BESSEL_WINDOW_TILT` | `2` | Largest \|k\| the window must cover |
+| `BESSEL_WINDOW_ITERS` | `40` | Bisection steps per window edge |
+| `BESSEL_WINDOW_HI_MAX` | `800` | Cap on \|x\| during window search |
+| `BESSEL_PANEL_FLOOR` | `1e-12` | Floor on each GL panel half-width |
 | `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
 
 ## GIG η→θ Optimization
@@ -278,8 +279,8 @@ This is equivalent to minimising the **Bregman divergence** $\psi(\theta) - \the
 $$s = \sqrt{\eta_2/\eta_3}, \quad \tilde\eta = \bigl(\eta_1 + \tfrac{1}{2}\log s^2,\; \sqrt{\eta_2\eta_3},\; \sqrt{\eta_2\eta_3}\bigr)$$
 
 **Solvers** (via `GeneralizedInverseGaussian.from_expectation(backend, method)`):
-- `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + `scipy.kve` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
-- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (11-Bessel analytical Hessian). The warm-started hot path is routed through a module-level `_gig_jax_newton_jit` produced by `make_jit_newton_solver` so all warm-started GIG solves share one cached XLA executable.
+- `backend='cpu', method='lbfgs'` (typical for EM M-step): `scipy.optimize.minimize` + numpy `log_kv` — avoids GPU kernel dispatch overhead on this 3D scalar problem.
+- `backend='jax', method='newton'`: JAX Newton via `lax.scan`. Uses `GIG._hessian_log_partition` (affine image of `log_kv_moments`). The warm-started hot path is routed through a module-level `_gig_jax_newton_jit` produced by `make_jit_newton_solver` so all warm-started GIG solves share one cached XLA executable.
 - `backend='jax', method='lbfgs'`: JAXopt L-BFGS.
 - Omitting `theta0` in **`ExponentialFamily.from_expectation`**: defaults to **`jnp.zeros_like(eta)`**. **GIG** overrides: `theta0=None` runs **`solve_bregman_multistart`** on the η-rescaled problem (CPU L-BFGS-B, seeds from Gamma / InverseGamma / InverseGaussian special cases).
 

@@ -92,6 +92,9 @@ def build_configs(include_mcecm: bool = False) -> list[EMConfig]:
                 # CPU E-step, JAX M-step, newton
                 configs.append(EMConfig(
                     dist_name, dist_cls, algo, 'cpu', 'jax', 'newton', reg))
+                # JAX E-step, JAX M-step, newton (lax.scan path)
+                configs.append(EMConfig(
+                    dist_name, dist_cls, algo, 'jax', 'jax', 'newton', reg))
 
     return configs
 
@@ -115,12 +118,27 @@ class EMBenchResult:
     avg_m_sub: float
     avg_regularize: float
     final_ll: float
+    fitted_p: Optional[float] = None
+    fitted_a: Optional[float] = None
+    fitted_b: Optional[float] = None
     error: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
 # Core: manual EM loop with per-sub-step timing
 # ---------------------------------------------------------------------------
+
+def _fitted_pab(model):
+    """Subordinator (p, a, b) or the family analogue."""
+    j = model._joint
+    if hasattr(j, "p"):
+        return float(j.p), float(j.a), float(j.b)
+    if hasattr(j, "alpha"):
+        return float(j.alpha), float(j.beta), None
+    if hasattr(j, "mu_ig"):
+        return -0.5, float(j.lam / (j.mu_ig * j.mu_ig)), float(j.lam)
+    return None, None, None
+
 
 def _regularize(model, cfg: EMConfig):
     if cfg.regularization == 'det_sigma_one':
@@ -226,6 +244,7 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
 
         total_time = time.perf_counter() - t_total
         ll = float(model.marginal_log_likelihood(X))
+        p, a, b = _fitted_pab(model)
 
         return EMBenchResult(
             dist_name=cfg.dist_name,
@@ -241,6 +260,7 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
             avg_m_sub=float(np.mean(ms_times)),
             avg_regularize=float(np.mean(reg_times)),
             final_ll=ll,
+            fitted_p=p, fitted_a=a, fitted_b=b,
         )
 
     except Exception as e:
@@ -250,9 +270,42 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
             0, 0, 0, 0, float('nan'), error=str(e)[:60])
 
 
-# ---------------------------------------------------------------------------
-# Table formatting
-# ---------------------------------------------------------------------------
+def run_default_fitter(dist_cls, dist_name: str, X: jax.Array,
+                       max_iter: int, tol: float) -> EMBenchResult:
+    """Family ``fit()`` path (``_fit_defaults`` + BatchEMFitter)."""
+    try:
+        model = dist_cls.default_init(X)
+        t0 = time.perf_counter()
+        result = model.fit(
+            X, max_iter=max_iter, tol=tol, track_ll=True, verbose=0,
+        )
+        elapsed = time.perf_counter() - t0
+        ll = float(result.log_likelihoods[-1]) if result.log_likelihoods is not None else float("nan")
+        if not np.isfinite(ll):
+            ll = float(result.model.marginal_log_likelihood(X))
+        p, a, b = _fitted_pab(result.model)
+        return EMBenchResult(
+            dist_name=dist_name,
+            algorithm="em",
+            e_backend="default",
+            m_backend="default",
+            m_method="fit",
+            n_iter=int(result.n_iter),
+            converged=bool(result.converged),
+            total_time=elapsed,
+            avg_e_step=float("nan"),
+            avg_m_normal=float("nan"),
+            avg_m_sub=float("nan"),
+            avg_regularize=float("nan"),
+            final_ll=ll,
+            fitted_p=p, fitted_a=a, fitted_b=b,
+        )
+    except Exception as e:
+        return EMBenchResult(
+            dist_name, "em", "default", "default", "fit",
+            0, False, 0, 0, 0, 0, 0, float("nan"),
+            error=str(e)[:60],
+        )
 
 def print_summary_table(results: list[EMBenchResult]):
     """Summary: convergence, total time, time/iter, final LL."""
@@ -303,6 +356,8 @@ def print_breakdown_table(results: list[EMBenchResult]):
     prev_dist = None
     for r in results:
         if r.error:
+            continue
+        if not np.isfinite(r.avg_e_step):
             continue
         if prev_dist is not None and r.dist_name != prev_dist:
             sep(W)
@@ -378,6 +433,20 @@ def main():
             print(f"  ERROR: {r.error}", flush=True)
         else:
             print(f"  {fmt_time(r.total_time)}  ({r.n_iter} iters)", flush=True)
+
+    n_def = len(DISTRIBUTIONS)
+    for i, (dist_name, dist_cls) in enumerate(DISTRIBUTIONS, 1):
+        tag = f"{dist_name} default fitter"
+        print(f"  [D{i}/{n_def}] {tag:<45}", end="", flush=True)
+        r = run_default_fitter(dist_cls, dist_name, X, args.max_iter, args.tol)
+        results.append(r)
+        if r.error:
+            print(f"  ERROR: {r.error}", flush=True)
+        else:
+            pab = ""
+            if r.fitted_p is not None:
+                pab = f"  p,a,b=({r.fitted_p:.3g},{r.fitted_a:.3g},{r.fitted_b})"
+            print(f"  {fmt_time(r.total_time)}  ({r.n_iter} iters){pab}", flush=True)
 
     print_summary_table(results)
     print_breakdown_table(results)

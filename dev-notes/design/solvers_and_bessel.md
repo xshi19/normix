@@ -1,8 +1,9 @@
 # Solvers and Bessel Functions
 
 > **Scope.** Why the Bregman solver is decoupled from `ExponentialFamily`,
-> why Bessel evaluation has two backends and four numerical regimes,
-> and why the EM hot path runs on a CPU/GPU hybrid.
+> why Bessel evaluation is one moment-quadrature kernel with two array
+> backends, and why the EM hot path still splits quad forms (JAX) from
+> the GIG solve (CPU).
 >
 > **Where things live.** The `backend × method` matrix is in
 > `exponential_family.md` § 3. ARCHITECTURE.md has the
@@ -109,7 +110,7 @@ $$
 ### 2.2 Solver choice in EM
 
 Default: `backend='cpu', method='lbfgs'` — `scipy.optimize.minimize`
-with `scipy.special.kve`. This avoids GPU kernel dispatch overhead on a
+with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
 3-D scalar problem.
 
 For the warm-started Newton path (`backend='jax', method='newton'`),
@@ -120,8 +121,8 @@ When `theta0` is **not** provided, `GeneralizedInverseGaussian.from_expectation`
 runs `solve_bregman_multistart` on the η-rescaled problem, with seeds
 from the Gamma / InverseGamma / InverseGaussian special cases.
 
-See `../tech_notes/gig_eta_to_theta.md` for the derivation, the
-seven-Bessel analytical Hessian, and benchmark comparisons.
+See `../tech_notes/gig_eta_to_theta.md` for the derivation and
+`../tech_notes/bessel_moment_kernel.md` for the S10 Hessian.
 
 ---
 
@@ -130,42 +131,32 @@ seven-Bessel analytical Hessian, and benchmark comparisons.
 `log_kv(v, z, backend='jax'|'cpu')` is the unified entry point in
 `normix/utils/bessel.py`.
 
-### 3.1 Pure-JAX backend (default)
+One centered whole-line Gauss–Legendre kernel implements both `log_kv`
+and `log_kv_moments`. Geometry is frozen under `stop_gradient`; autodiff
+of `log_kv` yields cumulants of that discrete measure. No regimes, no
+`lax.cond`, no `custom_jvp`, no finite differences.
 
-Four-regime dispatch via `lax.cond` (only the selected branch executes
-at runtime):
+### 3.1 The kernel
 
-| Regime | Trigger | Method |
-|---|---|---|
-| Hankel | $z > \max(25, v^2/4)$ | DLMF 10.40.2 asymptotic |
-| Olver | $\|v\| > 25$, not Hankel | DLMF 10.41.3-4 uniform expansion |
-| Small-$z$ | $z < 10^{-6}$, $\|v\| > 0.5$ | leading asymptotic |
-| Quadrature | otherwise | 64-point Gauss–Legendre (Takekawa 2022) |
+$2K_\nu(z)=\int e^{\nu u-z\cosh u}\,du$. Production `log_kv` is a 192-point
+Gauss–Legendre sum of that integrand (the kernel), not a library Bessel
+call. Mode $u_0=\mathrm{asinh}(\nu/z)$; nodes sit around the peak and are
+frozen (`stop_gradient`). **AD** = `jax.grad`/`jax.hessian` of that sum.
+`log_kv_moments(v,z).d_arg` is $\partial_z\log K=-E[\cosh u]$ written as
+an average; `jax.grad(lambda z: log_kv(v,z))(z)` is the same identity by
+differentiating the log-sum-exp. GIG $\eta,H$ use the bundle. `backend`
+selects JAX vs NumPy, not a different approximation. `scipy.kve` is a
+test oracle. Hankel / Olver / small-$z$ identities live in
+`tests/test_bessel_contract.py`. Detail:
+`../tech_notes/bessel_moment_kernel.md`.
 
-Custom JVP via `@jax.custom_jvp` with
-`defjvp(..., symbolic_zeros=True)`:
-
-- $\partial/\partial z$: exact recurrence
-  $K'_\nu = -(K_{\nu-1} + K_{\nu+1})/2$; skipped when the $z$-tangent
-  is a symbolic zero.
-- $\partial/\partial v$: central FD with $\varepsilon = 10^{-5}$;
-  skipped when the $v$-tangent is a symbolic zero (z-only
-  differentiation avoids the two extra Bessel evaluations).
-
-### 3.2 CPU backend (EM hot path)
-
-`scipy.special.kve`, fully vectorised NumPy. Not JIT-able. For large
-$N$ a single `kve` C-call per element beats vmapping JAX's
-`lax.cond`-dispatched implementation, which causes separate kernel
-launches per condition check.
-
-### 3.3 Why `backend` is a Python-level string
+### 3.2 Why `backend` is a Python-level string
 
 Resolved before JAX tracing begins. `backend='jax'` keeps the code
 traceable; `backend='cpu'` runs eagerly — appropriate because EM loops
 are already Python `for` loops at the CPU end.
 
-### 3.4 CPU triad for Bessel-dependent distributions
+### 3.3 CPU triad for Bessel-dependent distributions
 
 **Design rule:** any distribution that calls `log_kv` must override the
 Tier 3 CPU classmethods so the CPU solver path
@@ -176,18 +167,20 @@ three classmethods are `_log_partition_cpu`, `_grad_log_partition_cpu`,
 Distributions that don't call `log_kv` (Gamma, InverseGamma,
 InverseGaussian) inherit the default wrappers. They pay nothing.
 
-See `../tech_notes/bessel_implementations_survey.md` for benchmarks.
-
 ---
 
 ## 4. CPU/GPU Hybrid Backend
 
-EM timing on 468 stocks, 2552 observations (GH distribution):
+EM timing on 468 stocks, 2552 observations (GH; pre-S10, `kve` on CPU):
 
 | Phase | JAX (GPU) | CPU hybrid | Speedup |
 |---|---|---|---|
 | E-step | ~1.1 s | ~0.07 s | ~15× |
 | M-step (GIG solve) | ~5–7 s | ~0.01 s | ~500× |
+
+After S10 the CPU E-step is the same 192-node kernel in NumPy, not
+`kve`; it is slower than AMOS on $N=2552$. The split (quad forms in JAX,
+GIG solve on CPU) is unchanged. `_fit_defaults` is a separate decision.
 
 **Hybrid strategy:**
 

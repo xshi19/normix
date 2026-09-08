@@ -55,7 +55,8 @@ Key options:
   ($\lvert\Sigma\rvert = 1$), `'det_sigma_x'` ($\lvert\Sigma\rvert$ held at its
   initial value), or `'a_eq_b'` (GIG with $a = b$).
 - **`e_step_backend` / `m_step_backend`** select `'jax'` or `'cpu'`. The CPU
-  Bessel path is markedly faster for the GIG/NIG E-step on CPU.
+  path is the same `log_kv` kernel in NumPy (no JAX dispatch on the 3-D GIG
+  problem).
 - **`m_step_method`** is `'newton'`, `'lbfgs'`, or `'bfgs'`.
 
 See {doc}`../tutorials/em/01_batch_em` for diagnostics and worked examples.

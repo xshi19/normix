@@ -35,8 +35,8 @@ Not JIT-able due to multi-start control flow and scipy dependency.
 Likelihood gradient descent (Adam / L-BFGS + softplus on $(p,a,b)$) is
 compared against this solver in `gradient_fitting_comparison.md`. On the
 interior it matches `fit_mle`; at large $\sqrt{ab}$ / extreme $a/b$ only
-the η-rescaled Bregman stay well-behaved. The `log_kv` $\partial_\nu$
-custom JVP is *not* the failure mode.
+the η-rescaled Bregman stay well-behaved. First-order `log_kv` $\partial_\nu$
+was never the failure mode (S10: the Hessian was).
 
 ## Joint Distribution Expectation Parameters
 

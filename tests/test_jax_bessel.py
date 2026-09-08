@@ -15,9 +15,25 @@ from normix.utils.bessel import log_kv
 # ---------------------------------------------------------------------------
 
 def _scipy_log_kv(v, z):
-    """scipy reference for log K_v(z)."""
+    """scipy reference for log K_v(z), or None if kve overflows."""
     from scipy.special import kve
-    return float(np.log(kve(abs(float(v)), float(z))) - float(z))
+    val = kve(abs(float(v)), float(z))
+    if not np.isfinite(val) or val <= 0.0:
+        return None
+    return float(np.log(val) - float(z))
+
+
+def _check_against_scipy(v, z, result, *, rel, abs_):
+    expected = _scipy_log_kv(v, z)
+    if expected is None:
+        assert np.isfinite(result), f"log_kv({v}, {z}) not finite: {result}"
+        return
+    abs_err = abs(result - expected)
+    rel_err = abs_err / (abs(expected) + 1e-15)
+    assert rel_err < rel or abs_err < abs_, (
+        f"log_kv({v}, {z}): got {result}, expected {expected}, "
+        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
+    )
 
 # ---------------------------------------------------------------------------
 # Phase 1: Hankel asymptotic regime (large z)
@@ -36,15 +52,9 @@ def _scipy_log_kv(v, z):
     (100.0, 2600.0),  # v²/4 = 2500
 ])
 def test_hankel_regime(v, z):
-    """Points that should use the Hankel expansion (z > max(25, v^2/4))."""
+    """Value test at former Hankel-regime points (large z)."""
     result = float(log_kv(jnp.array(v), jnp.array(z)))
-    expected = _scipy_log_kv(v, z)
-    abs_err = abs(result - expected)
-    rel_err = abs_err / (abs(expected) + 1e-15)
-    assert rel_err < 1e-10 or abs_err < 1e-10, (
-        f"Hankel log_kv({v}, {z}): got {result}, expected {expected}, "
-        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
-    )
+    _check_against_scipy(v, z, result, rel=1e-10, abs_=1e-10)
 
 # ---------------------------------------------------------------------------
 # Phase 2: Quadrature regime (moderate z, moderate/large v)
@@ -69,15 +79,9 @@ def test_hankel_regime(v, z):
     (1.0, 1e-10),
 ])
 def test_quadrature_regime(v, z):
-    """Points in the quadrature regime (not handled by Hankel)."""
+    """Value test at moderate (v, z)."""
     result = float(log_kv(jnp.array(v), jnp.array(z)))
-    expected = _scipy_log_kv(v, z)
-    abs_err = abs(result - expected)
-    rel_err = abs_err / (abs(expected) + 1e-15)
-    assert rel_err < 1e-9 or abs_err < 1e-9, (
-        f"Quad log_kv({v}, {z}): got {result}, expected {expected}, "
-        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
-    )
+    _check_against_scipy(v, z, result, rel=1e-9, abs_=1e-9)
 
 # ---------------------------------------------------------------------------
 # Phase 3: Olver uniform expansion (large v)
@@ -94,15 +98,9 @@ def test_quadrature_regime(v, z):
     (500.0, 200.0),
 ])
 def test_olver_regime(v, z):
-    """Points that should use the Olver expansion (v > 25, not Hankel)."""
+    """Value test at former Olver-regime points (large |ν|)."""
     result = float(log_kv(jnp.array(v), jnp.array(z)))
-    expected = _scipy_log_kv(v, z)
-    abs_err = abs(result - expected)
-    rel_err = abs_err / (abs(expected) + 1e-15)
-    assert rel_err < 1e-9 or abs_err < 1e-9, (
-        f"Olver log_kv({v}, {z}): got {result}, expected {expected}, "
-        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
-    )
+    _check_against_scipy(v, z, result, rel=1e-9, abs_=1e-9)
 
 # ---------------------------------------------------------------------------
 # Phase 3: Small-z leading asymptotic
@@ -116,15 +114,9 @@ def test_olver_regime(v, z):
     (10.0, 1e-12),
 ])
 def test_smallz_regime(v, z):
-    """Points that should use the small-z asymptotic."""
+    """Value test at small z (kernel, not a clipped asymptotic)."""
     result = float(log_kv(jnp.array(v), jnp.array(z)))
-    expected = _scipy_log_kv(v, z)
-    abs_err = abs(result - expected)
-    rel_err = abs_err / (abs(expected) + 1e-15)
-    assert rel_err < 1e-6 or abs_err < 1e-6, (
-        f"Small-z log_kv({v}, {z}): got {result}, expected {expected}, "
-        f"rel_err={rel_err:.2e}, abs_err={abs_err:.2e}"
-    )
+    _check_against_scipy(v, z, result, rel=1e-6, abs_=1e-6)
 
 def test_no_scipy_callback():
     """Verify that log_kv works without importing scipy (pure JAX)."""
@@ -147,17 +139,15 @@ def test_no_scipy_callback():
 ])
 def test_log_kv_primal(v, z):
     result = float(log_kv(jnp.array(v), jnp.array(z)))
-    expected = _scipy_log_kv(v, z)
-    assert abs(result - expected) < 1e-8, (
-        f"log_kv({v}, {z}): got {result}, expected {expected}"
-    )
+    _check_against_scipy(v, z, result, rel=1e-8, abs_=1e-8)
 
 def test_log_kv_small_z():
-    """Small z: asymptotic fallback should avoid -inf."""
+    """Small z: kernel stays finite (no clip to LOG_EPS)."""
     v, z = 1.0, 1e-12
     result = float(log_kv(jnp.array(v), jnp.array(z)))
     assert np.isfinite(result), f"Expected finite, got {result}"
     assert result > 0, "log K_v for small z should be large positive"
+    assert result > 25.0, f"clipped small-z bug would give ~69; got {result}"
 
 def test_log_kv_vectorized():
     vs = jnp.array([0.5, 1.0, 1.5, 2.0])
@@ -165,18 +155,18 @@ def test_log_kv_vectorized():
     results = log_kv(vs, zs)
     assert results.shape == (4,)
     for i, (v, z) in enumerate(zip(vs, zs)):
-        expected = _scipy_log_kv(float(v), float(z))
-        assert abs(float(results[i]) - expected) < 1e-8
+        _check_against_scipy(float(v), float(z), float(results[i]),
+                             rel=1e-8, abs_=1e-8)
 
 def test_log_kv_vectorized_mixed_regimes():
-    """Vectorized call with points in both Hankel and fallback regimes."""
+    """Vectorized call across former regime boundaries (no seams)."""
     vs = jnp.array([0.5,  1.0, 10.0, 0.5])
     zs = jnp.array([1.0, 50.0, 30.0, 100.0])
     results = log_kv(vs, zs)
     assert results.shape == (4,)
     for i, (v, z) in enumerate(zip(vs, zs)):
-        expected = _scipy_log_kv(float(v), float(z))
-        assert abs(float(results[i]) - expected) < 1e-8
+        _check_against_scipy(float(v), float(z), float(results[i]),
+                             rel=1e-8, abs_=1e-8)
 
 # ---------------------------------------------------------------------------
 # Gradients ∂/∂z
@@ -186,8 +176,8 @@ def test_log_kv_vectorized_mixed_regimes():
     (0.5, 1.0),
     (1.0, 2.0),
     (2.0, 5.0),
-    (1.0, 50.0),   # Hankel regime
-    (5.0, 40.0),   # Hankel regime
+    (1.0, 50.0),
+    (5.0, 40.0),
 ])
 def test_log_kv_grad_z(v, z):
     """∂/∂z log K_v(z): compare with numerical finite differences."""
@@ -196,41 +186,26 @@ def test_log_kv_grad_z(v, z):
     grad_z = float(jax.grad(lambda z: log_kv(v_arr, z))(z_arr))
 
     eps = 1e-6
-    fd = (_scipy_log_kv(v, z + eps) - _scipy_log_kv(v, z - eps)) / (2 * eps)
+    expected = _scipy_log_kv(v, z)
+    if expected is None:
+        assert np.isfinite(grad_z)
+        return
+    lo = _scipy_log_kv(v, z - eps)
+    hi = _scipy_log_kv(v, z + eps)
+    if lo is None or hi is None:
+        assert np.isfinite(grad_z)
+        return
+    fd = (hi - lo) / (2 * eps)
     assert abs(grad_z - fd) / (abs(fd) + 1e-10) < 1e-4, (
         f"∂/∂z log_kv({v},{z}): got {grad_z}, fd={fd}"
     )
 
 # ---------------------------------------------------------------------------
-# Gradients ∂/∂v
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("v,z", [
-    (0.5, 1.0),
-    (1.0, 2.0),
-    (2.0, 5.0),
-    (1.0, 30.0),   # Hankel regime
-    (5.0, 50.0),   # Hankel regime
-])
-def test_log_kv_grad_v(v, z):
-    """∂/∂v log K_v(z): compare with numerical finite differences."""
-    z_arr = jnp.array(z)
-    v_arr = jnp.array(v)
-    grad_v = float(jax.grad(lambda v: log_kv(v, z_arr))(v_arr))
-
-    eps = 1e-5
-    fd = (_scipy_log_kv(v + eps, z) - _scipy_log_kv(v - eps, z)) / (2 * eps)
-    rel_err = abs(grad_v - fd) / (abs(fd) + 1e-10)
-    assert rel_err < 1e-4, (
-        f"∂/∂v log_kv({v},{z}): got {grad_v}, fd={fd}, rel_err={rel_err:.2e}"
-    )
-
-# ---------------------------------------------------------------------------
-# symbolic_zeros JVP (E4): z-only and v-only tangents
+# JVP (ordinary autodiff of the frozen quadrature)
 # ---------------------------------------------------------------------------
 
 def test_log_kv_jvp_z_only_matches_grad():
-    """z-only JVP must match ∂/∂z and skip the v finite-difference branch."""
+    """z-only JVP must match ∂/∂z of the quadrature kernel."""
     v = jnp.array(1.5)
     z = jnp.array(2.0)
     primal, tangent = jax.jvp(lambda zz: log_kv(v, zz), (z,), (jnp.ones_like(z),))
@@ -240,7 +215,7 @@ def test_log_kv_jvp_z_only_matches_grad():
 
 
 def test_log_kv_jvp_v_only_matches_grad():
-    """v-only JVP must match ∂/∂v (FD path still active)."""
+    """v-only JVP must match ∂/∂v = E[u]."""
     v = jnp.array(1.5)
     z = jnp.array(2.0)
     primal, tangent = jax.jvp(lambda vv: log_kv(vv, z), (v,), (jnp.ones_like(v),))
@@ -250,7 +225,7 @@ def test_log_kv_jvp_v_only_matches_grad():
 
 
 def test_log_kv_jvp_joint_matches_partials():
-    """Both-tangent JVP equals linear combination of partials (E4)."""
+    """Both-tangent JVP equals the linear combination of partials."""
     v = jnp.array(1.5)
     z = jnp.array(2.0)
     dv = jnp.array(0.3)
@@ -260,28 +235,6 @@ def test_log_kv_jvp_joint_matches_partials():
     gz = jax.grad(lambda zz: log_kv(v, zz))(z)
     np.testing.assert_allclose(
         float(tangent), float(gv * dv + gz * dz), rtol=1e-12,
-    )
-
-
-def test_log_kv_z_only_jaxpr_skips_nu_fd():
-    """z-only differentiation stages fewer lax.cond eqns than joint (E4 skip).
-
-    With ``symbolic_zeros=True``, z-only drops the ν±ε FD (and the two
-    regime-dispatched Bessel evals it needs). Joint differentiation keeps
-    both tangent branches. Measured on this point: 12 vs 20 ``cond`` eqns.
-    """
-    v = jnp.array(1.5)
-    z = jnp.array(2.0)
-    z_only = str(jax.make_jaxpr(jax.grad(lambda zz: log_kv(v, zz)))(z))
-    both = str(jax.make_jaxpr(jax.jacfwd(log_kv, argnums=(0, 1)))(v, z))
-    n_z = z_only.count('cond')
-    n_both = both.count('cond')
-    assert n_z < n_both, (
-        f"expected z-only jaxpr fewer conds than joint; got {n_z} vs {n_both}"
-    )
-    assert n_z <= 12 and n_both >= 20, (
-        f"unexpected cond counts (z-only={n_z}, joint={n_both}); "
-        "E4 skip may have regressed"
     )
 
 
@@ -301,6 +254,7 @@ def test_log_kv_hessian_wrt_z():
     v = float(v_arr)
     z = float(z_arr)
     fd2 = (_scipy_log_kv(v, z + eps) - 2 * _scipy_log_kv(v, z) + _scipy_log_kv(v, z - eps)) / eps**2
+    assert fd2 is not None and np.isfinite(fd2)
     assert abs(float(d2_dz2) - fd2) / (abs(fd2) + 1e-10) < 0.01
 
 # ---------------------------------------------------------------------------

@@ -10,9 +10,6 @@ TINY: float = 1e-300
 
 # ── GIG-specific constants ─────────────────────────────────────────────
 
-# Finite-difference step for Bessel order derivative ∂log K_v/∂v
-BESSEL_EPS_V: float = 1e-5
-
 # √(ab) threshold below which GIG delegates to Gamma/InverseGamma limits
 GIG_DEGEN_THRESHOLD: float = 1e-10
 
@@ -81,17 +78,32 @@ SIGMA_INIT_REG: float = 1e-4
 
 # ── Finite-difference steps ───────────────────────────────────────────
 
-# Central FD step for Fisher information (second-order)
-FD_EPS_FISHER: float = 1e-4
-
 # Half-width of the Taylor window for Rényi entropy about α = 1
 # (H_α = H − ½ V_H (α−1) + O((α−1)²)); keeps jax.grad(renyi) defined at α = 1
 RENYI_TAYLOR_EPS: float = 1e-6
 
-# ── Bessel regime thresholds ─────────────────────────────────────────
+# ── Bessel moment-quadrature kernel (S10) ─────────────────────────────
 
-# z threshold below which small-z asymptotic is used in log_kv
-BESSEL_SMALLZ_THRESHOLD: float = 1e-6
+# Gauss–Legendre nodes per whole-line integral (two equal panels at the mode).
+# Must be even. Sweep vs mpmath (n ∈ {64,96,128,192,256}): 192/40/2 is the
+# unique setting that holds the 1e-12 scaled-error contract on the frozen
+# table. 128/40/2 misses ∂_z at (0, 10^{-10}) (3.8e-11).
+BESSEL_QUAD_NODES: int = 192
+
+# Target log-density drop at the window edge for every tilt |k| ≤ T.
+BESSEL_QUAD_LOG_DROP: float = 40.0
+
+# Largest |k| for which the window is required to capture the tilted tail.
+BESSEL_WINDOW_TILT: int = 2
+
+# Fixed bisection steps used to solve each window edge (jit/vmap-safe).
+BESSEL_WINDOW_ITERS: int = 40
+
+# Absolute cap on |x| during window search (covers z down to ~1e-300).
+BESSEL_WINDOW_HI_MAX: float = 800.0
+
+# Degeneracy floor on each GL panel half-width (mode-centered).
+BESSEL_PANEL_FLOOR: float = 1e-12
 
 # ── Diversification / torsion constants ───────────────────────────────
 

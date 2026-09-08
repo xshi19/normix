@@ -107,11 +107,12 @@ A historical reason for avoiding gradient descent was
 $\partial_\nu\log K_\nu$: older JAX Bessel wrappers (TensorFlow
 Probability's `log_besselk`) returned a **zero** $\nu$-tangent, so Adam
 could not move $p$. That bug is gone.
-`log_kv` uses `@jax.custom_jvp` (exact
-$\partial_z$ recurrence; central difference $\partial_\nu$ at
-$10^{-5}$). On the same GIG grid, `jax.grad` of the observed NLL with
-respect to $(p,a,b)$ matches a CPU finite difference that never touches
-the custom JVP, relative error $\sim 10^{-9}$ (`tests/test_gig_properties.py`).
+`log_kv` is an ordinary JAX function (frozen whole-line quadrature; no
+`custom_jvp`). On the same GIG grid, `jax.grad` of the observed NLL with
+respect to $(p,a,b)$ matches a CPU finite difference of the same kernel,
+relative error $\sim 10^{-9}$ (`tests/test_gig_properties.py`). Hessians
+of $\log K_\nu$ are now $\mathrm{Var}(u)>0$ (S10); the first-order NLL
+check was never the blocker.
 
 Quasi-Newton on the GIG NLL *can* recover the interior MLE. We still do
 not lead with it, for the reasons in § 3, not because autodiff through
@@ -162,7 +163,7 @@ helper, not an in-tree Adam.
 
 - {doc}`exponential_family` — $\psi$, $\eta=\nabla\psi$, clamp vs bijections.
 - {doc}`em_framework` — model / fitter split, M-step as `from_expectation`.
-- {doc}`solvers_and_bessel` — η-rescaling, `log_kv` JVP, CPU/GPU hybrid.
+- {doc}`solvers_and_bessel` — η-rescaling, `log_kv` quadrature, CPU/GPU hybrid.
 - {doc}`EM algorithm <../theory/em_algorithm>`,
   {doc}`GIG distribution <../theory/gig>`.
 - {doc}`Fitting with EM <../user_guide/em_fitting>`.
