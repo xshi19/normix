@@ -460,7 +460,9 @@
 and GIG sampling. CPU and CUDA are separate series.</p>
 <p><a href="benchmarks/">Open the ASV dashboard</a></p><p>The JSON for those plots lives in <code class="docutils literal notranslate"><span class="pre">asv_bench/results/</span></code>, recorded on the
 maintainer’s Linux desktop (GPU) at each GitHub release. Docs CI rebuilds the
-dashboard from that JSON; it does not re-time the suite.</p>
+dashboard from that JSON; it does not re-time the suite. Pull requests run a
+CPU-only Bessel / GIG <code class="docutils literal notranslate"><span class="pre">asv</span> <span class="pre">continuous</span></code> check (factor 1.5) on GitHub-hosted
+runners — a smoke tripwire, not the trend series.</p>
 <p>Investigation scripts (S&amp;P 500, MCECM, large sweeps) stay in
 <a class="reference external" href="https://github.com/xshi19/normix/tree/master/benchmarks"><code class="docutils literal notranslate"><span class="pre">benchmarks/</span></code></a>
 on GitHub.</p>
