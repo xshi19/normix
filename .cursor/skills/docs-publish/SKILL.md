@@ -177,6 +177,9 @@ Do not assume the site is updated until the `pages build and deployment` run on
   materializes a local `master` ref when missing. Do not rename
   `asv.conf.json` `branches` to `origin/master` — local `asv run` /
   `asv continuous` use the same name.
+- **ASV tripwire is not the dashboard**: `.github/workflows/asv.yml`
+  times a CPU-only Bessel / GIG subset on the PR. It does not write
+  `asv_bench/results/wukong/` and must not deploy HTML.
 
 ## Related files
 
@@ -188,6 +191,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `scripts/check_doc_links.sh`
 - `scripts/publish_asv_html.sh` — `asv publish --no-pull` → `_build/html/benchmarks/`
 - `asv_bench/` — suite, `asv.conf.json`, committed `results/wukong/`
+- `.github/workflows/asv.yml` — PR tripwire (not the dashboard)
 - `.github/workflows/docs.yml`
 - `.github/workflows/docs-full.yml`
 - `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`

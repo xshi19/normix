@@ -1,7 +1,7 @@
 {
     // airspeed velocity config for the curated trend suite.
     // Paths are relative to cwd — run asv from this directory (`asv_bench/`).
-    // Plan: ../dev-notes/plans/asv_benchmarking.md
+    // Plan: ../dev-notes/archive/plans/asv_benchmarking.md
     "version": 1,
     "project": "normix",
     "project_url": "https://xshi19.github.io/normix/",
@@ -29,10 +29,11 @@
         "python -m build --wheel -o {build_cache_dir} {build_dir}"
     ],
 
-    // Default ASV install is `{wheel_file} --force-reinstall`. We add the
-    // cuda12 extra and, on Linux, `jax[cuda12]==0.9.1` so the plugin
-    // lands (see `_asv_install.py`). env_nobuild does not rebuild: cpu
-    // and cuda series share that install.
+    // Default ASV install is `{wheel_file} --force-reinstall`. On Linux
+    // with a GPU we add the cuda12 extra and `jax[cuda12]==0.9.1` so
+    // the plugin lands (see `_asv_install.py`). CPU-only Linux (GHA)
+    // skips that extra. env_nobuild does not rebuild: cpu and cuda
+    // series share that install.
     "install_command": [
         "in-dir={env_dir} python {conf_dir}/_asv_install.py {wheel_file}"
     ],

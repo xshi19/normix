@@ -2,7 +2,7 @@
 
 **Date**: March 2026 (updated — CPU Bessel backend results)  
 **Status**: Updated with CPU-Bessel backend results (March 2026)  
-**Related files**: `scripts/benchmark_comprehensive.py` (consolidated benchmark — run with `--sections 3,4,5,6`)
+**Related files**: `benchmarks/bench_em_mixture.py` (E/M-step × backend; `--mcecm` / `--n-stocks` for the SP500 sweep)
 
 ## Current Architecture (as of March 2026)
 
