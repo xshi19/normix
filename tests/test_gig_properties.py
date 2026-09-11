@@ -17,7 +17,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from normix.distributions.generalized_inverse_gaussian import GIG
-from normix.utils.bessel import log_kv
+from normix.utils.bessel import log_kv, log_kv_moments
 
 # ---------------------------------------------------------------------------
 # Parameter grid for parametric tests
@@ -354,3 +354,25 @@ class TestGIGMomentHessian:
         H = np.asarray(gig.fisher_information())
         assert_allclose(np.diag(H), np.diag(C), rtol=0.08)
         assert_allclose(H, C, rtol=0.15, atol=0.05)
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_concentrated_half_order_directional(self, backend):
+        """q=(0,1,1) holds p fixed and a=b; qᵀHq = 4 L_{zz} = 2/z².
+
+        ``d2_arg`` is the product-form projection (tight). Dense
+        ``H = D cov D`` is PSD with relative error O(ε z) in this
+        direction, so the Fisher check is 1e-6 rather than 1e-8.
+        """
+        z = 1e8
+        gig = GIG(p=0.5, a=z, b=z)
+        H = np.asarray(gig.fisher_information(backend=backend))
+        q = np.array([0.0, 1.0, 1.0])
+        exact = 2.0 / (z * z)
+        lzz = 4.0 * float(log_kv_moments(0.5, z, backend=backend).d2_arg)
+        got = float(q @ H @ q)
+        assert_allclose(lzz, exact, rtol=1e-8, atol=0.0)
+        assert got > 0.0
+        assert_allclose(got, exact, rtol=1e-6, atol=0.0)
+        eig = np.linalg.eigvalsh(0.5 * (H + H.T))
+        scale = max(float(np.max(np.abs(eig))), 1e-30)
+        assert float(np.min(eig)) >= -1e-13 * scale

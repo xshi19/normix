@@ -57,8 +57,12 @@ class BesselMoments(eqx.Module):
     The discrete exponential family lives on the centered coordinate
     :math:`x = u - u_0` with :math:`u_0 = \operatorname{asinh}(\nu/z)`.
     Geometry is constant under AD (see :func:`log_kv_moments`); ``mean``
-    and ``cov`` are the mean and Gram covariance of
+    and ``cov`` are the mean and centered Gram of
     :math:`s = (x, \operatorname{expm1}(-x), \operatorname{expm1}(x))`.
+    ``cov`` is PSD to rounding (relative-ε entries). Argument-jet views
+    are projections of
+    :math:`w = 2\sinh(u_0 + x/2)\sinh(x/2)`, not reconstructions from
+    ``cov``.
 
     Parameters
     ----------
@@ -69,13 +73,22 @@ class BesselMoments(eqx.Module):
     mean : jax.Array
         :math:`E[s]`, shape ``(..., 3)``.
     cov : jax.Array
-        :math:`\mathrm{Cov}[s]`, shape ``(..., 3, 3)``, PSD by construction.
+        :math:`\mathrm{Cov}[s]`, shape ``(..., 3, 3)``.
+    d_arg : jax.Array
+        :math:`\partial_z \log K_\nu = -(\cosh u_0 + E[w])`.
+    d2_arg : jax.Array
+        :math:`\partial_{zz} \log K_\nu = \mathrm{Var}(w)`.
+    d2_order_arg : jax.Array
+        :math:`\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(x, w)`.
     """
 
     log_k: Array
     u0: Array
     mean: Array
     cov: Array
+    d_arg: Array
+    d2_arg: Array
+    d2_order_arg: Array
 
     @property
     def d_order(self) -> Array:
@@ -83,31 +96,9 @@ class BesselMoments(eqx.Module):
         return self.u0 + self.mean[..., 0]
 
     @property
-    def d_arg(self) -> Array:
-        r""":math:`\partial_z \log K_\nu = -E[\cosh u]`."""
-        em = jnp.exp(-self.u0) * (1.0 + self.mean[..., 1])
-        ep = jnp.exp(self.u0) * (1.0 + self.mean[..., 2])
-        return -0.5 * (em + ep)
-
-    @property
     def d2_order(self) -> Array:
         r""":math:`\partial_{\nu\nu} \log K_\nu = \mathrm{Var}(u) > 0`."""
         return self.cov[..., 0, 0]
-
-    @property
-    def d2_order_arg(self) -> Array:
-        r""":math:`\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(u, \cosh u)`."""
-        em = jnp.exp(-self.u0) * self.cov[..., 0, 1]
-        ep = jnp.exp(self.u0) * self.cov[..., 0, 2]
-        return -0.5 * (em + ep)
-
-    @property
-    def d2_arg(self) -> Array:
-        r""":math:`\partial_{zz} \log K_\nu = \mathrm{Var}(\cosh u)`."""
-        c11 = jnp.exp(-2.0 * self.u0) * self.cov[..., 1, 1]
-        c22 = jnp.exp(2.0 * self.u0) * self.cov[..., 2, 2]
-        c12 = self.cov[..., 1, 2]
-        return 0.25 * (c11 + c22 + 2.0 * c12)
 
 
 def _is_jax(xp) -> bool:
@@ -167,12 +158,14 @@ def _as_arrays(v, z, xp):
 
 def _ab_coeffs(v, z, xp):
     r"""Stable :math:`(\kappa, (\kappa+\nu)/2, (\kappa-\nu)/2)` with
-    :math:`\kappa-\nu = z^2/(\kappa+\nu)` (mirrored for :math:`\nu<0`)."""
+    :math:`\kappa-\nu = z(z/(\kappa+\lvert\nu\rvert))` (mirrored for
+    :math:`\nu<0`). Grouping avoids overflow of :math:`z^2` for
+    :math:`z\gtrsim 10^{155}`."""
     kappa = xp.hypot(v, z)
     va = xp.abs(v)
     tiny = xp.asarray(np.finfo(np.float64).tiny, dtype=xp.float64)
     kp = kappa + va
-    km = (z * z) / xp.maximum(kp, tiny)
+    km = z * (z / xp.maximum(kp, tiny))
     pos = v >= 0
     a = xp.where(pos, 0.5 * kp, 0.5 * km)
     b = xp.where(pos, 0.5 * km, 0.5 * kp)
@@ -248,45 +241,38 @@ def _nodes_and_logw(x_lo, x_hi, xp, n_nodes: int):
     return x, log_w
 
 
-def _moments_from_weights(x, log_w, xp):
+def _moments_from_weights(x, log_w, u0, xp):
     r"""Cumulants of :math:`s=(x,\mathrm{expm1}(-x),\mathrm{expm1}(x))`.
 
-    Power moments of :math:`e^{\pm x}` go through log-sum-exp so the Gram
-    stays finite when a tail node has large :math:`|x|`. Covariance of
-    :math:`(x, e^{-x}, e^{x})` equals covariance of :math:`s`.
+    ``cov`` is the centered Gram :math:`R^\top R` with
+    :math:`R_i=\sqrt{p_i}\,(s_i-\bar s)`. Argument projections use
+
+    .. math::
+
+        w = 2\sinh(u_0 + x/2)\sinh(x/2) = \cosh(u_0+x)-\cosh u_0,
+
+    so :math:`\mathrm{Var}(w)` retains the :math:`O(1/z^2)` even component
+    that reconstructing ``cov`` from raw moments cancels. The grouping
+    :math:`\cosh u_0\cdot 2\sinh^2(x/2)+\sinh u_0\sinh x` is not used:
+    it cancels in the left tail when :math:`|u_0|` is large.
     """
     log_n = _logsumexp(log_w, xp, axis=-1, keepdims=True)
     p = xp.exp(log_w - log_n)
-    Ex = xp.sum(p * x, axis=-1)
-    Exx = xp.sum(p * (x * x), axis=-1)
+    s = xp.stack([x, xp.expm1(-x), xp.expm1(x)], axis=-1)
+    mean = xp.sum(p[..., None] * s, axis=-2)
+    r = xp.sqrt(p)[..., None] * (s - mean[..., None, :])
+    cov = xp.matmul(xp.swapaxes(r, -1, -2), r)
+    cov = 0.5 * (cov + xp.swapaxes(cov, -1, -2))
 
-    def log_mgf(k):
-        return _logsumexp(log_w + k * x, xp, axis=-1) - log_n[..., 0]
-
-    def tilted_mean_x(k):
-        lw = log_w + k * x
-        pk = xp.exp(lw - _logsumexp(lw, xp, axis=-1, keepdims=True))
-        return xp.sum(pk * x, axis=-1)
-
-    log_Ep = log_mgf(1.0)
-    log_Em = log_mgf(-1.0)
-    log_Epp = log_mgf(2.0)
-    log_Emm = log_mgf(-2.0)
-    Ep = xp.exp(log_Ep)
-    Em = xp.exp(log_Em)
-    mean = xp.stack([Ex, xp.expm1(log_Em), xp.expm1(log_Ep)], axis=-1)
-
-    Cxx = Exx - Ex * Ex
-    Cxp = Ep * (tilted_mean_x(1.0) - Ex)
-    Cxm = Em * (tilted_mean_x(-1.0) - Ex)
-    Cpp = xp.exp(2.0 * log_Ep) * xp.expm1(log_Epp - 2.0 * log_Ep)
-    Cmm = xp.exp(2.0 * log_Em) * xp.expm1(log_Emm - 2.0 * log_Em)
-    Cmp = 1.0 - Em * Ep
-    row0 = xp.stack([Cxx, Cxm, Cxp], axis=-1)
-    row1 = xp.stack([Cxm, Cmm, Cmp], axis=-1)
-    row2 = xp.stack([Cxp, Cmp, Cpp], axis=-1)
-    cov = xp.stack([row0, row1, row2], axis=-2)
-    return mean, 0.5 * (cov + xp.swapaxes(cov, -1, -2))
+    half = 0.5 * x
+    w = 2.0 * xp.sinh(u0[..., None] + half) * xp.sinh(half)
+    ew = xp.sum(p * w, axis=-1)
+    dw = w - ew[..., None]
+    dx = x - mean[..., 0][..., None]
+    d_arg = -(xp.cosh(u0) + ew)
+    d2_arg = xp.sum(p * dw * dw, axis=-1)
+    d2_order_arg = -xp.sum(p * dx * dw, axis=-1)
+    return mean, cov, d_arg, d2_arg, d2_order_arg
 
 
 def _eval_quad(
@@ -321,8 +307,13 @@ def _eval_quad(
 
 def _moments_xp(v, z, xp, **cfg) -> BesselMoments:
     log_k, u0, x, log_f = _eval_quad(v, z, xp, **cfg)
-    mean, cov = _moments_from_weights(x, log_f, xp)
-    return BesselMoments(log_k=log_k, u0=u0, mean=mean, cov=cov)
+    mean, cov, d_arg, d2_arg, d2_order_arg = _moments_from_weights(
+        x, log_f, u0, xp,
+    )
+    return BesselMoments(
+        log_k=log_k, u0=u0, mean=mean, cov=cov,
+        d_arg=d_arg, d2_arg=d2_arg, d2_order_arg=d2_order_arg,
+    )
 
 
 def _log_kv_quad_jax(v, z) -> Array:
@@ -379,7 +370,10 @@ def log_kv_moments(v, z, backend: str = 'jax') -> BesselMoments:
     BesselMoments
         ``log_k``, ``u0``, ``mean`` (shape ``(..., 3)``), ``cov``
         (shape ``(..., 3, 3)``). Jet views: ``d_order``, ``d_arg``,
-        ``d2_order``, ``d2_order_arg``, ``d2_arg``.
+        ``d2_order``, ``d2_order_arg``, ``d2_arg``. Argument jets
+        (``d_arg``, ``d2_arg``, ``d2_order_arg``) are stored projections
+        of :math:`w=2\sinh(u_0+x/2)\sinh(x/2)`, not affine images of
+        ``cov``.
 
     Notes
     -----

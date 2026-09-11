@@ -15,7 +15,8 @@ GIG_DEGEN_THRESHOLD: float = 1e-10
 
 # ── Optimisation constants ─────────────────────────────────────────────
 
-# Tikhonov damping added to Newton Hessian for positive-definiteness
+# Relative Tikhonov coefficient: Newton uses H + λ (tr H / n) I.
+# Finance QP `hess_reg` reuses this value as an absolute ridge.
 HESSIAN_DAMPING: float = 1e-6
 
 # Floor for GIG θ₂, θ₃ during warm-start initialisation

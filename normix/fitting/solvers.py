@@ -306,6 +306,25 @@ def _setup_reparam(
 # JAX Newton  (lax.scan, vmap-compatible)
 # ---------------------------------------------------------------------------
 
+def _damped_hessian(H: jax.Array, damping: float = HESSIAN_DAMPING) -> jax.Array:
+    r"""Relative Tikhonov: :math:`H + \lambda (\mathrm{tr}\,H / n)\,I`.
+
+    ``damping`` is a dimensionless coefficient. Apply this to the
+    **θ-space** Hessian (the Fisher), then sandwich with :math:`J`, not
+    to :math:`H_\phi`. On concentrated GIG, :math:`H_\theta` entries are
+    :math:`O(1/z)` while :math:`\mathrm{tr}(H_\phi)` is :math:`O(z)` from
+    the bound Jacobian, so damping :math:`H_\phi` swamps the
+    :math:`p`-direction. A non-positive trace falls back to
+    :math:`\mathrm{mean}|H_{ii}|` rather than a zero ridge.
+    """
+    dim = H.shape[-1]
+    tr_scale = jnp.trace(H, axis1=-2, axis2=-1) / dim
+    mag_scale = jnp.mean(jnp.abs(jnp.diagonal(H, axis1=-2, axis2=-1)), axis=-1)
+    scale = jnp.where(tr_scale > 0.0, tr_scale, mag_scale)
+    eye = jnp.eye(dim, dtype=H.dtype)
+    return H + damping * scale[..., None, None] * eye
+
+
 def _jax_newton_raw(
     f: Callable,
     eta: jax.Array,
@@ -321,13 +340,13 @@ def _jax_newton_raw(
     When grad_fn and hess_fn are both provided, the chain rule is applied
     generically via jax.jacobian(to_theta):
         g_phi = J^T @ (grad_fn(theta) − eta)
-        H_phi = J^T @ hess_fn(theta) @ J + ∇²[to_theta(phi)·g_theta]
+        H_phi = J^T @ H_theta_damped @ J + ∇²[to_theta(phi)·g_theta]
+        where H_theta_damped is λ tr(H_θ)/n relative Tikhonov in θ-space.
 
     Returns (theta_opt, fun, grad_norm, converged) as JAX arrays —
     all are vmappable.
     """
     phi0, to_theta, _ = _setup_reparam(theta0, bounds)
-    dim = phi0.shape[0]
 
     def obj(phi: jax.Array) -> jax.Array:
         theta = to_theta(phi)
@@ -337,7 +356,7 @@ def _jax_newton_raw(
         def get_g_H(phi):
             theta = to_theta(phi)
             g_theta = grad_fn(theta) - eta
-            H_theta = hess_fn(theta)
+            H_theta = _damped_hessian(hess_fn(theta))
             J = jax.jacobian(to_theta)(phi)
             g_phi = J.T @ g_theta
             # Second-order correction: ∇²[to_theta(phi)·g_theta]
@@ -345,16 +364,18 @@ def _jax_newton_raw(
                 return jnp.dot(to_theta(p), g_theta)
             H_phi = J.T @ H_theta @ J + jax.hessian(theta_dot_g)(phi)
             return g_phi, H_phi
+        damp_phi = False
     else:
         _grad = jax.grad(obj)
         _hess = jax.hessian(obj)
         def get_g_H(phi):
             return _grad(phi), _hess(phi)
+        damp_phi = True
 
     def newton_body(carry, _):
         phi, converged = carry
         g, H = get_g_H(phi)
-        H_safe = H + HESSIAN_DAMPING * jnp.eye(dim)
+        H_safe = _damped_hessian(H) if damp_phi else H
         delta = jnp.linalg.solve(H_safe, g)
         f0 = obj(phi)
         slope = jnp.dot(g, delta)

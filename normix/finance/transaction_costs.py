@@ -174,9 +174,10 @@ def build_transaction_cost_qp(
         Optional inequality :math:`A w \le b` (same :math:`w_0` must be
         feasible). Pass ``None`` for the budget-only problem.
     hess_reg :
-        Tikhonov damping added to :math:`\tilde H` so the QP is strictly
+        Absolute Tikhonov ridge on :math:`\tilde H` so the QP is strictly
         convex (:math:`\tilde H` has a nontrivial nullspace along
-        :math:`v^+ = v^-`).
+        :math:`v^+ = v^-`). Unlike Newton, this is not scaled by
+        :math:`\mathrm{tr}(\tilde H)`.
     """
     w0 = approx.w0
     m = jnp.asarray(m, dtype=jnp.float64)

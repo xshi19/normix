@@ -200,6 +200,19 @@ class TestSolveBregmanQuadratic:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
+
+def test_damped_hessian_scales_with_trace():
+    """Ridge is λ tr(H)/n, not an absolute 1e-6."""
+    from normix.fitting.solvers import _damped_hessian
+    from normix.utils.constants import HESSIAN_DAMPING
+
+    H = 1e-8 * jnp.eye(3)
+    Hs = np.asarray(_damped_hessian(H))
+    ridge = HESSIAN_DAMPING * 1e-8
+    np.testing.assert_allclose(np.diag(Hs), 1e-8 + ridge)
+    assert ridge < 1e-12
+
+
 # ---------------------------------------------------------------------------
 # Gamma distribution tests
 # ---------------------------------------------------------------------------
@@ -323,9 +336,27 @@ class TestSolveBregmanGIG:
         )
         self._check(r)
 
-    @pytest.mark.slow
-    @pytest.mark.stress
-    def test_result_converged(self):
+    def test_jax_newton_concentrated_recovers_p(self):
+        """Relative ridge is on H_θ, so a=b=100 still recovers p.
+
+        Damping H_φ used tr(H_φ)~O(z) and walked p the wrong way.
+        """
+        from normix import GIG
+        z = 100.0
+        gig = GIG(p=0.5, a=z, b=z)
+        eta = gig.expectation_params()
+        theta_true = gig.natural_params()
+        theta0 = theta_true + jnp.array([0.1, 0.0, 0.0])
+        r = solve_bregman(
+            GIG._log_partition_from_theta, eta, theta0,
+            backend="jax", method="newton",
+            bounds=GIG._theta_bounds(), max_steps=50, tol=1e-9,
+            grad_fn=GIG._grad_log_partition,
+            hess_fn=GIG._hessian_log_partition,
+        )
+        gig2 = GIG.from_natural(r.theta)
+        np.testing.assert_allclose(float(gig2.p), 0.5, rtol=1e-3)
+        assert bool(r.converged)
         from normix import GIG
         r = solve_bregman(
             GIG._log_partition_from_theta, self.eta, self.theta_true,

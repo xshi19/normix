@@ -25,7 +25,7 @@ The exponent is evaluated cancellation-free:
 
 $$
 g_c(x)=\nu x-\Bigl[\tfrac{\kappa+\nu}{2}\,\mathrm{expm1}(x)+\tfrac{\kappa-\nu}{2}\,\mathrm{expm1}(-x)\Bigr],
-\qquad \kappa-\nu=\frac{z^2}{\kappa+\nu}
+\qquad \kappa-\nu=z\bigl(z/(\kappa+\lvert\nu\rvert)\bigr)
 $$
 
 ($\nu\ge 0$; mirror for $\nu<0$). The grouping $\kappa\cdot 2\sinh^2(x/2)+\nu\sinh x$
@@ -47,13 +47,31 @@ an ordinary point.
 
 ## `BesselMoments`
 
-`log_kv_moments(v, z, backend)` returns `log_k`, $u_0$, and the mean/covariance
-of $s=(x,\mathrm{expm1}(-x),\mathrm{expm1}(x))$. Jet views `d_order`, `d_arg`,
-`d2_*` are affine images of that bundle.
+`log_kv_moments(v, z, backend)` returns `log_k`, $u_0$, the mean/covariance
+of $s=(x,\mathrm{expm1}(-x),\mathrm{expm1}(x))$, and stored argument jets.
+`d_order` / `d2_order` are $u_0+E[x]$ and $\mathrm{Var}(x)$. `d_arg`,
+`d2_arg`, `d2_order_arg` are projections of
+$w=2\sinh(u_0+x/2)\sinh(x/2)=\cosh(u_0+x)-\cosh u_0$, not affine images
+of `cov`.
+
+`cov` is the centered Gram $R^\top R$ with $R_i=\sqrt{p_i}\,(s_i-\bar s)$:
+relative-ε entries, PSD to rounding. Reconstructing $\mathrm{Var}(e^{\pm x})$
+from $\mathrm{expm1}(\log E[e^{2x}]-2\log E[e^x])$ loses the $O(1/z^2)$
+even part of $\mathrm{Var}(\cosh u)$ once $z\gtrsim 10^6$; at
+$(\nu,z)=(1/2,10^8)$ that path returned $L_{zz}<0$ against the exact
+$1/(2z^2)$ (DLMF 10.39.2).
+
+The grouping $\cosh u_0\cdot 2\sinh^2(x/2)+\sinh u_0\sinh x$ is the same
+left-tail cancellation the exponent already avoids when $\kappa\approx\nu$;
+do not use it for $w$.
 
 GIG in $u=\log X-\tfrac12\log(b/a)$ is this family with $\nu=p$, $z=\sqrt{ab}$.
-One call gives $\eta$ and $H=D\,\mathrm{cov}\,D$ (PSD). No $K_{p\pm 1}/K_p$
-ratios, no $p\pm 1$ evaluations, no large-term subtraction at the Gamma boundary.
+One call gives $\eta$ and $H=D\,\mathrm{cov}\,D$. Dense $H$ inherits an
+$O(\varepsilon z)$ relative error in its smallest eigenvalue (the
+$q=(0,1,1)$ direction at $a=b$). PSD until $z\sim 10^{16}$. Newton uses
+relative Tikhonov $\lambda\,\mathrm{tr}(H_\theta)/n$ applied to the Fisher
+before the bound sandwich. No $K_{p\pm 1}/K_p$ ratios,
+no $p\pm 1$ evaluations.
 
 NIG $E[\log Y]=\texttt{log\_kv\_moments}(-0.5,\lambda/\mu).\texttt{d\_order}+\log\mu$.
 
@@ -105,7 +123,10 @@ by explicit opt-in (not shipped). `_BACKENDS` has two live entries.
 
 ## Tests
 
-`tests/test_bessel_contract.py` — table, invariants, identities, AD ≡ bundle
-via `_log_kv_quad_jax` (not through `log_kv_moments.log_k`; that traces the
-Gram). `tests/test_gig_properties.py::TestGIGMomentHessian` — $H$ PSD, $H_{11}>0$,
-CPU ≡ JAX, sample $\mathrm{Cov}[t(X)]$; vs `jax.hessian(\psi)` is `slow`.
+`tests/test_bessel_contract.py` — table (1e-11 relative; 1e-7 for $d_v,d_{vz}$
+at large $z$; absolute at symmetry zeros), identities including $2z^2 L_{zz}=1$ at $\nu=1/2$,
+AD ≡ bundle via `_log_kv_quad_jax`, large-$z$ finiteness,
+former-seam Taylor consistency (not a global Lipschitz bound).
+`tests/test_gig_properties.py::TestGIGMomentHessian` — $H$ PSD, $H_{11}>0$,
+CPU ≡ JAX, sample $\mathrm{Cov}[t(X)]$, concentrated $q^\top H q=4L_{zz}$;
+vs `jax.hessian(ψ)` is `slow`.
