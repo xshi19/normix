@@ -806,19 +806,20 @@ side effects each step.</p>
 At the minimum ∇f(θ*) = η.</p>
 <section id="public-api">
 <h3>Public API<a class="headerlink" href="#public-api" title="Link to this heading">#</a></h3>
-<p>solve_bregman             single starting point
-solve_bregman_multistart  multiple starting points (vmap for JAX Newton;</p>
-<blockquote>
-<div><p>for-loop for quasi-Newton and CPU)</p>
-</div></blockquote>
-<p>bregman_objective         utility: f(θ) − θ·η
-make_jit_newton_solver    build a stable <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code> Newton solve specialised</p>
-<blockquote>
-<div><p>to a fixed <code class="docutils literal notranslate"><span class="pre">(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code> —
-repeated calls with matching shapes/dtypes hit the
-XLA cache, avoiding the per-call re-tracing that
-<code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> incurs from fresh closures.</p>
-</div></blockquote>
+<dl class="simple">
+<dt>solve_bregman</dt><dd><p>Single starting point.</p>
+</dd>
+<dt>solve_bregman_multistart</dt><dd><p>Multiple starting points (<code class="docutils literal notranslate"><span class="pre">vmap</span></code> for JAX Newton; a Python loop
+for quasi-Newton and CPU).</p>
+</dd>
+<dt>bregman_objective</dt><dd><p>Utility <span class="math notranslate nohighlight">\(f(\theta) - \theta\cdot\eta\)</span>.</p>
+</dd>
+<dt>make_jit_newton_solver</dt><dd><p>Build a stable <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code> Newton solve specialised to a fixed
+<code class="docutils literal notranslate"><span class="pre">(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code>. Repeated calls with matching
+shapes/dtypes hit the XLA cache, avoiding the per-call re-tracing
+that <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code> incurs from fresh closures.</p>
+</dd>
+</dl>
 </section>
 <section id="backends-methods">
 <h3>Backends × methods<a class="headerlink" href="#backends-methods" title="Link to this heading">#</a></h3>

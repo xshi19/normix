@@ -59,12 +59,16 @@ Hessian:
 | [JAXopt](https://jaxopt.github.io/stable/) | none | n/a | yes (LBFGSB only) |
 | [Optax](https://optax.readthedocs.io/en/latest/) | none | n/a | n/a |
 
-So we ship a hand-rolled Newton via `lax.while_loop` (true early
-stopping). For repeated warm-started solves on the same shape (the GIG
-EM hot path), `make_jit_newton_solver(f, grad_fn, hess_fn, bounds)`
-builds a `@jax.jit`-decorated specialised solve whose XLA cache survives
-across calls — critical, otherwise per-call retracing dominated GH
-EM time.
+So we ship a hand-rolled Newton via `lax.scan`. For repeated warm-started
+solves on the same shape (the GIG EM hot path),
+`make_jit_newton_solver(f, grad_fn, hess_fn, bounds)` builds a
+`@jax.jit`-decorated specialised solve whose XLA cache survives across
+calls — otherwise per-call retracing dominated GH EM time. The Hessian
+is damped by a relative Tikhonov ridge $\lambda\,\mathrm{tr}(H_\theta)/n$
+(`HESSIAN_DAMPING`) **in θ-space before the bound sandwich**, so
+concentrated GIG Fisher matrices (entries $O(1/z)$) are not swamped by
+an absolute $10^{-6}$ floor, and the $\phi$-space trace $O(z)$ from
+$J=\mathrm{diag}(1,\theta_2,\theta_3)$ does not set the ridge.
 
 ### 1.3 `BregmanResult` and `lax.scan`
 
@@ -159,15 +163,17 @@ $$
 
 `log_kv_moments(v, z).d_arg` is the first identity written out;
 `jax.grad(lambda z: log_kv(v, z))(z)` is the same identity by differentiating
-the log-sum-exp. They agree to $\sim 10^{-13}$
+the log-sum-exp. They agree to $\sim 10^{-11}$
 (`tests/test_bessel_contract.py::test_ad_equals_bundle`). GIG $\eta$ and
 $H=D\,\mathrm{cov}\,D$ use the moment bundle so both come from one pass.
 
 `backend='jax'` and `backend='cpu'` are the same sums in JAX and NumPy.
-The exponent uses $\mathrm{expm1}$ with $\kappa-\nu=z^2/(\kappa+\nu)$.
+The exponent uses $\mathrm{expm1}$ with $\kappa-\nu=z(z/(\kappa+\lvert\nu\rvert))$.
 
-`log_kv_moments` returns `BesselMoments(log_k, u0, mean, cov)` of
-$(x, e^{-x}-1, e^{x}-1)$. [`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
+`log_kv_moments` returns `BesselMoments` of
+$(x, e^{-x}-1, e^{x}-1)$: `log_k`, $u_0$, `mean`, `cov` (centered Gram),
+and stored argument jets from
+$w=2\sinh(u_0+x/2)\sinh(x/2)$. [`scipy.special.kve`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html)
 ({ref}`Amos1986 <amos1986>`) is a test oracle, not a runtime path.
 
 Hankel / Olver / small-$z$ formulae ( {ref}`DLMF <dlmf>`

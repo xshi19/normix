@@ -466,8 +466,12 @@
 <span class="sd">    The discrete exponential family lives on the centered coordinate</span>
 <span class="sd">    :math:`x = u - u_0` with :math:`u_0 = \operatorname{asinh}(\nu/z)`.</span>
 <span class="sd">    Geometry is constant under AD (see :func:`log_kv_moments`); ``mean``</span>
-<span class="sd">    and ``cov`` are the mean and Gram covariance of</span>
+<span class="sd">    and ``cov`` are the mean and centered Gram of</span>
 <span class="sd">    :math:`s = (x, \operatorname{expm1}(-x), \operatorname{expm1}(x))`.</span>
+<span class="sd">    ``cov`` is PSD to rounding (relative-ε entries). Argument-jet views</span>
+<span class="sd">    are projections of</span>
+<span class="sd">    :math:`w = 2\sinh(u_0 + x/2)\sinh(x/2)`, not reconstructions from</span>
+<span class="sd">    ``cov``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -478,13 +482,22 @@
 <span class="sd">    mean : jax.Array</span>
 <span class="sd">        :math:`E[s]`, shape ``(..., 3)``.</span>
 <span class="sd">    cov : jax.Array</span>
-<span class="sd">        :math:`\mathrm{Cov}[s]`, shape ``(..., 3, 3)``, PSD by construction.</span>
+<span class="sd">        :math:`\mathrm{Cov}[s]`, shape ``(..., 3, 3)``.</span>
+<span class="sd">    d_arg : jax.Array</span>
+<span class="sd">        :math:`\partial_z \log K_\nu = -(\cosh u_0 + E[w])`.</span>
+<span class="sd">    d2_arg : jax.Array</span>
+<span class="sd">        :math:`\partial_{zz} \log K_\nu = \mathrm{Var}(w)`.</span>
+<span class="sd">    d2_order_arg : jax.Array</span>
+<span class="sd">        :math:`\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(x, w)`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">log_k</span><span class="p">:</span> <span class="n">Array</span>
     <span class="n">u0</span><span class="p">:</span> <span class="n">Array</span>
     <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span>
     <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">d_arg</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">d2_arg</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">d2_order_arg</span><span class="p">:</span> <span class="n">Array</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">d_order</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
@@ -492,31 +505,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">d_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\partial_z \log K_\nu = -E[\cosh u]`.&quot;&quot;&quot;</span>
-        <span class="n">em</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-        <span class="n">ep</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">em</span> <span class="o">+</span> <span class="n">ep</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">d2_order</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\partial_{\nu\nu} \log K_\nu = \mathrm{Var}(u) &gt; 0`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">d2_order_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(u, \cosh u)`.&quot;&quot;&quot;</span>
-        <span class="n">em</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">ep</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">em</span> <span class="o">+</span> <span class="n">ep</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">d2_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\partial_{zz} \log K_\nu = \mathrm{Var}(\cosh u)`.&quot;&quot;&quot;</span>
-        <span class="n">c11</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">c22</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-        <span class="n">c12</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-        <span class="k">return</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">c11</span> <span class="o">+</span> <span class="n">c22</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">c12</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></div>
 
 
 
@@ -577,12 +568,14 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ab_coeffs</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">xp</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Stable :math:`(\kappa, (\kappa+\nu)/2, (\kappa-\nu)/2)` with</span>
-<span class="sd">    :math:`\kappa-\nu = z^2/(\kappa+\nu)` (mirrored for :math:`\nu&lt;0`).&quot;&quot;&quot;</span>
+<span class="sd">    :math:`\kappa-\nu = z(z/(\kappa+\lvert\nu\rvert))` (mirrored for</span>
+<span class="sd">    :math:`\nu&lt;0`). Grouping avoids overflow of :math:`z^2` for</span>
+<span class="sd">    :math:`z\gtrsim 10^{155}`.&quot;&quot;&quot;</span>
     <span class="n">kappa</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
     <span class="n">va</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="n">tiny</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">xp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">kp</span> <span class="o">=</span> <span class="n">kappa</span> <span class="o">+</span> <span class="n">va</span>
-    <span class="n">km</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">*</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="n">xp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">kp</span><span class="p">,</span> <span class="n">tiny</span><span class="p">)</span>
+    <span class="n">km</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="n">xp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">kp</span><span class="p">,</span> <span class="n">tiny</span><span class="p">))</span>
     <span class="n">pos</span> <span class="o">=</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">0</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">kp</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">km</span><span class="p">)</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">km</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">kp</span><span class="p">)</span>
@@ -658,45 +651,38 @@
     <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">log_w</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_moments_from_weights</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">log_w</span><span class="p">,</span> <span class="n">xp</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_moments_from_weights</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">log_w</span><span class="p">,</span> <span class="n">u0</span><span class="p">,</span> <span class="n">xp</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Cumulants of :math:`s=(x,\mathrm{expm1}(-x),\mathrm{expm1}(x))`.</span>
 
-<span class="sd">    Power moments of :math:`e^{\pm x}` go through log-sum-exp so the Gram</span>
-<span class="sd">    stays finite when a tail node has large :math:`|x|`. Covariance of</span>
-<span class="sd">    :math:`(x, e^{-x}, e^{x})` equals covariance of :math:`s`.</span>
+<span class="sd">    ``cov`` is the centered Gram :math:`R^\top R` with</span>
+<span class="sd">    :math:`R_i=\sqrt{p_i}\,(s_i-\bar s)`. Argument projections use</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w = 2\sinh(u_0 + x/2)\sinh(x/2) = \cosh(u_0+x)-\cosh u_0,</span>
+
+<span class="sd">    so :math:`\mathrm{Var}(w)` retains the :math:`O(1/z^2)` even component</span>
+<span class="sd">    that reconstructing ``cov`` from raw moments cancels. The grouping</span>
+<span class="sd">    :math:`\cosh u_0\cdot 2\sinh^2(x/2)+\sinh u_0\sinh x` is not used:</span>
+<span class="sd">    it cancels in the left tail when :math:`|u_0|` is large.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">log_n</span> <span class="o">=</span> <span class="n">_logsumexp</span><span class="p">(</span><span class="n">log_w</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_w</span> <span class="o">-</span> <span class="n">log_n</span><span class="p">)</span>
-    <span class="n">Ex</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">Exx</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">),</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">r</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">cov</span> <span class="o">+</span> <span class="n">xp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">log_mgf</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">_logsumexp</span><span class="p">(</span><span class="n">log_w</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_n</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">tilted_mean_x</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
-        <span class="n">lw</span> <span class="o">=</span> <span class="n">log_w</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">x</span>
-        <span class="n">pk</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">lw</span> <span class="o">-</span> <span class="n">_logsumexp</span><span class="p">(</span><span class="n">lw</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pk</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="n">log_Ep</span> <span class="o">=</span> <span class="n">log_mgf</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">log_Em</span> <span class="o">=</span> <span class="n">log_mgf</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">log_Epp</span> <span class="o">=</span> <span class="n">log_mgf</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
-    <span class="n">log_Emm</span> <span class="o">=</span> <span class="n">log_mgf</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">)</span>
-    <span class="n">Ep</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_Ep</span><span class="p">)</span>
-    <span class="n">Em</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_Em</span><span class="p">)</span>
-    <span class="n">mean</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Ex</span><span class="p">,</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">log_Em</span><span class="p">),</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">log_Ep</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="n">Cxx</span> <span class="o">=</span> <span class="n">Exx</span> <span class="o">-</span> <span class="n">Ex</span> <span class="o">*</span> <span class="n">Ex</span>
-    <span class="n">Cxp</span> <span class="o">=</span> <span class="n">Ep</span> <span class="o">*</span> <span class="p">(</span><span class="n">tilted_mean_x</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">Ex</span><span class="p">)</span>
-    <span class="n">Cxm</span> <span class="o">=</span> <span class="n">Em</span> <span class="o">*</span> <span class="p">(</span><span class="n">tilted_mean_x</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">Ex</span><span class="p">)</span>
-    <span class="n">Cpp</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">log_Ep</span><span class="p">)</span> <span class="o">*</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">log_Epp</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">log_Ep</span><span class="p">)</span>
-    <span class="n">Cmm</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">log_Em</span><span class="p">)</span> <span class="o">*</span> <span class="n">xp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">log_Emm</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">log_Em</span><span class="p">)</span>
-    <span class="n">Cmp</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">Em</span> <span class="o">*</span> <span class="n">Ep</span>
-    <span class="n">row0</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Cxx</span><span class="p">,</span> <span class="n">Cxm</span><span class="p">,</span> <span class="n">Cxp</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">row1</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Cxm</span><span class="p">,</span> <span class="n">Cmm</span><span class="p">,</span> <span class="n">Cmp</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">row2</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Cxp</span><span class="p">,</span> <span class="n">Cmp</span><span class="p">,</span> <span class="n">Cpp</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">cov</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">row0</span><span class="p">,</span> <span class="n">row1</span><span class="p">,</span> <span class="n">row2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">cov</span> <span class="o">+</span> <span class="n">xp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">xp</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">u0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">half</span><span class="p">)</span> <span class="o">*</span> <span class="n">xp</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">half</span><span class="p">)</span>
+    <span class="n">ew</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">dw</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="n">ew</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">][</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">d_arg</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">u0</span><span class="p">)</span> <span class="o">+</span> <span class="n">ew</span><span class="p">)</span>
+    <span class="n">d2_arg</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">dw</span> <span class="o">*</span> <span class="n">dw</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">d2_order_arg</span> <span class="o">=</span> <span class="o">-</span><span class="n">xp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">dw</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">d_arg</span><span class="p">,</span> <span class="n">d2_arg</span><span class="p">,</span> <span class="n">d2_order_arg</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_eval_quad</span><span class="p">(</span>
@@ -731,8 +717,13 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_moments_xp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="o">**</span><span class="n">cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BesselMoments</span><span class="p">:</span>
     <span class="n">log_k</span><span class="p">,</span> <span class="n">u0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">log_f</span> <span class="o">=</span> <span class="n">_eval_quad</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="o">**</span><span class="n">cfg</span><span class="p">)</span>
-    <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">_moments_from_weights</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">log_f</span><span class="p">,</span> <span class="n">xp</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">BesselMoments</span><span class="p">(</span><span class="n">log_k</span><span class="o">=</span><span class="n">log_k</span><span class="p">,</span> <span class="n">u0</span><span class="o">=</span><span class="n">u0</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">)</span>
+    <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">d_arg</span><span class="p">,</span> <span class="n">d2_arg</span><span class="p">,</span> <span class="n">d2_order_arg</span> <span class="o">=</span> <span class="n">_moments_from_weights</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">log_f</span><span class="p">,</span> <span class="n">u0</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BesselMoments</span><span class="p">(</span>
+        <span class="n">log_k</span><span class="o">=</span><span class="n">log_k</span><span class="p">,</span> <span class="n">u0</span><span class="o">=</span><span class="n">u0</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">cov</span><span class="p">,</span>
+        <span class="n">d_arg</span><span class="o">=</span><span class="n">d_arg</span><span class="p">,</span> <span class="n">d2_arg</span><span class="o">=</span><span class="n">d2_arg</span><span class="p">,</span> <span class="n">d2_order_arg</span><span class="o">=</span><span class="n">d2_order_arg</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_log_kv_quad_jax</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
@@ -791,7 +782,10 @@
 <span class="sd">    BesselMoments</span>
 <span class="sd">        ``log_k``, ``u0``, ``mean`` (shape ``(..., 3)``), ``cov``</span>
 <span class="sd">        (shape ``(..., 3, 3)``). Jet views: ``d_order``, ``d_arg``,</span>
-<span class="sd">        ``d2_order``, ``d2_order_arg``, ``d2_arg``.</span>
+<span class="sd">        ``d2_order``, ``d2_order_arg``, ``d2_arg``. Argument jets</span>
+<span class="sd">        (``d_arg``, ``d2_arg``, ``d2_order_arg``) are stored projections</span>
+<span class="sd">        of :math:`w=2\sinh(u_0+x/2)\sinh(x/2)`, not affine images of</span>
+<span class="sd">        ``cov``.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>

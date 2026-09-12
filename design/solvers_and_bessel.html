@@ -604,12 +604,16 @@ Hessian:</p>
 </tbody>
 </table>
 </div>
-<p>So we ship a hand-rolled Newton via <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code> (true early
-stopping). For repeated warm-started solves on the same shape (the GIG
-EM hot path), <code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code>
-builds a <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated specialised solve whose XLA cache survives
-across calls — critical, otherwise per-call retracing dominated GH
-EM time.</p>
+<p>So we ship a hand-rolled Newton via <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>. For repeated warm-started
+solves on the same shape (the GIG EM hot path),
+<code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code> builds a
+<code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated specialised solve whose XLA cache survives across
+calls — otherwise per-call retracing dominated GH EM time. The Hessian
+is damped by a relative Tikhonov ridge <span class="math notranslate nohighlight">\(\lambda\,\mathrm{tr}(H_\theta)/n\)</span>
+(<code class="docutils literal notranslate"><span class="pre">HESSIAN_DAMPING</span></code>) <strong>in θ-space before the bound sandwich</strong>, so
+concentrated GIG Fisher matrices (entries <span class="math notranslate nohighlight">\(O(1/z)\)</span>) are not swamped by
+an absolute <span class="math notranslate nohighlight">\(10^{-6}\)</span> floor, and the <span class="math notranslate nohighlight">\(\phi\)</span>-space trace <span class="math notranslate nohighlight">\(O(z)\)</span> from
+<span class="math notranslate nohighlight">\(J=\mathrm{diag}(1,\theta_2,\theta_3)\)</span> does not set the ridge.</p>
 </section>
 <section id="bregmanresult-and-lax-scan">
 <h3>1.3 <code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code> and <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code><a class="headerlink" href="#bregmanresult-and-lax-scan" title="Link to this heading">#</a></h3>
@@ -694,13 +698,15 @@ Because the nodes are constants,</p>
 \]</div>
 <p><code class="docutils literal notranslate"><span class="pre">log_kv_moments(v,</span> <span class="pre">z).d_arg</span></code> is the first identity written out;
 <code class="docutils literal notranslate"><span class="pre">jax.grad(lambda</span> <span class="pre">z:</span> <span class="pre">log_kv(v,</span> <span class="pre">z))(z)</span></code> is the same identity by differentiating
-the log-sum-exp. They agree to <span class="math notranslate nohighlight">\(\sim 10^{-13}\)</span>
+the log-sum-exp. They agree to <span class="math notranslate nohighlight">\(\sim 10^{-11}\)</span>
 (<code class="docutils literal notranslate"><span class="pre">tests/test_bessel_contract.py::test_ad_equals_bundle</span></code>). GIG <span class="math notranslate nohighlight">\(\eta\)</span> and
 <span class="math notranslate nohighlight">\(H=D\,\mathrm{cov}\,D\)</span> use the moment bundle so both come from one pass.</p>
 <p><code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> and <code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> are the same sums in JAX and NumPy.
-The exponent uses <span class="math notranslate nohighlight">\(\mathrm{expm1}\)</span> with <span class="math notranslate nohighlight">\(\kappa-\nu=z^2/(\kappa+\nu)\)</span>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> returns <code class="docutils literal notranslate"><span class="pre">BesselMoments(log_k,</span> <span class="pre">u0,</span> <span class="pre">mean,</span> <span class="pre">cov)</span></code> of
-<span class="math notranslate nohighlight">\((x, e^{-x}-1, e^{x}-1)\)</span>. <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
+The exponent uses <span class="math notranslate nohighlight">\(\mathrm{expm1}\)</span> with <span class="math notranslate nohighlight">\(\kappa-\nu=z(z/(\kappa+\lvert\nu\rvert))\)</span>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> returns <code class="docutils literal notranslate"><span class="pre">BesselMoments</span></code> of
+<span class="math notranslate nohighlight">\((x, e^{-x}-1, e^{x}-1)\)</span>: <code class="docutils literal notranslate"><span class="pre">log_k</span></code>, <span class="math notranslate nohighlight">\(u_0\)</span>, <code class="docutils literal notranslate"><span class="pre">mean</span></code>, <code class="docutils literal notranslate"><span class="pre">cov</span></code> (centered Gram),
+and stored argument jets from
+<span class="math notranslate nohighlight">\(w=2\sinh(u_0+x/2)\sinh(x/2)\)</span>. <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
 (<a class="reference internal" href="../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>) is a test oracle, not a runtime path.</p>
 <p>Hankel / Olver / small-<span class="math notranslate nohighlight">\(z\)</span> formulae ( <a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
 <a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a>,

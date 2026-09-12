@@ -1581,9 +1581,10 @@ CMC VaR bisection runs once rather than three times.</p>
 feasible). Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> for the budget-only problem.</p></li>
 <li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>) – Optional inequality <span class="math notranslate nohighlight">\(A w \le b\)</span> (same <span class="math notranslate nohighlight">\(w_0\)</span> must be
 feasible). Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> for the budget-only problem.</p></li>
-<li><p><strong>hess_reg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Tikhonov damping added to <span class="math notranslate nohighlight">\(\tilde H\)</span> so the QP is strictly
+<li><p><strong>hess_reg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Absolute Tikhonov ridge on <span class="math notranslate nohighlight">\(\tilde H\)</span> so the QP is strictly
 convex (<span class="math notranslate nohighlight">\(\tilde H\)</span> has a nontrivial nullspace along
-<span class="math notranslate nohighlight">\(v^+ = v^-\)</span>).</p></li>
+<span class="math notranslate nohighlight">\(v^+ = v^-\)</span>). Unlike Newton, this is not scaled by
+<span class="math notranslate nohighlight">\(\mathrm{tr}(\tilde H)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

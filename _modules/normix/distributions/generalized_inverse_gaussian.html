@@ -782,13 +782,17 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_hessian_log_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :math:`\nabla^2\psi(\theta)=\mathrm{Cov}[t(X)]`, PSD by construction.</span>
+<span class="sd">        :math:`\nabla^2\psi(\theta)=\mathrm{Cov}[t(X)]`.</span>
 
 <span class="sd">        One :func:`~normix.utils.bessel.log_kv_moments` call; the GIG</span>
 <span class="sd">        sufficient statistic is an affine image of</span>
-<span class="sd">        :math:`(x, e^{-x}-1, e^{x}-1)`. Valid in the non-degenerate regime</span>
-<span class="sd">        (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``). The Newton solver</span>
-<span class="sd">        still applies ``HESSIAN_DAMPING``.</span>
+<span class="sd">        :math:`(x, e^{-x}-1, e^{x}-1)`. The dense matrix is PSD to</span>
+<span class="sd">        rounding; its smallest eigenvalue has relative error</span>
+<span class="sd">        :math:`O(\varepsilon z)` from residual cancellation in ``cov``.</span>
+<span class="sd">        Valid in the non-degenerate regime</span>
+<span class="sd">        (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``). Newton applies</span>
+<span class="sd">        relative Tikhonov ``HESSIAN_DAMPING * tr(H_θ)/n`` in θ-space</span>
+<span class="sd">        before the bound sandwich.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span><span class="p">,</span> <span class="n">a_safe</span><span class="p">,</span> <span class="n">b_safe</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">log_sqrt_ba</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_unpack_safe</span><span class="p">(</span>
             <span class="n">theta</span><span class="p">,</span> <span class="n">jnp</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">,</span>

@@ -459,11 +459,11 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.u0"><code class="docutils literal notranslate"><span class="pre">BesselMoments.u0</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.mean"><code class="docutils literal notranslate"><span class="pre">BesselMoments.mean</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.cov"><code class="docutils literal notranslate"><span class="pre">BesselMoments.cov</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_order</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_arg</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order_arg</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_arg</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order_arg</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_order</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.log_kv_moments"><code class="docutils literal notranslate"><span class="pre">log_kv_moments()</span></code></a></li>
@@ -542,20 +542,27 @@ finite differences.</p>
 backend=’cpu’           : the same sums in NumPy.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.utils.bessel.</span></span><span class="sig-name descname"><span class="pre">BesselMoments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/bessel.html#BesselMoments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.bessel.BesselMoments" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.utils.bessel.</span></span><span class="sig-name descname"><span class="pre">BesselMoments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_arg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2_arg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2_order_arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/bessel.html#BesselMoments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.bessel.BesselMoments" title="Link to this definition">#</a></dt>
 <dd><p>Frozen quadrature moments of <span class="math notranslate nohighlight">\((x, e^{-x}-1, e^{x}-1)\)</span>.</p>
 <p>The discrete exponential family lives on the centered coordinate
 <span class="math notranslate nohighlight">\(x = u - u_0\)</span> with <span class="math notranslate nohighlight">\(u_0 = \operatorname{asinh}(\nu/z)\)</span>.
 Geometry is constant under AD (see <a class="reference internal" href="#normix.utils.bessel.log_kv_moments" title="normix.utils.bessel.log_kv_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_kv_moments()</span></code></a>); <code class="docutils literal notranslate"><span class="pre">mean</span></code>
-and <code class="docutils literal notranslate"><span class="pre">cov</span></code> are the mean and Gram covariance of
-<span class="math notranslate nohighlight">\(s = (x, \operatorname{expm1}(-x), \operatorname{expm1}(x))\)</span>.</p>
+and <code class="docutils literal notranslate"><span class="pre">cov</span></code> are the mean and centered Gram of
+<span class="math notranslate nohighlight">\(s = (x, \operatorname{expm1}(-x), \operatorname{expm1}(x))\)</span>.
+<code class="docutils literal notranslate"><span class="pre">cov</span></code> is PSD to rounding (relative-ε entries). Argument-jet views
+are projections of
+<span class="math notranslate nohighlight">\(w = 2\sinh(u_0 + x/2)\sinh(x/2)\)</span>, not reconstructions from
+<code class="docutils literal notranslate"><span class="pre">cov</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>log_k</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\log K_\nu(z)\)</span>, broadcast shape of <code class="docutils literal notranslate"><span class="pre">(v,</span> <span class="pre">z)</span></code>.</p></li>
 <li><p><strong>u0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Mode <span class="math notranslate nohighlight">\(\operatorname{asinh}(\nu/z)\)</span>.</p></li>
 <li><p><strong>mean</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(E[s]\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">3)</span></code>.</p></li>
-<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\mathrm{Cov}[s]\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">3,</span> <span class="pre">3)</span></code>, PSD by construction.</p></li>
+<li><p><strong>cov</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\mathrm{Cov}[s]\)</span>, shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">3,</span> <span class="pre">3)</span></code>.</p></li>
+<li><p><strong>d_arg</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\partial_z \log K_\nu = -(\cosh u_0 + E[w])\)</span>.</p></li>
+<li><p><strong>d2_arg</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\partial_{zz} \log K_\nu = \mathrm{Var}(w)\)</span>.</p></li>
+<li><p><strong>d2_order_arg</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <span class="math notranslate nohighlight">\(\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(x, w)\)</span>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -579,6 +586,21 @@ and <code class="docutils literal notranslate"><span class="pre">cov</span></cod
 <span class="sig-name descname"><span class="pre">cov</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.cov" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d_arg">
+<span class="sig-name descname"><span class="pre">d_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d_arg" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d2_arg">
+<span class="sig-name descname"><span class="pre">d2_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d2_arg" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d2_order_arg">
+<span class="sig-name descname"><span class="pre">d2_order_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d2_order_arg" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d_order">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d_order</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d_order" title="Link to this definition">#</a></dt>
@@ -586,27 +608,9 @@ and <code class="docutils literal notranslate"><span class="pre">cov</span></cod
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d_arg">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d_arg" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\partial_z \log K_\nu = -E[\cosh u]\)</span>.</p>
-</dd></dl>
-
-<dl class="py property">
 <dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d2_order">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d2_order</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d2_order" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\partial_{\nu\nu} \log K_\nu = \mathrm{Var}(u) &gt; 0\)</span>.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d2_order_arg">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d2_order_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d2_order_arg" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\partial_{\nu z} \log K_\nu = -\mathrm{Cov}(u, \cosh u)\)</span>.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="normix.utils.bessel.BesselMoments.d2_arg">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d2_arg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.bessel.BesselMoments.d2_arg" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\partial_{zz} \log K_\nu = \mathrm{Var}(\cosh u)\)</span>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -637,7 +641,10 @@ is the same sums in NumPy.</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">log_k</span></code>, <code class="docutils literal notranslate"><span class="pre">u0</span></code>, <code class="docutils literal notranslate"><span class="pre">mean</span></code> (shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">3)</span></code>), <code class="docutils literal notranslate"><span class="pre">cov</span></code>
 (shape <code class="docutils literal notranslate"><span class="pre">(...,</span> <span class="pre">3,</span> <span class="pre">3)</span></code>). Jet views: <code class="docutils literal notranslate"><span class="pre">d_order</span></code>, <code class="docutils literal notranslate"><span class="pre">d_arg</span></code>,
-<code class="docutils literal notranslate"><span class="pre">d2_order</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_order_arg</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_arg</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">d2_order</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_order_arg</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_arg</span></code>. Argument jets
+(<code class="docutils literal notranslate"><span class="pre">d_arg</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_arg</span></code>, <code class="docutils literal notranslate"><span class="pre">d2_order_arg</span></code>) are stored projections
+of <span class="math notranslate nohighlight">\(w=2\sinh(u_0+x/2)\sinh(x/2)\)</span>, not affine images of
+<code class="docutils literal notranslate"><span class="pre">cov</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.utils.bessel.BesselMoments" title="normix.utils.bessel.BesselMoments">BesselMoments</a></p>
@@ -1156,11 +1163,11 @@ documentation site aesthetic.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.u0"><code class="docutils literal notranslate"><span class="pre">BesselMoments.u0</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.mean"><code class="docutils literal notranslate"><span class="pre">BesselMoments.mean</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.cov"><code class="docutils literal notranslate"><span class="pre">BesselMoments.cov</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_order</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_arg</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order_arg</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_arg</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order_arg"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order_arg</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d_order</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.BesselMoments.d2_order"><code class="docutils literal notranslate"><span class="pre">BesselMoments.d2_order</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.bessel.log_kv_moments"><code class="docutils literal notranslate"><span class="pre">log_kv_moments()</span></code></a></li>

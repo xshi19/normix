@@ -10,7 +10,8 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.19.3
 mystnb:
-  execution_timeout: 900
+  execution_mode: cache
+  execution_timeout: 1800
 ---
 
 # EM vs MCECM Algorithm Comparison

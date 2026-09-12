@@ -414,15 +414,18 @@
 
 <span class="sd">Public API</span>
 <span class="sd">----------</span>
-<span class="sd">solve_bregman             single starting point</span>
-<span class="sd">solve_bregman_multistart  multiple starting points (vmap for JAX Newton;</span>
-<span class="sd">                          for-loop for quasi-Newton and CPU)</span>
-<span class="sd">bregman_objective         utility: f(θ) − θ·η</span>
-<span class="sd">make_jit_newton_solver    build a stable ``@jax.jit`` Newton solve specialised</span>
-<span class="sd">                          to a fixed ``(f, grad_fn, hess_fn, bounds)`` —</span>
-<span class="sd">                          repeated calls with matching shapes/dtypes hit the</span>
-<span class="sd">                          XLA cache, avoiding the per-call re-tracing that</span>
-<span class="sd">                          ``solve_bregman`` incurs from fresh closures.</span>
+<span class="sd">solve_bregman</span>
+<span class="sd">    Single starting point.</span>
+<span class="sd">solve_bregman_multistart</span>
+<span class="sd">    Multiple starting points (``vmap`` for JAX Newton; a Python loop</span>
+<span class="sd">    for quasi-Newton and CPU).</span>
+<span class="sd">bregman_objective</span>
+<span class="sd">    Utility :math:`f(\\theta) - \\theta\\cdot\\eta`.</span>
+<span class="sd">make_jit_newton_solver</span>
+<span class="sd">    Build a stable ``@jax.jit`` Newton solve specialised to a fixed</span>
+<span class="sd">    ``(f, grad_fn, hess_fn, bounds)``. Repeated calls with matching</span>
+<span class="sd">    shapes/dtypes hit the XLA cache, avoiding the per-call re-tracing</span>
+<span class="sd">    that ``solve_bregman`` incurs from fresh closures.</span>
 
 <span class="sd">Backends × methods</span>
 <span class="sd">------------------</span>
@@ -725,6 +728,25 @@
 <span class="c1"># JAX Newton  (lax.scan, vmap-compatible)</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_damped_hessian</span><span class="p">(</span><span class="n">H</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">HESSIAN_DAMPING</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Relative Tikhonov: :math:`H + \lambda (\mathrm{tr}\,H / n)\,I`.</span>
+
+<span class="sd">    ``damping`` is a dimensionless coefficient. Apply this to the</span>
+<span class="sd">    **θ-space** Hessian (the Fisher), then sandwich with :math:`J`, not</span>
+<span class="sd">    to :math:`H_\phi`. On concentrated GIG, :math:`H_\theta` entries are</span>
+<span class="sd">    :math:`O(1/z)` while :math:`\mathrm{tr}(H_\phi)` is :math:`O(z)` from</span>
+<span class="sd">    the bound Jacobian, so damping :math:`H_\phi` swamps the</span>
+<span class="sd">    :math:`p`-direction. A non-positive trace falls back to</span>
+<span class="sd">    :math:`\mathrm{mean}|H_{ii}|` rather than a zero ridge.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">tr_scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">axis1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">dim</span>
+    <span class="n">mag_scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">axis1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">tr_scale</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tr_scale</span><span class="p">,</span> <span class="n">mag_scale</span><span class="p">)</span>
+    <span class="n">eye</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">H</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">H</span> <span class="o">+</span> <span class="n">damping</span> <span class="o">*</span> <span class="n">scale</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">eye</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_jax_newton_raw</span><span class="p">(</span>
     <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -740,13 +762,13 @@
 <span class="sd">    When grad_fn and hess_fn are both provided, the chain rule is applied</span>
 <span class="sd">    generically via jax.jacobian(to_theta):</span>
 <span class="sd">        g_phi = J^T @ (grad_fn(theta) − eta)</span>
-<span class="sd">        H_phi = J^T @ hess_fn(theta) @ J + ∇²[to_theta(phi)·g_theta]</span>
+<span class="sd">        H_phi = J^T @ H_theta_damped @ J + ∇²[to_theta(phi)·g_theta]</span>
+<span class="sd">        where H_theta_damped is λ tr(H_θ)/n relative Tikhonov in θ-space.</span>
 
 <span class="sd">    Returns (theta_opt, fun, grad_norm, converged) as JAX arrays —</span>
 <span class="sd">    all are vmappable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">phi0</span><span class="p">,</span> <span class="n">to_theta</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_setup_reparam</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
-    <span class="n">dim</span> <span class="o">=</span> <span class="n">phi0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">obj</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
@@ -756,7 +778,7 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">get_g_H</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
             <span class="n">theta</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
             <span class="n">g_theta</span> <span class="o">=</span> <span class="n">grad_fn</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">-</span> <span class="n">eta</span>
-            <span class="n">H_theta</span> <span class="o">=</span> <span class="n">hess_fn</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+            <span class="n">H_theta</span> <span class="o">=</span> <span class="n">_damped_hessian</span><span class="p">(</span><span class="n">hess_fn</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
             <span class="n">J</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">to_theta</span><span class="p">)(</span><span class="n">phi</span><span class="p">)</span>
             <span class="n">g_phi</span> <span class="o">=</span> <span class="n">J</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">g_theta</span>
             <span class="c1"># Second-order correction: ∇²[to_theta(phi)·g_theta]</span>
@@ -764,16 +786,18 @@
                 <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">to_theta</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">g_theta</span><span class="p">)</span>
             <span class="n">H_phi</span> <span class="o">=</span> <span class="n">J</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">H_theta</span> <span class="o">@</span> <span class="n">J</span> <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="n">theta_dot_g</span><span class="p">)(</span><span class="n">phi</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">g_phi</span><span class="p">,</span> <span class="n">H_phi</span>
+        <span class="n">damp_phi</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="n">_hess</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">get_g_H</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_grad</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">_hess</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+        <span class="n">damp_phi</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">newton_body</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
         <span class="n">phi</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">g</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">get_g_H</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-        <span class="n">H_safe</span> <span class="o">=</span> <span class="n">H</span> <span class="o">+</span> <span class="n">HESSIAN_DAMPING</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">H_safe</span> <span class="o">=</span> <span class="n">_damped_hessian</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="k">if</span> <span class="n">damp_phi</span> <span class="k">else</span> <span class="n">H</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H_safe</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
         <span class="n">f0</span> <span class="o">=</span> <span class="n">obj</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
         <span class="n">slope</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>

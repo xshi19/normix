@@ -604,9 +604,10 @@
 <span class="sd">        Optional inequality :math:`A w \le b` (same :math:`w_0` must be</span>
 <span class="sd">        feasible). Pass ``None`` for the budget-only problem.</span>
 <span class="sd">    hess_reg :</span>
-<span class="sd">        Tikhonov damping added to :math:`\tilde H` so the QP is strictly</span>
+<span class="sd">        Absolute Tikhonov ridge on :math:`\tilde H` so the QP is strictly</span>
 <span class="sd">        convex (:math:`\tilde H` has a nontrivial nullspace along</span>
-<span class="sd">        :math:`v^+ = v^-`).</span>
+<span class="sd">        :math:`v^+ = v^-`). Unlike Newton, this is not scaled by</span>
+<span class="sd">        :math:`\mathrm{tr}(\tilde H)`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">w0</span> <span class="o">=</span> <span class="n">approx</span><span class="o">.</span><span class="n">w0</span>
     <span class="n">m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
