@@ -7,15 +7,18 @@ At the minimum ∇f(θ*) = η.
 
 Public API
 ----------
-solve_bregman             single starting point
-solve_bregman_multistart  multiple starting points (vmap for JAX Newton;
-                          for-loop for quasi-Newton and CPU)
-bregman_objective         utility: f(θ) − θ·η
-make_jit_newton_solver    build a stable ``@jax.jit`` Newton solve specialised
-                          to a fixed ``(f, grad_fn, hess_fn, bounds)`` —
-                          repeated calls with matching shapes/dtypes hit the
-                          XLA cache, avoiding the per-call re-tracing that
-                          ``solve_bregman`` incurs from fresh closures.
+solve_bregman
+    Single starting point.
+solve_bregman_multistart
+    Multiple starting points (``vmap`` for JAX Newton; a Python loop
+    for quasi-Newton and CPU).
+bregman_objective
+    Utility :math:`f(\\theta) - \\theta\\cdot\\eta`.
+make_jit_newton_solver
+    Build a stable ``@jax.jit`` Newton solve specialised to a fixed
+    ``(f, grad_fn, hess_fn, bounds)``. Repeated calls with matching
+    shapes/dtypes hit the XLA cache, avoiding the per-call re-tracing
+    that ``solve_bregman`` incurs from fresh closures.
 
 Backends × methods
 ------------------
