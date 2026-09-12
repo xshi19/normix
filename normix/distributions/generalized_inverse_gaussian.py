@@ -361,13 +361,17 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     @classmethod
     def _hessian_log_partition(cls, theta: jax.Array) -> jax.Array:
         r"""
-        :math:`\nabla^2\psi(\theta)=\mathrm{Cov}[t(X)]`, PSD by construction.
+        :math:`\nabla^2\psi(\theta)=\mathrm{Cov}[t(X)]`.
 
         One :func:`~normix.utils.bessel.log_kv_moments` call; the GIG
         sufficient statistic is an affine image of
-        :math:`(x, e^{-x}-1, e^{x}-1)`. Valid in the non-degenerate regime
-        (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``). The Newton solver
-        still applies ``HESSIAN_DAMPING``.
+        :math:`(x, e^{-x}-1, e^{x}-1)`. The dense matrix is PSD to
+        rounding; its smallest eigenvalue has relative error
+        :math:`O(\varepsilon z)` from residual cancellation in ``cov``.
+        Valid in the non-degenerate regime
+        (:math:`\sqrt{ab} \gg` ``GIG_DEGEN_THRESHOLD``). Newton applies
+        relative Tikhonov ``HESSIAN_DAMPING * tr(H_θ)/n`` in θ-space
+        before the bound sandwich.
         """
         p, a_safe, b_safe, z, log_sqrt_ba = cls._unpack_safe(
             theta, jnp, LOG_EPS,

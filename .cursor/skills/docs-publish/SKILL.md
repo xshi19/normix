@@ -156,7 +156,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
   even though the workflow "succeeded". The CI cache key includes `hashFiles('normix/**')`
   to force re-execution on library changes. For a one-off local republish after a
   library fix, use `uv run make -C docs html-strict` (force) or `clean-cache` first.
-- **Tutorial runtime**: the full tutorial tree (`docs/tutorials/**`, 18 executable pages) runs in a few minutes on a fresh build; `em/04_em_vs_mcecm` is the long pole (~2 min, sweeps 21 values of $p$ with EM + MCECM). CI restores the myst-nb cache from prior master builds.
+- **Tutorial runtime**: a cached `docs.yml` build is a few minutes. A cache miss (library change under `normix/**`) re-executes the tree; `em/04_em_vs_mcecm` is the long pole (21 values of $p$, EM + MCECM, CPU E-step Python loop — ~7 min locally, 15+ min on 2-core GHA). That page sets `execution_timeout: 1800`; `docs.yml` allows 90 min so the remaining finance tutorials still fit after it. CI restores the myst-nb cache from prior master builds when `normix/**` is unchanged.
 - **`notebooks/` is not published**: it's a personal research workspace (two-tier `.ipynb`-scratch / jupytext-`.py`-preserved policy, see `notebooks/README.md`), not built by Sphinx.
 - **ASV `gh-pages` trap**: never run `asv gh-pages`. That command replaces the
   Sphinx site with only the dashboard. The dashboard is a subdirectory of the

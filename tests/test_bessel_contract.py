@@ -11,7 +11,9 @@ import numpy as np
 import pytest
 from scipy.special import digamma, exp1, polygamma
 
-from normix.utils.bessel import _BACKENDS, _log_kv_quad_jax, log_kv_moments
+from normix.utils.bessel import (
+    _BACKENDS, _ab_coeffs, _log_kv_quad_jax, log_kv, log_kv_moments,
+)
 from normix.utils.constants import LOG_EPS
 
 _REF_PATH = Path(__file__).resolve().parent / "data" / "bessel_reference.json"
@@ -25,20 +27,43 @@ _AUDIT = [
 ]
 
 
-def _scaled_err(got: float, ref: float) -> float:
-    return abs(got - ref) / max(1.0, abs(ref))
+def _rel_err(got: float, ref: float) -> float:
+    """Relative error. Absolute only when the reference is exactly zero."""
+    denom = abs(ref)
+    if denom == 0.0:
+        return abs(got)
+    return abs(got - ref) / denom
 
 
 def _ok(got: float, ref: float, v: float, key: str) -> tuple[bool, float]:
-    """Scaled 1e-12; ν=0 mixed derivative is a ±1e10 cancellation (1 ulp)."""
+    """Relative vs mpmath; ν=0 mixed / first derivatives are zero by symmetry.
+
+    ``log_k``, ``d_z``, ``d_vv``, ``d_zz`` hold 1e-11. ``d_v`` and ``d_vz``
+    at large z are E[u]~ν/z corrections and use 1e-7. Tight small-curvature
+    pins are ``test_half_order_arg_curvature`` and the GIG directional check.
+    """
     if abs(v) == 0.0 and key == "d_vz":
         err = abs(got - ref)
         return err <= 1e-5, err
     if abs(v) == 0.0 and key == "d_v":
         err = abs(got - ref)
         return err <= 1e-10, err
-    err = _scaled_err(got, ref)
-    return err <= 1e-12, err
+    err = _rel_err(got, ref)
+    tol = 1e-7 if key in ("d_v", "d_vz") else 1e-11
+    return err <= tol, err
+
+
+def _jet_ok(got: float, ref: float, v: float, key: str) -> tuple[bool, float]:
+    """AD vs bundle: absolute near symmetry zeros, else 1e-11 relative.
+
+    Mixed Hessians at large z agree to ~11 digits; 1e-12 relative is one
+    ulp past the two accumulations. ν=0 first order is O(10^{-17}).
+    """
+    if abs(v) == 0.0 and key in ("d_v", "d_vz"):
+        err = abs(got - ref)
+        return err <= 1e-12, err
+    err = _rel_err(got, ref)
+    return err <= 1e-11, err
 
 
 def _second_order_jet(fn, v, z):
@@ -74,7 +99,7 @@ def ref_table():
 @pytest.mark.contract
 @pytest.mark.parametrize("backend", _BACKEND_NAMES)
 def test_reference_scaled_error(backend, ref_table):
-    """Kernel matches the frozen mpmath table to 1e-12 scaled error."""
+    """Kernel matches the frozen mpmath table (1e-11 relative; 1e-7 for d_v / d_vz)."""
     rows = [r for r in ref_table["points"] if r["z"] >= 1e-10]
     vs = np.array([r["v"] for r in rows], dtype=np.float64)
     zs = np.array([r["z"] for r in rows], dtype=np.float64)
@@ -108,7 +133,6 @@ def test_reference_scaled_error(backend, ref_table):
                 f"err={err:.2e}"
             )
     assert worst_key is not None
-    assert worst <= 1e-5
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +149,7 @@ def test_invariants(backend, v, z):
     w = np.linalg.eigvalsh(0.5 * (cov + cov.T))
     assert np.all(w >= -1e-12), w
     assert _as_float(m.d2_order) > 0.0
+    assert _as_float(m.d2_arg) >= 0.0
     assert _as_float(m.d_arg) < 0.0
     assert np.isfinite(_as_float(m.log_k))
     u0 = _as_float(m.u0)
@@ -141,8 +166,8 @@ def test_order_zero_and_parity(backend):
     assert abs(_as_float(m0.d_order)) <= 1e-12
     m_pos = log_kv_moments(2.5, z, backend=backend)
     m_neg = log_kv_moments(-2.5, z, backend=backend)
-    assert _scaled_err(_as_float(m_pos.log_k), _as_float(m_neg.log_k)) <= 1e-12
-    assert _scaled_err(_as_float(m_pos.d_order), -_as_float(m_neg.d_order)) <= 1e-12
+    assert _rel_err(_as_float(m_pos.log_k), _as_float(m_neg.log_k)) <= 1e-12
+    assert _rel_err(_as_float(m_pos.d_order), -_as_float(m_neg.d_order)) <= 1e-12
 
 
 @pytest.mark.contract
@@ -167,7 +192,7 @@ def test_recurrence_lz(backend):
         math.exp(_as_float(Lm.log_k) - _as_float(m.log_k))
         + math.exp(_as_float(Lp.log_k) - _as_float(m.log_k))
     )
-    assert _scaled_err(_as_float(m.d_arg), Lz_rec) <= 1e-12
+    assert _rel_err(_as_float(m.d_arg), Lz_rec) <= 1e-12
 
 
 @pytest.mark.contract
@@ -177,7 +202,7 @@ def test_dlmf_10_38_7(backend):
     z = 1.0
     got = _as_float(log_kv_moments(0.5, z, backend=backend).d_order)
     ref = math.exp(2.0 * z) * float(exp1(2.0 * z))
-    assert _scaled_err(got, ref) <= 1e-12
+    assert _rel_err(got, ref) <= 1e-12
 
 
 @pytest.mark.contract
@@ -189,10 +214,10 @@ def test_smallz_digamma(backend):
     va = abs(v)
     d1 = float(digamma(va) + np.log(2.0 / z))
     d2 = float(polygamma(1, va))
-    assert _scaled_err(_as_float(m.d_order), d1) <= 1e-12
-    assert _scaled_err(_as_float(m.d2_order), d2) <= 1e-12
+    assert _rel_err(_as_float(m.d_order), d1) <= 1e-12
+    assert _rel_err(_as_float(m.d2_order), d2) <= 1e-12
     log_k = float(math.lgamma(va) + va * math.log(2.0 / z) - math.log(2.0))
-    assert _scaled_err(_as_float(m.log_k), log_k) <= 1e-12
+    assert _rel_err(_as_float(m.log_k), log_k) <= 1e-12
 
 
 @pytest.mark.contract
@@ -202,7 +227,7 @@ def test_hankel_lvv(backend):
     v, z = 1.0, 1e4
     got = _as_float(log_kv_moments(v, z, backend=backend).d2_order)
     ref = 1.0 / z - 1.0 / (2.0 * z * z)
-    assert _scaled_err(got, ref) <= 1e-6
+    assert _rel_err(got, ref) <= 1e-6
 
 
 @pytest.mark.contract
@@ -235,19 +260,24 @@ def test_gig_degen_psi_via_moments(backend):
 def test_ad_equals_bundle(v, z):
     m = log_kv_moments(jnp.array(v), jnp.array(z), backend="jax")
     val, g, H = _jet_fn(jnp.array(v), jnp.array(z))
-    assert _scaled_err(_as_float(val), _as_float(m.log_k)) <= 1e-13
-    assert _scaled_err(_as_float(g[0]), _as_float(m.d_order)) <= 1e-13
-    assert _scaled_err(_as_float(g[1]), _as_float(m.d_arg)) <= 1e-13
-    assert _scaled_err(_as_float(H[0, 0]), _as_float(m.d2_order)) <= 1e-13
-    assert _scaled_err(_as_float(H[0, 1]), _as_float(m.d2_order_arg)) <= 1e-13
-    assert _scaled_err(_as_float(H[1, 1]), _as_float(m.d2_arg)) <= 1e-13
+    checks = (
+        ("log_k", _as_float(val), _as_float(m.log_k)),
+        ("d_v", _as_float(g[0]), _as_float(m.d_order)),
+        ("d_z", _as_float(g[1]), _as_float(m.d_arg)),
+        ("d_vv", _as_float(H[0, 0]), _as_float(m.d2_order)),
+        ("d_vz", _as_float(H[0, 1]), _as_float(m.d2_order_arg)),
+        ("d_zz", _as_float(H[1, 1]), _as_float(m.d2_arg)),
+    )
+    for key, got, ref in checks:
+        ok, err = _jet_ok(got, ref, v, key)
+        assert ok, f"{key}({v}, {z}): got {got}, ref {ref}, err={err:.2e}"
 
 
 @pytest.mark.contract
 def test_mode_agrees_with_asinh():
     v, z = 2.5, 0.3
     m = log_kv_moments(v, z, backend="cpu")
-    assert _scaled_err(_as_float(m.u0), math.asinh(v / z)) <= 1e-14
+    assert _rel_err(_as_float(m.u0), math.asinh(v / z)) <= 1e-14
 
 
 @pytest.mark.contract
@@ -283,9 +313,11 @@ def test_cpu_jax_moments_agree():
     for a, b in (
         (mj.log_k, mc.log_k),
         (mj.d_order, mc.d_order),
+        (mj.d_arg, mc.d_arg),
         (mj.d2_order, mc.d2_order),
+        (mj.d2_arg, mc.d2_arg),
     ):
-        assert _scaled_err(_as_float(a), _as_float(b)) <= 1e-12
+        assert _rel_err(_as_float(a), _as_float(b)) <= 1e-12
 
 
 @pytest.mark.contract
@@ -296,25 +328,58 @@ def test_cpu_vectorized_batch():
     assert np.asarray(m.log_k).shape == (8,)
     assert np.asarray(m.mean).shape == (8, 3)
     assert np.asarray(m.cov).shape == (8, 3, 3)
+    assert np.asarray(m.d_arg).shape == (8,)
+    assert np.asarray(m.d2_arg).shape == (8,)
 
 
 # ---------------------------------------------------------------------------
-# Former seams: Lipschitz in ν
+# Exact identities / extreme argument
+# ---------------------------------------------------------------------------
+
+@pytest.mark.contract
+@pytest.mark.parametrize("backend", _BACKEND_NAMES)
+@pytest.mark.parametrize("z", [1e2, 1e4, 1e6, 1e8, 1e10, 1e12])
+def test_half_order_arg_curvature(backend, z):
+    """2 z² ∂_{zz} log K_{1/2} = 1 (DLMF 10.39.2)."""
+    m = log_kv_moments(0.5, z, backend=backend)
+    got = 2.0 * z * z * _as_float(m.d2_arg)
+    assert abs(got - 1.0) <= 1e-8, (z, got)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("backend", _BACKEND_NAMES)
+def test_log_kv_large_z_finite(backend):
+    """z² in κ−ν must not overflow; log K_{1/2}(10^{155}) is finite."""
+    z = 1e155
+    kappa, a, b = _ab_coeffs(np.array(0.5), np.array(z), np)
+    assert np.isfinite(kappa) and np.isfinite(a) and np.isfinite(b)
+    got = _as_float(log_kv(0.5, z, backend=backend))
+    assert np.isfinite(got)
+    assert got < 0.0
+
+
+# ---------------------------------------------------------------------------
+# Former seams: d_order vs d2_order consistency
 # ---------------------------------------------------------------------------
 
 @pytest.mark.slow
 @pytest.mark.parametrize("z", [1e-6, 1.0, 100.0])
-def test_former_seam_lipschitz(z):
-    vs = np.arange(-30.0, 30.0 + 1e-12, 0.01)
+def test_former_seam_order_consistency(z):
+    """Δ L_ν / h matches L_{νν} at the midpoint; no global Lipschitz bound.
+
+    At z=10^{-6}, L_{νν}(0) ≈ 66 so a 0.01 step in ν moves L_ν by ~0.66.
+    A seam would show up as a first-order Taylor residual of that size.
+    """
+    h = 0.01
+    vs = np.arange(-30.0, 30.0 + 1e-12, h)
     m = log_kv_moments(vs, np.full_like(vs, z), backend="cpu")
     lv = np.asarray(m.d_order, dtype=np.float64)
     lvv = np.asarray(m.d2_order, dtype=np.float64)
-    dv = np.max(np.abs(np.diff(lv)))
-    d2 = np.max(np.abs(np.diff(lvv)))
-    # A seam of size ~2e-5 over h=1e-5 would produce ΔL_ν ~ 2 per 0.01 step.
-    assert dv < 0.05, dv
-    assert d2 < 0.05, d2
     assert np.all(lvv > 0.0)
+    mid = 0.5 * (lvv[1:] + lvv[:-1])
+    resid = np.diff(lv) / h - mid
+    scale = np.maximum(np.abs(mid), 1e-12)
+    assert np.max(np.abs(resid) / scale) < 0.05
 
 
 @pytest.mark.slow
@@ -337,4 +402,4 @@ def test_third_derivative_richardson():
     r1, r2 = fd3(h1), fd3(h2)
     # Richardson: (4 r2 − r1)/3 is O(h⁴) for this stencil.
     rich = (4.0 * r2 - r1) / 3.0
-    assert _scaled_err(d3, rich) < 1e-4
+    assert _rel_err(d3, rich) < 1e-4

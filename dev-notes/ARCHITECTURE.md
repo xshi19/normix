@@ -213,7 +213,9 @@ The model knows math; the fitter knows iteration (following GMMX).
 whole-line Gauss–Legendre kernel (S10). Geometry frozen under
 `stop_gradient`; `jax.grad` / `jax.hessian` of `log_kv` are cumulants.
 `log_kv_moments` returns `BesselMoments`; GIG $\eta,H$ are an affine
-image of one bundle. `backend='cpu'` is the same sums in NumPy.
+image of one bundle. Argument jets on the bundle are product-form
+projections, not reconstructions from `cov`. `backend='cpu'` is the
+same sums in NumPy.
 `scipy.kve` is a test oracle. Detail: `tech_notes/bessel_moment_kernel.md`.
 
 ### CPU Versions for Bessel-Dependent Functions
@@ -247,7 +249,7 @@ from there. Never define magic numbers locally in distribution files.
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping |
 | `TINY` | `1e-300` | Floor for numpy-side log |
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
-| `HESSIAN_DAMPING` | `1e-6` | Tikhonov damping in Newton Hessian |
+| `HESSIAN_DAMPING` | `1e-6` | Relative Tikhonov coefficient: Newton uses $H+\lambda(\mathrm{tr}\,H/n)I$ |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
 | `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |
 | `GIG_CLAMP_LO` | `1e-6` | Lower clamp for GIG `a`, `b` in the GH M-step |
