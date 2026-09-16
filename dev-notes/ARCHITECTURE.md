@@ -248,7 +248,7 @@ from there. Never define magic numbers locally in distribution files.
 |---|---|---|
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping |
 | `TINY` | `1e-300` | Floor for numpy-side log |
-| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
+| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) cap for the GIG small-z Gamma/InvGamma limit (with \|p\| log(2/z) > BESSEL_QUAD_LOG_DROP) |
 | `HESSIAN_DAMPING` | `1e-6` | Relative Tikhonov coefficient: Newton uses $H+\lambda(\mathrm{tr}\,H/n)I$ |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
 | `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |

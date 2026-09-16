@@ -63,13 +63,45 @@ from normix.utils.bessel import log_kv, log_kv_moments
 from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
-    LOG_EPS, TINY, GIG_DEGEN_THRESHOLD,
+    LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_LOG_DROP,
     THETA_FLOOR, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
     solve_bregman, solve_bregman_multistart,
     make_jit_newton_solver,
 )
+
+
+def _gig_degeneracy_flags(p, a, b, xp):
+    r"""Small-:math:`z` GIG limit predicate and off-domain flag.
+
+    The one-term Gamma / InverseGamma form is used iff
+
+    .. math::
+
+        z < z_{\max} \quad\text{and}\quad |p|\log(2/z) > C,
+
+    with :math:`z_{\max}=` ``GIG_DEGEN_THRESHOLD`` (bounds the
+    :math:`O(z^2)` remainder) and :math:`C=` ``BESSEL_QUAD_LOG_DROP``
+    (bounds the :math:`\rho_{|p|}` truncation). Form is
+    :math:`\operatorname{sign}(p)`. Combinations outside :math:`\Theta`
+    (:math:`b=0,\,p\le 0`; :math:`a=0,\,p\ge 0`) set ``off_theta``.
+    """
+    p = xp.asarray(p, dtype=xp.float64)
+    a = xp.maximum(xp.asarray(a, dtype=xp.float64), 0.0)
+    b = xp.maximum(xp.asarray(b, dtype=xp.float64), 0.0)
+    z = xp.sqrt(a * b)
+    inf = xp.asarray(np.inf, dtype=xp.float64)
+    tiny = xp.asarray(np.finfo(np.float64).tiny, dtype=xp.float64)
+    log_2_over_z = xp.where(z > 0.0, xp.log(2.0 / xp.maximum(z, tiny)), inf)
+    # np.where evaluates both arms: avoid 0 * +∞ → NaN when p=0, z=0.
+    safe_log = xp.where(p == 0.0, xp.zeros_like(log_2_over_z), log_2_over_z)
+    nats = xp.abs(p) * safe_log
+    use_limit = (z < GIG_DEGEN_THRESHOLD) & (nats > BESSEL_QUAD_LOG_DROP)
+    off_theta = ((b <= 0.0) & (p <= 0.0)) | ((a <= 0.0) & (p >= 0.0))
+    use_gamma = use_limit & (p > 0.0) & (a > 0.0)
+    use_invg = use_limit & (p < 0.0) & (b > 0.0)
+    return use_gamma, use_invg, off_theta, z
 
 
 # ---------------------------------------------------------------------------
@@ -207,10 +239,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         in the interior all moments are finite Bessel ratios.
         """
         p, a, b = self.p, self.a, self.b
-        sqrt_ab = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
-        use_gamma = use_degen & (b <= a)
-        use_invg = use_degen & (a < b)
+        use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
         alpha_g = jnp.maximum(p, LOG_EPS)
         beta_g = jnp.maximum(a / 2.0, LOG_EPS)
@@ -246,41 +275,37 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         r"""
         :math:`\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + (p/2)(\log b - \log a)`.
 
-        Degenerate limit (:math:`\sqrt{ab} < \text{threshold}`): delegate to
-        Gamma/InverseGamma. All branches use safe clamped values so no NaN
-        gradients from non-selected ``jnp.where`` branches.
+        Small-:math:`z` limit (see ``_gig_degeneracy_flags``): Gamma
+        if :math:`p>0`, InverseGamma if :math:`p<0`. Otherwise the Bessel
+        kernel on ``(a_safe, b_safe)`` as in :meth:`_grad_log_partition`.
+        Off :math:`\Theta` returns :math:`+\infty`. Clamps on the Gamma /
+        InverseGamma branches are unselected-branch guards.
         """
         p = theta[0] + 1.0
         b = jnp.maximum(-2.0 * theta[1], 0.0)
         a = jnp.maximum(-2.0 * theta[2], 0.0)
-        sqrt_ab = jnp.sqrt(a * b)
+        use_gamma, use_invg, off_theta, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
-        # Safe sqrt_ab to prevent log_kv(p, 0) blow-up
-        sqrt_ab_safe = jnp.maximum(sqrt_ab, LOG_EPS)
+        _, _, _, z_safe, log_sqrt_ba = (
+            GeneralizedInverseGaussian._unpack_safe(theta, jnp, LOG_EPS)
+        )
+        psi_bessel = jnp.log(2.0) + log_kv(p, z_safe) + p * log_sqrt_ba
 
-        # General Bessel case
-        psi_bessel = (jnp.log(2.0) + log_kv(p, sqrt_ab_safe)
-                      + 0.5 * p * (jnp.log(b + LOG_EPS) - jnp.log(a + LOG_EPS)))
-
-        # Gamma limit (b→0, p>0): Gamma(p, a/2)
         alpha_g = jnp.maximum(p, LOG_EPS)
         beta_g = jnp.maximum(a / 2.0, LOG_EPS)
         psi_gamma = (jax.scipy.special.gammaln(alpha_g)
                      - alpha_g * jnp.log(beta_g))
 
-        # InverseGamma limit (a→0, p<0): InvGamma(-p, b/2)
         alpha_ig = jnp.maximum(-p, LOG_EPS)
         beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
         psi_invgamma = (jax.scipy.special.gammaln(alpha_ig)
                         - alpha_ig * jnp.log(beta_ig))
 
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
-        use_gamma = use_degen & (b <= a)   # b≈0: Gamma limit
-        use_invg = use_degen & (a < b)     # a≈0: InvGamma limit
-
-        return jnp.where(use_gamma, psi_gamma,
-               jnp.where(use_invg, psi_invgamma,
-                         psi_bessel))
+        psi = jnp.where(
+            use_gamma, psi_gamma,
+            jnp.where(use_invg, psi_invgamma, psi_bessel),
+        )
+        return jnp.where(off_theta, jnp.inf, psi)
 
     def natural_params(self) -> jax.Array:
         return jnp.array([self.p - 1.0, -self.b / 2.0, -self.a / 2.0])
@@ -391,23 +416,24 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         p = theta[0] + 1.0
         b = max(-2.0 * theta[1], 0.0)
         a = max(-2.0 * theta[2], 0.0)
-        sqrt_ab = np.sqrt(a * b)
+        use_gamma, use_invg, off_theta, _ = _gig_degeneracy_flags(p, a, b, np)
 
-        if sqrt_ab < GIG_DEGEN_THRESHOLD:
+        if bool(np.asarray(off_theta)):
+            return float(np.inf)
+        if bool(np.asarray(use_gamma)):
             from scipy.special import gammaln
-            if b <= a:
-                alpha = max(p, TINY)
-                beta = max(a / 2.0, TINY)
-                return float(gammaln(alpha) - alpha * np.log(beta))
-            else:
-                alpha = max(-p, TINY)
-                beta = max(b / 2.0, TINY)
-                return float(gammaln(alpha) - alpha * np.log(beta))
+            alpha = max(p, TINY)
+            beta = max(a / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
+        if bool(np.asarray(use_invg)):
+            from scipy.special import gammaln
+            alpha = max(-p, TINY)
+            beta = max(b / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
 
-        sqrt_ab_safe = max(sqrt_ab, TINY)
+        _, _, _, z_safe, log_sqrt_ba = cls._unpack_safe(theta, np, TINY)
         return float(
-            np.log(2.0) + log_kv(p, sqrt_ab_safe, backend='cpu')
-            + 0.5 * p * (np.log(max(b, TINY)) - np.log(max(a, TINY)))
+            np.log(2.0) + log_kv(p, z_safe, backend='cpu') + p * log_sqrt_ba
         )
 
     @classmethod
@@ -534,8 +560,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Trapezoidal CDF on a :math:`w = \log x` grid built from
         :meth:`log_prob`; seeded at :math:`\log` :meth:`mode`.  In the
-        degenerate regimes (:math:`\sqrt{ab} <` ``GIG_DEGEN_THRESHOLD``)
-        delegates to the limiting Gamma / InverseGamma CDF for accuracy.
+        small-:math:`z` Gamma / InverseGamma regimes (see
+        ``_gig_degeneracy_flags``) delegates to the limiting CDF.
 
         JIT-compatible: the degeneracy test uses :func:`jax.lax.cond`
         (no host ``float()`` casts).
@@ -567,8 +593,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     def _cdf_or_ppf(self, z: jax.Array, *, inverse: bool) -> jax.Array:
         """Shared JIT-safe CDF / PPF with degenerate Gamma / InvGamma limits."""
         p, a, b = self.p, self.a, self.b
-        sqrt_ab = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
+        use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
+        use_degen = use_gamma | use_invg
 
         def _degen(z_):
             from normix.distributions.gamma import Gamma
@@ -581,8 +607,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 alpha=jnp.maximum(-p, LOG_EPS),
                 beta=jnp.maximum(b / 2.0, LOG_EPS),
             )
-            # Gamma limit requires p>0 (and b≪a); otherwise InverseGamma.
-            use_gamma = (b <= a) & (p > 0)
             if inverse:
                 return jnp.where(use_gamma, g.ppf(z_), ig.ppf(z_))
             return jnp.where(use_gamma, g.cdf(z_), ig.cdf(z_))
