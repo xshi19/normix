@@ -126,16 +126,49 @@ _GIG_TDR_MAX_ROUNDS = 256
 
 
 def _gig_log_mode(p, a, b) -> jax.Array:
-    r"""Log-mode :math:`w_0 = s + \operatorname{asinh}(p/z)`.
+    r"""Log-mode of :math:`W=\log X`, or of :math:`X` when called with :math:`p-1`.
 
-    :math:`z=\sqrt{ab}`, :math:`s=\tfrac12\log(b/a)`. For the density of
-    :math:`X` pass :math:`p-1`; for the log-density of :math:`W=\log X`
-    pass :math:`p`.
+    Interior (:math:`a>0`, :math:`b>0`):
+
+    .. math::
+
+        w_0 = s + \operatorname{asinh}(p/z),
+        \qquad z=\sqrt{ab},\; s=\tfrac12\log(b/a).
+
+    At an exact boundary the asinh form is :math:`\infty-\infty`; the
+    rationalized :math:`x`-space pair is used instead:
+
+    .. math::
+
+        e^{w_0}
+        = \begin{cases}
+            (|p|+r)/a & p\ge 0 \\
+            b/(|p|+r) & p<0
+          \end{cases},
+        \qquad r=\sqrt{p^2+ab}.
+
+    For the density of :math:`X` pass :math:`p-1`; for the log-density
+    of :math:`W` pass :math:`p`.
     """
     tiny = jnp.asarray(np.finfo(np.float64).tiny)
-    z = jnp.maximum(jnp.sqrt(a) * jnp.sqrt(b), tiny)
-    s = 0.5 * (jnp.log(b) - jnp.log(a))
-    return s + jnp.arcsinh(p / z)
+    p = jnp.asarray(p, dtype=jnp.float64)
+    a = jnp.asarray(a, dtype=jnp.float64)
+    b = jnp.asarray(b, dtype=jnp.float64)
+    z = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
+    interior = (a > 0.0) & (b > 0.0)
+    a_pos = jnp.maximum(a, tiny)
+    b_pos = jnp.maximum(b, tiny)
+    s = 0.5 * (jnp.log(b_pos) - jnp.log(a_pos))
+    w_asinh = s + jnp.arcsinh(p / jnp.maximum(z, tiny))
+    r = jnp.hypot(p, z)
+    abs_p = jnp.abs(p)
+    x0 = jnp.where(
+        p >= 0.0,
+        (abs_p + r) / jnp.maximum(a, tiny),
+        b / jnp.maximum(abs_p + r, tiny),
+    )
+    w_rat = jnp.log(jnp.maximum(x0, tiny))
+    return jnp.where(interior, w_asinh, w_rat)
 
 
 def _gig_psi(u, p, c_R, c_L):
@@ -231,17 +264,33 @@ def _gig_tdr_propose(key: jax.Array, env: dict, n: int):
     return u, accept
 
 
-def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
-    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w=\log x`.
+def _gig_rvs_boundary(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Exact :math:`a=0` or :math:`b=0`: Gamma, InverseGamma, or off-:math:`\Theta` NaN.
+
+    TDR is defined for :math:`a,b>0`. The small-:math:`z` interior limit
+    is still sampled by TDR; this path is only the exact boundary.
+    """
+    alpha_g = jnp.maximum(p, LOG_EPS)
+    beta_g = jnp.maximum(a / 2.0, LOG_EPS)
+    alpha_ig = jnp.maximum(-p, LOG_EPS)
+    beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
+    g = jax.random.gamma(key, alpha_g, shape=(n,), dtype=jnp.float64)
+    x_gamma = g / beta_g
+    g_ig = jax.random.gamma(key, alpha_ig, shape=(n,), dtype=jnp.float64)
+    x_invg = beta_ig / g_ig
+    use_gamma = (b <= 0.0) & (p > 0.0) & (a > 0.0)
+    use_invg = (a <= 0.0) & (p < 0.0) & (b > 0.0)
+    nan = jnp.full((n,), jnp.nan, dtype=jnp.float64)
+    return jnp.where(use_gamma, x_gamma, jnp.where(use_invg, x_invg, nan))
+
+
+def _gig_rvs_tdr(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""TDR on :math:`w=\log x` for :math:`a,b>0`.
 
     Envelope tangents at the :math:`e^{-1}` level of the centred log-density
     :math:`\psi`; :func:`jax.lax.while_loop` redraws only unaccepted columns.
-    Acceptance is at least :math:`e^{-1}` for every :math:`(p,a,b)` with
-    :math:`a,b>0`.
+    A column that exhausts ``_GIG_TDR_MAX_ROUNDS`` is NaN, never a reject.
     """
-    p = jnp.asarray(p, dtype=jnp.float64)
-    a = jnp.asarray(a, dtype=jnp.float64)
-    b = jnp.asarray(b, dtype=jnp.float64)
     env = _gig_tdr_setup(p, a, b)
 
     def cond(state):
@@ -258,8 +307,29 @@ def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
     u0 = jnp.zeros((n,), dtype=jnp.float64)
     done0 = jnp.zeros((n,), dtype=bool)
     i0 = jnp.asarray(0, dtype=jnp.int32)
-    _, _, u, _ = jax.lax.while_loop(cond, body, (key, done0, u0, i0))
+    _, done, u, _ = jax.lax.while_loop(cond, body, (key, done0, u0, i0))
+    u = jnp.where(done, u, jnp.nan)
     return jnp.exp(env["w0"] + u)
+
+
+def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w=\log x`.
+
+    Interior :math:`a,b>0` uses Devroye TDR (acceptance at least
+    :math:`e^{-1}`). Exact :math:`a=0` or :math:`b=0` dispatches to
+    :math:`\mathrm{Gamma}(p,a/2)` / :math:`\mathrm{InvGamma}(-p,b/2)`
+    (or NaN off :math:`\Theta`).
+    """
+    p = jnp.asarray(p, dtype=jnp.float64)
+    a = jnp.asarray(a, dtype=jnp.float64)
+    b = jnp.asarray(b, dtype=jnp.float64)
+    boundary = (a <= 0.0) | (b <= 0.0)
+    return jax.lax.cond(
+        boundary,
+        lambda _: _gig_rvs_boundary(key, p, a, b, n),
+        lambda _: _gig_rvs_tdr(key, p, a, b, n),
+        None,
+    )
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
@@ -604,12 +674,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return m2 - m1 ** 2
 
     def mode(self) -> jax.Array:
-        r"""Interior mode :math:`x^\star = \exp\bigl(s + \operatorname{asinh}((p-1)/z)\bigr)`.
+        r"""Mode :math:`x^\star = \exp(w_0)` with :math:`w_0` from ``_gig_log_mode(p-1, a, b)``.
 
         Unique positive critical point of the log-density for every
         :math:`p` with :math:`a, b > 0`. The density vanishes
         super-exponentially at 0 when :math:`b > 0`; it does not diverge
-        there for :math:`p < 1`.
+        there for :math:`p < 1`. At :math:`b=0,\,p>1` this is the Gamma
+        mode :math:`2(p-1)/a`; at :math:`a=0,\,p<0` the InverseGamma mode
+        :math:`b/(2(1-p))`.
         """
         return jnp.exp(_gig_log_mode(self.p - 1.0, self.a, self.b))
 

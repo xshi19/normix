@@ -18,15 +18,18 @@ JIT-able and GPU-accelerated.
 
 Works in $w=\log x$ with the centred kernel $\psi(u)=g(w_0+u)-g(w_0)$ in
 $(p,z,s)$ coordinates ($z=\sqrt{ab}$, $s=\tfrac12\log(b/a)$,
-$w_0=s+\operatorname{asinh}(p/z)$). Coefficients of $\operatorname{expm1}(\pm u)$
+$w_0=s+\operatorname{asinh}(p/z)$ for $a,b>0$). At an exact $a=0$ or $b=0$
+boundary `_gig_log_mode` uses the rationalized $x$-space pair instead of
+asinh, and default `rvs` samples Gamma / InverseGamma (NaN off $\Theta$).
+Coefficients of $\operatorname{expm1}(\pm u)$
 are $r\pm|p|$ with $r-|p|=z^2/(r+|p|)$. Tangent points solve $\psi(\pm t)=-1$
 (fixed bisection, `BESSEL_WINDOW_ITERS`); the hat is flat on the $e^{-1}$
 secants and exponential in the tails. Concavity gives acceptance
-$\ge e^{-1}$ uniformly in $(p,a,b)$.
+$\ge e^{-1}$ uniformly in $(p,a,b)$ with $a,b>0$.
 
 `lax.while_loop` redraws only unaccepted columns — never emit a rejected
-proposal via `argmax` on an all-False mask. `mode()` and the PINV seed share
-`_gig_log_mode`.
+proposal via `argmax` on an all-False mask (exhausted columns are NaN).
+`mode()` and the PINV seed share `_gig_log_mode`.
 
 **Bessel-free:** only the unnormalized log-kernel is evaluated.
 

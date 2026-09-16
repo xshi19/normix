@@ -13,12 +13,14 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import stats
 
+from normix.distributions.gamma import Gamma
 from normix.distributions.generalized_inverse_gaussian import (
     GIG,
     _gig_log_mode,
     _gig_tdr_propose,
     _gig_tdr_setup,
 )
+from normix.distributions.inverse_gamma import InverseGamma
 
 pytestmark = pytest.mark.contract
 
@@ -84,6 +86,41 @@ class TestGIGLogMode:
         gig = GIG(0.0, 1e-8, 1e-8)
         c = float(gig.cdf(gig.mode()))
         assert 0.0 < c < 1.0
+
+    def test_mode_gamma_boundary(self):
+        gig = GIG(2.0, 3.0, 0.0)
+        gamma = Gamma(alpha=2.0, beta=1.5)
+        assert_allclose(float(gig.mode()), float(gamma.mode()), rtol=1e-12)
+        assert_allclose(float(gig.mode()), 2.0 / 3.0, rtol=1e-12)
+
+    def test_mode_invgamma_boundary(self):
+        gig = GIG(-2.0, 0.0, 3.0)
+        ig = InverseGamma(alpha=2.0, beta=1.5)
+        assert_allclose(float(gig.mode()), float(ig.mode()), rtol=1e-12)
+        assert_allclose(float(gig.mode()), 0.5, rtol=1e-12)
+
+    def test_rvs_gamma_boundary_finite(self):
+        draws = np.asarray(GIG(2.0, 3.0, 0.0).rvs(500, seed=0), dtype=np.float64)
+        assert np.all(np.isfinite(draws) & (draws > 0.0))
+        # Gamma(2, 1.5) mean = 4/3
+        assert_allclose(float(np.mean(draws)), 4.0 / 3.0, rtol=0.15)
+
+    def test_rvs_invgamma_boundary_finite(self):
+        draws = np.asarray(GIG(-2.0, 0.0, 3.0).rvs(500, seed=0), dtype=np.float64)
+        assert np.all(np.isfinite(draws) & (draws > 0.0))
+
+    def test_exhausted_tdr_rounds_are_nan(self, monkeypatch):
+        import normix.distributions.generalized_inverse_gaussian as gig_mod
+        monkeypatch.setattr(gig_mod, "_GIG_TDR_MAX_ROUNDS", 0)
+        draws = np.asarray(
+            gig_mod._gig_rvs_tdr(
+                jax.random.PRNGKey(0),
+                jnp.float64(0.0), jnp.float64(1.0), jnp.float64(1.0),
+                8,
+            ),
+            dtype=np.float64,
+        )
+        assert np.all(np.isnan(draws))
 
 
 class TestGIGTDRAcceptance:

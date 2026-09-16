@@ -234,7 +234,7 @@ Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and 
 
 GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py`:
 
-- `_gig_rvs_devroye(key, p, a, b, n)` — Devroye TDR on $w = \log x$ in $(p,z,s)$ coordinates; $e^{-1}$ tangents; `lax.while_loop` redraws unaccepted columns.
+- `_gig_rvs_devroye(key, p, a, b, n)` — Devroye TDR on $w = \log x$ in $(p,z,s)$ coordinates for $a,b>0$ ($e^{-1}$ tangents; `lax.while_loop` redraws unaccepted columns, exhausted columns NaN). Exact $a=0$/$b=0$ samples Gamma / InverseGamma.
 - `GIG.rvs(method='pinv')` — routes through `quantile_table().rvs`.
 
 Neither method evaluates the Bessel normalising constant. See `tech_notes/gig_rvs.md`.
