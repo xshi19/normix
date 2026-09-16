@@ -64,6 +64,7 @@ from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
     LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_LOG_DROP,
+    BESSEL_WINDOW_ITERS, BESSEL_WINDOW_HI_MAX,
     THETA_FLOOR, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
@@ -110,97 +111,155 @@ def _gig_degeneracy_flags(p, a, b, xp):
 #
 # Two GIG sampling methods, neither requiring Bessel evaluation:
 #
-# 1. ``_gig_rvs_devroye`` — Transformed density rejection on
-#    :math:`w = \log x` where the GIG log-kernel
-#    :math:`g(w) = pw - (a e^w + b e^{-w})/2` is strictly concave.
-#    Three-piece tangent-line envelope, batch-parallel (no
-#    ``while_loop``), ~80–90% acceptance.
+# 1. ``_gig_rvs_devroye`` — Devroye TDR on :math:`u = w - w_0` in
+#    :math:`(p,z,s)` coordinates. Envelope tangents sit at the
+#    :math:`e^{-1}` level of :math:`\psi`; ``lax.while_loop`` redraws
+#    unaccepted columns (acceptance :math:`\ge e^{-1}` uniformly).
 #
 # 2. ``build_pinv_table`` + ``rvs_pinv`` — Numerical inverse CDF via
-#    :func:`normix.utils.rvs.build_pinv_table` seeded at :meth:`GIG.mode`.
+#    :func:`normix.utils.rvs.build_pinv_table` seeded at
+#    ``_gig_log_mode(p-1, a, b)``.
 
 _GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
-_GIG_RVS_MAX_REJECT_ROUNDS = 20
+_GIG_TDR_DOUBLE_ITERS = 8
+_GIG_TDR_MAX_ROUNDS = 256
+
+
+def _gig_log_mode(p, a, b) -> jax.Array:
+    r"""Log-mode :math:`w_0 = s + \operatorname{asinh}(p/z)`.
+
+    :math:`z=\sqrt{ab}`, :math:`s=\tfrac12\log(b/a)`. For the density of
+    :math:`X` pass :math:`p-1`; for the log-density of :math:`W=\log X`
+    pass :math:`p`.
+    """
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    z = jnp.maximum(jnp.sqrt(a) * jnp.sqrt(b), tiny)
+    s = 0.5 * (jnp.log(b) - jnp.log(a))
+    return s + jnp.arcsinh(p / z)
+
+
+def _gig_psi(u, p, c_R, c_L):
+    r""":math:`\psi(u)=p u - \tfrac{c_R}{2}\operatorname{expm1}(u)
+    - \tfrac{c_L}{2}\operatorname{expm1}(-u)`."""
+    return p * u - 0.5 * c_R * jnp.expm1(u) - 0.5 * c_L * jnp.expm1(-u)
+
+
+def _gig_dpsi(u, p, c_R, c_L):
+    return p - 0.5 * c_R * jnp.exp(u) + 0.5 * c_L * jnp.exp(-u)
+
+
+def _gig_tdr_root(p, c_R, c_L, side: float) -> jax.Array:
+    r"""Positive root of :math:`\psi(\mathrm{side}\cdot s)=-1` via doubling then bisection."""
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    hi_max = jnp.asarray(BESSEL_WINDOW_HI_MAX, dtype=jnp.float64)
+    coeff = jnp.where(side > 0.0, 0.5 * c_R, 0.5 * c_L)
+    hi = jnp.minimum(
+        jnp.maximum(jnp.log1p(1.0 / jnp.maximum(coeff, tiny)), 1.0),
+        hi_max,
+    )
+
+    def psi_at(x):
+        return _gig_psi(side * x, p, c_R, c_L)
+
+    def double_body(_i, hi):
+        return jnp.minimum(jnp.where(psi_at(hi) > -1.0, hi * 2.0, hi), hi_max)
+
+    hi = jax.lax.fori_loop(0, _GIG_TDR_DOUBLE_ITERS, double_body, hi)
+    lo = jnp.zeros((), dtype=jnp.float64)
+
+    def bisect_body(_i, carry):
+        lo, hi = carry
+        mid = 0.5 * (lo + hi)
+        wider = psi_at(mid) > -1.0
+        return jnp.where(wider, mid, lo), jnp.where(wider, hi, mid)
+
+    _, hi = jax.lax.fori_loop(0, BESSEL_WINDOW_ITERS, bisect_body, (lo, hi))
+    return hi
 
 
 def _gig_tdr_setup(p, a, b):
-    r"""Three-piece TDR envelope for :math:`g(w) = pw - (a e^w + b e^{-w})/2`."""
-    t0 = (p + jnp.sqrt(p * p + a * b)) / a
-    w0 = jnp.log(t0)
-    g0 = p * w0 - 0.5 * (a * t0 + b / t0)
-
-    neg_gpp = 0.5 * (a * t0 + b / t0)
-    sigma = 1.0 / jnp.sqrt(neg_gpp)
-
-    wL, wR = w0 - sigma, w0 + sigma
-    tL, tR = jnp.exp(wL), jnp.exp(wR)
-
-    gL = p * wL - 0.5 * (a * tL + b / tL)
-    gR = p * wR - 0.5 * (a * tR + b / tR)
-    gpL = p - 0.5 * a * tL + 0.5 * b / tL      # g′(wL) > 0
-    gpR = p - 0.5 * a * tR + 0.5 * b / tR      # g′(wR) < 0
-
-    wsL = wL + (g0 - gL) / gpL
-    wsR = wR + (g0 - gR) / gpR
-
-    inv_lL = 1.0 / gpL
-    inv_lR = 1.0 / (-gpR)
-    width  = wsR - wsL
-    D      = inv_lL + width + inv_lR
-
+    r"""Devroye :math:`e^{-1}` TDR envelope in :math:`(p,z,s)` coordinates."""
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    z = jnp.maximum(jnp.sqrt(a) * jnp.sqrt(b), tiny)
+    w0 = _gig_log_mode(p, a, b)
+    r = jnp.hypot(p, z)
+    abs_p = jnp.abs(p)
+    A = r + abs_p
+    B = z * (z / jnp.maximum(A, tiny))
+    c_R = jnp.where(p >= 0.0, A, B)
+    c_L = jnp.where(p >= 0.0, B, A)
+    t = _gig_tdr_root(p, c_R, c_L, 1.0)
+    sm = _gig_tdr_root(p, c_R, c_L, -1.0)
+    zeta = jnp.maximum(-_gig_dpsi(t, p, c_R, c_L), tiny)
+    xi = jnp.maximum(_gig_dpsi(-sm, p, c_R, c_L), tiny)
+    tp = t - 1.0 / zeta
+    sp = sm - 1.0 / xi
     return dict(
-        g0=g0, wsL=wsL, wsR=wsR, gpL=gpL, gpR=gpR,
-        width=width, pL=inv_lL / D, pM=width / D, lR=-gpR,
+        w0=w0, p=p, c_R=c_R, c_L=c_L,
+        t=t, s=sm, zeta=zeta, xi=xi, tp=tp, sp=sp, area=t + sm,
     )
 
 
-def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
-    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w = \log x`.
+def _gig_tdr_propose(key: jax.Array, env: dict, n: int):
+    """One envelope proposal of shape ``(n,)``. Returns ``(u, accept)``."""
+    k1, k2, k3 = jax.random.split(key, 3)
+    U = jax.random.uniform(k1, (n,), dtype=jnp.float64)
+    V = jnp.maximum(
+        jax.random.uniform(k2, (n,), dtype=jnp.float64), _GIG_RVS_TINY64,
+    )
+    W = jnp.maximum(
+        jax.random.uniform(k3, (n,), dtype=jnp.float64), _GIG_RVS_TINY64,
+    )
+    tp, sp, zeta, xi, area = (
+        env["tp"], env["sp"], env["zeta"], env["xi"], env["area"],
+    )
+    inv_xi = 1.0 / xi
+    width = tp + sp
+    pL = inv_xi / area
+    pM = width / area
+    left = U < pL
+    mid = (U >= pL) & (U < pL + pM)
+    u = jnp.where(
+        left, -sp + jnp.log(V) / xi,
+        jnp.where(mid, -sp + V * width, tp - jnp.log(V) / zeta),
+    )
+    h = jnp.where(
+        left, xi * (u + sp),
+        jnp.where(mid, 0.0, -zeta * (u - tp)),
+    )
+    accept = jnp.log(W) <= _gig_psi(u, env["p"], env["c_R"], env["c_L"]) - h
+    return u, accept
 
-    All ``_GIG_RVS_MAX_REJECT_ROUNDS * n`` proposals are generated in a
-    single batch — no ``while_loop`` or ``fori_loop``, fully GPU-parallel.
-    Acceptance rate ~ 80–90% for typical parameters.
+
+def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w=\log x`.
+
+    Envelope tangents at the :math:`e^{-1}` level of the centred log-density
+    :math:`\psi`; :func:`jax.lax.while_loop` redraws only unaccepted columns.
+    Acceptance is at least :math:`e^{-1}` for every :math:`(p,a,b)` with
+    :math:`a,b>0`.
     """
     p = jnp.asarray(p, dtype=jnp.float64)
     a = jnp.asarray(a, dtype=jnp.float64)
     b = jnp.asarray(b, dtype=jnp.float64)
-
     env = _gig_tdr_setup(p, a, b)
-    g0, wsL, wsR = env["g0"], env["wsL"], env["wsR"]
-    gpL, gpR, width = env["gpL"], env["gpR"], env["width"]
-    pL, pM, lR = env["pL"], env["pM"], env["lR"]
 
-    M = _GIG_RVS_MAX_REJECT_ROUNDS
+    def cond(state):
+        _key, done, _u, i = state
+        return (~done.all()) & (i < _GIG_TDR_MAX_ROUNDS)
 
-    k1, k2, k3 = jax.random.split(key, 3)
-    all_up = jax.random.uniform(k1, (M, n), dtype=jnp.float64)
-    all_u  = jnp.maximum(
-        jax.random.uniform(k2, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
-    all_ua = jnp.maximum(
-        jax.random.uniform(k3, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
+    def body(state):
+        key, done, u_out, i = state
+        key, sub = jax.random.split(key)
+        u, accept = _gig_tdr_propose(sub, env, n)
+        u_out = jnp.where(done, u_out, jnp.where(accept, u, u_out))
+        return key, done | accept, u_out, i + 1
 
-    log_u = jnp.log(all_u)
-
-    w_l = wsL + log_u / gpL
-    w_m = wsL + all_u * width
-    w_r = wsR - log_u / lR
-
-    h_l = g0 + gpL * (w_l - wsL)
-    h_m = g0
-    h_r = g0 + gpR * (w_r - wsR)
-
-    left = all_up < pL
-    mid  = (all_up >= pL) & (all_up < pL + pM)
-
-    w = jnp.where(left, w_l, jnp.where(mid, w_m, w_r))
-    h = jnp.where(left, h_l, jnp.where(mid, h_m, h_r))
-
-    ew = jnp.exp(w)
-    gw = p * w - 0.5 * (a * ew + b / ew)
-    ok = jnp.log(all_ua) <= gw - h
-
-    first_idx = jnp.argmax(ok, axis=0)
-    return ew[first_idx, jnp.arange(n)]
+    u0 = jnp.zeros((n,), dtype=jnp.float64)
+    done0 = jnp.zeros((n,), dtype=bool)
+    i0 = jnp.asarray(0, dtype=jnp.int32)
+    _, _, u, _ = jax.lax.while_loop(cond, body, (key, done0, u0, i0))
+    return jnp.exp(env["w0"] + u)
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
@@ -545,15 +604,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return m2 - m1 ** 2
 
     def mode(self) -> jax.Array:
-        r"""Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.
+        r"""Interior mode :math:`x^\star = \exp\bigl(s + \operatorname{asinh}((p-1)/z)\bigr)`.
 
-        Closed-form positive critical point of the log-density.  For
-        :math:`p \ge 1` this is the unique global maximum on
-        :math:`(0,\infty)`; for :math:`p < 1` the density diverges at 0
-        and this returns the interior local maximum.
+        Unique positive critical point of the log-density for every
+        :math:`p` with :math:`a, b > 0`. The density vanishes
+        super-exponentially at 0 when :math:`b > 0`; it does not diverge
+        there for :math:`p < 1`.
         """
-        pm1 = self.p - 1.0
-        return (pm1 + jnp.sqrt(pm1 ** 2 + self.a * self.b)) / self.a
+        return jnp.exp(_gig_log_mode(self.p - 1.0, self.a, self.b))
 
     def cdf(self, x: jax.Array) -> jax.Array:
         r"""CDF :math:`F(x) = P(X \le x)`.
@@ -586,7 +644,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         """
         log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
         u_grid, x_grid = build_pinv_table(
-            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+            log_kernel, _gig_log_mode(self.p - 1.0, self.a, self.b),
+            x_of_w=jnp.exp,
         )
         return QuantileTable(u_grid=u_grid, x_grid=x_grid)
 
