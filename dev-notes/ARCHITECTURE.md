@@ -230,11 +230,11 @@ Generic PINV (Polynomial-Interpolation-based Numerical Inversion) in `utils/rvs.
 - `QuantileTable(u_grid, x_grid)` — frozen pytree with `cdf` / `ppf` / `rvs`; returned by `quantile_table()` on PINV-backed distributions (`Univariate*` mixin, GIG, InverseGaussian) so repeated quantile workloads amortise the build (DEC-5 / E3).
 - `rvs_pinv(key, u_grid, x_grid, n)` — samples via `jnp.interp`. Fully vectorised, GPU-friendly.
 
-Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and seed the table at `jnp.log(self.mode())`. Closed-form `mode()` methods live on `Gamma`, `InverseGamma`, `InverseGaussian`, and `GIG`. Per-call `cdf`/`ppf` rebuild the table; hold `quantile_table()` for amortisation. GIG degenerate Gamma/InvGamma limits bypass the table (B4).
+Distributions on $(0,\infty)$ supply `log_kernel(w) = log_prob(exp(w)) + w` and seed the table at `jnp.log(self.mode())` (GIG seeds PINV at the shared `_gig_log_mode(p-1,a,b)`). Closed-form `mode()` methods live on `Gamma`, `InverseGamma`, `InverseGaussian`, and `GIG`. Per-call `cdf`/`ppf` rebuild the table; hold `quantile_table()` for amortisation. GIG degenerate Gamma/InvGamma limits bypass the table (B4).
 
 GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussian.py`:
 
-- `_gig_rvs_devroye(key, p, a, b, n)` — TDR on $w = \log x$. Batch-parallel (no `while_loop`).
+- `_gig_rvs_devroye(key, p, a, b, n)` — Devroye TDR on $w = \log x$ in $(p,z,s)$ coordinates for $a,b>0$ ($e^{-1}$ tangents; `lax.while_loop` redraws unaccepted columns, exhausted columns NaN). Exact $a=0$/$b=0$ samples Gamma / InverseGamma.
 - `GIG.rvs(method='pinv')` — routes through `quantile_table().rvs`.
 
 Neither method evaluates the Bessel normalising constant. See `tech_notes/gig_rvs.md`.
@@ -248,7 +248,7 @@ from there. Never define magic numbers locally in distribution files.
 |---|---|---|
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping |
 | `TINY` | `1e-300` | Floor for numpy-side log |
-| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for GIG degenerate limits |
+| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) cap for the GIG small-z Gamma/InvGamma limit (with \|p\| log(2/z) > BESSEL_QUAD_LOG_DROP) |
 | `HESSIAN_DAMPING` | `1e-6` | Relative Tikhonov coefficient: Newton uses $H+\lambda(\mathrm{tr}\,H/n)I$ |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ warm-start |
 | `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |

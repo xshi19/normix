@@ -63,7 +63,8 @@ from normix.utils.bessel import log_kv, log_kv_moments
 from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
-    LOG_EPS, TINY, GIG_DEGEN_THRESHOLD,
+    LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_LOG_DROP,
+    BESSEL_WINDOW_ITERS, BESSEL_WINDOW_HI_MAX,
     THETA_FLOOR, GIG_THETA_PERTURB,
 )
 from normix.fitting.solvers import (
@@ -72,103 +73,263 @@ from normix.fitting.solvers import (
 )
 
 
+def _gig_degeneracy_flags(p, a, b, xp):
+    r"""Small-:math:`z` GIG limit predicate and off-domain flag.
+
+    The one-term Gamma / InverseGamma form is used iff
+
+    .. math::
+
+        z < z_{\max} \quad\text{and}\quad |p|\log(2/z) > C,
+
+    with :math:`z_{\max}=` ``GIG_DEGEN_THRESHOLD`` (bounds the
+    :math:`O(z^2)` remainder) and :math:`C=` ``BESSEL_QUAD_LOG_DROP``
+    (bounds the :math:`\rho_{|p|}` truncation). Form is
+    :math:`\operatorname{sign}(p)`. Combinations outside :math:`\Theta`
+    (:math:`b=0,\,p\le 0`; :math:`a=0,\,p\ge 0`) set ``off_theta``.
+    """
+    p = xp.asarray(p, dtype=xp.float64)
+    a = xp.maximum(xp.asarray(a, dtype=xp.float64), 0.0)
+    b = xp.maximum(xp.asarray(b, dtype=xp.float64), 0.0)
+    z = xp.sqrt(a * b)
+    inf = xp.asarray(np.inf, dtype=xp.float64)
+    tiny = xp.asarray(np.finfo(np.float64).tiny, dtype=xp.float64)
+    log_2_over_z = xp.where(z > 0.0, xp.log(2.0 / xp.maximum(z, tiny)), inf)
+    # np.where evaluates both arms: avoid 0 * +∞ → NaN when p=0, z=0.
+    safe_log = xp.where(p == 0.0, xp.zeros_like(log_2_over_z), log_2_over_z)
+    nats = xp.abs(p) * safe_log
+    use_limit = (z < GIG_DEGEN_THRESHOLD) & (nats > BESSEL_QUAD_LOG_DROP)
+    off_theta = ((b <= 0.0) & (p <= 0.0)) | ((a <= 0.0) & (p >= 0.0))
+    use_gamma = use_limit & (p > 0.0) & (a > 0.0)
+    use_invg = use_limit & (p < 0.0) & (b > 0.0)
+    return use_gamma, use_invg, off_theta, z
+
+
 # ---------------------------------------------------------------------------
 # Random variate generation helpers (Devroye TDR + PINV wrappers)
 # ---------------------------------------------------------------------------
 #
 # Two GIG sampling methods, neither requiring Bessel evaluation:
 #
-# 1. ``_gig_rvs_devroye`` — Transformed density rejection on
-#    :math:`w = \log x` where the GIG log-kernel
-#    :math:`g(w) = pw - (a e^w + b e^{-w})/2` is strictly concave.
-#    Three-piece tangent-line envelope, batch-parallel (no
-#    ``while_loop``), ~80–90% acceptance.
+# 1. ``_gig_rvs_devroye`` — Devroye TDR on :math:`u = w - w_0` in
+#    :math:`(p,z,s)` coordinates. Envelope tangents sit at the
+#    :math:`e^{-1}` level of :math:`\psi`; ``lax.while_loop`` redraws
+#    unaccepted columns (acceptance :math:`\ge e^{-1}` uniformly).
 #
 # 2. ``build_pinv_table`` + ``rvs_pinv`` — Numerical inverse CDF via
-#    :func:`normix.utils.rvs.build_pinv_table` seeded at :meth:`GIG.mode`.
+#    :func:`normix.utils.rvs.build_pinv_table` seeded at
+#    ``_gig_log_mode(p-1, a, b)``.
 
 _GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
-_GIG_RVS_MAX_REJECT_ROUNDS = 20
+_GIG_TDR_DOUBLE_ITERS = 8
+_GIG_TDR_MAX_ROUNDS = 256
+
+
+def _gig_log_mode(p, a, b) -> jax.Array:
+    r"""Log-mode of :math:`W=\log X`, or of :math:`X` when called with :math:`p-1`.
+
+    Interior (:math:`a>0`, :math:`b>0`):
+
+    .. math::
+
+        w_0 = s + \operatorname{asinh}(p/z),
+        \qquad z=\sqrt{ab},\; s=\tfrac12\log(b/a).
+
+    At an exact boundary the asinh form is :math:`\infty-\infty`; the
+    rationalized :math:`x`-space pair is used instead:
+
+    .. math::
+
+        e^{w_0}
+        = \begin{cases}
+            (|p|+r)/a & p\ge 0 \\
+            b/(|p|+r) & p<0
+          \end{cases},
+        \qquad r=\sqrt{p^2+ab}.
+
+    For the density of :math:`X` pass :math:`p-1`; for the log-density
+    of :math:`W` pass :math:`p`.
+    """
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    p = jnp.asarray(p, dtype=jnp.float64)
+    a = jnp.asarray(a, dtype=jnp.float64)
+    b = jnp.asarray(b, dtype=jnp.float64)
+    z = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
+    interior = (a > 0.0) & (b > 0.0)
+    a_pos = jnp.maximum(a, tiny)
+    b_pos = jnp.maximum(b, tiny)
+    s = 0.5 * (jnp.log(b_pos) - jnp.log(a_pos))
+    w_asinh = s + jnp.arcsinh(p / jnp.maximum(z, tiny))
+    r = jnp.hypot(p, z)
+    abs_p = jnp.abs(p)
+    x0 = jnp.where(
+        p >= 0.0,
+        (abs_p + r) / jnp.maximum(a, tiny),
+        b / jnp.maximum(abs_p + r, tiny),
+    )
+    w_rat = jnp.log(jnp.maximum(x0, tiny))
+    return jnp.where(interior, w_asinh, w_rat)
+
+
+def _gig_psi(u, p, c_R, c_L):
+    r""":math:`\psi(u)=p u - \tfrac{c_R}{2}\operatorname{expm1}(u)
+    - \tfrac{c_L}{2}\operatorname{expm1}(-u)`."""
+    return p * u - 0.5 * c_R * jnp.expm1(u) - 0.5 * c_L * jnp.expm1(-u)
+
+
+def _gig_dpsi(u, p, c_R, c_L):
+    return p - 0.5 * c_R * jnp.exp(u) + 0.5 * c_L * jnp.exp(-u)
+
+
+def _gig_tdr_root(p, c_R, c_L, side: float) -> jax.Array:
+    r"""Positive root of :math:`\psi(\mathrm{side}\cdot s)=-1` via doubling then bisection."""
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    hi_max = jnp.asarray(BESSEL_WINDOW_HI_MAX, dtype=jnp.float64)
+    coeff = jnp.where(side > 0.0, 0.5 * c_R, 0.5 * c_L)
+    hi = jnp.minimum(
+        jnp.maximum(jnp.log1p(1.0 / jnp.maximum(coeff, tiny)), 1.0),
+        hi_max,
+    )
+
+    def psi_at(x):
+        return _gig_psi(side * x, p, c_R, c_L)
+
+    def double_body(_i, hi):
+        return jnp.minimum(jnp.where(psi_at(hi) > -1.0, hi * 2.0, hi), hi_max)
+
+    hi = jax.lax.fori_loop(0, _GIG_TDR_DOUBLE_ITERS, double_body, hi)
+    lo = jnp.zeros((), dtype=jnp.float64)
+
+    def bisect_body(_i, carry):
+        lo, hi = carry
+        mid = 0.5 * (lo + hi)
+        wider = psi_at(mid) > -1.0
+        return jnp.where(wider, mid, lo), jnp.where(wider, hi, mid)
+
+    _, hi = jax.lax.fori_loop(0, BESSEL_WINDOW_ITERS, bisect_body, (lo, hi))
+    return hi
 
 
 def _gig_tdr_setup(p, a, b):
-    r"""Three-piece TDR envelope for :math:`g(w) = pw - (a e^w + b e^{-w})/2`."""
-    t0 = (p + jnp.sqrt(p * p + a * b)) / a
-    w0 = jnp.log(t0)
-    g0 = p * w0 - 0.5 * (a * t0 + b / t0)
-
-    neg_gpp = 0.5 * (a * t0 + b / t0)
-    sigma = 1.0 / jnp.sqrt(neg_gpp)
-
-    wL, wR = w0 - sigma, w0 + sigma
-    tL, tR = jnp.exp(wL), jnp.exp(wR)
-
-    gL = p * wL - 0.5 * (a * tL + b / tL)
-    gR = p * wR - 0.5 * (a * tR + b / tR)
-    gpL = p - 0.5 * a * tL + 0.5 * b / tL      # g′(wL) > 0
-    gpR = p - 0.5 * a * tR + 0.5 * b / tR      # g′(wR) < 0
-
-    wsL = wL + (g0 - gL) / gpL
-    wsR = wR + (g0 - gR) / gpR
-
-    inv_lL = 1.0 / gpL
-    inv_lR = 1.0 / (-gpR)
-    width  = wsR - wsL
-    D      = inv_lL + width + inv_lR
-
+    r"""Devroye :math:`e^{-1}` TDR envelope in :math:`(p,z,s)` coordinates."""
+    tiny = jnp.asarray(np.finfo(np.float64).tiny)
+    z = jnp.maximum(jnp.sqrt(a) * jnp.sqrt(b), tiny)
+    w0 = _gig_log_mode(p, a, b)
+    r = jnp.hypot(p, z)
+    abs_p = jnp.abs(p)
+    A = r + abs_p
+    B = z * (z / jnp.maximum(A, tiny))
+    c_R = jnp.where(p >= 0.0, A, B)
+    c_L = jnp.where(p >= 0.0, B, A)
+    t = _gig_tdr_root(p, c_R, c_L, 1.0)
+    sm = _gig_tdr_root(p, c_R, c_L, -1.0)
+    zeta = jnp.maximum(-_gig_dpsi(t, p, c_R, c_L), tiny)
+    xi = jnp.maximum(_gig_dpsi(-sm, p, c_R, c_L), tiny)
+    tp = t - 1.0 / zeta
+    sp = sm - 1.0 / xi
     return dict(
-        g0=g0, wsL=wsL, wsR=wsR, gpL=gpL, gpR=gpR,
-        width=width, pL=inv_lL / D, pM=width / D, lR=-gpR,
+        w0=w0, p=p, c_R=c_R, c_L=c_L,
+        t=t, s=sm, zeta=zeta, xi=xi, tp=tp, sp=sp, area=t + sm,
     )
 
 
-def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
-    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w = \log x`.
+def _gig_tdr_propose(key: jax.Array, env: dict, n: int):
+    """One envelope proposal of shape ``(n,)``. Returns ``(u, accept)``."""
+    k1, k2, k3 = jax.random.split(key, 3)
+    U = jax.random.uniform(k1, (n,), dtype=jnp.float64)
+    V = jnp.maximum(
+        jax.random.uniform(k2, (n,), dtype=jnp.float64), _GIG_RVS_TINY64,
+    )
+    W = jnp.maximum(
+        jax.random.uniform(k3, (n,), dtype=jnp.float64), _GIG_RVS_TINY64,
+    )
+    tp, sp, zeta, xi, area = (
+        env["tp"], env["sp"], env["zeta"], env["xi"], env["area"],
+    )
+    inv_xi = 1.0 / xi
+    width = tp + sp
+    pL = inv_xi / area
+    pM = width / area
+    left = U < pL
+    mid = (U >= pL) & (U < pL + pM)
+    u = jnp.where(
+        left, -sp + jnp.log(V) / xi,
+        jnp.where(mid, -sp + V * width, tp - jnp.log(V) / zeta),
+    )
+    h = jnp.where(
+        left, xi * (u + sp),
+        jnp.where(mid, 0.0, -zeta * (u - tp)),
+    )
+    accept = jnp.log(W) <= _gig_psi(u, env["p"], env["c_R"], env["c_L"]) - h
+    return u, accept
 
-    All ``_GIG_RVS_MAX_REJECT_ROUNDS * n`` proposals are generated in a
-    single batch — no ``while_loop`` or ``fori_loop``, fully GPU-parallel.
-    Acceptance rate ~ 80–90% for typical parameters.
+
+def _gig_rvs_boundary(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Exact :math:`a=0` or :math:`b=0`: Gamma, InverseGamma, or off-:math:`\Theta` NaN.
+
+    TDR is defined for :math:`a,b>0`. The small-:math:`z` interior limit
+    is still sampled by TDR; this path is only the exact boundary.
+    """
+    alpha_g = jnp.maximum(p, LOG_EPS)
+    beta_g = jnp.maximum(a / 2.0, LOG_EPS)
+    alpha_ig = jnp.maximum(-p, LOG_EPS)
+    beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
+    g = jax.random.gamma(key, alpha_g, shape=(n,), dtype=jnp.float64)
+    x_gamma = g / beta_g
+    g_ig = jax.random.gamma(key, alpha_ig, shape=(n,), dtype=jnp.float64)
+    x_invg = beta_ig / g_ig
+    use_gamma = (b <= 0.0) & (p > 0.0) & (a > 0.0)
+    use_invg = (a <= 0.0) & (p < 0.0) & (b > 0.0)
+    nan = jnp.full((n,), jnp.nan, dtype=jnp.float64)
+    return jnp.where(use_gamma, x_gamma, jnp.where(use_invg, x_invg, nan))
+
+
+def _gig_rvs_tdr(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""TDR on :math:`w=\log x` for :math:`a,b>0`.
+
+    Envelope tangents at the :math:`e^{-1}` level of the centred log-density
+    :math:`\psi`; :func:`jax.lax.while_loop` redraws only unaccepted columns.
+    A column that exhausts ``_GIG_TDR_MAX_ROUNDS`` is NaN, never a reject.
+    """
+    env = _gig_tdr_setup(p, a, b)
+
+    def cond(state):
+        _key, done, _u, i = state
+        return (~done.all()) & (i < _GIG_TDR_MAX_ROUNDS)
+
+    def body(state):
+        key, done, u_out, i = state
+        key, sub = jax.random.split(key)
+        u, accept = _gig_tdr_propose(sub, env, n)
+        u_out = jnp.where(done, u_out, jnp.where(accept, u, u_out))
+        return key, done | accept, u_out, i + 1
+
+    u0 = jnp.zeros((n,), dtype=jnp.float64)
+    done0 = jnp.zeros((n,), dtype=bool)
+    i0 = jnp.asarray(0, dtype=jnp.int32)
+    _, done, u, _ = jax.lax.while_loop(cond, body, (key, done0, u0, i0))
+    u = jnp.where(done, u, jnp.nan)
+    return jnp.exp(env["w0"] + u)
+
+
+def _gig_rvs_devroye(key: jax.Array, p, a, b, n: int) -> jax.Array:
+    r"""Sample *n* :math:`\mathrm{GIG}(p, a, b)` variates via TDR on :math:`w=\log x`.
+
+    Interior :math:`a,b>0` uses Devroye TDR (acceptance at least
+    :math:`e^{-1}`). Exact :math:`a=0` or :math:`b=0` dispatches to
+    :math:`\mathrm{Gamma}(p,a/2)` / :math:`\mathrm{InvGamma}(-p,b/2)`
+    (or NaN off :math:`\Theta`).
     """
     p = jnp.asarray(p, dtype=jnp.float64)
     a = jnp.asarray(a, dtype=jnp.float64)
     b = jnp.asarray(b, dtype=jnp.float64)
-
-    env = _gig_tdr_setup(p, a, b)
-    g0, wsL, wsR = env["g0"], env["wsL"], env["wsR"]
-    gpL, gpR, width = env["gpL"], env["gpR"], env["width"]
-    pL, pM, lR = env["pL"], env["pM"], env["lR"]
-
-    M = _GIG_RVS_MAX_REJECT_ROUNDS
-
-    k1, k2, k3 = jax.random.split(key, 3)
-    all_up = jax.random.uniform(k1, (M, n), dtype=jnp.float64)
-    all_u  = jnp.maximum(
-        jax.random.uniform(k2, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
-    all_ua = jnp.maximum(
-        jax.random.uniform(k3, (M, n), dtype=jnp.float64), _GIG_RVS_TINY64)
-
-    log_u = jnp.log(all_u)
-
-    w_l = wsL + log_u / gpL
-    w_m = wsL + all_u * width
-    w_r = wsR - log_u / lR
-
-    h_l = g0 + gpL * (w_l - wsL)
-    h_m = g0
-    h_r = g0 + gpR * (w_r - wsR)
-
-    left = all_up < pL
-    mid  = (all_up >= pL) & (all_up < pL + pM)
-
-    w = jnp.where(left, w_l, jnp.where(mid, w_m, w_r))
-    h = jnp.where(left, h_l, jnp.where(mid, h_m, h_r))
-
-    ew = jnp.exp(w)
-    gw = p * w - 0.5 * (a * ew + b / ew)
-    ok = jnp.log(all_ua) <= gw - h
-
-    first_idx = jnp.argmax(ok, axis=0)
-    return ew[first_idx, jnp.arange(n)]
+    boundary = (a <= 0.0) | (b <= 0.0)
+    return jax.lax.cond(
+        boundary,
+        lambda _: _gig_rvs_boundary(key, p, a, b, n),
+        lambda _: _gig_rvs_tdr(key, p, a, b, n),
+        None,
+    )
 
 
 class GeneralizedInverseGaussian(ExponentialFamily):
@@ -207,10 +368,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         in the interior all moments are finite Bessel ratios.
         """
         p, a, b = self.p, self.a, self.b
-        sqrt_ab = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
-        use_gamma = use_degen & (b <= a)
-        use_invg = use_degen & (a < b)
+        use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
         alpha_g = jnp.maximum(p, LOG_EPS)
         beta_g = jnp.maximum(a / 2.0, LOG_EPS)
@@ -246,41 +404,37 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         r"""
         :math:`\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + (p/2)(\log b - \log a)`.
 
-        Degenerate limit (:math:`\sqrt{ab} < \text{threshold}`): delegate to
-        Gamma/InverseGamma. All branches use safe clamped values so no NaN
-        gradients from non-selected ``jnp.where`` branches.
+        Small-:math:`z` limit (see ``_gig_degeneracy_flags``): Gamma
+        if :math:`p>0`, InverseGamma if :math:`p<0`. Otherwise the Bessel
+        kernel on ``(a_safe, b_safe)`` as in :meth:`_grad_log_partition`.
+        Off :math:`\Theta` returns :math:`+\infty`. Clamps on the Gamma /
+        InverseGamma branches are unselected-branch guards.
         """
         p = theta[0] + 1.0
         b = jnp.maximum(-2.0 * theta[1], 0.0)
         a = jnp.maximum(-2.0 * theta[2], 0.0)
-        sqrt_ab = jnp.sqrt(a * b)
+        use_gamma, use_invg, off_theta, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
-        # Safe sqrt_ab to prevent log_kv(p, 0) blow-up
-        sqrt_ab_safe = jnp.maximum(sqrt_ab, LOG_EPS)
+        _, _, _, z_safe, log_sqrt_ba = (
+            GeneralizedInverseGaussian._unpack_safe(theta, jnp, LOG_EPS)
+        )
+        psi_bessel = jnp.log(2.0) + log_kv(p, z_safe) + p * log_sqrt_ba
 
-        # General Bessel case
-        psi_bessel = (jnp.log(2.0) + log_kv(p, sqrt_ab_safe)
-                      + 0.5 * p * (jnp.log(b + LOG_EPS) - jnp.log(a + LOG_EPS)))
-
-        # Gamma limit (b→0, p>0): Gamma(p, a/2)
         alpha_g = jnp.maximum(p, LOG_EPS)
         beta_g = jnp.maximum(a / 2.0, LOG_EPS)
         psi_gamma = (jax.scipy.special.gammaln(alpha_g)
                      - alpha_g * jnp.log(beta_g))
 
-        # InverseGamma limit (a→0, p<0): InvGamma(-p, b/2)
         alpha_ig = jnp.maximum(-p, LOG_EPS)
         beta_ig = jnp.maximum(b / 2.0, LOG_EPS)
         psi_invgamma = (jax.scipy.special.gammaln(alpha_ig)
                         - alpha_ig * jnp.log(beta_ig))
 
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
-        use_gamma = use_degen & (b <= a)   # b≈0: Gamma limit
-        use_invg = use_degen & (a < b)     # a≈0: InvGamma limit
-
-        return jnp.where(use_gamma, psi_gamma,
-               jnp.where(use_invg, psi_invgamma,
-                         psi_bessel))
+        psi = jnp.where(
+            use_gamma, psi_gamma,
+            jnp.where(use_invg, psi_invgamma, psi_bessel),
+        )
+        return jnp.where(off_theta, jnp.inf, psi)
 
     def natural_params(self) -> jax.Array:
         return jnp.array([self.p - 1.0, -self.b / 2.0, -self.a / 2.0])
@@ -391,23 +545,24 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         p = theta[0] + 1.0
         b = max(-2.0 * theta[1], 0.0)
         a = max(-2.0 * theta[2], 0.0)
-        sqrt_ab = np.sqrt(a * b)
+        use_gamma, use_invg, off_theta, _ = _gig_degeneracy_flags(p, a, b, np)
 
-        if sqrt_ab < GIG_DEGEN_THRESHOLD:
+        if bool(np.asarray(off_theta)):
+            return float(np.inf)
+        if bool(np.asarray(use_gamma)):
             from scipy.special import gammaln
-            if b <= a:
-                alpha = max(p, TINY)
-                beta = max(a / 2.0, TINY)
-                return float(gammaln(alpha) - alpha * np.log(beta))
-            else:
-                alpha = max(-p, TINY)
-                beta = max(b / 2.0, TINY)
-                return float(gammaln(alpha) - alpha * np.log(beta))
+            alpha = max(p, TINY)
+            beta = max(a / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
+        if bool(np.asarray(use_invg)):
+            from scipy.special import gammaln
+            alpha = max(-p, TINY)
+            beta = max(b / 2.0, TINY)
+            return float(gammaln(alpha) - alpha * np.log(beta))
 
-        sqrt_ab_safe = max(sqrt_ab, TINY)
+        _, _, _, z_safe, log_sqrt_ba = cls._unpack_safe(theta, np, TINY)
         return float(
-            np.log(2.0) + log_kv(p, sqrt_ab_safe, backend='cpu')
-            + 0.5 * p * (np.log(max(b, TINY)) - np.log(max(a, TINY)))
+            np.log(2.0) + log_kv(p, z_safe, backend='cpu') + p * log_sqrt_ba
         )
 
     @classmethod
@@ -519,23 +674,24 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return m2 - m1 ** 2
 
     def mode(self) -> jax.Array:
-        r"""Interior mode :math:`\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a`.
+        r"""Mode :math:`x^\star = \exp(w_0)` with :math:`w_0` from ``_gig_log_mode(p-1, a, b)``.
 
-        Closed-form positive critical point of the log-density.  For
-        :math:`p \ge 1` this is the unique global maximum on
-        :math:`(0,\infty)`; for :math:`p < 1` the density diverges at 0
-        and this returns the interior local maximum.
+        Unique positive critical point of the log-density for every
+        :math:`p` with :math:`a, b > 0`. The density vanishes
+        super-exponentially at 0 when :math:`b > 0`; it does not diverge
+        there for :math:`p < 1`. At :math:`b=0,\,p>1` this is the Gamma
+        mode :math:`2(p-1)/a`; at :math:`a=0,\,p<0` the InverseGamma mode
+        :math:`b/(2(1-p))`.
         """
-        pm1 = self.p - 1.0
-        return (pm1 + jnp.sqrt(pm1 ** 2 + self.a * self.b)) / self.a
+        return jnp.exp(_gig_log_mode(self.p - 1.0, self.a, self.b))
 
     def cdf(self, x: jax.Array) -> jax.Array:
         r"""CDF :math:`F(x) = P(X \le x)`.
 
         Trapezoidal CDF on a :math:`w = \log x` grid built from
         :meth:`log_prob`; seeded at :math:`\log` :meth:`mode`.  In the
-        degenerate regimes (:math:`\sqrt{ab} <` ``GIG_DEGEN_THRESHOLD``)
-        delegates to the limiting Gamma / InverseGamma CDF for accuracy.
+        small-:math:`z` Gamma / InverseGamma regimes (see
+        ``_gig_degeneracy_flags``) delegates to the limiting CDF.
 
         JIT-compatible: the degeneracy test uses :func:`jax.lax.cond`
         (no host ``float()`` casts).
@@ -560,15 +716,16 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         """
         log_kernel = lambda w: self.log_prob(jnp.exp(w)) + w
         u_grid, x_grid = build_pinv_table(
-            log_kernel, jnp.log(self.mode()), x_of_w=jnp.exp,
+            log_kernel, _gig_log_mode(self.p - 1.0, self.a, self.b),
+            x_of_w=jnp.exp,
         )
         return QuantileTable(u_grid=u_grid, x_grid=x_grid)
 
     def _cdf_or_ppf(self, z: jax.Array, *, inverse: bool) -> jax.Array:
         """Shared JIT-safe CDF / PPF with degenerate Gamma / InvGamma limits."""
         p, a, b = self.p, self.a, self.b
-        sqrt_ab = jnp.sqrt(jnp.maximum(a, 0.0) * jnp.maximum(b, 0.0))
-        use_degen = sqrt_ab < GIG_DEGEN_THRESHOLD
+        use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
+        use_degen = use_gamma | use_invg
 
         def _degen(z_):
             from normix.distributions.gamma import Gamma
@@ -581,8 +738,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 alpha=jnp.maximum(-p, LOG_EPS),
                 beta=jnp.maximum(b / 2.0, LOG_EPS),
             )
-            # Gamma limit requires p>0 (and b≪a); otherwise InverseGamma.
-            use_gamma = (b <= a) & (p > 0)
             if inverse:
                 return jnp.where(use_gamma, g.ppf(z_), ig.ppf(z_))
             return jnp.where(use_gamma, g.cdf(z_), ig.cdf(z_))

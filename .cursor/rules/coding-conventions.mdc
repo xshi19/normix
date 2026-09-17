@@ -138,7 +138,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 |---|---|---|
 | `LOG_EPS` | `1e-30` | Floor for JAX log-space clamping (`jnp.maximum(x, LOG_EPS)`) |
 | `TINY` | `1e-300` | Smallest positive floor for numpy-side log (prevents exact zero) |
-| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) threshold for Gamma/InverseGamma limit in GIG |
+| `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) cap for the GIG small-z Gamma/InvGamma limit (also requires \|p\| log(2/z) > BESSEL_QUAD_LOG_DROP) |
 | `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `HESSIAN_DAMPING` | `1e-6` | Relative Tikhonov coefficient (Newton: $\lambda\,\mathrm{tr}H/n$) |
 | `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ during warm-start initialisation |

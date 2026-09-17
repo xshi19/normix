@@ -105,20 +105,31 @@ def test_gig_cdf_ppf_jittable(p, a, b):
 
 @pytest.mark.contract
 def test_gig_degenerate_neg_p_with_b_le_a_uses_invgamma():
-    """B4: p≤0 never takes the Gamma limit, even when b≤a.
+    """p<0 never takes the Gamma limit, even when b≤a.
 
-    The Gamma limit requires p>0; for negative p the InverseGamma limit
-    applies whenever √(ab) is below the degeneracy threshold.
+    Form is by sign(p); the limit also requires z < GIG_DEGEN_THRESHOLD
+    and |p| log(2/z) > BESSEL_QUAD_LOG_DROP.
     """
-    p, a, b = -1.0, 1e-11, 1e-12
+    p, a, b = -2.0, 1.0, 1e-22
     gig = GIG(p=p, a=a, b=b)
     ig = InverseGamma(alpha=-p, beta=b / 2.0)
-    xs = jnp.asarray([1e-13, 1e-12, 1e-11, 1e-10])
-    np.testing.assert_allclose(
-        np.asarray(gig.cdf(xs)), np.asarray(ig.cdf(xs)), rtol=1e-8, atol=1e-10)
     qs = jnp.asarray(_QS)
     np.testing.assert_allclose(
         np.asarray(gig.ppf(qs)), np.asarray(ig.ppf(qs)), rtol=1e-8, atol=1e-10)
+    xs = ig.ppf(qs)
+    np.testing.assert_allclose(
+        np.asarray(gig.cdf(xs)), np.asarray(ig.cdf(xs)), rtol=1e-8, atol=1e-10)
+
+
+@pytest.mark.contract
+def test_gig_degenerate_pos_p_with_a_lt_b_uses_gamma():
+    """p>0 uses the Gamma limit even when a<b (a-vs-b is not the predicate)."""
+    p, a, b = 2.0, 1e-22, 1.0
+    gig = GIG(p=p, a=a, b=b)
+    g = Gamma(alpha=p, beta=a / 2.0)
+    qs = jnp.asarray(_QS)
+    np.testing.assert_allclose(
+        np.asarray(gig.ppf(qs)), np.asarray(g.ppf(qs)), rtol=1e-8, atol=1e-10)
 
 def test_gig_degenerate_invgamma_limit_delegates():
     """GIG(p<0, a≈0, b) should match InverseGamma(-p, b/2)."""

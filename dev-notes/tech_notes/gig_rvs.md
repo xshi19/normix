@@ -16,24 +16,20 @@ JIT-able and GPU-accelerated.
 **Location:** private helpers in `normix/distributions/generalized_inverse_gaussian.py`
 (`_gig_rvs_devroye`, `_gig_tdr_setup`).
 
-Works in the log-transformed variable $w = \log x$ where the GIG log-kernel
+Works in $w=\log x$ with the centred kernel $\psi(u)=g(w_0+u)-g(w_0)$ in
+$(p,z,s)$ coordinates ($z=\sqrt{ab}$, $s=\tfrac12\log(b/a)$,
+$w_0=s+\operatorname{asinh}(p/z)$ for $a,b>0$). At an exact $a=0$ or $b=0$
+boundary `_gig_log_mode` uses the rationalized $x$-space pair instead of
+asinh, and default `rvs` samples Gamma / InverseGamma (NaN off $\Theta$).
+Coefficients of $\operatorname{expm1}(\pm u)$
+are $r\pm|p|$ with $r-|p|=z^2/(r+|p|)$. Tangent points solve $\psi(\pm t)=-1$
+(fixed bisection, `BESSEL_WINDOW_ITERS`); the hat is flat on the $e^{-1}$
+secants and exponential in the tails. Concavity gives acceptance
+$\ge e^{-1}$ uniformly in $(p,a,b)$ with $a,b>0$.
 
-$$g(w) = p\,w - \tfrac{1}{2}(a\,e^w + b\,e^{-w})$$
-
-is strictly concave ($g''(w) = -(a\,e^w + b\,e^{-w})/2 < 0$).
-
-A **three-piece TDR hat** is constructed from tangent lines at mode $\pm \sigma$
-($\sigma = 1/\sqrt{-g''(w_0)}$) joined by a flat cap at $g(w_0)$:
-
-1. Left tail: exponential with rate $g'(w_L)$ from $-\infty$ to the crossover.
-2. Flat cap: constant $g(w_0)$ around the mode.
-3. Right tail: exponential with rate $|g'(w_R)|$ from the crossover to $+\infty$.
-
-**Acceptance rate ≈ 80–90 %** for typical GIG parameters.
-
-**GPU strategy:** all $M \times n$ proposals ($M = 20$ rounds) are generated in a
-single batch — zero loops, fully parallel.  `jnp.argmax` selects the first
-accepted proposal per sample.
+`lax.while_loop` redraws only unaccepted columns — never emit a rejected
+proposal via `argmax` on an all-False mask (exhausted columns are NaN).
+`mode()` and the PINV seed share `_gig_log_mode`.
 
 **Bessel-free:** only the unnormalized log-kernel is evaluated.
 
@@ -43,7 +39,7 @@ accepted proposal per sample.
 `build_pinv_table` + `rvs_pinv`; `GIG.rvs(method='pinv')` (and the
 shared `GIG.cdf` / `GIG.ppf`) go through `quantile_table()` with
 `log_kernel(w) = self.log_prob(exp(w)) + w` seeded at
-`jnp.log(self.mode())`. The remaining GIG-specific sampler helper is
+`_gig_log_mode(p-1, a, b)`. The remaining GIG-specific sampler helper is
 `_gig_rvs_devroye` (TDR).
 
 The PINV method builds $F^{-1}$ numerically:
@@ -107,8 +103,9 @@ method comparison from the deep-dive layer if these numbers go stale.
 
 | Decision | Rationale |
 |---|---|
-| Log-transform $w = \log x$ | Removes the singularity at $x = 0$ for $p < 1$; makes the GIG log-kernel bounded and strictly concave for all valid (p, a, b). |
-| Batch rejection (no `while_loop`) | `vmap(while_loop)` on GPU costs ~400 ms overhead per call.  Generating all M × n proposals in one batch reduces this to ~10 ms. |
+| Log-transform $w = \log x$ | Strictly log-concave target for every $(p,a,b)$ with $a,b>0$. |
+| $(p,z,s)$ envelope, $e^{-1}$ tangents | Curvature $\sigma=z^{-1/2}$ is the wrong width when $z\ll 1$; the $e^{-1}$ construction has acceptance $\ge e^{-1}$ uniformly. |
+| `lax.while_loop` redraw | Exhausted rejection rounds are a failure, not a sample. `argmax` of an all-False mask emitted envelope draws. |
 | Generic PINV in `utils/rvs.py` | The method is distribution-agnostic; only a `log_kernel` callable and a mode are needed.  Reusable for future distributions. |
 | GIG Devroye lives inside `distributions/generalized_inverse_gaussian.py` | The TDR envelope is GIG-specific (relies on the particular form of $g(w)$). Co-locating with the `GIG` class keeps the implementation surface contiguous. |
 | Default method = `'devroye'` | Pure JAX with no setup step.  PINV is faster end-to-end but requires an eager table build before the first sample. |

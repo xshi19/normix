@@ -10,7 +10,9 @@ TINY: float = 1e-300
 
 # ── GIG-specific constants ─────────────────────────────────────────────
 
-# √(ab) threshold below which GIG delegates to Gamma/InverseGamma limits
+# √(ab) cap on the O(z²) remainder of the small-z GIG Gamma / InverseGamma
+# log-partition. The limit is used iff z < this AND |p| log(2/z) exceeds
+# BESSEL_QUAD_LOG_DROP; the form is by sign(p). Off-Θ returns +∞.
 GIG_DEGEN_THRESHOLD: float = 1e-10
 
 # ── Optimisation constants ─────────────────────────────────────────────
