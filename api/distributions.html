@@ -927,8 +927,8 @@ return value is always a valid positive sample location.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -962,7 +962,7 @@ to stay in the strict interior of GIG’s domain (matters only for
 downstream <code class="docutils literal notranslate"><span class="pre">expectation_params</span></code> calls on the lifted GIG).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -977,9 +977,9 @@ downstream <code class="docutils literal notranslate"><span class="pre">expectat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
 <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (no XLA tracing).</p></li>
-<li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Lower bound on the fitted shape <span class="math notranslate nohighlight">\(\alpha\)</span>. When set, the
+<li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Lower bound on the fitted shape <span class="math notranslate nohighlight">\(\alpha\)</span>. When set, the
 digamma-inversion result is clamped to <code class="docutils literal notranslate"><span class="pre">jnp.maximum(alpha,</span>
 <span class="pre">alpha_min)</span></code> <em>before</em> <span class="math notranslate nohighlight">\(\beta = \alpha/\eta_2\)</span> is formed, so
 the projected estimate stays self-consistent. This is the opt-in
@@ -988,8 +988,8 @@ it restricts the estimator to a region where the VG marginal
 likelihood is bounded. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) leaves the estimate
 unconstrained. JIT-safe (no Python branch on traced values).</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1180,8 +1180,8 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1214,7 +1214,7 @@ limit of GIG(<span class="math notranslate nohighlight">\(p = -\alpha,\; a,\; b 
 small positive value to stay in the strict interior of GIG’s domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1228,11 +1228,11 @@ small positive value to stay in the strict interior of GIG’s domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
 <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (no XLA tracing).</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1477,8 +1477,8 @@ value when evaluating many quantiles at fixed parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1512,7 +1512,7 @@ approximation: the embedding lands strictly inside GIG’s domain.
 and ignored.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1526,8 +1526,8 @@ and ignored.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1618,7 +1618,7 @@ the shared prior-to-posterior conjugacy map in the EM E-step (see
 <code class="docutils literal notranslate"><span class="pre">boundary_eps</span></code> is accepted for API uniformity and ignored.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian"><em>GeneralizedInverseGaussian</em></a></p>
@@ -1674,7 +1674,7 @@ Returns (N, 3) array where columns are [E_log_X, E_inv_X, E_X].</p>
 backend=’cpu’ : one batched <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> call (NumPy kernel)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1740,11 +1740,13 @@ rather than the full 11-Bessel Fisher Hessian entry <code class="docutils litera
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode">
 <span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode" title="Link to this definition">#</a></dt>
-<dd><p>Interior mode <span class="math notranslate nohighlight">\(\bigl((p-1) + \sqrt{(p-1)^2 + ab}\bigr) / a\)</span>.</p>
-<p>Closed-form positive critical point of the log-density.  For
-<span class="math notranslate nohighlight">\(p \ge 1\)</span> this is the unique global maximum on
-<span class="math notranslate nohighlight">\((0,\infty)\)</span>; for <span class="math notranslate nohighlight">\(p &lt; 1\)</span> the density diverges at 0
-and this returns the interior local maximum.</p>
+<dd><p>Mode <span class="math notranslate nohighlight">\(x^\star = \exp(w_0)\)</span> with <span class="math notranslate nohighlight">\(w_0\)</span> from <code class="docutils literal notranslate"><span class="pre">_gig_log_mode(p-1,</span> <span class="pre">a,</span> <span class="pre">b)</span></code>.</p>
+<p>Unique positive critical point of the log-density for every
+<span class="math notranslate nohighlight">\(p\)</span> with <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span>. The density vanishes
+super-exponentially at 0 when <span class="math notranslate nohighlight">\(b &gt; 0\)</span>; it does not diverge
+there for <span class="math notranslate nohighlight">\(p &lt; 1\)</span>. At <span class="math notranslate nohighlight">\(b=0,\,p&gt;1\)</span> this is the Gamma
+mode <span class="math notranslate nohighlight">\(2(p-1)/a\)</span>; at <span class="math notranslate nohighlight">\(a=0,\,p&lt;0\)</span> the InverseGamma mode
+<span class="math notranslate nohighlight">\(b/(2(1-p))\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1758,8 +1760,8 @@ and this returns the interior local maximum.</p>
 <dd><p>CDF <span class="math notranslate nohighlight">\(F(x) = P(X \le x)\)</span>.</p>
 <p>Trapezoidal CDF on a <span class="math notranslate nohighlight">\(w = \log x\)</span> grid built from
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>; seeded at <span class="math notranslate nohighlight">\(\log\)</span> <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mode()</span></code></a>.  In the
-degenerate regimes (<span class="math notranslate nohighlight">\(\sqrt{ab} &lt;\)</span> <code class="docutils literal notranslate"><span class="pre">GIG_DEGEN_THRESHOLD</span></code>)
-delegates to the limiting Gamma / InverseGamma CDF for accuracy.</p>
+small-<span class="math notranslate nohighlight">\(z\)</span> Gamma / InverseGamma regimes (see
+<code class="docutils literal notranslate"><span class="pre">_gig_degeneracy_flags</span></code>) delegates to the limiting CDF.</p>
 <p>JIT-compatible: the degeneracy test uses <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.cond.html#jax.lax.cond" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.cond()</span></code></a>
 (no host <code class="docutils literal notranslate"><span class="pre">float()</span></code> casts).</p>
 <dl class="field-list simple">
@@ -1808,9 +1810,9 @@ quantiles at fixed non-degenerate parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Sample size.</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer seed for JAX PRNG (or <code class="docutils literal notranslate"><span class="pre">scipy</span></code> <code class="docutils literal notranslate"><span class="pre">random_state</span></code> for <code class="docutils literal notranslate"><span class="pre">'scipy'</span></code>).</p></li>
-<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Sampling algorithm:</p>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Sample size.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer seed for JAX PRNG (or <code class="docutils literal notranslate"><span class="pre">scipy</span></code> <code class="docutils literal notranslate"><span class="pre">random_state</span></code> for <code class="docutils literal notranslate"><span class="pre">'scipy'</span></code>).</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Sampling algorithm:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">'devroye'</span></code> (default) — Transformed density rejection (TDR) on
 <span class="math notranslate nohighlight">\(\log(x)\)</span>, pure JAX, no Bessel functions.</p></li>
@@ -1881,12 +1883,12 @@ reducing condition number by up to <span class="math notranslate nohighlight">\(
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Warm-start point (required for JAX solvers; if <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
 multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
-<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2098,8 +2100,8 @@ then <span class="math notranslate nohighlight">\(\mu = \Lambda^{-1}\theta_1\)</
 </dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2107,13 +2109,13 @@ then <span class="math notranslate nohighlight">\(\mu = \Lambda^{-1}\theta_1\)</
 
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.d">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.d" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">d</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.d" title="Link to this definition">#</a></dt>
 <dd><p>Dimensionality.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="normix.distributions.normal.MultivariateNormal.dim">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dim</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.dim" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dim</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.distributions.normal.MultivariateNormal.dim" title="Link to this definition">#</a></dt>
 <dd><p>Dimensionality (alias for <code class="docutils literal notranslate"><span class="pre">d</span></code>).</p>
 </dd></dl>
 
@@ -2280,7 +2282,7 @@ floored value, breaking the cancellation needed for a finite limit.</p>
 <dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2526,7 +2528,7 @@ cancellation between the two that is needed for a finite limit.</p>
 <dd><p>Exact embedding into the <code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> family.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2947,7 +2949,7 @@ b + (x-\mu)^\top\Sigma^{-1}(x-\mu))\)</span>.</p>
 <dd><p>Identity: JointGH is already the divergence gauge.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+<dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3324,7 +3326,7 @@ candidate.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

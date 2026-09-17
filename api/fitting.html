@@ -608,7 +608,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">EMResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diverged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#EMResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.EMResult" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Result of an EM fitting procedure.</p>
 <p><code class="docutils literal notranslate"><span class="pre">converged</span></code> and <code class="docutils literal notranslate"><span class="pre">diverged</span></code> are separate because batch EM has three
 outcomes: tolerance met (<code class="docutils literal notranslate"><span class="pre">converged=True</span></code>), a non-finite iterate was
@@ -621,10 +621,10 @@ divergence and a finite but not-yet-converged stop.</p>
 <li><p><strong>model</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
 <li><p><strong>log_likelihoods</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>param_changes</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
-<li><p><strong>diverged</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>diverged</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -635,7 +635,7 @@ divergence and a finite but not-yet-converged stop.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.log_likelihoods">
-<span class="sig-name descname"><span class="pre">log_likelihoods</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.log_likelihoods" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">log_likelihoods</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.log_likelihoods" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -645,22 +645,22 @@ divergence and a finite but not-yet-converged stop.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.n_iter">
-<span class="sig-name descname"><span class="pre">n_iter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.n_iter" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">n_iter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.n_iter" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.converged">
-<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.converged" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.converged" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.elapsed_time">
-<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.elapsed_time" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="headerlink" href="#normix.fitting.em.EMResult.elapsed_time" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.diverged">
-<span class="sig-name descname"><span class="pre">diverged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#normix.fitting.em.EMResult.diverged" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">diverged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#normix.fitting.em.EMResult.diverged" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -668,7 +668,7 @@ divergence and a finite but not-yet-converged stop.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.BatchEMFitter">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">BatchEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'em'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_ll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#BatchEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.BatchEMFitter" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Batch EM / MCECM algorithm with dual-loop architecture.</p>
 <p><strong>EM</strong> (default): E-step → M-step (all params) → regularize.</p>
 <p><strong>MCECM</strong>: E-step → M-step (normal params only) → regularize →
@@ -690,13 +690,13 @@ and no eta_update rule</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
-<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max hybrid-scale RMS parameter change
+<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max hybrid-scale RMS parameter change
 (<code class="docutils literal notranslate"><span class="pre">rms(Δ)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">rms(θ))</span></code>). Roughly dimension-free: <code class="docutils literal notranslate"><span class="pre">tol=1e-3</span></code>
 means a typical coordinate moved by ~0.1% of its natural scale.</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code> — no regularization.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> — enforce <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> (the
@@ -712,15 +712,15 @@ FactorGH parameters against VG / NIG / NInvG, which leave
 MultivariateNormal.</p></li>
 </ul>
 </p></li>
-<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ (default) or ‘cpu’.</p></li>
-<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ or ‘cpu’ (default, faster for GIG).</p></li>
-<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘newton’ (default), ‘lbfgs’, or ‘bfgs’.</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ (default) or ‘cpu’.</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘jax’ or ‘cpu’ (default, faster for GIG).</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘newton’ (default), ‘lbfgs’, or ‘bfgs’.</p></li>
 <li><p><strong>eta_update</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a><em> or </em><em>None</em>) – Optional eta combination rule (e.g. <code class="docutils literal notranslate"><span class="pre">Shrinkage(IdentityUpdate(),</span>
 <span class="pre">eta0,</span> <span class="pre">tau)</span></code>). When set, the E-step output is transformed before
 the M-step.</p></li>
-<li><p><strong>track_ll</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, record per-iteration marginal log-likelihood in
+<li><p><strong>track_ll</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, record per-iteration marginal log-likelihood in
 <a class="reference internal" href="#normix.fitting.em.EMResult.log_likelihoods" title="normix.fitting.em.EMResult.log_likelihoods"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a> without requiring <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p></li>
-<li><p><strong>m_step_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>None</em>) – Extra keyword arguments forwarded verbatim to every <code class="docutils literal notranslate"><span class="pre">m_step</span></code> /
+<li><p><strong>m_step_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>None</em>) – Extra keyword arguments forwarded verbatim to every <code class="docutils literal notranslate"><span class="pre">m_step</span></code> /
 <code class="docutils literal notranslate"><span class="pre">m_step_subordinator</span></code> call (in addition to <code class="docutils literal notranslate"><span class="pre">backend</span></code> and
 <code class="docutils literal notranslate"><span class="pre">method</span></code>). Used to thread estimand controls such as the VG
 <code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> shape bound down to the subordinator’s
@@ -751,7 +751,7 @@ stay compatible with the <code class="docutils literal notranslate"><span class=
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">IncrementalEMFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_step_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Incremental EM with pluggable eta update rules.</p>
 <p>Replaces <code class="docutils literal notranslate"><span class="pre">OnlineEMFitter</span></code> and <code class="docutils literal notranslate"><span class="pre">MiniBatchEMFitter</span></code>.  Processes data
 in random mini-batches, applies an <a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">EtaUpdateRule</span></code></a>
@@ -761,20 +761,20 @@ M-steps on the combined <span class="math notranslate nohighlight">\(\eta\)</spa
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eta_update</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a>) – How to combine running η with each batch estimate.</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Observations per batch.</p></li>
-<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of batches to process (total budget).</p></li>
-<li><p><strong>inner_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 1 = online (default); &gt;1 = fine-tuning on each batch.</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – <p>0 = silent; 1 = periodic summary.</p>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Observations per batch.</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of batches to process (total budget).</p></li>
+<li><p><strong>inner_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 1 = online (default); &gt;1 = fine-tuning on each batch.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – <p>0 = silent; 1 = periodic summary.</p>
 <p>Scan path (<strong>JAX backends only</strong>):</p>
 <p><code class="docutils literal notranslate"><span class="pre">verbose</span></code> must be <code class="docutils literal notranslate"><span class="pre">0</span></code> so diagnostics do not rely on Python
 side effects each step.</p>
 </p></li>
-<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Same options as <a class="reference internal" href="#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> —
+<li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Same options as <a class="reference internal" href="#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> —
 <code class="docutils literal notranslate"><span class="pre">'none'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_one'</span></code> | <code class="docutils literal notranslate"><span class="pre">'det_sigma_x'</span></code> |
 <code class="docutils literal notranslate"><span class="pre">'a_eq_b'</span></code>.</p></li>
-<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
-<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
-<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>e_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
+<li><p><strong>m_step_method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Passed through to <code class="docutils literal notranslate"><span class="pre">e_step</span></code> / <code class="docutils literal notranslate"><span class="pre">m_step</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -847,7 +847,7 @@ The solver handles all reparameterization internally via the chain rule.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">BregmanResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#BregmanResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.BregmanResult" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Result of a Bregman divergence minimization.</p>
 <p>Scalar fields accept both Python and JAX types so the result
 can live inside a lax.scan carry without concretization errors.</p>
@@ -857,9 +857,9 @@ can live inside a lax.scan carry without concretization errors.</p>
 <li><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>fun</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
 <li><p><strong>grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
-<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
-<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -880,7 +880,7 @@ can live inside a lax.scan carry without concretization errors.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.num_steps">
-<span class="sig-name descname"><span class="pre">num_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.num_steps" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">num_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.num_steps" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -890,7 +890,7 @@ can live inside a lax.scan carry without concretization errors.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.elapsed_time">
-<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.elapsed_time" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.elapsed_time" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -925,7 +925,7 @@ can live inside a lax.scan carry without concretization errors.</p>
 <li><p><strong>theta0</strong> (<em>initial guess</em>)</p></li>
 <li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>not JIT-able</em><em>)</em>)</p></li>
 <li><p><strong>method</strong> (<em>'lbfgs'</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
-<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
 For backend=’jax’: enforced via reparameterization.
 For backend=’cpu’: converted to scipy format internally.</p></li>
 <li><p><strong>max_steps</strong> (<em>iteration budget</em>)</p></li>
@@ -937,7 +937,7 @@ If None with backend=’cpu’: falls back to jax.grad (hybrid mode).</p></li>
 For backend=’cpu’: must accept numpy arrays and return numpy array.
 For backend=’jax’, method=’newton’: must be JAX-traceable.
 If None with method=’newton’: jax.hessian of the full objective is used.</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary after solve.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary after solve.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -955,14 +955,14 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>theta0_batch</strong> (<em>(</em><em>K</em><em>, </em><a class="reference internal" href="distributions.html#normix.distributions.normal.MultivariateNormal.dim" title="normix.distributions.normal.MultivariateNormal.dim"><em>dim</em></a><em>) </em><em>jax.Array for backend='jax'</em><em>, </em><em>method='newton'</em>) – (parallel via vmap); list of arrays otherwise
 (sequential for-loop).</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.</p></li>
 <li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>grad_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>hess_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
@@ -992,7 +992,7 @@ Newton kernel on each iteration.</p>
 <li><p><strong>f</strong> (<em>convex objective ψ</em><em>(</em><em>θ</em><em>) </em><em>→ scalar</em><em> (</em><em>must be JAX-traceable</em><em>)</em><em>.</em>)</p></li>
 <li><p><strong>grad_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla\psi(\theta) \to \mathbb{R}^d\)</span>.</p></li>
 <li><p><strong>hess_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla^2\psi(\theta) \to \mathbb{R}^{d\times d}\)</span>.</p></li>
-<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code>, each shape <span class="math notranslate nohighlight">\((d,)\)</span>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em> or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code>, each shape <span class="math notranslate nohighlight">\((d,)\)</span>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1190,8 +1190,8 @@ block-diagonal weighting; leaf-wise multiply;</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eta_prev</strong> – Running state <span class="math notranslate nohighlight">\(\eta_{t-1}\)</span>.</p></li>
 <li><p><strong>eta_new</strong> – New batch estimate <span class="math notranslate nohighlight">\(\hat\eta\)</span>.</p></li>
-<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on previous state.</p></li>
-<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on new estimate.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on previous state.</p></li>
+<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><em>Callable</em></a><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em>]</em>) – Weight on new estimate.</p></li>
 <li><p><strong>a</strong> – Additive shift (e.g. shrinkage prior). <code class="docutils literal notranslate"><span class="pre">None</span></code> means zero.</p></li>
 </ul>
 </dd>
@@ -1293,7 +1293,7 @@ base class provides a single <code class="xref py py-meth docutils literal notra
 <p>Robbins–Monro: <span class="math notranslate nohighlight">\(c = 1/(\tau_0 + t)\)</span>, <span class="math notranslate nohighlight">\(b = 1 - c\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tau0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Initial step-size denominator (higher → slower adaptation).</p>
+<dd class="field-odd"><p><strong>tau0</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Initial step-size denominator (higher → slower adaptation).</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1337,7 +1337,7 @@ base class provides a single <code class="xref py py-meth docutils literal notra
 <p>Exponentially weighted moving average: <span class="math notranslate nohighlight">\(b = 1-w\)</span>, <span class="math notranslate nohighlight">\(c = w\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on the new batch (0 &lt; w ≤ 1).</p>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on the new batch (0 &lt; w ≤ 1).</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1374,7 +1374,7 @@ base class provides a single <code class="xref py py-meth docutils literal notra
 <span class="math notranslate nohighlight">\(\mathrm{base}(\eta_{t-1}, \hat\eta)\)</span>.</p></li>
 <li><p><strong>eta0</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>) – Prior expectation parameters (shrinkage target). Must be a complete
 stats pytree of the same type as <code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> / <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>.</p></li>
-<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>stats pytree</em>) – <p>Shrinkage strength.</p>
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>stats pytree</em>) – <p>Shrinkage strength.</p>
 <ul>
 <li><p><strong>scalar</strong> — uniform shrinkage on every sufficient statistic;
 matches the penalised-MLE in
@@ -1456,14 +1456,14 @@ For time-varying schedules, subclass <a class="reference internal" href="#normix
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><em>None</em>) – Additive shift (e.g. scaled prior).</p></li>
-<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on previous state.</p></li>
-<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on new batch.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on previous state.</p></li>
+<li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Weight on new batch.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.eta_rules.AffineUpdate.a">
-<span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><span class="pre">NormalMixtureEta</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.a" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><span class="pre">NormalMixtureEta</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#normix.fitting.eta_rules.AffineUpdate.a" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1538,7 +1538,7 @@ and subordinator parameters.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Source model; provides <span class="math notranslate nohighlight">\((\mu, \gamma, p, a, b)\)</span>.</p></li>
-<li><p><strong>sigma2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Common variance for the isotropic prior. Must be positive.</p></li>
+<li><p><strong>sigma2</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Common variance for the isotropic prior. Must be positive.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
