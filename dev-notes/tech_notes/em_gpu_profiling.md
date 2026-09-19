@@ -1,6 +1,6 @@
 # EM Algorithm GPU Profiling: CPU vs GPU vs NumPy
 
-**Date**: March 2026 (updated — CPU Bessel backend results)  
+**Date**: March 2026 (updated — Aitken $\ell_n$ stop, 2026-09)  
 **Status**: Updated with CPU-Bessel backend results (March 2026)  
 **Related files**: `benchmarks/bench_em_mixture.py` (E/M-step × backend; `--mcecm` / `--n-stocks` for the SP500 sweep)
 
@@ -126,11 +126,42 @@ model = result.model
 
 Or equivalently, call directly:
 ```python
-eta = model.e_step(X, backend='cpu')
+eta = model.e_step(X, backend='cpu').eta
 model = model.m_step(eta, backend='cpu', method='lbfgs')
 ```
 
 The `backend='jax'` default remains correct for `log_prob`, `pdf`, `cdf`, `jax.jit`, and `jax.grad`.
+
+## Convergence: Aitken remaining gap of $\ell_n$
+
+`BatchEMFitter` stops on the Aitken remaining gap of the mean
+log-likelihood $\ell_n$ (nats per observation). Hybrid-RMS parameter
+change on `em_convergence_params()` is recorded in
+`EMResult.param_changes` only.
+
+The E-step already has the posterior GIG log-partition
+(`BesselMoments.log_k`). Conjugacy
+$\log f(x)=\log h(x)+\psi_{\mathrm{post}}-\psi$ gives
+$\ell_n(\theta_t)$ with no extra Bessel call. `e_step` returns
+`EStepResult(eta, log_lik)`: $\ell_n$ is not a field of
+`NormalMixtureEta` (`affine_combine` / shrinkage would mix it) and is
+not a cache on the model.
+
+With $\Delta_1=\ell_t-\ell_{t-1}$, $\Delta_2=\ell_{t+1}-\ell_t$,
+$a=\Delta_2/\Delta_1$, stop when
+$\ell_\infty-\ell_{t+1}=a\Delta_2/(1-a)<\mathtt{tol}$ for
+$\Delta_1>0$ and $0\le a<1$. Three consecutive $\ell$ values are
+required (earliest stop `n_iter=3`). Under scalar-$\tau$ MAP shrinkage
+the sequence is the penalised objective
+$\ell_n+\tau(\theta\cdot\eta_0-\psi)$. Incremental EM has no Aitken
+stop (`converged=None`).
+
+The 2026-09-05 review VG case (2000 obs, generating $\alpha=0.7$, init
+$\alpha=\beta=2$) reported `converged=True` at $\alpha\approx 1.59$
+because the subordinator was excluded from the parameter-change hook;
+continuation recovered $\alpha\approx 0.7$. Default `tol=1e-3` is now
+nats/obs remaining gap. Scaled data $X\mapsto cX$ no longer stops on
+the first step from the additive $1$ in the hybrid-RMS denominator.
 
 ## Experimental Setup
 
