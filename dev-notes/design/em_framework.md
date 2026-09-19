@@ -29,11 +29,10 @@ Both return `EMResult`:
 | Field | Always set | Notes |
 |---|---|---|
 | `model` | yes | the fitted pytree |
-| `param_changes` | yes | max hybrid-scale RMS change in `em_convergence_params()` per iteration |
+| `param_changes` | yes | hybrid-RMS diagnostic on `em_convergence_params()` (not the stop) |
 | `n_iter` | yes | iterations actually run |
-| `converged` | yes (Batch) / `None` (Incremental) | `bool` for batch; incremental is fixed-budget |
-| `stop_reason` | optional | `'tol'`, `'max_iter'`, or `'budget'` |
-| `log_likelihoods` | optional (verbose ≥ 1) | per-iteration LL trace |
+| `converged` | yes (Batch) / `None` (Incremental) | Aitken remaining gap $<$ `tol` for batch; incremental is fixed-budget |
+| `log_likelihoods` | optional (`track_ll` / verbose ≥ 1) | conjugacy mean $\ell_n$ per iteration (the Aitken sequence) |
 | `elapsed_time` | yes | wall clock |
 
 ### 1.1 One `fit()` signature: `_fit_defaults()` (DEC-3)
@@ -82,39 +81,80 @@ the drift that produced the narrowing bug.
 ## 2. EM Steps on Marginal Mixtures
 
 ```python
-e_step(X, *, backend='jax'|'cpu')        -> NormalMixtureEta | FactorMixtureStats
+e_step(X, *, backend='jax'|'cpu')        -> EStepResult  # eta + conjugacy ℓ_n
 m_step(eta, **kw)                        -> MarginalMixture       # full update
 m_step_normal(eta)                       -> MarginalMixture       # MCECM cycle 1
 m_step_subordinator(eta, **kw)           -> MarginalMixture       # MCECM cycle 2
 compute_eta_from_model()                 -> stats pytree          # incremental warm-start
-em_convergence_params()                  -> pytree                # convergence hook
+em_convergence_params()                  -> pytree                # hybrid-RMS diagnostic
 ```
 
-`e_step` returns aggregated expectation parameters as an `eqx.Module`
-pytree, not raw per-observation dicts. The first six fields of
-`FactorMixtureStats` are identical to `NormalMixtureEta`, so shrinkage
-targets and rule weights port across the two families (see
-`mixtures.md` §7).
+`e_step` returns `EStepResult`: aggregated expectation parameters
+(`eta`) plus the conjugacy mean log-likelihood $\ell_n(\theta)$ at the
+E-step parameters. $\ell_n$ is *not* a field of `NormalMixtureEta` —
+`affine_combine` / shrinkage would mix it — and is not a cache on the
+model. The first six fields of `FactorMixtureStats` are identical to
+`NormalMixtureEta`, so shrinkage targets and rule weights port across
+the two families (see `mixtures.md` §7).
+`marginal_log_likelihood` stays the public standalone method.
 
-### 2.1 Convergence on a pytree
+### 2.1 Stopping: Aitken remaining gap of $\ell_n$
 
-`em_convergence_params()` returns a pytree whose leaf-wise change
-defines convergence:
+E3. `converged` is the Aitken remaining gap of the mean log-likelihood
+$\ell_n$ in nats per observation (McLachlan & Krishnan 2008).
+With three consecutive values $\ell_{t-1},\ell_t,\ell_{t+1}$,
+
+$$
+\Delta_1 = \ell_t - \ell_{t-1},\qquad
+\Delta_2 = \ell_{t+1} - \ell_t,\qquad
+a = \Delta_2/\Delta_1,
+$$
+
+stop when $\ell_\infty - \ell_{t+1} = a\Delta_2/(1-a) < \mathtt{tol}$
+for $\Delta_1 > 0$ and $0 \le a < 1$. Earliest stop is `n_iter=3`.
+Default $\mathtt{tol}=10^{-3}$ is a remaining gap of $10^{-3}$ nats/obs.
+A negative $\Delta\ell$ under plain EM is a bug detector (Aitken is
+not a stop); under scalar-$\tau$ MAP shrinkage the tracked sequence is
+the penalised objective $\ell_n + \tau(\theta\cdot\eta_0 - \psi)$.
+
+$\ell_n(\theta_t)$ comes from the E-step at $\theta_t$. Posterior GIG
+conjugacy already evaluates $\psi_{\mathrm{post}}$ from
+`BesselMoments.log_k`:
+
+$$
+\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi,
+\qquad
+\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|
++ \gamma^\top\Sigma^{-1}(x-\mu).
+$$
+
+Zero extra Bessel calls relative to the E-step. Same $\ell_n$ for every
+regularisation (`none` / `det_sigma_one` / `det_sigma_x` / `a_eq_b`).
+MCECM uses $\ell_n$ from the first E-step of the cycle.
+
+The previous stop — hybrid-RMS on `em_convergence_params()` =
+$(\mu,\gamma,L_\Sigma)$, subordinator excluded — reported
+`converged=True` while the mixer was still travelling. The 2026-09-05
+review VG experiment (2000 draws, $Y_i\sim\mathrm{Gamma}(0.7,0.7)$,
+init $\alpha=\beta=2$) stopped at $\alpha\approx 1.59$; continuation
+recovered the generating shape $0.7$. The additive $1$ in the RMS
+denominator also stopped $X\mapsto 0.001\,X$ after one iteration.
+
+Public twin: `../../docs/design/em_framework.md` § 2.1.
+
+### 2.2 Hybrid-RMS diagnostic
+
+`em_convergence_params()` still returns a pytree whose leaf-wise
+hybrid-RMS change is stored in `EMResult.param_changes`:
 
 | Marginal | Returns |
 |---|---|
-| `NormalMixture` | `(μ, γ, L_Σ)` |
-| `FactorNormalMixture` | `(μ, γ, Σ = F F^\top + \mathrm{diag}(D))` |
+| `NormalMixture` | $(\mu, \gamma, L_\Sigma)$ |
+| `FactorNormalMixture` | $(\mu, \gamma, \Sigma = F F^\top + \mathrm{diag}(D))$ |
 
-Subordinator parameters $(p, a, b)$ are excluded — their solver has
-its own tolerance and including them inflates iteration counts.
 Returning $\Sigma$ from `FactorNormalMixture` (rather than $(F, D)$)
-sidesteps the $r \times r$ orthogonal gauge of $F$ — the Σ-recovery
-test in `tests/test_factor_mixture.py` passes without an
-orthogonalisation step.
-
-`_param_change(new, old)` takes the max hybrid-scale **RMS** change
-across leaves:
+sidesteps the $r \times r$ orthogonal gauge of $F$. `_param_change`
+is
 
 $$
 \max_{\text{leaves}}\;
@@ -123,21 +163,9 @@ $$
 \mathrm{rms}(v) = \|v\|_2 / \sqrt{m},\quad m = |v|.
 $$
 
-**Why parameter change, not likelihood.** Stopping on observed (or
-expected) log-likelihood is mathematically natural for EM, but a poor
-library default here: each LL evaluation is Bessel-heavy for GH/NIG,
-absolute $\Delta\ell$ still scales with $d$, and a flat likelihood on
-the $(\mu,\gamma)$ ridge does not imply unique parameters. Likelihood
-traces remain optional diagnostics (`track_ll` / `verbose`); they are
-not part of `converged`.
-
-**Why hybrid RMS.** The additive $1$ avoids near-zero-$\mu$ inflation
-from a pure relative $\|\Delta\|/\|\theta\|$ (centred returns). RMS
-(rather than raw L2) keeps a fixed `tol` roughly dimension-free — the
-same per-coordinate drift scores the same for $d=1$ and large $d$ —
-and stops the $d^2$-sized $L_\Sigma$ leaf from dominating $\mu$/$\gamma$.
-Subordinator parameters stay out of the pool (their solver has its own
-tolerance).
+The additive $1$ avoids near-zero-$\mu$ inflation from a pure relative
+$\|\Delta\|/\|\theta\|$. RMS keeps a fixed diagnostic roughly
+dimension-free. It is not `converged`.
 
 ---
 
