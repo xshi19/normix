@@ -295,29 +295,39 @@ class BatchEMFitter:
         max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state, objective
 
-    def _penalized_objective(self, model, log_lik: jax.Array) -> jax.Array:
-        r"""MAP objective :math:`\ell_n + \tau(\theta\cdot\eta_0 - \psi)` when it is maximised.
+    def _map_penalty_applies(self, model) -> bool:
+        r"""True when :meth:`_penalized_objective` adds the MAP term.
 
-        Applies only for scalar-:math:`\tau`
-        :class:`~normix.fitting.eta_rules.Shrinkage` wrapping
-        :class:`~normix.fitting.eta_rules.IdentityUpdate` on a
-        :class:`~normix.mixtures.marginal.NormalMixture` (joint
-        :math:`\theta, \psi` exist). Otherwise returns :math:`\ell_n`.
+        Scalar-:math:`\tau` :class:`~normix.fitting.eta_rules.Shrinkage`
+        wrapping :class:`~normix.fitting.eta_rules.IdentityUpdate` on a
+        model that exposes joint :math:`(\theta,\psi)` (a
+        :class:`~normix.mixtures.marginal.NormalMixture`) and a
+        :class:`~normix.fitting.eta.NormalMixtureEta` target. Factor
+        mixtures have no joint :math:`\theta`, so the penalty is skipped.
         """
         rule = self.eta_update
         if rule is None:
-            return log_lik
+            return False
         from normix.fitting.eta import NormalMixtureEta
         from normix.fitting.eta_rules import IdentityUpdate, Shrinkage
         if not isinstance(rule, Shrinkage):
-            return log_lik
+            return False
         if not isinstance(rule.base, IdentityUpdate):
-            return log_lik
+            return False
         if type(rule.tau) is type(rule.eta0):
-            return log_lik
+            return False
         joint = getattr(model, '_joint', None)
-        if joint is None or not isinstance(rule.eta0, NormalMixtureEta):
+        return joint is not None and isinstance(rule.eta0, NormalMixtureEta)
+
+    def _penalized_objective(self, model, log_lik: jax.Array) -> jax.Array:
+        r"""MAP objective :math:`\ell_n + \tau(\theta\cdot\eta_0 - \psi)` when it is maximised.
+
+        See :meth:`_map_penalty_applies`. Otherwise returns :math:`\ell_n`.
+        """
+        if not self._map_penalty_applies(model):
             return log_lik
+        rule = self.eta_update
+        joint = model._joint
         eta0 = rule.eta0
         eta0_flat = jnp.concatenate([
             jnp.stack([eta0.E_log_Y, eta0.E_inv_Y, eta0.E_Y]),
@@ -329,17 +339,14 @@ class BatchEMFitter:
         psi = joint.log_partition()
         return log_lik + rule.tau * (jnp.dot(theta, eta0_flat) - psi)
 
-    def _objective_should_increase(self) -> bool:
+    def _objective_should_increase(self, model) -> bool:
         """True when a negative :math:`\\Delta` is an EM bug, not an η-update artefact."""
         if self.eta_update is None:
             return True
-        from normix.fitting.eta_rules import IdentityUpdate, Shrinkage
-        rule = self.eta_update
-        return (
-            isinstance(rule, Shrinkage)
-            and isinstance(rule.base, IdentityUpdate)
-            and type(rule.tau) is not type(rule.eta0)
-        )
+        from normix.fitting.eta_rules import IdentityUpdate
+        if isinstance(self.eta_update, IdentityUpdate):
+            return True
+        return self._map_penalty_applies(model)
 
     # ------------------------------------------------------------------
     # lax.scan path (JIT-able, requires backend='jax')
@@ -405,6 +412,11 @@ class BatchEMFitter:
                 jax.lax.scan(body, init, None, length=self.max_iter))
             log_likelihoods = None
 
+        n_keep = int(n_iter)
+        param_changes = param_changes[:n_keep]
+        if log_likelihoods is not None:
+            log_likelihoods = log_likelihoods[:n_keep]
+
         elapsed = time.perf_counter() - t0
 
         if self.verbose >= 1:
@@ -419,7 +431,7 @@ class BatchEMFitter:
                 status = "NOT converged"
             print(
                 f"  {status} after {int(n_iter)} iterations "
-                f"({elapsed:.2f}s), final LL={ll:.6f}"
+                f"({elapsed:.2f}s), E-step LL={ll:.6f}"
             )
 
         return EMResult(
@@ -488,7 +500,7 @@ class BatchEMFitter:
 
             if (
                 self.verbose >= 1
-                and self._objective_should_increase()
+                and self._objective_should_increase(prev_model)
                 and ll_prev is not None
                 and float(obj - ll_prev) < 0.0
             ):
@@ -534,7 +546,7 @@ class BatchEMFitter:
                 status = "Diverged (non-finite iterate; kept last finite model)"
             else:
                 status = "Converged" if converged else "NOT converged"
-            ll_str = f", final LL={float(lls[-1]):.6f}" if lls else ""
+            ll_str = f", E-step LL={float(lls[-1]):.6f}" if lls else ""
             print(f"  {status} after {n_iter} iterations ({elapsed:.2f}s){ll_str}")
 
         return EMResult(

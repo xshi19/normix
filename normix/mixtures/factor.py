@@ -86,10 +86,10 @@ class FactorNormalMixture(MarginalMixture):
     Notes
     -----
     ``F`` is identifiable only up to a right :math:`r \times r`
-    orthogonal   rotation, so the hybrid-RMS diagnostic is on
-  :math:`\Sigma = F F^\top + \mathrm{diag}(D)`
-  (:meth:`em_convergence_params`) rather than on ``F`` directly.
-  Stopping uses the Aitken remaining gap of :math:`\ell_n`.
+    orthogonal rotation, so the hybrid-RMS diagnostic is on
+    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`
+    (:meth:`em_convergence_params`) rather than on ``F`` directly.
+    Stopping uses the Aitken remaining gap of :math:`\ell_n`.
     """
 
     mu: jax.Array          # (d,)
@@ -407,7 +407,7 @@ class FactorNormalMixture(MarginalMixture):
         log_lik = self._conjugacy_mean_log_lik(
             sub_exp['psi_post'], sub_exp['zw'],
             self.log_det_sigma(), self.d,
-            self.subordinator().log_partition(),
+            self._conjugacy_psi_prior(),
         )
         return eta, log_lik
 

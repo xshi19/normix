@@ -458,6 +458,7 @@ class TestReviewVGAitken:
             e_step_backend="cpu", m_step_backend="cpu",
         )
         alpha = float(result.model.joint.subordinator().alpha)
+        assert result.n_iter > 3
         assert not (result.converged and abs(alpha - 1.59) < 0.1), (
             f"stopped at α={alpha:.4f} with converged={result.converged} "
             f"after {result.n_iter} iters (review false stop was α≈1.59)"
@@ -482,20 +483,78 @@ class TestReviewVGAitken:
 
 
 class TestConjugacyMeanLogLik:
-    """E-step conjugacy ℓ_n matches mean log_prob (no extra Bessel)."""
+    """E-step conjugacy ℓ_n matches mean log_prob (GIG-convention ψ)."""
 
-    def test_gh_estep_log_lik_matches_marginal(self):
-        from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
-        model = GeneralizedHyperbolic.from_classical(
-            mu=jnp.array([0.0, 0.2]), gamma=jnp.array([0.3, -0.1]),
-            sigma=jnp.array([[1.0, 0.2], [0.2, 1.0]]),
-            p=-0.5, a=1.5, b=1.0,
+    _MU = jnp.array([0.0, 0.2])
+    _GAMMA = jnp.array([0.3, -0.1])
+    _SIGMA = jnp.array([[1.0, 0.2], [0.2, 1.0]])
+    _F = jnp.array([[0.8], [0.4]])
+    _D = jnp.array([0.5, 0.6])
+
+    @staticmethod
+    def _models():
+        from normix.distributions.normal_inverse_gamma import (
+            FactorNormalInverseGamma, NormalInverseGamma,
         )
-        X = model.rvs(80, seed=4)
-        estep = model.e_step(X, backend="jax")
-        mll = float(model.marginal_log_likelihood(X))
-        np.testing.assert_allclose(float(estep.log_lik), mll, rtol=1e-8, atol=1e-8)
-        estep_cpu = model.e_step(X, backend="cpu")
-        np.testing.assert_allclose(
-            float(estep_cpu.log_lik), mll, rtol=1e-7, atol=1e-7)
+        from normix.distributions.normal_inverse_gaussian import (
+            FactorNormalInverseGaussian, NormalInverseGaussian,
+        )
+        from normix.distributions.variance_gamma import FactorVarianceGamma
+        from normix.distributions.generalized_hyperbolic import (
+            FactorGeneralizedHyperbolic,
+        )
+        mu, g, S = (
+            TestConjugacyMeanLogLik._MU,
+            TestConjugacyMeanLogLik._GAMMA,
+            TestConjugacyMeanLogLik._SIGMA,
+        )
+        F, D = TestConjugacyMeanLogLik._F, TestConjugacyMeanLogLik._D
+        return [
+            GeneralizedHyperbolic.from_classical(
+                mu=mu, gamma=g, sigma=S, p=-0.5, a=1.5, b=1.0),
+            VarianceGamma.from_classical(
+                mu=mu, gamma=g, sigma=S, alpha=2.0, beta=1.5),
+            NormalInverseGamma.from_classical(
+                mu=mu, gamma=g, sigma=S, alpha=3.0, beta=1.0),
+            NormalInverseGaussian.from_classical(
+                mu=mu, gamma=g, sigma=S, mu_ig=1.0, lam=1.5),
+            FactorGeneralizedHyperbolic.from_classical(
+                mu=mu, gamma=g, F=F, D=D, p=-0.5, a=1.5, b=1.0),
+            FactorVarianceGamma.from_classical(
+                mu=mu, gamma=g, F=F, D=D, alpha=2.0, beta=1.5),
+            FactorNormalInverseGamma.from_classical(
+                mu=mu, gamma=g, F=F, D=D, alpha=3.0, beta=1.0),
+            FactorNormalInverseGaussian.from_classical(
+                mu=mu, gamma=g, F=F, D=D, mu_ig=1.0, lam=1.5),
+        ]
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_estep_log_lik_matches_marginal(self, backend):
+        rtol = 1e-8 if backend == "jax" else 1e-7
+        atol = 1e-8 if backend == "jax" else 1e-7
+        for model in self._models():
+            X = model.rvs(80, seed=4)
+            estep = model.e_step(X, backend=backend)
+            mll = float(model.marginal_log_likelihood(X))
+            np.testing.assert_allclose(
+                float(estep.log_lik), mll, rtol=rtol, atol=atol,
+                err_msg=f"{type(model).__name__} backend={backend}",
+            )
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_track_ll_length_equals_n_iter(self, loop):
+        true = VarianceGamma.from_classical(
+            mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
+            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
+        )
+        X = true.rvs(400, seed=1)
+        kwargs = dict(max_iter=20, tol=1e-3, verbose=0, track_ll=True)
+        if loop == "scan":
+            kwargs.update(e_step_backend="jax", m_step_backend="jax")
+        else:
+            kwargs.update(e_step_backend="cpu", m_step_backend="cpu")
+        result = BatchEMFitter(**kwargs).fit(true, X)
+        assert result.log_likelihoods is not None
+        assert result.log_likelihoods.shape[0] == int(result.n_iter)
+        assert result.param_changes.shape[0] == int(result.n_iter)
 

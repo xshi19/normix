@@ -89,6 +89,22 @@ class MarginalMixture(eqx.Module):
         X = jnp.asarray(X, dtype=jnp.float64)
         return jnp.mean(jax.vmap(self.log_prob)(X))
 
+    def _conjugacy_psi_prior(self) -> jax.Array:
+        r"""Prior log-partition in the GIG convention that matches
+        :math:`\psi_{\mathrm{post}}`.
+
+        :meth:`~normix.mixtures.joint.JointNormalMixture._compute_posterior_expectations`
+        evaluates :math:`\psi_{\mathrm{post}}` from GIG
+        :math:`\log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a)`
+        (base measure :math:`h\equiv 1`). InverseGaussian stores
+        :math:`\tfrac12\log(2\pi)` in its base measure, so the
+        subordinator's own :math:`\psi` is the wrong gauge for NIG.
+        ``subordinator().to_gig().log_partition()`` recovers the matching
+        :math:`\psi` (Gamma / InverseGamma degeneracy branches stay
+        bit-identical).
+        """
+        return self.subordinator().to_gig().log_partition()
+
     @staticmethod
     def _conjugacy_mean_log_lik(
         psi_post: jax.Array,
@@ -101,7 +117,8 @@ class MarginalMixture(eqx.Module):
 
         :math:`\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|
         + \gamma^\top\Sigma^{-1}(x-\mu)`. :math:`\psi` is the
-        subordinator log-partition (shared across the batch);
+        subordinator log-partition in the GIG convention (shared across
+        the batch; see :meth:`_conjugacy_psi_prior`);
         :math:`\psi_{\mathrm{post}}` is the posterior GIG log-partition.
         """
         log_h = (
@@ -546,7 +563,7 @@ class NormalMixture(MarginalMixture):
         log_lik = self._conjugacy_mean_log_lik(
             sub_exp['psi_post'], sub_exp['zw'],
             self.log_det_sigma(), self.d,
-            self.subordinator().log_partition(),
+            self._conjugacy_psi_prior(),
         )
         return eta, log_lik
 
