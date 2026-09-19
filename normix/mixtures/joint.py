@@ -278,7 +278,10 @@ class JointNormalMixture(ExponentialFamily):
 
         with the family-specific prior :math:`(p, a, b)` resolved by
         :meth:`_posterior_gig_params`. Returns a dict with keys
-        ``E_log_Y``, ``E_inv_Y``, ``E_Y``.
+        ``E_log_Y``, ``E_inv_Y``, ``E_Y``, plus ``psi_post`` (posterior
+        GIG log-partition) and ``zw`` (:math:`\gamma^\top\Sigma^{-1}(x-\mu)`)
+        for the conjugacy identity
+        :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.
         """
         x = jnp.asarray(x, dtype=jnp.float64)
         return self._compute_posterior_expectations(x)
@@ -286,19 +289,29 @@ class JointNormalMixture(ExponentialFamily):
     def _compute_posterior_expectations(
         self, x: jax.Array
     ) -> Dict[str, jax.Array]:
-        r"""Posterior :math:`(E[\log Y], E[1/Y], E[Y]\mid x)` via the GIG moments.
+        r"""Posterior moments and GIG :math:`\psi_{\mathrm{post}}` from one bundle.
 
         The posterior scale :math:`b_{\mathrm{post}} = b +
         (x-\mu)^\top\Sigma^{-1}(x-\mu)` is floored at
         :data:`~normix.utils.constants.B_POST_FLOOR`, which bounds
         :math:`E[1/Y\mid x]` for observations near the mode. The floor only
         binds for VG (prior :math:`b=0`); see :doc:`/theory/em_algorithm`.
+
+        :math:`\psi_{\mathrm{post}}` reuses ``m.log_k`` from the same
+        :func:`~normix.utils.bessel.log_kv_moments` call that produces
+        :math:`\eta` — no extra Bessel evaluation.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
-        _z, _w, z2, w2, _zw = self._quad_forms(x)
+        _z, _w, z2, w2, zw = self._quad_forms(x)
         p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
-        eta = GIG(p=p_post, a=a_post, b=b_post).expectation_params()
-        return {'E_log_Y': eta[0], 'E_inv_Y': eta[1], 'E_Y': eta[2]}
+        eta, psi_post = GIG._eta_psi_from_pab_jax(p_post, a_post, b_post)
+        return {
+            'E_log_Y': eta[0],
+            'E_inv_Y': eta[1],
+            'E_Y': eta[2],
+            'psi_post': psi_post,
+            'zw': zw,
+        }
 
     def _posterior_gig_params(self, z2: jax.Array, w2: jax.Array):
         r"""Prior-to-posterior GIG conjugacy map, uniform across families.

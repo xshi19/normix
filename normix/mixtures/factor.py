@@ -15,8 +15,8 @@ variance-mean mixture with dispersion :math:`\\Sigma = F F^\\top +
 \\mathrm{diag}(D)`. Storing :math:`(F, D)` instead of a full Cholesky of
 :math:`\\Sigma` keeps quadratic forms and log-determinants in
 :math:`\\mathcal{O}(d r^2 + r^3)` via Woodbury and makes the rotation
-gauge of :math:`F` irrelevant for convergence (we measure on
-:math:`\\Sigma`).
+gauge of :math:`F` irrelevant for the hybrid-RMS diagnostic (we measure
+on :math:`\\Sigma`).
 
 This module hosts only the abstract :class:`FactorNormalMixture` base.
 The four concrete subordinator families
@@ -36,7 +36,7 @@ signature — that is why :class:`FactorNormalMixture` is a sibling of
 from __future__ import annotations
 
 import abc
-from typing import Tuple
+from typing import Dict, Tuple
 
 import equinox as eqx
 import jax
@@ -86,9 +86,10 @@ class FactorNormalMixture(MarginalMixture):
     Notes
     -----
     ``F`` is identifiable only up to a right :math:`r \times r`
-    orthogonal rotation, so convergence is measured on
-    :math:`\Sigma = F F^\top + \mathrm{diag}(D)`
-    (:meth:`em_convergence_params`) rather than on ``F`` directly.
+    orthogonal   rotation, so the hybrid-RMS diagnostic is on
+  :math:`\Sigma = F F^\top + \mathrm{diag}(D)`
+  (:meth:`em_convergence_params`) rather than on ``F`` directly.
+  Stopping uses the Aitken remaining gap of :math:`\ell_n`.
     """
 
     mu: jax.Array          # (d,)
@@ -306,73 +307,88 @@ class FactorNormalMixture(MarginalMixture):
     # E-step: posterior expectations + factor-stat reduction
     # ------------------------------------------------------------------
 
-    def _conditional_expectations(self, x: jax.Array):
-        r"""Return :math:`(E[\log Y \mid x],\, E[1/Y \mid x],\,
-        E[Y \mid x])` for a single observation."""
+    def _conditional_expectations(self, x: jax.Array) -> Dict[str, jax.Array]:
+        r"""Posterior moments, :math:`\psi_{\mathrm{post}}`, and
+        :math:`\gamma^\top\Sigma^{-1}(x-\mu)` for a single observation."""
         from normix.distributions.generalized_inverse_gaussian import GIG
-        z2, w2, _zw = self._quad_forms(x)
+        z2, w2, zw = self._quad_forms(x)
         p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
-        gig = GIG(p=p_post, a=a_post, b=b_post)
-        eta = gig.expectation_params()
-        return eta[0], eta[1], eta[2]
+        eta, psi_post = GIG._eta_psi_from_pab_jax(p_post, a_post, b_post)
+        return {
+            'E_log_Y': eta[0],
+            'E_inv_Y': eta[1],
+            'E_Y': eta[2],
+            'psi_post': psi_post,
+            'zw': zw,
+        }
 
-    def e_step(self, X: jax.Array, *, backend: str = 'jax') -> FactorMixtureStats:
+    def e_step(self, X: jax.Array, *, backend: str = 'jax') -> "EStepResult":
         r"""Full E-step: posterior :math:`Y` expectations + deterministic
         :math:`Z` reductions.
 
-        Returns a :class:`~normix.fitting.eta.FactorMixtureStats`
-        whose first six fields are batch averages of the standard normal
-        variance-mean mixture sufficient statistics, and whose four
-        :math:`Z`-fields are computed from the first six via the
-        deterministic relations in
-        ``docs/theory/factor_analysis.md`` §E-Step (no extra Bessel
-        evaluations).
+        Returns :class:`~normix.fitting.eta.EStepResult` whose ``eta`` is
+        a :class:`~normix.fitting.eta.FactorMixtureStats` (first six
+        fields are batch averages of the standard mixture statistics;
+        the four :math:`Z`-fields follow
+        ``docs/theory/factor_analysis.md`` §E-Step) and whose
+        ``log_lik`` is the conjugacy mean log-likelihood at the current
+        parameters.
         """
+        from normix.fitting.eta import EStepResult
+
         if backend == 'cpu':
             sub_exp = self._e_step_subordinator_cpu(X)
         elif backend == 'jax':
             sub_exp = self._e_step_subordinator_jax(X)
         else:
             raise ValueError(f"unknown backend {backend!r}")
-        return self._aggregate_stats(X, sub_exp)
+        eta, log_lik = self._aggregate_stats(X, sub_exp)
+        return EStepResult(eta=eta, log_lik=log_lik)
 
-    def _e_step_subordinator_jax(self, X: jax.Array):
-        E_log_Y, E_inv_Y, E_Y = jax.vmap(
-            self._conditional_expectations)(X)
-        return E_log_Y, E_inv_Y, E_Y
+    def _e_step_subordinator_jax(self, X: jax.Array) -> Dict[str, jax.Array]:
+        return jax.vmap(self._conditional_expectations)(X)
 
-    def _e_step_subordinator_cpu(self, X: jax.Array):
+    def _e_step_subordinator_cpu(self, X: jax.Array) -> Dict[str, jax.Array]:
         """CPU path: per-observation quad forms in JAX (vmapped) plus
         GIG Bessel via scipy."""
         from normix.distributions.generalized_inverse_gaussian import GIG
+        from normix.utils.constants import TINY
 
         X = jnp.asarray(X, dtype=jnp.float64)
 
-        def _z2(x):
-            return self._quad_forms(x)[0]
+        def _quad(x):
+            z2, _w2, zw = self._quad_forms(x)
+            return z2, zw
 
-        z2_all = jax.vmap(_z2)(X)
+        z2_all, zw_all = jax.vmap(_quad)(X)
         w2 = self._quad_form(self.gamma)
-        # The posterior map returns scalars or arrays matching z2_all;
-        # broadcasting handles both.
         p_post, a_post, b_post = self._floored_posterior_gig_params(z2_all, w2)
         n = X.shape[0]
         p_post = jnp.broadcast_to(p_post, (n,))
         a_post = jnp.broadcast_to(a_post, (n,))
         b_post = jnp.broadcast_to(b_post, (n,))
-        eta = GIG.expectation_params_batch(
-            p_post, a_post, b_post, backend='cpu')
-        return eta[:, 0], eta[:, 1], eta[:, 2]
+        eta, log_k = GIG._expectation_params_batch_cpu(p_post, a_post, b_post)
+        psi_post = GIG._psi_from_log_k(
+            log_k, p_post, a_post, b_post, floor=TINY, xp=jnp)
+        return {
+            'E_log_Y': eta[:, 0],
+            'E_inv_Y': eta[:, 1],
+            'E_Y': eta[:, 2],
+            'psi_post': psi_post,
+            'zw': zw_all,
+        }
 
     def _aggregate_stats(
         self,
         X: jax.Array,
-        sub_exp: Tuple[jax.Array, jax.Array, jax.Array],
-    ) -> FactorMixtureStats:
+        sub_exp: Dict[str, jax.Array],
+    ) -> tuple:
         """Average per-obs expectations into the six classical sums and
         compute the four factor-related statistics deterministically."""
         X = jnp.asarray(X, dtype=jnp.float64)
-        E_log_Y, E_inv_Y, E_Y = sub_exp
+        E_log_Y = sub_exp['E_log_Y']
+        E_inv_Y = sub_exp['E_inv_Y']
+        E_Y = sub_exp['E_Y']
 
         s1 = jnp.mean(E_inv_Y)
         s2 = jnp.mean(E_Y)
@@ -382,12 +398,18 @@ class FactorNormalMixture(MarginalMixture):
         s6 = jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
 
         s7, s8, s9, s10 = self._z_stats_from_six(s1, s2, s4, s5, s6)
-        return FactorMixtureStats(
+        eta = FactorMixtureStats(
             E_inv_Y=s1, E_Y=s2, E_log_Y=s3,
             E_X=s4, E_X_inv_Y=s5, E_XXT_inv_Y=s6,
             E_XZT_inv_sqrtY=s7, E_Z_inv_sqrtY=s8,
             E_Z_sqrtY=s9, E_ZZT=s10,
         )
+        log_lik = self._conjugacy_mean_log_lik(
+            sub_exp['psi_post'], sub_exp['zw'],
+            self.log_det_sigma(), self.d,
+            self.subordinator().log_partition(),
+        )
+        return eta, log_lik
 
     def _z_stats_from_six(
         self,
@@ -587,13 +609,13 @@ class FactorNormalMixture(MarginalMixture):
     # ------------------------------------------------------------------
 
     def em_convergence_params(self):
-        r"""Return :math:`(\mu, \gamma, \Sigma)` for the convergence
-        check.
+        r"""Diagnostic pytree :math:`(\mu, \gamma, \Sigma)` for hybrid-RMS
+        :attr:`~normix.fitting.em.EMResult.param_changes`.
 
         :math:`\Sigma = F F^\top + \mathrm{diag}(D)` rather than ``F``
         directly, because ``F`` is identifiable only up to an
-        :math:`r \times r` orthogonal rotation and would never converge
-        in norm.
+        :math:`r \times r` orthogonal rotation. Stopping uses the Aitken
+        remaining gap of :math:`\ell_n`, not this pytree.
         """
         return (self.mu, self.gamma, self.sigma())
 

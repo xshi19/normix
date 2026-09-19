@@ -331,7 +331,7 @@ class TestGeneralizedHyperbolic:
     def test_e_step_shapes(self, gh_2d):
         from normix.fitting.eta import NormalMixtureEta
         X = jax.random.normal(jax.random.PRNGKey(1), (30, 2), dtype=jnp.float64)
-        eta = gh_2d.e_step(X)
+        eta = gh_2d.e_step(X).eta
         assert isinstance(eta, NormalMixtureEta)
         assert eta.E_Y.shape == ()
         assert eta.E_inv_Y.shape == ()
@@ -344,7 +344,7 @@ class TestGeneralizedHyperbolic:
     def test_m_step_increases_ll(self, gh_2d):
         X = jax.random.normal(jax.random.PRNGKey(2), (100, 2), dtype=jnp.float64)
         ll0 = float(gh_2d.marginal_log_likelihood(X))
-        eta = gh_2d.e_step(X)
+        eta = gh_2d.e_step(X).eta
         gh_new = gh_2d.m_step(eta)
         ll1 = float(gh_new.marginal_log_likelihood(X))
         assert ll1 >= ll0 - 1e-6, f"LL decreased: {ll0:.4f} → {ll1:.4f}"
@@ -408,7 +408,7 @@ class TestMStepDenominatorSign:
         }
         for name, m in models.items():
             X = m.rvs(200, seed=7)
-            eta = m.e_step(X)
+            eta = m.e_step(X).eta
             D = 1.0 - float(eta.E_inv_Y) * float(eta.E_Y)
             assert D <= 1e-9, f"{name}: D = 1 - eta2*eta3 = {D} should be <= 0"
 

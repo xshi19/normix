@@ -204,7 +204,7 @@ def test_e_step_returns_factor_stats(small_factor_setup):
         mu=mu, gamma=gamma, F=F, D=D, alpha=2.0, beta=1.0)
     X = fa.rvs(64, seed=3)
 
-    eta = fa.e_step(X, backend='jax')
+    eta = fa.e_step(X, backend='jax').eta
     assert isinstance(eta, FactorMixtureStats)
     assert eta.E_X.shape == (mu.shape[0],)
     assert eta.E_XXT_inv_Y.shape == (mu.shape[0], mu.shape[0])
@@ -396,7 +396,7 @@ def test_shrinkage_tau_zero_equals_base_on_factor_stats(small_factor_setup):
         mu=mu, gamma=gamma, F=F, D=D, alpha=2.0, beta=1.0)
     X = fa.rvs(128, seed=2)
 
-    eta_hat = fa.e_step(X, backend='jax')
+    eta_hat = fa.e_step(X, backend='jax').eta
     eta_prev = fa.compute_eta_from_model()
     eta0 = fa.compute_eta_from_model()
 
@@ -423,7 +423,7 @@ def test_shrinkage_per_field_tau_only_sigma_on_factor_stats(small_factor_setup):
         mu=mu, gamma=gamma, F=F, D=D, alpha=2.0, beta=1.0)
     X = fa.rvs(128, seed=2)
 
-    eta_hat = fa.e_step(X, backend='jax')
+    eta_hat = fa.e_step(X, backend='jax').eta
     eta_prev = fa.compute_eta_from_model()
     eta0 = fa.compute_eta_from_model()
 

@@ -53,7 +53,7 @@ Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -601,19 +601,51 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         backend='cpu' : one batched ``log_kv_moments`` call (NumPy kernel)
         """
         if backend == 'cpu':
-            return GeneralizedInverseGaussian._expectation_params_batch_cpu(p, a, b)
+            eta, _log_k = GeneralizedInverseGaussian._expectation_params_batch_cpu(
+                p, a, b)
+            return eta
         p = jnp.asarray(p, dtype=jnp.float64)
         a = jnp.asarray(a, dtype=jnp.float64)
         b = jnp.asarray(b, dtype=jnp.float64)
 
         def _single(pi, ai, bi):
-            return GeneralizedInverseGaussian(p=pi, a=ai, b=bi).expectation_params()
+            eta, _psi = GeneralizedInverseGaussian._eta_psi_from_pab_jax(
+                pi, ai, bi)
+            return eta
 
         return jax.vmap(_single)(p, a, b)
 
     @staticmethod
-    def _expectation_params_batch_cpu(p, a, b) -> jax.Array:
-        """Vectorized CPU path — one ``log_kv_moments`` call on (N,) arrays."""
+    def _eta_psi_from_pab_jax(p, a, b) -> Tuple[jax.Array, jax.Array]:
+        r"""Scalar (vmappable) GIG :math:`(\eta, \psi)` from one moment bundle.
+
+        Keeps ``m.log_k`` from :func:`~normix.utils.bessel.log_kv_moments`
+        to form :math:`\psi = \log 2 + \log K_p(\sqrt{ab}) +
+        \tfrac{p}{2}\log(b/a)` with no extra Bessel call. Matches the
+        Bessel branch of :meth:`_grad_log_partition` (``LOG_EPS`` floor).
+        """
+        p = jnp.asarray(p, dtype=jnp.float64)
+        a_safe = jnp.maximum(jnp.asarray(a, dtype=jnp.float64), LOG_EPS)
+        b_safe = jnp.maximum(jnp.asarray(b, dtype=jnp.float64), LOG_EPS)
+        tiny = jnp.asarray(np.finfo(np.float64).tiny, dtype=jnp.float64)
+        z = jnp.sqrt(jnp.maximum(a_safe * b_safe, tiny))
+        log_sqrt_ba = 0.5 * (jnp.log(b_safe) - jnp.log(a_safe))
+        m = log_kv_moments(p, z, backend='jax')
+        eta, _ = GeneralizedInverseGaussian._eta_H_from_moments(
+            m, a_safe, b_safe, log_sqrt_ba, jnp,
+        )
+        psi = jnp.log(2.0) + m.log_k + p * log_sqrt_ba
+        return eta, psi
+
+    @staticmethod
+    def _expectation_params_batch_cpu(
+        p, a, b,
+    ) -> Tuple[jax.Array, jax.Array]:
+        r"""Vectorized CPU path — one ``log_kv_moments`` call on (N,) arrays.
+
+        Returns ``(eta, log_k)`` with ``eta`` shape ``(N, 3)`` and
+        ``log_k`` shape ``(N,)`` equal to :math:`\log K_p(\sqrt{ab})`.
+        """
         p = np.asarray(p, dtype=np.float64)
         a = np.asarray(a, dtype=np.float64)
         b = np.asarray(b, dtype=np.float64)
@@ -627,7 +659,19 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         eta, _ = GeneralizedInverseGaussian._eta_H_from_moments(
             m, a_safe, b_safe, log_sqrt_ba, np,
         )
-        return jnp.asarray(eta, dtype=jnp.float64)
+        return (
+            jnp.asarray(eta, dtype=jnp.float64),
+            jnp.asarray(m.log_k, dtype=jnp.float64),
+        )
+
+    @staticmethod
+    def _psi_from_log_k(log_k, p, a, b, *, floor: float, xp):
+        r""":math:`\psi = \log 2 + \log K_p(\sqrt{ab}) +
+        \tfrac{p}{2}\log(b/a)` from a kept ``log_k``."""
+        a_safe = xp.maximum(a, floor)
+        b_safe = xp.maximum(b, floor)
+        log_sqrt_ba = 0.5 * (xp.log(b_safe) - xp.log(a_safe))
+        return xp.log(2.0) + log_k + p * log_sqrt_ba
 
     # ------------------------------------------------------------------
     # Moments and sampling

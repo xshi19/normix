@@ -290,7 +290,7 @@ def _phase1_affine_combine(
     model,
     np,
 ):
-    eta_new = model.e_step(X_train)
+    eta_new = model.e_step(X_train).eta
 
     _out_scalar = affine_combine(eta, eta_new, b=0.7, c=0.3)
 

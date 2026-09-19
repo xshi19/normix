@@ -78,7 +78,7 @@ def test_m_step_normal_preserves_subordinator(dist_name, sp500_returns):
     X = sp500_returns
     model = _make_models(X)[dist_name]
 
-    eta = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu').eta
     model_after = model.m_step_normal(eta)
 
     j_before = model._joint
@@ -113,7 +113,7 @@ def test_full_m_step_matches_split(dist_name, sp500_returns):
     X = sp500_returns
     model = _make_models(X)[dist_name]
 
-    eta = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu').eta
 
     model_full = model.m_step(eta)
 

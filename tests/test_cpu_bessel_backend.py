@@ -196,8 +196,8 @@ def test_e_step_cpu_vs_jax_gh(d):
     rng = np.random.default_rng(0)
     X = jnp.array(rng.standard_normal((20, d)))
 
-    eta_jax = model.e_step(X, backend='jax')
-    eta_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax').eta
+    eta_cpu = model.e_step(X, backend='cpu').eta
 
     for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(
@@ -211,8 +211,8 @@ def test_e_step_default_backend_unchanged():
     """Default e_step (no backend arg) still uses JAX path."""
     model = _make_gh_model(d=2)
     X = jnp.array(np.random.default_rng(1).standard_normal((10, 2)))
-    eta_default = model.e_step(X)
-    eta_jax = model.e_step(X, backend='jax')
+    eta_default = model.e_step(X).eta
+    eta_jax = model.e_step(X, backend='jax').eta
     for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_array_equal(
             np.array(getattr(eta_default, field)),
@@ -259,8 +259,8 @@ def test_e_step_cpu_vs_jax_all_distributions(model_fn, name):
     model = model_fn(d=2)
     X = jnp.array(np.random.default_rng(7).standard_normal((15, 2)))
 
-    eta_jax = model.e_step(X, backend='jax')
-    eta_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax').eta
+    eta_cpu = model.e_step(X, backend='cpu').eta
 
     for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(

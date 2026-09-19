@@ -428,7 +428,7 @@ def turnover(w_prev: np.ndarray, w_new: np.ndarray) -> float:
 @eqx.filter_jit
 def _nig_online_step(model, eta, x, w, tau, eta0):
     """One Cappé–Moulines EWMA (+ optional shrinkage) step; no re-gauging."""
-    eta_hat = model.e_step(x[None, :], backend="jax")
+    eta_hat = model.e_step(x[None, :], backend="jax").eta
     eta_base = affine_combine(eta, eta_hat, 1.0 - w, w)
     factor_a = tau / (1.0 + tau)
     factor_b = 1.0 / (1.0 + tau)

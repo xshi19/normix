@@ -1,5 +1,5 @@
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter, EMResult
-from normix.fitting.eta import NormalMixtureEta, affine_combine
+from normix.fitting.eta import NormalMixtureEta, FactorMixtureStats, EStepResult, affine_combine
 from normix.fitting.eta_rules import (
     EtaUpdateRule,
     AffineRule,
@@ -21,7 +21,9 @@ __all__ = [
     "BatchEMFitter",
     "IncrementalEMFitter",
     "EMResult",
+    "EStepResult",
     "NormalMixtureEta",
+    "FactorMixtureStats",
     "affine_combine",
     "EtaUpdateRule",
     "AffineRule",
