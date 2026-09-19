@@ -142,7 +142,10 @@ change on `em_convergence_params()` is recorded in
 The E-step already has the posterior GIG log-partition
 (`BesselMoments.log_k`). Conjugacy
 $\log f(x)=\log h(x)+\psi_{\mathrm{post}}-\psi$ gives
-$\ell_n(\theta_t)$ with no extra Bessel call. `e_step` returns
+$\ell_n(\theta_t)$ with no extra per-observation Bessel call.
+$\psi$ is `subordinator().to_gig().log_partition()` (GIG gauge:
+InverseGaussian's own $\psi$ omits $\tfrac12\log(2\pi)$ stored in
+$h$). `e_step` returns
 `EStepResult(eta, log_lik)`: $\ell_n$ is not a field of
 `NormalMixtureEta` (`affine_combine` / shrinkage would mix it) and is
 not a cache on the model.

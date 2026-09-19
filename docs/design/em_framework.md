@@ -87,11 +87,18 @@ $$
 + \gamma^\top\Sigma^{-1}(x-\mu).
 $$
 
-Zero extra Bessel calls relative to the E-step. The same $\ell_n$ is
+$\psi$ is the subordinator log-partition in the GIG convention
+(`subordinator().to_gig().log_partition()`). InverseGaussian stores
+$\tfrac12\log(2\pi)$ in $h$, so its own $\psi$ is the wrong gauge for
+this identity. Gamma / InverseGamma / GIG already match.
+
+Zero extra *per-observation* Bessel calls relative to the E-step (the
+prior $\psi$ is a scalar). The same $\ell_n$ is
 valid for every regularisation (`none` / `det_sigma_one` /
 `det_sigma_x` / `a_eq_b`): they reparametrise along the $Y\to sY$ orbit
 and leave the density unchanged. MCECM uses $\ell_n$ from the first
-E-step of the cycle.
+E-step of the cycle. `EMResult.log_likelihoods` is that E-step sequence
+of length `n_iter` (the returned model is one M-step ahead).
 
 The previous stop — hybrid-RMS on `em_convergence_params()` =
 $(\mu,\gamma,L_\Sigma)$, subordinator excluded — reported
