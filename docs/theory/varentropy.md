@@ -84,6 +84,13 @@ $\alpha\theta$:
 R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta).
 ```
 
+This equals $\log\int p^\alpha$ only when $\alpha\theta$ lies in the
+natural domain $\Theta$. For Gamma with shape $a$ the condition is
+$\alpha(a-1)+1>0$; for InverseGamma it is $\alpha(a+1)-1>0$. Outside
+$\Theta$ one has $\int p^\alpha=+\infty$, hence $R(\alpha)=+\infty$, and
+the Rényi entropy $H_\alpha=R(\alpha)/(1-\alpha)$ inherits the sign of
+$1-\alpha$.
+
 Substituting into {eq}`ve-cumulants` and using $\eta = \nabla\psi(\theta)$
 and the Fisher information $I(\theta) = \nabla^2\psi(\theta)$ gives closed
 forms in terms of the log-partition triad:

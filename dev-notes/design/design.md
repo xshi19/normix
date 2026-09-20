@@ -82,6 +82,12 @@ the class as `@classmethod` or `@staticmethod`.
 | F9 | Numerical constants | Centralised in `utils/constants.py` | No scattered magic numbers |
 | F10 | Module-level functions | **forbidden**; classmethods or staticmethods | Keeps the interface on the class |
 
+### Moment and density-power domains
+
+| # | Decision | Choice | Why / Detail |
+|---|---|---|---|
+| MD1 | Non-existent moments / density powers | Public API returns `+∞` via `jnp.where` (not raise, not meromorphic `Γ`, not `ALPHA_MOMENT_MARGIN`). Guard `log_density_power`, not a blanket inf on `renyi`. Mixture mean/cov/kurtosis split on `γ=0` so `0·∞` is not NaN. | InverseGamma: `E[Y^k]<∞` iff `k<α`; mean `α>1`; var `α>2`. Rényi: `R(q)=+∞` when `qθ∉Θ` (Gamma: `q(α-1)+1>0`; InverseGamma: `q(α+1)-1>0`); `H_q=R(q)/(1-q)` supplies the sign. NInvG Student-t (`ν=2α`, `γ=0`): mean for `α>1/2`, cov for `α>1`; Cauchy mean is `+∞`, not `μ`. VG (Gamma subordinator) has all positive moments of `Y`. Closed-form `mean`/`var` are not routed through `raw_moment`. |
+
 ### Mixtures
 
 | # | Decision | Choice | Why / Detail |
