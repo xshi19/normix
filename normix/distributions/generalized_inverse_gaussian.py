@@ -439,6 +439,17 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     def natural_params(self) -> jax.Array:
         return jnp.array([self.p - 1.0, -self.b / 2.0, -self.a / 2.0])
 
+    def log_partition(self) -> jax.Array:
+        r""":math:`\psi(\theta)` at current parameters.
+
+        A module-level :func:`jax.jit` of :meth:`_log_partition_from_theta`
+        (see ``_gig_log_partition_jit``). Without it, a scalar call runs
+        the eager 192-point :func:`~normix.utils.bessel.log_kv` quadrature
+        — about a second per E-step when conjugacy asks for prior
+        :math:`\psi` via ``subordinator().to_gig().log_partition()``.
+        """
+        return _gig_log_partition_jit(self.natural_params())
+
     @staticmethod
     def sufficient_statistics(x: jax.Array) -> jax.Array:
         x = jnp.asarray(x, dtype=jnp.float64)
@@ -1062,6 +1073,13 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 # Stable jitted GIG Newton solver
 # ---------------------------------------------------------------------------
 #
+# Hoisted so ``GIG.log_partition`` / EM conjugacy does not re-run eager
+# ``log_kv`` quadrature on every E-step. Same pattern as the Newton kernel
+# below: a module-level jit, not a fresh closure per call.
+_gig_log_partition_jit = jax.jit(
+    GeneralizedInverseGaussian._log_partition_from_theta
+)
+
 # Hoisted to module level so that JAX caches the compiled XLA executable
 # across all GIG.from_expectation(jax/newton) calls. Without this, every
 # warm-started solve inside an EM loop builds fresh Python closures and
