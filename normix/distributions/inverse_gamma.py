@@ -105,31 +105,50 @@ class InverseGamma(ExponentialFamily):
     # ------------------------------------------------------------------
 
     def mean(self) -> jax.Array:
-        return self.beta / (self.alpha - 1.0)
+        r""":math:`E[X] = \beta/(\alpha-1)` for :math:`\alpha > 1`, else :math:`+\infty`.
+
+        Closed form; not routed through :meth:`raw_moment`.
+        """
+        return jnp.where(self.alpha > 1.0, self.beta / (self.alpha - 1.0), jnp.inf)
 
     def var(self) -> jax.Array:
-        return self.beta**2 / ((self.alpha - 1.0)**2 * (self.alpha - 2.0))
+        r""":math:`\mathrm{Var}[X] = \beta^2/((\alpha-1)^2(\alpha-2))` for :math:`\alpha > 2`, else :math:`+\infty`."""
+        return jnp.where(
+            self.alpha > 2.0,
+            self.beta**2 / ((self.alpha - 1.0)**2 * (self.alpha - 2.0)),
+            jnp.inf,
+        )
 
     def raw_moment(self, k: jax.Array) -> jax.Array:
         r"""Raw moment :math:`E[X^k] = \beta^k\,\Gamma(\alpha-k)/\Gamma(\alpha)`.
 
-        Finite for :math:`k < \alpha`.
+        Finite iff :math:`k < \alpha`; returns :math:`+\infty` otherwise.
+        The meromorphic continuation of :math:`\Gamma(\alpha-k)/\Gamma(\alpha)`
+        is not a moment.
         """
-        k = jnp.asarray(k, dtype=jnp.float64)
-        return jnp.exp(
-            k * jnp.log(self.beta)
-            + jax.scipy.special.gammaln(self.alpha - k)
-            - jax.scipy.special.gammaln(self.alpha)
-        )
+        return self.raw_moments(jnp.asarray(k, dtype=jnp.float64))
 
     def raw_moments(self, ks: jax.Array) -> jax.Array:
         r"""Vectorised :meth:`raw_moment` over orders ``ks``."""
         ks = jnp.asarray(ks, dtype=jnp.float64)
-        return jnp.exp(
+        val = jnp.exp(
             ks * jnp.log(self.beta)
             + jax.scipy.special.gammaln(self.alpha - ks)
             - jax.scipy.special.gammaln(self.alpha)
         )
+        return jnp.where(ks < self.alpha, val, jnp.inf)
+
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log density-power integral :math:`R(q) = \log\int p^q`.
+
+        Finite iff :math:`q\theta \in \Theta`, i.e. :math:`q(\alpha+1)-1 > 0`.
+        Outside that set :math:`\int p^q = +\infty`, so this returns
+        :math:`+\infty`; :meth:`~normix.exponential_family.ExponentialFamily.renyi`
+        then has the correct sign through :math:`H_q = R(q)/(1-q)`.
+        """
+        q = jnp.asarray(alpha, dtype=jnp.float64)
+        in_domain = q * (self.alpha + 1.0) - 1.0 > 0.0
+        return jnp.where(in_domain, super().log_density_power(q), jnp.inf)
 
     def mode(self) -> jax.Array:
         r"""Mode :math:`\beta / (\alpha + 1)` (closed form, valid for all :math:`\alpha > 0`)."""

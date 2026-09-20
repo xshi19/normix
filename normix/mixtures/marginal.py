@@ -29,6 +29,57 @@ from normix.utils.constants import SIGMA_INIT_REG
 from normix.utils.rvs import QuantileTable, build_pinv_table
 
 
+def _normal_mixture_mean(
+    mu: jax.Array,
+    gamma: jax.Array,
+    subordinator: Any,
+) -> jax.Array:
+    r"""Mean of :math:`X = \mu + \gamma Y + \sqrt{Y}\,Z`.
+
+    For a coordinate with :math:`\gamma_i = 0`, :math:`E[X_i]=\mu_i` as soon as
+    :math:`E[\sqrt{Y}]<\infty` (Student-:math:`t` with :math:`\nu=2\alpha` needs
+    :math:`\alpha>1/2`). The product :math:`\gamma_i E[Y]` is not formed, so
+    :math:`0\cdot\infty` cannot appear. For :math:`\gamma_i\neq 0` the mean
+    exists iff :math:`E[Y]<\infty`. Non-existence is :math:`+\infty`, including
+    Cauchy (:math:`\alpha=1/2`, :math:`\gamma=0`), which must not return
+    :math:`\mu`.
+    """
+    E_Y = subordinator.mean()
+    E_sqrt_Y = subordinator.raw_moment(jnp.asarray(0.5, dtype=jnp.float64))
+    loc = jnp.where(jnp.isfinite(E_sqrt_Y), mu, jnp.full_like(mu, jnp.inf))
+    drifted = jnp.where(
+        jnp.isfinite(E_Y), mu + gamma * E_Y, jnp.full_like(mu, jnp.inf),
+    )
+    return jnp.where(gamma == 0.0, loc, drifted)
+
+
+def _normal_mixture_cov(
+    gamma: jax.Array,
+    Sigma: jax.Array,
+    subordinator: Any,
+) -> jax.Array:
+    r"""Covariance of :math:`X = \mu + \gamma Y + \sqrt{Y}\,Z`.
+
+    :math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.
+    When :math:`E[Y]` diverges the whole matrix is :math:`+\infty`. A zero
+    entry of :math:`\gamma\gamma^\top` contributes nothing even if
+    :math:`\mathrm{Var}[Y]=+\infty` (the :math:`\gamma=0` Student-:math:`t`
+    case needs only :math:`E[Y]`, i.e. :math:`\alpha>1`).
+    """
+    E_Y = subordinator.mean()
+    Var_Y = subordinator.var()
+    gg = jnp.outer(gamma, gamma)
+    scale = jnp.where(
+        jnp.isfinite(E_Y), E_Y * Sigma, jnp.full_like(Sigma, jnp.inf),
+    )
+    drift = jnp.where(
+        gg == 0.0,
+        jnp.zeros_like(gg),
+        jnp.where(jnp.isfinite(Var_Y), Var_Y * gg, jnp.full_like(gg, jnp.inf)),
+    )
+    return scale + drift
+
+
 def _normal_mixture_skew_kurt(
     gamma: jax.Array,
     sigma_diag: jax.Array,
@@ -42,7 +93,10 @@ def _normal_mixture_skew_kurt(
     For each coordinate :math:`X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i` with
     :math:`Z_i\sim\mathcal{N}(0,\Sigma_{ii})` independent of the subordinator
     :math:`Y`, condition on :math:`Y` and take Gaussian central moments.
-    ``m_k`` are the raw moments :math:`E[Y^k]`.
+    ``m_k`` are the raw moments :math:`E[Y^k]`. Products with a zero
+    :math:`\gamma_i` are not formed, so :math:`0\cdot\infty` cannot appear.
+    Excess kurtosis is :math:`+\infty` unless :math:`E[Y^2]<\infty` (symmetric
+    case) or :math:`E[Y^4]<\infty` (:math:`\gamma_i\neq 0`).
     """
     var_y = m2 - m1 ** 2
     mu3_y = m3 - 3.0 * m1 * m2 + 2.0 * m1 ** 3
@@ -51,12 +105,19 @@ def _normal_mixture_skew_kurt(
 
     g = gamma
     s2 = sigma_diag
-    var_x = m1 * s2 + var_y * g ** 2
-    mu3_x = g ** 3 * mu3_y + 3.0 * g * s2 * var_y
-    mu4_x = g ** 4 * mu4_y + 6.0 * g ** 2 * s2 * e_c2_y + 3.0 * s2 ** 2 * m2
+    g_zero = g == 0.0
+    var_x = m1 * s2 + jnp.where(g_zero, 0.0, var_y * g ** 2)
+    mu3_x = jnp.where(g_zero, 0.0, g ** 3 * mu3_y + 3.0 * g * s2 * var_y)
+    mu4_x = (
+        jnp.where(g_zero, 0.0, g ** 4 * mu4_y + 6.0 * g ** 2 * s2 * e_c2_y)
+        + 3.0 * s2 ** 2 * m2
+    )
     std_x = jnp.sqrt(var_x)
     skew = mu3_x / (std_x ** 3)
     kurt = mu4_x / (var_x ** 2) - 3.0
+    skew = jnp.where(g_zero, 0.0, jnp.where(jnp.isfinite(m3), skew, jnp.inf))
+    kurt_exists = jnp.where(g_zero, jnp.isfinite(m2), jnp.isfinite(m4))
+    kurt = jnp.where(kurt_exists, kurt, jnp.inf)
     return skew, kurt
 
 
@@ -302,17 +363,28 @@ class NormalMixture(MarginalMixture):
         )
 
     def mean(self) -> jax.Array:
-        r""":math:`E[X] = \mu + \gamma E[Y]`."""
+        r""":math:`E[X] = \mu + \gamma E[Y]`.
+
+        A zero coordinate of :math:`\gamma` does not form :math:`0\cdot\infty`.
+        That coordinate equals :math:`\mu_i` iff :math:`E[\sqrt{Y}]<\infty`
+        (NInvG / Student-:math:`t` with :math:`\nu=2\alpha`: :math:`\alpha>1/2`);
+        otherwise :math:`+\infty`. Cauchy (:math:`\alpha=1/2`, :math:`\gamma=0`)
+        therefore returns :math:`+\infty`, not :math:`\mu`. A nonzero
+        :math:`\gamma_i` needs :math:`E[Y]<\infty`.
+        """
         j = self._joint
-        E_Y = j.subordinator().mean()
-        return j.mu + j.gamma * E_Y
+        return _normal_mixture_mean(j.mu, j.gamma, j.subordinator())
 
     def cov(self) -> jax.Array:
-        r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`."""
+        r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.
+
+        When :math:`\gamma=0` only :math:`E[Y]` is required (NInvG:
+        :math:`\alpha>1`). A zero entry of :math:`\gamma\gamma^\top` contributes
+        nothing even if :math:`\mathrm{Var}[Y]` diverges. Non-existence is
+        :math:`+\infty`.
+        """
         j = self._joint
-        E_Y = j.subordinator().mean()
-        Var_Y = j.subordinator().var()
-        return E_Y * j.sigma() + Var_Y * jnp.outer(j.gamma, j.gamma)
+        return _normal_mixture_cov(j.gamma, j.sigma(), j.subordinator())
 
     def _y_raw_moments_1_to_4(self) -> jax.Array:
         r"""Subordinator raw moments :math:`(E[Y], E[Y^2], E[Y^3], E[Y^4])`."""
@@ -324,8 +396,8 @@ class NormalMixture(MarginalMixture):
 
         Closed form from the normal variance-mean mixture representation and
         subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.
-        Requires a finite fourth moment of the subordinator (e.g. InverseGamma
-        shape :math:`\alpha > 4` when :math:`\gamma \ne 0`).
+        Requires a finite third moment of the subordinator when
+        :math:`\gamma \ne 0`. Symmetric coordinates return 0.
         """
         m1, m2, m3, m4 = self._y_raw_moments_1_to_4()
         sigma_diag = jnp.sum(self.L_Sigma ** 2, axis=1)
@@ -338,7 +410,9 @@ class NormalMixture(MarginalMixture):
 
         Closed form from the normal variance-mean mixture representation and
         subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.
-        Same moment conditions as :meth:`skewness`.
+        Symmetric coordinates need :math:`E[Y^2]<\infty` (NInvG:
+        :math:`\alpha>2`); a nonzero :math:`\gamma_i` needs :math:`E[Y^4]`.
+        Otherwise :math:`+\infty` (e.g. :math:`t_3`).
         """
         m1, m2, m3, m4 = self._y_raw_moments_1_to_4()
         sigma_diag = jnp.sum(self.L_Sigma ** 2, axis=1)
