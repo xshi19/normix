@@ -1,11 +1,11 @@
-"""
-EM fitters for normix distributions.
+"""EM fitters for normix distributions.
 
 Model knows math, fitter knows iteration.
 
-  BatchEMFitter        — standard batch EM with dual-loop architecture:
-                         lax.scan (JIT-able) or Python for-loop (CPU-compatible)
-  IncrementalEMFitter  — online / mini-batch EM with pluggable eta update rules
+``BatchEMFitter`` is batch EM with a dual-loop architecture (``lax.scan``
+when both backends are JAX, otherwise a Python for-loop).
+``IncrementalEMFitter`` is online / mini-batch EM with pluggable eta
+update rules.
 """
 from __future__ import annotations
 
