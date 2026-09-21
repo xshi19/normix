@@ -1,6 +1,7 @@
 """Skewness / excess kurtosis of normal variance-mean mixtures (review F1)."""
 from __future__ import annotations
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -15,6 +16,7 @@ from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.distributions.inverse_gamma import InverseGamma
 from normix.distributions.inverse_gaussian import InverseGaussian
 from normix.distributions.normal_inverse_gamma import (
+    FactorNormalInverseGamma,
     NormalInverseGamma,
     UnivariateNormalInverseGamma,
 )
@@ -60,6 +62,38 @@ def test_invgamma_raw_moments_match_closed_form():
     np.testing.assert_allclose(got, want, rtol=1e-12)
 
 
+@pytest.mark.contract
+def test_invgamma_mean_var_inf_outside_existence():
+    """Review §6: meromorphic Γ continuation is not a moment."""
+    ig = InverseGamma(0.5, 1.0)
+    assert np.isposinf(float(ig.mean()))
+    assert np.isposinf(float(ig.var()))
+    assert np.isposinf(float(ig.raw_moment(1.0)))
+    assert np.all(np.isposinf(np.asarray(
+        ig.raw_moments(jnp.array([1.0, 2.0, 3.0, 4.0])))))
+
+    ig15 = InverseGamma(1.5, 1.0)
+    np.testing.assert_allclose(float(ig15.mean()), 2.0, rtol=1e-12)
+    assert np.isposinf(float(ig15.var()))
+    assert np.isposinf(float(ig15.raw_moment(2.0)))
+    assert np.isposinf(float(ig15.raw_moment(1.5)))
+
+    ig25 = InverseGamma(2.5, 1.0)
+    np.testing.assert_allclose(float(ig25.mean()), 1.0 / 1.5, rtol=1e-12)
+    np.testing.assert_allclose(
+        float(ig25.var()), 1.0 / (1.5 ** 2 * 0.5), rtol=1e-12)
+    mixed = np.asarray(ig25.raw_moments(jnp.array([1.0, 2.0, 3.0])))
+    assert np.isfinite(mixed[0]) and np.isfinite(mixed[1])
+    assert np.isposinf(mixed[2])
+
+    m_jit = jax.jit(lambda d: d.mean())(ig)
+    assert np.isposinf(float(m_jit))
+
+    def _mean_of_alpha(a):
+        return InverseGamma(a, 1.0).mean()
+    assert not np.isnan(float(jax.grad(_mean_of_alpha)(jnp.asarray(1.0))))
+
+
 def test_gig_raw_moment_matches_mean_var():
     gig = GIG(p=0.7, a=1.4, b=0.9)
     m1, m2 = np.asarray(gig.raw_moments(jnp.array([1.0, 2.0])))
@@ -98,6 +132,131 @@ def test_symmetric_ninvg_excess_kurtosis_is_3_over_alpha_minus_2():
     np.testing.assert_allclose(float(ninvg.skewness()), 0.0, atol=1e-12)
     np.testing.assert_allclose(
         float(ninvg.kurtosis()), 3.0 / (alpha - 2.0), rtol=1e-12)
+
+
+def _ninvg_uni(mu, gamma, alpha, beta=1.0, sigma=1.0):
+    return UnivariateNormalInverseGamma.from_classical(
+        mu=mu, gamma=gamma, sigma=sigma, alpha=alpha, beta=beta)
+
+
+@pytest.mark.contract
+def test_symmetric_ninvg_mean_student_t_existence():
+    """γ=0 is Student-t with ν=2α. Cauchy (ν=1) mean is +∞, not μ."""
+    mu = 1.7
+    cauchy = _ninvg_uni(mu, 0.0, 0.5)
+    m = float(cauchy.mean())
+    assert np.isposinf(m)
+    assert not np.isnan(m)
+
+    t15 = _ninvg_uni(mu, 0.0, 0.75)
+    np.testing.assert_allclose(float(t15.mean()), mu, rtol=1e-12)
+
+    skewed = _ninvg_uni(0.0, 0.3, 0.5)
+    assert np.isposinf(float(skewed.mean()))
+    assert not np.isnan(float(skewed.mean()))
+
+
+@pytest.mark.contract
+def test_symmetric_ninvg_cov_inf_when_mean_of_y_diverges():
+    """γ=0, α=1/2: Cov(X)=E[Y]Σ is +∞, not the meromorphic −2Σ."""
+    sigma = jnp.array([[1.0, 0.3], [0.3, 2.0]])
+    ninvg = NormalInverseGamma.from_classical(
+        mu=jnp.array([0.0, 0.0]),
+        gamma=jnp.array([0.0, 0.0]),
+        sigma=sigma, alpha=0.5, beta=1.0,
+    )
+    cov = np.asarray(ninvg.cov())
+    assert np.all(np.isposinf(cov))
+    assert not np.any(np.isnan(cov))
+
+    t3 = NormalInverseGamma.from_classical(
+        mu=jnp.array([0.0, 0.0]),
+        gamma=jnp.array([0.0, 0.0]),
+        sigma=sigma, alpha=1.5, beta=1.0,
+    )
+    cov_t3 = np.asarray(t3.cov())
+    assert np.all(np.isfinite(cov_t3))
+    np.testing.assert_allclose(cov_t3, 2.0 * np.asarray(sigma), rtol=1e-12)
+
+
+@pytest.mark.contract
+def test_symmetric_ninvg_t3_kurtosis_is_inf():
+    """γ=0, α=1.5 is t_3: excess kurtosis is +∞, not 0."""
+    t3 = _ninvg_uni(0.0, 0.0, 1.5)
+    assert np.isposinf(float(t3.kurtosis()))
+    np.testing.assert_allclose(float(t3.skewness()), 0.0, atol=1e-12)
+
+
+@pytest.mark.contract
+def test_partially_symmetric_ninvg_mean_gamma_zero_split():
+    """A zero γ_i must not form 0·∞; that coordinate uses E[√Y]."""
+    ninvg = NormalInverseGamma.from_classical(
+        mu=jnp.array([1.0, 2.0]),
+        gamma=jnp.array([0.0, 0.4]),
+        sigma=jnp.array([[1.0, 0.0], [0.0, 1.0]]),
+        alpha=0.75, beta=1.0,
+    )
+    m = np.asarray(ninvg.mean())
+    np.testing.assert_allclose(m[0], 1.0, rtol=1e-12)
+    assert np.isposinf(m[1])
+    assert not np.isnan(m[1])
+
+
+@pytest.mark.contract
+def test_symmetric_vg_moments_exist_for_small_alpha():
+    """Gamma subordinators have every positive moment; do not copy InvGamma."""
+    vg = UnivariateVarianceGamma.from_classical(
+        mu=1.0, gamma=0.0, sigma=1.0, alpha=0.2, beta=1.0)
+    np.testing.assert_allclose(float(vg.mean()), 1.0, rtol=1e-12)
+    assert np.isfinite(float(vg.var()))
+    assert np.isfinite(float(vg.kurtosis()))
+    np.testing.assert_allclose(float(vg.kurtosis()), 3.0 / 0.2, rtol=1e-12)
+
+
+@pytest.mark.contract
+def test_factor_ninvg_inherits_gamma_zero_split():
+    fa = FactorNormalInverseGamma.from_classical(
+        mu=jnp.array([1.0, 2.0]),
+        gamma=jnp.array([0.0, 0.0]),
+        F=jnp.array([[1.0], [0.5]]),
+        D=jnp.array([0.4, 0.6]),
+        alpha=0.5, beta=1.0,
+    )
+    assert np.all(np.isposinf(np.asarray(fa.mean())))
+    assert np.all(np.isposinf(np.asarray(fa.cov())))
+
+    t3 = FactorNormalInverseGamma.from_classical(
+        mu=jnp.array([0.0, 0.0]),
+        gamma=jnp.array([0.0, 0.0]),
+        F=jnp.array([[1.0], [0.5]]),
+        D=jnp.array([0.4, 0.6]),
+        alpha=1.5, beta=1.0,
+    )
+    assert np.all(np.isposinf(np.asarray(t3.kurtosis())))
+    assert np.all(np.isfinite(np.asarray(t3.cov())))
+
+
+@pytest.mark.contract
+def test_mixture_mean_autodiff_at_gamma_zero_when_e_y_finite():
+    """γ=0 split must not fire when E[Y] is finite: d(mean)/dγ = E[Y]."""
+    from normix.mixtures.marginal import _normal_mixture_mean
+    sub = Gamma(alpha=2.0, beta=1.0)
+    mu = jnp.array([0.0])
+
+    def m(g):
+        return _normal_mixture_mean(mu, jnp.array([g]), sub)[0]
+
+    np.testing.assert_allclose(float(m(0.0)), 0.0, atol=1e-12)
+    np.testing.assert_allclose(float(jax.grad(m)(0.0)), 2.0, rtol=1e-10)
+
+
+@pytest.mark.contract
+def test_cauchy_ninvg_cdf_stays_finite():
+    """PINV is centred at μ when E[X] does not exist."""
+    cauchy = _ninvg_uni(1.7, 0.0, 0.5)
+    F = float(cauchy.cdf(1.7))
+    assert np.isfinite(F)
+    assert 0.0 < F < 1.0
 
 
 # ---------------------------------------------------------------------------

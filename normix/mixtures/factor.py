@@ -44,7 +44,12 @@ import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
-from normix.mixtures.marginal import MarginalMixture, _normal_mixture_skew_kurt
+from normix.mixtures.marginal import (
+    MarginalMixture,
+    _normal_mixture_cov,
+    _normal_mixture_mean,
+    _normal_mixture_skew_kurt,
+)
 from normix.utils.constants import B_POST_FLOOR, D_FLOOR, SIGMA_INIT_REG
 
 
@@ -195,14 +200,13 @@ class FactorNormalMixture(MarginalMixture):
         return self._log_det_sigma()
 
     def mean(self) -> jax.Array:
-        r""":math:`E[X] = \mu + \gamma\,E[Y]`."""
-        return self.mu + self.gamma * self._subordinator.mean()
+        r""":math:`E[X] = \mu + \gamma\,E[Y]` (see :meth:`NormalMixture.mean`)."""
+        return _normal_mixture_mean(self.mu, self.gamma, self.subordinator())
 
     def cov(self) -> jax.Array:
-        r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`."""
-        E_Y = self._subordinator.mean()
-        Var_Y = self._subordinator.var()
-        return E_Y * self.sigma() + Var_Y * jnp.outer(self.gamma, self.gamma)
+        r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`
+        (see :meth:`NormalMixture.cov`)."""
+        return _normal_mixture_cov(self.gamma, self.sigma(), self.subordinator())
 
     def skewness(self) -> jax.Array:
         r"""Component-wise skewness of :math:`X` (see :meth:`NormalMixture.skewness`)."""

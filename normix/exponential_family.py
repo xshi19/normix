@@ -200,6 +200,12 @@ class ExponentialFamily(eqx.Module):
         :math:`-\log p(X)`: entropy is :math:`H = -R'(1)`, varentropy is
         :math:`V_H = R''(1)`, and the Rényi entropy of order :math:`\alpha` is
         :math:`R(\alpha)/(1-\alpha)`.
+
+        The identity equals :math:`\log\int p^\alpha` only for
+        :math:`\alpha\theta \in \Theta`. Subclasses whose :math:`\psi` admits an
+        analytic continuation off :math:`\Theta` (Gamma, InverseGamma) return
+        :math:`+\infty` when the powered density is not integrable, so
+        :meth:`renyi` inherits the sign of :math:`1-\alpha`.
         """
         cls = type(self)
         alpha = jnp.asarray(alpha, dtype=jnp.float64)

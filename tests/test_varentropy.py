@@ -71,6 +71,26 @@ def test_renyi_at_one_is_shannon_entropy(dist):
     np.testing.assert_allclose(
         float(dist.renyi(1.0)), float(dist.entropy()), rtol=1e-10)
 
+
+@pytest.mark.contract
+def test_renyi_inf_when_q_theta_outside_natural_domain():
+    """Review §6: R(q)=+∞ when qθ ∉ Θ; H_q = R(q)/(1-q) gets the sign."""
+    g = Gamma(alpha=0.2, beta=1.0)
+    assert np.isposinf(float(g.log_density_power(2.0)))
+    assert np.isneginf(float(g.renyi(2.0)))
+    assert np.isfinite(float(g.renyi(1.0)))
+    assert np.isfinite(float(g.log_density_power(0.5)))
+
+    ig = InverseGamma(alpha=0.5, beta=1.0)
+    assert np.isposinf(float(ig.log_density_power(0.5)))
+    assert np.isposinf(float(ig.renyi(0.5)))
+    assert np.isfinite(float(ig.renyi(1.0)))
+    assert np.isfinite(float(ig.log_density_power(2.0)))
+
+    r_jit = jax.jit(lambda a: g.renyi(a))(jnp.asarray(2.0, dtype=jnp.float64))
+    assert np.isneginf(float(r_jit))
+    assert np.isposinf(float(g.log_density_power(-1.0)))
+
 @pytest.mark.parametrize("dist", [
     Gamma(alpha=2.0, beta=3.0),
     GIG(p=-0.5, a=2.0, b=3.0),
