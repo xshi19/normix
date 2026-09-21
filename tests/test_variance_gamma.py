@@ -235,7 +235,7 @@ class TestInverseMomentSingularityVG:
             sigma=jnp.array([[2.0]]), alpha=0.7, beta=1.0,
         )
         X = jnp.array([[0.3], [0.3 + 1e-9], [1.0], [-0.5]])  # first two near/at mode
-        eta = vg.e_step(X, backend=backend)
+        eta = vg.e_step(X, backend=backend).eta
         for leaf in jax.tree_util.tree_leaves(eta):
             assert jnp.all(jnp.isfinite(leaf))
 

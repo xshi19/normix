@@ -171,13 +171,52 @@ class MarginalMixture(eqx.Module):
         X = jnp.asarray(X, dtype=jnp.float64)
         return jnp.mean(jax.vmap(self.log_prob)(X))
 
+    def _conjugacy_psi_prior(self) -> jax.Array:
+        r"""Prior log-partition in the GIG convention that matches
+        :math:`\psi_{\mathrm{post}}`.
+
+        :meth:`~normix.mixtures.joint.JointNormalMixture._compute_posterior_expectations`
+        evaluates :math:`\psi_{\mathrm{post}}` from GIG
+        :math:`\log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a)`
+        (base measure :math:`h\equiv 1`). InverseGaussian stores
+        :math:`\tfrac12\log(2\pi)` in its base measure, so the
+        subordinator's own :math:`\psi` is the wrong gauge for NIG.
+        ``subordinator().to_gig().log_partition()`` recovers the matching
+        :math:`\psi` (Gamma / InverseGamma degeneracy branches stay
+        bit-identical).
+        """
+        return self.subordinator().to_gig().log_partition()
+
+    @staticmethod
+    def _conjugacy_mean_log_lik(
+        psi_post: jax.Array,
+        zw: jax.Array,
+        log_det_sigma: jax.Array,
+        d: int,
+        psi_prior: jax.Array,
+    ) -> jax.Array:
+        r"""Mean :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.
+
+        :math:`\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|
+        + \gamma^\top\Sigma^{-1}(x-\mu)`. :math:`\psi` is the
+        subordinator log-partition in the GIG convention (shared across
+        the batch; see :meth:`_conjugacy_psi_prior`);
+        :math:`\psi_{\mathrm{post}}` is the posterior GIG log-partition.
+        """
+        log_h = (
+            -0.5 * d * jnp.log(2.0 * jnp.pi)
+            - 0.5 * log_det_sigma
+            + zw
+        )
+        return jnp.mean(log_h + psi_post) - psi_prior
+
     # ------------------------------------------------------------------
     # EM hooks (stats type chosen by subclass)
     # ------------------------------------------------------------------
 
     @abc.abstractmethod
     def e_step(self, X: jax.Array, *, backend: str = 'jax') -> Any:
-        """E-step: aggregated expectation parameters for the batch."""
+        """E-step: :class:`~normix.fitting.eta.EStepResult` ``(eta, log_lik)``."""
 
     @abc.abstractmethod
     def m_step(self, eta: Any, **kwargs) -> "MarginalMixture":
@@ -197,13 +236,14 @@ class MarginalMixture(eqx.Module):
 
     @abc.abstractmethod
     def em_convergence_params(self) -> Any:
-        r"""Pytree whose leaf-wise change measures EM convergence.
+        r"""Pytree whose leaf-wise hybrid-RMS change is the EM diagnostic.
 
-        Subordinator parameters are intentionally excluded (their solver
-        has its own tolerance, and including them inflates iteration
-        counts). For full-covariance models this is
-        ``(mu, gamma, L_Sigma)``; for factor-analysis models it is
-        ``(mu, gamma, F F^T + D)`` to sidestep the rotational gauge.
+        Stopping uses the Aitken remaining gap of :math:`\ell_n`; this
+        pytree feeds :attr:`~normix.fitting.em.EMResult.param_changes`
+        only. Subordinator parameters are excluded. For full-covariance
+        models this is ``(mu, gamma, L_Sigma)``; for factor-analysis
+        models it is ``(mu, gamma, F F^T + D)`` to sidestep the
+        rotational gauge of :math:`F`.
         """
 
     @abc.abstractmethod
@@ -533,12 +573,15 @@ class NormalMixture(MarginalMixture):
     # EM E-step
     # ------------------------------------------------------------------
 
-    def e_step(self, X: jax.Array, backend: str = 'jax') -> "NormalMixtureEta":
+    def e_step(self, X: jax.Array, backend: str = 'jax') -> "EStepResult":
         r"""
         Full E-step: subordinator conditionals + batch aggregation.
 
-        Returns a :class:`~normix.fitting.eta.NormalMixtureEta` with the
-        six aggregated expectation parameters.
+        Returns :class:`~normix.fitting.eta.EStepResult` with aggregated
+        :class:`~normix.fitting.eta.NormalMixtureEta` and the mean
+        log-likelihood :math:`\ell_n(\theta)` at the current parameters
+        (nats per observation), via conjugacy
+        :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.
 
         Parameters
         ----------
@@ -547,15 +590,19 @@ class NormalMixture(MarginalMixture):
             ``'jax'`` (default): ``jax.vmap`` over ``conditional_expectations``.
             ``'cpu'``: quad forms in JAX + GIG Bessel on CPU.
         """
+        from normix.fitting.eta import EStepResult
+
         sub_exp = self._e_step_subordinator(X, backend=backend)
-        return self._aggregate_eta(X, sub_exp)
+        eta, log_lik = self._aggregate_eta(X, sub_exp)
+        return EStepResult(eta=eta, log_lik=log_lik)
 
     def _e_step_subordinator(
         self, X: jax.Array, backend: str = 'jax',
     ) -> Dict[str, jax.Array]:
-        r"""Per-observation subordinator conditional expectations.
+        r"""Per-observation subordinator conditionals and posterior :math:`\psi`.
 
-        Returns dict ``{E_log_Y: (n,), E_inv_Y: (n,), E_Y: (n,)}``.
+        Returns dict with ``E_log_Y``, ``E_inv_Y``, ``E_Y``, ``psi_post``,
+        ``zw``, each shape ``(n,)``.
         """
         if backend == 'cpu':
             return self._e_step_subordinator_cpu(X)
@@ -564,35 +611,41 @@ class NormalMixture(MarginalMixture):
     def _e_step_subordinator_cpu(self, X: jax.Array) -> Dict[str, jax.Array]:
         """CPU path: quad forms in JAX (vmapped) + GIG Bessel via scipy."""
         from normix.distributions.generalized_inverse_gaussian import GIG
+        from normix.utils.constants import TINY
 
         j = self._joint
         X = jnp.asarray(X, dtype=jnp.float64)
 
         def _quad_scalars(x):
-            z, w, z2, w2, zw = j._quad_forms(x)
-            return z2, w2
+            _z, _w, z2, w2, zw = j._quad_forms(x)
+            return z2, w2, zw
 
-        z2_all, w2_all = jax.vmap(_quad_scalars)(X)
+        z2_all, w2_all, zw_all = jax.vmap(_quad_scalars)(X)
 
         p_post, a_post, b_post = j._floored_posterior_gig_params(z2_all, w2_all)
 
-        eta = GIG.expectation_params_batch(p_post, a_post, b_post, backend='cpu')
+        eta, log_k = GIG._expectation_params_batch_cpu(p_post, a_post, b_post)
+        psi_post = GIG._psi_from_log_k(
+            log_k, p_post, a_post, b_post, floor=TINY, xp=jnp)
 
         return {
             'E_log_Y': eta[:, 0],
             'E_inv_Y': eta[:, 1],
             'E_Y':     eta[:, 2],
+            'psi_post': psi_post,
+            'zw': zw_all,
         }
 
-    @staticmethod
-    def _aggregate_eta(X: jax.Array, sub_exp: Dict[str, jax.Array]) -> "NormalMixtureEta":
-        """Average per-observation expectations into a NormalMixtureEta."""
+    def _aggregate_eta(
+        self, X: jax.Array, sub_exp: Dict[str, jax.Array],
+    ) -> tuple:
+        """Average per-observation expectations; conjugacy mean log-likelihood."""
         from normix.fitting.eta import NormalMixtureEta
 
         X = jnp.asarray(X, dtype=jnp.float64)
         E_inv_Y = sub_exp['E_inv_Y']
 
-        return NormalMixtureEta(
+        eta = NormalMixtureEta(
             E_log_Y=jnp.mean(sub_exp['E_log_Y']),
             E_inv_Y=jnp.mean(E_inv_Y),
             E_Y=jnp.mean(sub_exp['E_Y']),
@@ -602,6 +655,12 @@ class NormalMixture(MarginalMixture):
                 jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
             ),
         )
+        log_lik = self._conjugacy_mean_log_lik(
+            sub_exp['psi_post'], sub_exp['zw'],
+            self.log_det_sigma(), self.d,
+            self._conjugacy_psi_prior(),
+        )
+        return eta, log_lik
 
     # ------------------------------------------------------------------
     # η → model: closed-form M-step as exponential-family inversion
@@ -814,11 +873,11 @@ class NormalMixture(MarginalMixture):
     # ------------------------------------------------------------------
 
     def em_convergence_params(self):
-        r"""Pytree whose leaf-wise change measures EM convergence.
+        r"""Diagnostic pytree ``(mu, gamma, L_Sigma)`` for hybrid-RMS
+        :attr:`~normix.fitting.em.EMResult.param_changes`.
 
-        Returns ``(mu, gamma, L_Sigma)``. Subordinator parameters
-        (``p, a, b``) are excluded — their solver has its own tolerance
-        and including them inflates iteration counts.
+        Stopping uses the Aitken remaining gap of :math:`\ell_n`, not
+        this pytree. Subordinator parameters are excluded here.
         """
         j = self._joint
         return (j.mu, j.gamma, j.L_Sigma)

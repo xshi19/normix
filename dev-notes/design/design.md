@@ -99,7 +99,7 @@ the class as `@classmethod` or `@staticmethod`.
 | M5 | `from_expectation` η→model | Canonical map on both layers; closed-form pytree path + Bregman fallback | `mixtures.md` § 5 |
 | M6 | Parameter facade | `replace(**)` on `NormalMixture`; subordinator forwarders per subclass | `mixtures.md` § 4 |
 | M7 | `DispersionModel` ABC | **deferred** | Only two storage variants today — `mixtures.md` § 6.5 |
-| M8 | Convergence on FA $F$ | Compare $\Sigma = F F^\top + \mathrm{diag}(D)$, not $(F, D)$ | $F$ is gauge-only — `em_framework.md` § 2.1 |
+| M8 | Convergence diagnostic on FA $F$ | Compare $\Sigma = F F^\top + \mathrm{diag}(D)$, not $(F, D)$, in `em_convergence_params()` | $F$ is gauge-only; Aitken stop is on $\ell_n$ — `em_framework.md` § 2.1 |
 
 ### EM and η-update rules
 
@@ -107,7 +107,7 @@ the class as `@classmethod` or `@staticmethod`.
 |---|---|---|---|
 | E1 | EM separation | Model + Fitter (GMMX-style) | `em_framework.md` § 1 |
 | E2 | EM return value | `EMResult` (not bare model) | Diagnostics, timing, optional LL trace |
-| E3 | Convergence criterion | Parameter change only: max hybrid-scale RMS `rms(Δ)/(1+rms(θ))` over `em_convergence_params()`; subordinator excluded; LL not used for stopping | Near-zero `μ` + roughly `d`-free `tol`; LL is diagnostic only — `em_framework.md` § 2.1 |
+| E3 | Convergence criterion | Aitken remaining gap of mean log-likelihood $\ell_n$ (nats/obs): stop when $\ell_\infty-\ell_{t+1}<\mathtt{tol}$. $\ell_n(\theta_t)$ from E-step conjugacy (`BesselMoments.log_k`); `EStepResult(eta, log_lik)` — not a field of `NormalMixtureEta`, not a model cache. Hybrid-RMS `_param_change` on `em_convergence_params()` is a diagnostic in `EMResult.param_changes`. Same criterion for all regularisations. MCECM uses the first E-step of the cycle. Incremental: no Aitken stop. **Supersedes** parameter-change-only (subordinator excluded; LL diagnostic). | Unit-free; 2026-09-05 review VG false stop at $\alpha\approx 1.59$. `em_framework.md` § 2.1; `../tech_notes/em_gpu_profiling.md` |
 | E4 | Fitter classes | `BatchEMFitter` + `IncrementalEMFitter` (D1) | Replaces obsolete `OnlineEMFitter` / `MiniBatchEMFitter` |
 | E5 | η-update rule abstraction | Two layers: `EtaUpdateRule.__call__` + `AffineRule.weights` | Future ML-style predictors plug in; `em_framework.md` § 3 |
 | E6 | `EtaUpdateRule` | `eqx.Module` (not plain ABC) | Hyperparams are JAX leaves — JIT-compatible, differentiable |

@@ -67,7 +67,8 @@ from normix.mixtures.marginal import MarginalMixture, NormalMixture
 from normix.mixtures.factor import FactorNormalMixture
 
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
-from normix.fitting.eta import NormalMixtureEta, FactorMixtureStats, affine_combine
+from normix.fitting.eta import (
+    NormalMixtureEta, FactorMixtureStats, EStepResult, affine_combine)
 from normix.fitting.eta_rules import (
     EtaUpdateRule,
     AffineRule,
@@ -142,6 +143,7 @@ __all__ = [
     # Eta parametrization
     "NormalMixtureEta",
     "FactorMixtureStats",
+    "EStepResult",
     "affine_combine",
     # Eta update rules
     "EtaUpdateRule",

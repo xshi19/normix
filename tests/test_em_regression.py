@@ -235,7 +235,7 @@ class TestMstepDenominatorSign:
         model = VarianceGamma.from_classical(
             mu=mu_true, gamma=jnp.array([0.01, -0.01]),
             sigma=Sigma, alpha=1e9, beta=1e9)
-        eta = model.e_step(X, backend="jax")
+        eta = model.e_step(X, backend="jax").eta
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
         assert D < 1e-6
         mu, _, _ = JointNormalMixture._mstep_normal_params(eta)
@@ -252,7 +252,7 @@ class TestMstepDenominatorSign:
         X = jax.random.multivariate_normal(
             key, jnp.zeros(d), jnp.eye(d), (n,)) * 1.2 + 0.3
         model = cls.default_init(X)
-        eta = model.e_step(X, backend="jax")
+        eta = model.e_step(X, backend="jax").eta
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
         assert D <= 1e-9
 
@@ -295,47 +295,52 @@ class TestEMMonotoneLL:
         active = changes[:-1] > 0
         assert jnp.all(dll[active] >= -1e-5)
 
-class TestEMStep1Convergence:
-    """B5/B6: loop and scan share step-1 stopping; EMResult uses Python types."""
+class TestEMAitkenEarliestStop:
+    """Aitken remaining gap needs three consecutive ℓ; EMResult uses Python types."""
 
     @staticmethod
     def _near_mle_setup():
-        """Data + init whose first EM step already meets tol=2e-2.
-
-        Sampling noise at the true parameters gives ~0.016 change on step 1;
-        the old loop path refused to stop there (``i > 0`` / ``n_iter > 1``).
-        """
+        """True VG parameters as init: Aitken remaining is small by step 3."""
         true = VarianceGamma.from_classical(
             mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
             sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
         )
         X = true.rvs(2000, seed=42)
-        return true, X, 2e-2
+        return true, X, 1.0
 
     @pytest.mark.contract
     @pytest.mark.parametrize("loop", ["scan", "python"])
-    def test_step1_convergence_and_python_types(self, loop):
-        init, X, tol = self._near_mle_setup()
+    def test_cannot_stop_before_three_lls(self, loop):
+        init, X, _ = self._near_mle_setup()
+        kwargs = dict(max_iter=2, tol=1e6, verbose=0)
         if loop == "scan":
-            fitter = BatchEMFitter(
-                max_iter=20, tol=tol, verbose=0,
-                e_step_backend="jax", m_step_backend="jax",
-            )
+            kwargs.update(e_step_backend="jax", m_step_backend="jax")
         else:
-            fitter = BatchEMFitter(
-                max_iter=20, tol=tol, verbose=0,
-                e_step_backend="cpu", m_step_backend="cpu",
-            )
-        result = fitter.fit(init, X)
+            kwargs.update(e_step_backend="cpu", m_step_backend="cpu")
+        result = BatchEMFitter(**kwargs).fit(init, X)
+        assert result.converged is False
+        assert result.diverged is False
+        assert result.n_iter == 2
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_earliest_stop_is_three_and_python_types(self, loop):
+        init, X, tol = self._near_mle_setup()
+        kwargs = dict(max_iter=20, tol=tol, verbose=0)
+        if loop == "scan":
+            kwargs.update(e_step_backend="jax", m_step_backend="jax")
+        else:
+            kwargs.update(e_step_backend="cpu", m_step_backend="cpu")
+        result = BatchEMFitter(**kwargs).fit(init, X)
         assert result.converged is True
         assert result.diverged is False
-        assert result.n_iter == 1
+        assert result.n_iter == 3
         assert isinstance(result.converged, bool)
         assert isinstance(result.n_iter, int)
         assert isinstance(result.diverged, bool)
 
     @pytest.mark.contract
-    def test_scan_and_loop_agree_on_step1(self):
+    def test_scan_and_loop_agree_on_earliest_stop(self):
         init, X, tol = self._near_mle_setup()
         scan = BatchEMFitter(
             max_iter=20, tol=tol, verbose=0,
@@ -346,7 +351,7 @@ class TestEMStep1Convergence:
             e_step_backend="cpu", m_step_backend="cpu",
         ).fit(init, X)
         assert scan.converged is True and loop.converged is True
-        assert scan.n_iter == loop.n_iter == 1
+        assert scan.n_iter == loop.n_iter == 3
 
     @pytest.mark.contract
     def test_scan_does_not_diverge_after_convergence(self):
@@ -356,17 +361,16 @@ class TestEMStep1Convergence:
             max_iter=20, tol=tol, verbose=0,
             e_step_backend="jax", m_step_backend="jax",
         )
-        fitter._force_nonfinite_at_step = 2
+        fitter._force_nonfinite_at_step = 4
         result = fitter.fit(init, X)
         assert result.converged is True
         assert result.diverged is False
-        assert result.n_iter == 1
+        assert result.n_iter == 3
 
     @pytest.mark.contract
     def test_scan_does_not_converge_after_divergence(self):
         """Post-divergence scan padding must not set converged=True."""
         init, X, _ = self._near_mle_setup()
-        # Loose tol so any finite padded step would otherwise look converged.
         fitter = BatchEMFitter(
             max_iter=5, tol=1e6, verbose=0,
             e_step_backend="jax", m_step_backend="jax",
@@ -406,3 +410,151 @@ class TestEMDivergenceGuard:
         _assert_model_finite(result.model)
         assert int(result.n_iter) >= 1
         assert jnp.any(~jnp.isfinite(result.param_changes))
+
+
+def _review_vg_setup(scale: float = 1.0):
+    """2026-09-05 review VG: Gamma(0.7, rate=0.7), n=2000, seed 13, init α=β=2."""
+    rng = np.random.default_rng(13)
+    y = rng.gamma(0.7, 1.0 / 0.7, 2000)
+    x = (np.sqrt(y) * rng.normal(size=2000))[:, None] * scale
+    X = jnp.asarray(x, dtype=jnp.float64)
+    init = VarianceGamma.from_classical(
+        mu=X.mean(axis=0), gamma=jnp.zeros(1),
+        sigma=jnp.atleast_2d(X.var()), alpha=2.0, beta=2.0,
+    )
+    return init, X
+
+
+class TestAitkenRemaining:
+    """Aitken remaining gap formula (geometric sequence)."""
+
+    def test_geometric_half(self):
+        from normix.fitting.em import _aitken_remaining
+        # ℓ = 0, 1, 1.5 → Δ1=1, Δ2=0.5, a=0.5 → remaining = 0.5
+        rem = _aitken_remaining(
+            jnp.asarray(1.5), jnp.asarray(1.0), jnp.asarray(0.0))
+        np.testing.assert_allclose(float(rem), 0.5, rtol=1e-12)
+
+    def test_stalled_is_zero(self):
+        from normix.fitting.em import _aitken_remaining
+        rem = _aitken_remaining(
+            jnp.asarray(-1.2), jnp.asarray(-1.2), jnp.asarray(-1.2))
+        np.testing.assert_allclose(float(rem), 0.0, atol=1e-15)
+
+    def test_negative_delta_does_not_stop(self):
+        from normix.fitting.em import _aitken_remaining
+        rem = _aitken_remaining(
+            jnp.asarray(0.9), jnp.asarray(1.0), jnp.asarray(0.0))
+        assert float(rem) == np.inf
+
+
+class TestReviewVGAitken:
+    """Review VG 2000-obs case: default tol must not stop at α≈1.59."""
+
+    def test_default_tol_and_continuation(self):
+        init, X = _review_vg_setup()
+        result = init.fit(
+            X, max_iter=80, verbose=0,
+            e_step_backend="cpu", m_step_backend="cpu",
+        )
+        alpha = float(result.model.joint.subordinator().alpha)
+        assert result.n_iter > 3
+        assert not (result.converged and abs(alpha - 1.59) < 0.1), (
+            f"stopped at α={alpha:.4f} with converged={result.converged} "
+            f"after {result.n_iter} iters (review false stop was α≈1.59)"
+        )
+        continued = result.model.fit(
+            X, max_iter=50, tol=1e-8, verbose=0,
+            e_step_backend="cpu", m_step_backend="cpu",
+        )
+        alpha2 = float(continued.model.joint.subordinator().alpha)
+        np.testing.assert_allclose(alpha2, 0.7, atol=0.15)
+
+    def test_unit_scale_does_not_stop_after_one_iter(self):
+        """Data × 0.001 must not stop after one iteration from the hybrid-RMS floor."""
+        init, X = _review_vg_setup(scale=0.001)
+        result = init.fit(
+            X, max_iter=80, verbose=0,
+            e_step_backend="cpu", m_step_backend="cpu",
+        )
+        assert result.n_iter > 1
+        if result.converged:
+            assert result.n_iter >= 3
+
+
+class TestConjugacyMeanLogLik:
+    """E-step conjugacy ℓ_n matches mean log_prob (GIG-convention ψ)."""
+
+    _MU = jnp.array([0.0, 0.2])
+    _GAMMA = jnp.array([0.3, -0.1])
+    _SIGMA = jnp.array([[1.0, 0.2], [0.2, 1.0]])
+    _F = jnp.array([[0.8], [0.4]])
+    _D = jnp.array([0.5, 0.6])
+
+    @staticmethod
+    def _models():
+        from normix.distributions.normal_inverse_gamma import (
+            FactorNormalInverseGamma, NormalInverseGamma,
+        )
+        from normix.distributions.normal_inverse_gaussian import (
+            FactorNormalInverseGaussian, NormalInverseGaussian,
+        )
+        from normix.distributions.variance_gamma import FactorVarianceGamma
+        from normix.distributions.generalized_hyperbolic import (
+            FactorGeneralizedHyperbolic,
+        )
+        mu, g, S = (
+            TestConjugacyMeanLogLik._MU,
+            TestConjugacyMeanLogLik._GAMMA,
+            TestConjugacyMeanLogLik._SIGMA,
+        )
+        F, D = TestConjugacyMeanLogLik._F, TestConjugacyMeanLogLik._D
+        return [
+            GeneralizedHyperbolic.from_classical(
+                mu=mu, gamma=g, sigma=S, p=-0.5, a=1.5, b=1.0),
+            VarianceGamma.from_classical(
+                mu=mu, gamma=g, sigma=S, alpha=2.0, beta=1.5),
+            NormalInverseGamma.from_classical(
+                mu=mu, gamma=g, sigma=S, alpha=3.0, beta=1.0),
+            NormalInverseGaussian.from_classical(
+                mu=mu, gamma=g, sigma=S, mu_ig=1.0, lam=1.5),
+            FactorGeneralizedHyperbolic.from_classical(
+                mu=mu, gamma=g, F=F, D=D, p=-0.5, a=1.5, b=1.0),
+            FactorVarianceGamma.from_classical(
+                mu=mu, gamma=g, F=F, D=D, alpha=2.0, beta=1.5),
+            FactorNormalInverseGamma.from_classical(
+                mu=mu, gamma=g, F=F, D=D, alpha=3.0, beta=1.0),
+            FactorNormalInverseGaussian.from_classical(
+                mu=mu, gamma=g, F=F, D=D, mu_ig=1.0, lam=1.5),
+        ]
+
+    @pytest.mark.parametrize("backend", ["jax", "cpu"])
+    def test_estep_log_lik_matches_marginal(self, backend):
+        rtol = 1e-8 if backend == "jax" else 1e-7
+        atol = 1e-8 if backend == "jax" else 1e-7
+        for model in self._models():
+            X = model.rvs(80, seed=4)
+            estep = model.e_step(X, backend=backend)
+            mll = float(model.marginal_log_likelihood(X))
+            np.testing.assert_allclose(
+                float(estep.log_lik), mll, rtol=rtol, atol=atol,
+                err_msg=f"{type(model).__name__} backend={backend}",
+            )
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_track_ll_length_equals_n_iter(self, loop):
+        true = VarianceGamma.from_classical(
+            mu=jnp.array([0.5]), gamma=jnp.array([0.3]),
+            sigma=jnp.array([[1.0]]), alpha=2.0, beta=1.0,
+        )
+        X = true.rvs(400, seed=1)
+        kwargs = dict(max_iter=20, tol=1e-3, verbose=0, track_ll=True)
+        if loop == "scan":
+            kwargs.update(e_step_backend="jax", m_step_backend="jax")
+        else:
+            kwargs.update(e_step_backend="cpu", m_step_backend="cpu")
+        result = BatchEMFitter(**kwargs).fit(true, X)
+        assert result.log_likelihoods is not None
+        assert result.log_likelihoods.shape[0] == int(result.n_iter)
+        assert result.param_changes.shape[0] == int(result.n_iter)
+

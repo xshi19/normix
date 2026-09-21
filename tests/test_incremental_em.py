@@ -171,7 +171,7 @@ def test_affine_combine_identity():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta1 = model.compute_eta_from_model()
-    eta2 = model.e_step(X)
+    eta2 = model.e_step(X).eta
     result = affine_combine(eta1, eta2, b=0.0, c=1.0)
     np.testing.assert_allclose(
         np.array(result.E_X), np.array(eta2.E_X), atol=1e-12)
@@ -181,7 +181,7 @@ def test_affine_combine_midpoint():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta1 = model.compute_eta_from_model()
-    eta2 = model.e_step(X)
+    eta2 = model.e_step(X).eta
     result = affine_combine(eta1, eta2, b=0.5, c=0.5)
     expected = 0.5 * np.array(eta1.E_X) + 0.5 * np.array(eta2.E_X)
     np.testing.assert_allclose(np.array(result.E_X), expected, atol=1e-12)
@@ -191,7 +191,7 @@ def test_affine_combine_with_shift():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta1 = model.compute_eta_from_model()
-    eta2 = model.e_step(X)
+    eta2 = model.e_step(X).eta
     shift = jax.tree.map(lambda x: 0.1 * jnp.ones_like(x), eta1)
     result = affine_combine(eta1, eta2, b=0.0, c=1.0, a=shift)
     expected = np.array(eta2.E_Y) + 0.1
@@ -244,7 +244,7 @@ def test_shrinkage_combinator_scalar_closed_form():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta0 = eta0_from_model(model)
-    eta_new = model.e_step(X)
+    eta_new = model.e_step(X).eta
 
     tau = 0.5
     rule = Shrinkage(IdentityUpdate(), eta0, tau=tau)
@@ -301,7 +301,7 @@ def test_shrinkage_tau_zero_equals_base(base_factory):
     model = _make_models(X)["VG"]
     eta0 = eta0_from_model(model)
     eta_prev = eta0
-    eta_new = model.e_step(X)
+    eta_new = model.e_step(X).eta
 
     base = base_factory()
     shrunk = Shrinkage(base, eta0, tau=0.0)
@@ -323,7 +323,7 @@ def test_shrinkage_per_field_tau_only_sigma():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta0 = eta0_from_model(model)
-    eta_new = model.e_step(X)
+    eta_new = model.e_step(X).eta
 
     d = X.shape[1]
     tau_pytree = NormalMixtureEta(
@@ -365,7 +365,7 @@ def test_shrinkage_preserves_running_state():
     model = _make_models(X)["VG"]
     eta0 = eta0_from_model(model)
     eta_prev = eta0
-    eta_new = model.e_step(X)
+    eta_new = model.e_step(X).eta
 
     base = RobbinsMonroUpdate(tau0=10.0)
     shrunk = Shrinkage(base, eta0, tau=0.25)
@@ -398,7 +398,7 @@ def test_shrinkage_preserves_sample_weighted_state():
     X = _make_data()
     model = _make_models(X)["VG"]
     eta0 = eta0_from_model(model)
-    eta_new = model.e_step(X)
+    eta_new = model.e_step(X).eta
 
     base = SampleWeightedUpdate()
     shrunk = Shrinkage(base, eta0, tau=0.0)  # τ=0 ⇒ output equals base

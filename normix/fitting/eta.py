@@ -20,11 +20,27 @@ This is the expectation parametrization of
 """
 from __future__ import annotations
 
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+
+
+class EStepResult(eqx.Module):
+    r"""E-step output: aggregated :math:`\eta` and mean log-likelihood.
+
+    :math:`\ell_n` is *not* a field of :class:`NormalMixtureEta` —
+    ``affine_combine`` / shrinkage would mix it. It is computed from the
+    E-step's posterior GIG log-partition (already in
+    ``BesselMoments.log_k``) via conjugacy, with no extra Bessel calls
+    and no cache on the model.
+    """
+
+    eta: Any
+    #: mean log-likelihood :math:`\ell_n(\theta)` at the E-step parameters,
+    #: nats per observation
+    log_lik: jax.Array
 
 
 class NormalMixtureEta(eqx.Module):

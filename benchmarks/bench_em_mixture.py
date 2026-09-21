@@ -187,7 +187,7 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
             if cfg.algorithm == 'mcecm':
                 # Cycle 1: E → M_normal → regularize
                 t0 = time.perf_counter()
-                eta = model.e_step(X, backend=cfg.e_backend)
+                eta = model.e_step(X, backend=cfg.e_backend).eta
                 t_e1 = time.perf_counter() - t0
 
                 t0 = time.perf_counter()
@@ -200,7 +200,7 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
 
                 # Cycle 2: E → M_subordinator
                 t0 = time.perf_counter()
-                eta = model.e_step(X, backend=cfg.e_backend)
+                eta = model.e_step(X, backend=cfg.e_backend).eta
                 t_e2 = time.perf_counter() - t0
 
                 t0 = time.perf_counter()
@@ -215,7 +215,7 @@ def run_benchmark(cfg: EMConfig, X: jax.Array,
             else:
                 # EM: E → M_normal → M_subordinator → regularize
                 t0 = time.perf_counter()
-                eta = model.e_step(X, backend=cfg.e_backend)
+                eta = model.e_step(X, backend=cfg.e_backend).eta
                 t_e = time.perf_counter() - t0
 
                 t0 = time.perf_counter()

@@ -86,12 +86,12 @@ class MarginalMixture(eqx.Module):
     def marginal_log_likelihood(self, X: jax.Array) -> jax.Array: ...
 
     # EM hooks (stats type chosen by subclass)
-    def e_step(self, X, *, backend='jax'): ...
+    def e_step(self, X, *, backend='jax'): ...  # -> EStepResult(eta, log_lik)
     def m_step(self, eta, **kw) -> "MarginalMixture": ...
     def m_step_normal(self, eta) -> "MarginalMixture": ...
     def m_step_subordinator(self, eta, **kw) -> "MarginalMixture": ...
     def compute_eta_from_model(self): ...
-    def em_convergence_params(self): ...
+    def em_convergence_params(self): ...  # hybrid-RMS diagnostic
 
     # convenience
     def fit(self, X, **kw) -> "EMResult": ...
@@ -211,9 +211,9 @@ def _beta(self):        # β = Fᵀ Σ⁻¹, used per E-step pass
   (`D_FLOOR = 1e-8` in `utils/constants.py`).
 - `F` is identifiable only up to a right $r \times r$ orthogonal
   rotation, so `(μ, γ, F, D)` would never converge in norm. The
-  convergence hook `em_convergence_params` returns
+  hybrid-RMS diagnostic `em_convergence_params` returns
   `(μ, γ, Σ = F F^\top + \mathrm{diag}(D))` — invariant to the
-  rotation.
+  rotation. Stopping is the Aitken remaining gap of $\ell_n$.
 
 ### 6.4 `default_init` for FactorGH
 

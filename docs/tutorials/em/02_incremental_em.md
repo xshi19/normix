@@ -5,7 +5,7 @@ kernelspec:
   name: python3
 mystnb:
   execution_mode: cache
-  execution_timeout: 600
+  execution_timeout: 900
 ---
 
 # Incremental (mini-batch) EM
@@ -45,9 +45,10 @@ true = NormalInverseGaussian.from_classical(
     gamma=jnp.array([0.4, -0.3]),
     sigma=jnp.array([[1.0, 0.3], [0.3, 1.0]]),
     mu_ig=1.0, lam=1.5)
-X = true.rvs(20_000, seed=0)
+X = true.rvs(8_000, seed=0)
 init = NormalInverseGaussian.default_init(X)
 key = jax.random.PRNGKey(0)
+N_STEPS = 30
 ```
 
 ## The six $\eta$-update rules
@@ -80,7 +81,7 @@ print(f"target mean log-likelihood (true model): {target:.4f}\n")
 finals = {}
 for name, rule in rules.items():
     fitter = IncrementalEMFitter(
-        batch_size=512, max_steps=60, eta_update=rule,
+        batch_size=512, max_steps=N_STEPS, eta_update=rule,
         e_step_backend="cpu", m_step_backend="cpu")
     res = fitter.fit(init, X, key=key)
     finals[name] = float(res.model.marginal_log_likelihood(X))
@@ -96,13 +97,13 @@ ax.barh(names, [finals[n] for n in names], color="#2D5A8A")
 ax.axvline(target, color="0.4", ls="--", lw=1.2, label="true-model LL")
 ax.set_xlabel("final mean log-likelihood")
 ax.set_xlim(min(finals.values()) - 0.01, target + 0.005)
-ax.set_title("Mini-batch EM: $\\eta$-update rules after 60 steps")
+ax.set_title(f"Mini-batch EM: $\\eta$-update rules after {N_STEPS} steps")
 ax.legend()
 plt.show()
 ```
 
 All rules climb to within a fraction of a nat of the true-model likelihood after
-just 60 mini-batches. They differ mainly in *how* they get there — the averaging
+30 mini-batches. They differ mainly in *how* they get there — the averaging
 rules (`SampleWeighted`, `EWMA`, `Affine`) damp the per-step noise, while
 `Identity` and the decaying `RobbinsMonro` step are more volatile.
 
@@ -117,10 +118,10 @@ fig, ax = plt.subplots()
 for name, rule in [("Identity", IdentityUpdate()),
                    ("EWMA(0.1)", EWMAUpdate(w=0.1))]:
     res = IncrementalEMFitter(
-        batch_size=512, max_steps=60, eta_update=rule, verbose=1,
+        batch_size=512, max_steps=N_STEPS, eta_update=rule, verbose=1,
         e_step_backend="cpu", m_step_backend="cpu").fit(init, X, key=key)
     ll = np.asarray(res.log_likelihoods)
-    ax.plot(np.linspace(0, 60, len(ll)), ll, marker="o", ms=3, label=name)
+    ax.plot(np.linspace(0, N_STEPS, len(ll)), ll, marker="o", ms=3, label=name)
 ax.axhline(target, color="0.4", ls="--", lw=1.2, label="true-model LL")
 ax.set_xlabel("mini-batch step"); ax.set_ylabel("mean log-likelihood")
 ax.set_title("Incremental EM trajectories")
@@ -147,7 +148,7 @@ from normix import eta0_isotropic
 
 rule = Shrinkage(RobbinsMonroUpdate(tau0=10.0), eta0_isotropic(init, 1.0), tau=0.5)
 res = IncrementalEMFitter(
-    batch_size=256, max_steps=60, eta_update=rule,
+    batch_size=256, max_steps=N_STEPS, eta_update=rule,
     e_step_backend="cpu", m_step_backend="cpu").fit(init, X, key=key)
 print("shrinkage-to-isotropic final mean log-lik:",
       float(res.model.marginal_log_likelihood(X)))

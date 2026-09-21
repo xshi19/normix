@@ -76,7 +76,7 @@ def run_instrumented_em(
     for i in range(max_iter):
         prev_params = model.em_convergence_params()
 
-        eta = model.e_step(X, backend="jax")
+        eta = model.e_step(X, backend="jax").eta
         D = float(1.0 - eta.E_inv_Y * eta.E_Y)
         eta2 = float(eta.E_inv_Y)
         eta3 = float(eta.E_Y)

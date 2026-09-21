@@ -58,8 +58,8 @@ def test_e_step_cpu_vs_jax_sp500(dist_name, sp500_returns):
     X = sp500_returns
     model = _make_models(X)[dist_name]
 
-    eta_jax = model.e_step(X, backend='jax')
-    eta_cpu = model.e_step(X, backend='cpu')
+    eta_jax = model.e_step(X, backend='jax').eta
+    eta_cpu = model.e_step(X, backend='cpu').eta
 
     for field in ['E_log_Y', 'E_inv_Y', 'E_Y']:
         np.testing.assert_allclose(
@@ -87,7 +87,7 @@ def test_m_step_cpu_vs_jax_sp500(dist_name, sp500_returns):
     X = sp500_returns
     model = _make_models(X)[dist_name]
 
-    eta = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu').eta
 
     model_jax = model.m_step(eta, backend='jax', method='newton')
     model_cpu = model.m_step(eta, backend='cpu', method='lbfgs')

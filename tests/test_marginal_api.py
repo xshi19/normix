@@ -140,7 +140,7 @@ def test_joint_from_expectation_pytree_matches_m_step(dist_name):
     """
     X = _make_data()
     model = _make_models(X)[dist_name]
-    eta = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu').eta
 
     joint_cls = _JOINT_CLS[dist_name]
     j_from_eta = joint_cls.from_expectation(eta, backend='cpu')
@@ -166,7 +166,7 @@ def test_marginal_from_expectation_wraps_joint(dist_name):
     """MarginalXxx.from_expectation(eta).joint == JointXxx.from_expectation(eta)."""
     X = _make_data()
     model = _make_models(X)[dist_name]
-    eta = model.e_step(X, backend='cpu')
+    eta = model.e_step(X, backend='cpu').eta
 
     marginal_cls = _MARGINAL_CLS[dist_name]
     joint_cls = _JOINT_CLS[dist_name]
