@@ -653,6 +653,11 @@ the cumulant generator of the information content
 <span class="math notranslate nohighlight">\(-\log p(X)\)</span>: entropy is <span class="math notranslate nohighlight">\(H = -R'(1)\)</span>, varentropy is
 <span class="math notranslate nohighlight">\(V_H = R''(1)\)</span>, and the Rényi entropy of order <span class="math notranslate nohighlight">\(\alpha\)</span> is
 <span class="math notranslate nohighlight">\(R(\alpha)/(1-\alpha)\)</span>.</p>
+<p>The identity equals <span class="math notranslate nohighlight">\(\log\int p^\alpha\)</span> only for
+<span class="math notranslate nohighlight">\(\alpha\theta \in \Theta\)</span>. Subclasses whose <span class="math notranslate nohighlight">\(\psi\)</span> admits an
+analytic continuation off <span class="math notranslate nohighlight">\(\Theta\)</span> (Gamma, InverseGamma) return
+<span class="math notranslate nohighlight">\(+\infty\)</span> when the powered density is not integrable, so
+<a class="reference internal" href="#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a> inherits the sign of <span class="math notranslate nohighlight">\(1-\alpha\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

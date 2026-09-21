@@ -494,6 +494,11 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta">Eta Parametrization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult"><code class="docutils literal notranslate"><span class="pre">EStepResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult.eta"><code class="docutils literal notranslate"><span class="pre">EStepResult.eta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult.log_lik"><code class="docutils literal notranslate"><span class="pre">EStepResult.log_lik</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_Y</span></code></a></li>
@@ -598,13 +603,10 @@
 <span id="em-fitters"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink">EM Fitters</a><a class="headerlink" href="#module-normix.fitting.em" title="Link to this heading">#</a></h2>
 <p>EM fitters for normix distributions.</p>
 <p>Model knows math, fitter knows iteration.</p>
-<blockquote>
-<div><dl class="simple">
-<dt>BatchEMFitter        — standard batch EM with dual-loop architecture:</dt><dd><p>lax.scan (JIT-able) or Python for-loop (CPU-compatible)</p>
-</dd>
-</dl>
-<p>IncrementalEMFitter  — online / mini-batch EM with pluggable eta update rules</p>
-</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code> is batch EM with a dual-loop architecture (<code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>
+when both backends are JAX, otherwise a Python for-loop).
+<code class="docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code> is online / mini-batch EM with pluggable eta
+update rules.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">EMResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diverged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#EMResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.EMResult" title="Link to this definition">#</a></dt>
@@ -673,12 +675,16 @@ divergence and a finite but not-yet-converged stop.</p>
 <p><strong>EM</strong> (default): E-step → M-step (all params) → regularize.</p>
 <p><strong>MCECM</strong>: E-step → M-step (normal params only) → regularize →
 E-step → M-step (subordinator only).</p>
-<p>Convergence is measured by hybrid-scale <strong>RMS</strong> parameter change in the
-normal parameters (mu, gamma, L_Sigma), excluding subordinator (GIG)
-parameters. Per leaf the change is
-<code class="docutils literal notranslate"><span class="pre">rms(new</span> <span class="pre">-</span> <span class="pre">old)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">rms(old))</span></code> with
-<code class="docutils literal notranslate"><span class="pre">rms(v)</span> <span class="pre">=</span> <span class="pre">||v||_2</span> <span class="pre">/</span> <span class="pre">sqrt(m)</span></code> and <code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">=</span> <span class="pre">v.size</span></code>. Likelihood is not
-used for stopping (optional LL traces remain diagnostics only).</p>
+<p>Convergence is the Aitken remaining gap of the mean log-likelihood
+<span class="math notranslate nohighlight">\(\ell_n\)</span> (nats per observation) from the E-step conjugacy
+identity; stop when <span class="math notranslate nohighlight">\(\ell_\infty - \ell_{t+1} &lt;\)</span> <code class="docutils literal notranslate"><span class="pre">tol</span></code>.
+Three consecutive <span class="math notranslate nohighlight">\(\ell\)</span> values are required, so the earliest
+stop is <code class="docutils literal notranslate"><span class="pre">n_iter=3</span></code>. Hybrid-scale RMS on
+<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.MarginalMixture.em_convergence_params" title="normix.mixtures.marginal.MarginalMixture.em_convergence_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">em_convergence_params()</span></code></a>
+is recorded in <a class="reference internal" href="#normix.fitting.em.EMResult.param_changes" title="normix.fitting.em.EMResult.param_changes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EMResult.param_changes</span></code></a> as a diagnostic, not
+the stop. Covariance regularisations leave the density unchanged, so
+they share this criterion. Under scalar-<span class="math notranslate nohighlight">\(\tau\)</span> MAP shrinkage
+the tracked sequence is the penalised objective.</p>
 <dl class="simple">
 <dt>Loop selection is automatic:</dt><dd><ul class="simple">
 <li><p>lax.scan when both backends are ‘jax’, verbose &lt;= 1, algorithm=’em’,
@@ -692,9 +698,10 @@ and no eta_update rule</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – ‘em’ (default) or ‘mcecm’.</p></li>
 <li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of iterations.</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on max hybrid-scale RMS parameter change
-(<code class="docutils literal notranslate"><span class="pre">rms(Δ)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">rms(θ))</span></code>). Roughly dimension-free: <code class="docutils literal notranslate"><span class="pre">tol=1e-3</span></code>
-means a typical coordinate moved by ~0.1% of its natural scale.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Convergence tolerance on the Aitken remaining gap of
+<span class="math notranslate nohighlight">\(\ell_n\)</span> in nats per observation. <code class="docutils literal notranslate"><span class="pre">tol=1e-3</span></code> means the
+extrapolated remaining improvement is less than <span class="math notranslate nohighlight">\(10^{-3}\)</span>
+nats/obs.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, 1 = summary, 2 = per-iteration table.</p></li>
 <li><p><strong>regularization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Strategy applied after each M-step:</p>
 <ul>
@@ -718,8 +725,12 @@ MultivariateNormal.</p></li>
 <li><p><strong>eta_update</strong> (<a class="reference internal" href="#normix.fitting.eta_rules.EtaUpdateRule" title="normix.fitting.eta_rules.EtaUpdateRule"><em>EtaUpdateRule</em></a><em> or </em><em>None</em>) – Optional eta combination rule (e.g. <code class="docutils literal notranslate"><span class="pre">Shrinkage(IdentityUpdate(),</span>
 <span class="pre">eta0,</span> <span class="pre">tau)</span></code>). When set, the E-step output is transformed before
 the M-step.</p></li>
-<li><p><strong>track_ll</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, record per-iteration marginal log-likelihood in
-<a class="reference internal" href="#normix.fitting.em.EMResult.log_likelihoods" title="normix.fitting.em.EMResult.log_likelihoods"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a> without requiring <code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p></li>
+<li><p><strong>track_ll</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, record the per-iteration conjugacy mean
+log-likelihood (the Aitken sequence) in
+<a class="reference internal" href="#normix.fitting.em.EMResult.log_likelihoods" title="normix.fitting.em.EMResult.log_likelihoods"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code></a> without requiring
+<code class="docutils literal notranslate"><span class="pre">verbose</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>. These are <span class="math notranslate nohighlight">\(\ell_n(\theta_t)\)</span> at the
+E-step parameters, not a second Bessel pass through
+<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood" title="normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood"><code class="xref py py-meth docutils literal notranslate"><span class="pre">marginal_log_likelihood()</span></code></a>.</p></li>
 <li><p><strong>m_step_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>None</em>) – Extra keyword arguments forwarded verbatim to every <code class="docutils literal notranslate"><span class="pre">m_step</span></code> /
 <code class="docutils literal notranslate"><span class="pre">m_step_subordinator</span></code> call (in addition to <code class="docutils literal notranslate"><span class="pre">backend</span></code> and
 <code class="docutils literal notranslate"><span class="pre">method</span></code>). Used to thread estimand controls such as the VG
@@ -1023,6 +1034,38 @@ s_5 = E[X / Y], \;\;
 s_6 = E[X X^\top / Y].\]</div>
 <p>This is the expectation parametrization of
 <a class="reference internal" href="mixtures.html#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.fitting.eta.EStepResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">EStepResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_lik</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#EStepResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.EStepResult" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>E-step output: aggregated <span class="math notranslate nohighlight">\(\eta\)</span> and mean log-likelihood.</p>
+<p><span class="math notranslate nohighlight">\(\ell_n\)</span> is <em>not</em> a field of <a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> —
+<code class="docutils literal notranslate"><span class="pre">affine_combine</span></code> / shrinkage would mix it. It is computed from the
+E-step’s posterior GIG log-partition (already in
+<code class="docutils literal notranslate"><span class="pre">BesselMoments.log_k</span></code>) via conjugacy, with no extra Bessel calls
+and no cache on the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>log_lik</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.EStepResult.eta">
+<span class="sig-name descname"><span class="pre">eta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.eta.EStepResult.eta" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.EStepResult.log_lik">
+<span class="sig-name descname"><span class="pre">log_lik</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.EStepResult.log_lik" title="Link to this definition">#</a></dt>
+<dd><p>mean log-likelihood <span class="math notranslate nohighlight">\(\ell_n(\theta)\)</span> at the E-step parameters,
+nats per observation</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">NormalMixtureEta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta" title="Link to this definition">#</a></dt>
@@ -1689,6 +1732,11 @@ Must be positive semi-definite (not checked).</p></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.fitting.eta">Eta Parametrization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult"><code class="docutils literal notranslate"><span class="pre">EStepResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult.eta"><code class="docutils literal notranslate"><span class="pre">EStepResult.eta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.EStepResult.log_lik"><code class="docutils literal notranslate"><span class="pre">EStepResult.log_lik</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_Y</span></code></a></li>

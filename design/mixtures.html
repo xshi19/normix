@@ -565,12 +565,12 @@ contract that fitters and downstream code depend on:</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">marginal_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
 
     <span class="c1"># EM hooks (stats type chosen by subclass)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="p">):</span> <span class="o">...</span>  <span class="c1"># -&gt; EStepResult(eta, log_lik)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MarginalMixture&quot;</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_eta_from_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>  <span class="c1"># hybrid-RMS diagnostic</span>
 
     <span class="c1"># convenience</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span> <span class="o">...</span>
@@ -708,9 +708,9 @@ never forming a dense <span class="math notranslate nohighlight">\(d \times d\)<
 (<code class="docutils literal notranslate"><span class="pre">D_FLOOR</span> <span class="pre">=</span> <span class="pre">1e-8</span></code> in <code class="docutils literal notranslate"><span class="pre">utils/constants.py</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to a right <span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal
 rotation, so <code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">F,</span> <span class="pre">D)</span></code> would never converge in norm. The
-convergence hook <code class="docutils literal notranslate"><span class="pre">em_convergence_params</span></code> returns
+hybrid-RMS diagnostic <code class="docutils literal notranslate"><span class="pre">em_convergence_params</span></code> returns
 <code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">Σ</span> <span class="pre">=</span> <span class="pre">F</span> <span class="pre">F^\top</span> <span class="pre">+</span> <span class="pre">\mathrm{diag}(D))</span></code> — invariant to the
-rotation.</p></li>
+rotation. Stopping is the Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span>.</p></li>
 </ul>
 </section>
 <section id="default-init-for-factorgh">

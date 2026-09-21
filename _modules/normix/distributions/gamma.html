@@ -553,6 +553,23 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="Gamma.log_density_power">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.gamma.Gamma.log_density_power">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_density_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log density-power integral :math:`R(q) = \log\int p^q`.</span>
+
+<span class="sd">        Finite iff :math:`q\theta \in \Theta`, i.e. :math:`q &gt; 0` and</span>
+<span class="sd">        :math:`q(\alpha-1)+1 &gt; 0`. Outside that set :math:`\int p^q = +\infty`,</span>
+<span class="sd">        so this returns :math:`+\infty`;</span>
+<span class="sd">        :meth:`~normix.exponential_family.ExponentialFamily.renyi`</span>
+<span class="sd">        then has the correct sign through :math:`H_q = R(q)/(1-q)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">in_domain</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">q_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_domain</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_domain</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">q_safe</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Gamma.mode">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.gamma.Gamma.mode">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>

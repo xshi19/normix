@@ -509,9 +509,10 @@ online estimate — including Robbins–Monro step sizes
     <span class="n">gamma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">]),</span>
     <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]),</span>
     <span class="n">mu_ig</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">true</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">20_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">true</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">8_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">init</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">N_STEPS</span> <span class="o">=</span> <span class="mi">30</span>
 </pre></div>
 </div>
 </div>
@@ -566,7 +567,7 @@ online estimate — including Robbins–Monro step sizes
 <span class="n">finals</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">rules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">fitter</span> <span class="o">=</span> <span class="n">IncrementalEMFitter</span><span class="p">(</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">N_STEPS</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
         <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
     <span class="n">res</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
     <span class="n">finals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
@@ -575,13 +576,13 @@ online estimate — including Robbins–Monro step sizes
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>target mean log-likelihood (true model): -2.7653
-Identity         final mean log-lik = -2.7660
-RobbinsMonro     final mean log-lik = -2.7770
-SampleWeighted   final mean log-lik = -2.7679
-EWMA(0.1)        final mean log-lik = -2.7675
-Affine(½,½)      final mean log-lik = -2.7665
-Shrinkage        final mean log-lik = -2.7779
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>target mean log-likelihood (true model): -2.7684
+Identity         final mean log-lik = -2.7714
+RobbinsMonro     final mean log-lik = -2.7840
+SampleWeighted   final mean log-lik = -2.7709
+EWMA(0.1)        final mean log-lik = -2.7743
+Affine(½,½)      final mean log-lik = -2.7696
+Shrinkage        final mean log-lik = -2.7789
 </pre></div>
 </div>
 </div>
@@ -596,18 +597,18 @@ Shrinkage        final mean log-lik = -2.7779
 <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.4&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true-model LL&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;final mean log-likelihood&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">finals</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">target</span> <span class="o">+</span> <span class="mf">0.005</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Mini-batch EM: $</span><span class="se">\\</span><span class="s2">eta$-update rules after 60 steps&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mini-batch EM: $</span><span class="se">\\</span><span class="s2">eta$-update rules after </span><span class="si">{</span><span class="n">N_STEPS</span><span class="si">}</span><span class="s2"> steps&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/101d72a5a93dd55fa422ce0d6e5985cc671611901ea2dcaf15a4751dfbf33725.png" src="../../_images/101d72a5a93dd55fa422ce0d6e5985cc671611901ea2dcaf15a4751dfbf33725.png" />
+<img alt="../../_images/cfa11a5375fa10c2397731ad97d7cfc1108d2195ed775a15ae5950e741692f35.png" src="../../_images/cfa11a5375fa10c2397731ad97d7cfc1108d2195ed775a15ae5950e741692f35.png" />
 </div>
 </div>
 <p>All rules climb to within a fraction of a nat of the true-model likelihood after
-just 60 mini-batches. They differ mainly in <em>how</em> they get there — the averaging
+30 mini-batches. They differ mainly in <em>how</em> they get there — the averaging
 rules (<code class="docutils literal notranslate"><span class="pre">SampleWeighted</span></code>, <code class="docutils literal notranslate"><span class="pre">EWMA</span></code>, <code class="docutils literal notranslate"><span class="pre">Affine</span></code>) damp the per-step noise, while
 <code class="docutils literal notranslate"><span class="pre">Identity</span></code> and the decaying <code class="docutils literal notranslate"><span class="pre">RobbinsMonro</span></code> step are more volatile.</p>
 </section>
@@ -622,10 +623,10 @@ rules:</p>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rule</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;Identity&quot;</span><span class="p">,</span> <span class="n">IdentityUpdate</span><span class="p">()),</span>
                    <span class="p">(</span><span class="s2">&quot;EWMA(0.1)&quot;</span><span class="p">,</span> <span class="n">EWMAUpdate</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))]:</span>
     <span class="n">res</span> <span class="o">=</span> <span class="n">IncrementalEMFitter</span><span class="p">(</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">N_STEPS</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
     <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">log_likelihoods</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ll</span><span class="p">)),</span> <span class="n">ll</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N_STEPS</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ll</span><span class="p">)),</span> <span class="n">ll</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;0.4&quot;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true-model LL&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;mini-batch step&quot;</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;mean log-likelihood&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Incremental EM trajectories&quot;</span><span class="p">)</span>
@@ -635,33 +636,33 @@ rules:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>EM [incremental] NormalInverseGaussian: rule=IdentityUpdate, batch_size=512, max_steps=60, inner_iter=1
-  step    6/60  LL=-2.770447  |Δparams|=4.8809e-02
-  step   12/60  LL=-2.768975  |Δparams|=2.8717e-02
-  step   18/60  LL=-2.766060  |Δparams|=3.0322e-02
-  step   24/60  LL=-2.767411  |Δparams|=5.3444e-02
-  step   30/60  LL=-2.768273  |Δparams|=2.7829e-02
-  step   36/60  LL=-2.766347  |Δparams|=4.6858e-02
-  step   42/60  LL=-2.768970  |Δparams|=7.5251e-02
-  step   48/60  LL=-2.767970  |Δparams|=2.9973e-02
-  step   54/60  LL=-2.769208  |Δparams|=9.7933e-02
-  step   60/60  LL=-2.766001  |Δparams|=9.5216e-02
-  Done (26.53s), final LL=-2.766001
-EM [incremental] NormalInverseGaussian: rule=EWMAUpdate, batch_size=512, max_steps=60, inner_iter=1
-  step    6/60  LL=-2.794093  |Δparams|=1.0129e-02
-  step   12/60  LL=-2.784090  |Δparams|=1.1258e-02
-  step   18/60  LL=-2.778310  |Δparams|=6.0021e-03
-  step   24/60  LL=-2.773891  |Δparams|=5.7814e-03
-  step   30/60  LL=-2.771556  |Δparams|=3.0138e-03
-  step   36/60  LL=-2.770150  |Δparams|=5.0898e-03
-  step   42/60  LL=-2.768800  |Δparams|=5.3319e-03
-  step   48/60  LL=-2.768355  |Δparams|=4.5691e-03
-  step   54/60  LL=-2.768068  |Δparams|=5.1095e-03
-  step   60/60  LL=-2.767476  |Δparams|=3.1518e-03
-  Done (26.52s), final LL=-2.767476
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>EM [incremental] NormalInverseGaussian: rule=IdentityUpdate, batch_size=512, max_steps=30, inner_iter=1
+  step    3/30  LL=-2.775277  |Δparams|=6.8369e-02
+  step    6/30  LL=-2.771501  |Δparams|=4.0041e-02
+  step    9/30  LL=-2.787793  |Δparams|=6.6476e-02
+  step   12/30  LL=-2.772647  |Δparams|=5.6552e-02
+  step   15/30  LL=-2.768970  |Δparams|=3.9134e-02
+  step   18/30  LL=-2.771232  |Δparams|=8.3946e-02
+  step   21/30  LL=-2.770677  |Δparams|=4.3130e-02
+  step   24/30  LL=-2.769282  |Δparams|=4.5298e-02
+  step   27/30  LL=-2.769822  |Δparams|=4.0683e-02
+  step   30/30  LL=-2.771450  |Δparams|=7.9296e-02
+  Done (22.02s), final LL=-2.771450
+EM [incremental] NormalInverseGaussian: rule=EWMAUpdate, batch_size=512, max_steps=30, inner_iter=1
+  step    3/30  LL=-2.801727  |Δparams|=1.3692e-02
+  step    6/30  LL=-2.795269  |Δparams|=9.1137e-03
+  step    9/30  LL=-2.790216  |Δparams|=1.2854e-02
+  step   12/30  LL=-2.786959  |Δparams|=3.7463e-03
+  step   15/30  LL=-2.783138  |Δparams|=5.4757e-03
+  step   18/30  LL=-2.780366  |Δparams|=5.6213e-03
+  step   21/30  LL=-2.778214  |Δparams|=8.5632e-03
+  step   24/30  LL=-2.776969  |Δparams|=5.9169e-03
+  step   27/30  LL=-2.775718  |Δparams|=3.4815e-03
+  step   30/30  LL=-2.774264  |Δparams|=4.8815e-03
+  Done (22.12s), final LL=-2.774264
 </pre></div>
 </div>
-<img alt="../../_images/7dd9d0b4262998e3171b0c4a03b7dcd27486697bfbff161e3a1d3ff0bdcaa7d0.png" src="../../_images/7dd9d0b4262998e3171b0c4a03b7dcd27486697bfbff161e3a1d3ff0bdcaa7d0.png" />
+<img alt="../../_images/08b2f2afb125c74c8e3b688bb23afbb0e4c1410dd5fab0b98b957c49d1392c6a.png" src="../../_images/08b2f2afb125c74c8e3b688bb23afbb0e4c1410dd5fab0b98b957c49d1392c6a.png" />
 </div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">Identity</span></code> rule is noisier because it discards all history; <code class="docutils literal notranslate"><span class="pre">EWMA</span></code>
@@ -684,7 +685,7 @@ builds sensible <span class="math notranslate nohighlight">\(\eta_0\)</span> val
 
 <span class="n">rule</span> <span class="o">=</span> <span class="n">Shrinkage</span><span class="p">(</span><span class="n">RobbinsMonroUpdate</span><span class="p">(</span><span class="n">tau0</span><span class="o">=</span><span class="mf">10.0</span><span class="p">),</span> <span class="n">eta0_isotropic</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">res</span> <span class="o">=</span> <span class="n">IncrementalEMFitter</span><span class="p">(</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">N_STEPS</span><span class="p">,</span> <span class="n">eta_update</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
     <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">m_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;shrinkage-to-isotropic final mean log-lik:&quot;</span><span class="p">,</span>
       <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)))</span>
@@ -692,7 +693,7 @@ builds sensible <span class="math notranslate nohighlight">\(\eta_0\)</span> val
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>shrinkage-to-isotropic final mean log-lik: -2.8295220213379775
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>shrinkage-to-isotropic final mean log-lik: -2.8308698420638634
 </pre></div>
 </div>
 </div>

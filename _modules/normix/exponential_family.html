@@ -635,6 +635,12 @@
 <span class="sd">        :math:`-\log p(X)`: entropy is :math:`H = -R&#39;(1)`, varentropy is</span>
 <span class="sd">        :math:`V_H = R&#39;&#39;(1)`, and the Rényi entropy of order :math:`\alpha` is</span>
 <span class="sd">        :math:`R(\alpha)/(1-\alpha)`.</span>
+
+<span class="sd">        The identity equals :math:`\log\int p^\alpha` only for</span>
+<span class="sd">        :math:`\alpha\theta \in \Theta`. Subclasses whose :math:`\psi` admits an</span>
+<span class="sd">        analytic continuation off :math:`\Theta` (Gamma, InverseGamma) return</span>
+<span class="sd">        :math:`+\infty` when the powered density is not integrable, so</span>
+<span class="sd">        :meth:`renyi` inherits the sign of :math:`1-\alpha`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>

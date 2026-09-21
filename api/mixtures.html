@@ -759,7 +759,10 @@ a + \gamma^\top\Sigma^{-1}\gamma,\;
 b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),\]</div>
 <p>with the family-specific prior <span class="math notranslate nohighlight">\((p, a, b)\)</span> resolved by
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>. Returns a dict with keys
-<code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>, plus <code class="docutils literal notranslate"><span class="pre">psi_post</span></code> (posterior
+GIG log-partition) and <code class="docutils literal notranslate"><span class="pre">zw</span></code> (<span class="math notranslate nohighlight">\(\gamma^\top\Sigma^{-1}(x-\mu)\)</span>)
+for the conjugacy identity
+<span class="math notranslate nohighlight">\(\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -909,7 +912,7 @@ storage form a model uses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.e_step">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.e_step" title="Link to this definition">#</a></dt>
-<dd><p>E-step: aggregated expectation parameters for the batch.</p>
+<dd><p>E-step: <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> <code class="docutils literal notranslate"><span class="pre">(eta,</span> <span class="pre">log_lik)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -979,12 +982,13 @@ storage form a model uses.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.em_convergence_params">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
-<dd><p>Pytree whose leaf-wise change measures EM convergence.</p>
-<p>Subordinator parameters are intentionally excluded (their solver
-has its own tolerance, and including them inflates iteration
-counts). For full-covariance models this is
-<code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code>; for factor-analysis models it is
-<code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">F</span> <span class="pre">F^T</span> <span class="pre">+</span> <span class="pre">D)</span></code> to sidestep the rotational gauge.</p>
+<dd><p>Pytree whose leaf-wise hybrid-RMS change is the EM diagnostic.</p>
+<p>Stopping uses the Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span>; this
+pytree feeds <a class="reference internal" href="fitting.html#normix.fitting.em.EMResult.param_changes" title="normix.fitting.em.EMResult.param_changes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">param_changes</span></code></a>
+only. Subordinator parameters are excluded. For full-covariance
+models this is <code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code>; for factor-analysis
+models it is <code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">F</span> <span class="pre">F^T</span> <span class="pre">+</span> <span class="pre">D)</span></code> to sidestep the
+rotational gauge of <span class="math notranslate nohighlight">\(F\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a></p>
@@ -1124,6 +1128,12 @@ a new model with updated parameters (modules are immutable).</p>
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.mean" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma E[Y]\)</span>.</p>
+<p>A zero coordinate of <span class="math notranslate nohighlight">\(\gamma\)</span> does not form <span class="math notranslate nohighlight">\(0\cdot\infty\)</span>.
+That coordinate equals <span class="math notranslate nohighlight">\(\mu_i\)</span> iff <span class="math notranslate nohighlight">\(E[\sqrt{Y}]&lt;\infty\)</span>
+(NInvG / Student-<span class="math notranslate nohighlight">\(t\)</span> with <span class="math notranslate nohighlight">\(\nu=2\alpha\)</span>: <span class="math notranslate nohighlight">\(\alpha&gt;1/2\)</span>);
+otherwise <span class="math notranslate nohighlight">\(+\infty\)</span>. Cauchy (<span class="math notranslate nohighlight">\(\alpha=1/2\)</span>, <span class="math notranslate nohighlight">\(\gamma=0\)</span>)
+therefore returns <span class="math notranslate nohighlight">\(+\infty\)</span>, not <span class="math notranslate nohighlight">\(\mu\)</span>. A nonzero
+<span class="math notranslate nohighlight">\(\gamma_i\)</span> needs <span class="math notranslate nohighlight">\(E[Y]&lt;\infty\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1135,6 +1145,10 @@ a new model with updated parameters (modules are immutable).</p>
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.cov">
 <span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.cov" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<p>When <span class="math notranslate nohighlight">\(\gamma=0\)</span> only <span class="math notranslate nohighlight">\(E[Y]\)</span> is required (NInvG:
+<span class="math notranslate nohighlight">\(\alpha&gt;1\)</span>). A zero entry of <span class="math notranslate nohighlight">\(\gamma\gamma^\top\)</span> contributes
+nothing even if <span class="math notranslate nohighlight">\(\mathrm{Var}[Y]\)</span> diverges. Non-existence is
+<span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1148,8 +1162,8 @@ a new model with updated parameters (modules are immutable).</p>
 <dd><p>Component-wise skewness <span class="math notranslate nohighlight">\(\gamma_1 = \mu_3 / \sigma^3\)</span> of <span class="math notranslate nohighlight">\(X\)</span>.</p>
 <p>Closed form from the normal variance-mean mixture representation and
 subordinator raw moments; see <a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>. Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.
-Requires a finite fourth moment of the subordinator (e.g. InverseGamma
-shape <span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span> when <span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>).</p>
+Requires a finite third moment of the subordinator when
+<span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>. Symmetric coordinates return 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1163,7 +1177,9 @@ shape <span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span> when <
 <dd><p>Component-wise excess kurtosis <span class="math notranslate nohighlight">\(\gamma_2 = \mu_4/\sigma^4 - 3\)</span> of <span class="math notranslate nohighlight">\(X\)</span>.</p>
 <p>Closed form from the normal variance-mean mixture representation and
 subordinator raw moments; see <a class="reference internal" href="../theory/gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>. Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.
-Same moment conditions as <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.skewness" title="normix.mixtures.marginal.NormalMixture.skewness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">skewness()</span></code></a>.</p>
+Symmetric coordinates need <span class="math notranslate nohighlight">\(E[Y^2]&lt;\infty\)</span> (NInvG:
+<span class="math notranslate nohighlight">\(\alpha&gt;2\)</span>); a nonzero <span class="math notranslate nohighlight">\(\gamma_i\)</span> needs <span class="math notranslate nohighlight">\(E[Y^4]\)</span>.
+Otherwise <span class="math notranslate nohighlight">\(+\infty\)</span> (e.g. <span class="math notranslate nohighlight">\(t_3\)</span>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1279,8 +1295,11 @@ form; this tractable joint quantity is the natural surrogate.</p>
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.e_step">
 <span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition">#</a></dt>
 <dd><p>Full E-step: subordinator conditionals + batch aggregation.</p>
-<p>Returns a <a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> with the
-six aggregated expectation parameters.</p>
+<p>Returns <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> with aggregated
+<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> and the mean
+log-likelihood <span class="math notranslate nohighlight">\(\ell_n(\theta)\)</span> at the current parameters
+(nats per observation), via conjugacy
+<span class="math notranslate nohighlight">\(\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1290,7 +1309,7 @@ six aggregated expectation parameters.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult">EStepResult</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1448,10 +1467,10 @@ right behaviour).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.em_convergence_params">
 <span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
-<dd><p>Pytree whose leaf-wise change measures EM convergence.</p>
-<p>Returns <code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code>. Subordinator parameters
-(<code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code>) are excluded — their solver has its own tolerance
-and including them inflates iteration counts.</p>
+<dd><p>Diagnostic pytree <code class="docutils literal notranslate"><span class="pre">(mu,</span> <span class="pre">gamma,</span> <span class="pre">L_Sigma)</span></code> for hybrid-RMS
+<a class="reference internal" href="fitting.html#normix.fitting.em.EMResult.param_changes" title="normix.fitting.em.EMResult.param_changes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">param_changes</span></code></a>.</p>
+<p>Stopping uses the Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span>, not
+this pytree. Subordinator parameters are excluded here.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1493,8 +1512,8 @@ variance-mean mixture with dispersion <span class="math notranslate nohighlight"
 \mathrm{diag}(D)\)</span>. Storing <span class="math notranslate nohighlight">\((F, D)\)</span> instead of a full Cholesky of
 <span class="math notranslate nohighlight">\(\Sigma\)</span> keeps quadratic forms and log-determinants in
 <span class="math notranslate nohighlight">\(\mathcal{O}(d r^2 + r^3)\)</span> via Woodbury and makes the rotation
-gauge of <span class="math notranslate nohighlight">\(F\)</span> irrelevant for convergence (we measure on
-<span class="math notranslate nohighlight">\(\Sigma\)</span>).</p>
+gauge of <span class="math notranslate nohighlight">\(F\)</span> irrelevant for the hybrid-RMS diagnostic (we measure
+on <span class="math notranslate nohighlight">\(\Sigma\)</span>).</p>
 <p>This module hosts only the abstract <a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture" title="normix.mixtures.factor.FactorNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></a> base.
 The four concrete subordinator families
 (<a class="reference internal" href="distributions.html#normix.distributions.variance_gamma.FactorVarianceGamma" title="normix.distributions.variance_gamma.FactorVarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorVarianceGamma</span></code></a>,
@@ -1541,9 +1560,10 @@ Woodbury helpers (<code class="xref py py-meth docutils literal notranslate"><sp
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_det_sigma()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_beta()</span></code>).</p>
 <p class="rubric">Notes</p>
 <p><code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to a right <span class="math notranslate nohighlight">\(r \times r\)</span>
-orthogonal rotation, so convergence is measured on
+orthogonal rotation, so the hybrid-RMS diagnostic is on
 <span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span>
-(<a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params" title="normix.mixtures.factor.FactorNormalMixture.em_convergence_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">em_convergence_params()</span></code></a>) rather than on <code class="docutils literal notranslate"><span class="pre">F</span></code> directly.</p>
+(<a class="reference internal" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params" title="normix.mixtures.factor.FactorNormalMixture.em_convergence_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">em_convergence_params()</span></code></a>) rather than on <code class="docutils literal notranslate"><span class="pre">F</span></code> directly.
+Stopping uses the Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.mu">
 <span class="sig-name descname"><span class="pre">mu</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.mu" title="Link to this definition">#</a></dt>
@@ -1610,7 +1630,7 @@ orthogonal rotation, so convergence is measured on
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.mean" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma\,E[Y]\)</span>.</p>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma\,E[Y]\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1621,7 +1641,8 @@ orthogonal rotation, so convergence is measured on
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.cov">
 <span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.cov" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>.</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>
+(see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1674,22 +1695,22 @@ orthogonal rotation, so convergence is measured on
 <span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.e_step" title="Link to this definition">#</a></dt>
 <dd><p>Full E-step: posterior <span class="math notranslate nohighlight">\(Y\)</span> expectations + deterministic
 <span class="math notranslate nohighlight">\(Z\)</span> reductions.</p>
-<p>Returns a <a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a>
-whose first six fields are batch averages of the standard normal
-variance-mean mixture sufficient statistics, and whose four
-<span class="math notranslate nohighlight">\(Z\)</span>-fields are computed from the first six via the
-deterministic relations in
-<code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code> §E-Step (no extra Bessel
-evaluations).</p>
+<p>Returns <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> whose <code class="docutils literal notranslate"><span class="pre">eta</span></code> is
+a <a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a> (first six
+fields are batch averages of the standard mixture statistics;
+the four <span class="math notranslate nohighlight">\(Z\)</span>-fields follow
+<code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code> §E-Step) and whose
+<code class="docutils literal notranslate"><span class="pre">log_lik</span></code> is the conjugacy mean log-likelihood at the current
+parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult">EStepResult</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1766,12 +1787,12 @@ theory doc).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.em_convergence_params">
 <span class="sig-name descname"><span class="pre">em_convergence_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.em_convergence_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.em_convergence_params" title="Link to this definition">#</a></dt>
-<dd><p>Return <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span> for the convergence
-check.</p>
+<dd><p>Diagnostic pytree <span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma)\)</span> for hybrid-RMS
+<a class="reference internal" href="fitting.html#normix.fitting.em.EMResult.param_changes" title="normix.fitting.em.EMResult.param_changes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">param_changes</span></code></a>.</p>
 <p><span class="math notranslate nohighlight">\(\Sigma = F F^\top + \mathrm{diag}(D)\)</span> rather than <code class="docutils literal notranslate"><span class="pre">F</span></code>
 directly, because <code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to an
-<span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal rotation and would never converge
-in norm.</p>
+<span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal rotation. Stopping uses the Aitken
+remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span>, not this pytree.</p>
 </dd></dl>
 
 <dl class="py method">

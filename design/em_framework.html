@@ -455,7 +455,8 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-knows-math-fitter-knows-iteration">1. Model Knows Math, Fitter Knows Iteration</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#em-steps-on-marginal-mixtures">2. EM Steps on Marginal Mixtures</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-on-a-pytree">2.1 Convergence on a pytree</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping-aitken-remaining-gap-of-ell-n">2.1 Stopping: Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hybrid-rms-diagnostic">2.2 Hybrid-RMS diagnostic</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#update-rules-two-layers">3. η-Update Rules: Two Layers</a><ul class="nav section-nav flex-column">
@@ -528,7 +529,7 @@ and make their attributes traceable).</p>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">param_changes</span></code></p></td>
 <td><p>yes</p></td>
-<td><p>max hybrid-scale RMS change in <code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> per iteration</p></td>
+<td><p>hybrid-RMS diagnostic on <code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> (not the stop)</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">n_iter</span></code></p></td>
 <td><p>yes</p></td>
@@ -536,17 +537,13 @@ and make their attributes traceable).</p>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">converged</span></code></p></td>
 <td><p>yes (Batch) / <code class="docutils literal notranslate"><span class="pre">None</span></code> (Incremental)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code> for batch; incremental is fixed-budget</p></td>
+<td><p>Aitken remaining gap <span class="math notranslate nohighlight">\(&lt;\)</span> <code class="docutils literal notranslate"><span class="pre">tol</span></code> for batch; incremental is fixed-budget</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">stop_reason</span></code></p></td>
-<td><p>optional</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">'tol'</span></code>, <code class="docutils literal notranslate"><span class="pre">'max_iter'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'budget'</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log_likelihoods</span></code></p></td>
+<td><p>optional (<code class="docutils literal notranslate"><span class="pre">track_ll</span></code> / verbose ≥ 1)</p></td>
+<td><p>conjugacy mean <span class="math notranslate nohighlight">\(\ell_n\)</span> per iteration (the Aitken sequence)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log_likelihoods</span></code></p></td>
-<td><p>optional (verbose ≥ 1)</p></td>
-<td><p>per-iteration LL trace</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">elapsed_time</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">elapsed_time</span></code></p></td>
 <td><p>yes</p></td>
 <td><p>wall clock</p></td>
 </tr>
@@ -557,23 +554,73 @@ and make their attributes traceable).</p>
 <hr class="docutils" />
 <section id="em-steps-on-marginal-mixtures">
 <h2>2. EM Steps on Marginal Mixtures<a class="headerlink" href="#em-steps-on-marginal-mixtures" title="Link to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="o">|</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>        <span class="o">-&gt;</span> <span class="n">NormalMixtureEta</span> <span class="o">|</span> <span class="n">FactorMixtureStats</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;jax&#39;</span><span class="o">|</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>        <span class="o">-&gt;</span> <span class="n">EStepResult</span>  <span class="c1"># eta + conjugacy ℓ_n</span>
 <span class="n">m_step</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>                        <span class="o">-&gt;</span> <span class="n">MarginalMixture</span>       <span class="c1"># full update</span>
 <span class="n">m_step_normal</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>                       <span class="o">-&gt;</span> <span class="n">MarginalMixture</span>       <span class="c1"># MCECM cycle 1</span>
 <span class="n">m_step_subordinator</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>           <span class="o">-&gt;</span> <span class="n">MarginalMixture</span>       <span class="c1"># MCECM cycle 2</span>
 <span class="n">compute_eta_from_model</span><span class="p">()</span>                 <span class="o">-&gt;</span> <span class="n">stats</span> <span class="n">pytree</span>          <span class="c1"># incremental warm-start</span>
-<span class="n">em_convergence_params</span><span class="p">()</span>                  <span class="o">-&gt;</span> <span class="n">pytree</span>                <span class="c1"># convergence hook</span>
+<span class="n">em_convergence_params</span><span class="p">()</span>                  <span class="o">-&gt;</span> <span class="n">pytree</span>                <span class="c1"># hybrid-RMS diagnostic</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">e_step</span></code> returns aggregated expectation parameters as an <code class="docutils literal notranslate"><span class="pre">eqx.Module</span></code>
-pytree, not raw per-observation dicts. The first six fields of
-<code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code> are identical to <code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>, so shrinkage
-targets and rule weights port across the two families (see
-<code class="docutils literal notranslate"><span class="pre">docs/design/mixtures.md</span></code> §7).</p>
-<section id="convergence-on-a-pytree">
-<h3>2.1 Convergence on a pytree<a class="headerlink" href="#convergence-on-a-pytree" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> returns a pytree whose leaf-wise change
-defines convergence:</p>
+<p><code class="docutils literal notranslate"><span class="pre">e_step</span></code> returns <a class="reference internal" href="../api/fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a>: aggregated
+expectation parameters (<code class="docutils literal notranslate"><span class="pre">eta</span></code>) plus the conjugacy mean log-likelihood
+<span class="math notranslate nohighlight">\(\ell_n(\theta)\)</span> at the E-step parameters. <span class="math notranslate nohighlight">\(\ell_n\)</span> is <em>not</em> a field of
+<a class="reference internal" href="../api/fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> — <code class="docutils literal notranslate"><span class="pre">affine_combine</span></code> /
+shrinkage would mix it — and is not a cache on the model. The first six
+fields of <code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code> are identical to <code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code>, so
+shrinkage targets and rule weights port across the two families (see
+<a class="reference internal" href="mixtures.html"><span class="doc">Mixture Architecture</span></a> §7).
+<a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood" title="normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood"><code class="xref py py-meth docutils literal notranslate"><span class="pre">marginal_log_likelihood()</span></code></a>
+stays the public standalone method (one Bessel pass per observation).</p>
+<section id="stopping-aitken-remaining-gap-of-ell-n">
+<h3>2.1 Stopping: Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span><a class="headerlink" href="#stopping-aitken-remaining-gap-of-ell-n" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">converged</span></code> is the Aitken remaining gap of the mean log-likelihood
+<span class="math notranslate nohighlight">\(\ell_n\)</span> in nats per observation (<a class="reference internal" href="../references.html#mclachlankrishnan2008"><span class="std std-ref">McLachlanKrishnan2008</span></a>). With three consecutive values <span class="math notranslate nohighlight">\(\ell_{t-1},\ell_t,\ell_{t+1}\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+\Delta_1 = \ell_t - \ell_{t-1},\qquad
+\Delta_2 = \ell_{t+1} - \ell_t,\qquad
+a = \Delta_2/\Delta_1,
+\]</div>
+<p>stop when <span class="math notranslate nohighlight">\(\ell_\infty - \ell_{t+1} = a\Delta_2/(1-a) &lt; \mathtt{tol}\)</span>
+for <span class="math notranslate nohighlight">\(\Delta_1 &gt; 0\)</span> and <span class="math notranslate nohighlight">\(0 \le a &lt; 1\)</span>. Earliest stop is <code class="docutils literal notranslate"><span class="pre">n_iter=3</span></code>.
+Default <span class="math notranslate nohighlight">\(\mathtt{tol}=10^{-3}\)</span> is a remaining gap of <span class="math notranslate nohighlight">\(10^{-3}\)</span> nats/obs.
+A negative <span class="math notranslate nohighlight">\(\Delta\ell\)</span> under plain EM is a bug detector (Aitken is
+not a stop); under scalar-<span class="math notranslate nohighlight">\(\tau\)</span> MAP shrinkage the tracked sequence is
+the penalised objective <span class="math notranslate nohighlight">\(\ell_n + \tau(\theta\cdot\eta_0 - \psi)\)</span>.</p>
+<p><span class="math notranslate nohighlight">\(\ell_n(\theta_t)\)</span> comes from the E-step at <span class="math notranslate nohighlight">\(\theta_t\)</span>. Posterior GIG
+conjugacy already evaluates <span class="math notranslate nohighlight">\(\psi_{\mathrm{post}}\)</span> from
+<code class="docutils literal notranslate"><span class="pre">BesselMoments.log_k</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[
+\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi,
+\qquad
+\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|
++ \gamma^\top\Sigma^{-1}(x-\mu).
+\]</div>
+<p><span class="math notranslate nohighlight">\(\psi\)</span> is the subordinator log-partition in the GIG convention
+(<code class="docutils literal notranslate"><span class="pre">subordinator().to_gig().log_partition()</span></code>). InverseGaussian stores
+<span class="math notranslate nohighlight">\(\tfrac12\log(2\pi)\)</span> in <span class="math notranslate nohighlight">\(h\)</span>, so its own <span class="math notranslate nohighlight">\(\psi\)</span> is the wrong gauge for
+this identity. Gamma / InverseGamma / GIG already match.</p>
+<p>Zero extra <em>per-observation</em> Bessel calls relative to the E-step (the
+prior <span class="math notranslate nohighlight">\(\psi\)</span> is a scalar). The same <span class="math notranslate nohighlight">\(\ell_n\)</span> is
+valid for every regularisation (<code class="docutils literal notranslate"><span class="pre">none</span></code> / <code class="docutils literal notranslate"><span class="pre">det_sigma_one</span></code> /
+<code class="docutils literal notranslate"><span class="pre">det_sigma_x</span></code> / <code class="docutils literal notranslate"><span class="pre">a_eq_b</span></code>): they reparametrise along the <span class="math notranslate nohighlight">\(Y\to sY\)</span> orbit
+and leave the density unchanged. MCECM uses <span class="math notranslate nohighlight">\(\ell_n\)</span> from the first
+E-step of the cycle. <code class="docutils literal notranslate"><span class="pre">EMResult.log_likelihoods</span></code> is that E-step sequence
+of length <code class="docutils literal notranslate"><span class="pre">n_iter</span></code> (the returned model is one M-step ahead).</p>
+<p>The previous stop — hybrid-RMS on <code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> =
+<span class="math notranslate nohighlight">\((\mu,\gamma,L_\Sigma)\)</span>, subordinator excluded — reported
+<code class="docutils literal notranslate"><span class="pre">converged=True</span></code> while the mixer was still travelling. The 2026-09-05
+review VG experiment (2000 draws, <span class="math notranslate nohighlight">\(Y_i\sim\mathrm{Gamma}(0.7,0.7)\)</span>,
+init <span class="math notranslate nohighlight">\(\alpha=\beta=2\)</span>) stopped at <span class="math notranslate nohighlight">\(\alpha\approx 1.59\)</span>; continuation
+recovered the generating shape <span class="math notranslate nohighlight">\(0.7\)</span>. The additive <span class="math notranslate nohighlight">\(1\)</span> in the RMS
+denominator also stopped <span class="math notranslate nohighlight">\(X\mapsto 0.001\,X\)</span> after one iteration.</p>
+</section>
+<section id="hybrid-rms-diagnostic">
+<h3>2.2 Hybrid-RMS diagnostic<a class="headerlink" href="#hybrid-rms-diagnostic" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">em_convergence_params()</span></code> still returns a pytree whose leaf-wise
+hybrid-RMS change is stored in <code class="docutils literal notranslate"><span class="pre">EMResult.param_changes</span></code>:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Marginal</p></th>
@@ -582,22 +629,17 @@ defines convergence:</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">L_Σ)</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\((\mu, \gamma, L_\Sigma)\)</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">(μ,</span> <span class="pre">γ,</span> <span class="pre">Σ</span> <span class="pre">=</span> <span class="pre">F</span> <span class="pre">F^\top</span> <span class="pre">+</span> <span class="pre">\mathrm{diag}(D))</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\((\mu, \gamma, \Sigma = F F^\top + \mathrm{diag}(D))\)</span></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Subordinator parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> are excluded — their solver has
-its own tolerance and including them inflates iteration counts.
-Returning <span class="math notranslate nohighlight">\(\Sigma\)</span> from <code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code> (rather than <span class="math notranslate nohighlight">\((F, D)\)</span>)
-sidesteps the <span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal gauge of <span class="math notranslate nohighlight">\(F\)</span> — the Σ-recovery
-test in <code class="docutils literal notranslate"><span class="pre">tests/test_factor_mixture.py</span></code> passes without an
-orthogonalisation step.</p>
-<p><code class="docutils literal notranslate"><span class="pre">_param_change(new,</span> <span class="pre">old)</span></code> takes the max hybrid-scale <strong>RMS</strong> change
-across leaves:</p>
+<p>Returning <span class="math notranslate nohighlight">\(\Sigma\)</span> from <code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code> (rather than <span class="math notranslate nohighlight">\((F, D)\)</span>)
+sidesteps the <span class="math notranslate nohighlight">\(r \times r\)</span> orthogonal gauge of <span class="math notranslate nohighlight">\(F\)</span>. <code class="docutils literal notranslate"><span class="pre">_param_change</span></code>
+is</p>
 <div class="math notranslate nohighlight">
 \[
 \max_{\text{leaves}}\;
@@ -605,20 +647,9 @@ across leaves:</p>
 \qquad
 \mathrm{rms}(v) = \|v\|_2 / \sqrt{m},\quad m = |v|.
 \]</div>
-<p><strong>Why parameter change, not likelihood.</strong> Stopping on observed (or
-expected) log-likelihood is mathematically natural for EM, but a poor
-library default here: each LL evaluation is Bessel-heavy for GH/NIG,
-absolute <span class="math notranslate nohighlight">\(\Delta\ell\)</span> still scales with <span class="math notranslate nohighlight">\(d\)</span>, and a flat likelihood on
-the <span class="math notranslate nohighlight">\((\mu,\gamma)\)</span> ridge does not imply unique parameters. Likelihood
-traces remain optional diagnostics (<code class="docutils literal notranslate"><span class="pre">track_ll</span></code> / <code class="docutils literal notranslate"><span class="pre">verbose</span></code>); they are
-not part of <code class="docutils literal notranslate"><span class="pre">converged</span></code>.</p>
-<p><strong>Why hybrid RMS.</strong> The additive <span class="math notranslate nohighlight">\(1\)</span> avoids near-zero-<span class="math notranslate nohighlight">\(\mu\)</span> inflation
-from a pure relative <span class="math notranslate nohighlight">\(\|\Delta\|/\|\theta\|\)</span> (centred returns). RMS
-(rather than raw L2) keeps a fixed <code class="docutils literal notranslate"><span class="pre">tol</span></code> roughly dimension-free — the
-same per-coordinate drift scores the same for <span class="math notranslate nohighlight">\(d=1\)</span> and large <span class="math notranslate nohighlight">\(d\)</span> —
-and stops the <span class="math notranslate nohighlight">\(d^2\)</span>-sized <span class="math notranslate nohighlight">\(L_\Sigma\)</span> leaf from dominating <span class="math notranslate nohighlight">\(\mu\)</span>/<span class="math notranslate nohighlight">\(\gamma\)</span>.
-Subordinator parameters stay out of the pool (their solver has its own
-tolerance).</p>
+<p>The additive <span class="math notranslate nohighlight">\(1\)</span> avoids near-zero-<span class="math notranslate nohighlight">\(\mu\)</span> inflation from a pure relative
+<span class="math notranslate nohighlight">\(\|\Delta\|/\|\theta\|\)</span>. RMS keeps a fixed diagnostic roughly
+dimension-free. It is not <code class="docutils literal notranslate"><span class="pre">converged</span></code>.</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -1104,7 +1135,8 @@ backends are <code class="docutils literal notranslate"><span class="pre">'jax'<
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-knows-math-fitter-knows-iteration">1. Model Knows Math, Fitter Knows Iteration</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#em-steps-on-marginal-mixtures">2. EM Steps on Marginal Mixtures</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-on-a-pytree">2.1 Convergence on a pytree</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping-aitken-remaining-gap-of-ell-n">2.1 Stopping: Aitken remaining gap of <span class="math notranslate nohighlight">\(\ell_n\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hybrid-rms-diagnostic">2.2 Hybrid-RMS diagnostic</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#update-rules-two-layers">3. η-Update Rules: Two Layers</a><ul class="nav section-nav flex-column">

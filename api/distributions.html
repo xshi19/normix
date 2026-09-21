@@ -465,6 +465,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.var"><code class="docutils literal notranslate"><span class="pre">Gamma.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moments()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">Gamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.mode"><code class="docutils literal notranslate"><span class="pre">Gamma.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.cdf"><code class="docutils literal notranslate"><span class="pre">Gamma.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.ppf"><code class="docutils literal notranslate"><span class="pre">Gamma.ppf()</span></code></a></li>
@@ -487,6 +488,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.var"><code class="docutils literal notranslate"><span class="pre">InverseGamma.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moments()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.mode"><code class="docutils literal notranslate"><span class="pre">InverseGamma.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.cdf"><code class="docutils literal notranslate"><span class="pre">InverseGamma.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.ppf"><code class="docutils literal notranslate"><span class="pre">InverseGamma.ppf()</span></code></a></li>
@@ -529,6 +531,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.b</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gig()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_partition()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.expectation_params_batch()</span></code></a></li>
@@ -879,6 +882,25 @@ x^{\alpha-1} e^{-\beta x}, \quad x &gt; 0\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p^q\)</span>.</p>
+<p>Finite iff <span class="math notranslate nohighlight">\(q\theta \in \Theta\)</span>, i.e. <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(q(\alpha-1)+1 &gt; 0\)</span>. Outside that set <span class="math notranslate nohighlight">\(\int p^q = +\infty\)</span>,
+so this returns <span class="math notranslate nohighlight">\(+\infty\)</span>;
+<a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a>
+then has the correct sign through <span class="math notranslate nohighlight">\(H_q = R(q)/(1-q)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.mode">
 <span class="sig-name descname"><span class="pre">mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.mode" title="Link to this definition">#</a></dt>
 <dd><p>Mode <span class="math notranslate nohighlight">\((\alpha - 1)/\beta\)</span> for <span class="math notranslate nohighlight">\(\alpha \ge 1\)</span>.</p>
@@ -1083,7 +1105,10 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.mean" title="Link to this definition">#</a></dt>
-<dd><p>E[X]. Subclasses should override with analytical formulas.</p>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \beta/(\alpha-1)\)</span> for <span class="math notranslate nohighlight">\(\alpha &gt; 1\)</span>, else <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
+<p>Closed form; not routed through <a class="reference internal" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment" title="normix.distributions.inverse_gamma.InverseGamma.raw_moment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw_moment()</span></code></a>. Dummy interior
+<span class="math notranslate nohighlight">\(\alpha\)</span> in the unused <code class="xref py py-func docutils literal notranslate"><span class="pre">jnp.where()</span></code> branch keeps the
+pole at <span class="math notranslate nohighlight">\(\alpha=1\)</span> from producing <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">*</span> <span class="pre">inf</span></code> gradients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1094,7 +1119,7 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.var">
 <span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.var" title="Link to this definition">#</a></dt>
-<dd><p>Var[X]. Subclasses should override with analytical formulas.</p>
+<dd><p><span class="math notranslate nohighlight">\(\mathrm{Var}[X] = \beta^2/((\alpha-1)^2(\alpha-2))\)</span> for <span class="math notranslate nohighlight">\(\alpha &gt; 2\)</span>, else <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1106,7 +1131,9 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 <dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.raw_moment">
 <span class="sig-name descname"><span class="pre">raw_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.raw_moment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment" title="Link to this definition">#</a></dt>
 <dd><p>Raw moment <span class="math notranslate nohighlight">\(E[X^k] = \beta^k\,\Gamma(\alpha-k)/\Gamma(\alpha)\)</span>.</p>
-<p>Finite for <span class="math notranslate nohighlight">\(k &lt; \alpha\)</span>.</p>
+<p>Finite iff <span class="math notranslate nohighlight">\(k &lt; \alpha\)</span>; returns <span class="math notranslate nohighlight">\(+\infty\)</span> otherwise.
+The meromorphic continuation of <span class="math notranslate nohighlight">\(\Gamma(\alpha-k)/\Gamma(\alpha)\)</span>
+is not a moment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>k</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -1124,6 +1151,25 @@ x^{-\alpha-1} e^{-\beta/x}, \quad x &gt; 0\]</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ks</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p^q\)</span>.</p>
+<p>Finite iff <span class="math notranslate nohighlight">\(q\theta \in \Theta\)</span>, i.e. <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(q(\alpha+1)-1 &gt; 0\)</span>. Outside that set <span class="math notranslate nohighlight">\(\int p^q = +\infty\)</span>,
+so this returns <span class="math notranslate nohighlight">\(+\infty\)</span>;
+<a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a>
+then has the correct sign through <span class="math notranslate nohighlight">\(H_q = R(q)/(1-q)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1630,6 +1676,22 @@ the shared prior-to-posterior conjugacy map in the EM E-step (see
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params">
 <span class="sig-name descname"><span class="pre">natural_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.natural_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\theta\)</span> from stored classical parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition">
+<span class="sig-name descname"><span class="pre">log_partition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.log_partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\psi(\theta)\)</span> at current parameters.</p>
+<p>A module-level <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.jit.html#jax.jit" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.jit()</span></code></a> of <code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_partition_from_theta()</span></code>
+(see <code class="docutils literal notranslate"><span class="pre">_gig_log_partition_jit</span></code>). Without it, a scalar call runs
+the eager 192-point <a class="reference internal" href="utils.html#normix.utils.bessel.log_kv" title="normix.utils.bessel.log_kv"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_kv()</span></code></a> quadrature
+— about a second per E-step when conjugacy asks for prior
+<span class="math notranslate nohighlight">\(\psi\)</span> via <code class="docutils literal notranslate"><span class="pre">subordinator().to_gig().log_partition()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -3400,6 +3462,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.var"><code class="docutils literal notranslate"><span class="pre">Gamma.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moments()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">Gamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.mode"><code class="docutils literal notranslate"><span class="pre">Gamma.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.cdf"><code class="docutils literal notranslate"><span class="pre">Gamma.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.ppf"><code class="docutils literal notranslate"><span class="pre">Gamma.ppf()</span></code></a></li>
@@ -3422,6 +3485,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.var"><code class="docutils literal notranslate"><span class="pre">InverseGamma.var()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moments()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.mode"><code class="docutils literal notranslate"><span class="pre">InverseGamma.mode()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.cdf"><code class="docutils literal notranslate"><span class="pre">InverseGamma.cdf()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.ppf"><code class="docutils literal notranslate"><span class="pre">InverseGamma.ppf()</span></code></a></li>
@@ -3464,6 +3528,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.b"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.b</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.to_gig()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_partition()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.sufficient_statistics"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.sufficient_statistics()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.expectation_params_batch()</span></code></a></li>

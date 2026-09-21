@@ -146,6 +146,12 @@ Finance*, 7(1), 77–91.
 **McNeil2010.** McNeil, A. J., Frey, R., & Embrechts, P. (2010).
 *Quantitative Risk Management*. Princeton University Press.
 
+(mclachlankrishnan2008)=
+**McLachlanKrishnan2008.** McLachlan, G. J. & Krishnan, T. (2008).
+*The EM Algorithm and Extensions*, 2nd ed. Wiley. Aitken acceleration
+of the observed-data log-likelihood sequence: remaining gap
+$\ell_\infty-\ell_{t+1}=a\Delta_2/(1-a)$ with $a=\Delta_2/\Delta_1$.
+
 (mencasentana2009)=
 **MenciaSentana2009.** Mencía, J. & Sentana, E. (2009). Multivariate
 location-scale mixtures of normals and mean-variance-skewness portfolio

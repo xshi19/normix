@@ -130,6 +130,18 @@ E[X] &= \mu + \gamma\,E[Y], \\
 \mathrm{Cov}[X] &= E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top.
 ```
 
+These identities require the moments of $Y$ that they display. When a
+coordinate has $\gamma_i = 0$ the drift terms vanish, so
+$E[X_i]=\mu_i$ as soon as $E[\sqrt{Y}]<\infty$ and
+$\mathrm{Cov}[X]=E[Y]\,\Sigma$ needs only $E[Y]<\infty$. For InverseGamma
+(the Student-$t$ case $\nu=2\alpha$) that is $\alpha>1/2$ for the mean and
+$\alpha>1$ for the covariance. When $\gamma_i\neq 0$ the mean needs $E[Y]$
+and the covariance needs $\mathrm{Var}[Y]$. Cauchy ($\alpha=1/2$,
+$\gamma=0$) therefore has no mean: the Lebesgue integral is $+\infty$, not
+$\mu$. Gamma subordinators have every positive moment, so VarianceGamma does
+not inherit the InverseGamma table. In code, a zero factor of $\gamma$ is
+never multiplied by an infinite moment of $Y$.
+
 Higher central moments follow by conditioning on $Y$. For each coordinate
 $X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i$ with $Z_i\sim\mathcal{N}(0,\Sigma_{ii})$,
 the centred variable $W = X_i - E[X_i]$ satisfies
@@ -157,8 +169,10 @@ moments $m_k$ are closed form for every member of the GIG tree
 Special cases check the algebra: when $\gamma = 0$ one has $\gamma_1 = 0$ and
 $\gamma_2 = 3\,E[Y^2]/E[Y]^2 - 3$, which reduces to $3/\alpha$ for
 VarianceGamma and to $3/(\alpha-2)$ for NormalInverseGamma ($\alpha > 2$).
-When $\gamma \ne 0$, the $\gamma_i^4\mu_4(Y)$ term requires a finite fourth
-moment of $Y$ (InverseGamma shape $\alpha > 4$).
+The $t_3$ law (NInvG, $\gamma=0$, $\alpha=1.5$) has no fourth moment, so
+excess kurtosis is $+\infty$. When $\gamma \ne 0$, the $\gamma_i^4\mu_4(Y)$
+term requires a finite fourth moment of $Y$ (InverseGamma shape
+$\alpha > 4$).
 
 In ``normix`` these formulae are
 {meth}`~normix.mixtures.marginal.NormalMixture.skewness` and

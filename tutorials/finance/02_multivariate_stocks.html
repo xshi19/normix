@@ -544,11 +544,11 @@ market data:</p>
   E-step       : cpu
   M-step       : cpu / newton
   Regularize   : none
-  Tolerance    : 1.0e-04
+  Tolerance    : 1.0e-04 nats/obs (Aitken remaining)
   Max iters    : 150
-  Converged after 3 iterations (8.35s), final LL=15.077929
-converged True in 3 iters (8.3s)
-test mean log-lik: 14.3946
+  Converged after 8 iterations (3.16s), E-step LL=15.080568
+converged True in 8 iters (3.2s)
+test mean log-lik: 14.3804
 </pre></div>
 </div>
 </div>
@@ -572,7 +572,7 @@ test mean log-lik: 14.3946
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a2d95518605be97a77c81831649d071d7c389abaca19f6a20f151f6952a0abae.png" src="../../_images/a2d95518605be97a77c81831649d071d7c389abaca19f6a20f151f6952a0abae.png" />
+<img alt="../../_images/388b03c8fbe32ea5143f7855a25772e443061f044572a97514fdcedb04aaf6c7.png" src="../../_images/388b03c8fbe32ea5143f7855a25772e443061f044572a97514fdcedb04aaf6c7.png" />
 </div>
 </div>
 </section>
@@ -601,7 +601,7 @@ market-stress index — it spikes on the most turbulent days:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/f54553b6f1ad402e7c61b2db209a0945ac6916513314e17c2cd782a52a690c65.png" src="../../_images/f54553b6f1ad402e7c61b2db209a0945ac6916513314e17c2cd782a52a690c65.png" />
+<img alt="../../_images/cec03f38aead438351b0518af6187dbc1d16a67ffa64144dbdec733ff8da2bbf.png" src="../../_images/cec03f38aead438351b0518af6187dbc1d16a67ffa64144dbdec733ff8da2bbf.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>corr(E[Y|X], realized RMS return) = 0.905
 </pre></div>
 </div>
@@ -628,8 +628,8 @@ re-fitting:</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>portfolio mean  0.00070  (empirical 0.00067)
-portfolio std   0.01127  (empirical 0.01180)
-5% quantile     -0.01730
+portfolio std   0.01150  (empirical 0.01180)
+5% quantile     -0.01748
 </pre></div>
 </div>
 </div>

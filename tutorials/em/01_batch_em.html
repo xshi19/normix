@@ -535,12 +535,12 @@ returns an <code class="docutils literal notranslate"><span class="pre">EMResult
   E-step       : cpu
   M-step       : cpu / newton
   Regularize   : none
-  Tolerance    : 1.0e-04
+  Tolerance    : 1.0e-04 nats/obs (Aitken remaining)
   Max iters    : 150
-  Converged after 31 iterations (69.55s), final LL=-4.129249
+  Converged after 14 iterations (6.12s), E-step LL=-4.129337
 converged : True
-iterations: 31
-elapsed   : 69.55s
+iterations: 14
+elapsed   : 6.12s
 </pre></div>
 </div>
 </div>
@@ -556,7 +556,7 @@ elapsed   : 69.55s
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fields: [&#39;model&#39;, &#39;log_likelihoods&#39;, &#39;param_changes&#39;, &#39;n_iter&#39;, &#39;converged&#39;, &#39;elapsed_time&#39;, &#39;diverged&#39;]
-fitted γ: [ 0.4157 -0.3382  0.0818]
+fitted γ: [ 0.4027 -0.3274  0.079 ]
 true   γ: [ 0.4 -0.3  0.1]
 </pre></div>
 </div>
@@ -588,7 +588,7 @@ flatten at convergence:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/5590c07216865fa1f95c49629f8c15033b2e175886bce4fb5826815027c01c9a.png" src="../../_images/5590c07216865fa1f95c49629f8c15033b2e175886bce4fb5826815027c01c9a.png" />
+<img alt="../../_images/8efa916874ed38891fa7c066270541b9b8889f96113edb93ad080563763453c2.png" src="../../_images/8efa916874ed38891fa7c066270541b9b8889f96113edb93ad080563763453c2.png" />
 </div>
 </div>
 <p>EM never decreases the likelihood — a useful invariant when debugging a fit.</p>
@@ -633,8 +633,8 @@ subordinator. <code class="docutils literal notranslate"><span class="pre">Batch
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 1.0000000000000002
-log|Σ|             : 1.1796119636642288e-16
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 0.9999999999999994
+log|Σ|             : -5.551115123125783e-16
 </pre></div>
 </div>
 </div>
@@ -667,8 +667,8 @@ subordinator update; <code class="docutils literal notranslate"><span class="pre
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mean log-lik  (cpu E-step): -4.129249
-mean log-lik  (jax E-step): -4.129249
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mean log-lik  (cpu E-step): -4.129313
+mean log-lik  (jax E-step): -4.129313
 </pre></div>
 </div>
 </div>

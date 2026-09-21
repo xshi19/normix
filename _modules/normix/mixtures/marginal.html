@@ -436,6 +436,62 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantileTable</span><span class="p">,</span> <span class="n">build_pinv_table</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_normal_mixture_mean</span><span class="p">(</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">subordinator</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mean of :math:`X = \mu + \gamma Y + \sqrt{Y}\,Z`.</span>
+
+<span class="sd">    For a coordinate with :math:`\gamma_i = 0`, :math:`E[X_i]=\mu_i` as soon as</span>
+<span class="sd">    :math:`E[\sqrt{Y}]&lt;\infty` (Student-:math:`t` with :math:`\nu=2\alpha` needs</span>
+<span class="sd">    :math:`\alpha&gt;1/2`). The product :math:`\gamma_i E[Y]` is not formed, so</span>
+<span class="sd">    :math:`0\cdot\infty` cannot appear. For :math:`\gamma_i\neq 0` the mean</span>
+<span class="sd">    exists iff :math:`E[Y]&lt;\infty`. Non-existence is :math:`+\infty`, including</span>
+<span class="sd">    Cauchy (:math:`\alpha=1/2`, :math:`\gamma=0`), which must not return</span>
+<span class="sd">    :math:`\mu`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">E_Y</span> <span class="o">=</span> <span class="n">subordinator</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">E_sqrt_Y</span> <span class="o">=</span> <span class="n">subordinator</span><span class="o">.</span><span class="n">raw_moment</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+    <span class="n">loc</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">E_sqrt_Y</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+    <span class="c1"># Only split on γ=0 when E[Y] diverges. Otherwise μ+γ E[Y] is finite at</span>
+    <span class="c1"># γ=0 (0·finite=0) and autodiff recovers E[Y], not a spurious 0.</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">E_Y</span><span class="p">),</span>
+        <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gamma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normal_mixture_cov</span><span class="p">(</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">Sigma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="n">subordinator</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance of :math:`X = \mu + \gamma Y + \sqrt{Y}\,Z`.</span>
+
+<span class="sd">    :math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.</span>
+<span class="sd">    When :math:`E[Y]` diverges the whole matrix is :math:`+\infty`. A zero</span>
+<span class="sd">    entry of :math:`\gamma\gamma^\top` contributes nothing even if</span>
+<span class="sd">    :math:`\mathrm{Var}[Y]=+\infty` (the :math:`\gamma=0` Student-:math:`t`</span>
+<span class="sd">    case needs only :math:`E[Y]`, i.e. :math:`\alpha&gt;1`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">E_Y</span> <span class="o">=</span> <span class="n">subordinator</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">Var_Y</span> <span class="o">=</span> <span class="n">subordinator</span><span class="o">.</span><span class="n">var</span><span class="p">()</span>
+    <span class="n">gg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">E_Y</span><span class="p">),</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">Sigma</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Sigma</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="c1"># γγᵀ is quadratic: at γ=0 the true derivative is 0. Zero-safe the</span>
+    <span class="c1"># product only when Var(Y) diverges.</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">Var_Y</span><span class="p">),</span>
+        <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">gg</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gg</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">gg</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">gg</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">drift</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_normal_mixture_skew_kurt</span><span class="p">(</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="n">sigma_diag</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -449,7 +505,10 @@
 <span class="sd">    For each coordinate :math:`X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i` with</span>
 <span class="sd">    :math:`Z_i\sim\mathcal{N}(0,\Sigma_{ii})` independent of the subordinator</span>
 <span class="sd">    :math:`Y`, condition on :math:`Y` and take Gaussian central moments.</span>
-<span class="sd">    ``m_k`` are the raw moments :math:`E[Y^k]`.</span>
+<span class="sd">    ``m_k`` are the raw moments :math:`E[Y^k]`. Products with a zero</span>
+<span class="sd">    :math:`\gamma_i` are not formed, so :math:`0\cdot\infty` cannot appear.</span>
+<span class="sd">    Excess kurtosis is :math:`+\infty` unless :math:`E[Y^2]&lt;\infty` (symmetric</span>
+<span class="sd">    case) or :math:`E[Y^4]&lt;\infty` (:math:`\gamma_i\neq 0`).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">var_y</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">-</span> <span class="n">m1</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">mu3_y</span> <span class="o">=</span> <span class="n">m3</span> <span class="o">-</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">m1</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">m1</span> <span class="o">**</span> <span class="mi">3</span>
@@ -458,12 +517,35 @@
 
     <span class="n">g</span> <span class="o">=</span> <span class="n">gamma</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">sigma_diag</span>
-    <span class="n">var_x</span> <span class="o">=</span> <span class="n">m1</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">var_y</span> <span class="o">*</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span>
-    <span class="n">mu3_x</span> <span class="o">=</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">mu3_y</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">var_y</span>
-    <span class="n">mu4_x</span> <span class="o">=</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">mu4_y</span> <span class="o">+</span> <span class="mf">6.0</span> <span class="o">*</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">e_c2_y</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m2</span>
+    <span class="n">g_zero</span> <span class="o">=</span> <span class="n">g</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="n">var_x</span> <span class="o">=</span> <span class="n">m1</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">var_y</span><span class="p">),</span>
+        <span class="n">var_y</span> <span class="o">*</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="c1"># Odd in γ: keep the algebra when Var(Y) is finite so autodiff at γ=0</span>
+    <span class="c1"># is 3 Σ_ii Var(Y), not a masked 0.</span>
+    <span class="n">mu3_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">var_y</span><span class="p">),</span>
+        <span class="n">g</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">mu3_y</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">var_y</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">mu4_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m2</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">mu4_y</span> <span class="o">+</span> <span class="mf">6.0</span> <span class="o">*</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">e_c2_y</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">s2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m2</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">std_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var_x</span><span class="p">)</span>
-    <span class="n">skew</span> <span class="o">=</span> <span class="n">mu3_x</span> <span class="o">/</span> <span class="p">(</span><span class="n">std_x</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="n">kurt</span> <span class="o">=</span> <span class="n">mu4_x</span> <span class="o">/</span> <span class="p">(</span><span class="n">var_x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">3.0</span>
+    <span class="n">skew_val</span> <span class="o">=</span> <span class="n">mu3_x</span> <span class="o">/</span> <span class="p">(</span><span class="n">std_x</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">kurt_val</span> <span class="o">=</span> <span class="n">mu4_x</span> <span class="o">/</span> <span class="p">(</span><span class="n">var_x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">3.0</span>
+    <span class="n">skew</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m3</span><span class="p">),</span>
+        <span class="n">skew_val</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">kurt_exists</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g_zero</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m2</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m4</span><span class="p">))</span>
+    <span class="n">kurt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kurt_exists</span><span class="p">,</span> <span class="n">kurt_val</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">skew</span><span class="p">,</span> <span class="n">kurt</span>
 
 
@@ -507,6 +589,45 @@
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">)(</span><span class="n">X</span><span class="p">))</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_conjugacy_psi_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Prior log-partition in the GIG convention that matches</span>
+<span class="sd">        :math:`\psi_{\mathrm{post}}`.</span>
+
+<span class="sd">        :meth:`~normix.mixtures.joint.JointNormalMixture._compute_posterior_expectations`</span>
+<span class="sd">        evaluates :math:`\psi_{\mathrm{post}}` from GIG</span>
+<span class="sd">        :math:`\log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a)`</span>
+<span class="sd">        (base measure :math:`h\equiv 1`). InverseGaussian stores</span>
+<span class="sd">        :math:`\tfrac12\log(2\pi)` in its base measure, so the</span>
+<span class="sd">        subordinator&#39;s own :math:`\psi` is the wrong gauge for NIG.</span>
+<span class="sd">        ``subordinator().to_gig().log_partition()`` recovers the matching</span>
+<span class="sd">        :math:`\psi` (Gamma / InverseGamma degeneracy branches stay</span>
+<span class="sd">        bit-identical).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span><span class="o">.</span><span class="n">log_partition</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_conjugacy_mean_log_lik</span><span class="p">(</span>
+        <span class="n">psi_post</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">zw</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">log_det_sigma</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">psi_prior</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Mean :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.</span>
+
+<span class="sd">        :math:`\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|</span>
+<span class="sd">        + \gamma^\top\Sigma^{-1}(x-\mu)`. :math:`\psi` is the</span>
+<span class="sd">        subordinator log-partition in the GIG convention (shared across</span>
+<span class="sd">        the batch; see :meth:`_conjugacy_psi_prior`);</span>
+<span class="sd">        :math:`\psi_{\mathrm{post}}` is the posterior GIG log-partition.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_h</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">log_det_sigma</span>
+            <span class="o">+</span> <span class="n">zw</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">log_h</span> <span class="o">+</span> <span class="n">psi_post</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi_prior</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># EM hooks (stats type chosen by subclass)</span>
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -515,7 +636,7 @@
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.e_step">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;E-step: aggregated expectation parameters for the batch.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;E-step: :class:`~normix.fitting.eta.EStepResult` ``(eta, log_lik)``.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="MarginalMixture.m_step">
@@ -550,13 +671,14 @@
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.MarginalMixture.em_convergence_params">[docs]</a>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise hybrid-RMS change is the EM diagnostic.</span>
 
-<span class="sd">        Subordinator parameters are intentionally excluded (their solver</span>
-<span class="sd">        has its own tolerance, and including them inflates iteration</span>
-<span class="sd">        counts). For full-covariance models this is</span>
-<span class="sd">        ``(mu, gamma, L_Sigma)``; for factor-analysis models it is</span>
-<span class="sd">        ``(mu, gamma, F F^T + D)`` to sidestep the rotational gauge.</span>
+<span class="sd">        Stopping uses the Aitken remaining gap of :math:`\ell_n`; this</span>
+<span class="sd">        pytree feeds :attr:`~normix.fitting.em.EMResult.param_changes`</span>
+<span class="sd">        only. Subordinator parameters are excluded. For full-covariance</span>
+<span class="sd">        models this is ``(mu, gamma, L_Sigma)``; for factor-analysis</span>
+<span class="sd">        models it is ``(mu, gamma, F F^T + D)`` to sidestep the</span>
+<span class="sd">        rotational gauge of :math:`F`.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
 
@@ -761,20 +883,31 @@
 <div class="viewcode-block" id="NormalMixture.mean">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma E[Y]`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma E[Y]`.</span>
+
+<span class="sd">        A zero coordinate of :math:`\gamma` does not form :math:`0\cdot\infty`.</span>
+<span class="sd">        That coordinate equals :math:`\mu_i` iff :math:`E[\sqrt{Y}]&lt;\infty`</span>
+<span class="sd">        (NInvG / Student-:math:`t` with :math:`\nu=2\alpha`: :math:`\alpha&gt;1/2`);</span>
+<span class="sd">        otherwise :math:`+\infty`. Cauchy (:math:`\alpha=1/2`, :math:`\gamma=0`)</span>
+<span class="sd">        therefore returns :math:`+\infty`, not :math:`\mu`. A nonzero</span>
+<span class="sd">        :math:`\gamma_i` needs :math:`E[Y]&lt;\infty`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">j</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span></div>
+        <span class="k">return</span> <span class="n">_normal_mixture_mean</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="NormalMixture.cov">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.cov">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`.</span>
+
+<span class="sd">        When :math:`\gamma=0` only :math:`E[Y]` is required (NInvG:</span>
+<span class="sd">        :math:`\alpha&gt;1`). A zero entry of :math:`\gamma\gamma^\top` contributes</span>
+<span class="sd">        nothing even if :math:`\mathrm{Var}[Y]` diverges. Non-existence is</span>
+<span class="sd">        :math:`+\infty`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-        <span class="n">Var_Y</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">var</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">E_Y</span> <span class="o">*</span> <span class="n">j</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span> <span class="o">+</span> <span class="n">Var_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">_normal_mixture_cov</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">sigma</span><span class="p">(),</span> <span class="n">j</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_y_raw_moments_1_to_4</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -789,8 +922,8 @@
 
 <span class="sd">        Closed form from the normal variance-mean mixture representation and</span>
 <span class="sd">        subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.</span>
-<span class="sd">        Requires a finite fourth moment of the subordinator (e.g. InverseGamma</span>
-<span class="sd">        shape :math:`\alpha &gt; 4` when :math:`\gamma \ne 0`).</span>
+<span class="sd">        Requires a finite third moment of the subordinator when</span>
+<span class="sd">        :math:`\gamma \ne 0`. Symmetric coordinates return 0.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y_raw_moments_1_to_4</span><span class="p">()</span>
         <span class="n">sigma_diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -806,7 +939,9 @@
 
 <span class="sd">        Closed form from the normal variance-mean mixture representation and</span>
 <span class="sd">        subordinator raw moments; see :doc:`/theory/gh`. Shape ``(d,)``.</span>
-<span class="sd">        Same moment conditions as :meth:`skewness`.</span>
+<span class="sd">        Symmetric coordinates need :math:`E[Y^2]&lt;\infty` (NInvG:</span>
+<span class="sd">        :math:`\alpha&gt;2`); a nonzero :math:`\gamma_i` needs :math:`E[Y^4]`.</span>
+<span class="sd">        Otherwise :math:`+\infty` (e.g. :math:`t_3`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y_raw_moments_1_to_4</span><span class="p">()</span>
         <span class="n">sigma_diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_Sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -930,12 +1065,15 @@
 
 <div class="viewcode-block" id="NormalMixture.e_step">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.e_step">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EStepResult&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Full E-step: subordinator conditionals + batch aggregation.</span>
 
-<span class="sd">        Returns a :class:`~normix.fitting.eta.NormalMixtureEta` with the</span>
-<span class="sd">        six aggregated expectation parameters.</span>
+<span class="sd">        Returns :class:`~normix.fitting.eta.EStepResult` with aggregated</span>
+<span class="sd">        :class:`~normix.fitting.eta.NormalMixtureEta` and the mean</span>
+<span class="sd">        log-likelihood :math:`\ell_n(\theta)` at the current parameters</span>
+<span class="sd">        (nats per observation), via conjugacy</span>
+<span class="sd">        :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -944,16 +1082,20 @@
 <span class="sd">            ``&#39;jax&#39;`` (default): ``jax.vmap`` over ``conditional_expectations``.</span>
 <span class="sd">            ``&#39;cpu&#39;``: quad forms in JAX + GIG Bessel on CPU.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">EStepResult</span>
+
         <span class="n">sub_exp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_eta</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">)</span></div>
+        <span class="n">eta</span><span class="p">,</span> <span class="n">log_lik</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_eta</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">EStepResult</span><span class="p">(</span><span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span> <span class="n">log_lik</span><span class="o">=</span><span class="n">log_lik</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;jax&#39;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Per-observation subordinator conditional expectations.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Per-observation subordinator conditionals and posterior :math:`\psi`.</span>
 
-<span class="sd">        Returns dict ``{E_log_Y: (n,), E_inv_Y: (n,), E_Y: (n,)}``.</span>
+<span class="sd">        Returns dict with ``E_log_Y``, ``E_inv_Y``, ``E_Y``, ``psi_post``,</span>
+<span class="sd">        ``zw``, each shape ``(n,)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_e_step_subordinator_cpu</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -962,35 +1104,41 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_e_step_subordinator_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;CPU path: quad forms in JAX (vmapped) + GIG Bessel via scipy.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">TINY</span>
 
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_quad_scalars</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-            <span class="n">z</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span>
+            <span class="n">_z</span><span class="p">,</span> <span class="n">_w</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">_quad_forms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">zw</span>
 
-        <span class="n">z2_all</span><span class="p">,</span> <span class="n">w2_all</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_quad_scalars</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">z2_all</span><span class="p">,</span> <span class="n">w2_all</span><span class="p">,</span> <span class="n">zw_all</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_quad_scalars</span><span class="p">)(</span><span class="n">X</span><span class="p">)</span>
 
         <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">_floored_posterior_gig_params</span><span class="p">(</span><span class="n">z2_all</span><span class="p">,</span> <span class="n">w2_all</span><span class="p">)</span>
 
-        <span class="n">eta</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">expectation_params_batch</span><span class="p">(</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="n">eta</span><span class="p">,</span> <span class="n">log_k</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_expectation_params_batch_cpu</span><span class="p">(</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">)</span>
+        <span class="n">psi_post</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_psi_from_log_k</span><span class="p">(</span>
+            <span class="n">log_k</span><span class="p">,</span> <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">,</span> <span class="n">floor</span><span class="o">=</span><span class="n">TINY</span><span class="p">,</span> <span class="n">xp</span><span class="o">=</span><span class="n">jnp</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
             <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
             <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span>     <span class="n">eta</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+            <span class="s1">&#39;psi_post&#39;</span><span class="p">:</span> <span class="n">psi_post</span><span class="p">,</span>
+            <span class="s1">&#39;zw&#39;</span><span class="p">:</span> <span class="n">zw_all</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_eta</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Average per-observation expectations into a NormalMixtureEta.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_eta</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">sub_exp</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Average per-observation expectations; conjugacy mean log-likelihood.&quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
 
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_inv_Y&#39;</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
             <span class="n">E_log_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_log_Y&#39;</span><span class="p">]),</span>
             <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">),</span>
             <span class="n">E_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_Y&#39;</span><span class="p">]),</span>
@@ -1000,6 +1148,12 @@
                 <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj,n-&gt;ij&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span> <span class="o">/</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
+        <span class="n">log_lik</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conjugacy_mean_log_lik</span><span class="p">(</span>
+            <span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;psi_post&#39;</span><span class="p">],</span> <span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;zw&#39;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conjugacy_psi_prior</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">,</span> <span class="n">log_lik</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># η → model: closed-form M-step as exponential-family inversion</span>
@@ -1238,11 +1392,11 @@
 <div class="viewcode-block" id="NormalMixture.em_convergence_params">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.em_convergence_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">em_convergence_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pytree whose leaf-wise change measures EM convergence.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Diagnostic pytree ``(mu, gamma, L_Sigma)`` for hybrid-RMS</span>
+<span class="sd">        :attr:`~normix.fitting.em.EMResult.param_changes`.</span>
 
-<span class="sd">        Returns ``(mu, gamma, L_Sigma)``. Subordinator parameters</span>
-<span class="sd">        (``p, a, b``) are excluded — their solver has its own tolerance</span>
-<span class="sd">        and including them inflates iteration counts.</span>
+<span class="sd">        Stopping uses the Aitken remaining gap of :math:`\ell_n`, not</span>
+<span class="sd">        this pytree. Subordinator parameters are excluded here.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">)</span></div>
@@ -1297,7 +1451,8 @@
 <span class="sd">    VarianceGamma)``). Provides:</span>
 
 <span class="sd">    - d=1 validation in ``__init__``;</span>
-<span class="sd">    - ``cdf`` / ``ppf`` via :func:`build_pinv_table` seeded at the marginal mean;</span>
+<span class="sd">    - ``cdf`` / ``ppf`` via :func:`build_pinv_table` seeded at the marginal</span>
+<span class="sd">      mean, or at :math:`\mu` when the mean does not exist;</span>
 <span class="sd">    - scalar ``mean``, ``var``, ``std``, ``log_prob``, ``pdf``;</span>
 <span class="sd">    - ``(n,)``-shaped ``rvs``.</span>
 
@@ -1306,8 +1461,8 @@
 <span class="sd">    the underlying joint is still a 1-D :class:`JointNormalMixture`.</span>
 
 <span class="sd">    The PINV table is seeded at :meth:`mean` (no closed-form mode for the</span>
-<span class="sd">    Bessel-mixture marginals).  The seed is only used as a bisection</span>
-<span class="sd">    starting point, so a rough estimate is sufficient.</span>
+<span class="sd">    Bessel-mixture marginals). When the mean does not exist the seed is</span>
+<span class="sd">    :math:`\mu`. The seed is only a bisection starting point.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint</span><span class="p">):</span>
@@ -1331,7 +1486,11 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pinv_grids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
         <span class="n">log_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">build_pinv_table</span><span class="p">(</span><span class="n">log_kernel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="c1"># PINV needs a finite location. When the mean does not exist</span>
+        <span class="c1"># (Cauchy), centre the table at μ — not a claim that E[X]=μ.</span>
+        <span class="n">anchor</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m</span><span class="p">),</span> <span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu_scalar</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">build_pinv_table</span><span class="p">(</span><span class="n">log_kernel</span><span class="p">,</span> <span class="n">anchor</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">quantile_table</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantileTable</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Frozen PINV table for amortised :meth:`cdf` / :meth:`ppf` / sampling.</span>

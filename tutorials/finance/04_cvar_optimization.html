@@ -521,7 +521,7 @@ risk. Formal derivations: <a class="reference internal" href="../../theory/cvar_
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>portfolio mean +0.00082, std 0.01298
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>portfolio mean +0.00082, std 0.01315
 </pre></div>
 </div>
 </div>
@@ -543,8 +543,8 @@ returns directly:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>VaR_95%  = 0.02026
-CVaR_95% = 0.03015
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>VaR_95%  = 0.02045
+CVaR_95% = 0.03084
 </pre></div>
 </div>
 </div>
@@ -562,8 +562,8 @@ draws — agreement confirms the conditional-MC estimator:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>conditional-MC CVaR : 0.03015
-brute-force MC CVaR : 0.03015
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>conditional-MC CVaR : 0.03084
+brute-force MC CVaR : 0.03083
 </pre></div>
 </div>
 </div>
@@ -597,8 +597,8 @@ central finite difference using common random numbers (the same <span class="mat
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∂CVaR/∂(μ̃, γ̃, σ̃) analytic: [-1.      -1.85201  2.04184]
-∂CVaR/∂(μ̃, γ̃, σ̃) FD      : [-1.      -1.85201  2.04184]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∂CVaR/∂(μ̃, γ̃, σ̃) analytic: [-1.      -2.02219  2.09231]
+∂CVaR/∂(μ̃, γ̃, σ̃) FD      : [-1.      -2.02219  2.09231]
 </pre></div>
 </div>
 </div>
@@ -625,8 +625,8 @@ gradient against a finite difference of <code class="docutils literal notranslat
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∇_w CVaR analytic: [0.03615 0.03095 0.02343 0.01713]
-∇_w CVaR FD      : [0.03615 0.03095 0.02343 0.01713]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∇_w CVaR analytic: [0.03702 0.03165 0.02395 0.01744]
+∇_w CVaR FD      : [0.03702 0.03165 0.02395 0.01744]
 Hessian_w shape  : (4, 4)
 </pre></div>
 </div>
@@ -656,8 +656,8 @@ portfolio CVaR. We hold <span class="math notranslate nohighlight">\(Y\)</span> 
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>start weights : [0.4 0.3 0.2 0.1]
-final weights : [0.33889 0.27595 0.22211 0.16304]  (sum 1.0000)
-CVaR 0.03015 → 0.02898
+final weights : [0.33729 0.27552 0.22254 0.16465]  (sum 1.0000)
+CVaR 0.03084 → 0.02961
 </pre></div>
 </div>
 </div>
@@ -675,7 +675,7 @@ CVaR 0.03015 → 0.02898
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/41c41c2199a22d04bd384e61afa90702cb1db01005bb0324cc1e538d514fc2ba.png" src="../../_images/41c41c2199a22d04bd384e61afa90702cb1db01005bb0324cc1e538d514fc2ba.png" />
+<img alt="../../_images/a9533d9896541604be2ea82803213fbe187d1126804b2848f9810e61f13c482a.png" src="../../_images/a9533d9896541604be2ea82803213fbe187d1126804b2848f9810e61f13c482a.png" />
 </div>
 </div>
 <p>The weight gradient lets you plug normix’s tail risk straight into any

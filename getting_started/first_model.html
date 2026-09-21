@@ -577,11 +577,11 @@ to guess initial parameters. <code class="docutils literal notranslate"><span cl
   E-step       : cpu
   M-step       : cpu / newton
   Regularize   : none
-  Tolerance    : 1.0e-04
+  Tolerance    : 1.0e-04 nats/obs (Aitken remaining)
   Max iters    : 150
-  Converged after 42 iterations (91.29s), final LL=-2.947356
-converged: True in 42 iterations
-fitted gamma: [ 0.5425 -0.496 ]  (true [0.6, -0.4])
+  Converged after 15 iterations (4.72s), E-step LL=-2.947459
+converged: True in 15 iterations
+fitted gamma: [ 0.5222 -0.4756]  (true [0.6, -0.4])
 </pre></div>
 </div>
 </div>
@@ -606,10 +606,10 @@ fitted mean/covariance to the truth and look at the log-likelihood ascent:</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>‖mean − true‖  = 0.0340
-‖cov − true‖_F = 0.1042
+‖cov − true‖_F = 0.1120
 </pre></div>
 </div>
-<img alt="../_images/f811d0299884392a6be44db64426cd380f5a11b9ba899132a7fdaef2374da02e.png" src="../_images/f811d0299884392a6be44db64426cd380f5a11b9ba899132a7fdaef2374da02e.png" />
+<img alt="../_images/9bf558644450b88313fe550d43fef471b4896e76342524fb6a2f9c5c52930704.png" src="../_images/9bf558644450b88313fe550d43fef471b4896e76342524fb6a2f9c5c52930704.png" />
 </div>
 </div>
 </section>
@@ -626,7 +626,7 @@ compute moments — all the same methods the true model has:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log density at x0: -1.7226931318377283
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log density at x0: -1.7090025010278218
 new samples: (3, 2)
 </pre></div>
 </div>

@@ -581,6 +581,17 @@ two moments are immediate from the law of total expectation:</p>
 <div class="math notranslate nohighlight" id="equation-gh-mean-cov">
 <span class="eqno">(4)<a class="headerlink" href="#equation-gh-mean-cov" title="Link to this equation">#</a></span>\[\begin{split}E[X] &amp;= \mu + \gamma\,E[Y], \\
 \mathrm{Cov}[X] &amp;= E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top.\end{split}\]</div>
+<p>These identities require the moments of <span class="math notranslate nohighlight">\(Y\)</span> that they display. When a
+coordinate has <span class="math notranslate nohighlight">\(\gamma_i = 0\)</span> the drift terms vanish, so
+<span class="math notranslate nohighlight">\(E[X_i]=\mu_i\)</span> as soon as <span class="math notranslate nohighlight">\(E[\sqrt{Y}]&lt;\infty\)</span> and
+<span class="math notranslate nohighlight">\(\mathrm{Cov}[X]=E[Y]\,\Sigma\)</span> needs only <span class="math notranslate nohighlight">\(E[Y]&lt;\infty\)</span>. For InverseGamma
+(the Student-<span class="math notranslate nohighlight">\(t\)</span> case <span class="math notranslate nohighlight">\(\nu=2\alpha\)</span>) that is <span class="math notranslate nohighlight">\(\alpha&gt;1/2\)</span> for the mean and
+<span class="math notranslate nohighlight">\(\alpha&gt;1\)</span> for the covariance. When <span class="math notranslate nohighlight">\(\gamma_i\neq 0\)</span> the mean needs <span class="math notranslate nohighlight">\(E[Y]\)</span>
+and the covariance needs <span class="math notranslate nohighlight">\(\mathrm{Var}[Y]\)</span>. Cauchy (<span class="math notranslate nohighlight">\(\alpha=1/2\)</span>,
+<span class="math notranslate nohighlight">\(\gamma=0\)</span>) therefore has no mean: the Lebesgue integral is <span class="math notranslate nohighlight">\(+\infty\)</span>, not
+<span class="math notranslate nohighlight">\(\mu\)</span>. Gamma subordinators have every positive moment, so VarianceGamma does
+not inherit the InverseGamma table. In code, a zero factor of <span class="math notranslate nohighlight">\(\gamma\)</span> is
+never multiplied by an infinite moment of <span class="math notranslate nohighlight">\(Y\)</span>.</p>
 <p>Higher central moments follow by conditioning on <span class="math notranslate nohighlight">\(Y\)</span>. For each coordinate
 <span class="math notranslate nohighlight">\(X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i\)</span> with <span class="math notranslate nohighlight">\(Z_i\sim\mathcal{N}(0,\Sigma_{ii})\)</span>,
 the centred variable <span class="math notranslate nohighlight">\(W = X_i - E[X_i]\)</span> satisfies
@@ -602,8 +613,10 @@ moments <span class="math notranslate nohighlight">\(m_k\)</span> are closed for
 <p>Special cases check the algebra: when <span class="math notranslate nohighlight">\(\gamma = 0\)</span> one has <span class="math notranslate nohighlight">\(\gamma_1 = 0\)</span> and
 <span class="math notranslate nohighlight">\(\gamma_2 = 3\,E[Y^2]/E[Y]^2 - 3\)</span>, which reduces to <span class="math notranslate nohighlight">\(3/\alpha\)</span> for
 VarianceGamma and to <span class="math notranslate nohighlight">\(3/(\alpha-2)\)</span> for NormalInverseGamma (<span class="math notranslate nohighlight">\(\alpha &gt; 2\)</span>).
-When <span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>, the <span class="math notranslate nohighlight">\(\gamma_i^4\mu_4(Y)\)</span> term requires a finite fourth
-moment of <span class="math notranslate nohighlight">\(Y\)</span> (InverseGamma shape <span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span>).</p>
+The <span class="math notranslate nohighlight">\(t_3\)</span> law (NInvG, <span class="math notranslate nohighlight">\(\gamma=0\)</span>, <span class="math notranslate nohighlight">\(\alpha=1.5\)</span>) has no fourth moment, so
+excess kurtosis is <span class="math notranslate nohighlight">\(+\infty\)</span>. When <span class="math notranslate nohighlight">\(\gamma \ne 0\)</span>, the <span class="math notranslate nohighlight">\(\gamma_i^4\mu_4(Y)\)</span>
+term requires a finite fourth moment of <span class="math notranslate nohighlight">\(Y\)</span> (InverseGamma shape
+<span class="math notranslate nohighlight">\(\alpha &gt; 4\)</span>).</p>
 <p>In <code class="docutils literal notranslate"><span class="pre">normix</span></code> these formulae are
 <a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.skewness" title="normix.mixtures.marginal.NormalMixture.skewness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">skewness()</span></code></a> and
 <a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.kurtosis" title="normix.mixtures.marginal.NormalMixture.kurtosis"><code class="xref py py-meth docutils literal notranslate"><span class="pre">kurtosis()</span></code></a>
