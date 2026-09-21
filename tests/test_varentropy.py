@@ -89,6 +89,7 @@ def test_renyi_inf_when_q_theta_outside_natural_domain():
 
     r_jit = jax.jit(lambda a: g.renyi(a))(jnp.asarray(2.0, dtype=jnp.float64))
     assert np.isneginf(float(r_jit))
+    assert np.isposinf(float(g.log_density_power(-1.0)))
 
 @pytest.mark.parametrize("dist", [
     Gamma(alpha=2.0, beta=3.0),

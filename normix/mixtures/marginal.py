@@ -47,10 +47,13 @@ def _normal_mixture_mean(
     E_Y = subordinator.mean()
     E_sqrt_Y = subordinator.raw_moment(jnp.asarray(0.5, dtype=jnp.float64))
     loc = jnp.where(jnp.isfinite(E_sqrt_Y), mu, jnp.full_like(mu, jnp.inf))
-    drifted = jnp.where(
-        jnp.isfinite(E_Y), mu + gamma * E_Y, jnp.full_like(mu, jnp.inf),
+    # Only split on γ=0 when E[Y] diverges. Otherwise μ+γ E[Y] is finite at
+    # γ=0 (0·finite=0) and autodiff recovers E[Y], not a spurious 0.
+    return jnp.where(
+        jnp.isfinite(E_Y),
+        mu + gamma * E_Y,
+        jnp.where(gamma == 0.0, loc, jnp.full_like(mu, jnp.inf)),
     )
-    return jnp.where(gamma == 0.0, loc, drifted)
 
 
 def _normal_mixture_cov(
@@ -72,10 +75,12 @@ def _normal_mixture_cov(
     scale = jnp.where(
         jnp.isfinite(E_Y), E_Y * Sigma, jnp.full_like(Sigma, jnp.inf),
     )
+    # γγᵀ is quadratic: at γ=0 the true derivative is 0. Zero-safe the
+    # product only when Var(Y) diverges.
     drift = jnp.where(
-        gg == 0.0,
-        jnp.zeros_like(gg),
-        jnp.where(jnp.isfinite(Var_Y), Var_Y * gg, jnp.full_like(gg, jnp.inf)),
+        jnp.isfinite(Var_Y),
+        Var_Y * gg,
+        jnp.where(gg == 0.0, jnp.zeros_like(gg), jnp.full_like(gg, jnp.inf)),
     )
     return scale + drift
 
@@ -106,18 +111,34 @@ def _normal_mixture_skew_kurt(
     g = gamma
     s2 = sigma_diag
     g_zero = g == 0.0
-    var_x = m1 * s2 + jnp.where(g_zero, 0.0, var_y * g ** 2)
-    mu3_x = jnp.where(g_zero, 0.0, g ** 3 * mu3_y + 3.0 * g * s2 * var_y)
-    mu4_x = (
+    var_x = m1 * s2 + jnp.where(
+        jnp.isfinite(var_y),
+        var_y * g ** 2,
+        jnp.where(g_zero, 0.0, jnp.inf),
+    )
+    # Odd in γ: keep the algebra when Var(Y) is finite so autodiff at γ=0
+    # is 3 Σ_ii Var(Y), not a masked 0.
+    mu3_x = jnp.where(
+        jnp.isfinite(var_y),
+        g ** 3 * mu3_y + 3.0 * g * s2 * var_y,
+        jnp.where(g_zero, 0.0, jnp.inf),
+    )
+    mu4_x = jnp.where(
+        jnp.isfinite(m2),
         jnp.where(g_zero, 0.0, g ** 4 * mu4_y + 6.0 * g ** 2 * s2 * e_c2_y)
-        + 3.0 * s2 ** 2 * m2
+        + 3.0 * s2 ** 2 * m2,
+        jnp.inf,
     )
     std_x = jnp.sqrt(var_x)
-    skew = mu3_x / (std_x ** 3)
-    kurt = mu4_x / (var_x ** 2) - 3.0
-    skew = jnp.where(g_zero, 0.0, jnp.where(jnp.isfinite(m3), skew, jnp.inf))
+    skew_val = mu3_x / (std_x ** 3)
+    kurt_val = mu4_x / (var_x ** 2) - 3.0
+    skew = jnp.where(
+        jnp.isfinite(m3),
+        skew_val,
+        jnp.where(g_zero, 0.0, jnp.inf),
+    )
     kurt_exists = jnp.where(g_zero, jnp.isfinite(m2), jnp.isfinite(m4))
-    kurt = jnp.where(kurt_exists, kurt, jnp.inf)
+    kurt = jnp.where(kurt_exists, kurt_val, jnp.inf)
     return skew, kurt
 
 
@@ -847,7 +868,8 @@ class _UnivariateNormalMixtureMixin:
     VarianceGamma)``). Provides:
 
     - d=1 validation in ``__init__``;
-    - ``cdf`` / ``ppf`` via :func:`build_pinv_table` seeded at the marginal mean;
+    - ``cdf`` / ``ppf`` via :func:`build_pinv_table` seeded at the marginal
+      mean, or at :math:`\mu` when the mean does not exist;
     - scalar ``mean``, ``var``, ``std``, ``log_prob``, ``pdf``;
     - ``(n,)``-shaped ``rvs``.
 
@@ -856,8 +878,8 @@ class _UnivariateNormalMixtureMixin:
     the underlying joint is still a 1-D :class:`JointNormalMixture`.
 
     The PINV table is seeded at :meth:`mean` (no closed-form mode for the
-    Bessel-mixture marginals).  The seed is only used as a bisection
-    starting point, so a rough estimate is sufficient.
+    Bessel-mixture marginals). When the mean does not exist the seed is
+    :math:`\mu`. The seed is only a bisection starting point.
     """
 
     def __init__(self, joint):
@@ -881,7 +903,11 @@ class _UnivariateNormalMixtureMixin:
 
     def _pinv_grids(self) -> tuple[jax.Array, jax.Array]:
         log_kernel = lambda w: self.log_prob(jnp.atleast_1d(w))
-        return build_pinv_table(log_kernel, self.mean())
+        m = self.mean()
+        # PINV needs a finite location. When the mean does not exist
+        # (Cauchy), centre the table at μ — not a claim that E[X]=μ.
+        anchor = jnp.where(jnp.isfinite(m), m, self._mu_scalar)
+        return build_pinv_table(log_kernel, anchor)
 
     def quantile_table(self) -> QuantileTable:
         r"""Frozen PINV table for amortised :meth:`cdf` / :meth:`ppf` / sampling.

@@ -86,7 +86,8 @@ R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta).
 
 This equals $\log\int p^\alpha$ only when $\alpha\theta$ lies in the
 natural domain $\Theta$. For Gamma with shape $a$ the condition is
-$\alpha(a-1)+1>0$; for InverseGamma it is $\alpha(a+1)-1>0$. Outside
+$\alpha>0$ and $\alpha(a-1)+1>0$; for InverseGamma it is
+$\alpha(a+1)-1>0$ (which already forces $\alpha>0$). Outside
 $\Theta$ one has $\int p^\alpha=+\infty$, hence $R(\alpha)=+\infty$, and
 the Rényi entropy $H_\alpha=R(\alpha)/(1-\alpha)$ inherits the sign of
 $1-\alpha$.

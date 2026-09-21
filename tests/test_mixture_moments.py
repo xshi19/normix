@@ -89,6 +89,10 @@ def test_invgamma_mean_var_inf_outside_existence():
     m_jit = jax.jit(lambda d: d.mean())(ig)
     assert np.isposinf(float(m_jit))
 
+    def _mean_of_alpha(a):
+        return InverseGamma(a, 1.0).mean()
+    assert not np.isnan(float(jax.grad(_mean_of_alpha)(jnp.asarray(1.0))))
+
 
 def test_gig_raw_moment_matches_mean_var():
     gig = GIG(p=0.7, a=1.4, b=0.9)
@@ -230,6 +234,29 @@ def test_factor_ninvg_inherits_gamma_zero_split():
     )
     assert np.all(np.isposinf(np.asarray(t3.kurtosis())))
     assert np.all(np.isfinite(np.asarray(t3.cov())))
+
+
+@pytest.mark.contract
+def test_mixture_mean_autodiff_at_gamma_zero_when_e_y_finite():
+    """γ=0 split must not fire when E[Y] is finite: d(mean)/dγ = E[Y]."""
+    from normix.mixtures.marginal import _normal_mixture_mean
+    sub = Gamma(alpha=2.0, beta=1.0)
+    mu = jnp.array([0.0])
+
+    def m(g):
+        return _normal_mixture_mean(mu, jnp.array([g]), sub)[0]
+
+    np.testing.assert_allclose(float(m(0.0)), 0.0, atol=1e-12)
+    np.testing.assert_allclose(float(jax.grad(m)(0.0)), 2.0, rtol=1e-10)
+
+
+@pytest.mark.contract
+def test_cauchy_ninvg_cdf_stays_finite():
+    """PINV is centred at μ when E[X] does not exist."""
+    cauchy = _ninvg_uni(1.7, 0.0, 0.5)
+    F = float(cauchy.cdf(1.7))
+    assert np.isfinite(F)
+    assert 0.0 < F < 1.0
 
 
 # ---------------------------------------------------------------------------

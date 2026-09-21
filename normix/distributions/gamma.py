@@ -126,14 +126,16 @@ class Gamma(ExponentialFamily):
     def log_density_power(self, alpha: jax.Array) -> jax.Array:
         r"""Log density-power integral :math:`R(q) = \log\int p^q`.
 
-        Finite iff :math:`q\theta \in \Theta`, i.e. :math:`q(\alpha-1)+1 > 0`.
-        Outside that set :math:`\int p^q = +\infty`, so this returns
-        :math:`+\infty`; :meth:`~normix.exponential_family.ExponentialFamily.renyi`
+        Finite iff :math:`q\theta \in \Theta`, i.e. :math:`q > 0` and
+        :math:`q(\alpha-1)+1 > 0`. Outside that set :math:`\int p^q = +\infty`,
+        so this returns :math:`+\infty`;
+        :meth:`~normix.exponential_family.ExponentialFamily.renyi`
         then has the correct sign through :math:`H_q = R(q)/(1-q)`.
         """
         q = jnp.asarray(alpha, dtype=jnp.float64)
-        in_domain = q * (self.alpha - 1.0) + 1.0 > 0.0
-        return jnp.where(in_domain, super().log_density_power(q), jnp.inf)
+        in_domain = (q > 0.0) & (q * (self.alpha - 1.0) + 1.0 > 0.0)
+        q_safe = jnp.where(in_domain, q, 1.0)
+        return jnp.where(in_domain, super().log_density_power(q_safe), jnp.inf)
 
     def mode(self) -> jax.Array:
         r"""Mode :math:`(\alpha - 1)/\beta` for :math:`\alpha \ge 1`.
