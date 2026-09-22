@@ -21,8 +21,25 @@ GIG_DEGEN_THRESHOLD: float = 1e-10
 # Finance QP `hess_reg` reuses this value as an absolute ridge.
 HESSIAN_DAMPING: float = 1e-6
 
-# Floor for GIG θ₂, θ₃ during warm-start initialisation
+# Floor for GIG θ₂, θ₃ during warm-start initialisation.
+# Also the strict active-set gap for the Newton iteration: a coordinate
+# within -THETA_FLOOR of a finite bound is eligible to be dropped from
+# the KKT residual.
 THETA_FLOOR: float = -1e-8
+
+# Wider gap used only to decide whether from_expectation may return a
+# model. A GIG coordinate within this distance of θ = 0, with the
+# gradient pointing out of the feasible set, is the bound multiplier
+# (O(10⁻³)), not an uninverted free coordinate. The iteration itself
+# still stops on the tighter THETA_FLOOR gap.
+KKT_NEAR_GAP: float = 1e-2
+
+# Free residual at which η counts as inverted for from_expectation.
+# Trust-exact status 2 stalls near 10⁻⁹ with success=False; a 20-step
+# Newton budget on a gamma-limit GIG leaves a free residual ~10⁻⁶ and
+# a multiplier ~10⁻³. Residuals of O(1) — the φ-gradient false stop —
+# stay above this floor.
+BREGMAN_INVERT_ATOL: float = 1e-5
 
 # ── GIG parameter clamps ──────────────────────────────────────────────
 
