@@ -183,11 +183,10 @@ def test_marginal_from_expectation_wraps_joint(dist_name):
 def test_joint_from_expectation_flat_array_dispatches_to_bregman():
     """A flat ``jax.Array`` η dispatches to the inherited Bregman solver.
 
-    We don't assert on the solution quality here — the joint EF has
-    high-dimensional θ that the generic Bregman solver handles poorly
-    (the closed-form ``NormalMixtureEta`` path is the real intended
-    route). We only verify the dispatch is wired and the call returns a
-    structurally valid `JointVarianceGamma`.
+    The joint EF has high-dimensional θ that the generic solver does not
+    invert (the closed-form ``NormalMixtureEta`` path is the real route).
+    Dispatch is the ``RuntimeError`` from that solver: a failed inversion
+    is not returned as a model.
     """
     X = _make_data()
     j = _make_models(X)["VG"].joint
@@ -195,10 +194,8 @@ def test_joint_from_expectation_flat_array_dispatches_to_bregman():
     theta = j.natural_params()
     eta_flat = JointVarianceGamma._grad_log_partition(theta)
 
-    # Should run without raising; quality is not asserted.
-    j2 = JointVarianceGamma.from_expectation(eta_flat, backend='cpu')
-    assert isinstance(j2, JointVarianceGamma)
-    assert j2.mu.shape == j.mu.shape
+    with pytest.raises(RuntimeError, match="did not converge"):
+        JointVarianceGamma.from_expectation(eta_flat, backend='cpu')
 
 # ---------------------------------------------------------------------------
 # eta0_isotropic round-trip — the original validation use case

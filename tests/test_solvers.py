@@ -589,5 +589,127 @@ class TestLogPartitionTriad:
             np.testing.assert_allclose(eta_jax, eta_cpu, rtol=1e-8,
                                        err_msg=f"{type(dist).__name__} backend mismatch")
 
+
+# ---------------------------------------------------------------------------
+# JAX Newton: natural residual, GIG warm start, failed-solve contract
+# ---------------------------------------------------------------------------
+
+class TestJaxNewtonGaussAndResidual:
+    """Regression for the φ-Hessian ascent step and the ‖g_φ‖ stop.
+
+    The 1-D start has ‖Jᵀ g_θ‖_∞ ~ 10⁻¹² < tol while ‖g_θ‖_∞ ~ 1.
+    The GIG start is GIG(0.5, 1, 1) from GIG(0, 10, 10).
+    """
+
+    @pytest.mark.contract
+    def test_stops_on_natural_residual_near_bound(self):
+        eta = jnp.array([-1.0])
+        theta0 = jnp.array([-1e-12])
+        bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
+        tol = 1e-10
+        r = solve_bregman(
+            quadratic_f, eta, theta0,
+            backend="jax", method="newton", bounds=bounds,
+            max_steps=500, tol=tol,
+            grad_fn=lambda t: t,
+            hess_fn=lambda t: jnp.eye(t.shape[-1], dtype=t.dtype),
+        )
+        theta = float(np.asarray(r.theta).reshape(-1)[0])
+        natural = abs(theta - float(eta[0]))
+        reported = float(np.asarray(r.grad_norm))
+        np.testing.assert_allclose(theta, -1.0, atol=1e-8, rtol=0.0)
+        np.testing.assert_allclose(reported, natural, rtol=1e-10, atol=1e-14)
+        if bool(r.converged):
+            assert natural < tol
+
+    @pytest.mark.contract
+    def test_jax_lbfgs_does_not_accept_phi_gradient(self):
+        """jaxopt stops on ‖g_φ‖. That must not count as an inverted η."""
+        eta = jnp.array([-1.0])
+        theta0 = jnp.array([-1e-12])
+        bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
+        r = solve_bregman(
+            quadratic_f, eta, theta0,
+            backend="jax", method="lbfgs", bounds=bounds,
+            max_steps=500, tol=1e-10,
+        )
+        theta = float(np.asarray(r.theta).reshape(-1)[0])
+        natural = abs(theta + 1.0)
+        assert not bool(r.converged)
+        assert natural > 0.1
+
+    @pytest.mark.contract
+    def test_bound_optimum_keeps_multiplier_in_grad_norm(self):
+        """η = +1 is infeasible for θ ≤ 0. The multiplier stays O(1).
+
+        Convergence is the free residual, not ‖g_φ‖ and not the multiplier.
+        The reported grad_norm is still |θ − η|.
+        """
+        eta = jnp.array([1.0])
+        theta0 = jnp.array([-0.5])
+        bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
+        tol = 1e-10
+        r = solve_bregman(
+            quadratic_f, eta, theta0,
+            backend="jax", method="newton", bounds=bounds,
+            max_steps=500, tol=tol,
+            grad_fn=lambda t: t,
+            hess_fn=lambda t: jnp.eye(t.shape[-1], dtype=t.dtype),
+        )
+        theta = float(np.asarray(r.theta).reshape(-1)[0])
+        natural = abs(theta - float(eta[0]))
+        reported = float(np.asarray(r.grad_norm))
+        assert -1e-6 < theta <= 0.0
+        np.testing.assert_allclose(reported, natural, rtol=1e-8, atol=1e-8)
+        assert bool(r.converged)
+        assert natural > tol
+
+    @pytest.mark.contract
+    def test_gig_warm_start_inverts_expectation(self):
+        from normix import GIG
+        target = GIG(p=0.5, a=1.0, b=1.0)
+        warm = GIG(p=0.0, a=10.0, b=10.0)
+        rec = GIG.from_expectation(
+            target.expectation_params(),
+            theta0=warm.natural_params(),
+            backend="jax", method="newton", maxiter=500,
+        )
+        np.testing.assert_allclose(float(rec.p), 0.5, rtol=1e-4, atol=1e-6)
+        np.testing.assert_allclose(float(rec.a), 1.0, rtol=1e-4, atol=1e-6)
+        np.testing.assert_allclose(float(rec.b), 1.0, rtol=1e-4, atol=1e-6)
+        eta = np.asarray(target.expectation_params())
+        eta_hat = np.asarray(rec.expectation_params())
+        assert float(np.max(np.abs(eta_hat - eta))) < 1e-8
+
+    @pytest.mark.contract
+    def test_from_expectation_refuses_failed_solve(self):
+        from normix import GIG
+        target = GIG(p=0.5, a=1.0, b=1.0)
+        warm = GIG(p=0.0, a=10.0, b=10.0)
+        with pytest.raises(RuntimeError, match="did not converge"):
+            GIG.from_expectation(
+                target.expectation_params(),
+                theta0=warm.natural_params(),
+                backend="jax", method="newton", maxiter=1,
+            )
+
+    @pytest.mark.contract
+    def test_from_expectation_jit_masks_failed_solve(self):
+        from normix import GIG
+        target = GIG(p=0.5, a=1.0, b=1.0)
+        warm = GIG(p=0.0, a=10.0, b=10.0)
+        eta = target.expectation_params()
+        theta0 = warm.natural_params()
+
+        def invert(eta, theta0):
+            return GIG.from_expectation(
+                eta, theta0=theta0,
+                backend="jax", method="newton", maxiter=1,
+            ).natural_params()
+
+        theta = np.asarray(jax.jit(invert)(eta, theta0))
+        assert not np.all(np.isfinite(theta))
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

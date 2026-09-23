@@ -141,7 +141,9 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 | `GIG_DEGEN_THRESHOLD` | `1e-10` | √(ab) cap for the GIG small-z Gamma/InvGamma limit (also requires \|p\| log(2/z) > BESSEL_QUAD_LOG_DROP) |
 | `RENYI_TAYLOR_EPS` | `1e-6` | Half-width of Rényi Taylor window about α = 1 |
 | `HESSIAN_DAMPING` | `1e-6` | Relative Tikhonov coefficient (Newton: $\lambda\,\mathrm{tr}H/n$) |
-| `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ during warm-start initialisation |
+| `THETA_FLOOR` | `-1e-8` | Floor for GIG θ₂, θ₃ during warm-start initialisation; strict KKT active-set gap |
+| `KKT_NEAR_GAP` | `1e-2` | Wider bound gap used only when deciding whether η was inverted |
+| `BREGMAN_INVERT_ATOL` | `1e-5` | Free residual below which `from_expectation` returns a model |
 | `GIG_THETA_PERTURB` | `1e-4` | Near-zero perturbation for θ₂, θ₃ in GIG multi-start |
 | `GIG_CLAMP_LO` | `1e-6` | Lower clamp for GIG `a`, `b` in the GH M-step |
 | `GIG_CLAMP_HI` | `1e6` | Upper clamp for GIG `a`, `b` in the GH M-step |

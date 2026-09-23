@@ -431,8 +431,14 @@ class ExponentialFamily(eqx.Module):
             ``'lbfgs'`` (default), ``'bfgs'``, or ``'newton'``.
         verbose : int
             0 = silent, >= 1 = print solver summary.
+
+        Raises
+        ------
+        RuntimeError
+            The solve did not converge. Under ``jit`` / ``lax.scan`` the
+            returned natural parameters are NaN instead of a silent model.
         """
-        from normix.fitting.solvers import solve_bregman
+        from normix.fitting.solvers import solve_bregman, _require_solved_theta
 
         eta = jnp.asarray(eta, dtype=jnp.float64)
         if theta0 is None:
@@ -456,7 +462,10 @@ class ExponentialFamily(eqx.Module):
             grad_fn=grad_fn, hess_fn=hess_fn,
             verbose=verbose,
         )
-        return cls.from_natural(result.theta)
+        theta = _require_solved_theta(
+            result.theta, result.converged, grad_norm=result.grad_norm,
+        )
+        return cls.from_natural(theta)
 
     @classmethod
     def fit_mle(

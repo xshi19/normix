@@ -69,7 +69,7 @@ from normix.utils.constants import (
 )
 from normix.fitting.solvers import (
     solve_bregman, solve_bregman_multistart,
-    make_jit_newton_solver,
+    make_jit_newton_solver, _require_solved_theta,
 )
 
 
@@ -922,6 +922,12 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             ``'jax'`` (default, JIT-able) or ``'cpu'`` (scipy, more robust).
         method : str
             ``'newton'``, ``'lbfgs'``, or ``'bfgs'``.
+
+        Raises
+        ------
+        RuntimeError
+            The solve did not converge. Under ``jit`` / ``lax.scan`` the
+            returned natural parameters are NaN instead of a silent model.
         """
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
@@ -958,7 +964,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             # Avoids the per-call retrace incurred by solve_bregman's
             # fresh Python closures (key bottleneck in GH JAX/JAX EM).
             if backend == "jax" and method == "newton" and verbose <= 0:
-                theta_scaled, _, _, _ = _gig_jax_newton_jit(
+                theta_scaled, _, grad_norm, converged = _gig_jax_newton_jit(
                     eta_scaled, theta0_scaled,
                     max_steps=int(maxiter), tol=float(tol),
                 )
@@ -980,6 +986,11 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                     **solver_kwargs,
                 )
                 theta_scaled = result.theta
+                grad_norm = result.grad_norm
+                converged = result.converged
+            theta_scaled = _require_solved_theta(
+                theta_scaled, converged, grad_norm=grad_norm,
+            )
         else:
             theta0_list = cls._initial_guesses(eta_scaled)
             processed = []
@@ -995,7 +1006,9 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 grad_fn=cls._grad_log_partition_cpu,
                 verbose=verbose,
             )
-            theta_scaled = result.theta
+            theta_scaled = _require_solved_theta(
+                result.theta, result.converged, grad_norm=result.grad_norm,
+            )
 
         theta = jnp.array([theta_scaled[0],
                            theta_scaled[1] / s,

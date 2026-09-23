@@ -53,7 +53,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from normix.utils.constants import LOG_EPS, HESSIAN_DAMPING
+from normix.utils.constants import (
+    LOG_EPS, HESSIAN_DAMPING, THETA_FLOOR, KKT_NEAR_GAP, BREGMAN_INVERT_ATOL,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -328,6 +330,66 @@ def _damped_hessian(H: jax.Array, damping: float = HESSIAN_DAMPING) -> jax.Array
     return H + damping * scale[..., None, None] * eye
 
 
+def _natural_grad(
+    f: Callable,
+    eta: jax.Array,
+    theta: jax.Array,
+    grad_fn,
+) -> jax.Array:
+    """:math:`g_\\theta = \\nabla f(\\theta) - \\eta`."""
+    if grad_fn is not None:
+        return grad_fn(theta) - eta
+    return jax.grad(lambda t: f(t) - jnp.dot(t, eta))(theta)
+
+
+def _kkt_residual(
+    g: jax.Array, theta: jax.Array, bounds, gap: float = -THETA_FLOOR,
+) -> jax.Array:
+    r"""Infinity norm of :math:`g_\theta` after dropping bound-active components.
+
+    A coordinate within ``gap`` of a finite bound is active when the
+    gradient points out of the feasible set: :math:`g_i \le 0` on an
+    upper bound, :math:`g_i \ge 0` on a lower bound. That entry is the
+    multiplier. The free residual is what can still be driven to ``tol``.
+
+    The iteration uses ``gap = -THETA_FLOOR``. ``from_expectation`` also
+    consults :data:`~normix.utils.constants.KKT_NEAR_GAP`, because a
+    20-step budget reaches the multiplier regime before :math:`\theta`
+    is within ``10^{-8}`` of the bound.
+
+    The reported ``grad_norm`` stays :math:`\lVert g_\theta\rVert_\infty`,
+    multiplier included. Stopping on :math:`\lVert g_\phi\rVert_\infty`
+    is a different test: near a bound it can be tiny while a free
+    coordinate of :math:`g_\theta` is still :math:`O(1)`.
+    """
+    if bounds is None:
+        return jnp.max(jnp.abs(g))
+    lower, upper = bounds
+    gap_a = jnp.asarray(gap, dtype=theta.dtype)
+    lower = jnp.asarray(lower, dtype=theta.dtype)
+    upper = jnp.asarray(upper, dtype=theta.dtype)
+    at_upper = jnp.isfinite(upper) & (theta >= upper - gap_a)
+    at_lower = jnp.isfinite(lower) & (theta <= lower + gap_a)
+    blocked = (at_upper & (g <= 0.0)) | (at_lower & (g >= 0.0))
+    return jnp.max(jnp.abs(jnp.where(blocked, 0.0, g)))
+
+
+def _inversion_converged(g, theta, bounds, tol) -> jax.Array:
+    """True when the free residual met ``tol`` or :data:`BREGMAN_INVERT_ATOL`.
+
+    The second clause uses :data:`KKT_NEAR_GAP`. It is what lets a
+    trust-exact stop at :math:`\\sim 10^{-9}` and a short Newton budget
+    on a bound-active GIG return a model. A residual of :math:`O(1)`
+    does not pass.
+    """
+    kkt = _kkt_residual(g, theta, bounds)
+    near = _kkt_residual(g, theta, bounds, gap=KKT_NEAR_GAP)
+    tol_b = jnp.asarray(tol, dtype=jnp.result_type(g, theta))
+    atol = jnp.asarray(BREGMAN_INVERT_ATOL, dtype=tol_b.dtype)
+    finite = jnp.isfinite(kkt) & jnp.isfinite(near)
+    return finite & ((kkt < tol_b) | (near < atol))
+
+
 def _jax_newton_raw(
     f: Callable,
     eta: jax.Array,
@@ -338,15 +400,48 @@ def _jax_newton_raw(
     grad_fn,   # theta → ∇ψ(θ), or None
     hess_fn,   # theta → ∇²ψ(θ), or None
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-    """Newton in reparametrised φ-space via lax.scan.
+    r"""Gauss–Newton in reparametrised :math:`\phi`-space via ``lax.scan``.
 
-    When grad_fn and hess_fn are both provided, the chain rule is applied
-    generically via jax.jacobian(to_theta):
-        g_phi = J^T @ (grad_fn(theta) − eta)
-        H_phi = J^T @ H_theta_damped @ J + ∇²[to_theta(phi)·g_theta]
-        where H_theta_damped is λ tr(H_θ)/n relative Tikhonov in θ-space.
+    When ``grad_fn`` and ``hess_fn`` are both provided the chain rule is
+    applied via ``jax.jacobian(to_theta)``:
 
-    Returns (theta_opt, fun, grad_norm, converged) as JAX arrays —
+    .. math::
+
+        g_\phi = J^\top g_\theta, \qquad
+        H_\phi = J^\top H_\theta^{\mathrm{damped}} J,
+
+    where :math:`g_\theta = \nabla f(\theta) - \eta`, :math:`J = \partial\theta/\partial\phi`,
+    and :math:`H_\theta^{\mathrm{damped}}` is the relative Tikhonov ridge
+    :math:`\lambda\,\mathrm{tr}(H_\theta)/n` on the Fisher. The
+    second-fundamental-form term
+    :math:`\sum_i (g_\theta)_i \nabla^2\theta_i(\phi)` is omitted: it is
+    indefinite away from a root, so the resulting step is ascent, and it
+    is :math:`O(\lVert g_\theta\rVert)` so the local rate stays quadratic.
+    For square invertible :math:`J` the step is Newton on the convex
+    :math:`\theta`-problem pulled back by :math:`J^{-1}`.
+
+    The returned ``grad_norm`` is the natural residual
+    :math:`\lVert g_\theta\rVert_\infty`. Convergence uses the same
+    residual after dropping components a finite bound blocks
+    (:func:`_kkt_residual`). :math:`\lVert g_\phi\rVert_\infty` is not the
+    stop: it can be tiny near a bound while a free coordinate of
+    :math:`g_\theta` is still :math:`O(1)`. At a bound optimum the
+    multiplier stays in ``grad_norm`` and does not by itself fail the solve.
+
+    A full Gauss–Newton step is taken when it meets the Armijo test at
+    step length 1. Otherwise an adaptive Levenberg–Marquardt shift
+    :math:`\mu = \lVert g_\phi\rVert_\infty` (multiplied by ten until the
+    full step is accepted) is added to :math:`H_\phi`. A permanent ridge
+    would swamp the :math:`p`-direction of a concentrated GIG, whose
+    :math:`\phi`-gradient is :math:`O(|\theta|)`. :math:`\mu` is unused
+    once the undamped step is valid, so the local rate stays quadratic.
+    The fallback exists because :math:`J=\mathrm{diag}(\theta)\to 0` on
+    an exp bound makes :math:`H_\phi=O(\theta^2)` and the undamped step
+    :math:`O(1/\theta)`, which overflows :math:`\exp`; the same long
+    step, accepted at a tiny Armijo length, walks the GIG warm start
+    into that bound.
+
+    Returns ``(theta_opt, fun, grad_norm, converged)`` as JAX arrays —
     all are vmappable.
     """
     phi0, to_theta, _ = _setup_reparam(theta0, bounds)
@@ -362,39 +457,120 @@ def _jax_newton_raw(
             H_theta = _damped_hessian(hess_fn(theta))
             J = jax.jacobian(to_theta)(phi)
             g_phi = J.T @ g_theta
-            # Second-order correction: ∇²[to_theta(phi)·g_theta]
-            def theta_dot_g(p):
-                return jnp.dot(to_theta(p), g_theta)
-            H_phi = J.T @ H_theta @ J + jax.hessian(theta_dot_g)(phi)
-            return g_phi, H_phi
+            # Drop Σ_i (g_θ)_i ∇²θ_i(φ): indefinite away from the root.
+            H_phi = J.T @ H_theta @ J
+            return g_phi, H_phi, g_theta
         damp_phi = False
     else:
         _grad = jax.grad(obj)
         _hess = jax.hessian(obj)
+        _grad_theta = jax.grad(lambda t: f(t) - jnp.dot(t, eta))
+
         def get_g_H(phi):
-            return _grad(phi), _hess(phi)
+            return _grad(phi), _hess(phi), _grad_theta(to_theta(phi))
         damp_phi = True
+
+    eye = jnp.eye(phi0.shape[-1], dtype=phi0.dtype)
+
+    def _lm_step(phi, g, H, delta, f0):
+        """Grow :math:`\\mu I` until a full :math:`\\phi`-step passes Armijo."""
+        mu0 = jnp.maximum(jnp.max(jnp.abs(g)), LOG_EPS)
+
+        def cond(state):
+            i, _mu, _alpha, _delta, done = state
+            return (~done) & (i < 8)
+
+        def body(state):
+            i, mu, alpha_lm, delta_lm, done = state
+            delta_lm = jnp.linalg.solve(H + mu * eye, g)
+            slope_lm = jnp.dot(g, delta_lm)
+            alpha_lm = _backtrack(obj, phi, delta_lm, f0, slope_lm)
+            done = (alpha_lm >= 1.0) & (slope_lm > 0.0)
+            return i + 1, mu * 10.0, alpha_lm, delta_lm, done
+
+        _i, _mu, alpha_lm, delta_lm, _done = jax.lax.while_loop(
+            cond, body,
+            (
+                jnp.int32(0), mu0, jnp.array(0.0, dtype=phi.dtype),
+                delta, jnp.bool_(False),
+            ),
+        )
+        return phi - alpha_lm * delta_lm
 
     def newton_body(carry, _):
         phi, converged = carry
-        g, H = get_g_H(phi)
+        g, H, g_theta = get_g_H(phi)
         H_safe = _damped_hessian(H) if damp_phi else H
         delta = jnp.linalg.solve(H_safe, g)
         f0 = obj(phi)
         slope = jnp.dot(g, delta)
         alpha = _backtrack(obj, phi, delta, f0, slope)
-        phi_new = phi - alpha * delta
-        grad_norm = jnp.max(jnp.abs(g))
-        converged_new = converged | (grad_norm < tol)
+        if damp_phi:
+            phi_new = phi - alpha * delta
+        else:
+            # Full step only. Backtracking this direction still follows
+            # the huge flat component and walks into the bound.
+            full = (alpha >= 1.0) & (slope > 0.0)
+            phi_new = jax.lax.cond(
+                full,
+                lambda _: phi - delta,
+                lambda _: _lm_step(phi, g, H_safe, delta, f0),
+                operand=None,
+            )
+        theta = to_theta(phi)
+        grad_norm = jnp.max(jnp.abs(g_theta))
+        converged_new = converged | (_kkt_residual(g_theta, theta, bounds) < tol)
         phi_out = jnp.where(converged_new, phi, phi_new)
         return (phi_out, converged_new), grad_norm
 
-    (phi_opt, converged), grad_norms = jax.lax.scan(
+    (phi_opt, converged), _ = jax.lax.scan(
         newton_body, (phi0, jnp.bool_(False)), None, length=max_steps
     )
     theta_opt = to_theta(phi_opt)
+    g_final = _natural_grad(f, eta, theta_opt, grad_fn)
+    grad_norm = jnp.max(jnp.abs(g_final))
+    # The scan freezes once the pre-step KKT residual is under tol. The
+    # last accepted step can land inside tol without a further frozen check.
+    # The returned flag is wider: a free residual under BREGMAN_INVERT_ATOL
+    # (multiplier dropped inside KKT_NEAR_GAP) is an inverted η.
+    strict = _kkt_residual(g_final, theta_opt, bounds) < tol
+    converged = converged | _inversion_converged(g_final, theta_opt, bounds, tol)
+    converged = converged | strict
     final_obj = f(theta_opt) - jnp.dot(theta_opt, eta)
-    return theta_opt, final_obj, grad_norms[-1], converged
+    return theta_opt, final_obj, grad_norm, converged
+
+
+def _require_solved_theta(
+    theta: jax.Array,
+    converged: Any,
+    *,
+    grad_norm: Any = None,
+) -> jax.Array:
+    """Return ``theta`` only when the Bregman solve converged.
+
+    Eager calls raise :class:`RuntimeError`. Under tracing (``jit``,
+    ``lax.scan``, EM) a failed solve is NaN, so the caller cannot treat
+    an uninverted :math:`\\eta` as a model. GH M-step sanity checks
+    already reject non-finite subordinator parameters and keep the
+    previous ones.
+    """
+    converged_b = jnp.asarray(converged, dtype=jnp.bool_)
+    masked = jnp.where(converged_b, theta, jnp.full_like(theta, jnp.nan))
+    if isinstance(theta, jax.core.Tracer) or isinstance(converged, jax.core.Tracer):
+        return masked
+    if bool(converged_b):
+        return theta
+    detail = ""
+    if grad_norm is not None:
+        try:
+            detail = f" (‖∇f(θ)−η‖∞={float(grad_norm):.3e})"
+        except (TypeError, ValueError, jax.errors.ConcretizationTypeError):
+            detail = ""
+    raise RuntimeError(
+        "Bregman solve did not converge"
+        + detail
+        + "; refusing to return a model whose expectation parameters were not inverted."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -458,7 +634,11 @@ def _multistart_jax_newton(
         return _jax_newton_raw(f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn)
 
     all_theta, all_fun, all_gn, all_conv = jax.vmap(solve_one)(theta0_batch)
-    best = jnp.argmin(all_fun)
+    # A start that met tol outranks a lower objective that did not.
+    finite = jnp.isfinite(all_fun)
+    best_conv = jnp.argmin(jnp.where(all_conv & finite, all_fun, jnp.inf))
+    best_any = jnp.argmin(jnp.where(finite, all_fun, jnp.inf))
+    best = jnp.where(jnp.any(all_conv & finite), best_conv, best_any)
     return BregmanResult(
         theta=all_theta[best],
         fun=float(all_fun[best]),
@@ -500,17 +680,17 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
     g = jax.grad(lambda t: f(t) - jnp.dot(t, eta))(theta_opt)
     final_obj = float(f(theta_opt) - jnp.dot(theta_opt, eta))
 
-    # jaxopt state attributes vary between LBFGS / LBFGSB
+    # jaxopt state.error is ‖∇_φ obj‖, which is tiny on an exp bound
+    # while g_θ is still O(1). Acceptance is the natural residual.
     state = result.state
     n_iter = int(state.iter_num) if hasattr(state, "iter_num") else max_steps
-    err = float(state.error) if hasattr(state, "error") else float("nan")
 
     return BregmanResult(
         theta=theta_opt,
         fun=final_obj,
         grad_norm=float(jnp.max(jnp.abs(g))),
         num_steps=n_iter,
-        converged=bool(err < tol) if not np.isnan(err) else False,
+        converged=bool(_inversion_converged(g, theta_opt, bounds, tol)),
     )
 
 
@@ -582,12 +762,16 @@ def _cpu_solve(
     result = minimize(fun_np, theta0_np, method=scipy_method, **kwargs)
     theta_opt = jnp.asarray(result.x, dtype=jnp.float64)
     jac_val = result.jac if result.jac is not None else jac_np(result.x)
+    g = jnp.asarray(jac_val, dtype=jnp.float64)
+    # scipy success is not the natural residual: trust-exact status 2
+    # stops just above gtol, and L-BFGS-B can report success with a
+    # large bound multiplier. Gate on the free residual.
     return BregmanResult(
         theta=theta_opt,
         fun=float(result.fun),
         grad_norm=float(np.max(np.abs(jac_val))),
         num_steps=int(result.nit),
-        converged=bool(result.success),
+        converged=bool(_inversion_converged(g, theta_opt, bounds, tol)),
     )
 
 
@@ -608,8 +792,23 @@ def _multistart_loop(
                 max_steps=max_steps, tol=tol,
                 grad_fn=grad_fn, hess_fn=hess_fn,
             )
-            if best is None or res.fun < best.fun:
+            # A start that met tol outranks a lower objective that did not.
+            # A non-finite objective must not block a later finite start.
+            res_fin = bool(np.isfinite(float(res.fun)))
+            if best is None:
                 best = res
+            else:
+                best_fin = bool(np.isfinite(float(best.fun)))
+                if res_fin and not best_fin:
+                    best = res
+                elif res_fin and best_fin:
+                    if bool(res.converged) and not bool(best.converged):
+                        best = res
+                    elif (
+                        bool(res.converged) == bool(best.converged)
+                        and res.fun < best.fun
+                    ):
+                        best = res
         except Exception:
             pass
 
@@ -631,7 +830,11 @@ def _backtrack(obj, phi, delta, f0, slope, beta: float = 0.5, c: float = 1e-4):
     """Armijo backtracking via lax.while_loop."""
     def cond(state):
         alpha, _ = state
-        return (obj(phi - alpha * delta) > f0 - c * alpha * slope) & (alpha > 1e-10)
+        trial = obj(phi - alpha * delta)
+        # NaN is not greater than the threshold, so a non-finite trial
+        # would otherwise be accepted (exp overflow on a long φ step).
+        insufficient = (~jnp.isfinite(trial)) | (trial > f0 - c * alpha * slope)
+        return insufficient & (alpha > 1e-10)
 
     def body(state):
         alpha, i = state
