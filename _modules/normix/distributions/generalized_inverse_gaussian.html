@@ -476,7 +476,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">solve_bregman_multistart</span><span class="p">,</span>
-    <span class="n">make_jit_newton_solver</span><span class="p">,</span>
+    <span class="n">make_jit_newton_solver</span><span class="p">,</span> <span class="n">_require_solved_theta</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -1390,6 +1390,12 @@
 <span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (scipy, more robust).</span>
 <span class="sd">        method : str</span>
 <span class="sd">            ``&#39;newton&#39;``, ``&#39;lbfgs&#39;``, or ``&#39;bfgs&#39;``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        RuntimeError</span>
+<span class="sd">            The solve did not converge. Under ``jit`` / ``lax.scan`` the</span>
+<span class="sd">            returned natural parameters are NaN instead of a silent model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
@@ -1426,7 +1432,7 @@
             <span class="c1"># Avoids the per-call retrace incurred by solve_bregman&#39;s</span>
             <span class="c1"># fresh Python closures (key bottleneck in GH JAX/JAX EM).</span>
             <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gig_jax_newton_jit</span><span class="p">(</span>
+                <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">_gig_jax_newton_jit</span><span class="p">(</span>
                     <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
                     <span class="n">max_steps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">maxiter</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">tol</span><span class="p">),</span>
                 <span class="p">)</span>
@@ -1448,6 +1454,11 @@
                     <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
+                <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span>
+                <span class="n">converged</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span>
+            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
+                <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">grad_norm</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">theta0_list</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">)</span>
             <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1463,7 +1474,9 @@
                 <span class="n">grad_fn</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition_cpu</span><span class="p">,</span>
                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span>
+            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                            <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span>

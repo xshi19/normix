@@ -905,8 +905,14 @@
 <span class="sd">            ``&#39;lbfgs&#39;`` (default), ``&#39;bfgs&#39;``, or ``&#39;newton&#39;``.</span>
 <span class="sd">        verbose : int</span>
 <span class="sd">            0 = silent, &gt;= 1 = print solver summary.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        RuntimeError</span>
+<span class="sd">            The solve did not converge. Under ``jit`` / ``lax.scan`` the</span>
+<span class="sd">            returned natural parameters are NaN instead of a silent model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bregman</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">_require_solved_theta</span>
 
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -930,7 +936,10 @@
             <span class="n">grad_fn</span><span class="o">=</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="o">=</span><span class="n">hess_fn</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span></div>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.fit_mle">

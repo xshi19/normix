@@ -70,6 +70,45 @@ concentrated GIG Fisher matrices (entries $O(1/z)$) are not swamped by
 an absolute $10^{-6}$ floor, and the $\phi$-space trace $O(z)$ from
 $J=\mathrm{diag}(1,\theta_2,\theta_3)$ does not set the ridge.
 
+The $\phi$-step is Gauss–Newton,
+
+$$
+g_\phi = J^\top g_\theta, \qquad
+H_\phi = J^\top H_\theta^{\mathrm{damped}} J,
+$$
+
+with $J=\partial\theta/\partial\phi$ and $g_\theta=\nabla f(\theta)-\eta$.
+The second-fundamental-form term
+$\sum_i (g_\theta)_i\nabla^2\theta_i(\phi)$ is omitted. The $\phi$-Hessian
+that includes it has an eigenvalue $-4.5\times 10^{-3}$ at the scaled
+warm start inverting `GIG(0.5, 1, 1)` from `GIG(0, 10, 10)`, so
+$\delta=H_\phi^{-1}g_\phi$ is ascent and Armijo shrinks to the floor.
+The term is $O(\lVert g_\theta\rVert)$ and is zero at a root, so the
+local rate stays quadratic. When $J$ is square and invertible the step
+is Newton on the convex $\theta$-problem, pulled back by $J^{-1}$.
+
+On an exp bound, $J=\mathrm{diag}(\theta)\to 0$ makes
+$H_\phi=O(\theta^2)$ and the undamped step $O(1/\theta)$, which overflows
+$\exp$. The same long step, taken at a tiny Armijo length, walks that
+GIG warm start into the bound. If the unit step fails Armijo, $H_\phi$
+gains an adaptive shift $\mu=\lVert g_\phi\rVert_\infty$, multiplied
+by ten until the unit step is accepted. A fixed $\lambda I$ on
+$H_\phi$, or this shift on every iteration, swamps the $p$-direction
+once $|\theta|$ is large — the concentrated-GIG failure the θ-space
+ridge was introduced to avoid. Once the undamped step is valid, $\mu$
+is unused and the local rate is the Gauss–Newton rate.
+
+`BregmanResult.grad_norm` is the natural residual
+$\lVert g_\theta\rVert_\infty$. Convergence uses that residual after
+dropping components a finite bound blocks: within $10^{-8}$ of an upper
+bound with $g_i\le 0$, or of a lower bound with $g_i\ge 0$. Those
+entries are multipliers. A gamma-limit GIG MLE sits on $b=0$ with
+multiplier $\sim 5\times 10^{-3}$ and free residual $\sim 10^{-13}$;
+L-BFGS-B already accepts that point. $\lVert g_\phi\rVert_\infty$ is
+not the stop. Next to a bound it can lie under `tol` while a free
+coordinate of $g_\theta$ is still $O(1)$, which is what froze the
+bounded quadratic at $\theta=-10^{-12}$ instead of $\theta=-1$.
+
 ### 1.3 `BregmanResult` and `lax.scan`
 
 ```python
@@ -121,6 +160,20 @@ with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
 For the warm-started Newton path (`backend='jax', method='newton'`),
 the cached `_gig_jax_newton_jit` keeps a single XLA executable across
 all warm-started solves.
+
+`from_expectation` does not return a model when the free residual
+stays above `BREGMAN_INVERT_ATOL` (`10^{-5}`). The iteration stop is
+tighter (the `THETA_FLOOR` gap and `tol`). A coordinate within
+`KKT_NEAR_GAP` (`10^{-2}`) of a bound, with the gradient pointing
+out of the feasible set, is dropped for that check: a 20-step Newton
+budget on a gamma-limit GIG is already on the multiplier, and
+trust-exact status 2 stalls near `10^{-9}` with `success=False`.
+Neither is an uninverted η. `grad_norm` still stores the full
+residual, multiplier included. The same free-residual test replaces
+jaxopt's φ-gradient norm, which is the false stop on an exp bound.
+Eager calls raise `RuntimeError`. Inside `jit` or `lax.scan` the
+natural parameters are NaN, and the GH M-step sanity check keeps the
+previous subordinator.
 
 When `theta0` is **not** provided, `GeneralizedInverseGaussian.from_expectation`
 runs `solve_bregman_multistart` on the η-rescaled problem, with seeds
