@@ -46,6 +46,9 @@ class JointNormalInverseGaussian(JointNormalMixture):
         from normix.distributions.inverse_gaussian import InverseGaussian
         return InverseGaussian(mu=self.mu_ig, lam=self.lam)
 
+    def _ambient_moment_contract(self) -> bool:
+        return True
+
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [-3/2-d/2,\; -(\lambda/2+\tfrac{1}{2}\mu^\top\Lambda\mu),\;

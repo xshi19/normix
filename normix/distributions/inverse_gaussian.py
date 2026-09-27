@@ -262,10 +262,22 @@ class InverseGaussian(ExponentialFamily):
         """Divergence gauge is GIG."""
         return self.to_gig()
 
+    def _gig_layout_eta(self, backend: str = "jax"):
+        r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` via the interior embedding.
+
+        InverseGaussian is :math:`\mathrm{GIG}(-1/2, \lambda/\mu^2, \lambda)`
+        with :math:`a,b>0`, so all three moments are finite.
+        """
+        eta = self.to_gig().expectation_params(backend=backend)
+        return eta, jnp.zeros((), dtype=eta.dtype), jnp.zeros_like(eta)
+
+    def _gig_layout_cov(self, backend: str = "jax") -> jax.Array:
+        r"""Covariance of :math:`(\log X, 1/X, X)` from the GIG embedding."""
+        return self.to_gig().fisher_information(backend=backend)
+
     def _divergence_eta(self):
         """Interior GIG moments (all finite)."""
-        eta = self.to_gig().expectation_params()
-        return eta, jnp.zeros((), dtype=eta.dtype), jnp.zeros_like(eta)
+        return self._gig_layout_eta()
 
     @classmethod
     def from_expectation(

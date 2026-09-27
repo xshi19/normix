@@ -39,7 +39,10 @@ normal quadratic forms so that :math:`\\theta^{\\top} t` matches
 
     \\psi = \\psi_{\\mathrm{sub}}(p, a, b) + \\tfrac{1}{2}\\log|\\Sigma| + \\mu^\\top\\Sigma^{-1}\\gamma
 
-**Expectation parameters (EM E-step quantities):**
+**Expectation parameters** (also the EM E-step moments). Joint VG, NInvG,
+and NIG return these from ``expectation_params``; the restricted
+log-partition does not differentiate the frozen GIG slot. Joint GH
+returns :math:`\\nabla\\psi`, which agrees with them in the interior.
 
 .. math::
 
@@ -123,15 +126,20 @@ class JointNormalMixture(ExponentialFamily):
         """Divergence gauge is JointGH (``boundary_eps = 0``)."""
         return self.to_joint_generalized_hyperbolic(boundary_eps=0.0)
 
-    def _divergence_eta(self):
-        r"""Assemble joint-gauge :math:`\eta` from the subordinator tail split.
+    def _ambient_moment_contract(self) -> bool:
+        """VG, NInvG, and NIG report ambient moments; Joint GH stays on the triad."""
+        return False
+
+    def _divergence_eta(self, backend: str = "jax"):
+        r"""Assemble joint-gauge :math:`\eta` from the subordinator GIG-layout split.
 
         Same algebra as :meth:`~normix.mixtures.marginal.NormalMixture.compute_eta_from_model`,
         but without the EM-only :math:`\alpha`-moment floor: infinite prior
         moments stay honest ``inf`` and are handled by
         :func:`~normix.divergences.kl_divergence_from_eta`.
+        ``backend`` is forwarded to the subordinator moments.
         """
-        eta_s, m, v_s = self.subordinator()._divergence_eta()
+        eta_s, m, v_s = self.subordinator()._gig_layout_eta(backend=backend)
         mu, gamma, sigma = self.mu, self.gamma, self.sigma()
         E_log, E_inv_fin, E_Y_fin = eta_s[0], eta_s[1], eta_s[2]
         eta_fin = jnp.concatenate([
@@ -159,6 +167,168 @@ class JointNormalMixture(ExponentialFamily):
         ])
         v = v_s[1] * v_inv + v_s[2] * v_Y
         return eta_fin, m, v
+
+    def expectation_params(self, backend: str = "jax") -> jax.Array:
+        r"""Ambient :math:`E[t]` for VG, NInvG, and NIG; :math:`\nabla\psi` for Joint GH.
+
+        The special cases keep the GH statistic
+        :math:`t = [\log y, 1/y, y, x, x/y, \mathrm{vec}(xx^\top/y)]`.
+        Their restricted log-partition ignores the frozen slot, so
+        :math:`\nabla\psi` is not :math:`E[t]`. The value is the subordinator
+        GIG-layout triple plus the Gaussian blocks, with :math:`+\infty` where
+        the moment does not exist.
+        """
+        if self._ambient_moment_contract():
+            eta_fin, m, v = self._divergence_eta(backend=backend)
+            return self._combine_split(eta_fin, m, v)
+        return super().expectation_params(backend)
+
+    def fisher_information(self, backend: str = "jax") -> jax.Array:
+        r"""Ambient :math:`\mathrm{Cov}[t]` for VG, NInvG, and NIG; :math:`\nabla^2\psi` for Joint GH.
+
+        Law of total covariance on :math:`b = (\log Y, 1/Y, Y)`: the
+        subordinator supplies :math:`\mathrm{Cov}(b)`, and this class adds
+        :math:`E[\mathrm{Cov}(t\mid Y)]`. An entry touched by a nonexistent
+        second moment of :math:`Y` is :math:`+\infty`.
+        """
+        if not self._ambient_moment_contract():
+            return super().fisher_information(backend)
+        sub = self.subordinator()
+        eta_s, m, v_s = sub._gig_layout_eta(backend=backend)
+        e_b = self._combine_split(eta_s, m, v_s)
+        between = self._sandwich(
+            self._direction_matrix(self.mu, self.gamma),
+            sub._gig_layout_cov(backend=backend),
+        )
+        cond = self._expected_conditional_cov(
+            self.mu, self.gamma, self.sigma(), e_b[1], e_b[2],
+        )
+        return between + cond
+
+    @staticmethod
+    def _combine_split(eta_fin: jax.Array, m: jax.Array, v: jax.Array) -> jax.Array:
+        r""":math:`\eta_{\mathrm{fin}} + m v`, with :math:`0\cdot\infty` masked off."""
+        return eta_fin + jnp.where(v != 0.0, m * v, jnp.zeros_like(v))
+
+    @staticmethod
+    def _direction_matrix(mu: jax.Array, gamma: jax.Array) -> jax.Array:
+        r"""Columns :math:`(e_{\log}, v_{1/y}, v_Y)` of :math:`E[t\mid Y=y] = c_0 + C b`."""
+        d = mu.shape[0]
+        n = 3 + 2 * d + d * d
+        C = jnp.zeros((n, 3), dtype=mu.dtype)
+        C = C.at[0, 0].set(1.0)
+        C = C.at[1, 1].set(1.0)
+        C = C.at[3 + d:3 + 2 * d, 1].set(mu)
+        C = C.at[3 + 2 * d:, 1].set(jnp.outer(mu, mu).ravel())
+        C = C.at[2, 2].set(1.0)
+        C = C.at[3:3 + d, 2].set(gamma)
+        C = C.at[3 + 2 * d:, 2].set(jnp.outer(gamma, gamma).ravel())
+        return C
+
+    @staticmethod
+    def _sandwich(C: jax.Array, cov_b: jax.Array) -> jax.Array:
+        r"""``C \mathrm{Cov}(b) C^\top``; :math:`+\infty` on the support of a non-finite entry."""
+        finite_coef = jnp.where(jnp.isfinite(cov_b), cov_b, 0.0)
+        assembled = C @ finite_coef @ C.T
+        bad = ~jnp.isfinite(cov_b)
+        col_nz = C != 0.0
+        support = col_nz[:, :, None] & bad[None, :, :]
+        hit = jnp.any(support[:, None, :, :] & col_nz[None, :, None, :], axis=(2, 3))
+        return jnp.where(hit, jnp.inf, assembled)
+
+    @staticmethod
+    def _scale_moment(coef: jax.Array, mat: jax.Array) -> jax.Array:
+        r"""``coef * mat``, or :math:`+\infty` where ``mat`` is nonzero and ``coef`` is not finite."""
+        return jnp.where(
+            jnp.isfinite(coef),
+            coef * mat,
+            jnp.where(mat != 0.0, jnp.inf, jnp.zeros_like(mat)),
+        )
+
+    @staticmethod
+    def _moment_affine(base: jax.Array, coef: jax.Array, moment: jax.Array) -> jax.Array:
+        r"""``base + coef * moment``, with :math:`+\infty` where ``coef`` meets a non-finite moment."""
+        return jnp.where(
+            jnp.isfinite(moment),
+            base + coef * moment,
+            jnp.where(coef != 0.0, jnp.inf, base),
+        )
+
+    @staticmethod
+    def _pair_block(v: jax.Array, sigma: jax.Array) -> jax.Array:
+        r"""Rows :math:`K_{i,(j,k)} = v_j\Sigma_{ik} + v_k\Sigma_{ij}`."""
+        d = v.shape[0]
+        v_f = jnp.where(jnp.isfinite(v), v, 0.0)
+        K = jnp.einsum("j,ik->ijk", v_f, sigma) + jnp.einsum("k,ij->ijk", v_f, sigma)
+        v_bad = ~jnp.isfinite(v)
+        sig_nz = sigma != 0.0
+        hit = (
+            (v_bad[None, :, None] & sig_nz[:, None, :])
+            | (v_bad[None, None, :] & sig_nz[:, :, None])
+        )
+        return jnp.where(hit, jnp.inf, K).reshape(d, d * d)
+
+    @staticmethod
+    def _quad_block(M: jax.Array, sigma: jax.Array) -> jax.Array:
+        r"""Covariance block of :math:`\mathrm{vec}(xx^\top/y)`, averaged over :math:`Y`."""
+        d = sigma.shape[0]
+        M_f = jnp.where(jnp.isfinite(M), M, 0.0)
+        T = (
+            jnp.einsum("jl,km->jklm", M_f, sigma)
+            + jnp.einsum("jm,kl->jklm", M_f, sigma)
+            + jnp.einsum("kl,jm->jklm", M_f, sigma)
+            + jnp.einsum("km,jl->jklm", M_f, sigma)
+            + jnp.einsum("jl,km->jklm", sigma, sigma)
+            + jnp.einsum("jm,kl->jklm", sigma, sigma)
+        )
+        M_bad = ~jnp.isfinite(M)
+        sig_nz = sigma != 0.0
+        hit = (
+            (M_bad[:, None, :, None] & sig_nz[None, :, None, :])
+            | (M_bad[:, None, None, :] & sig_nz[None, :, :, None])
+            | (M_bad[None, :, :, None] & sig_nz[:, None, None, :])
+            | (M_bad[None, :, None, :] & sig_nz[:, None, :, None])
+        )
+        return jnp.where(hit, jnp.inf, T).reshape(d * d, d * d)
+
+    @staticmethod
+    def _expected_conditional_cov(
+        mu: jax.Array,
+        gamma: jax.Array,
+        sigma: jax.Array,
+        E_inv: jax.Array,
+        E_Y: jax.Array,
+    ) -> jax.Array:
+        r""":math:`E[\mathrm{Cov}(t\mid Y)]` in the ambient layout. The :math:`(\log y,1/y,y)` block is zero."""
+        d = mu.shape[0]
+        n = 3 + 2 * d + d * d
+        a1 = JointNormalMixture._moment_affine(mu, gamma, E_Y)
+        a2 = JointNormalMixture._moment_affine(gamma, mu, E_inv)
+        M = (
+            JointNormalMixture._scale_moment(E_inv, jnp.outer(mu, mu))
+            + jnp.outer(mu, gamma)
+            + jnp.outer(gamma, mu)
+            + JointNormalMixture._scale_moment(E_Y, jnp.outer(gamma, gamma))
+        )
+        ix = slice(3, 3 + d)
+        iv = slice(3 + d, 3 + 2 * d)
+        iq = slice(3 + 2 * d, n)
+        xx = JointNormalMixture._scale_moment(E_Y, sigma)
+        yy = JointNormalMixture._scale_moment(E_inv, sigma)
+        xq = JointNormalMixture._pair_block(a1, sigma)
+        yq = JointNormalMixture._pair_block(a2, sigma)
+        qq = JointNormalMixture._quad_block(M, sigma)
+        W = jnp.zeros((n, n), dtype=mu.dtype)
+        W = W.at[ix, ix].set(xx)
+        W = W.at[ix, iv].set(sigma)
+        W = W.at[iv, ix].set(sigma.T)
+        W = W.at[iv, iv].set(yy)
+        W = W.at[ix, iq].set(xq)
+        W = W.at[iq, ix].set(xq.T)
+        W = W.at[iv, iq].set(yq)
+        W = W.at[iq, iv].set(yq.T)
+        W = W.at[iq, iq].set(qq)
+        return W
 
     # ------------------------------------------------------------------
     # Derived from subclass

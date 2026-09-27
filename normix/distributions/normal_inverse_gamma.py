@@ -50,6 +50,9 @@ class JointNormalInverseGamma(JointNormalMixture):
         from normix.distributions.inverse_gamma import InverseGamma
         return InverseGamma(alpha=self.alpha, beta=self.beta)
 
+    def _ambient_moment_contract(self) -> bool:
+        return True
+
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [-(\alpha+1)-d/2,\; -(\beta+\tfrac{1}{2}\mu^\top\Lambda\mu),\;

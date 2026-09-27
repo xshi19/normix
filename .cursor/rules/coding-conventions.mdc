@@ -91,7 +91,7 @@ Hessian              _hessian_log_partition           _hessian_log_partition_cpu
 **Rules:**
 - The triad methods are `@classmethod` (not `@staticmethod`) because the default Tier 2 and Tier 3 implementations reference `cls` to resolve the subclass's `_log_partition_from_theta`.
 - Both `grad_fn` and `hess_fn` passed to the solver operate in **θ-space** only. The solver applies the φ↔θ chain rule internally. Never pass phi-space gradient or Hessian functions from distributions.
-- `expectation_params(backend='jax'|'cpu')` and `fisher_information(backend='jax'|'cpu')` are derived in the parent class from the triad. Do not override these in subclasses.
+- `expectation_params(backend='jax'|'cpu')` and `fisher_information(backend='jax'|'cpu')` come from the triad in the parent. Do not override them in subclasses. Exception: joint VG, NInvG, and NIG (`_ambient_moment_contract`) return ambient $E[t]$ and $\mathrm{Cov}[t]$ of the GH statistic. Do not build those with `jax.grad` / `jax.hessian` of the restricted $\psi$, and do not lift the law to `JointGeneralizedHyperbolic`.
 - `fit_mle` is a generic parent method (`vmap(sufficient_statistics)` + `from_expectation`). Do not override it in subclasses — any specialisation belongs in `from_expectation`.
 
 ## Code Organization Within a Distribution Class

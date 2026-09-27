@@ -54,8 +54,13 @@ $$
 \nabla^2\psi(\theta) = \operatorname{Cov}[t(X)] = I(\theta),
 $$
 
-the second being the Fisher information. Each distribution therefore provides a
-**triad** — log-partition, gradient, Hessian — in two backends:
+the second being the Fisher information. Joint variance-gamma,
+normal-inverse-gamma, and normal-inverse-Gaussian keep $E[t]$ and
+$\operatorname{Cov}[t]$ for the generalized-hyperbolic statistic, but those
+values are the special-case moments, not derivatives of the restricted
+log-partition. Joint generalized hyperbolic uses the derivatives. Each
+distribution therefore provides a **triad** — log-partition, gradient,
+Hessian — in two backends:
 
 - a **[JAX](https://docs.jax.dev/en/latest/)** backend (`expectation_params()`,
   `fisher_information()`, default `backend="jax"`) that is JIT-able,

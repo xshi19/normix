@@ -471,7 +471,9 @@ class TestJointExponentialFamilyRoundTrip:
     """
     Verify the EF contract for each joint class:
       1. log_partition() agrees with _log_partition_from_theta(natural_params()).
-      2. expectation_params() = jax.grad(_log_partition_from_theta)(natural_params()).
+      2. Joint GH: expectation_params() = grad of the log-partition.
+         VG, NInvG, and NIG report ambient moments instead (see
+         test_joint_ambient_moments.py); their restricted gradient is not η.
       3. rvs produces finite (X, Y) samples.
       4. conditional_expectations returns finite, sign-correct moments.
     """
@@ -481,14 +483,18 @@ class TestJointExponentialFamilyRoundTrip:
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _check_ef_contract(joint):
-        """Shared checks: log_partition self-consistency and grad=eta."""
+    def _check_log_partition(joint):
+        """log_partition() agrees with the triad evaluated at natural_params()."""
         theta = joint.natural_params()
         psi_direct = float(joint.log_partition())
         psi_from_theta = float(type(joint)._log_partition_from_theta(theta))
         np.testing.assert_allclose(psi_direct, psi_from_theta, rtol=1e-10,
                                    err_msg="log_partition() != _log_partition_from_theta(theta)")
 
+    @staticmethod
+    def _check_grad_matches_expectation(joint):
+        """Joint GH: ∇ψ equals E[t]."""
+        theta = joint.natural_params()
         eta = joint.expectation_params()
         grad_eta = jax.grad(type(joint)._log_partition_from_theta)(theta)
         np.testing.assert_allclose(np.array(eta), np.array(grad_eta), rtol=1e-6,
@@ -523,7 +529,7 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
             alpha=2.0, beta=1.0,
         )
-        self._check_ef_contract(j)
+        self._check_log_partition(j)
 
     def test_vg_rvs(self):
         j = JointVarianceGamma(
@@ -550,7 +556,7 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
             alpha=3.0, beta=1.5,
         )
-        self._check_ef_contract(j)
+        self._check_log_partition(j)
 
     def test_ninvg_rvs(self):
         j = JointNormalInverseGamma(
@@ -577,7 +583,7 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
             mu_ig=1.0, lam=2.0,
         )
-        self._check_ef_contract(j)
+        self._check_log_partition(j)
 
     def test_nig_rvs(self):
         j = JointNormalInverseGaussian(
@@ -604,7 +610,8 @@ class TestJointExponentialFamilyRoundTrip:
             L_Sigma=jnp.array([[1.0, 0.0], [0.3, 0.9]]),
             p=1.0, a=1.0, b=1.0,
         )
-        self._check_ef_contract(j)
+        self._check_log_partition(j)
+        self._check_grad_matches_expectation(j)
 
     def test_gh_rvs(self):
         j = JointGeneralizedHyperbolic(

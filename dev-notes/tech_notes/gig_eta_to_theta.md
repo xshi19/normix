@@ -40,8 +40,8 @@ was never the failure mode (S10: the Hessian was).
 
 ## Joint Distribution Expectation Parameters
 
-The joint distribution `JointNormalMixture` computes `expectation_params()` via `jax.grad`
-on the joint log-partition, which parameterizes the subordinator through the GIG limit
-(e.g., b → ε for VG). This can yield numerically inaccurate values for E[Y] when the
-subordinator is at a degenerate limit. For theoretical moment computation (E[X], Cov[X]),
-use `subordinator().mean()` and `subordinator().var()` directly instead.
+Joint VG, NInvG, and NIG implement `expectation_params()` as the ambient GH moment
+$E[t]$, assembled from the subordinator's GIG-layout triple
+$(E[\log Y], E[1/Y], E[Y])$ plus the Gaussian blocks. `jax.grad` of the restricted
+joint log-partition drops the frozen slot and is not that moment. Marginal moments
+$E[X]$ and $\mathrm{Cov}[X]$ have their own formulas on the marginal classes.

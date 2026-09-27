@@ -346,3 +346,11 @@ These are implemented as separate classes in ``normix``:
 - {class}`~normix.distributions.normal_inverse_gaussian.NormalInverseGaussian`
 - {class}`~normix.distributions.variance_gamma.VarianceGamma`
 - {class}`~normix.distributions.normal_inverse_gamma.NormalInverseGamma`
+
+The ambient expectation parameters of the joint special cases are
+{eq}`gh-expectation`, with $(\eta_1, \eta_2, \eta_3)$ the Gamma,
+inverse-gamma, or inverse-Gaussian moments of $Y$. They are not the
+partial derivatives of $\psi$ after the frozen coordinate ($b = 0$,
+$a = 0$, or $p = -1/2$) has been removed. The Fisher information is the
+covariance of the same statistic. Where a moment of $Y$ does not exist,
+the corresponding entry is $+\infty$.

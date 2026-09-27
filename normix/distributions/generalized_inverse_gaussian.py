@@ -360,13 +360,20 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         del boundary_eps
         return self
 
-    def _divergence_eta(self):
-        r"""Degenerate-aware GIG split mirroring the :math:`\psi` branches.
+    def _gig_layout_eta(self, backend: str = "jax"):
+        r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.
 
         At the Gamma (:math:`b\to 0`) or InverseGamma (:math:`a\to 0`) boundary
         the possibly-infinite moment uses the closed-form subordinator split;
-        in the interior all moments are finite Bessel ratios.
+        in the interior all moments are finite Bessel ratios. ``backend`` is
+        accepted for a uniform subordinator signature; the interior branch
+        uses the JAX moment bundle (KL calls this at the default).
         """
+        del backend
+        return self._gig_layout_eta_split()
+
+    def _gig_layout_eta_split(self):
+        r"""Degenerate-aware split. See :meth:`_gig_layout_eta`."""
         p, a, b = self.p, self.a, self.b
         use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
@@ -394,6 +401,10 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         m = jnp.where(use_gamma, m_g, jnp.where(use_invg, m_ig, m_int))
         v = jnp.where(use_gamma, v_g, jnp.where(use_invg, v_ig, v_int))
         return eta, m, v
+
+    def _divergence_eta(self):
+        r"""Degenerate-aware GIG split mirroring the :math:`\psi` branches."""
+        return self._gig_layout_eta()
 
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface
