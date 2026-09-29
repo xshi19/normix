@@ -46,6 +46,9 @@ class JointVarianceGamma(JointNormalMixture):
         from normix.distributions.gamma import Gamma
         return Gamma(alpha=self.alpha, beta=self.beta)
 
+    def _ambient_moment_contract(self) -> bool:
+        return True
+
     def natural_params(self) -> jax.Array:
         r"""
         :math:`\theta = [\alpha-1-d/2,\; -\tfrac{1}{2}\mu^\top\Lambda\mu,\;

@@ -214,8 +214,14 @@ class InverseGamma(ExponentialFamily):
         """Divergence gauge is GIG (``boundary_eps = 0``)."""
         return self.to_gig(boundary_eps=0.0)
 
-    def _divergence_eta(self):
-        r"""GIG-coordinate split: :math:`E[X]` may be :math:`+\infty` for :math:`\alpha\le 1`."""
+    def _gig_layout_eta(self, backend: str = "jax"):
+        r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.
+
+        :math:`E[X]=\beta/(\alpha-1)` for :math:`\alpha>1` and :math:`+\infty`
+        for :math:`0<\alpha\le 1`. ``backend`` is accepted for a uniform
+        subordinator signature; the moments are closed form.
+        """
+        del backend
         alpha, beta = self.alpha, self.beta
         E_log = jnp.log(beta) - jax.scipy.special.digamma(alpha)
         E_inv = alpha / beta
@@ -223,6 +229,28 @@ class InverseGamma(ExponentialFamily):
         eta_fin = jnp.array([E_log, E_inv, 0.0])
         v = jnp.array([0.0, 0.0, 1.0])
         return eta_fin, m, v
+
+    def _divergence_eta(self):
+        r"""GIG-coordinate split: :math:`E[X]` may be :math:`+\infty` for :math:`\alpha\le 1`."""
+        return self._gig_layout_eta()
+
+    def _gig_layout_cov(self, backend: str = "jax") -> jax.Array:
+        r"""Covariance of :math:`(\log X, 1/X, X)`.
+
+        :math:`X=1/W` with :math:`W\sim\mathrm{Gamma}(\alpha,\beta)`, so the
+        matrix is the signed permutation of
+        :meth:`~normix.distributions.gamma.Gamma._b_covariance`. Entries that
+        need :math:`E[X]` (:math:`\alpha\le 1`) or :math:`E[X^2]`
+        (:math:`\alpha\le 2`) are :math:`+\infty`.
+        """
+        del backend
+        from normix.distributions.gamma import Gamma
+        cov_w = Gamma._b_covariance(self.alpha, self.beta)
+        src = jnp.array([0, 2, 1])
+        raw = cov_w[jnp.ix_(src, src)]
+        signs = jnp.array([-1.0, 1.0, 1.0])
+        signed = signs[:, None] * raw * signs[None, :]
+        return jnp.where(jnp.isinf(raw), jnp.inf, signed)
 
     @classmethod
     def from_expectation(

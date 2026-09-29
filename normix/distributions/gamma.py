@@ -189,8 +189,14 @@ class Gamma(ExponentialFamily):
         """Divergence gauge is GIG (``boundary_eps = 0``)."""
         return self.to_gig(boundary_eps=0.0)
 
-    def _divergence_eta(self):
-        r"""GIG-coordinate split: :math:`E[1/X]` may be :math:`+\infty` for :math:`\alpha\le 1`."""
+    def _gig_layout_eta(self, backend: str = "jax"):
+        r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.
+
+        :math:`E[1/X]=\beta/(\alpha-1)` for :math:`\alpha>1` and :math:`+\infty`
+        for :math:`0<\alpha\le 1`. ``backend`` is accepted for a uniform
+        subordinator signature; the moments are closed form.
+        """
+        del backend
         alpha, beta = self.alpha, self.beta
         E_log = jax.scipy.special.digamma(alpha) - jnp.log(beta)
         E_X = alpha / beta
@@ -198,6 +204,46 @@ class Gamma(ExponentialFamily):
         eta_fin = jnp.array([E_log, 0.0, E_X])
         v = jnp.array([0.0, 1.0, 0.0])
         return eta_fin, m, v
+
+    def _divergence_eta(self):
+        r"""GIG-coordinate split: :math:`E[1/X]` may be :math:`+\infty` for :math:`\alpha\le 1`."""
+        return self._gig_layout_eta()
+
+    @staticmethod
+    def _b_covariance(alpha: jax.Array, beta: jax.Array) -> jax.Array:
+        r"""Covariance of :math:`(\log X, 1/X, X)` for :math:`\mathrm{Gamma}(\alpha,\beta)`.
+
+        Entries that need :math:`E[X^{-1}]` (:math:`\alpha\le 1`) or
+        :math:`E[X^{-2}]` (:math:`\alpha\le 2`) are :math:`+\infty`.
+        """
+        alpha = jnp.asarray(alpha, dtype=jnp.float64)
+        beta = jnp.asarray(beta, dtype=jnp.float64)
+        var_log = jax.scipy.special.polygamma(1, alpha)
+        cov_log_y = 1.0 / beta
+        var_y = alpha / beta ** 2
+
+        inv_ok = alpha > 1.0
+        a1 = jnp.where(inv_ok, alpha, 2.0)
+        cov_log_inv = -beta / (a1 - 1.0) ** 2
+        cov_y_inv = -1.0 / (a1 - 1.0)
+
+        inv2_ok = alpha > 2.0
+        a2 = jnp.where(inv2_ok, alpha, 3.0)
+        var_inv = beta ** 2 / ((a2 - 1.0) ** 2 * (a2 - 2.0))
+
+        def _finite(ok: jax.Array, val: jax.Array) -> jax.Array:
+            return jnp.where(ok, val, jnp.inf)
+
+        return jnp.array([
+            [var_log, _finite(inv_ok, cov_log_inv), cov_log_y],
+            [_finite(inv_ok, cov_log_inv), _finite(inv2_ok, var_inv), _finite(inv_ok, cov_y_inv)],
+            [cov_log_y, _finite(inv_ok, cov_y_inv), var_y],
+        ])
+
+    def _gig_layout_cov(self, backend: str = "jax") -> jax.Array:
+        r"""Covariance of :math:`(\log X, 1/X, X)` in GIG order."""
+        del backend
+        return self._b_covariance(self.alpha, self.beta)
 
     @classmethod
     def from_expectation(
