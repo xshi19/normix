@@ -12,9 +12,11 @@
 ## 1. One Function, Three Parametrizations
 
 Each distribution is described by a single convex log-partition
-$\psi(\theta)$. Everything else — densities, expectation parameters,
-Fisher information, Bregman inversion — is derived from it. Three
-parametrizations form a triangle:
+$\psi(\theta)$. Densities and the $\eta\to\theta$ map are derived from it.
+On a full exponential family, $\eta = \nabla\psi(\theta)$ and the Fisher
+information is $\nabla^2\psi(\theta)$. Joint variance-gamma,
+normal-inverse-gamma, and normal-inverse-Gaussian are the exception in
+§ 2.4. The three parametrizations still form a triangle:
 
 ```
 classical (μ, σ², α, β, …)   ←→   natural θ   ←→   expectation η = ∇ψ(θ)
@@ -75,6 +77,26 @@ The triad remains three θ-space classmethods; the solver still applies the
 φ↔θ chain rule (S2). A combined `_grad_hess` on the distribution would
 re-introduce a φ-space chain rule the distribution must understand, and is
 not used.
+
+### 2.4 Ambient moments on the curved joints
+
+Joint variance-gamma, normal-inverse-gamma, and normal-inverse-Gaussian
+keep the generalized-hyperbolic statistic
+$t = [\log y,\, 1/y,\, y,\, x,\, x/y,\, \mathrm{vec}(xx^\top/y)]$.
+`expectation_params` and `fisher_information` return $E[t]$ and
+$\mathrm{Cov}[t]$ under the special-case law. Both are assembled from the
+subordinator's moments of $(\log Y, 1/Y, Y)$ in that GIG order, plus the
+Gaussian conditional blocks. An entry that needs a moment of $Y$ which
+does not exist is $+\infty$.
+
+Differentiating the restricted log-partition is the wrong source: that
+$\psi$ ignores the frozen slot, so
+$\nabla\psi_{\mathrm{ext}} = \nabla\psi_{\mathrm{GH}} - m v$, and the
+Hessian is indefinite for variance-gamma and normal-inverse-gamma.
+Lifting the law to joint generalized hyperbolic and differentiating there
+has the same defect at $b = 0$ or $a = 0$. Joint generalized hyperbolic
+itself stays on the triad. In the interior, $\nabla\psi = E[t]$ and
+$\nabla^2\psi = \mathrm{Cov}[t]$.
 
 ---
 

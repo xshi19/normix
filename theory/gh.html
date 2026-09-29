@@ -747,6 +747,13 @@ discussed in the <a class="reference internal" href="gig.html"><span class="doc"
 <li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.variance_gamma.VarianceGamma" title="normix.distributions.variance_gamma.VarianceGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">VarianceGamma</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.normal_inverse_gamma.NormalInverseGamma" title="normix.distributions.normal_inverse_gamma.NormalInverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalInverseGamma</span></code></a></p></li>
 </ul>
+<p>The ambient expectation parameters of the joint special cases are
+<a class="reference internal" href="#equation-gh-expectation">(8)</a>, with <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> the Gamma,
+inverse-gamma, or inverse-Gaussian moments of <span class="math notranslate nohighlight">\(Y\)</span>. They are not the
+partial derivatives of <span class="math notranslate nohighlight">\(\psi\)</span> after the frozen coordinate (<span class="math notranslate nohighlight">\(b = 0\)</span>,
+<span class="math notranslate nohighlight">\(a = 0\)</span>, or <span class="math notranslate nohighlight">\(p = -1/2\)</span>) has been removed. The Fisher information is the
+covariance of the same statistic. Where a moment of <span class="math notranslate nohighlight">\(Y\)</span> does not exist,
+the corresponding entry is <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
 </section>
 </section>
 

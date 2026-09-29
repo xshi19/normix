@@ -460,6 +460,8 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.to_joint_generalized_hyperbolic()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.expectation_params"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.expectation_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.fisher_information"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.fisher_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>
@@ -603,7 +605,10 @@ normal quadratic forms so that <span class="math notranslate nohighlight">\(\the
 <p><strong>Log-partition:</strong></p>
 <div class="math notranslate nohighlight">
 \[\psi = \psi_{\mathrm{sub}}(p, a, b) + \tfrac{1}{2}\log|\Sigma| + \mu^\top\Sigma^{-1}\gamma\]</div>
-<p><strong>Expectation parameters (EM E-step quantities):</strong></p>
+<p><strong>Expectation parameters</strong> (also the EM E-step moments). Joint VG, NInvG,
+and NIG return these from <code class="docutils literal notranslate"><span class="pre">expectation_params</span></code>; the restricted
+log-partition does not differentiate the frozen GIG slot. Joint GH
+returns <span class="math notranslate nohighlight">\(\nabla\psi\)</span>, which agrees with them in the interior.</p>
 <div class="math notranslate nohighlight">
 \[\eta_1 = E[\log Y], \quad \eta_2 = E[1/Y], \quad \eta_3 = E[Y]\]</div>
 <div class="math notranslate nohighlight">
@@ -671,6 +676,44 @@ the Gamma/InvGamma boundary exactly (required for divergence gauges).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>boundary_eps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.expectation_params">
+<span class="sig-name descname"><span class="pre">expectation_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.expectation_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.expectation_params" title="Link to this definition">#</a></dt>
+<dd><p>Ambient <span class="math notranslate nohighlight">\(E[t]\)</span> for VG, NInvG, and NIG; <span class="math notranslate nohighlight">\(\nabla\psi\)</span> for Joint GH.</p>
+<p>The special cases keep the GH statistic
+<span class="math notranslate nohighlight">\(t = [\log y, 1/y, y, x, x/y, \mathrm{vec}(xx^\top/y)]\)</span>.
+Their restricted log-partition ignores the frozen slot, so
+<span class="math notranslate nohighlight">\(\nabla\psi\)</span> is not <span class="math notranslate nohighlight">\(E[t]\)</span>. The value is the subordinator
+GIG-layout triple plus the Gaussian blocks, with <span class="math notranslate nohighlight">\(+\infty\)</span> where
+the moment does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.mixtures.joint.JointNormalMixture.fisher_information">
+<span class="sig-name descname"><span class="pre">fisher_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/joint.html#JointNormalMixture.fisher_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.joint.JointNormalMixture.fisher_information" title="Link to this definition">#</a></dt>
+<dd><p>Ambient <span class="math notranslate nohighlight">\(\mathrm{Cov}[t]\)</span> for VG, NInvG, and NIG; <span class="math notranslate nohighlight">\(\nabla^2\psi\)</span> for Joint GH.</p>
+<p>Law of total covariance on <span class="math notranslate nohighlight">\(b = (\log Y, 1/Y, Y)\)</span>: the
+subordinator supplies <span class="math notranslate nohighlight">\(\mathrm{Cov}(b)\)</span>, and this class adds
+<span class="math notranslate nohighlight">\(E[\mathrm{Cov}(t\mid Y)]\)</span>. An entry touched by a nonexistent
+second moment of <span class="math notranslate nohighlight">\(Y\)</span> is <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1949,6 +1992,8 @@ This keeps the contract narrow (one storage form per family).</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.L_Sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.L_Sigma</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.subordinator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.to_joint_generalized_hyperbolic()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.expectation_params"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.expectation_params()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.fisher_information"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.fisher_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.d"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.d</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.sigma()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.mixtures.joint.JointNormalMixture.log_det_sigma"><code class="docutils literal notranslate"><span class="pre">JointNormalMixture.log_det_sigma()</span></code></a></li>

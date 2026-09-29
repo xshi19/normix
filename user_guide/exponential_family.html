@@ -537,8 +537,13 @@ produce a distribution. The walkthrough in
 \nabla\psi(\theta) = \mathbb{E}[t(X)] = \eta, \qquad
 \nabla^2\psi(\theta) = \operatorname{Cov}[t(X)] = I(\theta),
 \]</div>
-<p>the second being the Fisher information. Each distribution therefore provides a
-<strong>triad</strong> — log-partition, gradient, Hessian — in two backends:</p>
+<p>the second being the Fisher information. Joint variance-gamma,
+normal-inverse-gamma, and normal-inverse-Gaussian keep <span class="math notranslate nohighlight">\(E[t]\)</span> and
+<span class="math notranslate nohighlight">\(\operatorname{Cov}[t]\)</span> for the generalized-hyperbolic statistic, but those
+values are the special-case moments, not derivatives of the restricted
+log-partition. Joint generalized hyperbolic uses the derivatives. Each
+distribution therefore provides a <strong>triad</strong> — log-partition, gradient,
+Hessian — in two backends:</p>
 <ul class="simple">
 <li><p>a <strong><a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a></strong> backend (<code class="docutils literal notranslate"><span class="pre">expectation_params()</span></code>,
 <code class="docutils literal notranslate"><span class="pre">fisher_information()</span></code>, default <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code>) that is JIT-able,

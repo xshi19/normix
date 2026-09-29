@@ -458,6 +458,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ambient-moments-on-the-curved-joints">2.4 Ambient moments on the curved joints</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>
@@ -493,9 +494,11 @@ consistent, and how these primitives plug into the η→θ Bregman solver.</p>
 <section id="one-function-three-parametrizations">
 <h2>1. One Function, Three Parametrizations<a class="headerlink" href="#one-function-three-parametrizations" title="Link to this heading">#</a></h2>
 <p>Each distribution is described by a single convex log-partition
-<span class="math notranslate nohighlight">\(\psi(\theta)\)</span>. Everything else — densities, expectation parameters,
-Fisher information, Bregman inversion — is derived from it. Three
-parametrizations form a triangle:</p>
+<span class="math notranslate nohighlight">\(\psi(\theta)\)</span>. Densities and the <span class="math notranslate nohighlight">\(\eta\to\theta\)</span> map are derived from it.
+On a full exponential family, <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span> and the Fisher
+information is <span class="math notranslate nohighlight">\(\nabla^2\psi(\theta)\)</span>. Joint variance-gamma,
+normal-inverse-gamma, and normal-inverse-Gaussian are the exception in
+§ 2.4. The three parametrizations still form a triangle:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>classical (μ, σ², α, β, …)   ←→   natural θ   ←→   expectation η = ∇ψ(θ)
                   via from_classical / natural_params                ↑
                                                                 from_expectation
@@ -567,6 +570,25 @@ The triad remains three θ-space classmethods; the solver still applies the
 φ↔θ chain rule (S2). A combined <code class="docutils literal notranslate"><span class="pre">_grad_hess</span></code> on the distribution would
 re-introduce a φ-space chain rule the distribution must understand, and is
 not used.</p>
+</section>
+<section id="ambient-moments-on-the-curved-joints">
+<h3>2.4 Ambient moments on the curved joints<a class="headerlink" href="#ambient-moments-on-the-curved-joints" title="Link to this heading">#</a></h3>
+<p>Joint variance-gamma, normal-inverse-gamma, and normal-inverse-Gaussian
+keep the generalized-hyperbolic statistic
+<span class="math notranslate nohighlight">\(t = [\log y,\, 1/y,\, y,\, x,\, x/y,\, \mathrm{vec}(xx^\top/y)]\)</span>.
+<code class="docutils literal notranslate"><span class="pre">expectation_params</span></code> and <code class="docutils literal notranslate"><span class="pre">fisher_information</span></code> return <span class="math notranslate nohighlight">\(E[t]\)</span> and
+<span class="math notranslate nohighlight">\(\mathrm{Cov}[t]\)</span> under the special-case law. Both are assembled from the
+subordinator’s moments of <span class="math notranslate nohighlight">\((\log Y, 1/Y, Y)\)</span> in that GIG order, plus the
+Gaussian conditional blocks. An entry that needs a moment of <span class="math notranslate nohighlight">\(Y\)</span> which
+does not exist is <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
+<p>Differentiating the restricted log-partition is the wrong source: that
+<span class="math notranslate nohighlight">\(\psi\)</span> ignores the frozen slot, so
+<span class="math notranslate nohighlight">\(\nabla\psi_{\mathrm{ext}} = \nabla\psi_{\mathrm{GH}} - m v\)</span>, and the
+Hessian is indefinite for variance-gamma and normal-inverse-gamma.
+Lifting the law to joint generalized hyperbolic and differentiating there
+has the same defect at <span class="math notranslate nohighlight">\(b = 0\)</span> or <span class="math notranslate nohighlight">\(a = 0\)</span>. Joint generalized hyperbolic
+itself stays on the triad. In the interior, <span class="math notranslate nohighlight">\(\nabla\psi = E[t]\)</span> and
+<span class="math notranslate nohighlight">\(\nabla^2\psi = \mathrm{Cov}[t]\)</span>.</p>
 </section>
 </section>
 <hr class="docutils" />
@@ -790,6 +812,7 @@ and are hard to override.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-classmethod-for-the-triad">2.1 Why <code class="docutils literal notranslate"><span class="pre">@classmethod</span></code> for the triad</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ambient-moments-on-the-curved-joints">2.4 Ambient moments on the curved joints</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>

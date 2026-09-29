@@ -640,8 +640,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Divergence gauge is GIG (``boundary_eps = 0``).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gig</span><span class="p">(</span><span class="n">boundary_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-coordinate split: :math:`E[1/X]` may be :math:`+\infty` for :math:`\alpha\le 1`.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.</span>
+
+<span class="sd">        :math:`E[1/X]=\beta/(\alpha-1)` for :math:`\alpha&gt;1` and :math:`+\infty`</span>
+<span class="sd">        for :math:`0&lt;\alpha\le 1`. ``backend`` is accepted for a uniform</span>
+<span class="sd">        subordinator signature; the moments are closed form.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">backend</span>
         <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span>
         <span class="n">E_log</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span>
         <span class="n">E_X</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">beta</span>
@@ -649,6 +655,46 @@
         <span class="n">eta_fin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">E_X</span><span class="p">])</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">eta_fin</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-coordinate split: :math:`E[1/X]` may be :math:`+\infty` for :math:`\alpha\le 1`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gig_layout_eta</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_b_covariance</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance of :math:`(\log X, 1/X, X)` for :math:`\mathrm{Gamma}(\alpha,\beta)`.</span>
+
+<span class="sd">        Entries that need :math:`E[X^{-1}]` (:math:`\alpha\le 1`) or</span>
+<span class="sd">        :math:`E[X^{-2}]` (:math:`\alpha\le 2`) are :math:`+\infty`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">var_log</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">polygamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">cov_log_y</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">beta</span>
+        <span class="n">var_y</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">beta</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="n">inv_ok</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mf">1.0</span>
+        <span class="n">a1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inv_ok</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">cov_log_inv</span> <span class="o">=</span> <span class="o">-</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="n">a1</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">cov_y_inv</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">a1</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="n">inv2_ok</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mf">2.0</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inv2_ok</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="n">var_inv</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">((</span><span class="n">a2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a2</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">))</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_finite</span><span class="p">(</span><span class="n">ok</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="n">var_log</span><span class="p">,</span> <span class="n">_finite</span><span class="p">(</span><span class="n">inv_ok</span><span class="p">,</span> <span class="n">cov_log_inv</span><span class="p">),</span> <span class="n">cov_log_y</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">_finite</span><span class="p">(</span><span class="n">inv_ok</span><span class="p">,</span> <span class="n">cov_log_inv</span><span class="p">),</span> <span class="n">_finite</span><span class="p">(</span><span class="n">inv2_ok</span><span class="p">,</span> <span class="n">var_inv</span><span class="p">),</span> <span class="n">_finite</span><span class="p">(</span><span class="n">inv_ok</span><span class="p">,</span> <span class="n">cov_y_inv</span><span class="p">)],</span>
+            <span class="p">[</span><span class="n">cov_log_y</span><span class="p">,</span> <span class="n">_finite</span><span class="p">(</span><span class="n">inv_ok</span><span class="p">,</span> <span class="n">cov_y_inv</span><span class="p">),</span> <span class="n">var_y</span><span class="p">],</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance of :math:`(\log X, 1/X, X)` in GIG order.&quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">backend</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_b_covariance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Gamma.from_expectation">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.gamma.Gamma.from_expectation">[docs]</a>

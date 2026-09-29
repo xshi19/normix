@@ -458,6 +458,9 @@
         <span class="k">return</span> <span class="n">InverseGaussian</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_ig</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ambient_moment_contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
 <div class="viewcode-block" id="JointNormalInverseGaussian.natural_params">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.normal_inverse_gaussian.JointNormalInverseGaussian.natural_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">natural_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>

@@ -772,13 +772,20 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Degenerate-aware GIG split mirroring the :math:`\psi` branches.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.</span>
 
 <span class="sd">        At the Gamma (:math:`b\to 0`) or InverseGamma (:math:`a\to 0`) boundary</span>
 <span class="sd">        the possibly-infinite moment uses the closed-form subordinator split;</span>
-<span class="sd">        in the interior all moments are finite Bessel ratios.</span>
+<span class="sd">        in the interior all moments are finite Bessel ratios. ``backend`` is</span>
+<span class="sd">        accepted for a uniform subordinator signature; the interior branch</span>
+<span class="sd">        uses the JAX moment bundle (KL calls this at the default).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">backend</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gig_layout_eta_split</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_eta_split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Degenerate-aware split. See :meth:`_gig_layout_eta`.&quot;&quot;&quot;</span>
         <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span>
         <span class="n">use_gamma</span><span class="p">,</span> <span class="n">use_invg</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gig_degeneracy_flags</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">jnp</span><span class="p">)</span>
 
@@ -806,6 +813,10 @@
         <span class="n">m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_gamma</span><span class="p">,</span> <span class="n">m_g</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_invg</span><span class="p">,</span> <span class="n">m_ig</span><span class="p">,</span> <span class="n">m_int</span><span class="p">))</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_gamma</span><span class="p">,</span> <span class="n">v_g</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use_invg</span><span class="p">,</span> <span class="n">v_ig</span><span class="p">,</span> <span class="n">v_int</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">eta</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Degenerate-aware GIG split mirroring the :math:`\psi` branches.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gig_layout_eta</span><span class="p">()</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Tier 1: Exponential family interface</span>

@@ -665,8 +665,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Divergence gauge is GIG (``boundary_eps = 0``).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_gig</span><span class="p">(</span><span class="n">boundary_eps</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-coordinate split: :math:`E[X]` may be :math:`+\infty` for :math:`\alpha\le 1`.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.</span>
+
+<span class="sd">        :math:`E[X]=\beta/(\alpha-1)` for :math:`\alpha&gt;1` and :math:`+\infty`</span>
+<span class="sd">        for :math:`0&lt;\alpha\le 1`. ``backend`` is accepted for a uniform</span>
+<span class="sd">        subordinator signature; the moments are closed form.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">backend</span>
         <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span>
         <span class="n">E_log</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
         <span class="n">E_inv</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">beta</span>
@@ -674,6 +680,28 @@
         <span class="n">eta_fin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">E_log</span><span class="p">,</span> <span class="n">E_inv</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">eta_fin</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_divergence_eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GIG-coordinate split: :math:`E[X]` may be :math:`+\infty` for :math:`\alpha\le 1`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gig_layout_eta</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Covariance of :math:`(\log X, 1/X, X)`.</span>
+
+<span class="sd">        :math:`X=1/W` with :math:`W\sim\mathrm{Gamma}(\alpha,\beta)`, so the</span>
+<span class="sd">        matrix is the signed permutation of</span>
+<span class="sd">        :meth:`~normix.distributions.gamma.Gamma._b_covariance`. Entries that</span>
+<span class="sd">        need :math:`E[X]` (:math:`\alpha\le 1`) or :math:`E[X^2]`</span>
+<span class="sd">        (:math:`\alpha\le 2`) are :math:`+\infty`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">backend</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
+        <span class="n">cov_w</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">_b_covariance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">cov_w</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">src</span><span class="p">)]</span>
+        <span class="n">signs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="n">signs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">raw</span> <span class="o">*</span> <span class="n">signs</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">signed</span><span class="p">)</span>
 
 <div class="viewcode-block" id="InverseGamma.from_expectation">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.from_expectation">[docs]</a>
