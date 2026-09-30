@@ -47,6 +47,18 @@ class InverseGamma(ExponentialFamily):
         self.alpha = jnp.asarray(alpha, dtype=jnp.float64)
         self.beta = jnp.asarray(beta, dtype=jnp.float64)
 
+    @classmethod
+    def _on_positive_support(cls) -> bool:
+        return True
+
+    def _log_density_at_zero(self) -> jax.Array:
+        r"""Limit as :math:`x \to 0^+`: :math:`-\infty` for :math:`\beta > 0`.
+
+        :math:`e^{-\beta/x}` dominates every power. :math:`\beta = 0` leaves
+        :math:`x^{-\alpha-1}`, which diverges.
+        """
+        return jnp.where(self.beta > 0.0, -jnp.inf, jnp.inf)
+
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
@@ -163,8 +175,8 @@ class InverseGamma(ExponentialFamily):
         return self.beta / (self.alpha + 1.0)
 
     def cdf(self, x: jax.Array) -> jax.Array:
-        x = jnp.asarray(x, dtype=jnp.float64)
-        return 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / x)
+        return self._cdf_on_positive_line(
+            x, lambda z: 1.0 - jax.scipy.special.gammainc(self.alpha, self.beta / z))
 
     def ppf(self, q: jax.Array) -> jax.Array:
         r"""Quantile function :math:`F^{-1}(q) = \beta / \mathrm{gammaincinv}(\alpha, 1-q)`.

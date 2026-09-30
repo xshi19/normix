@@ -348,6 +348,24 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         self.a = jnp.asarray(a, dtype=jnp.float64)
         self.b = jnp.asarray(b, dtype=jnp.float64)
 
+    @classmethod
+    def _on_positive_support(cls) -> bool:
+        return True
+
+    def _log_density_at_zero(self) -> jax.Array:
+        r"""Limit as :math:`x \to 0^+`.
+
+        :math:`b > 0` gives :math:`-\infty` because :math:`e^{-b/(2x)}`
+        dominates. :math:`b = 0` is :math:`\mathrm{Gamma}(p, a/2)`.
+        """
+        log_rate = jnp.log(self.a / 2.0)
+        gamma_end = jnp.where(
+            self.p < 1.0,
+            jnp.inf,
+            jnp.where(self.p == 1.0, log_rate, -jnp.inf),
+        )
+        return jnp.where(self.b > 0.0, -jnp.inf, gamma_end)
+
     def to_gig(self, *, boundary_eps: float = 0.0) -> "GeneralizedInverseGaussian":
         r"""Identity embedding into the GIG family.
 
@@ -762,8 +780,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         JIT-compatible: the degeneracy test uses :func:`jax.lax.cond`
         (no host ``float()`` casts).
         """
-        x = jnp.asarray(x, dtype=jnp.float64)
-        return self._cdf_or_ppf(x, inverse=False)
+        return self._cdf_on_positive_line(
+            x, lambda z: self._cdf_or_ppf(z, inverse=False))
 
     def ppf(self, q: jax.Array) -> jax.Array:
         r"""Quantile (inverse CDF) :math:`F^{-1}(q)` via the PINV table.
