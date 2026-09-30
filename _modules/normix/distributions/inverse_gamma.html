@@ -456,6 +456,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_positive_support</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_density_at_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Limit as :math:`x \to 0^+`: :math:`-\infty` for :math:`\beta &gt; 0`.</span>
+
+<span class="sd">        :math:`e^{-\beta/x}` dominates every power. :math:`\beta = 0` leaves</span>
+<span class="sd">        :math:`x^{-\alpha-1}`, which diverges.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Tier 1: Exponential family interface</span>
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -601,8 +613,8 @@
 <div class="viewcode-block" id="InverseGamma.cdf">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdf_on_positive_line</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="n">z</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="InverseGamma.ppf">

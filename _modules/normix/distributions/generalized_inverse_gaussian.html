@@ -757,6 +757,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_positive_support</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_density_at_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Limit as :math:`x \to 0^+`.</span>
+
+<span class="sd">        :math:`b &gt; 0` gives :math:`-\infty` because :math:`e^{-b/(2x)}`</span>
+<span class="sd">        dominates. :math:`b = 0` is :math:`\mathrm{Gamma}(p, a/2)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_rate</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">gamma_end</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">log_rate</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">gamma_end</span><span class="p">)</span>
+
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_gig">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.to_gig">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">boundary_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
@@ -1206,8 +1224,8 @@
 <span class="sd">        JIT-compatible: the degeneracy test uses :func:`jax.lax.cond`</span>
 <span class="sd">        (no host ``float()`` casts).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdf_or_ppf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdf_on_positive_line</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdf_or_ppf</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.ppf">

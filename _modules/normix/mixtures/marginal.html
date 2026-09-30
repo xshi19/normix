@@ -1033,25 +1033,47 @@
 <span class="sd">            \eta_5 = \mu\,E[1/Y] + \gamma, \quad</span>
 <span class="sd">            \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]</span>
 <span class="sd">                     + \mu\gamma^\top + \gamma\mu^\top</span>
+
+<span class="sd">        When :math:`\varepsilon\|\mu\|^2|E[1/Y]|` exceeds</span>
+<span class="sd">        :data:`~normix.utils.constants.MOMENT_CANCEL_ATOL`, those three</span>
+<span class="sd">        moments are stored about :math:`\mu` instead. Float64 cannot hold</span>
+<span class="sd">        both :math:`s_1\mu\mu^\top` and :math:`\Sigma`; the centered store</span>
+<span class="sd">        is what the unchanged M-step needs in order to return :math:`\Sigma`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MOMENT_CANCEL_ATOL</span>
 
         <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
 
+        <span class="c1"># Raw moments are the population values. When ε ‖μ‖² |E[1/Y]| exceeds</span>
+        <span class="c1"># MOMENT_CANCEL_ATOL a float64 store of s6 has already lost Σ, so</span>
+        <span class="c1"># store the same moments about μ. The M-step is unchanged and</span>
+        <span class="c1"># returns that Σ; there is no center field on η.</span>
+        <span class="n">cancel</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span>
+                  <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">mu</span><span class="p">)))</span>
+        <span class="n">about_mu</span> <span class="o">=</span> <span class="n">cancel</span> <span class="o">&gt;</span> <span class="n">MOMENT_CANCEL_ATOL</span>
+        <span class="n">E_X_raw</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="n">E_X_about</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="n">E_XiY_raw</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">E_inv_Y</span> <span class="o">+</span> <span class="n">gamma</span>
+        <span class="n">E_XiY_about</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="n">cross</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">E_XXT_raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma</span>
+                     <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_Y</span>
+                     <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
+                     <span class="o">+</span> <span class="n">cross</span><span class="p">)</span>
+        <span class="n">E_XXT_about</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
+
         <span class="k">return</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
             <span class="n">E_log_Y</span><span class="o">=</span><span class="n">E_log_Y</span><span class="p">,</span>
             <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">E_inv_Y</span><span class="p">,</span>
             <span class="n">E_Y</span><span class="o">=</span><span class="n">E_Y</span><span class="p">,</span>
-            <span class="n">E_X</span><span class="o">=</span><span class="n">mu</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span>
-            <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">mu</span> <span class="o">*</span> <span class="n">E_inv_Y</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">,</span>
-            <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="p">(</span><span class="n">sigma</span>
-                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_Y</span>
-                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
-                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span>
-                         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">)),</span>
+            <span class="n">E_X</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">about_mu</span><span class="p">,</span> <span class="n">E_X_about</span><span class="p">,</span> <span class="n">E_X_raw</span><span class="p">),</span>
+            <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">about_mu</span><span class="p">,</span> <span class="n">E_XiY_about</span><span class="p">,</span> <span class="n">E_XiY_raw</span><span class="p">),</span>
+            <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">about_mu</span><span class="p">,</span> <span class="n">E_XXT_about</span><span class="p">,</span> <span class="n">E_XXT_raw</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 

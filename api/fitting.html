@@ -751,8 +751,20 @@ stay compatible with the <code class="docutils literal notranslate"><span class=
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Data array, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>EMResult with fitted model, convergence diagnostics, and timing.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>EMResult with fitted model, convergence diagnostics, and timing.</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> is centered at its sample mean before any statistic is</p></li>
+<li><p>accumulated, and that mean is added back onto <code class="docutils literal notranslate"><span class="pre">mu</span></code>. <code class="docutils literal notranslate"><span class="pre">gamma</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Sigma</span></code>, and the subordinator are unchanged by the shift. A</p></li>
+<li><p><em>shrinkage target equal to the initial model’s own η is rebuilt</em></p></li>
+<li><p><em>in these coordinates; any other target is translated as a</em></p></li>
+<li><p><em>population moment.</em></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><em>EMResult</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -793,6 +805,9 @@ side effects each step.</p>
 <dt class="sig sig-object py" id="normix.fitting.em.IncrementalEMFitter.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#IncrementalEMFitter.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.IncrementalEMFitter.fit" title="Link to this definition">#</a></dt>
 <dd><p>Run incremental EM. Returns <a class="reference internal" href="#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EMResult</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">X</span></code> is centered at its sample mean for the whole stream, and
+that mean is added back onto <code class="docutils literal notranslate"><span class="pre">mu</span></code>. A shrinkage target equal to
+the initial model’s own η is rebuilt in these coordinates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

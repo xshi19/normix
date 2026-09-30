@@ -615,6 +615,12 @@ sufficient_statistics, log_base_measure</p>
 <dt class="sig sig-object py" id="normix.exponential_family.ExponentialFamily.log_prob">
 <span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.log_prob" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)\)</span>, single observation.</p>
+<p>On a positive support, <span class="math notranslate nohighlight">\(t(x)\)</span> is evaluated at
+<span class="math notranslate nohighlight">\(x_{\mathrm{safe}} = x\)</span> if <span class="math notranslate nohighlight">\(x &gt; 0\)</span> and at <span class="math notranslate nohighlight">\(1\)</span>
+otherwise, then the value is replaced by the endpoint limit at
+<span class="math notranslate nohighlight">\(x = 0\)</span> and by <span class="math notranslate nohighlight">\(-\infty\)</span> for <span class="math notranslate nohighlight">\(x &lt; 0\)</span>. Masking
+the input and the value is required: an output-only <code class="docutils literal notranslate"><span class="pre">where</span></code>
+leaves NaN parameter gradients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -893,8 +899,16 @@ via <code class="docutils literal notranslate"><span class="pre">solve_bregman</
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print solver summary.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – On a positive support, if a concrete <code class="docutils literal notranslate"><span class="pre">X</span></code> is empty, contains a
+    non-finite or non-positive value, has a single observation, or
+    is constant. Constant data has no finite MLE: the Jensen gap
+    <span class="math notranslate nohighlight">\(\log\bar x - \overline{\log x}\)</span> is 0. Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> /
+    <code class="docutils literal notranslate"><span class="pre">vmap</span></code> the sample is a tracer and this check is skipped, so
+    a traced call keeps the previous contract.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a></p>
 </dd>
 </dl>
 </dd></dl>

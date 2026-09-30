@@ -417,9 +417,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
@@ -439,6 +440,84 @@
         <span class="n">k</span><span class="p">,</span> <span class="n">sk</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
         <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sk</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_translate_location_moments</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shift :math:`(s_4, s_5, s_6)` into coordinates where :math:`X` lost ``center``.</span>
+
+<span class="sd">    :math:`s_1, s_2, s_3` are invariant. Applied to a shrinkage target</span>
+<span class="sd">    before a centered fit; the η pytree gains no center field.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span>
+    <span class="n">s4</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X</span> <span class="o">-</span> <span class="n">r</span>
+    <span class="n">s5</span> <span class="o">=</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span> <span class="o">-</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">r</span>
+    <span class="n">s6</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">eta</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span>
+        <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">s1</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">E_X</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span><span class="p">),</span>
+        <span class="n">eta</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_same_eta</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when two η pytrees have the same structure and the same values.&quot;&quot;&quot;</span>
+    <span class="n">leaves_a</span><span class="p">,</span> <span class="n">treedef_a</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">leaves_b</span><span class="p">,</span> <span class="n">treedef_b</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">treedef_a</span> <span class="o">!=</span> <span class="n">treedef_b</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">leaves_a</span><span class="p">,</span> <span class="n">leaves_b</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">))):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_recenter_eta_update</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``rule`` with its prior η in the centered coordinates.</span>
+
+<span class="sd">    ``model`` has already had ``center`` subtracted from ``mu``. A target</span>
+<span class="sd">    equal to that model&#39;s own ``compute_eta_from_model`` (before the</span>
+<span class="sd">    shift) is rebuilt from the centered model. Rebuilding is required</span>
+<span class="sd">    when the store is about :math:`\\mu`: those moments do not contain</span>
+<span class="sd">    :math:`\\mu`, and translating them by the sample mean puts</span>
+<span class="sd">    :math:`s_1 c c^\\top` back into :math:`s_6`. Any other target is</span>
+<span class="sd">    shifted as a population moment. Factor latent statistics on that</span>
+<span class="sd">    path are recomputed from the shifted six. Rules without an ``eta0``</span>
+<span class="sd">    are unchanged.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">rule</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="s2">&quot;eta0&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">rule</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">center</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_same_eta</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">eta0</span><span class="p">,</span> <span class="n">origin</span><span class="o">.</span><span class="n">compute_eta_from_model</span><span class="p">()):</span>
+        <span class="n">eta0</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_eta_from_model</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eta0</span> <span class="o">=</span> <span class="n">_translate_location_moments</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">eta0</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">eta0</span><span class="p">,</span> <span class="s2">&quot;E_ZZT&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;_z_stats_from_six&quot;</span><span class="p">):</span>
+            <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span>
+                <span class="n">eta0</span><span class="o">.</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">eta0</span><span class="o">.</span><span class="n">E_Y</span><span class="p">,</span> <span class="n">eta0</span><span class="o">.</span><span class="n">E_X</span><span class="p">,</span>
+                <span class="n">eta0</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">eta0</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">eta0</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">e</span><span class="o">.</span><span class="n">E_XZT_inv_sqrtY</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_Z_inv_sqrtY</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_Z_sqrtY</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_ZZT</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">eta0</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span><span class="p">),</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">rule</span><span class="p">)(</span><span class="n">rule</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">eta0</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_restore_location</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the sample mean back onto ``result.model.mu``.&quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">center</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -609,35 +688,51 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        EMResult with fitted model, convergence diagnostics, and timing.</span>
+
+<span class="sd">        ``X`` is centered at its sample mean before any statistic is</span>
+<span class="sd">        accumulated, and that mean is added back onto ``mu``. ``gamma``,</span>
+<span class="sd">        ``Sigma``, and the subordinator are unchanged by the shift. A</span>
+<span class="sd">        shrinkage target equal to the initial model&#39;s own η is rebuilt</span>
+<span class="sd">        in these coordinates; any other target is translated as a</span>
+<span class="sd">        population moment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">center</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+        <span class="n">saved_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">_recenter_eta_update</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">saved_rule</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
 
-        <span class="n">target_log_det</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
-            <span class="n">target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">target_log_det</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
+                <span class="n">target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
-        <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;em&#39;</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&lt;=</span> <span class="mi">1</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">)</span>
+            <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;em&#39;</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">use_scan</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;EM [lax.scan] </span><span class="si">{</span><span class="n">dist_name</span><span class="si">}</span><span class="s2">: &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;backend=jax, tol=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="si">:</span><span class="s2">.0e</span><span class="si">}</span><span class="s2">, &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;max_iter=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_scan</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_print_header</span><span class="p">(</span><span class="n">dist_name</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_loop</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="n">use_scan</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;EM [lax.scan] </span><span class="si">{</span><span class="n">dist_name</span><span class="si">}</span><span class="s2">: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;backend=jax, tol=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="si">:</span><span class="s2">.0e</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;max_iter=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_scan</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_print_header</span><span class="p">(</span><span class="n">dist_name</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_loop</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">saved_rule</span>
+        <span class="k">return</span> <span class="n">_restore_location</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1110,30 +1205,44 @@
 <div class="viewcode-block" id="IncrementalEMFitter.fit">
 <a class="viewcode-back" href="../../../api/fitting.html#normix.fitting.em.IncrementalEMFitter.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EMResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run incremental EM. Returns :class:`EMResult`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run incremental EM. Returns :class:`EMResult`.</span>
+
+<span class="sd">        ``X`` is centered at its sample mean for the whole stream, and</span>
+<span class="sd">        that mean is added back onto ``mu``. A shrinkage target equal to</span>
+<span class="sd">        the initial model&#39;s own η is rebuilt in these coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">bs</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-        <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">center</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+        <span class="n">saved_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">_recenter_eta_update</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">saved_rule</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">dist_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
 
-        <span class="n">target_log_det</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
-            <span class="n">target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">target_log_det</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization</span> <span class="o">==</span> <span class="s1">&#39;det_sigma_x&#39;</span><span class="p">:</span>
+                <span class="n">target_log_det</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">log_det_sigma</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
-        <span class="n">step_keys</span> <span class="o">=</span> <span class="n">_materialize_incremental_subkeys</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">)</span>
-        <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
-        <span class="p">)</span>
+            <span class="n">step_keys</span> <span class="o">=</span> <span class="n">_materialize_incremental_subkeys</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">)</span>
+            <span class="n">use_scan</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_step_backend</span> <span class="o">==</span> <span class="s1">&#39;jax&#39;</span>
+            <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">use_scan</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_incremental_scan</span><span class="p">(</span>
-                <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">step_keys</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_incremental_python</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">step_keys</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="n">use_scan</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_incremental_scan</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">step_keys</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_incremental_python</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span> <span class="n">step_keys</span><span class="p">,</span> <span class="n">dist_name</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">saved_rule</span>
+        <span class="k">return</span> <span class="n">_restore_location</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_fit_incremental_scan</span><span class="p">(</span>

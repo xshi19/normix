@@ -1327,6 +1327,11 @@ form; this tractable joint quantity is the natural surrogate.</p>
 \eta_5 = \mu\,E[1/Y] + \gamma, \quad
 \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
          + \mu\gamma^\top + \gamma\mu^\top\]</div>
+<p>When <span class="math notranslate nohighlight">\(\varepsilon\|\mu\|^2|E[1/Y]|\)</span> exceeds
+<code class="xref py py-data docutils literal notranslate"><span class="pre">MOMENT_CANCEL_ATOL</span></code>, those three
+moments are stored about <span class="math notranslate nohighlight">\(\mu\)</span> instead. Float64 cannot hold
+both <span class="math notranslate nohighlight">\(s_1\mu\mu^\top\)</span> and <span class="math notranslate nohighlight">\(\Sigma\)</span>; the centered store
+is what the unchanged M-step needs in order to return <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
