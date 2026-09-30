@@ -58,26 +58,52 @@ def _translate_location_moments(eta, center: jax.Array):
     )
 
 
-def _recenter_eta_update(model, rule, center: jax.Array):
-    """Return ``rule`` with its prior η translated by ``-center``.
+def _same_eta(a, b) -> bool:
+    """True when two η pytrees have the same structure and the same values."""
+    leaves_a, treedef_a = jax.tree_util.tree_flatten(a)
+    leaves_b, treedef_b = jax.tree_util.tree_flatten(b)
+    if treedef_a != treedef_b:
+        return False
+    for x, y in zip(leaves_a, leaves_b):
+        if getattr(x, "shape", None) != getattr(y, "shape", None):
+            return False
+        if not bool(jnp.array_equal(jnp.asarray(x), jnp.asarray(y))):
+            return False
+    return True
 
-    Factor latent statistics are recomputed from the shifted six at the
-    already-centered model. Rules without an ``eta0`` are unchanged.
+
+def _recenter_eta_update(model, rule, center: jax.Array):
+    """Return ``rule`` with its prior η in the centered coordinates.
+
+    ``model`` has already had ``center`` subtracted from ``mu``. A target
+    equal to that model's own ``compute_eta_from_model`` (before the
+    shift) is rebuilt from the centered model. Rebuilding is required
+    when the store is about :math:`\\mu`: those moments do not contain
+    :math:`\\mu`, and translating them by the sample mean puts
+    :math:`s_1 c c^\\top` back into :math:`s_6`. Any other target is
+    shifted as a population moment. Factor latent statistics on that
+    path are recomputed from the shifted six. Rules without an ``eta0``
+    are unchanged.
     """
     if rule is None or not hasattr(rule, "eta0"):
         return rule
-    eta0 = _translate_location_moments(rule.eta0, center)
-    if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
-        s7, s8, s9, s10 = model._z_stats_from_six(
-            eta0.E_inv_Y, eta0.E_Y, eta0.E_X, eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
-        )
-        eta0 = eqx.tree_at(
-            lambda e: (
-                e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
-            ),
-            eta0,
-            (s7, s8, s9, s10),
-        )
+    origin = model.replace(mu=model.mu + center)
+    if _same_eta(rule.eta0, origin.compute_eta_from_model()):
+        eta0 = model.compute_eta_from_model()
+    else:
+        eta0 = _translate_location_moments(rule.eta0, center)
+        if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
+            s7, s8, s9, s10 = model._z_stats_from_six(
+                eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
+                eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
+            )
+            eta0 = eqx.tree_at(
+                lambda e: (
+                    e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
+                ),
+                eta0,
+                (s7, s8, s9, s10),
+            )
     return type(rule)(rule.base, eta0, rule.tau)
 
 
@@ -251,7 +277,10 @@ class BatchEMFitter:
 
         ``X`` is centered at its sample mean before any statistic is
         accumulated, and that mean is added back onto ``mu``. ``gamma``,
-        ``Sigma``, and the subordinator are unchanged by the shift.
+        ``Sigma``, and the subordinator are unchanged by the shift. A
+        shrinkage target equal to the initial model's own η is rebuilt
+        in these coordinates; any other target is translated as a
+        population moment.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         center = jnp.mean(X, axis=0)
@@ -759,7 +788,8 @@ class IncrementalEMFitter:
         """Run incremental EM. Returns :class:`EMResult`.
 
         ``X`` is centered at its sample mean for the whole stream, and
-        that mean is added back onto ``mu``.
+        that mean is added back onto ``mu``. A shrinkage target equal to
+        the initial model's own η is rebuilt in these coordinates.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         center = jnp.mean(X, axis=0)

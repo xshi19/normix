@@ -15,6 +15,9 @@ import numpy as np
 import pytest
 
 from normix import GIG, Gamma, InverseGamma, InverseGaussian, VarianceGamma
+from normix.fitting.em import BatchEMFitter
+from normix.fitting.eta_rules import IdentityUpdate, Shrinkage
+from normix.fitting.shrinkage_targets import eta0_from_model
 from normix.mixtures.joint import JointNormalMixture
 from normix.utils.constants import SIGMA_REG
 
@@ -70,6 +73,36 @@ def test_fit_gamma_zero_does_not_collapse_sigma(shift):
     assert float(sigma[0, 0]) > 0.1
 
 
+def test_shrinkage_from_model_keeps_sigma_at_large_location():
+    """A self-prior must not be translated as if it still contained μ.
+
+    ``compute_eta_from_model`` stores (s4, s5, s6) about μ at this
+    location. Subtracting the sample mean from those moments puts
+    s1 c c^T back into s6, and the fit reports success with Σ ~ 1e15.
+    """
+    shift = 1e8
+    base = VarianceGamma.from_classical(
+        mu=jnp.zeros(1),
+        gamma=jnp.zeros(1),
+        sigma=jnp.eye(1),
+        alpha=3.0,
+        beta=2.0,
+    )
+    X = jnp.asarray(base.rvs(200, seed=0)) + shift
+    init = VarianceGamma.default_init(X)
+    result = BatchEMFitter(
+        max_iter=8,
+        tol=1e-6,
+        eta_update=Shrinkage(IdentityUpdate(), eta0_from_model(init), tau=0.3),
+        e_step_backend="jax",
+        m_step_backend="jax",
+    ).fit(init, X)
+    sigma = float(np.asarray(result.model.sigma())[0, 0])
+    assert result.diverged is False
+    assert math.isfinite(sigma)
+    assert 0.1 < sigma < 100.0
+
+
 def test_log_prob_pdf_cdf_off_support_and_at_zero():
     """x < 0 is off support; x = 0 is the one-sided limit. Grads stay non-NaN."""
     cases = [
@@ -123,6 +156,14 @@ def test_fit_mle_rejects_invalid_data(cls, label, x):
 def test_fit_mle_constant_message_names_jensen_gap():
     with pytest.raises(ValueError, match="Jensen"):
         Gamma.fit_mle(jnp.full(20, 3.7))
+
+
+def test_fit_mle_vmap_on_valid_samples():
+    """The host-side check must not block a traced fit of a valid sample."""
+    x = jnp.array([0.5, 1.0, 2.0, 3.0, 0.7, 1.4])
+    fitted = jax.vmap(Gamma.fit_mle)(jnp.stack([x, x * 1.1]))
+    assert np.isfinite(np.asarray(fitted.alpha)).all()
+    assert np.isfinite(np.asarray(fitted.beta)).all()
 
 
 def test_fit_mle_valid_sample_unchanged():

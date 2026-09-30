@@ -538,10 +538,12 @@ class ExponentialFamily(eqx.Module):
         Raises
         ------
         ValueError
-            On a positive support, if ``X`` is empty, contains a non-finite
-            or non-positive value, has a single observation, or is constant.
-            Constant data has no finite MLE: the Jensen gap
-            :math:`\log\bar x - \overline{\log x}` is 0.
+            On a positive support, if a concrete ``X`` is empty, contains a
+            non-finite or non-positive value, has a single observation, or
+            is constant. Constant data has no finite MLE: the Jensen gap
+            :math:`\log\bar x - \overline{\log x}` is 0. Under ``jit`` /
+            ``vmap`` the sample is a tracer and this check is skipped, so
+            a traced call keeps the previous contract.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         cls._validate_positive_sample(X)
@@ -605,11 +607,15 @@ class ExponentialFamily(eqx.Module):
     def _validate_positive_sample(cls, X: jax.Array) -> None:
         """Reject samples for which a positive-support MLE does not exist.
 
-        Eager only. Multivariate families leave this as a no-op: their
-        support is :math:`\\mathbb{R}^d`, and a constant sample still has
-        a (singular) normal MLE.
+        Host-side only. A traced ``X`` (``jit``, ``vmap``) skips the
+        check so those transforms still run; eager calls raise.
+        Multivariate families leave this as a no-op: their support is
+        :math:`\\mathbb{R}^d`, and a constant sample still has a
+        (singular) normal MLE.
         """
         if not cls._on_positive_support():
+            return
+        if isinstance(X, jax.core.Tracer):
             return
         arr = np.asarray(X)
         if arr.ndim == 0 or arr.size == 0 or arr.shape[0] == 0:
