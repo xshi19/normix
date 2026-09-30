@@ -34,7 +34,7 @@ Tier 3 defaults to wrapping Tier 2; GIG overrides with native numpy/scipy.
 from __future__ import annotations
 
 import abc
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 
@@ -149,13 +149,53 @@ class ExponentialFamily(eqx.Module):
                 type(self)._hessian_log_partition_cpu(np.asarray(theta)))
         return type(self)._hessian_log_partition(theta)
 
+    @classmethod
+    def _on_positive_support(cls) -> bool:
+        """True when the sample space is :math:`x > 0`."""
+        return False
+
+    def _log_density_at_zero(self) -> jax.Array:
+        r"""One-sided limit of :math:`\log p(x)` as :math:`x \to 0^+`.
+
+        The default is :math:`-\infty`. Families whose density diverges or
+        stays finite at the origin override this.
+        """
+        return jnp.asarray(-jnp.inf, dtype=jnp.float64)
+
     def log_prob(self, x: jax.Array) -> jax.Array:
-        r""":math:`\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)`, single observation."""
+        r""":math:`\log p(x\mid\theta) = \log h(x) + \theta^\top t(x) - \psi(\theta)`, single observation.
+
+        On a positive support, :math:`t(x)` is evaluated at
+        :math:`x_{\mathrm{safe}} = x` if :math:`x > 0` and at :math:`1`
+        otherwise, then the value is replaced by the endpoint limit at
+        :math:`x = 0` and by :math:`-\infty` for :math:`x < 0`. Masking
+        the input and the value is required: an output-only ``where``
+        leaves NaN parameter gradients.
+        """
         cls = type(self)
         theta = self.natural_params()
-        return (cls.log_base_measure(x)
-                + jnp.dot(cls.sufficient_statistics(x), theta)
-                - cls._log_partition_from_theta(theta))
+        psi = cls._log_partition_from_theta(theta)
+
+        def _interior(x_: jax.Array) -> jax.Array:
+            return (cls.log_base_measure(x_)
+                    + jnp.dot(cls.sufficient_statistics(x_), theta)
+                    - psi)
+
+        if not cls._on_positive_support():
+            return _interior(x)
+
+        x = jnp.asarray(x, dtype=jnp.float64)
+        on = x > 0
+        x_safe = jnp.where(on, x, jnp.ones_like(x))
+        off = jnp.where(x == 0, self._log_density_at_zero(), -jnp.inf)
+        return jnp.where(on, _interior(x_safe), off)
+
+    def _cdf_on_positive_line(self, x: jax.Array, cdf_at: Callable) -> jax.Array:
+        r"""CDF on :math:`(0, \infty)`: 0 for :math:`x \le 0`, with the integrand masked."""
+        x = jnp.asarray(x, dtype=jnp.float64)
+        on = x > 0
+        x_safe = jnp.where(on, x, jnp.ones_like(x))
+        return jnp.where(on, cdf_at(x_safe), jnp.zeros((), dtype=jnp.float64))
 
     def pdf(self, x: jax.Array) -> jax.Array:
         """p(x|θ), single observation. Batch via jax.vmap."""
@@ -494,8 +534,19 @@ class ExponentialFamily(eqx.Module):
             Convergence tolerance for the :math:`\eta\to\theta` solver.
         verbose : int
             0 = silent, >= 1 = print solver summary.
+
+        Raises
+        ------
+        ValueError
+            On a positive support, if a concrete ``X`` is empty, contains a
+            non-finite or non-positive value, has a single observation, or
+            is constant. Constant data has no finite MLE: the Jensen gap
+            :math:`\log\bar x - \overline{\log x}` is 0. Under ``jit`` /
+            ``vmap`` the sample is a tracer and this check is skipped, so
+            a traced call keeps the previous contract.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
+        cls._validate_positive_sample(X)
         stats = jax.vmap(cls.sufficient_statistics)(X)   # (n, dim_t)
         eta_hat = jnp.mean(stats, axis=0)
         return cls.from_expectation(
@@ -551,6 +602,40 @@ class ExponentialFamily(eqx.Module):
         stats = jax.vmap(cls.sufficient_statistics)(X)
         eta_hat = jnp.mean(stats, axis=0)
         return cls.from_expectation(eta_hat)
+
+    @classmethod
+    def _validate_positive_sample(cls, X: jax.Array) -> None:
+        """Reject samples for which a positive-support MLE does not exist.
+
+        Host-side only. A traced ``X`` (``jit``, ``vmap``) skips the
+        check so those transforms still run; eager calls raise.
+        Multivariate families leave this as a no-op: their support is
+        :math:`\\mathbb{R}^d`, and a constant sample still has a
+        (singular) normal MLE.
+        """
+        if not cls._on_positive_support():
+            return
+        if isinstance(X, jax.core.Tracer):
+            return
+        arr = np.asarray(X)
+        if arr.ndim == 0 or arr.size == 0 or arr.shape[0] == 0:
+            raise ValueError(f"{cls.__name__}.fit_mle received an empty sample")
+        if not np.isfinite(arr).all():
+            raise ValueError(
+                f"{cls.__name__}.fit_mle requires every observation to be finite")
+        if np.any(arr <= 0):
+            raise ValueError(
+                f"{cls.__name__}.fit_mle requires observations on the "
+                f"positive support (x > 0)")
+        if arr.shape[0] < 2:
+            raise ValueError(
+                f"{cls.__name__}.fit_mle requires n >= 2; a single "
+                f"observation has no finite MLE")
+        flat = np.reshape(arr, (arr.shape[0], -1))
+        if np.all(np.max(flat, axis=0) == np.min(flat, axis=0)):
+            raise ValueError(
+                f"{cls.__name__}.fit_mle: constant data has no finite MLE "
+                f"(Jensen gap log(mean) - mean(log) is 0)")
 
     @classmethod
     def _theta_bounds(cls):

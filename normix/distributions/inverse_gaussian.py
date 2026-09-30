@@ -51,6 +51,10 @@ class InverseGaussian(ExponentialFamily):
         self.mu = jnp.asarray(mu, dtype=jnp.float64)
         self.lam = jnp.asarray(lam, dtype=jnp.float64)
 
+    @classmethod
+    def _on_positive_support(cls) -> bool:
+        return True
+
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
@@ -176,12 +180,14 @@ class InverseGaussian(ExponentialFamily):
         :math:`t_2 = \sqrt{\lambda/x}\,(x/\mu + 1)`.  The second term uses
         ``log_ndtr`` to avoid overflow when :math:`\lambda/\mu` is large.
         """
-        x = jnp.asarray(x, dtype=jnp.float64)
-        sqrt_lam_over_x = jnp.sqrt(self.lam / x)
-        t1 = sqrt_lam_over_x * (x / self.mu - 1.0)
-        t2 = sqrt_lam_over_x * (x / self.mu + 1.0)
-        log_term2 = 2.0 * self.lam / self.mu + jax.scipy.special.log_ndtr(-t2)
-        return jax.scipy.stats.norm.cdf(t1) + jnp.exp(log_term2)
+        def _at(z: jax.Array) -> jax.Array:
+            sqrt_lam_over_x = jnp.sqrt(self.lam / z)
+            t1 = sqrt_lam_over_x * (z / self.mu - 1.0)
+            t2 = sqrt_lam_over_x * (z / self.mu + 1.0)
+            log_term2 = 2.0 * self.lam / self.mu + jax.scipy.special.log_ndtr(-t2)
+            return jax.scipy.stats.norm.cdf(t1) + jnp.exp(log_term2)
+
+        return self._cdf_on_positive_line(x, _at)
 
     def quantile_table(self) -> QuantileTable:
         r"""Frozen PINV table for amortised :meth:`ppf` / sampling.

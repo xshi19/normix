@@ -46,6 +46,23 @@ class Gamma(ExponentialFamily):
         self.alpha = jnp.asarray(alpha, dtype=jnp.float64)
         self.beta = jnp.asarray(beta, dtype=jnp.float64)
 
+    @classmethod
+    def _on_positive_support(cls) -> bool:
+        return True
+
+    def _log_density_at_zero(self) -> jax.Array:
+        r"""Limit of :math:`\log p(x)` as :math:`x \to 0^+`.
+
+        :math:`+\infty` for :math:`\alpha < 1`, :math:`\log\beta` for
+        :math:`\alpha = 1`, and :math:`-\infty` for :math:`\alpha > 1`.
+        """
+        log_beta = jnp.log(self.beta)
+        return jnp.where(
+            self.alpha < 1.0,
+            jnp.inf,
+            jnp.where(self.alpha == 1.0, log_beta, -jnp.inf),
+        )
+
     # ------------------------------------------------------------------
     # Tier 1: Exponential family interface
     # ------------------------------------------------------------------
@@ -147,8 +164,8 @@ class Gamma(ExponentialFamily):
         return jnp.maximum((self.alpha - 1.0) / self.beta, LOG_EPS)
 
     def cdf(self, x: jax.Array) -> jax.Array:
-        x = jnp.asarray(x, dtype=jnp.float64)
-        return jax.scipy.special.gammainc(self.alpha, self.beta * x)
+        return self._cdf_on_positive_line(
+            x, lambda z: jax.scipy.special.gammainc(self.alpha, self.beta * z))
 
     def ppf(self, q: jax.Array) -> jax.Array:
         r"""Quantile function :math:`F^{-1}(q) = \mathrm{gammaincinv}(\alpha, q) / \beta`."""

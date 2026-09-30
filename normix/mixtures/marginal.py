@@ -544,25 +544,47 @@ class NormalMixture(MarginalMixture):
             \eta_5 = \mu\,E[1/Y] + \gamma, \quad
             \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
                      + \mu\gamma^\top + \gamma\mu^\top
+
+        When :math:`\varepsilon\|\mu\|^2|E[1/Y]|` exceeds
+        :data:`~normix.utils.constants.MOMENT_CANCEL_ATOL`, those three
+        moments are stored about :math:`\mu` instead. Float64 cannot hold
+        both :math:`s_1\mu\mu^\top` and :math:`\Sigma`; the centered store
+        is what the unchanged M-step needs in order to return :math:`\Sigma`.
         """
         from normix.fitting.eta import NormalMixtureEta
+
+        from normix.utils.constants import MOMENT_CANCEL_ATOL
 
         E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
         j = self._joint
         mu, gamma = j.mu, j.gamma
         sigma = j.sigma()
 
+        # Raw moments are the population values. When ε ‖μ‖² |E[1/Y]| exceeds
+        # MOMENT_CANCEL_ATOL a float64 store of s6 has already lost Σ, so
+        # store the same moments about μ. The M-step is unchanged and
+        # returns that Σ; there is no center field on η.
+        cancel = (jnp.finfo(jnp.float64).eps * jnp.abs(E_inv_Y)
+                  * jnp.sum(jnp.square(mu)))
+        about_mu = cancel > MOMENT_CANCEL_ATOL
+        E_X_raw = mu + gamma * E_Y
+        E_X_about = gamma * E_Y
+        E_XiY_raw = mu * E_inv_Y + gamma
+        E_XiY_about = gamma
+        cross = jnp.outer(mu, gamma) + jnp.outer(gamma, mu)
+        E_XXT_raw = (sigma
+                     + jnp.outer(mu, mu) * E_inv_Y
+                     + jnp.outer(gamma, gamma) * E_Y
+                     + cross)
+        E_XXT_about = sigma + jnp.outer(gamma, gamma) * E_Y
+
         return NormalMixtureEta(
             E_log_Y=E_log_Y,
             E_inv_Y=E_inv_Y,
             E_Y=E_Y,
-            E_X=mu + gamma * E_Y,
-            E_X_inv_Y=mu * E_inv_Y + gamma,
-            E_XXT_inv_Y=(sigma
-                         + jnp.outer(mu, mu) * E_inv_Y
-                         + jnp.outer(gamma, gamma) * E_Y
-                         + jnp.outer(mu, gamma)
-                         + jnp.outer(gamma, mu)),
+            E_X=jnp.where(about_mu, E_X_about, E_X_raw),
+            E_X_inv_Y=jnp.where(about_mu, E_XiY_about, E_XiY_raw),
+            E_XXT_inv_Y=jnp.where(about_mu, E_XXT_about, E_XXT_raw),
         )
 
     @abc.abstractmethod

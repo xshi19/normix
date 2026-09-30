@@ -10,9 +10,10 @@ update rules.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Optional
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 
@@ -32,6 +33,84 @@ def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Arra
         k, sk = jax.random.split(k)
         rows.append(sk)
     return jnp.stack(rows)
+
+
+def _translate_location_moments(eta, center: jax.Array):
+    """Shift :math:`(s_4, s_5, s_6)` into coordinates where :math:`X` lost ``center``.
+
+    :math:`s_1, s_2, s_3` are invariant. Applied to a shrinkage target
+    before a centered fit; the η pytree gains no center field.
+    """
+    r = jnp.asarray(center, dtype=jnp.float64)
+    s1 = eta.E_inv_Y
+    s4 = eta.E_X - r
+    s5 = eta.E_X_inv_Y - s1 * r
+    s6 = (
+        eta.E_XXT_inv_Y
+        - jnp.outer(eta.E_X_inv_Y, r)
+        - jnp.outer(r, eta.E_X_inv_Y)
+        + s1 * jnp.outer(r, r)
+    )
+    return eqx.tree_at(
+        lambda e: (e.E_X, e.E_X_inv_Y, e.E_XXT_inv_Y),
+        eta,
+        (s4, s5, s6),
+    )
+
+
+def _same_eta(a, b) -> bool:
+    """True when two η pytrees have the same structure and the same values."""
+    leaves_a, treedef_a = jax.tree_util.tree_flatten(a)
+    leaves_b, treedef_b = jax.tree_util.tree_flatten(b)
+    if treedef_a != treedef_b:
+        return False
+    for x, y in zip(leaves_a, leaves_b):
+        if getattr(x, "shape", None) != getattr(y, "shape", None):
+            return False
+        if not bool(jnp.array_equal(jnp.asarray(x), jnp.asarray(y))):
+            return False
+    return True
+
+
+def _recenter_eta_update(model, rule, center: jax.Array):
+    """Return ``rule`` with its prior η in the centered coordinates.
+
+    ``model`` has already had ``center`` subtracted from ``mu``. A target
+    equal to that model's own ``compute_eta_from_model`` (before the
+    shift) is rebuilt from the centered model. Rebuilding is required
+    when the store is about :math:`\\mu`: those moments do not contain
+    :math:`\\mu`, and translating them by the sample mean puts
+    :math:`s_1 c c^\\top` back into :math:`s_6`. Any other target is
+    shifted as a population moment. Factor latent statistics on that
+    path are recomputed from the shifted six. Rules without an ``eta0``
+    are unchanged.
+    """
+    if rule is None or not hasattr(rule, "eta0"):
+        return rule
+    origin = model.replace(mu=model.mu + center)
+    if _same_eta(rule.eta0, origin.compute_eta_from_model()):
+        eta0 = model.compute_eta_from_model()
+    else:
+        eta0 = _translate_location_moments(rule.eta0, center)
+        if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
+            s7, s8, s9, s10 = model._z_stats_from_six(
+                eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
+                eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
+            )
+            eta0 = eqx.tree_at(
+                lambda e: (
+                    e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
+                ),
+                eta0,
+                (s7, s8, s9, s10),
+            )
+    return type(rule)(rule.base, eta0, rule.tau)
+
+
+def _restore_location(result: "EMResult", center: jax.Array) -> "EMResult":
+    """Add the sample mean back onto ``result.model.mu``."""
+    model = result.model.replace(mu=result.model.mu + center)
+    return replace(result, model=model)
 
 
 # ---------------------------------------------------------------------------
@@ -195,35 +274,51 @@ class BatchEMFitter:
         Returns
         -------
         EMResult with fitted model, convergence diagnostics, and timing.
+
+        ``X`` is centered at its sample mean before any statistic is
+        accumulated, and that mean is added back onto ``mu``. ``gamma``,
+        ``Sigma``, and the subordinator are unchanged by the shift. A
+        shrinkage target equal to the initial model's own η is rebuilt
+        in these coordinates; any other target is translated as a
+        population moment.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
-        dist_name = type(model).__name__
+        center = jnp.mean(X, axis=0)
+        X = X - center
+        model = model.replace(mu=model.mu - center)
+        saved_rule = self.eta_update
+        self.eta_update = _recenter_eta_update(model, saved_rule, center)
+        try:
+            dist_name = type(model).__name__
 
-        target_log_det = None
-        if self.regularization == 'det_sigma_x':
-            target_log_det = jnp.asarray(
-                model.log_det_sigma(), dtype=jnp.float64)
+            target_log_det = None
+            if self.regularization == 'det_sigma_x':
+                target_log_det = jnp.asarray(
+                    model.log_det_sigma(), dtype=jnp.float64)
 
-        use_scan = (
-            self.algorithm == 'em'
-            and self.e_step_backend == 'jax'
-            and self.m_step_backend == 'jax'
-            and self.verbose <= 1
-            and self.eta_update is None
-        )
+            use_scan = (
+                self.algorithm == 'em'
+                and self.e_step_backend == 'jax'
+                and self.m_step_backend == 'jax'
+                and self.verbose <= 1
+                and self.eta_update is None
+            )
 
-        if use_scan:
-            if self.verbose >= 1:
-                print(
-                    f"EM [lax.scan] {dist_name}: "
-                    f"backend=jax, tol={self.tol:.0e}, "
-                    f"max_iter={self.max_iter}"
-                )
-            return self._fit_scan(model, X, target_log_det)
-        else:
-            if self.verbose >= 1:
-                self._print_header(dist_name)
-            return self._fit_loop(model, X, target_log_det)
+            if use_scan:
+                if self.verbose >= 1:
+                    print(
+                        f"EM [lax.scan] {dist_name}: "
+                        f"backend=jax, tol={self.tol:.0e}, "
+                        f"max_iter={self.max_iter}"
+                    )
+                result = self._fit_scan(model, X, target_log_det)
+            else:
+                if self.verbose >= 1:
+                    self._print_header(dist_name)
+                result = self._fit_loop(model, X, target_log_det)
+        finally:
+            self.eta_update = saved_rule
+        return _restore_location(result, center)
 
     # ------------------------------------------------------------------
     # Pure EM / MCECM step (no prints, no float(), no list.append())
@@ -690,30 +785,44 @@ class IncrementalEMFitter:
         self.m_step_method = m_step_method
 
     def fit(self, model, X: jax.Array, *, key: jax.Array) -> EMResult:
-        """Run incremental EM. Returns :class:`EMResult`."""
+        """Run incremental EM. Returns :class:`EMResult`.
+
+        ``X`` is centered at its sample mean for the whole stream, and
+        that mean is added back onto ``mu``. A shrinkage target equal to
+        the initial model's own η is rebuilt in these coordinates.
+        """
         X = jnp.asarray(X, dtype=jnp.float64)
-        n = int(X.shape[0])
-        bs = min(self.batch_size, n)
-        dist_name = type(model).__name__
+        center = jnp.mean(X, axis=0)
+        X = X - center
+        model = model.replace(mu=model.mu - center)
+        saved_rule = self.eta_update
+        self.eta_update = _recenter_eta_update(model, saved_rule, center)
+        try:
+            n = int(X.shape[0])
+            bs = min(self.batch_size, n)
+            dist_name = type(model).__name__
 
-        target_log_det = None
-        if self.regularization == 'det_sigma_x':
-            target_log_det = jnp.asarray(
-                model.log_det_sigma(), dtype=jnp.float64)
+            target_log_det = None
+            if self.regularization == 'det_sigma_x':
+                target_log_det = jnp.asarray(
+                    model.log_det_sigma(), dtype=jnp.float64)
 
-        step_keys = _materialize_incremental_subkeys(key, self.max_steps)
-        use_scan = (
-            self.verbose == 0
-            and self.e_step_backend == 'jax'
-            and self.m_step_backend == 'jax'
-        )
+            step_keys = _materialize_incremental_subkeys(key, self.max_steps)
+            use_scan = (
+                self.verbose == 0
+                and self.e_step_backend == 'jax'
+                and self.m_step_backend == 'jax'
+            )
 
-        if use_scan:
-            return self._fit_incremental_scan(
-                model, X, n, bs, step_keys, target_log_det)
-
-        return self._fit_incremental_python(
-            model, X, n, bs, step_keys, dist_name, target_log_det)
+            if use_scan:
+                result = self._fit_incremental_scan(
+                    model, X, n, bs, step_keys, target_log_det)
+            else:
+                result = self._fit_incremental_python(
+                    model, X, n, bs, step_keys, dist_name, target_log_det)
+        finally:
+            self.eta_update = saved_rule
+        return _restore_location(result, center)
 
     def _fit_incremental_scan(
         self,
