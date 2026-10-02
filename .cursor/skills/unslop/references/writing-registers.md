@@ -1,7 +1,8 @@
 # normix writing registers
 
-Four surfaces, four voices. Identify the register before writing or
-editing. The unslop patterns and carve-outs apply to all four.
+Five surfaces, five voices. Identify the register before writing or
+editing. The unslop patterns and carve-outs apply to all of them. How much
+of the STE-style pass each register takes: the scope table in `ste.md`.
 
 ## `dev-notes/` — engineer's notebook (internal, agent-facing)
 
