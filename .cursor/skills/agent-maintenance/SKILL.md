@@ -126,6 +126,7 @@ Before updating anything, check that you're updating the **canonical location**:
 | Mathematical derivations | `docs/theory/` |
 | Published bibliography keys | `docs/references.md` |
 | Citation / package-link conventions | `.cursor/rules/docs-cross-links.mdc` |
+| Prose style, writing registers, STE-style scope | `.cursor/skills/unslop/` |
 
 If the fact already exists elsewhere, **add a pointer**, don't duplicate.
 

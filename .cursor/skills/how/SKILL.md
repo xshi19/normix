@@ -52,6 +52,10 @@ Visual-first explanations — a diagram denser than chat mermaid, a
 side-by-side math comparison — go to the show-me skill. This skill
 stays prose-and-citation.
 
+Asked for a simple or STE explanation? Write and check the full
+explanation first, then apply the STE-style pass (unslop
+`references/ste.md`). Simplifying during exploration loses sources.
+
 ## Critique mode
 
 Explain first — you cannot critique what you don't understand. Then the
