@@ -71,6 +71,8 @@ fit
 
 Place each visual next to the short text it supports. Keep only the
 calls, files, states, and boundaries needed for the current question.
+Write that text and the labels STE-style (unslop `references/ste.md`).
+The visual carries the structure; each sentence carries one fact.
 
 ## Delivering an HTML artifact
 

@@ -20,6 +20,11 @@ alwaysApply: true
 - **<= 100 lines per rule**; if longer, split or move details to `docs/`
 - **Concrete**: prefer "do X / don't do Y" over explanations of how things work
 
+## Wording (AGENTS.md, rules, skills)
+
+- **STE-style** for new and edited lines: one instruction per sentence, 20 words maximum.
+  Scope and limits: the unslop skill, `references/ste.md`. Don't rewrite untouched text.
+
 ## Where content belongs
 
 | Content type | Location |

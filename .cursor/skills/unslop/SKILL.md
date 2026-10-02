@@ -3,19 +3,21 @@ name: unslop
 description: >-
   Strip AI-writing patterns from prose while preserving normix's
   mathematical voice. Use when writing or editing README, docs/ pages,
-  docstrings, dev-notes, PR descriptions, or when the user says unslop,
-  de-AI, or "this reads like AI". Includes the normix carve-outs and the
-  four writing registers (dev-notes, docstrings, tutorials, theory).
+  docstrings, dev-notes, PR descriptions, rules and skills, or when the
+  user says unslop, de-AI, or "this reads like AI", or asks for plain,
+  simple, or STE (ASD-STE100) English. Includes the normix carve-outs,
+  the writing registers, and the STE-style pass with its scope table.
 ---
 
 # Unslop
 
 Cut AI tells; preserve meaning, tone, and the math. Process: identify the
 register → scan for patterns → rewrite → self-audit ("what still reads as
-AI-generated?").
+AI-generated?") → STE-style pass where in scope.
 
 Pick the register first — what's right in dev-notes is wrong in a
-docstring: `references/writing-registers.md`.
+docstring: `references/writing-registers.md`. The STE-style pass (scope
+per doc type, limits, checker script): `references/ste.md`.
 
 ## normix carve-outs (override the patterns below)
 
